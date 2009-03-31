@@ -19,5 +19,23 @@
 */
 
 /*
-  The CArc memory allocator allocates memory in 
+  The CArc memory allocator uses a fast-fits memory allocator to
+  perform its allocation.  Later on, we'll modify this so that it can
+  do locking and we can safely allocate and deallocate memory this way
+  in a concurrent fashion.
  */
+
+static void demote(Bhdr *parent, Bhdr *child)
+{
+  Bhdr *left, *right;
+  int r1;
+
+  r1 = (parent->s.left == child);
+  left = child->s.left;
+  right = child->s.right;
+  while (left->size > child->size || right->size > child->size) {
+    if (right->size > child->size) {
+    } else {
+    }
+  }
+}
