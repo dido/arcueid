@@ -1,4 +1,4 @@
-/* 
+/*
   Copyright (C) 2009 Rafael R. Sevilla
 
   This file is part of CArc
@@ -16,7 +16,20 @@
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
-*/
+
+ */
+
+/*! \file alloc.h
+  \brief Memory allocation data structures and functions
+
+  The basic data structures used by the CArc memory manager are all
+  here.  Similarities between this code and that of the Inferno
+  memory manager should probably be unmissable.
+
+  The memory allocator used herein is an adaptation of the Stephenson
+  fast fits memory allocator using Cartesian trees.
+
+ */
 
 #include <inttypes.h>
 #include <assert.h>
@@ -46,7 +59,15 @@ struct Bhdr {
     magic number is MAGIC_F (free block).
    */
   union {
-    uint8_t data[1];		/*!< data in the block (if allocated) */
+    /*! \struct d
+      This member is used when the block is allocated (MAGIC_A or MAGIC_F).
+      Allocated blocks are chained in a linked list so that the sweep phase
+      of a memory allocator can determine all allocated blocks easily.
+     */
+    struct {
+      struct Bhdr *next;      /*!< next block in allocated */
+      uint8_t data[1];	      /*!< data in the block (if allocated) */
+    } d;
     /*! \struct s
       This is the tree structure by which the memory allocator organizes
       free blocks.  These free blocks are organized by means of a
@@ -65,7 +86,7 @@ struct Bhdr {
   Given a pointer to a block header \a bp, this macro will produce a
   pointer to the data member of the block.
  */
-#define B2D(bp) ((void *)(bp)->u.data)
+#define B2D(bp) ((void *)(bp)->u.d.data)
 
 /*! \def D2B(b, dp)
   \brief Given a data pointer, get the block header
@@ -74,5 +95,18 @@ struct Bhdr {
   block header in \a b.  This will check to see if the magic numbers are
   valid, and assert whether the data are valid.
  */
-#define D2B(b, dp) (b) = ((Bhdr *)(((uint8_t *)(dp)) - (((Bhdr *)0)->u.data))); \
+#define D2B(b, dp) (b) = ((Bhdr *)(((uint8_t *)(dp)) - (((Bhdr *)0)->u.d.data))); \
 		       assert((b)->magic == MAGIC_A || (b)->magic == MAGIC_I)
+
+/*! \fn void *carc_heap_alloc(uint64_t size)
+  \brief allocate memory from the heap
+
+  Allocate a block of memory from the heap of size \a size.
+ */
+void *carc_heap_alloc(uint64_t size);
+
+/*! \fn void *carc_heap_free(void *ptr)
+  \brief free a memory block back to the heap.
+ */
+void carc_heap_free(void *ptr);
+
