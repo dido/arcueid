@@ -30,6 +30,8 @@
   fast fits memory allocator using Cartesian trees.
 
  */
+#ifndef _ALLOC_H_
+#define _ALLOC_H_
 
 #include <inttypes.h>
 #include <assert.h>
@@ -140,3 +142,4 @@ void *carc_heap_alloc(size_t size);
  */
 void carc_heap_free(void *ptr);
 
+#endif
