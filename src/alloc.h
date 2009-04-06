@@ -39,20 +39,20 @@ enum
 {
   MAGIC_A = 0xa110c,	     /*!< Allocated block */
   MAGIC_F = 0xbadc0c0a,	     /*!< Free block */
-  MAGIC_E = 0xdeadbabe,	     /*!< End of arena */
+  MAGIC_E = 0xdeadbabe,	     /*!< End of heap */
   MAGIC_I = 0xabba	     /*!< Block is immutable (hidden from gc) */
 };
 
 /*! \struct Bhdr
   \brief Block header used for memory management
 
-  The memory management and garbage collector used by CArc manages the heap
+  The memory manageer and garbage collector used by CArc manages the heap
   by means of blocks prefixed with the following header.
   
  */
 struct Bhdr {
   uint64_t magic;		/*!< magic number code of the block */
-  uint64_t size;		/*!< size of the block */
+  size_t size;			/*!< size of the block */
   /*! \union u
     This union has the data member if the magic number is MAGIC_A or
     MAGIC_I (allocated or immutable), and has the s member if the
@@ -60,14 +60,8 @@ struct Bhdr {
    */
   union {
     /*! \struct d
-      This member is used when the block is allocated (MAGIC_A or MAGIC_F).
-      Allocated blocks are chained in a linked list so that the sweep phase
-      of a memory allocator can determine all allocated blocks easily.
-     */
-    struct {
-      struct Bhdr *next;      /*!< next block in allocated */
-      uint8_t data[1];	      /*!< data in the block (if allocated) */
-    } d;
+      This member is used when the block is allocated (MAGIC_A or MAGIC_F). */
+    uint8_t data[1];	      /*!< data in the block (if allocated) */
     /*! \struct s
       This is the tree structure by which the memory allocator organizes
       free blocks.  These free blocks are organized by means of a
@@ -80,13 +74,28 @@ struct Bhdr {
   } u;
 };
 
+/*! \struct Shdr
+ \brief Segment header
+
+ The heap of the CArc memory manager is structured as a linked list of
+ memory segments. */
+struct Shdr {
+  size_t size;		     /*!< size of the segment in bytes */
+  struct Shdr *next;	     /*!< next segment */
+  struct Bhdr firstblock[1]; /*!< first block header in the segment */
+};
+
+/*! \var struct Shdr carc_heap_head
+  \brief The start of the linked list of heap segments. */
+extern struct Shdr *carc_heap_head;
+
 /*! \def B2D(bp)
   \brief Given a block header, get a pointer to the data
 
   Given a pointer to a block header \a bp, this macro will produce a
   pointer to the data member of the block.
  */
-#define B2D(bp) ((void *)(bp)->u.d.data)
+#define B2D(bp) ((void *)(bp)->u.data)
 
 /*! \def D2B(b, dp)
   \brief Given a data pointer, get the block header
@@ -95,15 +104,25 @@ struct Bhdr {
   block header in \a b.  This will check to see if the magic numbers are
   valid, and assert whether the data are valid.
  */
-#define D2B(b, dp) (b) = ((Bhdr *)(((uint8_t *)(dp)) - (((Bhdr *)0)->u.d.data))); \
+#define D2B(b, dp) (b) = ((struct Bhdr *) \
+			  (((uint8_t *)(dp)) - \
+			   (((struct Bhdr *)0)->u.d.data))); \
 		       assert((b)->magic == MAGIC_A || (b)->magic == MAGIC_I)
 
-/*! \fn void *carc_heap_alloc(uint64_t size)
+/*! \def B2NB(b)
+  \brief Get the following block in a segment
+
+  Given a Bhdr \a b, this macro will give the block following it in the
+  heap.  This macro can be used to visit all the blocks of a segment.
+*/
+#define B2NB(b) ((struct Bhdr *)(((uint8_t *)(b) + (b)->size)))
+
+/*! \fn void *carc_heap_alloc(size_t size)
   \brief allocate memory from the heap
 
   Allocate a block of memory from the heap of size \a size.
  */
-void *carc_heap_alloc(uint64_t size);
+void *carc_heap_alloc(size_t size);
 
 /*! \fn void *carc_heap_free(void *ptr)
   \brief free a memory block back to the heap.
