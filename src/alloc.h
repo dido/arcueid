@@ -46,7 +46,7 @@ enum
 /*! \struct Bhdr
   \brief Block header used for memory management
 
-  The memory manageer and garbage collector used by CArc manages the heap
+  The memory manager and garbage collector used by CArc manages the heap
   by means of blocks prefixed with the following header.
   
  */
@@ -83,12 +83,22 @@ struct Shdr {
   void *block;		     /*!< address of the memory block this chunk lives in (alignment may make this different)  */
   size_t size;		     /*!< size of the segment in bytes */
   struct Shdr *next;	     /*!< next segment */
-  struct Bhdr *firstblock;   /*!< first block header in the segment */
+  struct Bhdr firstblock[1]; /*!< first block header in the segment */
 };
 
 /*! \var struct Shdr carc_heap_head
   \brief The start of the linked list of heap segments. */
 extern struct Shdr *carc_heap_head;
+
+/*! \def PAGE_SIZE
+  \brief Size of a memory page
+*/
+#define PAGE_SIZE (1 << (PAGE_LOG))
+
+/*! \def PAGE_LOG
+  \brief The number of bits used to represent a page.
+*/
+#define PAGE_LOG (12)
 
 /*! \def B2D(bp)
   \brief Given a block header, get a pointer to the data
