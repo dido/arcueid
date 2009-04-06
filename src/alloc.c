@@ -18,12 +18,38 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
 */
 
-/*
-  The CArc memory allocator uses a fast-fits memory allocator to
-  perform its allocation.  Later on, we'll modify this so that it can
-  do locking and we can safely allocate and deallocate memory this way
-  in a concurrent fashion.
+/*!< \fn static Shdr *new_segment(size_t size, int modulo)
+  \brief Allocate a new segment
+
+  This method allocates a new segment with size \a size
  */
+static Shdr *new_segment(size_t size)
+{
+  char *mem, *segbase;
+  uint64_t aligned_mem;
+  static void *last_addr = NULL;
+  Bhdr *last_block;
+
+  mem = (char *)mmap(last_addr, size + PAGE_SIZE, PROT_READ | PROT_WRITE,
+		     MAP_PRIVATE | MAP_ANON, -1, 0);
+  if (mem == MAP_FAILED) {
+    perror("Failed to allocate segment\n");
+    exit(1);
+  }
+  last_addr = mem + size + 2*PAGE_SIZE;
+  segbase = mem + sizeof(Shdr);
+  aligned_mem = (((uint64_t)segbase / PAGE_SIZE + 1) * PAGE_SIZE);
+  segbase = (char *)(aligned_mem - sizeof(Shdr));
+  segbase->block = (void *)mem;
+  segbase->size = size;
+  segbase->next = NULL;
+  segbase->firstblock->magic = MAGIC_F;
+  last_block = (last_addr - sizeof(struct Bhdr));
+  segbase->firstblock->size = (size_t)((char *)last_block - (char *)segbase->firstblock);
+  last_block->magic = MAGIC_E;
+  last_block->size = 0;
+  return(segbase);
+}
 
 static void demote(Bhdr *parent, Bhdr *child)
 {
