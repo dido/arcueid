@@ -17,38 +17,45 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
 */
+#include <stdio.h>
+#include "carc.h"
+#include "alloc.h"
 
 /*!< \fn static Shdr *new_segment(size_t size, int modulo)
   \brief Allocate a new segment
 
-  This method allocates a new segment with size \a size
- */
-static Shdr *new_segment(size_t size)
-{
-  char *mem, *segbase;
-  uint64_t aligned_mem;
-  static void *last_addr = NULL;
-  Bhdr *last_block;
+  This method allocates a new segment which contains a free block of
+  size \a size.  This allocates an additional end of segment block in
+  addition.
 
-  mem = (char *)mmap(last_addr, size + PAGE_SIZE, PROT_READ | PROT_WRITE,
+  TODO: memory alignment?
+ */
+Shdr *_carc_new_segment(size_t size)
+{
+  char *mem;
+  static void *last_addr = NULL;
+  size_t fsize;
+  Shdr *seg;
+  Bhdr *endseg;
+
+  fsize = size + sizeof(struct Shdr) + 2*sizeof(struct Bhdr);
+
+  mem = (char *)mmap(NULL, fsize,
+		     PROT_READ | PROT_WRITE,
 		     MAP_PRIVATE | MAP_ANON, -1, 0);
+
   if (mem == MAP_FAILED) {
     perror("Failed to allocate segment\n");
     exit(1);
   }
-  last_addr = mem + size + 2*PAGE_SIZE;
-  segbase = mem + sizeof(Shdr);
-  aligned_mem = (((uint64_t)segbase / PAGE_SIZE + 1) * PAGE_SIZE);
-  segbase = (char *)(aligned_mem - sizeof(Shdr));
-  segbase->block = (void *)mem;
-  segbase->size = size;
-  segbase->next = NULL;
-  segbase->firstblock->magic = MAGIC_F;
-  last_block = (last_addr - sizeof(struct Bhdr));
-  segbase->firstblock->size = (size_t)((char *)last_block - (char *)segbase->firstblock);
-  last_block->magic = MAGIC_E;
-  last_block->size = 0;
-  return(segbase);
+
+  seg = (Shdr *)mem;
+  seg->block->magic = MAGIC_F;
+  seg->block->size = size;
+  endseg = B2NB(seg->block);
+  endseg->block->magic = MAGIC_E;
+  seg->block->size = 0;
+  return(seg);
 }
 
 static void demote(Bhdr *parent, Bhdr *child)
