@@ -18,6 +18,8 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
 */
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
 #include "carc.h"
 #include "alloc.h"
 
@@ -30,13 +32,13 @@
 
   TODO: memory alignment?
  */
-Shdr *_carc_new_segment(size_t size)
+struct Shdr *_carc_new_segment(size_t size)
 {
   char *mem;
   static void *last_addr = NULL;
   size_t fsize;
-  Shdr *seg;
-  Bhdr *endseg;
+  struct Shdr *seg;
+  struct Bhdr *endseg;
 
   fsize = size + sizeof(struct Shdr) + 2*sizeof(struct Bhdr);
 
@@ -49,26 +51,12 @@ Shdr *_carc_new_segment(size_t size)
     exit(1);
   }
 
-  seg = (Shdr *)mem;
-  seg->block->magic = MAGIC_F;
-  seg->block->size = size;
-  endseg = B2NB(seg->block);
-  endseg->block->magic = MAGIC_E;
-  seg->block->size = 0;
+  seg = (struct Shdr *)mem;
+  seg->fblk->magic = MAGIC_F;
+  seg->fblk->size = size;
+  endseg = B2NB(seg->fblk);
+  endseg->magic = MAGIC_E;
+  endseg->size = 0;
   return(seg);
 }
 
-static void demote(Bhdr *parent, Bhdr *child)
-{
-  Bhdr *left, *right;
-  int r1;
-
-  r1 = (parent->s.left == child);
-  left = child->s.left;
-  right = child->s.right;
-  while (left->size > child->size || right->size > child->size) {
-    if (right->size > child->size) {
-    } else {
-    }
-  }
-}
