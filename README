@@ -1,0 +1,11 @@
+CARC README -- Important introductory notes.
+Copyright (C) 2009 Rafael R. Sevilla
+See the end for copying conditions.
+
+This is CArc, an implementation of Paul Graham's Arc dialect of Lisp
+in C.
+
+----------------------------------------------------------------------
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
