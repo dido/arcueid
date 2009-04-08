@@ -82,10 +82,9 @@ struct Bhdr {
  The heap of the CArc memory manager is structured as a linked list of
  memory segments. */
 struct Shdr {
-  void *block;		     /*!< address of the memory block this chunk lives in (alignment may make this different)  */
   size_t size;		     /*!< size of the segment in bytes */
   struct Shdr *next;	     /*!< next segment */
-  struct Bhdr firstblock[1]; /*!< first block header in the segment */
+  struct Bhdr fblk[1];     /*!< first block header in the segment */
 };
 
 /*! \var struct Shdr carc_heap_head
