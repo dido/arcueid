@@ -22,10 +22,6 @@
 
 #define _CARC_H_
 
-#if sizeof(long) != sizeof(void *)
-# error ---->> CArc requires sizeof(void*) == sizeof(long) to be compiled. <<----
-#else
 typedef unsigned long value;
-#endif
 
 #endif
