@@ -22,6 +22,8 @@
 #include <check.h>
 #include "../src/alloc.h"
 
+struct Shdr *_carc_new_segment(size_t size);
+
 START_TEST(test_new_segment)
 {
   struct Shdr *s;
@@ -33,7 +35,7 @@ START_TEST(test_new_segment)
   fail_unless(s->next == NULL);
   b = s->fblk;
   fail_unless(b->magic  == MAGIC_F);
-  fail_unless(b->size == 1024);
+  fail_unless(b->size == 1024 + BHDRSIZE);
   data = B2D(b);
   memset(data, 0, 1024);
   b = B2NB(b);
