@@ -35,6 +35,7 @@
 
 #include <inttypes.h>
 #include <assert.h>
+#include <stdlib.h>
 
 /*! This enum gives a list of the types of block that the system uses */
 enum
@@ -93,7 +94,7 @@ extern struct Shdr *carc_heap_head;
 
 /*! \def PAGE_SIZE
   \brief Size of a memory page
-*/
+ */
 #define PAGE_SIZE (1 << (PAGE_LOG))
 
 /*! \def PAGE_LOG
@@ -126,8 +127,16 @@ extern struct Shdr *carc_heap_head;
 
   Given a Bhdr \a b, this macro will give the block following it in the
   heap.  This macro can be used to visit all the blocks of a segment.
-*/
+ */
 #define B2NB(b) ((struct Bhdr *)(((uint8_t *)(b) + (b)->size)))
+
+/*! \def BHDRSIZE
+  \brief Size of an allocated block header
+
+  The data of a block overlaps with the data of a block header: this is
+  the portion which is used for the allocation.
+ */
+#define BHDRSIZE ((size_t)(((struct Bhdr *)0)->u.data))
 
 /*! \fn void *carc_heap_alloc(size_t size)
   \brief allocate memory from the heap
