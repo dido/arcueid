@@ -22,6 +22,10 @@
 #include "carc.h"
 #include "alloc.h"
 
+static size_t heap_incr;	/* Minimum heap increment on alloc */
+Shdr *carc_heap;		/* The actual heap. */
+Bhdr *free_root;   /* The root of the Cartesian tree of free blocks */
+
 /*!< \fn static Shdr *new_segment(size_t size, int modulo)
   \brief Allocate a new segment
 
@@ -57,3 +61,8 @@ struct Shdr *_carc_new_segment(size_t size)
   return(seg);
 }
 
+void carc_alloc_init(size_t set_heap_incr)
+{
+  heap_incr = set_heap_incr;
+  carc_heap = free_root = NULL;
+}
