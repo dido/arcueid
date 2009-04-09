@@ -107,38 +107,38 @@ extern struct Shdr *carc_heap_head;
  */
 #define DEFAULT_HEAP_INCR ((PAGE_SIZE) * 16)
 
-/* /\*! \def BHDRSIZE */
-/*   \brief Size of an allocated block header */
+/*! \def BHDRSIZE
+  \brief Size of an allocated block header
 
-/*   The data of a block overlaps with the data of a block header: this is */
-/*   the portion which is used for the allocation. */
-/*  *\/ */
-/* #define BHDRSIZE ((size_t)(((struct Bhdr *)0)->u.data)) */
+  The data of a block overlaps with the data of a block header: this is
+  the portion which is used for the allocation.
+ */
+#define BHDRSIZE ((size_t)(((struct Bhdr *)0)->u.data))
 
-/* /\*! \def B2D(bp) */
-/*   \brief Given a block header, get a pointer to the data */
+/*! \def B2D(bp)
+  \brief Given a block header, get a pointer to the data
 
-/*   Given a pointer to a block header \a bp, this macro will produce a */
-/*   pointer to the data member of the block. */
-/*  *\/ */
-/* #define B2D(bp) ((void *)(bp)->u.data) */
+  Given a pointer to a block header \a bp, this macro will produce a
+  pointer to the data member of the block.
+ */
+#define B2D(bp) ((void *)(bp)->u.data)
 
-/* /\*! \def D2B(b, dp) */
-/*   \brief Given a data pointer, get the block header */
+/*! \def D2B(b, dp)
+  \brief Given a data pointer, get the block header
 
-/*   Given a pointer to a valid data pointer \a dp, put the address of the */
-/*   block header in \a b.  This will check to see if the magic numbers are */
-/*   valid, and assert whether the data are valid. */
-/*  *\/ */
-/* #define D2B(b, dp) (b) = ((struct Bhdr *) \ */
-/* 			  (((uint8_t *)(dp)) - \ */
-/* 			   (((struct Bhdr *)0)->u.d.data))); \ */
-/* 		       assert((b)->magic == MAGIC_A || (b)->magic == MAGIC_I) */
+  Given a pointer to a valid data pointer \a dp, put the address of the
+  block header in \a b.  This will check to see if the magic numbers are
+  valid, and assert whether the data are valid.
+ */
+#define D2B(b, dp) (b) = ((struct Bhdr *) \
+			  (((uint8_t *)(dp)) - \
+			   (((struct Bhdr *)0)->u.d.data))); \
+		       assert((b)->magic == MAGIC_A || (b)->magic == MAGIC_I)
 
-/* /\*! \def B2NB(b) */
-/*   \brief Get the following block in a segment */
+/*! \def B2NB(b)
+  \brief Get the following block in a segment
 
-/*   Given a Bhdr \a b, this macro will give the block following it in the */
+  Given a Bhdr \a b, this macro will give the block following it in the
   heap.  This macro can be used to visit all the blocks of a segment.
  */
 #define B2NB(b) ((struct Bhdr *)(((uint8_t *)(b) + (b)->size + BHDRSIZE)))
