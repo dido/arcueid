@@ -53,6 +53,7 @@ struct Shdr *_carc_new_segment(size_t size)
 
   seg = (struct Shdr *)mem;
   seg->size = fsize;
+  seg->next = NULL;
   seg->fblk->magic = MAGIC_F;
   seg->fblk->size = size;
   endseg = B2NB(seg->fblk);
