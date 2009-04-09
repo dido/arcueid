@@ -26,3 +26,4 @@ stamp-*
 *.la
 check_alloc
 .libs
+carc.pc
