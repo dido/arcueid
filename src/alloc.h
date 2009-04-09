@@ -143,6 +143,10 @@ extern struct Shdr *carc_heap_head;
  */
 #define BHDRSIZE ((size_t)(((struct Bhdr *)0)->u.data))
 
+/*! \fn void *carc_alloc_init(size_t heap_incr)
+  \brief Initialize the memory allocator, setting the default heap incrementto
+  \a heap_incr.
+ */
 void *carc_alloc_init(size_t heap_incr);
 
 /*! \fn void *carc_heap_alloc(size_t size)
