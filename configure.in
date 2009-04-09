@@ -29,6 +29,7 @@ AC_PROG_CC
 AC_PROG_LN_S
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
+AM_PROG_CC_C_O
 
 AC_C_CONST
 AC_C_INLINE
@@ -38,4 +39,6 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int)
 
-AC_OUTPUT([Makefile src/Makefile])
+PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+
+AC_OUTPUT([Makefile src/Makefile test/Makefile])
