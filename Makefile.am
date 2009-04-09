@@ -21,3 +21,7 @@
 #
 SUBDIRS = src . test
 ACLOCAL_AMFLAGS = -I m4
+
+EXTRA_DIST = carc.pc.in
+pcdatadir = $(libdir)/pkgconfig
+pcdata_DATA = carc.pc
