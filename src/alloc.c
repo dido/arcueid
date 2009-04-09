@@ -19,7 +19,6 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/mman.h>
 #include "carc.h"
 #include "alloc.h"
 
@@ -35,18 +34,14 @@
 struct Shdr *_carc_new_segment(size_t size)
 {
   char *mem;
-  static void *last_addr = NULL;
   size_t fsize;
   struct Shdr *seg;
   struct Bhdr *endseg;
 
-  fsize = size + sizeof(struct Shdr) + 2*sizeof(struct Bhdr);
+  fsize = size + sizeof(struct Shdr) + sizeof(struct Bhdr);
 
-  mem = (char *)mmap(NULL, fsize,
-		     PROT_READ | PROT_WRITE,
-		     MAP_PRIVATE | MAP_ANON, -1, 0);
-
-  if (mem == MAP_FAILED) {
+  mem = (char *) malloc(fsize);
+  if (mem == NULL) {
     perror("Failed to allocate segment\n");
     exit(1);
   }
@@ -55,7 +50,7 @@ struct Shdr *_carc_new_segment(size_t size)
   seg->size = fsize;
   seg->next = NULL;
   seg->fblk->magic = MAGIC_F;
-  seg->fblk->size = size;
+  seg->fblk->size = size + BHDRSIZE;
   endseg = B2NB(seg->fblk);
   endseg->magic = MAGIC_E;
   endseg->size = 0;
