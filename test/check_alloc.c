@@ -35,7 +35,9 @@ START_TEST(test_new_segment)
   fail_unless(s->next == NULL);
   b = s->fblk;
   fail_unless(b->magic  == MAGIC_F);
-  fail_unless(b->size == 1024 + BHDRSIZE);
+  fail_unless(b->u.s.left == NULL);
+  fail_unless(b->u.s.right == NULL);
+  fail_unless(b->size == 1024);
   data = B2D(b);
   memset(data, 0, 1024);
   b = B2NB(b);
