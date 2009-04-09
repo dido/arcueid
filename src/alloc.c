@@ -55,6 +55,8 @@ struct Shdr *_carc_new_segment(size_t size)
   seg->next = NULL;
   seg->fblk->magic = MAGIC_F;
   seg->fblk->size = size;
+  seg->fblk->u.s.left = NULL;
+  seg->fblk->u.s.right = NULL;
   endseg = B2NB(seg->fblk);
   endseg->magic = MAGIC_E;
   endseg->size = 0;
@@ -78,6 +80,12 @@ static struct Bhdr *expand_heap(size)
 
 static struct Bhdr *ftree_alloc(size_t size)
 {
+  struct Bhdr *node;
+
+  if (free_root == NULL || free_root->size < size) {
+    /* root is empty or too small to allocate from */
+    return(NULL);
+  }
 }
 
 static void ftree_insert(struct Bhdr *new)
