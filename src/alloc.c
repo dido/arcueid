@@ -19,6 +19,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "carc.h"
 #include "alloc.h"
 
@@ -78,18 +79,94 @@ static struct Bhdr *expand_heap(size)
   return(new_seg->fblk);
 }
 
-static struct Bhdr *ftree_alloc(size_t size)
-{
-  struct Bhdr *node;
+#define FTREE_LEFT(n) ((n)->u.s.left)
+#define FTREE_RIGHT(n) ((n)->u.s.right)
 
-  if (free_root == NULL || free_root->size < size) {
-    /* root is empty or too small to allocate from */
-    return(NULL);
-  }
-}
 
 static void ftree_insert(struct Bhdr *new)
 {
+}
+
+static void ftree_delete(struct Bhdr *parent, struct Bhdr *node)
+{
+}
+
+static struct Bhdr *ftree_node_split(struct Bhdr *node, size_t size)
+{
+}
+
+static void ftree_demote(struct Bhdr *parent, struct Bhdr *node)
+{
+}
+
+static struct Bhdr *ftree_alloc(size_t size)
+{
+  struct Bhdr *node, *parent, *block;
+
+  node = parent = free_root;
+  if (node == NULL || node->size < size) {
+    /* root is empty or too small to allocate from */
+    return(NULL);
+  }
+
+  for (;;) {
+    if ((FTREE_LEFT(node) == NULL && FTREE_RIGHT(node) == NULL)) {
+      /* We have reached a leaf node that has no children.  Stop. */
+      break;
+    }
+
+    if (FTREE_LEFT(node) == NULL && FTREE_RIGHT(node)->size >= size) {
+      parent = node;
+      node = FTREE_RIGHT(node);
+      continue;
+    }
+
+    if (FTREE_LEFT(node) == NULL && FTREE_RIGHT(node)->size < size) {
+      /* Both subtrees are ineligible, we're already at a node that
+	 will work */
+      break;
+    }
+
+    if (FTREE_RIGHT(node) == NULL && FTREE_LEFT(node)->size >= size) {
+      parent = node;
+      node = FTREE_LEFT(node);
+      continue;
+    }
+
+    if (FTREE_RIGHT(node) == NULL && FTREE_LEFT(node)->size < size) {
+      /* Both subtrees are ineligible, we're already at a node that
+	 will work */
+      break;
+    }
+
+    if (FTREE_RIGHT(node)->size < size && FTREE_LEFT(node)->size >= size) {
+      parent = node;
+      node = FTREE_LEFT(node);
+      continue;
+    }
+
+    if (FTREE_LEFT(node)->size < size && FTREE_RIGHT(node)->size >= size) {
+      parent = node;
+      node = FTREE_RIGHT(node);
+      continue;
+    }
+
+    /* If we get here, both left and right nodes are at least as large as
+       the requested allocation.  Choose the node that is closer in size to
+       our allocation request. */
+    parent = node;
+    node = (FTREE_LEFT(node)->size > FTREE_RIGHT(node)->size) ? FTREE_RIGHT(node) : FTREE_LEFT(node);
+  }
+  /* The traversal should have left us with the node which is the closest fit
+     to the present node. */
+  if (node->size == size) {
+    ftree_delete(parent, node);
+    return(node);
+  }
+  /* Split the block if necessary */
+  block = ftree_node_split(node, size);
+  ftree_demote(parent, node);
+  return(block);
 }
 
 void *carc_heap_alloc(size_t size)
