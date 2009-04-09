@@ -21,3 +21,8 @@ config.status
 libtool
 .deps
 stamp-*
+*.lo
+*.o
+*.la
+check_alloc
+.libs
