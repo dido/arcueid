@@ -23,8 +23,8 @@
 #include "alloc.h"
 
 static size_t heap_incr;	/* Minimum heap increment on alloc */
-Shdr *carc_heap;		/* The actual heap. */
-Bhdr *free_root;   /* The root of the Cartesian tree of free blocks */
+struct Shdr *carc_heap;		/* The actual heap. */
+struct Bhdr *free_root;	/* The root of the Cartesian tree of free blocks */
 
 /*!< \fn static Shdr *new_segment(size_t size, int modulo)
   \brief Allocate a new segment
@@ -54,7 +54,7 @@ struct Shdr *_carc_new_segment(size_t size)
   seg->size = fsize;
   seg->next = NULL;
   seg->fblk->magic = MAGIC_F;
-  seg->fblk->size = size + BHDRSIZE;
+  seg->fblk->size = size;
   endseg = B2NB(seg->fblk);
   endseg->magic = MAGIC_E;
   endseg->size = 0;
@@ -67,15 +67,32 @@ void carc_alloc_init(size_t set_heap_incr)
   carc_heap = free_root = NULL;
 }
 
+static struct Bhdr *expand_heap(size)
+{
+  struct Shdr *new_seg;
+
+  size = (size < heap_incr) ? heap_incr : size;
+  new_seg = _carc_new_segment(size);
+  return(new_seg->fblk);
+}
+
+static struct Bhdr *ftree_alloc(size_t size)
+{
+}
+
+static void ftree_insert(struct Bhdr *new)
+{
+}
+
 void *carc_heap_alloc(size_t size)
 {
-  Bhdr *hp, *new_block;
+  struct Bhdr *hp, *new_block;
 
-  hp = freelist_alloc(size);
+  hp = ftree_alloc(size);
   if (hp == NULL) {
     new_block = expand_heap(size);
-    freelist_add(new_block);
-    hp = freelist_alloc(size);
+    ftree_insert(new_block);
+    hp = ftree_alloc(size);
   }
   return(B2D(hp));
 }
