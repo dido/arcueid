@@ -66,3 +66,16 @@ void carc_alloc_init(size_t set_heap_incr)
   heap_incr = set_heap_incr;
   carc_heap = free_root = NULL;
 }
+
+void *carc_heap_alloc(size_t size)
+{
+  Bhdr *hp, *new_block;
+
+  hp = freelist_alloc(size);
+  if (hp == NULL) {
+    new_block = expand_heap(size);
+    freelist_add(new_block);
+    hp = freelist_alloc(size);
+  }
+  return(B2D(hp));
+}
