@@ -102,6 +102,11 @@ extern struct Shdr *carc_heap_head;
 */
 #define PAGE_LOG (12)
 
+/*! \def DEFAULT_HEAP_INCR
+  \brief The default increment of the heap for allocations.
+ */
+#define DEFAULT_HEAP_INCR ((PAGE_SIZE) * 16)
+
 /*! \def B2D(bp)
   \brief Given a block header, get a pointer to the data
 
@@ -137,6 +142,8 @@ extern struct Shdr *carc_heap_head;
   the portion which is used for the allocation.
  */
 #define BHDRSIZE ((size_t)(((struct Bhdr *)0)->u.data))
+
+void *carc_alloc_init(size_t heap_incr);
 
 /*! \fn void *carc_heap_alloc(size_t size)
   \brief allocate memory from the heap
