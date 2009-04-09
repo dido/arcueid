@@ -111,7 +111,7 @@ static struct Bhdr *ftree_alloc(size_t size)
 
   for (;;) {
     if ((FTREE_LEFT(node) == NULL && FTREE_RIGHT(node) == NULL)) {
-      /* We have reached a leaf node that has no children.  Stop. */
+      /* We have reached a leaf node that has no children. Stop. */
       break;
     }
 
@@ -134,7 +134,7 @@ static struct Bhdr *ftree_alloc(size_t size)
     }
 
     if (FTREE_RIGHT(node) == NULL && FTREE_LEFT(node)->size < size) {
-      /* Both subtrees are ineligible, we're already at a node that
+      /* Both subtrees are ineligible, we're already at a node that 
 	 will work */
       break;
     }
@@ -151,19 +151,26 @@ static struct Bhdr *ftree_alloc(size_t size)
       continue;
     }
 
-    /* If we get here, both left and right nodes are at least as large as
-       the requested allocation.  Choose the node that is closer in size to
-       our allocation request. */
+    /* If we get here, both left and right nodes are at least as large
+       as the requested allocation.  Choose the node that is closer in
+       size to our allocation request. */
     parent = node;
     node = (FTREE_LEFT(node)->size > FTREE_RIGHT(node)->size) ? FTREE_RIGHT(node) : FTREE_LEFT(node);
   }
-  /* The traversal should have left us with the node which is the closest fit
-     to the present node. */
-  if (node->size == size) {
+
+  /* The traversal should have left us with the node which is the
+     closest fit to the present node.  The first case is if the size
+     of the new node is so close that splitting it would result in a
+     node smaller than a Bhdr.  In this case, we simply delete the
+     chosen node from the ftree. */
+  if (node->size - size < sizeof(struct Bhdr)) {
     ftree_delete(parent, node);
     return(node);
   }
-  /* Split the block if necessary */
+  /* If the node is larger than the request, we need to split the node
+     into two nodes, one of which is the exact size of our request.
+     This means that the remaining free node from which the node was
+     split off from should probably be demoted in the tree. */
   block = ftree_node_split(node, size);
   ftree_demote(parent, node);
   return(block);
