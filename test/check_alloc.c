@@ -15,6 +15,7 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
+
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
 */
 #include <stdlib.h>
@@ -49,12 +50,84 @@ START_TEST(test_new_segment)
 }
 END_TEST
 
+START_TEST(test_ftree_demote)
+{
+  struct Bhdr blocks[13];
+  struct Bhdr *root = &blocks[4];
+
+  /* This is the sample Cartesian tree in Johnson 1991. */
+  blocks[0].size = 5;
+  blocks[0].u.s.left = NULL;
+  blocks[0].u.s.right = NULL;
+
+  blocks[1].size = 10;
+  blocks[1].u.s.left = &blocks[0];
+  blocks[1].u.s.right = &blocks[2];
+
+  blocks[2].size = 7;
+  blocks[2].u.s.left = NULL;
+  blocks[2].u.s.right = NULL;
+
+  blocks[3].size = 20;
+  blocks[3].u.s.left = &blocks[1];
+  blocks[3].u.s.right = NULL;
+
+  blocks[4].size = 60;
+  blocks[4].u.s.left = &blocks[3];
+  blocks[4].u.s.right = &blocks[9];
+
+  blocks[5].size = 2;
+  blocks[5].u.s.left = NULL;
+  blocks[5].u.s.right = NULL;
+
+  blocks[6].size = 9;
+  blocks[6].u.s.left = &blocks[5];
+  blocks[6].u.s.right = &blocks[7];
+
+  blocks[7].size = 4;
+  blocks[7].u.s.left = NULL;
+  blocks[7].u.s.right = NULL;
+
+  blocks[8].size = 25;
+  blocks[8].u.s.left = &blocks[6];
+  blocks[8].u.s.right = NULL;
+
+  blocks[9].size = 54;
+  blocks[9].u.s.left = &blocks[8];
+  blocks[9].u.s.right = &blocks[11];
+
+  blocks[10].size = 18;
+  blocks[10].u.s.left = NULL;
+  blocks[10].u.s.right = NULL;
+
+  blocks[11].size = 40;
+  blocks[11].u.s.left = &blocks[10];
+  blocks[11].u.s.right = &blocks[12];
+
+  blocks[12].size = 7;
+  blocks[12].u.s.left = NULL;
+  blocks[12].u.s.right = NULL;
+
+  blocks[9].size = 20;		/* This node gets rebalanced. */
+  _carc_ftree_demote(&root->u.s.right, &blocks[9]);
+  fail_unless(blocks[9].u.s.left == NULL);
+  fail_unless(blocks[9].u.s.right == &blocks[10]);
+  fail_unless(blocks[8].u.s.left == &blocks[6]);
+  fail_unless(blocks[8].u.s.right == &blocks[9]);
+  fail_unless(blocks[11].u.s.left == &blocks[8]);
+  fail_unless(blocks[11].u.s.right == &blocks[12]);
+  fail_unless(blocks[4].u.s.left == &blocks[3]);
+  fail_unless(blocks[4].u.s.right == &blocks[11]);
+}
+END_TEST
+
 Suite *alloc_suite(void)
 {
   Suite *s = suite_create("Alloc");
   TCase *tc_alloc = tcase_create("Alloc");
 
   tcase_add_test(tc_alloc, test_new_segment);
+  tcase_add_test(tc_alloc, test_ftree_demote);
   suite_add_tcase(s, tc_alloc);
   return(s);
 }
