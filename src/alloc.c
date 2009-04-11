@@ -87,46 +87,61 @@ static struct Bhdr *expand_heap(size)
 #define FTREE_RIGHT(n) ((n)->u.s.right)
 /* Determine whether two nodes are neighbors, i.e. b2 starts where b1 ends */
 #define NEIGHBOR_P(b1, b2) ((value)(B2D(b1)) + b1->size == (value)b2)
-
+  
 static void ftree_insert(struct Bhdr *parent, struct Bhdr *new)
 {
 }
 
-/* Delete a child node of \a parent */
-static void ftree_delete(struct Bhdr *parent, struct Bhdr *child)
-{
-  value c, p;
-  int rl;
-  struct Bhdr *lt, *rt;
-
-  rl = ((value)parent > (value)child);
-  lt = FTREE_LEFT(child);
-  rt = FTREE_RIGHT(child);
-  while (lt != rt) {		/* until both are NULL */
-    if (lt->size > rt->size) {	/* The lt block is bigger */
-      /* We should insert a lock here */
-    } else {
-    }
-  }
-}
-
-static void ftree_demote(struct Bhdr *parent, struct Bhdr *child)
+void _carc_ftree_demote(struct Bhdr **parentptr, struct Bhdr *child)
 {
   value p, c;
-  int rl;
   struct Bhdr *rt, *lt;
 
-  p = (value)parent;
-  c = (value)child;
+  rt = FTREE_RIGHT(child);
+  lt = FTREE_LEFT(child);
+  while (rt != NULL && lt != NULL && (rt->size > child->size ||
+				      lt->size > child->size)) {
+    /* Compare the sizes of the left and right subtrees.  We look for
+       the place to put the demoted node in the larger of the left and
+       right subtrees. */
+    if (lt == NULL || rt->size > lt->size) {
+      /* The new parent becomes the right subtree, and we traverse
+	 down its left branch, assigning as we go.  To preserve the
+	 Cartesian tree invariant of having ascending addresses on
+	 inorder traversal, we have to go down the left branch. */
+      *parentptr = rt;
+      parentptr = &FTREE_LEFT(rt);
+      rt = FTREE_LEFT(rt);
+    } else {
+      /* If the left subtree is bigger (or the right subtree is NULL),
+	 we go down the left subtree's right branch instead. */
+      *parentptr = lt;
+      parentptr = &FTREE_RIGHT(lt);
+      lt = FTREE_RIGHT(lt);
+    }
+  }
+  /* At this point, the child to demote is larger than both the left
+     and right subtrees, so we can now stop. */
+  *parentptr = child;
+  FTREE_LEFT(child) = lt;
+  FTREE_RIGHT(child) = rt;
+}
+
+/* Delete a child node of \a parent.  This merges the rightmost path
+   of the left subtree and the leftmost path of the right subtree. */
+static void ftree_delete(struct Bhdr *parent, struct Bhdr *child)
+{
+
 }
 
 /*! \fn static struct Bhdr *ftree_alloc(size_t size)
   \brief Allocate */
 static struct Bhdr *ftree_alloc(size_t size)
 {
-  struct Bhdr *node, *parent, *block;
+  struct Bhdr *node, *parent, *block, **parentptr;
 
   node = parent = free_root;
+  parentptr = &free_root;
   if (node == NULL || node->size < size) {
     /* root is empty or too small to allocate from */
     return(NULL);
@@ -140,6 +155,7 @@ static struct Bhdr *ftree_alloc(size_t size)
 
     if (FTREE_LEFT(node) == NULL && FTREE_RIGHT(node)->size >= size) {
       parent = node;
+      parentptr = &FTREE_RIGHT(parent);
       node = FTREE_RIGHT(node);
       continue;
     }
@@ -152,6 +168,7 @@ static struct Bhdr *ftree_alloc(size_t size)
 
     if (FTREE_RIGHT(node) == NULL && FTREE_LEFT(node)->size >= size) {
       parent = node;
+      parentptr = &FTREE_LEFT(parent);
       node = FTREE_LEFT(node);
       continue;
     }
@@ -164,12 +181,14 @@ static struct Bhdr *ftree_alloc(size_t size)
 
     if (FTREE_RIGHT(node)->size < size && FTREE_LEFT(node)->size >= size) {
       parent = node;
+      parentptr = &FTREE_LEFT(parent);
       node = FTREE_LEFT(node);
       continue;
     }
 
     if (FTREE_LEFT(node)->size < size && FTREE_RIGHT(node)->size >= size) {
       parent = node;
+      parentptr = &FTREE_RIGHT(parent);
       node = FTREE_RIGHT(node);
       continue;
     }
@@ -180,7 +199,13 @@ static struct Bhdr *ftree_alloc(size_t size)
        better-fit algorithm.  TODO: when we make this concurrent, use
        random better fit instead. */
     parent = node;
-    node = (FTREE_LEFT(node)->size > FTREE_RIGHT(node)->size) ? FTREE_RIGHT(node) : FTREE_LEFT(node);
+    if (FTREE_LEFT(node)->size > FTREE_RIGHT(node)->size) {
+      parentptr = &FTREE_RIGHT(parent);
+      node = FTREE_RIGHT(node);
+    } else {
+      parentptr = &FTREE_LEFT(parent);
+      node = FTREE_LEFT(node);
+    }
   }
 
   /* The traversal should have left us with the node which is the
@@ -205,7 +230,7 @@ static struct Bhdr *ftree_alloc(size_t size)
   block->size = size;
 
   /* Demote the block that was carved out */
-  ftree_demote(parent, node);
+  _carc_ftree_demote(parentptr, node);
   return(block);
 }
 
