@@ -97,7 +97,6 @@ static void ftree_insert(struct Bhdr *parent, struct Bhdr *new)
 
 void _carc_ftree_demote(struct Bhdr **parentptr, struct Bhdr *child)
 {
-  value p, c;
   struct Bhdr *rt, *lt;
 
   rt = FTREE_RIGHT(child);
@@ -132,9 +131,44 @@ void _carc_ftree_demote(struct Bhdr **parentptr, struct Bhdr *child)
 
 /* Delete a child node of \a parent.  This merges the rightmost path
    of the left subtree and the leftmost path of the right subtree. */
-static void ftree_delete(struct Bhdr *parent, struct Bhdr *child)
+void _carc_ftree_delete(struct Bhdr **parentptr, struct Bhdr *child)
 {
+  struct Bhdr *rt, *lt, *temp;
+  size_t cs;
 
+  rt = FTREE_RIGHT(child);
+  lt = FTREE_LEFT(child);
+
+  while (rt != lt) {		/* until both are nil */
+    if (FTREE_SIZE(lt) > FTREE_SIZE(rt)) {
+      /* We should put a lock here */
+      if (NEIGHBOR_P(lt, child)) {
+	temp = FTREE_LEFT(lt);	/* neighbor => no right subtree */
+	/* Combine the neighbors */
+	cs = FTREE_SIZE(child) + BHDRSIZE;
+	child = lt;
+	child->size += cs;
+	lt = temp;
+      } else {
+	*parentptr = lt;
+	parentptr = &FTREE_RIGHT(lt);
+	lt = FTREE_RIGHT(lt);
+      }
+    } else {
+      if (NEIGHBOR_P(child, rt)) {
+	temp = FTREE_RIGHT(rt);	/* neighbor => no left subtree */
+	/* Combine the neighbors */
+	cs = FTREE_SIZE(rt) + BHDRSIZE;
+	child->size += cs;
+	rt = temp;
+      } else {
+	*parentptr = rt;
+	parentptr = &FTREE_LEFT(rt);
+	rt = FTREE_LEFT(rt);
+      }
+    }
+  }
+  *parentptr = NULL;
 }
 
 /*! \fn static struct Bhdr *ftree_alloc(size_t size)
@@ -217,7 +251,7 @@ static struct Bhdr *ftree_alloc(size_t size)
      node smaller than a Bhdr.  In this case, we simply delete the
      chosen node from the ftree. */
   if (node->size - size < sizeof(struct Bhdr)) {
-    ftree_delete(parent, node);
+    _carc_ftree_delete(parent, node);
     node->magic = MAGIC_A;
     return(node);
   }
