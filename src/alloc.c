@@ -87,6 +87,9 @@ static struct Bhdr *expand_heap(size)
 #define FTREE_RIGHT(n) ((n)->u.s.right)
 /* Determine whether two nodes are neighbors, i.e. b2 starts where b1 ends */
 #define NEIGHBOR_P(b1, b2) ((value)(B2D(b1)) + b1->size == (value)b2)
+/* Get the size of a tree, handling the case where the value may be
+   null, in which case we set the size to zero. */
+#define FTREE_SIZE(n) (((n) == NULL) ? 0 : (n)->size)
   
 static void ftree_insert(struct Bhdr *parent, struct Bhdr *new)
 {
@@ -99,12 +102,12 @@ void _carc_ftree_demote(struct Bhdr **parentptr, struct Bhdr *child)
 
   rt = FTREE_RIGHT(child);
   lt = FTREE_LEFT(child);
-  while (rt != NULL && lt != NULL && (rt->size > child->size ||
-				      lt->size > child->size)) {
+  while (FTREE_SIZE(rt) > FTREE_SIZE(child) ||
+	 FTREE_SIZE(lt) > FTREE_SIZE(child)) {
     /* Compare the sizes of the left and right subtrees.  We look for
-       the place to put the demoted node in the larger of the left and
+       the place to put the demoted node in the larger of the left or
        right subtrees. */
-    if (lt == NULL || rt->size > lt->size) {
+    if (FTREE_SIZE(rt) > FTREE_SIZE(lt)) {
       /* The new parent becomes the right subtree, and we traverse
 	 down its left branch, assigning as we go.  To preserve the
 	 Cartesian tree invariant of having ascending addresses on
