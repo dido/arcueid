@@ -67,7 +67,8 @@ struct Shdr *_carc_new_segment(size_t size)
 void carc_alloc_init(size_t set_heap_incr)
 {
   heap_incr = set_heap_incr;
-  carc_heap = free_root = NULL;
+  carc_heap = NULL;
+  free_root = NULL;
 }
 
 static struct Bhdr *expand_heap(size)
@@ -76,27 +77,51 @@ static struct Bhdr *expand_heap(size)
 
   size = (size < heap_incr) ? heap_incr : size;
   new_seg = _carc_new_segment(size);
+  /* Link it into the list of segments that make up the heap */
+  new_seg->next = carc_heap;
+  carc_heap = new_seg;
   return(new_seg->fblk);
 }
 
 #define FTREE_LEFT(n) ((n)->u.s.left)
 #define FTREE_RIGHT(n) ((n)->u.s.right)
+/* Determine whether two nodes are neighbors, i.e. b2 starts where b1 ends */
+#define NEIGHBOR_P(b1, b2) ((value)(B2D(b1)) + b1->size == (value)b2)
 
-
-static void ftree_insert(struct Bhdr *new)
+static void ftree_insert(struct Bhdr *parent, struct Bhdr *new)
 {
 }
 
-static void ftree_delete(struct Bhdr *parent, struct Bhdr *node)
+/* Delete a child node of \a parent */
+static void ftree_delete(struct Bhdr *parent, struct Bhdr *child)
 {
+  value c, p;
+  int rl;
+  struct Bhdr *lt, *rt;
+
+  rl = ((value)parent > (value)child);
+  lt = FTREE_LEFT(child);
+  rt = FTREE_RIGHT(child);
+  while (lt != rt) {		/* until both are NULL */
+    if (lt->size > rt->size) {	/* The lt block is bigger */
+      /* We should insert a lock here */
+    } else {
+    }
+  }
 }
 
 static struct Bhdr *ftree_node_split(struct Bhdr *node, size_t size)
 {
 }
 
-static void ftree_demote(struct Bhdr *parent, struct Bhdr *node)
+static void ftree_demote(struct Bhdr *parent, struct Bhdr *child)
 {
+  value p, c;
+  int rl;
+  struct Bhdr *rt, *lt;
+
+  p = (value)parent;
+  c = (value)child;
 }
 
 static struct Bhdr *ftree_alloc(size_t size)
@@ -183,8 +208,16 @@ void *carc_heap_alloc(size_t size)
   hp = ftree_alloc(size);
   if (hp == NULL) {
     new_block = expand_heap(size);
-    ftree_insert(new_block);
+    ftree_insert(free_root, new_block);
     hp = ftree_alloc(size);
   }
   return(B2D(hp));
+}
+
+void carc_heap_free(void *ptr)
+{
+  struct Bhdr *block;
+
+  D2B(block, ptr);
+
 }
