@@ -27,7 +27,7 @@ struct Shdr *_carc_new_segment(size_t size);
 START_TEST(test_new_segment)
 {
   struct Shdr *s;
-  struct Bhdr *b;
+  struct Bhdr *b, *b2;
   char *data;
 
   s = _carc_new_segment(1024);
@@ -39,6 +39,9 @@ START_TEST(test_new_segment)
   fail_unless(b->u.s.right == NULL);
   fail_unless(b->size == 1024);
   data = B2D(b);
+  b->magic = MAGIC_A;
+  D2B(b2, data);
+  fail_unless(b2 == b);
   memset(data, 0, 1024);
   b = B2NB(b);
   fail_unless(b->magic  == MAGIC_E);
