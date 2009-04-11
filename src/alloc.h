@@ -130,9 +130,7 @@ extern struct Shdr *carc_heap_head;
   block header in \a b.  This will check to see if the magic numbers are
   valid, and assert whether the data are valid.
  */
-#define D2B(b, dp) (b) = ((struct Bhdr *) \
-			  (((uint8_t *)(dp)) - \
-			   (((struct Bhdr *)0)->u.d.data))); \
+#define D2B(b, dp) (b) = ((struct Bhdr *) ((uint8_t *)(dp) - BHDRSIZE)); \
 		       assert((b)->magic == MAGIC_A || (b)->magic == MAGIC_I)
 
 /*! \def B2NB(b)
