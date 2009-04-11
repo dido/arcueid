@@ -110,10 +110,6 @@ static void ftree_delete(struct Bhdr *parent, struct Bhdr *child)
   }
 }
 
-static struct Bhdr *ftree_node_split(struct Bhdr *node, size_t size)
-{
-}
-
 static void ftree_demote(struct Bhdr *parent, struct Bhdr *child)
 {
   value p, c;
@@ -124,6 +120,8 @@ static void ftree_demote(struct Bhdr *parent, struct Bhdr *child)
   c = (value)child;
 }
 
+/*! \fn static struct Bhdr *ftree_alloc(size_t size)
+  \brief Allocate */
 static struct Bhdr *ftree_alloc(size_t size)
 {
   struct Bhdr *node, *parent, *block;
@@ -178,7 +176,9 @@ static struct Bhdr *ftree_alloc(size_t size)
 
     /* If we get here, both left and right nodes are at least as large
        as the requested allocation.  Choose the node that is closer in
-       size to our allocation request. */
+       size to our allocation request, so our allocation uses the
+       better-fit algorithm.  TODO: when we make this concurrent, use
+       random better fit instead. */
     parent = node;
     node = (FTREE_LEFT(node)->size > FTREE_RIGHT(node)->size) ? FTREE_RIGHT(node) : FTREE_LEFT(node);
   }
@@ -190,13 +190,21 @@ static struct Bhdr *ftree_alloc(size_t size)
      chosen node from the ftree. */
   if (node->size - size < sizeof(struct Bhdr)) {
     ftree_delete(parent, node);
+    node->magic = MAGIC_A;
     return(node);
   }
   /* If the node is larger than the request, we need to split the node
      into two nodes, one of which is the exact size of our request.
      This means that the remaining free node from which the node was
      split off from should probably be demoted in the tree. */
-  block = ftree_node_split(node, size);
+  node->size -= size;		/* Resize the original node */
+  block = B2NB(node);		/* Given the new size, get the
+				   address of the new block */
+  /* Set all of the parameters of the block */
+  block->magic = MAGIC_A;
+  block->size = size;
+
+  /* Demote the block that was carved out */
   ftree_demote(parent, node);
   return(block);
 }
@@ -216,8 +224,9 @@ void *carc_heap_alloc(size_t size)
 
 void carc_heap_free(void *ptr)
 {
-  struct Bhdr *block;
+  struct Bhdr *block, *parent;
 
   D2B(block, ptr);
 
+  parent = free_root;
 }
