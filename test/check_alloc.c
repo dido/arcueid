@@ -121,22 +121,22 @@ START_TEST(test_ftree_demote)
 }
 END_TEST
 
-Suite *alloc_suite(void)
-{
-  Suite *s = suite_create("Alloc");
-  TCase *tc_alloc = tcase_create("Alloc");
-
-  tcase_add_test(tc_alloc, test_new_segment);
-  tcase_add_test(tc_alloc, test_ftree_demote);
-  suite_add_tcase(s, tc_alloc);
-  return(s);
-}
-
 int main(void)
 {
   int number_failed;
-  Suite *s = alloc_suite();
-  SRunner *sr = srunner_create(s);
+  Suite *s = suite_create("MemManager");
+  TCase *tc_alloc = tcase_create("Alloc");
+  TCase *tc_treeops = tcase_create("TreeOps");
+  TCase *tc_free = tcase_create("Free");
+  SRunner *sr;
+
+  tcase_add_test(tc_alloc, test_new_segment);
+  tcase_add_test(tc_treeops, test_ftree_demote);
+
+  suite_add_tcase(s, tc_alloc);
+  suite_add_tcase(s, tc_treeops);
+  suite_add_tcase(s, tc_free);
+  sr = srunner_create(s);
   srunner_run_all(sr, CK_NORMAL);
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
