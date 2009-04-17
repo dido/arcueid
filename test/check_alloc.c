@@ -15,8 +15,8 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+  02110-1301 USA.
 */
 #include <stdlib.h>
 #include <string.h>
@@ -50,11 +50,8 @@ START_TEST(test_new_segment)
 }
 END_TEST
 
-START_TEST(test_ftree_demote)
+static void setup_tree(struct Bhdr *blocks)
 {
-  struct Bhdr blocks[13];
-  struct Bhdr *root = &blocks[4];
-
   /* This is the sample Cartesian tree in Johnson 1991. */
   blocks[0].size = 5;
   blocks[0].u.s.left = NULL;
@@ -107,7 +104,14 @@ START_TEST(test_ftree_demote)
   blocks[12].size = 7;
   blocks[12].u.s.left = NULL;
   blocks[12].u.s.right = NULL;
+}
 
+START_TEST(test_ftree_demote)
+{
+  struct Bhdr blocks[13];
+  struct Bhdr *root = &blocks[4];
+
+  setup_tree(blocks);
   blocks[9].size = 20;		/* This node gets rebalanced. */
   _carc_ftree_demote(&root->u.s.right, &blocks[9]);
   fail_unless(blocks[9].u.s.left == NULL);
@@ -118,6 +122,11 @@ START_TEST(test_ftree_demote)
   fail_unless(blocks[11].u.s.right == &blocks[12]);
   fail_unless(blocks[4].u.s.left == &blocks[3]);
   fail_unless(blocks[4].u.s.right == &blocks[11]);
+}
+END_TEST
+
+START_TEST(test_ftree_delete)
+{
 }
 END_TEST
 

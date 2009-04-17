@@ -15,7 +15,8 @@
 
   You should have received a copy of the GNU General Public License
   along with this program; if not, write to the Free Software
-  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111, USA.
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+  02110-1301 USA.
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,30 +143,13 @@ void _carc_ftree_delete(struct Bhdr **parentptr, struct Bhdr *child)
   while (rt != lt) {		/* until both are nil */
     if (FTREE_SIZE(lt) > FTREE_SIZE(rt)) {
       /* We should put a lock here */
-      if (NEIGHBOR_P(lt, child)) {
-	temp = FTREE_LEFT(lt);	/* neighbor => no right subtree */
-	/* Combine the neighbors */
-	cs = FTREE_SIZE(child) + BHDRSIZE;
-	child = lt;
-	child->size += cs;
-	lt = temp;
-      } else {
-	*parentptr = lt;
-	parentptr = &FTREE_RIGHT(lt);
-	lt = FTREE_RIGHT(lt);
-      }
+      *parentptr = lt;
+      parentptr = &FTREE_RIGHT(lt);
+      lt = FTREE_RIGHT(lt);
     } else {
-      if (NEIGHBOR_P(child, rt)) {
-	temp = FTREE_RIGHT(rt);	/* neighbor => no left subtree */
-	/* Combine the neighbors */
-	cs = FTREE_SIZE(rt) + BHDRSIZE;
-	child->size += cs;
-	rt = temp;
-      } else {
-	*parentptr = rt;
-	parentptr = &FTREE_LEFT(rt);
-	rt = FTREE_LEFT(rt);
-      }
+      *parentptr = rt;
+      parentptr = &FTREE_LEFT(rt);
+      rt = FTREE_LEFT(rt);
     }
   }
   *parentptr = NULL;
@@ -248,17 +232,18 @@ static struct Bhdr *ftree_alloc(size_t size)
   /* The traversal should have left us with the node which is the
      closest fit to the present node.  The first case is if the size
      of the new node is so close that splitting it would result in a
-     node smaller than a Bhdr.  In this case, we simply delete the
-     chosen node from the ftree. */
+     node smaller than a Bhdr.  In this case, we simply unlink the
+     chosen node from the ftree and provide it to the user. */
   if (node->size - size < sizeof(struct Bhdr)) {
     _carc_ftree_delete(parent, node);
     node->magic = MAGIC_A;
     return(node);
   }
-  /* If the node is larger than the request, we need to split the node
-     into two nodes, one of which is the exact size of our request.
-     This means that the remaining free node from which the node was
-     split off from should probably be demoted in the tree. */
+  /* If the node is significantly larger than the request, we should
+     split the node into two nodes, one of which is the exact size of
+     our request. This means that the remaining free node from which
+     the node was split off from should probably be demoted in the
+     tree. */
   node->size -= size;		/* Resize the original node */
   block = B2NB(node);		/* Given the new size, get the
 				   address of the new block */
