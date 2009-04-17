@@ -127,6 +127,17 @@ END_TEST
 
 START_TEST(test_ftree_delete)
 {
+  struct Bhdr blocks[13];
+  struct Bhdr *root = &blocks[4];
+
+  setup_tree(blocks);
+  _carc_ftree_delete(&root->u.s.right, &blocks[9]);
+  fail_unless(blocks[8].u.s.left == &blocks[6]);
+  fail_unless(blocks[8].u.s.right == &blocks[10]);
+  fail_unless(blocks[11].u.s.left == &blocks[8]);
+  fail_unless(blocks[11].u.s.right == &blocks[12]);
+  fail_unless(blocks[4].u.s.left == &blocks[3]);
+  fail_unless(blocks[4].u.s.right == &blocks[11]);
 }
 END_TEST
 
@@ -141,6 +152,7 @@ int main(void)
 
   tcase_add_test(tc_alloc, test_new_segment);
   tcase_add_test(tc_treeops, test_ftree_demote);
+  tcase_add_test(tc_treeops, test_ftree_delete);
 
   suite_add_tcase(s, tc_alloc);
   suite_add_tcase(s, tc_treeops);
