@@ -141,15 +141,14 @@ void _carc_ftree_delete(struct Bhdr **parentptr, struct Bhdr *child)
   lt = FTREE_LEFT(child);
 
   while (rt != lt) {		/* until both are nil */
-    if (FTREE_SIZE(lt) > FTREE_SIZE(rt)) {
-      /* We should put a lock here */
-      *parentptr = lt;
-      parentptr = &FTREE_RIGHT(lt);
-      lt = FTREE_RIGHT(lt);
-    } else {
+    if (FTREE_SIZE(rt) > FTREE_SIZE(lt)) {
       *parentptr = rt;
       parentptr = &FTREE_LEFT(rt);
       rt = FTREE_LEFT(rt);
+    } else {
+      *parentptr = lt;
+      parentptr = &FTREE_RIGHT(lt);
+      lt = FTREE_RIGHT(lt);
     }
   }
   *parentptr = NULL;
