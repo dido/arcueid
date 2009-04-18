@@ -92,7 +92,8 @@ static struct Bhdr *expand_heap(size)
    null, in which case we set the size to zero. */
 #define FTREE_SIZE(n) (((n) == NULL) ? 0 : (n)->size)
   
-static void ftree_insert(struct Bhdr *parent, struct Bhdr *new)
+void _carc_ftree_insert(struct Bhdr **parentptr, struct Bhdr *new,
+			struct Bhdr **releaselist)
 {
 }
 
@@ -132,7 +133,8 @@ void _carc_ftree_demote(struct Bhdr **parentptr, struct Bhdr *child)
 
 /* Delete a child node of \a parent.  This merges the rightmost path
    of the left subtree and the leftmost path of the right subtree. */
-void _carc_ftree_delete(struct Bhdr **parentptr, struct Bhdr *child)
+void _carc_ftree_delete(struct Bhdr **parentptr, struct Bhdr *child,
+			int coalesce)
 {
   struct Bhdr *rt, *lt, *temp;
   size_t cs;
@@ -141,14 +143,33 @@ void _carc_ftree_delete(struct Bhdr **parentptr, struct Bhdr *child)
   lt = FTREE_LEFT(child);
 
   while (rt != lt) {		/* until both are nil */
-    if (FTREE_SIZE(rt) > FTREE_SIZE(lt)) {
-      *parentptr = rt;
-      parentptr = &FTREE_LEFT(rt);
-      rt = FTREE_LEFT(rt);
+
+    if (FTREE_SIZE(lt) > FTREE_SIZE(rt)) {
+      /* We should put a lock here */
+      if (NEIGHBOR_P(lt, child) && coalesce) {
+	temp = FTREE_LEFT(lt);	/* neighbor => no right subtree */
+	/* Combine the neighbors */
+	cs = FTREE_SIZE(child) + BHDRSIZE;
+	child = lt;
+	child->size += cs;
+	lt = temp;
+      } else {
+	*parentptr = lt;
+	parentptr = &FTREE_RIGHT(lt);
+	lt = FTREE_RIGHT(lt);
+      }
     } else {
-      *parentptr = lt;
-      parentptr = &FTREE_RIGHT(lt);
-      lt = FTREE_RIGHT(lt);
+      if (NEIGHBOR_P(child, rt) && coalesce) {
+	temp = FTREE_RIGHT(rt);	/* neighbor => no left subtree */
+	/* Combine the neighbors */
+	cs = FTREE_SIZE(rt) + BHDRSIZE;
+	child->size += cs;
+	rt = temp;
+      } else {
+	*parentptr = rt;
+	parentptr = &FTREE_LEFT(rt);
+	rt = FTREE_LEFT(rt);
+      }
     }
   }
   *parentptr = NULL;
@@ -234,7 +255,7 @@ static struct Bhdr *ftree_alloc(size_t size)
      node smaller than a Bhdr.  In this case, we simply unlink the
      chosen node from the ftree and provide it to the user. */
   if (node->size - size < sizeof(struct Bhdr)) {
-    _carc_ftree_delete(parent, node);
+    _carc_ftree_delete(parentptr, node, 0);
     node->magic = MAGIC_A;
     return(node);
   }
@@ -257,12 +278,14 @@ static struct Bhdr *ftree_alloc(size_t size)
 
 void *carc_heap_alloc(size_t size)
 {
-  struct Bhdr *hp, *new_block;
+  struct Bhdr *hp, *new_block, *releaselist, *block;
 
   hp = ftree_alloc(size);
   if (hp == NULL) {
     new_block = expand_heap(size);
-    ftree_insert(free_root, new_block);
+    _carc_ftree_insert(&free_root, new_block, &releaselist);
+    for (block=releaselist; block; FTREE_RIGHT(block))
+      carc_heap_free(B2D(block));
     hp = ftree_alloc(size);
   }
   return(B2D(hp));
@@ -270,9 +293,38 @@ void *carc_heap_alloc(size_t size)
 
 void carc_heap_free(void *ptr)
 {
-  struct Bhdr *block, *parent;
+  struct Bhdr *block, *parent, *child, **parentptr, *releaselist = NULL;
 
   D2B(block, ptr);
 
-  parent = free_root;
+ begin:
+  block->magic = MAGIC_F;
+  parent = child = free_root;
+  parentptr = &free_root;
+
+  while (FTREE_SIZE(child) > FTREE_SIZE(block) &&
+	 !(NEIGHBOR_P(block, child) || NEIGHBOR_P(child, block))) {
+    parent = child;
+    parentptr = (((unsigned long)parent) > (unsigned long)block) ?
+      &FTREE_LEFT(parent) : &FTREE_RIGHT(parent);
+    child = *parentptr;
+  }
+
+  if (NEIGHBOR_P(child, block)) {
+    _carc_ftree_delete(parentptr, child, 1);
+    child->size += block->size;
+    block = child;
+    goto begin;
+  } else if (NEIGHBOR_P(block, child)) {
+    _carc_ftree_delete(parentptr, child, 1);
+    block->size += child->size;
+    goto begin;
+  }
+
+  _carc_ftree_insert(parentptr, block, &releaselist);
+  block = releaselist;
+  if (block == NULL)
+    return;
+  releaselist = FTREE_RIGHT(releaselist);
+  goto begin;
 }
