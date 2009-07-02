@@ -52,6 +52,22 @@
 /*#define USE_SBRK        (0) */
 /*#define USE_MMAP        (0) */
 
+#include "config.h"
+
+/* CHANGED FOR CARC: autoconf macros now determine use of locks, mmap, and
+   sbrk. */
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_LIBPTHREAD)
+#define TLSF_USE_LOCKS (1)
+#endif
+
+#if defined(HAVE_MMAP)
+#define USE_MMAP (1)
+#endif
+
+#if defined(HAVE_SBRK)
+#define USE_SBRK (1)
+#endif
+
 #include <stdio.h>
 #include <string.h>
 
@@ -157,8 +173,7 @@
 #define PREV_FREE	(0x2)
 #define PREV_USED	(0x0)
 
-
-#define DEFAULT_AREA_SIZE (1024*10)
+#define DEFAULT_AREA_SIZE (10*1024)
 
 #ifdef USE_MMAP
 #define PAGE_SIZE (getpagesize())
@@ -606,7 +621,9 @@ void *tlsf_malloc(size_t size)
         size_t area_size;
         void *area;
 
-        area_size = sizeof(tlsf_t) + BHDR_OVERHEAD * 8; /* Just a safety constant */
+	/* CHANGED FOR CARC: use the size of the initial alloc to determine
+	   size of the initial area. */
+        area_size = sizeof(tlsf_t) + size + BHDR_OVERHEAD * 8; /* Just a safety constant */
         area_size = (area_size > DEFAULT_AREA_SIZE) ? area_size : DEFAULT_AREA_SIZE;
         area = get_new_area(&area_size);
         if (area == ((void *) ~0))
@@ -875,7 +892,27 @@ void *calloc_ex(size_t nelem, size_t elem_size, void *mem_pool)
     return ptr;
 }
 
+/* This function basically calls the function iter with each memory block
+   that is allocated within the system. */
+void tlsf_each_block(void (*iter)(const void *))
+{
+  area_info_t *ai;
+  bhdr_t *next, *pnext;
+  tlsf_t *tlsf = (tlsf_t *)mp;
 
+  ai = tlsf->area_head;
+  while (ai) {
+    next = (bhdr_t *) ((char *) ai - BHDR_OVERHEAD);
+    while (next) {
+      iter((void *)next->ptr.buffer);
+      if ((next->size & BLOCK_SIZE))
+	next = GET_NEXT_BLOCK(next->ptr.buffer, next->size & BLOCK_SIZE);
+      else
+	next = NULL;
+    }
+    ai = ai->next;
+  }
+}
 
 #if _DEBUG_TLSF_
 
