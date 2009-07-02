@@ -25,7 +25,7 @@
 #include "alloc.h"
 
 static size_t heap_incr;	/* Minimum heap increment on alloc */
-struct Shdr *carc_heap;		/* The actual heap. */
+struct Shdr *carc_heap_head;	/* The actual heap. */
 struct Bhdr *free_root;	/* The root of the Cartesian tree of free blocks */
 
 /*!< \fn static Shdr *new_segment(size_t size, int modulo)
@@ -68,7 +68,7 @@ struct Shdr *_carc_new_segment(size_t size)
 void carc_alloc_init(size_t set_heap_incr)
 {
   heap_incr = set_heap_incr;
-  carc_heap = NULL;
+  carc_heap_head = NULL;
   free_root = NULL;
 }
 
@@ -79,8 +79,8 @@ static struct Bhdr *expand_heap(size)
   size = (size < heap_incr) ? heap_incr : size;
   new_seg = _carc_new_segment(size);
   /* Link it into the list of segments that make up the heap */
-  new_seg->next = carc_heap;
-  carc_heap = new_seg;
+  new_seg->next = carc_heap_head;
+  carc_heap_head = new_seg;
   return(new_seg->fblk);
 }
 
@@ -92,200 +92,54 @@ static struct Bhdr *expand_heap(size)
    null, in which case we set the size to zero. */
 #define FTREE_SIZE(n) (((n) == NULL) ? 0 : (n)->size)
   
-void _carc_ftree_insert(struct Bhdr **parentptr, struct Bhdr *new,
-			struct Bhdr **releaselist)
-{
-}
-
-void _carc_ftree_demote(struct Bhdr **parentptr, struct Bhdr *child)
-{
-  struct Bhdr *rt, *lt;
-
-  rt = FTREE_RIGHT(child);
-  lt = FTREE_LEFT(child);
-  while (FTREE_SIZE(rt) > FTREE_SIZE(child) ||
-	 FTREE_SIZE(lt) > FTREE_SIZE(child)) {
-    /* Compare the sizes of the left and right subtrees.  We look for
-       the place to put the demoted node in the larger of the left or
-       right subtrees. */
-    if (FTREE_SIZE(rt) > FTREE_SIZE(lt)) {
-      /* The new parent becomes the right subtree, and we traverse
-	 down its left branch, assigning as we go.  To preserve the
-	 Cartesian tree invariant of having ascending addresses on
-	 inorder traversal, we have to go down the left branch. */
-      *parentptr = rt;
-      parentptr = &FTREE_LEFT(rt);
-      rt = FTREE_LEFT(rt);
-    } else {
-      /* If the left subtree is bigger (or the right subtree is NULL),
-	 we go down the left subtree's right branch instead. */
-      *parentptr = lt;
-      parentptr = &FTREE_RIGHT(lt);
-      lt = FTREE_RIGHT(lt);
-    }
-  }
-  /* At this point, the child to demote is larger than both the left
-     and right subtrees, so we can now stop. */
-  *parentptr = child;
-  FTREE_LEFT(child) = lt;
-  FTREE_RIGHT(child) = rt;
-}
-
-/* Delete a child node of \a parent.  This merges the rightmost path
-   of the left subtree and the leftmost path of the right subtree. */
-void _carc_ftree_delete(struct Bhdr **parentptr, struct Bhdr *child,
-			int coalesce)
-{
-  struct Bhdr *rt, *lt, *temp;
-  size_t cs;
-
-  rt = FTREE_RIGHT(child);
-  lt = FTREE_LEFT(child);
-
-  while (rt != lt) {		/* until both are nil */
-
-    if (FTREE_SIZE(lt) > FTREE_SIZE(rt)) {
-      /* We should put a lock here */
-      if (NEIGHBOR_P(lt, child) && coalesce) {
-	temp = FTREE_LEFT(lt);	/* neighbor => no right subtree */
-	/* Combine the neighbors */
-	cs = FTREE_SIZE(child) + BHDRSIZE;
-	child = lt;
-	child->size += cs;
-	lt = temp;
-      } else {
-	*parentptr = lt;
-	parentptr = &FTREE_RIGHT(lt);
-	lt = FTREE_RIGHT(lt);
-      }
-    } else {
-      if (NEIGHBOR_P(child, rt) && coalesce) {
-	temp = FTREE_RIGHT(rt);	/* neighbor => no left subtree */
-	/* Combine the neighbors */
-	cs = FTREE_SIZE(rt) + BHDRSIZE;
-	child->size += cs;
-	rt = temp;
-      } else {
-	*parentptr = rt;
-	parentptr = &FTREE_LEFT(rt);
-	rt = FTREE_LEFT(rt);
-      }
-    }
-  }
-  *parentptr = NULL;
-}
-
 /*! \fn static struct Bhdr *ftree_alloc(size_t size)
   \brief Allocate */
 static struct Bhdr *ftree_alloc(size_t size)
 {
   struct Bhdr *node, *parent, *block, **parentptr;
 
-  node = parent = free_root;
+  node = free_root;
   parentptr = &free_root;
-  if (node == NULL || node->size < size) {
-    /* root is empty or too small to allocate from */
-    return(NULL);
-  }
 
   for (;;) {
-    if ((FTREE_LEFT(node) == NULL && FTREE_RIGHT(node) == NULL)) {
-      /* We have reached a leaf node that has no children. Stop. */
+    if (node == NULL)
+      return(NULL);
+    if (FTREE_SIZE(node) > size)
       break;
-    }
-
-    if (FTREE_LEFT(node) == NULL && FTREE_RIGHT(node)->size >= size) {
-      parent = node;
-      parentptr = &FTREE_RIGHT(parent);
-      node = FTREE_RIGHT(node);
-      continue;
-    }
-
-    if (FTREE_LEFT(node) == NULL && FTREE_RIGHT(node)->size < size) {
-      /* Both subtrees are ineligible, we're already at a node that
-	 will work */
-      break;
-    }
-
-    if (FTREE_RIGHT(node) == NULL && FTREE_LEFT(node)->size >= size) {
-      parent = node;
-      parentptr = &FTREE_LEFT(parent);
-      node = FTREE_LEFT(node);
-      continue;
-    }
-
-    if (FTREE_RIGHT(node) == NULL && FTREE_LEFT(node)->size < size) {
-      /* Both subtrees are ineligible, we're already at a node that 
-	 will work */
-      break;
-    }
-
-    if (FTREE_RIGHT(node)->size < size && FTREE_LEFT(node)->size >= size) {
-      parent = node;
-      parentptr = &FTREE_LEFT(parent);
-      node = FTREE_LEFT(node);
-      continue;
-    }
-
-    if (FTREE_LEFT(node)->size < size && FTREE_RIGHT(node)->size >= size) {
-      parent = node;
-      parentptr = &FTREE_RIGHT(parent);
-      node = FTREE_RIGHT(node);
-      continue;
-    }
-
-    /* If we get here, both left and right nodes are at least as large
-       as the requested allocation.  Choose the node that is closer in
-       size to our allocation request, so our allocation uses the
-       better-fit algorithm.  TODO: when we make this concurrent, use
-       random better fit instead. */
-    parent = node;
-    if (FTREE_LEFT(node)->size > FTREE_RIGHT(node)->size) {
-      parentptr = &FTREE_RIGHT(parent);
-      node = FTREE_RIGHT(node);
-    } else {
-      parentptr = &FTREE_LEFT(parent);
-      node = FTREE_LEFT(node);
-    }
+    parentptr = &FTREE_RIGHT(node);
+    node = FTREE_RIGHT(node);
   }
 
-  /* The traversal should have left us with the node which is the
-     closest fit to the present node.  The first case is if the size
-     of the new node is so close that splitting it would result in a
-     node smaller than a Bhdr.  In this case, we simply unlink the
-     chosen node from the ftree and provide it to the user. */
-  if (node->size - size < sizeof(struct Bhdr)) {
-    _carc_ftree_delete(parentptr, node, 0);
+  /* The traversal should have left us with some node which will fit
+     the present node.  The first case is if the size of the new node is so
+     close that splitting it would result in a block smaller than a Bhdr.
+     In this case, we simply unlink the chosen node from the free
+     list and provide it to the user. */
+  if (FTREE_SIZE(node) - size < sizeof(struct Bhdr)) {
+    *parentptr = FTREE_RIGHT(node); /* unlink */
     node->magic = MAGIC_A;
     return(node);
   }
-  /* If the node is significantly larger than the request, we should
-     split the node into two nodes, one of which is the exact size of
-     our request. This means that the remaining free node from which
-     the node was split off from should probably be demoted in the
-     tree. */
+  /* If the node is larger enough than the request, we should split
+     the node into two nodes, one of which is the exact size of our
+     request. */
   node->size -= size;		/* Resize the original node */
   block = B2NB(node);		/* Given the new size, get the
 				   address of the new block */
   /* Set all of the parameters of the block */
   block->magic = MAGIC_A;
   block->size = size;
-
-  /* Demote the block that was carved out */
-  _carc_ftree_demote(parentptr, node);
   return(block);
 }
 
 void *carc_heap_alloc(size_t size)
 {
-  struct Bhdr *hp, *new_block, *releaselist, *block;
+  struct Bhdr *hp, *new_block;
 
   hp = ftree_alloc(size);
   if (hp == NULL) {
     new_block = expand_heap(size);
-    _carc_ftree_insert(&free_root, new_block, &releaselist);
-    for (block=releaselist; block; FTREE_RIGHT(block))
-      carc_heap_free(B2D(block));
+    _carc_block_insert(&free_root, new_block);
     hp = ftree_alloc(size);
   }
   return(B2D(hp));
@@ -297,34 +151,5 @@ void carc_heap_free(void *ptr)
 
   D2B(block, ptr);
 
- begin:
-  block->magic = MAGIC_F;
-  parent = child = free_root;
-  parentptr = &free_root;
 
-  while (FTREE_SIZE(child) > FTREE_SIZE(block) &&
-	 !(NEIGHBOR_P(block, child) || NEIGHBOR_P(child, block))) {
-    parent = child;
-    parentptr = (((unsigned long)parent) > (unsigned long)block) ?
-      &FTREE_LEFT(parent) : &FTREE_RIGHT(parent);
-    child = *parentptr;
-  }
-
-  if (NEIGHBOR_P(child, block)) {
-    _carc_ftree_delete(parentptr, child, 1);
-    child->size += block->size;
-    block = child;
-    goto begin;
-  } else if (NEIGHBOR_P(block, child)) {
-    _carc_ftree_delete(parentptr, child, 1);
-    block->size += child->size;
-    goto begin;
-  }
-
-  _carc_ftree_insert(parentptr, block, &releaselist);
-  block = releaselist;
-  if (block == NULL)
-    return;
-  releaselist = FTREE_RIGHT(releaselist);
-  goto begin;
 }
