@@ -27,3 +27,4 @@ stamp-*
 check_alloc
 .libs
 carc.pc
+cscope.out
