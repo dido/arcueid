@@ -131,7 +131,7 @@ START_TEST(test_ftree_delete)
   struct Bhdr *root = &blocks[4];
 
   setup_tree(blocks);
-  _carc_ftree_delete(&root->u.s.right, &blocks[9]);
+  _carc_ftree_delete(&root->u.s.right, &blocks[9], 0);
   fail_unless(blocks[8].u.s.left == &blocks[6]);
   fail_unless(blocks[8].u.s.right == &blocks[10]);
   fail_unless(blocks[11].u.s.left == &blocks[8]);
