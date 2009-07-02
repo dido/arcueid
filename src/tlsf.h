@@ -36,4 +36,6 @@ extern void tlsf_free(void *ptr);
 extern void *tlsf_realloc(void *ptr, size_t size);
 extern void *tlsf_calloc(size_t nelem, size_t elem_size);
 
+extern void tlsf_each_block(void(*)(const void *));
+
 #endif
