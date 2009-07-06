@@ -9,10 +9,6 @@ City 1229, Philippines.
 Rafael R. Sevilla <dido@imperium.ph>
 Current maintainer.
 
-The code incorporates the Two Levels Segregate Fit (TLSF) memory
-allocator written by Miguel Masmano, Ismael Ripoll, and Alfons Crespo,
-Copyright (C) 2008 UPVLC, OCERA Consortium.
-
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
