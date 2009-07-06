@@ -35,11 +35,6 @@ AM_PROG_CC_C_O
 AC_C_CONST
 AC_C_INLINE
 
-AC_CHECK_HEADERS([pthread.h])
-AC_CHECK_LIB(pthread, pthread_mutex_init)
-
-AC_CHECK_FUNCS([mmap sbrk])
-
 AC_HEADER_STDC
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
