@@ -29,6 +29,14 @@ typedef struct cell *value;
 typedef void * (*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
 
+typedef struct num {
+  char is_fixnum;
+  union {
+    long ivalue;
+    double rvalue;
+  } value;
+} num;
+
 extern carc *carc_init_new();
 extern carc *carc_init_new_custom_alloc(func_alloc malloc, func_dealloc free);
 extern int carc_init(carc *c);
