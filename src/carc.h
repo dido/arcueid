@@ -23,6 +23,19 @@
 
 #define _CARC_H_
 
-typedef unsigned long value;
+typedef struct carc carc;
+typedef struct cell *value;
+
+typedef void * (*func_alloc)(size_t);
+typedef void (*func_dealloc)(void *);
+
+extern carc *carc_init_new();
+extern carc *carc_init_new_custom_alloc(func_alloc malloc, func_dealloc free);
+extern int carc_init(carc *c);
+extern int carc_init_custom_alloc(carc *c, func_alloc, func_dealloc);
+extern void carc_deinit(carc *c);
+extern void carc_load_file(carc *c, FILE *fp);
+extern void carc_load_string(carc *c, const char *cmd);
+extern value carc_apply1(carc *c, const char *procname, value arg);
 
 #endif
