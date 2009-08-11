@@ -1,0 +1,67 @@
+/* 
+  Copyright (C) 2009 Rafael R. Sevilla
+
+  This file is part of CArc
+
+  CArc is free software; you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+  02110-1301 USA.
+*/
+#ifndef _CARCP_H_
+
+#define _CARCP_H_
+
+#include "carc.h"
+#include <inttypes.h>
+@MP_HEADER@
+
+struct cell {
+  unsigned int flag;
+  union {
+    struct {
+      uint32_t *str;		/* Strings are stored internally as UCS-4 */
+      int length;
+    } _str;
+    foreign_func _ff;
+    double _real;
+    @MP_BVALUE@
+    struct {
+      struct cell *car;
+      struct cell *cdr;
+    } _cons;
+  } obj;
+};
+
+#define CELL_SEGSIZE 8192	/* no. of cells in a segment */
+#define CELL_NSEGMENT 16	/* number of cell segments */
+
+struct carc {
+  func_alloc malloc;
+  func_dealloc free;
+
+  int retcode;
+
+  char *alloc_seg[CELL_NSEGMENT];
+  value cell_seg[CELL_NSEGMENT];
+  int last_cell_seg;
+
+  struct cell _nil;
+  value nil;
+  struct cell _true;
+  value t;
+
+  value global_env;
+}
+
+#endif
