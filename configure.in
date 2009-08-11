@@ -39,8 +39,14 @@ AC_HEADER_STDC
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int)
-
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
+if test "$GMP_LIBS" != ""; then
+   MP_HEADER="#include <gmp.h>"
+   MP_BVALUE="mpz_t _bignum;"
+   AC_SUBST(MP_HEADER)
+   AC_SUBST(MP_BVALUE)
+fi
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([carc.pc Makefile src/Makefile test/Makefile])
+AC_CONFIG_FILES([carc.pc Makefile src/Makefile test/Makefile src/carcP.h])
 AC_OUTPUT
