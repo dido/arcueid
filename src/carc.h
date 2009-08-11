@@ -26,7 +26,7 @@
 #include <inttypes.h>
 
 typedef struct carc carc;
-typedef struct cell *value;
+typedef unsigned long value;
 
 typedef void * (*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
