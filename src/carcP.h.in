@@ -24,7 +24,14 @@
 
 #include "carc.h"
 #include <inttypes.h>
+#include <stdio.h>
 @MP_HEADER@
+
+enum carc_types {
+  T_FIXNUM=1,
+  T_BIGNUM=2,
+  T_FLONUM=3
+};
 
 struct cell {
   unsigned int flag;
@@ -34,8 +41,9 @@ struct cell {
       int length;
     } _str;
     foreign_func _ff;
-    double _real;
+    uint64_t _fixnum;
     @MP_BVALUE@
+    double _flonum;
     struct {
       struct cell *car;
       struct cell *cdr;
