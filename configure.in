@@ -39,6 +39,16 @@ AC_HEADER_STDC
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int)
+AC_MSG_CHECKING([that long and void * have the same size])
+if test $ac_cv_sizeof_long == $ac_cv_sizeof_void_p
+then
+   AC_MSG_RESULT(yes)
+else
+   AC_MSG_RESULT(no)
+   echo "******** ERROR **********"
+   echo "CArc requires that sizeof(long) and sizeof(void *) be equal to compile"
+   exit 1
+fi
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
 if test "$GMP_LIBS" != ""; then
