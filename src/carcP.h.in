@@ -41,7 +41,6 @@ struct cell {
       int length;
     } _str;
     foreign_func _ff;
-    uint64_t _fixnum;
     @MP_BVALUE@
     double _flonum;
     struct {
