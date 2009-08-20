@@ -53,7 +53,7 @@ PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
 AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
 if test "$GMP_LIBS" != ""; then
    MP_HEADER="#include <gmp.h>"
-   MP_BVALUE="mpz_t _bignum;"
+   MP_BVALUE="mpq_t _bignum;"
    AC_SUBST(MP_HEADER)
    AC_SUBST(MP_BVALUE)
 fi
