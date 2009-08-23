@@ -50,6 +50,7 @@ else
    exit 1
 fi
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
+AC_CHECK_HEADERS(gmp.h)
 AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
 if test "$GMP_LIBS" != ""; then
    MP_HEADER="#include <gmp.h>"
