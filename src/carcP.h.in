@@ -28,7 +28,6 @@
 @MP_HEADER@
 
 enum carc_types {
-  T_FIXNUM=1,
   T_BIGNUM=2,
   T_FLONUM=3
 };
