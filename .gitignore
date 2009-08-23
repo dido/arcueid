@@ -28,4 +28,4 @@ check_alloc
 .libs
 carc.pc
 cscope.out
-carcP.h
+carc.h
