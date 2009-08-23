@@ -58,5 +58,5 @@ if test "$GMP_LIBS" != ""; then
    AC_SUBST(MP_BVALUE)
 fi
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([carc.pc Makefile src/Makefile test/Makefile src/carcP.h])
+AC_CONFIG_FILES([carc.pc Makefile src/Makefile test/Makefile src/carc.h])
 AC_OUTPUT
