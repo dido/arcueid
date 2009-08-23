@@ -28,6 +28,15 @@
 typedef struct carc carc;
 typedef unsigned long value;
 
+#define VALUE_SIZE (sizeof(value))
+#define FIXNUM_MAX ((1 << ((VALUE_SIZE << 3) - 2)) - 1)
+#define FIXNUM_MIN (-FIXNUM_MAX - 1)
+#define FIXNUM_FLAG 0x01
+#define INT2FIX(i) ((value)(((long)(i))<< 1 | FIXNUM_FLAG))
+/* FIXME: portability to systems that don't preserve sign bit on
+   right shifts. */
+#define FIX2INT(x) ((long)(x) >> 1)
+
 typedef void * (*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
 
