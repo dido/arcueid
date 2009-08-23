@@ -21,7 +21,7 @@
 lib_LTLIBRARIES = libcarc.la
 
 libcarc_la_LDFLAGS = -version-info 0:0:0
-libcarc_la_SOURCES = alloc.c alloc.h tlsf.h tlsf.c target.h
+libcarc_la_SOURCES = arith.c
 
-include_HEADERS = carc.h
+include_HEADERS = carc.h carcP.h
 
