@@ -54,6 +54,8 @@ struct cell {
 };
 
 #define VALUE_SIZE (sizeof(value))
+
+/* Definitions for Fixnums */
 #define FIXNUM_MAX ((1 << ((VALUE_SIZE << 3) - 2)) - 1)
 #define FIXNUM_MIN (-FIXNUM_MAX - 1)
 #define FIXNUM_FLAG 0x01
@@ -61,6 +63,7 @@ struct cell {
 /* FIXME: portability to systems that don't preserve sign bit on
    right shifts. */
 #define FIX2INT(x) ((long)(x) >> 1)
+#define FIXNUM_P(f) (((long)(f))&FIXNUM_FLAG)
 
 typedef void * (*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
