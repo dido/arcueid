@@ -31,6 +31,7 @@ typedef unsigned long value;
 
 /* Boxed type flags */
 enum carc_types {
+  T_FIXNUM=1,
   T_BIGNUM=2,
   T_FLONUM=3
 };
@@ -55,6 +56,12 @@ struct cell {
 
 #define VALUE_SIZE (sizeof(value))
 
+/* Immediate values */
+#define IMMEDIATE_MASK 0x03
+#define IMMEDIATE_P(x) ((value)(x) & IMMEDIATE_MASK)
+
+#define TAG(v) (((struct cell *)(v))->flag)
+
 /* Definitions for Fixnums */
 #define FIXNUM_MAX ((1 << ((VALUE_SIZE << 3) - 2)) - 1)
 #define FIXNUM_MIN (-FIXNUM_MAX - 1)
@@ -64,6 +71,8 @@ struct cell {
    right shifts. */
 #define FIX2INT(x) ((long)(x) >> 1)
 #define FIXNUM_P(f) (((long)(f))&FIXNUM_FLAG)
+
+#define BIGNUM_P(v) (!(IMMEDIATE_P(v)) && TAG(v) == T_BIGNUM)
 
 typedef void * (*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
