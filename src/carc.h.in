@@ -24,16 +24,24 @@
 #define _CARC_H_
 
 #include <inttypes.h>
+#include <stdarg.h>
 @MP_HEADER@
 
 typedef struct carc carc;
 typedef unsigned long value;
+@MP_TYPE@
 
 /* Boxed type flags */
 enum carc_types {
-  T_FIXNUM=1,
-  T_BIGNUM=2,
-  T_FLONUM=3
+  T_NONE=0x00,
+  T_FIXNUM=0x01,
+  T_BIGNUM=0x02,
+  T_FLONUM=0x03,
+  T_STRING=0x04,
+  T_SYMBOL=0x05,
+  T_FOREIGN_FUNC=0x06,
+  T_CONS=0x07,
+  T_MASK=0x3f
 };
 
 /* Cells for boxed items */
@@ -60,7 +68,12 @@ struct cell {
 #define IMMEDIATE_MASK 0x03
 #define IMMEDIATE_P(x) ((value)(x) & IMMEDIATE_MASK)
 
-#define TAG(v) (((struct cell *)(v))->flag)
+/* Special constants -- non-zero and non-fixnum constants */
+#define CNIL ((value)0)
+#define CTRUE ((value)2)
+
+#define BTYPE(v) (((struct cell *)(v))->flag & T_MASK)
+#define REP(v) (((struct cell *)(v))->obj)
 
 /* Definitions for Fixnums */
 #define FIXNUM_MAX ((1 << ((VALUE_SIZE << 3) - 2)) - 1)
@@ -72,7 +85,23 @@ struct cell {
 #define FIX2INT(x) ((long)(x) >> 1)
 #define FIXNUM_P(f) (((long)(f))&FIXNUM_FLAG)
 
-#define BIGNUM_P(v) (!(IMMEDIATE_P(v)) && TAG(v) == T_BIGNUM)
+static inline int TYPE(value v)
+{
+  if (!IMMEDIATE_P(v))
+    return(BTYPE(v));
+
+  if (FIXNUM_P(v))
+    return(T_FIXNUM);
+
+  /* Add more type values here */
+  return(T_NONE);		/* unrecognized immediate type */
+}
+
+/* data structure for interpreter */
+typedef struct carc {
+  value (*get_cell)(struct carc *c);
+  void (*signal_error)(struct carc *c, const char *errmsg, ...);
+} carc;
 
 typedef void * (*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
