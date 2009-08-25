@@ -158,7 +158,7 @@ static value add2(carc *c, value arg1, value arg2)
 
 value carc_arith_op(carc *c, int opval, value args)
 {
-  value v = INT2FIX(0);
+  value x, v = INT2FIX(0);
   value (*op)(carc *, value, value);
 
   switch (opval) {
