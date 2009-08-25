@@ -24,6 +24,7 @@
 #define _CARC_H_
 
 #include <inttypes.h>
+#include <limits.h>
 #include <stdarg.h>
 @MP_HEADER@
 
@@ -80,7 +81,7 @@ struct cell {
 #define REP(v) (((struct cell *)(v))->obj)
 
 /* Definitions for Fixnums */
-#define FIXNUM_MAX ((1 << ((VALUE_SIZE << 3) - 2)) - 1)
+#define FIXNUM_MAX (LONG_MAX >> 1)
 #define FIXNUM_MIN (-FIXNUM_MAX - 1)
 #define FIXNUM_FLAG 0x01
 #define INT2FIX(i) ((value)(((long)(i))<< 1 | FIXNUM_FLAG))
