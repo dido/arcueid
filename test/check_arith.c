@@ -22,6 +22,7 @@
 #include <string.h>
 #include <check.h>
 #include "../src/carc.h"
+#include "../config.h"
 
 START_TEST(test_add_fixnum)
 {
@@ -42,6 +43,39 @@ START_TEST(test_add_fixnum)
 }
 END_TEST
 
+value get_cell_test_add_fixnum2bignum(struct carc *c)
+{
+  static struct cell cellone;
+
+  return((value)&cellone);
+}
+
+START_TEST(test_add_fixnum2bignum)
+{
+#ifdef HAVE_GMP_H
+  struct cell c1, c2;
+  value value1, value2, maxfixnum, one, sum;
+  carc c;
+  double d;
+
+  c.get_cell = get_cell_test_add_fixnum2bignum;
+
+  value1 = (value)&c1;
+  value2 = (value)&c2;
+  maxfixnum = INT2FIX(FIXNUM_MAX);
+  one = INT2FIX(1);
+  car(value1) = maxfixnum;
+  cdr(value1) = value2;
+  car(value2) = one;
+  cdr(value2) = CNIL;
+  sum = carc_arith_op(&c, '+', value1);
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  d = mpq_get_d(REP(sum)._bignum);
+  fail_unless(fabs((d - 1.) - (double)FIXNUM_MAX) < 1e-6);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -50,6 +84,7 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_ops, test_add_fixnum);
+  tcase_add_test(tc_ops, test_add_fixnum2bignum);
 
   suite_add_tcase(s, tc_ops);
   sr = srunner_create(s);
