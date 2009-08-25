@@ -20,7 +20,7 @@
 # Foundation, Inc.,  51 Franklin Street, Fifth Floor, Boston MA
 # 02110-1301 USA.
 #
-SUBDIRS = src . test
+SUBDIRS = @SRC_SUBDIRS@
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = carc.pc.in
