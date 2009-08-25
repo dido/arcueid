@@ -30,3 +30,5 @@ carc.pc
 cscope.out
 carc.h
 check_*
+*.gcda
+*.gcno
