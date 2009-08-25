@@ -61,8 +61,8 @@ struct cell {
     @MP_BVALUE@;
     double _flonum;
     struct {
-      struct cell *car;
-      struct cell *cdr;
+      value car;
+      value cdr;
     } _cons;
   } obj;
 };
