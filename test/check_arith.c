@@ -54,7 +54,7 @@ START_TEST(test_add_fixnum2bignum)
 {
 #ifdef HAVE_GMP_H
   struct cell c1, c2;
-  value value1, value2, maxfixnum, one, sum;
+  value value1, value2, maxfixnum, one, negone, sum;
   carc c;
   double d;
 
@@ -64,14 +64,23 @@ START_TEST(test_add_fixnum2bignum)
   value2 = (value)&c2;
   maxfixnum = INT2FIX(FIXNUM_MAX);
   one = INT2FIX(1);
+  negone = INT2FIX(-1);
   car(value1) = maxfixnum;
   cdr(value1) = value2;
   car(value2) = one;
   cdr(value2) = CNIL;
   sum = carc_arith_op(&c, '+', value1);
   fail_unless(TYPE(sum) == T_BIGNUM);
-  d = mpq_get_d(REP(sum)._bignum);
-  fail_unless(fabs((d - 1.) - (double)FIXNUM_MAX) < 1e-6);
+  fail_unless(mpz_get_si(mpq_denref(REP(sum)._bignum)) == 1);
+  fail_unless(mpz_get_si(mpq_numref(REP(sum)._bignum)) == FIXNUM_MAX + 1);
+
+  car(value1) = sum;
+  cdr(value1) = value2;
+  car(value2) = negone;
+  cdr(value2) = CNIL;
+  sum = carc_arith_op(&c, '+', value1);
+  fail_unless(TYPE(sum) == T_FIXNUM);
+  fail_unless(FIX2INT(sum) == FIXNUM_MAX);
 #endif
 }
 END_TEST
