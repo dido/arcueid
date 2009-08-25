@@ -52,7 +52,6 @@ struct cell {
       uint32_t *str;		/* Strings are stored internally as UCS-4 */
       int length;
     } _str;
-    foreign_func _ff;
     @MP_BVALUE@;
     double _flonum;
     struct {
@@ -100,12 +99,6 @@ static inline int TYPE(value v)
   /* Add more type values here */
   return(T_NONE);		/* unrecognized immediate type */
 }
-
-/* data structure for interpreter */
-typedef struct carc {
-  value (*get_cell)(struct carc *c);
-  void (*signal_error)(struct carc *c, const char *errmsg, ...);
-} carc;
 
 typedef void * (*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
