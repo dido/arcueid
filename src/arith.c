@@ -44,7 +44,7 @@ value carc_mkbignuml(carc *c, long val)
   BTYPE(bignum) = T_BIGNUM;
   mpq_init(REP(bignum)._bignum);
   mpq_set_si(REP(bignum)._bignum, val, 1);
-  return(fnum)
+  return(bignum);
 #else
   c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
 #endif
@@ -57,14 +57,14 @@ double carc_coerce_flonum(carc *c, value v)
 
   switch (TYPE(v)) {
 #ifdef HAVE_GMP_H
-  case BIGNUM:
+  case T_BIGNUM:
     val = mpq_get_d(REP(v)._bignum);
     break;
 #endif
-  case FLONUM:
+  case T_FLONUM:
     return(v);
     break;
-  case FIXNUM:
+  case T_FIXNUM:
     val = (double)FIX2INT(v);
     break;
   default:
@@ -79,14 +79,14 @@ void carc_coerce_bignum(carc *c, value v, void *bignumptr)
 #ifdef HAVE_GMP_H
   mpq_t *bignum = (mpq_t *)bignumptr;
   switch (TYPE(v)) {
-  case BIGNUM:
-    bignum = REP(v)._bignum;
+  case T_BIGNUM:
+    bignum = &REP(v)._bignum;
     break;
-  case FLONUM:
+  case T_FLONUM:
     mpq_set_d(*bignum, REP(v)._flonum);
     break;
-  case FIXNUM:
-    mpq_set_si(*bignum, FIX2INT(v));
+  case T_FIXNUM:
+    mpq_set_si(*bignum, FIX2INT(v), 1);
     break;
   default:
     c->signal_error(c, "Cannot coerce %v into bignum", v);
@@ -115,12 +115,13 @@ static value add2_bignum(carc *c, value arg1, value arg2)
   mpq_t coerced_bignum;
 
   if (TYPE(arg2) == T_BIGNUM) {
-    coerced_bignum = REP(arg2)._bignum;
+    mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
   } else {
     mpq_init(coerced_bignum);
     carc_coerce_bignum(c, arg2, &coerced_bignum);
+    mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
+    mpq_clear(coerced_bignum);
   }
-  mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
   return(arg1);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
