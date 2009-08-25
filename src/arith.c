@@ -101,7 +101,7 @@ void carc_coerce_bignum(carc *c, value v, void *bignumptr)
 
 static value add2_flonum(carc *c, value arg1, value arg2)
 {
-  double coerced_flonum, sum;
+  double coerced_flonum;
 
   coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)._flonum
     : carc_coerce_flonum(c, arg2);
@@ -154,6 +154,7 @@ static value add2(carc *c, value arg1, value arg2)
   }
 
   c->signal_error(c, "Invalid types for addition");
+  return(CNIL);
 }
 
 value carc_arith_op(carc *c, int opval, value args)
