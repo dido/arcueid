@@ -29,3 +29,4 @@ check_alloc
 carc.pc
 cscope.out
 carc.h
+check_*
