@@ -29,7 +29,7 @@
 
 typedef struct carc carc;
 typedef unsigned long value;
-@MP_TYPE@
+@MP_TYPE@;
 
 /* Boxed type flags */
 enum carc_types {
@@ -53,7 +53,7 @@ struct cell {
       int length;
     } _str;
     foreign_func _ff;
-    @MP_BVALUE@
+    @MP_BVALUE@;
     double _flonum;
     struct {
       struct cell *car;
