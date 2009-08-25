@@ -32,3 +32,4 @@ carc.h
 check_*
 *.gcda
 *.gcno
+*.gcov
