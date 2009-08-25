@@ -33,3 +33,4 @@ check_*
 *.gcda
 *.gcno
 *.gcov
+coverage/*
