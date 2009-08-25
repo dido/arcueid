@@ -123,6 +123,8 @@ value carc_coerce_fixnum(carc *c, value v)
       den = mpz_get_si(mpq_denref(REP(v)._bignum));
       return(INT2FIX(num/den));
     }
+#else
+    c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
 #endif
   }
   return(CNIL);
