@@ -118,8 +118,8 @@ extern value carc_apply1(carc *c, const char *procname, value arg);
 extern value carc_mkflonum(carc *c, double val);
 extern value carc_mkbignuml(carc *c, long val);
 
-extern value carc_coerce_flonum(carc *c, value v);
-extern value carc_coerce_bignum(carc *c, value v);
+extern double carc_coerce_flonum(carc *c, value v);
+extern void carc_coerce_bignum(carc *c, value v, void *bignum);
 extern value carc_coerce_fixnum(carc *c, value v);
 
 #endif
