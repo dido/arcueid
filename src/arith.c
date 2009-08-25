@@ -149,7 +149,7 @@ static value add2(carc *c, value arg1, value arg2)
   switch (TYPE(arg2)) {
   case T_FLONUM:
     return(add2_flonum(c, arg2, arg1));
-  case T_BIGNUM
+  case T_BIGNUM:
     return(add2_bignum(c, arg2, arg1));
   }
 
