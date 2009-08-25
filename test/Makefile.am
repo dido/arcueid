@@ -20,7 +20,7 @@
 #
 TESTS = check_arith
 check_PROGRAMS = check_arith
-check_alloc_SOURCES = check_arith.c $(top_builddir)/src/carc.h
-check_alloc_CFLAGS = @CHECK_CFLAGS@
-check_alloc_LDADD = @CHECK_LIBS@ $(top_builddir)/src/libcarc.la
-check_alloc_LDFLAGS = -static
+check_arith_SOURCES = check_arith.c $(top_builddir)/src/carc.h
+check_arith_CFLAGS = @CHECK_CFLAGS@
+check_arith_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_arith_LDFLAGS = -static
