@@ -31,7 +31,7 @@ value carc_mkflonum(carc *c, double val)
 
   fnum = c->get_cell(c);
   BTYPE(fnum) = T_FLONUM;
-  REP(fnum)->_flonum = val;
+  REP(fnum)._flonum = val;
   return(fnum);
 }
 
@@ -42,8 +42,8 @@ value carc_mkbignuml(carc *c, long val)
 
   bignum = c->get_cell(c);
   BTYPE(bignum) = T_BIGNUM;
-  mpq_init(REP(bignum)->_bignum);
-  mpq_set_si(REP(bignum)->_bignum, val, 1);
+  mpq_init(REP(bignum)._bignum);
+  mpq_set_si(REP(bignum)._bignum, val, 1);
   return(fnum)
 #else
   c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
@@ -58,7 +58,7 @@ double carc_coerce_flonum(carc *c, value v)
   switch (TYPE(v)) {
 #ifdef HAVE_GMP_H
   case BIGNUM:
-    val = mpq_get_d(REP(v)->_bignum);
+    val = mpq_get_d(REP(v)._bignum);
     break;
 #endif
   case FLONUM:
@@ -80,10 +80,10 @@ void carc_coerce_bignum(carc *c, value v, void *bignumptr)
   mpq_t *bignum = (mpq_t *)bignumptr;
   switch (TYPE(v)) {
   case BIGNUM:
-    bignum = REP(v)->_bignum;
+    bignum = REP(v)._bignum;
     break;
   case FLONUM:
-    mpq_set_d(*bignum, REP(v)->_flonum);
+    mpq_set_d(*bignum, REP(v)._flonum);
     break;
   case FIXNUM:
     mpq_set_si(*bignum, FIX2INT(v));
@@ -103,9 +103,9 @@ static value add2_flonum(carc *c, value arg1, value arg2)
 {
   double coerced_flonum, sum;
 
-  coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)
+  coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)._flonum
     : carc_coerce_flonum(c, arg2);
-  REP(arg1)->_flonum += coerced_flonum;
+  REP(arg1)._flonum += coerced_flonum;
   return(arg1);
 }
 
@@ -115,12 +115,12 @@ static value add2_bignum(carc *c, value arg1, value arg2)
   mpq_t coerced_bignum;
 
   if (TYPE(arg2) == T_BIGNUM) {
-    coerced_bignum = REP(arg2)->_bignum;
+    coerced_bignum = REP(arg2)._bignum;
   } else {
     mpq_init(coerced_bignum);
     carc_coerce_bignum(c, arg2, &coerced_bignum);
   }
-  mpq_add(REP(arg1)->_bignum, REP(arg1)->_bignum, coerced_bignum);
+  mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
   return(arg1);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
@@ -155,3 +155,20 @@ static value add2(carc *c, value arg1, value arg2)
   c->signal_error(c, "Invalid types for addition");
 }
 
+value carc_arith_op(carc *c, int opval, value args)
+{
+  value v = INT2FIX(0);
+  value (*op)(carc *, value, value);
+
+  switch (opval) {
+  case '+':
+    op = add2;
+    break;
+  default:
+    c->signal_error("Invalid operator %c");
+  }
+
+  for (x=args; x != CNIL; x=cdr(x))
+    v = op(c, v, car(x));
+  return(v);
+}
