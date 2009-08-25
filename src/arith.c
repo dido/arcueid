@@ -166,7 +166,7 @@ value carc_arith_op(carc *c, int opval, value args)
     op = add2;
     break;
   default:
-    c->signal_error("Invalid operator %c");
+    c->signal_error(c, "Invalid operator %c");
   }
 
   for (x=args; x != CNIL; x=cdr(x))
