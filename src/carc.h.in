@@ -27,9 +27,14 @@
 #include <stdarg.h>
 @MP_HEADER@
 
-typedef struct carc carc;
 typedef unsigned long value;
 @MP_TYPE@;
+
+typedef struct carc {
+  value (*get_cell)(struct carc *);
+  void (*signal_error)(struct carc *, const char *, ...);
+} carc;
+
 
 /* Boxed type flags */
 enum carc_types {
