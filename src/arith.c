@@ -93,7 +93,7 @@ void carc_coerce_bignum(carc *c, value v, void *bignumptr)
     break;
   }
 #else
-  c->signal_error(c, "Overflow error (no bignum support)", v);
+  c->signal_error(c, "Overflow error (no bignum support)");
 #endif
 }
 
@@ -114,9 +114,16 @@ static value add2_bignum(carc *c, value arg1, value arg2)
 #ifdef HAVE_GMP_H
   mpq_t coerced_bignum;
 
-  coerced_bignum = (TYPE(arg2) == T_BIGNUM) ? arg2 : carc_coerce_bignum(arg2);
-  sum = 
+  if (TYPE(arg2) == T_BIGNUM) {
+    coerced_bignum = REP(arg2)->_bignum;
+  } else {
+    mpq_init(coerced_bignum);
+    carc_coerce_bignum(c, arg2, &coerced_bignum);
+  }
+  mpq_add(REP(arg1)->_bignum, REP(arg1)->_bignum, coerced_bignum);
+  return(arg1);
 #else
+  c->signal_error(c, "Overflow error (no bignum support)");
 #endif
 }
 
@@ -147,3 +154,4 @@ static value add2(carc *c, value arg1, value arg2)
 
   c->signal_error(c, "Invalid types for addition");
 }
+
