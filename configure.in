@@ -60,6 +60,8 @@ if test "$GMP_LIBS" != ""; then
    AC_SUBST(MP_TYPE)
    AC_SUBST(MP_BVALUE)
 fi
+LIBCARC_LIBS="-L${libdir} -lcarc $GMP_LIBS"
+AC_SUBST(LIBCARC_LIBS)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([carc.pc Makefile src/Makefile test/Makefile src/carc.h])
 AC_OUTPUT
