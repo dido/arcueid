@@ -45,9 +45,7 @@ then
    AC_MSG_RESULT(yes)
 else
    AC_MSG_RESULT(no)
-   echo "******** ERROR **********"
-   echo "CArc requires that sizeof(long) and sizeof(void *) be equal to compile"
-   exit 1
+   AC_MSG_FAILURE([CArc requires that sizeof(long) be the same as sizeof(void) to compile])
 fi
 AC_ARG_ENABLE([unit-tests], [AS_HELP_STRING([--enable-unit-tests], [enable GNU Check unit test suites @<:@default=no@:>@])], [], [enable_unit_tests=no])
 SRC_SUBDIRS=src
