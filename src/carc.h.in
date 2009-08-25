@@ -40,13 +40,13 @@ enum carc_types {
   T_STRING=0x04,
   T_SYMBOL=0x05,
   T_FOREIGN_FUNC=0x06,
-  T_CONS=0x07,
-  T_MASK=0x3f
+  T_CONS=0x07
 };
 
 /* Cells for boxed items */
 struct cell {
-  unsigned int flag;
+  unsigned int _type;
+  unsigned int _flags;
   union {
     struct {
       uint32_t *str;		/* Strings are stored internally as UCS-4 */
@@ -72,7 +72,7 @@ struct cell {
 #define CNIL ((value)0)
 #define CTRUE ((value)2)
 
-#define BTYPE(v) (((struct cell *)(v))->flag & T_MASK)
+#define BTYPE(v) (((struct cell *)(v))->_type)
 #define REP(v) (((struct cell *)(v))->obj)
 
 /* Definitions for Fixnums */
@@ -114,5 +114,12 @@ extern void carc_deinit(carc *c);
 extern void carc_load_file(carc *c, FILE *fp);
 extern void carc_load_string(carc *c, const char *cmd);
 extern value carc_apply1(carc *c, const char *procname, value arg);
+
+extern value carc_mkflonum(carc *c, double val);
+extern value carc_mkbignuml(carc *c, long val);
+
+extern value carc_coerce_flonum(carc *c, value v);
+extern value carc_coerce_bignum(carc *c, value v);
+extern value carc_coerce_fixnum(carc *c, value v);
 
 #endif
