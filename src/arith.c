@@ -51,7 +51,7 @@ value carc_mkbignuml(carc *c, long val)
 }
 
 /* Type conversions */
-value carc_coerce_flonum(carc *c, value v)
+double carc_coerce_flonum(carc *c, value v)
 {
   double val;
 
@@ -68,10 +68,33 @@ value carc_coerce_flonum(carc *c, value v)
     val = (double)FIX2INT(v);
     break;
   default:
-    c->signal_error(c, "Cannot coerce operand %v into flonum", v);
+    c->signal_error(c, "Cannot coerce %v into flonum", v);
     break;
   }
-  return(carc_mkflonum(c, val));
+  return(val);
+}
+
+void carc_coerce_bignum(carc *c, value v, void *bignumptr)
+{
+#ifdef HAVE_GMP_H
+  mpq_t *bignum = (mpq_t *)bignumptr;
+  switch (TYPE(v)) {
+  case BIGNUM:
+    bignum = REP(v)->_bignum;
+    break;
+  case FLONUM:
+    mpq_set_d(*bignum, REP(v)->_flonum);
+    break;
+  case FIXNUM:
+    mpq_set_si(*bignum, FIX2INT(v));
+    break;
+  default:
+    c->signal_error(c, "Cannot coerce %v into bignum", v);
+    break;
+  }
+#else
+  c->signal_error(c, "Overflow error (no bignum support)", v);
+#endif
 }
 
 /* Basic arithmetic functions */
@@ -82,14 +105,17 @@ static value add2_flonum(carc *c, value arg1, value arg2)
 
   coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)
     : carc_coerce_flonum(c, arg2);
-  sum = coerced_flonum + REP(arg2)->_flonum;
-  return(carc_mkflonum(c, sum));
+  REP(arg1)->_flonum += coerced_flonum;
+  return(arg1);
 }
 
 static value add2_bignum(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
-  coerced_
+  mpq_t coerced_bignum;
+
+  coerced_bignum = (TYPE(arg2) == T_BIGNUM) ? arg2 : carc_coerce_bignum(arg2);
+  sum = 
 #else
 #endif
 }
