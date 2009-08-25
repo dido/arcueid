@@ -21,6 +21,8 @@
 
 #include "carc.h"
 #include "../config.h"
+#include <math.h>
+#include <stdlib.h>
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
@@ -68,7 +70,7 @@ double carc_coerce_flonum(carc *c, value v)
     val = (double)FIX2INT(v);
     break;
   default:
-    c->signal_error(c, "Cannot coerce %v into flonum", v);
+    c->signal_error(c, "Cannot convert operand %v into a flonum", v);
     break;
   }
   return(val);
@@ -89,12 +91,41 @@ void carc_coerce_bignum(carc *c, value v, void *bignumptr)
     mpq_set_si(*bignum, FIX2INT(v), 1);
     break;
   default:
-    c->signal_error(c, "Cannot coerce %v into bignum", v);
+    c->signal_error(c, "Cannot convert operand %v into a flonum", v);
     break;
   }
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
 #endif
+}
+
+/* Attempt to coerce the value to a fixnum.  If this is not possible,
+   return CNIL. */
+value carc_coerce_fixnum(carc *c, value v)
+{
+  long val;
+
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+    return(v);
+  case T_FLONUM:
+    val = (long)v;
+    if (abs(val) > FIXNUM_MAX)
+      return(CNIL);
+    return(INT2FIX(val));
+  case T_BIGNUM:
+#ifdef HAVE_GMP_H
+    if (mpq_cmp_si(REP(v)._bignum, FIXNUM_MAX, 1) <= 0
+	&& mpq_cmp_si(REP(v)._bignum, FIXNUM_MIN, 1) >= 0) {
+      long num, den;
+
+      num = mpz_get_si(mpq_numref(REP(v)._bignum));
+      den = mpz_get_si(mpq_denref(REP(v)._bignum));
+      return(INT2FIX(num/den));
+    }
+#endif
+  }
+  return(CNIL);
 }
 
 /* Basic arithmetic functions */
@@ -113,6 +144,7 @@ static value add2_bignum(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
   mpq_t coerced_bignum;
+  value coerced_fixnum;
 
   if (TYPE(arg2) == T_BIGNUM) {
     mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
@@ -122,7 +154,9 @@ static value add2_bignum(carc *c, value arg1, value arg2)
     mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
     mpq_clear(coerced_bignum);
   }
-  return(arg1);
+  /* Attempt to coerce back to a fixnum if possible */
+  coerced_fixnum = carc_coerce_fixnum(c, arg1);
+  return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
 #endif
