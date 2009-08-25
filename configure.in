@@ -50,15 +50,19 @@ else
    exit 1
 fi
 PKG_CHECK_MODULES([CHECK], [check >= 0.9.4])
-AC_CHECK_HEADERS(gmp.h)
-AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
-if test "$GMP_LIBS" != ""; then
-   MP_HEADER="#include <gmp.h>"
-   MP_TYPE="typedef mpq_t bignum_t"
-   MP_BVALUE="bignum_t _bignum"
-   AC_SUBST(MP_HEADER)
-   AC_SUBST(MP_TYPE)
-   AC_SUBST(MP_BVALUE)
+AC_ARG_ENABLE([bignum], [AS_HELP_STRING([--enable-bignum], [enable bignum/rational support @<:@default=check@:>@])], [], [enable_bignum=check])
+GMP_LIBS=
+if test "x$enable_bignum" != xno; then
+  AC_CHECK_HEADERS(gmp.h)
+  AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
+  if test "$GMP_LIBS" != ""; then
+    MP_HEADER="#include <gmp.h>"
+    MP_TYPE="typedef mpq_t bignum_t"
+    MP_BVALUE="bignum_t _bignum"
+    AC_SUBST(MP_HEADER)
+    AC_SUBST(MP_TYPE)
+    AC_SUBST(MP_BVALUE)
+  fi
 fi
 LIBCARC_LIBS="-L${libdir} -lcarc $GMP_LIBS"
 AC_SUBST(LIBCARC_LIBS)
