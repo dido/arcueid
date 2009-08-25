@@ -7,5 +7,5 @@ Name: CArc
 Description: An interpreter for the Arc dialect of Lisp
 URL: http://www.arclanguage.com/
 Version: @VERSION@
-Libs: -L${libdir} -lcarc
+Libs: @LIBCARC_LIBS@
 Cflags: -I${includedir}
