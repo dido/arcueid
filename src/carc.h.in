@@ -85,6 +85,10 @@ struct cell {
 #define FIX2INT(x) ((long)(x) >> 1)
 #define FIXNUM_P(f) (((long)(f))&FIXNUM_FLAG)
 
+/* Definitions for conses */
+#define car(x) (REP(x)._cons.car)
+#define cdr(x) (REP(x)._cons.cdr)
+
 static inline int TYPE(value v)
 {
   if (!IMMEDIATE_P(v))
