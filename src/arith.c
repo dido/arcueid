@@ -25,14 +25,53 @@
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
 /* Type constructors */
-value carc_make_flonum(carc *c, double val)
+value carc_mkflonum(carc *c, double val)
 {
   value fnum;
 
   fnum = c->get_cell(c);
-  TYPE(fnum)->T_FLONUM;
+  BTYPE(fnum) = T_FLONUM;
   REP(fnum)->_flonum = val;
   return(fnum);
+}
+
+value carc_mkbignuml(carc *c, long val)
+{
+#ifdef HAVE_GMP_H
+  value bignum;
+
+  bignum = c->get_cell(c);
+  BTYPE(bignum) = T_BIGNUM;
+  mpq_init(REP(bignum)->_bignum);
+  mpq_set_si(REP(bignum)->_bignum, val, 1);
+  return(fnum)
+#else
+  c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+#endif
+}
+
+/* Type conversions */
+value carc_coerce_flonum(carc *c, value v)
+{
+  double val;
+
+  switch (TYPE(v)) {
+#ifdef HAVE_GMP_H
+  case BIGNUM:
+    val = mpq_get_d(REP(v)->_bignum);
+    break;
+#endif
+  case FLONUM:
+    return(v);
+    break;
+  case FIXNUM:
+    val = (double)FIX2INT(v);
+    break;
+  default:
+    c->signal_error(c, "Cannot coerce operand %v into flonum", v);
+    break;
+  }
+  return(carc_mkflonum(c, val));
 }
 
 /* Basic arithmetic functions */
@@ -44,7 +83,15 @@ static value add2_flonum(carc *c, value arg1, value arg2)
   coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)
     : carc_coerce_flonum(c, arg2);
   sum = coerced_flonum + REP(arg2)->_flonum;
-  return(carc_make_flonum(c, sum));
+  return(carc_mkflonum(c, sum));
+}
+
+static value add2_bignum(carc *c, value arg1, value arg2)
+{
+#ifdef HAVE_GMP_H
+  coerced_
+#else
+#endif
 }
 
 static value add2(carc *c, value arg1, value arg2)
@@ -54,7 +101,7 @@ static value add2(carc *c, value arg1, value arg2)
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
     fixnum_sum = FIX2INT(arg1) + FIX2INT(arg2);
     if (ABS(fixnum_sum) > FIXNUM_MAX)
-      return(make_bignum(c, fixnum_sum));
+      return(carc_mkbignuml(c, fixnum_sum));
     return(INT2FIX(fixnum_sum));
   }
 
@@ -72,4 +119,5 @@ static value add2(carc *c, value arg1, value arg2)
     return(add2_bignum(c, arg2, arg1));
   }
 
+  c->signal_error(c, "Invalid types for addition");
 }
