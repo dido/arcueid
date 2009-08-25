@@ -55,7 +55,7 @@ AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
 if test "$GMP_LIBS" != ""; then
    MP_HEADER="#include <gmp.h>"
    MP_TYPE="typedef mpq_t bignum_t"
-   MP_BVALUE="bignum_t _bignum;"
+   MP_BVALUE="bignum_t _bignum"
    AC_SUBST(MP_HEADER)
    AC_SUBST(MP_TYPE)
    AC_SUBST(MP_BVALUE)
