@@ -106,6 +106,13 @@ START_TEST(test_add_fixnum2flonum)
   sum = carc_arith_op(&c, '+', list);
   fail_unless(TYPE(sum) == T_FLONUM);
   fail_unless(fabs(4.14159 - REP(sum)._flonum) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  car(list) = sum;
+  car(cdr(list)) = val1;
+  sum = carc_arith_op(&c, '+', list);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(3.14159 - REP(sum)._flonum) < 1e-6);
 }
 END_TEST
 
