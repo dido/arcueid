@@ -58,7 +58,6 @@ START_TEST(test_add_fixnum2bignum)
   struct cell c1, c2;
   value value1, value2, maxfixnum, one, negone, sum;
   carc c;
-  double d;
 
   c.get_cell = get_cell_test;
 
@@ -91,7 +90,6 @@ START_TEST(test_add_fixnum2flonum)
 {
   value list, val1, val2, sum;
   carc c;
-  double d;
 
   c.get_cell = get_cell_test;
 
@@ -116,18 +114,37 @@ START_TEST(test_add_fixnum2flonum)
 }
 END_TEST
 
+START_TEST(test_coerce_flonum)
+{
+  carc c;
+  double d;
+  value v;
+
+  c.get_cell = get_cell_test;
+  v = carc_mkbignuml(&c, 1);
+  mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  d = carc_coerce_flonum(&c, v);
+  printf("%lf\n", 1e29 - d);
+  fail_unless(fabs(1e29 - d) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
   Suite *s = suite_create("Arithmetic");
   TCase *tc_ops = tcase_create("Operators");
+  TCase *tc_conv = tcase_create("Conversions");
   SRunner *sr;
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
 
+  tcase_add_test(tc_conv, test_coerce_flonum);
+
   suite_add_tcase(s, tc_ops);
+  suite_add_tcase(s, tc_conv);
   sr = srunner_create(s);
   srunner_run_all(sr, CK_NORMAL);
   number_failed = srunner_ntests_failed(sr);
