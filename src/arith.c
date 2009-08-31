@@ -64,7 +64,7 @@ double carc_coerce_flonum(carc *c, value v)
     break;
 #endif
   case T_FLONUM:
-    return(v);
+    return(REP(v)._flonum);
     break;
   case T_FIXNUM:
     val = (double)FIX2INT(v);
