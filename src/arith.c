@@ -91,7 +91,7 @@ void carc_coerce_bignum(carc *c, value v, void *bignumptr)
     mpq_set_si(*bignum, FIX2INT(v), 1);
     break;
   default:
-    c->signal_error(c, "Cannot convert operand %v into a flonum", v);
+    c->signal_error(c, "Cannot convert operand %v into a bignum", v);
     break;
   }
 #else
