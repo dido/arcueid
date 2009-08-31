@@ -128,7 +128,7 @@ START_TEST(test_add_bignum2bignum)
 
   c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
-  val2 = carc_mkbignuml(&c, -2);
+  val2 = carc_mkbignuml(&c, -(FIXNUM_MAX+2));
   list = get_cell_test(&c);
   car(list) = val1;
   cdr(list) = get_cell_test(&c);
@@ -136,7 +136,7 @@ START_TEST(test_add_bignum2bignum)
   cdr(cdr(list)) = CNIL;
   sum = carc_arith_op(&c, '+', list);
   fail_unless(TYPE(sum) == T_FIXNUM);
-  fail_unless(FIX2INT(sum) == FIXNUM_MAX-1);
+  fail_unless(FIX2INT(sum) == 1);
 }
 END_TEST
 
