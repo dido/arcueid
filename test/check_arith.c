@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
+#include <math.h>
 #include "../src/carc.h"
 #include "../config.h"
 
@@ -43,11 +44,12 @@ START_TEST(test_add_fixnum)
 }
 END_TEST
 
-value get_cell_test_add_fixnum2bignum(struct carc *c)
+value get_cell_test(struct carc *c)
 {
-  static struct cell cellone;
+  static struct cell cells[1024];
+  static struct cell *cellptr = cells;
 
-  return((value)&cellone);
+  return((value)cellptr++);
 }
 
 START_TEST(test_add_fixnum2bignum)
@@ -58,7 +60,7 @@ START_TEST(test_add_fixnum2bignum)
   carc c;
   double d;
 
-  c.get_cell = get_cell_test_add_fixnum2bignum;
+  c.get_cell = get_cell_test;
 
   value1 = (value)&c1;
   value2 = (value)&c2;
@@ -85,6 +87,28 @@ START_TEST(test_add_fixnum2bignum)
 }
 END_TEST
 
+START_TEST(test_add_fixnum2flonum)
+{
+  value list, val1, val2, sum;
+  carc c;
+  double d;
+
+  c.get_cell = get_cell_test;
+
+  val1 = INT2FIX(1);
+  val2 = carc_mkflonum(&c, 3.14159);
+  list = get_cell_test(&c);
+
+  car(list) = val1;
+  cdr(list) = get_cell_test(&c);
+  car(cdr(list)) = val2;
+  cdr(cdr(list)) = CNIL;
+  sum = carc_arith_op(&c, '+', list);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(4.14159 - REP(sum)._flonum) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -94,6 +118,7 @@ int main(void)
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
+  tcase_add_test(tc_ops, test_add_fixnum2flonum);
 
   suite_add_tcase(s, tc_ops);
   sr = srunner_create(s);
