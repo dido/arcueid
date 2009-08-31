@@ -114,6 +114,13 @@ START_TEST(test_add_fixnum2flonum)
 }
 END_TEST
 
+static int error = 0;
+
+static void signal_error_test(struct carc *c, const char *fmt, ...)
+{
+  error = 1;
+}
+
 START_TEST(test_coerce_flonum)
 {
   carc c;
@@ -121,11 +128,22 @@ START_TEST(test_coerce_flonum)
   value v;
 
   c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
   v = carc_mkbignuml(&c, 1);
   mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
   d = carc_coerce_flonum(&c, v);
-  printf("%lf\n", 1e29 - d);
   fail_unless(fabs(1e29 - d) < 1e-6);
+  v = carc_mkflonum(&c, 3.14159);
+  d = carc_coerce_flonum(&c, v);
+  fail_unless(fabs(3.14159 - d) < 1e-6);
+  v = INT2FIX(0xdeadbeef);
+  d = carc_coerce_flonum(&c, v);
+  fail_unless(fabs(3735928559.0 - d) < 1e-6);
+  v = c.get_cell(&c);
+  BTYPE(v) = T_CONS;
+  d = carc_coerce_flonum(&c, v);
+  fail_unless(error == 1);
+  error = 0;
 }
 END_TEST
 
