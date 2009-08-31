@@ -121,6 +121,25 @@ static void signal_error_test(struct carc *c, const char *fmt, ...)
   error = 1;
 }
 
+START_TEST(test_add_bignum2bignum)
+{
+  value list, val1, val2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+  val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
+  val2 = carc_mkbignuml(&c, -2);
+  list = get_cell_test(&c);
+  car(list) = val1;
+  cdr(list) = get_cell_test(&c);
+  car(cdr(list)) = val2;
+  cdr(cdr(list)) = CNIL;
+  sum = carc_arith_op(&c, '+', list);
+  fail_unless(TYPE(sum) == T_FIXNUM);
+  fail_unless(FIX2INT(sum) == FIXNUM_MAX-1);
+}
+END_TEST
+
 START_TEST(test_coerce_flonum)
 {
   carc c;
@@ -158,6 +177,7 @@ int main(void)
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
+  tcase_add_test(tc_ops, test_add_bignum2bignum);
 
   tcase_add_test(tc_conv, test_coerce_flonum);
 
