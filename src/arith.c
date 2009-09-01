@@ -112,8 +112,6 @@ value carc_coerce_fixnum(carc *c, value v)
     if (fabs(REP(v)._flonum) > FIXNUM_MAX)
       return(CNIL);
     val = (long)REP(v)._flonum;
-    if (abs(val) > FIXNUM_MAX)
-      return(CNIL);
     return(INT2FIX(val));
   case T_BIGNUM:
 #ifdef HAVE_GMP_H
