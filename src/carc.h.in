@@ -39,14 +39,15 @@ typedef struct carc {
 
 /* Boxed type flags */
 enum carc_types {
-  T_NONE=0x00,
+  T_NIL=0x00,
   T_FIXNUM=0x01,
   T_BIGNUM=0x02,
   T_FLONUM=0x03,
   T_STRING=0x04,
   T_SYMBOL=0x05,
   T_FOREIGN_FUNC=0x06,
-  T_CONS=0x07
+  T_CONS=0x07,
+  T_NONE=0xff
 };
 
 /* Cells for boxed items */
@@ -79,6 +80,8 @@ struct cell {
 
 #define BTYPE(v) (((struct cell *)(v))->_type)
 #define REP(v) (((struct cell *)(v))->obj)
+
+#define NIL_P(v) ((v) == CNIL)
 
 /* Definitions for Fixnums */
 #define FIXNUM_MAX (LONG_MAX >> 1)
