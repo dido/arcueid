@@ -159,6 +159,27 @@ START_TEST(test_add_bignum)
 }
 END_TEST
 
+START_TEST(test_add_misc)
+{
+  carc c;
+  value v, sum;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  v = cons(&c, cons(&c, CNIL, CNIL), cons(&c, CNIL, CNIL));
+  sum = carc_arith_op(&c, '+', v);
+  fail_unless(error == 1);
+  error = 0;
+
+  sum = carc_arith_op(&c, '$', v);
+  fail_unless(error == 1);
+  error = 0;
+
+}
+END_TEST
+
 START_TEST(test_coerce_flonum)
 {
   carc c;
