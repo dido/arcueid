@@ -109,6 +109,8 @@ value carc_coerce_fixnum(carc *c, value v)
   case T_FIXNUM:
     return(v);
   case T_FLONUM:
+    if (fabs(REP(v)._flonum) > FIXNUM_MAX)
+      return(CNIL);
     val = (long)REP(v)._flonum;
     if (abs(val) > FIXNUM_MAX)
       return(CNIL);
