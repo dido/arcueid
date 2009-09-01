@@ -235,6 +235,36 @@ START_TEST(test_coerce_fixnum)
 }
 END_TEST
 
+START_TEST(test_coerce_bignum)
+{
+  carc c;
+  value v;
+  mpq_t v2;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+  mpq_init(v2);
+  v = carc_mkbignuml(&c, 1000);
+  carc_coerce_bignum(&c, v, &v2);
+  fail_unless(mpq_equal(REP(v)._bignum, v2));
+
+  v = carc_mkflonum(&c, 3.14159);
+  carc_coerce_bignum(&c, v, &v2);
+  fail_unless(fabs(mpq_get_d(v2) - 3.14159) < 1e-6);
+
+  v = INT2FIX(32);
+  carc_coerce_bignum(&c, v, &v2);
+  fail_unless(mpz_get_si(mpq_numref(v2)) == 32);
+  fail_unless(mpz_get_si(mpq_denref(v2)) == 1);
+
+  v = cons(&c, 1,2);
+  carc_coerce_bignum(&c, v, &v2);
+  fail_unless(error == 1);
+  error = 0;
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -247,9 +277,11 @@ int main(void)
   tcase_add_test(tc_ops, test_add_bignum);
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
+  tcase_add_test(tc_ops, test_add_misc);
 
-  tcase_add_test(tc_conv, test_coerce_flonum);
   tcase_add_test(tc_conv, test_coerce_fixnum);
+  tcase_add_test(tc_conv, test_coerce_flonum);
+  tcase_add_test(tc_conv, test_coerce_bignum);
 
   suite_add_tcase(s, tc_ops);
   suite_add_tcase(s, tc_conv);
