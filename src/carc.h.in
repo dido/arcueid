@@ -40,13 +40,14 @@ typedef struct carc {
 /* Boxed type flags */
 enum carc_types {
   T_NIL=0x00,
-  T_FIXNUM=0x01,
-  T_BIGNUM=0x02,
-  T_FLONUM=0x03,
-  T_STRING=0x04,
-  T_SYMBOL=0x05,
-  T_FOREIGN_FUNC=0x06,
-  T_CONS=0x07,
+  T_TRUE=0x01,
+  T_FIXNUM=0x02,
+  T_BIGNUM=0x03,
+  T_FLONUM=0x04,
+  T_STRING=0x05,
+  T_SYMBOL=0x06,
+  T_FOREIGN_FUNC=0x07,
+  T_CONS=0x08,
   T_NONE=0xff
 };
 
@@ -109,11 +110,14 @@ static inline value cons(struct carc *c, value x, value y)
 
 static inline int TYPE(value v)
 {
-  if (!IMMEDIATE_P(v))
-    return(BTYPE(v));
-
   if (FIXNUM_P(v))
     return(T_FIXNUM);
+  if (v == CNIL)
+    return(T_NIL);
+  if (v == CTRUE)
+    return(T_TRUE);
+  if (!IMMEDIATE_P(v))
+    return(BTYPE(v));
 
   /* Add more type values here */
   return(T_NONE);		/* unrecognized immediate type */
