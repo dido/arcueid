@@ -94,7 +94,7 @@ struct cell {
 #define car(x) (REP(x)._cons.car)
 #define cdr(x) (REP(x)._cons.cdr)
 
-static inline value cons(c, x, y)
+static inline value cons(struct carc *c, value x, value y)
 {
   value cc = c->get_cell(c);
 
