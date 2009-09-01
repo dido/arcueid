@@ -126,6 +126,7 @@ value carc_coerce_fixnum(carc *c, value v)
 #else
     c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
 #endif
+    break;
   }
   return(CNIL);
 }
