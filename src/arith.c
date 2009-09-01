@@ -76,13 +76,14 @@ double carc_coerce_flonum(carc *c, value v)
   return(val);
 }
 
-void carc_coerce_bignum(carc *c, value v, void *bignumptr)
+void carc_coerce_bignum(carc *c, value v, void *bptr)
 {
 #ifdef HAVE_GMP_H
-  mpq_t *bignum = (mpq_t *)bignumptr;
+  mpq_t *bignum = (mpq_t *)bptr;
+
   switch (TYPE(v)) {
   case T_BIGNUM:
-    bignum = &REP(v)._bignum;
+    mpq_set(*bignum, REP(v)._bignum);
     break;
   case T_FLONUM:
     mpq_set_d(*bignum, REP(v)._flonum);
@@ -205,6 +206,7 @@ value carc_arith_op(carc *c, int opval, value args)
     break;
   default:
     c->signal_error(c, "Invalid operator %c");
+    return(CNIL);
   }
 
   for (x=args; x != CNIL; x=cdr(x))
