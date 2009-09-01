@@ -94,6 +94,16 @@ struct cell {
 #define car(x) (REP(x)._cons.car)
 #define cdr(x) (REP(x)._cons.cdr)
 
+static inline value cons(c, x, y)
+{
+  value cc = c->get_cell(c);
+
+  BTYPE(cc) = T_CONS;
+  car(cc) = x;
+  cdr(cc) = y;
+  return(cc);
+}
+
 static inline int TYPE(value v)
 {
   if (!IMMEDIATE_P(v))
@@ -106,7 +116,7 @@ static inline int TYPE(value v)
   return(T_NONE);		/* unrecognized immediate type */
 }
 
-typedef void * (*func_alloc)(size_t);
+typedef void *(*func_alloc)(size_t);
 typedef void (*func_dealloc)(void *);
 
 extern carc *carc_init_new();
