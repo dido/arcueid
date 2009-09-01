@@ -185,6 +185,56 @@ START_TEST(test_coerce_flonum)
 }
 END_TEST
 
+START_TEST(test_coerce_fixnum)
+{
+  carc c;
+  value v, v2;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  /* Identity */
+  v = INT2FIX(1);
+  v2 = carc_coerce_fixnum(&c, v);
+  fail_unless(TYPE(v2) == T_FIXNUM);
+  fail_unless(FIX2INT(v2) == 1);
+
+  /* Truncates */
+  v = carc_mkflonum(&c, 3.14159);
+  v2 = carc_coerce_fixnum(&c, v);
+  fail_unless(TYPE(v2) == T_FIXNUM);
+  fail_unless(FIX2INT(v2) == 3);
+
+  /* Fails conversion (too big) */
+  v = carc_mkflonum(&c, 1e100);
+  v2 = carc_coerce_fixnum(&c, v);
+  fail_unless(v2 == CNIL);
+  fail_unless(TYPE(v2) == T_NIL);
+
+  /* Should also fail conversion */
+  v = carc_mkflonum(&c, ((double)(FIXNUM_MAX))*2);
+  v2 = carc_coerce_fixnum(&c, v);
+  fail_unless(v2 == CNIL);
+  fail_unless(TYPE(v2) == T_NIL);
+
+#ifdef HAVE_GMP_H
+  /* Small bignum should be converted */
+  v = carc_mkbignuml(&c, 1000);
+  v2 = carc_coerce_fixnum(&c, v);
+  fail_unless(TYPE(v2) == T_FIXNUM);
+  fail_unless(FIX2INT(v2) == 1000);
+
+  /* too big to convert to fixnum */
+  v = carc_mkbignuml(&c, 0);
+  mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  v2 = carc_coerce_fixnum(&c, v);
+  fail_unless(v2 == CNIL);
+  fail_unless(TYPE(v2) == T_NIL);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -199,6 +249,7 @@ int main(void)
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
 
   tcase_add_test(tc_conv, test_coerce_flonum);
+  tcase_add_test(tc_conv, test_coerce_fixnum);
 
   suite_add_tcase(s, tc_ops);
   suite_add_tcase(s, tc_conv);
