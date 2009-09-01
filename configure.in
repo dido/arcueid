@@ -36,6 +36,11 @@ AC_C_CONST
 AC_C_INLINE
 
 AC_HEADER_STDC
+
+MATH_LIBS=
+AC_CHECK_HEADERS(math.h,, AC_MSG_FAILURE([Math library header seems to be missing.]))
+AC_CHECK_LIB(m, fabs, MATH_LIBS=-lm, AC_MSG_FAILURE(Your math library seems to be incomplete))
+
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_SIZEOF(int)
@@ -73,7 +78,7 @@ if test "x$enable_bignum" != xno; then
     AC_MSG_FAILURE([Bignum (libgmp) test failed (--disable-bignum to disable)])
   fi
 fi
-LIBCARC_LIBS="-L${libdir} -lcarc $GMP_LIBS"
+LIBCARC_LIBS="-L${libdir} -lcarc $GMP_LIBS $MATH_LIBS"
 AC_SUBST(LIBCARC_LIBS)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([carc.pc Makefile src/Makefile $TEST_MAKEFILE src/carc.h])
