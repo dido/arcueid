@@ -24,6 +24,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "../src/carc.h"
+#include "../src/arith.h"
 #include "../config.h"
 
 START_TEST(test_add_fixnum)
@@ -180,6 +181,36 @@ START_TEST(test_add_misc)
 }
 END_TEST
 
+START_TEST(test_neg)
+{
+  carc c;
+  value v, neg;
+  mpq_t expected;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  v = INT2FIX(1);
+  neg = __carc_neg(&c, v);
+  fail_unless(TYPE(neg) == T_FIXNUM);
+  fail_unless(FIX2INT(neg) == -1);
+
+  v = carc_mkflonum(&c, -1.234);
+  neg = __carc_neg(&c, v);
+  fail_unless(TYPE(neg) == T_FLONUM);
+  fail_unless(fabs(REP(neg)._flonum - 1.234) < 1e-6);
+
+  v = carc_mkbignuml(&c, 0);
+  mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  neg = __carc_neg(&c, v);
+  mpq_init(expected);
+  mpq_set_str(expected, "-100000000000000000000000000000", 10);
+  fail_unless(TYPE(neg) == T_BIGNUM);
+  fail_unless(mpq_equal(expected, REP(neg)._bignum));
+}
+END_TEST
+
 START_TEST(test_coerce_flonum)
 {
   carc c;
@@ -299,6 +330,7 @@ int main(void)
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
   tcase_add_test(tc_ops, test_add_misc);
+  tcase_add_test(tc_ops, test_neg);
 
   tcase_add_test(tc_conv, test_coerce_fixnum);
   tcase_add_test(tc_conv, test_coerce_flonum);
