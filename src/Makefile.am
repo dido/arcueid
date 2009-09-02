@@ -24,4 +24,4 @@ libcarc_la_LDFLAGS = -version-info 0:0:0
 libcarc_la_SOURCES = arith.c
 
 include_HEADERS = carc.h
-
+noinst_HEADERS = arith.h
