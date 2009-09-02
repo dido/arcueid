@@ -20,6 +20,7 @@
 */
 
 #include "carc.h"
+#include "arith.h"
 #include "../config.h"
 #include <math.h>
 #include <stdlib.h>
@@ -166,7 +167,7 @@ static value add2_bignum(carc *c, value arg1, value arg2)
 #endif
 }
 
-static value add2(carc *c, value arg1, value arg2)
+value __carc_add2(carc *c, value arg1, value arg2)
 {
   long fixnum_sum;
 
@@ -195,6 +196,40 @@ static value add2(carc *c, value arg1, value arg2)
   return(CNIL);
 }
 
+value __carc_neg(carc *c, value arg)
+{
+  value big;
+
+  switch (TYPE(arg)) {
+  case T_FIXNUM:
+    return(INT2FIX(-FIX2INT(arg)));
+  case T_FLONUM:
+    return(carc_mkflonum(c, -REP(arg)._flonum));
+  case T_BIGNUM:
+    big = carc_mkbignuml(c, 0);
+    mpq_neg(REP(big)._bignum, REP(arg)._bignum);
+    return(big);
+  default:
+    c->signal_error(c, "Invalid type for negation");
+  }
+  return(CNIL);
+}
+
+value __carc_sub2(carc *c, value arg1, value arg2)
+{
+  long fixnum_diff;
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    fixnum_diff = FIX2INT(arg1) - FIX2INT(arg2);
+    if (ABS(fixnum_diff) > FIXNUM_MAX)
+      return(carc_mkbignuml(c, fixnum_diff));
+    return(INT2FIX(fixnum_diff));
+  }
+
+  return(__carc_add2(c, arg1, __carc_neg(c, arg2)));
+}
+
+
 value carc_arith_op(carc *c, int opval, value args)
 {
   value x, v = INT2FIX(0);
@@ -202,7 +237,7 @@ value carc_arith_op(carc *c, int opval, value args)
 
   switch (opval) {
   case '+':
-    op = add2;
+    op = __carc_add2;
     break;
   default:
     c->signal_error(c, "Invalid operator %c");
