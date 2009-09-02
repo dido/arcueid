@@ -21,6 +21,8 @@
 #ifndef _ARITH_H_
 #define _ARITH_H_
 
+extern value __carc_neg(carc *c, value arg);
+
 extern value __carc_add2(carc *c, value arg1, value arg2);
 extern value __carc_sub2(carc *c, value arg1, value arg2);
 extern value __carc_mul2(carc *c, value arg1, value arg2);
