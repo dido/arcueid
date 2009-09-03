@@ -229,6 +229,76 @@ value __carc_sub2(carc *c, value arg1, value arg2)
   return(__carc_add2(c, arg1, __carc_neg(c, arg2)));
 }
 
+static value mul2_flonum(carc *c, value arg1, value arg2)
+{
+  double coerced_flonum;
+
+  coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)._flonum
+    : carc_coerce_flonum(c, arg2);
+  REP(arg1)._flonum *= coerced_flonum;
+  return(arg1);
+}
+
+static value mul2_bignum(carc *c, value arg1, value arg2)
+{
+#ifdef HAVE_GMP_H
+  mpq_t coerced_bignum;
+  value coerced_fixnum;
+
+  if (TYPE(arg2) == T_BIGNUM) {
+    mpq_mul(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+  } else {
+    mpq_init(coerced_bignum);
+    carc_coerce_bignum(c, arg2, &coerced_bignum);
+    mpq_mul(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
+    mpq_clear(coerced_bignum);
+  }
+  /* Attempt to coerce back to a fixnum if possible */
+  coerced_fixnum = carc_coerce_fixnum(c, arg1);
+  return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
+#else
+  c->signal_error(c, "Overflow error (no bignum support)");
+#endif
+}
+
+value __carc_mul2(carc *c, value arg1, value arg2)
+{
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    long varg1, varg2;
+
+    varg1 = FIX2INT(arg1);
+    varg2 = FIX2INT(arg2);
+
+    /* This rather complicated test is a (sorta) portable check for
+       multiplication overflow.  If the product would overflow, we need to
+       use bignum arithmetic. */
+    if ((varg1 > 0 && varg2 > 0 && varg1 > (FIXNUM_MAX / varg2))
+	|| (varg1 > 0 && varg2 <= 0 && (varg2 < (FIXNUM_MIN / varg1)))
+	|| (varg1 <= 0 && varg2 > 0 && (varg1 < (FIXNUM_MIN / varg2)))
+	|| (varg1 != 0 && (varg2 < (FIXNUM_MAX / varg1)))) {
+      return(mul2_bignum(c, carc_mkbignuml(c, varg1), arg2));
+    }
+    return(INT2FIX(varg1 * varg2));
+  }
+
+  switch (TYPE(arg1)) {
+  case T_FLONUM:
+    return(mul2_flonum(c, arg1, arg2));
+  case T_BIGNUM:
+    return(mul2_bignum(c, arg1, arg2));
+  }
+
+  switch (TYPE(arg2)) {
+  case T_FLONUM:
+    return(mul2_flonum(c, arg2, arg1));
+  case T_BIGNUM:
+    return(mul2_bignum(c, arg2, arg1));
+  }
+
+  c->signal_error(c, "Invalid types for multiplication");
+  return(CNIL);
+
+}
 
 value carc_arith_op(carc *c, int opval, value args)
 {
@@ -238,6 +308,12 @@ value carc_arith_op(carc *c, int opval, value args)
   switch (opval) {
   case '+':
     op = __carc_add2;
+    break;
+  case '-':
+    op = __carc_sub2;
+    break;
+  case '*':
+    op = __carc_mul2;
     break;
   default:
     c->signal_error(c, "Invalid operator %c");
