@@ -123,17 +123,6 @@ static inline int TYPE(value v)
   return(T_NONE);		/* unrecognized immediate type */
 }
 
-typedef void *(*func_alloc)(size_t);
-typedef void (*func_dealloc)(void *);
-
-extern carc *carc_init_new();
-extern carc *carc_init_new_custom_alloc(func_alloc malloc, func_dealloc free);
-extern int carc_init(carc *c);
-extern int carc_init_custom_alloc(carc *c, func_alloc, func_dealloc);
-extern void carc_deinit(carc *c);
-extern void carc_load_string(carc *c, const char *cmd);
-extern value carc_apply1(carc *c, const char *procname, value arg);
-
 extern value carc_mkflonum(carc *c, double val);
 extern value carc_mkbignuml(carc *c, long val);
 
