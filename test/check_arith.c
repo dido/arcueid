@@ -208,6 +208,54 @@ START_TEST(test_mul_fixnum)
 }
 END_TEST
 
+START_TEST(test_mul_bignum)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, sum;
+  carc c;
+  mpq_t expected;
+
+  c.get_cell = get_cell_test;
+  val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
+  val2 = carc_mkbignuml(&c, -(FIXNUM_MAX+2));
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_FIXNUM);
+  fail_unless(FIX2INT(sum) == -1);
+
+  val1 = carc_mkbignuml(&c, 0);
+  mpq_set_str(REP(val1)._bignum, "400000000000000000000000000000", 10);
+  val2 = carc_mkbignuml(&c, 0);
+  mpq_set_str(REP(val2)._bignum, "300000000000000000000000000000", 10);
+  sum = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  mpq_init(expected);
+  mpq_set_str(expected, "120000000000000000000000000000000000000000000000000000000000", 10);
+  fail_unless(mpq_equal(expected, REP(sum)._bignum));
+#endif
+}
+END_TEST
+
+START_TEST(test_mul_fixnum2bignum)
+{
+#ifdef HAVE_GMP_H
+  value factorial;
+  carc c;
+  mpq_t expected;
+  int i;
+
+  c.get_cell = get_cell_test;
+  factorial = INT2FIX(1);
+  for (i=1; i<=100; i++)
+    factorial = __carc_mul2(&c, INT2FIX(i), factorial);
+
+  mpq_init(expected);
+  mpq_set_str(expected, "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000", 10);
+  fail_unless(mpq_equal(expected, REP(factorial)._bignum));
+#endif
+}
+END_TEST
+
+
 START_TEST(test_neg)
 {
   carc c;
@@ -373,6 +421,8 @@ int main(void)
   tcase_add_test(tc_ops, test_add_misc);
   tcase_add_test(tc_ops, test_neg);
   tcase_add_test(tc_ops, test_mul_fixnum);
+  tcase_add_test(tc_ops, test_mul_bignum);
+  tcase_add_test(tc_ops, test_mul_fixnum2bignum);
 
   tcase_add_test(tc_conv, test_coerce_fixnum);
   tcase_add_test(tc_conv, test_coerce_flonum);
