@@ -184,7 +184,7 @@ END_TEST
 START_TEST(test_mul_fixnum)
 {
   carc c;
-  value v1, v2, prod;
+  value prod;
   mpq_t expected;
 
   c.get_cell = get_cell_test;
