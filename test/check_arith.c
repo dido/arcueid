@@ -29,59 +29,45 @@
 
 START_TEST(test_add_fixnum)
 {
-  struct cell conses[4];
-  value head, val;
   int i;
   carc c;
+  value v = INT2FIX(0);
 
-  /* Create a list of numbers */
-  val = head = (value)&conses[0];
-  for (i=0; i<4; i++) {
-    car(val) = INT2FIX(i+1);
-    cdr(val) = (i == 3) ? CNIL : ((value)&conses[i+1]);
-    val = cdr(val);
-  }
-  val = carc_arith_op(&c, '+', head);
-  fail_unless(FIX2INT(val) == 10);
+  for (i=1; i<=100; i++)
+    v = __carc_add2(&c, v, INT2FIX(i));
+  fail_unless(TYPE(v) == T_FIXNUM);
+  fail_unless(FIX2INT(v) == 5050);
+  
 }
 END_TEST
 
+/* This is a very basic memory allocation routine that essentially
+   "fakes" it out. */
 value get_cell_test(struct carc *c)
 {
   static struct cell cells[1024];
-  static struct cell *cellptr = cells;
+  static int cellptr = 0;
 
-  return((value)cellptr++);
+  return((value)(cells + ((cellptr++) % 1024)));
 }
 
 START_TEST(test_add_fixnum2bignum)
 {
 #ifdef HAVE_GMP_H
-  struct cell c1, c2;
-  value value1, value2, maxfixnum, one, negone, sum;
+  value maxfixnum, one, negone, sum;
   carc c;
 
   c.get_cell = get_cell_test;
 
-  value1 = (value)&c1;
-  value2 = (value)&c2;
   maxfixnum = INT2FIX(FIXNUM_MAX);
   one = INT2FIX(1);
   negone = INT2FIX(-1);
-  car(value1) = maxfixnum;
-  cdr(value1) = value2;
-  car(value2) = one;
-  cdr(value2) = CNIL;
-  sum = carc_arith_op(&c, '+', value1);
+  sum = __carc_add2(&c, maxfixnum, one);
   fail_unless(TYPE(sum) == T_BIGNUM);
   fail_unless(mpz_get_si(mpq_denref(REP(sum)._bignum)) == 1);
   fail_unless(mpz_get_si(mpq_numref(REP(sum)._bignum)) == FIXNUM_MAX + 1);
 
-  car(value1) = sum;
-  cdr(value1) = value2;
-  car(value2) = negone;
-  cdr(value2) = CNIL;
-  sum = carc_arith_op(&c, '+', value1);
+  sum = __carc_add2(&c, negone, sum);
   fail_unless(TYPE(sum) == T_FIXNUM);
   fail_unless(FIX2INT(sum) == FIXNUM_MAX);
 #endif
@@ -90,27 +76,20 @@ END_TEST
 
 START_TEST(test_add_fixnum2flonum)
 {
-  value list, val1, val2, sum;
+  value val1, val2, sum;
   carc c;
 
   c.get_cell = get_cell_test;
 
   val1 = INT2FIX(1);
   val2 = carc_mkflonum(&c, 3.14159);
-  list = get_cell_test(&c);
 
-  car(list) = val1;
-  cdr(list) = get_cell_test(&c);
-  car(cdr(list)) = val2;
-  cdr(cdr(list)) = CNIL;
-  sum = carc_arith_op(&c, '+', list);
+  sum = __carc_add2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_FLONUM);
   fail_unless(fabs(4.14159 - REP(sum)._flonum) < 1e-6);
 
   val1 = INT2FIX(-1);
-  car(list) = sum;
-  car(cdr(list)) = val1;
-  sum = carc_arith_op(&c, '+', list);
+  sum = __carc_add2(&c, sum, val1);
   fail_unless(TYPE(sum) == T_FLONUM);
   fail_unless(fabs(3.14159 - REP(sum)._flonum) < 1e-6);
 }
@@ -126,19 +105,14 @@ static void signal_error_test(struct carc *c, const char *fmt, ...)
 START_TEST(test_add_bignum)
 {
 #ifdef HAVE_GMP_H
-  value list, val1, val2, sum;
+  value val1, val2, sum;
   carc c;
   mpq_t expected;
 
   c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
   val2 = carc_mkbignuml(&c, -(FIXNUM_MAX+2));
-  list = get_cell_test(&c);
-  car(list) = val1;
-  cdr(list) = get_cell_test(&c);
-  car(cdr(list)) = val2;
-  cdr(cdr(list)) = CNIL;
-  sum = carc_arith_op(&c, '+', list);
+  sum = __carc_add2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_FIXNUM);
   fail_unless(FIX2INT(sum) == -1);
 
@@ -146,12 +120,7 @@ START_TEST(test_add_bignum)
   mpq_set_str(REP(val1)._bignum, "100000000000000000000000000000", 10);
   val2 = carc_mkbignuml(&c, 0);
   mpq_set_str(REP(val2)._bignum, "200000000000000000000000000000", 10);
-
-  car(list) = val1;
-  cdr(list) = get_cell_test(&c);
-  car(cdr(list)) = val2;
-  cdr(cdr(list)) = CNIL;
-  sum = carc_arith_op(&c, '+', list);
+  sum = __carc_add2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_BIGNUM);
   mpq_init(expected);
   mpq_set_str(expected, "300000000000000000000000000000", 10);
@@ -169,15 +138,12 @@ START_TEST(test_add_misc)
   c.signal_error = signal_error_test;
   error = 0;
 
-  v = cons(&c, cons(&c, CNIL, CNIL), cons(&c, CNIL, CNIL));
-  sum = carc_arith_op(&c, '+', v);
+  sum = __carc_add2(&c, CNIL, CNIL);
   fail_unless(error == 1);
   error = 0;
 
-  sum = carc_arith_op(&c, '$', v);
-  fail_unless(error == 1);
-  error = 0;
-
+  sum = __carc_add2(&c, cons(&c, FIX2INT(1), CNIL), 
+		    cons(&c, FIX2INT(2), CNIL));
 }
 END_TEST
 
