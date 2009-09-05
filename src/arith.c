@@ -111,7 +111,7 @@ value carc_coerce_fixnum(carc *c, value v)
   case T_FIXNUM:
     return(v);
   case T_FLONUM:
-    if (fabs(REP(v)._flonum) > FIXNUM_MAX)
+    if (ABS(REP(v)._flonum) > FIXNUM_MAX)
       return(CNIL);
     val = (long)REP(v)._flonum;
     return(INT2FIX(val));
@@ -263,19 +263,30 @@ static value mul2_bignum(carc *c, value arg1, value arg2)
 
 value __carc_mul2(carc *c, value arg1, value arg2)
 {
+
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
     long varg1, varg2;
 
     varg1 = FIX2INT(arg1);
     varg2 = FIX2INT(arg2);
-
+#if VALUE_SIZE == 8
+    /* 64-bit platform.  We can mask against the high bits of the
+       absolute value to determine whether or not bignum arithmetic
+       is necessary. */
+    if ((ABS(varg1) | ABS(varg2)) & 0xffffffff80000000) {
+#elif VALUE_SIZE == 4
+      /* 32-bit platform.  Similarly. */
+    if ((ABS(varg1) | ABS(varg2)) & 0xffff8000) {
+#else
     /* This rather complicated test is a (sorta) portable check for
        multiplication overflow.  If the product would overflow, we need to
-       use bignum arithmetic. */
+       use bignum arithmetic.  This should work on any oddball platform
+       no matter what the actual size of a value is. */
     if ((varg1 > 0 && varg2 > 0 && varg1 > (FIXNUM_MAX / varg2))
 	|| (varg1 > 0 && varg2 <= 0 && (varg2 < (FIXNUM_MIN / varg1)))
 	|| (varg1 <= 0 && varg2 > 0 && (varg1 < (FIXNUM_MIN / varg2)))
 	|| (varg1 != 0 && (varg2 < (FIXNUM_MAX / varg1)))) {
+#endif
       return(mul2_bignum(c, carc_mkbignuml(c, varg1), arg2));
     }
     return(INT2FIX(varg1 * varg2));
