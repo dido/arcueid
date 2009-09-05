@@ -69,7 +69,7 @@ struct cell {
   } obj;
 };
 
-#define VALUE_SIZE (sizeof(value))
+#define VALUE_SIZE @VALUE_SIZE@
 
 /* Immediate values */
 #define IMMEDIATE_MASK 0x03
