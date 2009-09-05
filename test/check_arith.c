@@ -111,7 +111,6 @@ START_TEST(test_add_flonum)
 }
 END_TEST
 
-
 static int error = 0;
 
 static void signal_error_test(struct carc *c, const char *fmt, ...)
@@ -249,6 +248,22 @@ START_TEST(test_mul_bignum)
   mpq_set_str(expected, "120000000000000000000000000000000000000000000000000000000000", 10);
   fail_unless(mpq_equal(expected, REP(sum)._bignum));
 #endif
+}
+END_TEST
+
+START_TEST(test_mul_flonum)
+{
+  value val1, val2, prod;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkflonum(&c, 1.20257);
+  val2 = carc_mkflonum(&c, 0.57721);
+
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(0.694135 - REP(prod)._flonum) < 1e-6);
 }
 END_TEST
 
@@ -478,6 +493,7 @@ int main(void)
   tcase_add_test(tc_ops, test_neg);
   tcase_add_test(tc_ops, test_mul_fixnum);
   tcase_add_test(tc_ops, test_mul_bignum);
+  tcase_add_test(tc_ops, test_mul_flonum);
   tcase_add_test(tc_ops, test_mul_fixnum2bignum);
   tcase_add_test(tc_ops, test_mul_fixnum2flonum);
   tcase_add_test(tc_ops, test_mul_misc);
