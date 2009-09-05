@@ -50,6 +50,7 @@ value carc_mkbignuml(carc *c, long val)
   return(bignum);
 #else
   c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+  return(CNIL);
 #endif
 }
 
@@ -164,6 +165,7 @@ static value add2_bignum(carc *c, value arg1, value arg2)
   return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
+  return(CNIL);
 #endif
 }
 
@@ -198,17 +200,20 @@ value __carc_add2(carc *c, value arg1, value arg2)
 
 value __carc_neg(carc *c, value arg)
 {
-  value big;
-
   switch (TYPE(arg)) {
   case T_FIXNUM:
     return(INT2FIX(-FIX2INT(arg)));
   case T_FLONUM:
     return(carc_mkflonum(c, -REP(arg)._flonum));
   case T_BIGNUM:
-    big = carc_mkbignuml(c, 0);
-    mpq_neg(REP(big)._bignum, REP(arg)._bignum);
-    return(big);
+#ifdef HAVE_GMP_H
+    {
+      value big;
+      big = carc_mkbignuml(c, 0);
+      mpq_neg(REP(big)._bignum, REP(arg)._bignum);
+      return(big);
+    }
+#endif
   default:
     c->signal_error(c, "Invalid type for negation");
   }
@@ -258,6 +263,7 @@ static value mul2_bignum(carc *c, value arg1, value arg2)
   return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
+  return(CNIL);
 #endif
 }
 
