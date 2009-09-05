@@ -185,7 +185,9 @@ START_TEST(test_mul_fixnum)
 {
   carc c;
   value prod;
+#ifdef HAVE_GMP_H
   mpq_t expected;
+#endif
 
   c.get_cell = get_cell_test;
   c.signal_error = signal_error_test;
@@ -207,6 +209,7 @@ START_TEST(test_mul_fixnum)
   fail_unless(TYPE(prod) == T_FIXNUM);
   fail_unless(FIX2INT(prod) == -168);
 
+#ifdef HAVE_GMP_H
   prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
   mpq_init(expected);
@@ -230,6 +233,12 @@ START_TEST(test_mul_fixnum)
   mpq_init(expected);
   mpq_set_si(expected, -2*FIXNUM_MAX, 1);
   fail_unless(mpq_equal(expected, REP(prod)._bignum));
+#else
+  prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_NIL);
+  fail_unless(error == 1);
+#endif
+
 }
 END_TEST
 
@@ -237,7 +246,9 @@ START_TEST(test_neg)
 {
   carc c;
   value v, neg;
+#ifdef HAVE_GMP_H
   mpq_t expected;
+#endif
 
   c.get_cell = get_cell_test;
   c.signal_error = signal_error_test;
@@ -253,6 +264,7 @@ START_TEST(test_neg)
   fail_unless(TYPE(neg) == T_FLONUM);
   fail_unless(fabs(REP(neg)._flonum - 1.234) < 1e-6);
 
+#ifdef HAVE_GMP_H
   v = carc_mkbignuml(&c, 0);
   mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
   neg = __carc_neg(&c, v);
@@ -260,6 +272,7 @@ START_TEST(test_neg)
   mpq_set_str(expected, "-100000000000000000000000000000", 10);
   fail_unless(TYPE(neg) == T_BIGNUM);
   fail_unless(mpq_equal(expected, REP(neg)._bignum));
+#endif
 }
 END_TEST
 
@@ -271,10 +284,14 @@ START_TEST(test_coerce_flonum)
 
   c.get_cell = get_cell_test;
   c.signal_error = signal_error_test;
+
+#ifdef HAVE_GMP_H
   v = carc_mkbignuml(&c, 1);
   mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
   d = carc_coerce_flonum(&c, v);
   fail_unless(fabs(1e29 - d) < 1e-6);
+#endif
+
   v = carc_mkflonum(&c, 3.14159);
   d = carc_coerce_flonum(&c, v);
   fail_unless(fabs(3.14159 - d) < 1e-6);
@@ -341,6 +358,7 @@ END_TEST
 
 START_TEST(test_coerce_bignum)
 {
+#ifdef HAVE_GMP_H
   carc c;
   value v;
   mpq_t v2;
@@ -366,6 +384,7 @@ START_TEST(test_coerce_bignum)
   carc_coerce_bignum(&c, v, &v2);
   fail_unless(error == 1);
   error = 0;
+#endif
 }
 END_TEST
 
