@@ -239,6 +239,10 @@ START_TEST(test_neg)
   fail_unless(TYPE(neg) == T_BIGNUM);
   fail_unless(mpq_equal(expected, REP(neg)._bignum));
 #endif
+
+  neg = __carc_neg(&c, CNIL);
+  fail_unless(error == 1);
+  fail_unless(neg == CNIL);
 }
 END_TEST
 
