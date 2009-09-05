@@ -155,7 +155,7 @@ START_TEST(test_add_bignum)
   fail_unless(TYPE(sum) == T_BIGNUM);
   mpq_init(expected);
   mpq_set_str(expected, "300000000000000000000000000000", 10);
-  fail_if(!mpq_equal(expected, REP(sum)._bignum));
+  fail_unless(mpq_equal(expected, REP(sum)._bignum));
 #endif
 }
 END_TEST
@@ -178,6 +178,58 @@ START_TEST(test_add_misc)
   fail_unless(error == 1);
   error = 0;
 
+}
+END_TEST
+
+START_TEST(test_mul_fixnum)
+{
+  carc c;
+  value v1, v2, prod;
+  mpq_t expected;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  prod = __carc_mul2(&c, INT2FIX(8), INT2FIX(21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 168);
+
+  prod = __carc_mul2(&c, INT2FIX(-8), INT2FIX(-21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 168);
+
+  prod = __carc_mul2(&c, INT2FIX(-8), INT2FIX(21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == -168);
+
+  prod = __carc_mul2(&c, INT2FIX(8), INT2FIX(-21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == -168);
+
+  prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpq_init(expected);
+  mpq_set_si(expected, 2*FIXNUM_MAX, 1);
+  fail_unless(mpq_equal(expected, REP(prod)._bignum));
+
+  prod = __carc_mul2(&c, INT2FIX(-2), INT2FIX(-FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpq_init(expected);
+  mpq_set_si(expected, 2*FIXNUM_MAX, 1);
+  fail_unless(mpq_equal(expected, REP(prod)._bignum));
+
+  prod = __carc_mul2(&c, INT2FIX(-2), INT2FIX(FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpq_init(expected);
+  mpq_set_si(expected, -2*FIXNUM_MAX, 1);
+  fail_unless(mpq_equal(expected, REP(prod)._bignum));
+
+  prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(-FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpq_init(expected);
+  mpq_set_si(expected, -2*FIXNUM_MAX, 1);
+  fail_unless(mpq_equal(expected, REP(prod)._bignum));
 }
 END_TEST
 
@@ -331,6 +383,7 @@ int main(void)
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
   tcase_add_test(tc_ops, test_add_misc);
   tcase_add_test(tc_ops, test_neg);
+  tcase_add_test(tc_ops, test_mul_fixnum);
 
   tcase_add_test(tc_conv, test_coerce_fixnum);
   tcase_add_test(tc_conv, test_coerce_flonum);
