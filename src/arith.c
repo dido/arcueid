@@ -316,28 +316,3 @@ value __carc_mul2(carc *c, value arg1, value arg2)
   return(CNIL);
 
 }
-
-value carc_arith_op(carc *c, int opval, value args)
-{
-  value x, v = INT2FIX(0);
-  value (*op)(carc *, value, value);
-
-  switch (opval) {
-  case '+':
-    op = __carc_add2;
-    break;
-  case '-':
-    op = __carc_sub2;
-    break;
-  case '*':
-    op = __carc_mul2;
-    break;
-  default:
-    c->signal_error(c, "Invalid operator %c");
-    return(CNIL);
-  }
-
-  for (x=args; x != CNIL; x=cdr(x))
-    v = op(c, v, car(x));
-  return(v);
-}
