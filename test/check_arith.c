@@ -95,6 +95,23 @@ START_TEST(test_add_fixnum2flonum)
 }
 END_TEST
 
+START_TEST(test_add_flonum)
+{
+  value val1, val2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkflonum(&c, 2.71828);
+  val2 = carc_mkflonum(&c, 3.14159);
+
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(5.85987 - REP(sum)._flonum) < 1e-6);
+}
+END_TEST
+
+
 static int error = 0;
 
 static void signal_error_test(struct carc *c, const char *fmt, ...)
@@ -255,6 +272,44 @@ START_TEST(test_mul_fixnum2bignum)
 }
 END_TEST
 
+START_TEST(test_mul_misc)
+{
+  carc c;
+  value v, prod;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  prod = __carc_mul2(&c, CNIL, CNIL);
+  fail_unless(error == 1);
+  error = 0;
+
+  prod = __carc_mul2(&c, cons(&c, FIX2INT(1), CNIL), 
+		     cons(&c, FIX2INT(2), CNIL));
+}
+END_TEST
+
+START_TEST(test_mul_fixnum2flonum)
+{
+  value val1, val2, prod;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = INT2FIX(2);
+  val2 = carc_mkflonum(&c, 3.14159);
+
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(6.28318 - REP(prod)._flonum) < 1e-6);
+
+  val1 = INT2FIX(3);
+  prod = __carc_mul2(&c, prod, val1);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(18.84954 - REP(prod)._flonum) < 1e-6);
+}
+END_TEST
 
 START_TEST(test_neg)
 {
@@ -416,6 +471,7 @@ int main(void)
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
+  tcase_add_test(tc_ops, test_add_flonum);
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
   tcase_add_test(tc_ops, test_add_misc);
@@ -423,6 +479,8 @@ int main(void)
   tcase_add_test(tc_ops, test_mul_fixnum);
   tcase_add_test(tc_ops, test_mul_bignum);
   tcase_add_test(tc_ops, test_mul_fixnum2bignum);
+  tcase_add_test(tc_ops, test_mul_fixnum2flonum);
+  tcase_add_test(tc_ops, test_mul_misc);
 
   tcase_add_test(tc_conv, test_coerce_fixnum);
   tcase_add_test(tc_conv, test_coerce_flonum);
