@@ -24,8 +24,11 @@
 #include "../config.h"
 #include <math.h>
 #include <stdlib.h>
+#include <float.h>
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
+
+double __carc_flonum_conv_tolerance = DBL_EPSILON;
 
 /* Type constructors */
 value carc_mkflonum(carc *c, double val)
@@ -126,6 +129,33 @@ void carc_coerce_bignum(carc *c, value v, void *bptr)
 #endif
 }
 
+void carc_coerce_rational(carc *c, value v, void *bptr)
+{
+#ifdef HAVE_GMP_H
+  mpq_t *rat = (mpq_t *)bptr;
+
+  switch (TYPE(v)) {
+  case T_RATIONAL:
+    mpq_set(*rat, REP(v)._rational);
+    break;
+  case T_BIGNUM:
+    mpq_set_z(*rat, REP(v)._bignum);
+    break;
+  case T_FLONUM:
+    mpq_set_d(*rat, REP(v)._flonum);
+    break;
+  case T_FIXNUM:
+    mpq_set_si(*rat, FIX2INT(v), 1);
+    break;
+  default:
+    c->signal_error(c, "Cannot convert operand %v into a rational", v);
+    break;
+  }
+#else
+  c->signal_error(c, "Overflow error (no bignum support)");
+#endif
+}
+
 /* Attempt to coerce the value to a fixnum.  If this is not possible,
    return CNIL. */
 value carc_coerce_fixnum(carc *c, value v)
@@ -152,7 +182,7 @@ value carc_coerce_fixnum(carc *c, value v)
     break;
   case T_RATIONAL:
 #ifdef HAVE_GMP_H
-    {
+    if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1)) {
       mpz_t temp;
 
       mpz_init(temp);
@@ -177,6 +207,42 @@ value carc_coerce_fixnum(carc *c, value v)
   return(CNIL);
 }
 
+/* Coerce value to a fixnum where possible without losing precision.
+   Returns nil if this is impossible. */
+value carc_coerce_fixnum_nf(carc *c, value v)
+{
+  switch (TYPE(v)) {
+  case T_FLONUM:
+    if (ABS(REP(v)._flonum - ((double)((long)REP(v)._flonum)))
+	> __carc_flonum_conv_tolerance)
+      return(CNIL);
+    break;
+  case T_RATIONAL:
+    if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1) != 0)
+      return(CNIL);
+    break;
+  }
+  return(carc_coerce_fixnum(c, v));
+}
+
+/* Coerce value to a bignum where possible without losing precision.
+   Returns nil if this is impossible. */
+value carc_coerce_bignum_nf(carc *c, value v)
+{
+  switch (TYPE(v)) {
+  case T_FLONUM:
+    if (ABS(REP(v)._flonum - ((double)((long)REP(v)._flonum)))
+	> __carc_flonum_conv_tolerance)
+      return(CNIL);
+    break;
+  case T_RATIONAL:
+    if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1) != 0)
+      return(CNIL);
+    break;
+  }
+  return(carc_coerce_fixnum(c, v));
+}
+
 /* Basic arithmetic functions */
 
 static value add2_flonum(carc *c, value arg1, value arg2)
@@ -190,6 +256,29 @@ static value add2_flonum(carc *c, value arg1, value arg2)
 }
 
 static value add2_bignum(carc *c, value arg1, value arg2)
+{
+#ifdef HAVE_GMP_H
+  mpz_t coerced_bignum;
+  value coerced_fixnum;
+
+  if (TYPE(arg2) == T_BIGNUM) {
+    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+  } else {
+    mpz_init(coerced_bignum);
+    carc_coerce_bignum(c, arg2, &coerced_bignum);
+    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
+    mpz_clear(coerced_bignum);
+  }
+  /* Attempt to coerce back to a fixnum if possible */
+  coerced_fixnum = carc_coerce_fixnum(c, arg1);
+  return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
+#else
+  c->signal_error(c, "Overflow error (no bignum support)");
+  return(CNIL);
+#endif
+}
+
+static value add2_rational(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
   mpz_t coerced_bignum;
