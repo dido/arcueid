@@ -19,12 +19,12 @@
   02110-1301 USA.
 */
 
+#include <stdlib.h>
+#include <math.h>
+#include <float.h>
 #include "carc.h"
 #include "arith.h"
 #include "../config.h"
-#include <math.h>
-#include <stdlib.h>
-#include <float.h>
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
@@ -156,8 +156,8 @@ void carc_coerce_rational(carc *c, value v, void *bptr)
 #endif
 }
 
-/* Attempt to coerce the value to a fixnum.  If this is not possible,
-   return CNIL. */
+/* Attempt to coerce the value to a fixnum.  If the number is too large
+   in magnitude to be converted, return nil. */
 value carc_coerce_fixnum(carc *c, value v)
 {
   long val;
@@ -211,13 +211,19 @@ value carc_coerce_fixnum(carc *c, value v)
    Returns nil if this is impossible. */
 value carc_coerce_fixnum_nf(carc *c, value v)
 {
+  double iptr, v;
+
   switch (TYPE(v)) {
   case T_FLONUM:
-    if (ABS(REP(v)._flonum - ((double)((long)REP(v)._flonum)))
-	> __carc_flonum_conv_tolerance)
+    /* If the flonum is not too close to being an integer, do not
+       perform the coercion. */
+    v = modf(REP(v)._flonum, &iptr);
+    if (ABS(v) > __carc_flonum_conv_tolerance)
       return(CNIL);
     break;
   case T_RATIONAL:
+    /* If the denominator of the rational is not 1, we cannot exactly
+       convert the rational, so do not coerce. */
     if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1) != 0)
       return(CNIL);
     break;
@@ -229,10 +235,12 @@ value carc_coerce_fixnum_nf(carc *c, value v)
    Returns nil if this is impossible. */
 value carc_coerce_bignum_nf(carc *c, value v)
 {
+  double iptr, v;
+
   switch (TYPE(v)) {
   case T_FLONUM:
-    if (ABS(REP(v)._flonum - ((double)((long)REP(v)._flonum)))
-	> __carc_flonum_conv_tolerance)
+    v = modf(REP(v)._flonum, &iptr);
+    if (ABS(v) > __carc_flonum_conv_tolerance)
       return(CNIL);
     break;
   case T_RATIONAL:
