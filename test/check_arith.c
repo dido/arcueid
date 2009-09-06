@@ -64,8 +64,7 @@ START_TEST(test_add_fixnum2bignum)
   negone = INT2FIX(-1);
   sum = __carc_add2(&c, maxfixnum, one);
   fail_unless(TYPE(sum) == T_BIGNUM);
-  fail_unless(mpz_get_si(mpq_denref(REP(sum)._bignum)) == 1);
-  fail_unless(mpz_get_si(mpq_numref(REP(sum)._bignum)) == FIXNUM_MAX + 1);
+  fail_unless(mpz_get_si(REP(sum)._bignum) == FIXNUM_MAX + 1);
 
   sum = __carc_add2(&c, negone, sum);
   fail_unless(TYPE(sum) == T_FIXNUM);
@@ -123,7 +122,7 @@ START_TEST(test_add_bignum)
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
   carc c;
-  mpq_t expected;
+  mpz_t expected;
 
   c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
@@ -133,14 +132,14 @@ START_TEST(test_add_bignum)
   fail_unless(FIX2INT(sum) == -1);
 
   val1 = carc_mkbignuml(&c, 0);
-  mpq_set_str(REP(val1)._bignum, "100000000000000000000000000000", 10);
+  mpz_set_str(REP(val1)._bignum, "100000000000000000000000000000", 10);
   val2 = carc_mkbignuml(&c, 0);
-  mpq_set_str(REP(val2)._bignum, "200000000000000000000000000000", 10);
+  mpz_set_str(REP(val2)._bignum, "200000000000000000000000000000", 10);
   sum = __carc_add2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_BIGNUM);
-  mpq_init(expected);
-  mpq_set_str(expected, "300000000000000000000000000000", 10);
-  fail_unless(mpq_equal(expected, REP(sum)._bignum));
+  mpz_init(expected);
+  mpz_set_str(expected, "300000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
 #endif
 }
 END_TEST
@@ -168,7 +167,7 @@ START_TEST(test_mul_fixnum)
   carc c;
   value prod;
 #ifdef HAVE_GMP_H
-  mpq_t expected;
+  mpz_t expected;
 #endif
 
   c.get_cell = get_cell_test;
@@ -194,27 +193,27 @@ START_TEST(test_mul_fixnum)
 #ifdef HAVE_GMP_H
   prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
-  mpq_init(expected);
-  mpq_set_si(expected, 2*FIXNUM_MAX, 1);
-  fail_unless(mpq_equal(expected, REP(prod)._bignum));
+  mpz_init(expected);
+  mpz_set_si(expected, 2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
 
   prod = __carc_mul2(&c, INT2FIX(-2), INT2FIX(-FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
-  mpq_init(expected);
-  mpq_set_si(expected, 2*FIXNUM_MAX, 1);
-  fail_unless(mpq_equal(expected, REP(prod)._bignum));
+  mpz_init(expected);
+  mpz_set_si(expected, 2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
 
   prod = __carc_mul2(&c, INT2FIX(-2), INT2FIX(FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
-  mpq_init(expected);
-  mpq_set_si(expected, -2*FIXNUM_MAX, 1);
-  fail_unless(mpq_equal(expected, REP(prod)._bignum));
+  mpz_init(expected);
+  mpz_set_si(expected, -2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
 
   prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(-FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
-  mpq_init(expected);
-  mpq_set_si(expected, -2*FIXNUM_MAX, 1);
-  fail_unless(mpq_equal(expected, REP(prod)._bignum));
+  mpz_init(expected);
+  mpz_set_si(expected, -2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
 #else
   prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_NIL);
@@ -229,7 +228,7 @@ START_TEST(test_mul_bignum)
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
   carc c;
-  mpq_t expected;
+  mpz_t expected;
 
   c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
@@ -239,14 +238,14 @@ START_TEST(test_mul_bignum)
   fail_unless(FIX2INT(sum) == -1);
 
   val1 = carc_mkbignuml(&c, 0);
-  mpq_set_str(REP(val1)._bignum, "400000000000000000000000000000", 10);
+  mpz_set_str(REP(val1)._bignum, "400000000000000000000000000000", 10);
   val2 = carc_mkbignuml(&c, 0);
-  mpq_set_str(REP(val2)._bignum, "300000000000000000000000000000", 10);
+  mpz_set_str(REP(val2)._bignum, "300000000000000000000000000000", 10);
   sum = __carc_mul2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_BIGNUM);
-  mpq_init(expected);
-  mpq_set_str(expected, "120000000000000000000000000000000000000000000000000000000000", 10);
-  fail_unless(mpq_equal(expected, REP(sum)._bignum));
+  mpz_init(expected);
+  mpz_set_str(expected, "120000000000000000000000000000000000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
 #endif
 }
 END_TEST
@@ -272,7 +271,7 @@ START_TEST(test_mul_fixnum2bignum)
 #ifdef HAVE_GMP_H
   value factorial;
   carc c;
-  mpq_t expected;
+  mpz_t expected;
   int i;
 
   c.get_cell = get_cell_test;
@@ -280,9 +279,9 @@ START_TEST(test_mul_fixnum2bignum)
   for (i=1; i<=100; i++)
     factorial = __carc_mul2(&c, INT2FIX(i), factorial);
 
-  mpq_init(expected);
-  mpq_set_str(expected, "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000", 10);
-  fail_unless(mpq_equal(expected, REP(factorial)._bignum));
+  mpz_init(expected);
+  mpz_set_str(expected, "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REP(factorial)._bignum) == 0);
 #endif
 }
 END_TEST
@@ -331,7 +330,7 @@ START_TEST(test_neg)
   carc c;
   value v, neg;
 #ifdef HAVE_GMP_H
-  mpq_t expected;
+  mpz_t expected;
 #endif
 
   c.get_cell = get_cell_test;
@@ -350,12 +349,12 @@ START_TEST(test_neg)
 
 #ifdef HAVE_GMP_H
   v = carc_mkbignuml(&c, 0);
-  mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
   neg = __carc_neg(&c, v);
-  mpq_init(expected);
-  mpq_set_str(expected, "-100000000000000000000000000000", 10);
+  mpz_init(expected);
+  mpz_set_str(expected, "-100000000000000000000000000000", 10);
   fail_unless(TYPE(neg) == T_BIGNUM);
-  fail_unless(mpq_equal(expected, REP(neg)._bignum));
+  fail_unless(mpz_cmp(expected, REP(neg)._bignum) == 0);
 #endif
 
   neg = __carc_neg(&c, CNIL);
@@ -375,7 +374,7 @@ START_TEST(test_coerce_flonum)
 
 #ifdef HAVE_GMP_H
   v = carc_mkbignuml(&c, 1);
-  mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
   d = carc_coerce_flonum(&c, v);
   fail_unless(fabs(1e29 - d) < 1e-6);
 #endif
@@ -436,7 +435,7 @@ START_TEST(test_coerce_fixnum)
 
   /* too big to convert to fixnum */
   v = carc_mkbignuml(&c, 0);
-  mpq_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
   v2 = carc_coerce_fixnum(&c, v);
   fail_unless(v2 == CNIL);
   fail_unless(TYPE(v2) == T_NIL);
@@ -449,24 +448,23 @@ START_TEST(test_coerce_bignum)
 #ifdef HAVE_GMP_H
   carc c;
   value v;
-  mpq_t v2;
+  mpz_t v2;
 
   c.get_cell = get_cell_test;
   c.signal_error = signal_error_test;
   error = 0;
-  mpq_init(v2);
+  mpz_init(v2);
   v = carc_mkbignuml(&c, 1000);
   carc_coerce_bignum(&c, v, &v2);
-  fail_unless(mpq_equal(REP(v)._bignum, v2));
+  fail_unless(mpz_cmp(REP(v)._bignum, v2) == 0);
 
   v = carc_mkflonum(&c, 3.14159);
   carc_coerce_bignum(&c, v, &v2);
-  fail_unless(fabs(mpq_get_d(v2) - 3.14159) < 1e-6);
+  fail_unless(fabs(mpz_get_d(v2) - 3.0) < 1e-6);
 
   v = INT2FIX(32);
   carc_coerce_bignum(&c, v, &v2);
-  fail_unless(mpz_get_si(mpq_numref(v2)) == 32);
-  fail_unless(mpz_get_si(mpq_denref(v2)) == 1);
+  fail_unless(mpz_get_si(v2) == 32);
 
   v = cons(&c, 1,2);
   carc_coerce_bignum(&c, v, &v2);
