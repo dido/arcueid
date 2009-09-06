@@ -128,6 +128,7 @@ static inline int TYPE(value v)
 
 extern value carc_mkflonum(carc *c, double val);
 extern value carc_mkbignuml(carc *c, long val);
+extern value carc_mkrationall(carc *c, long num, long den);
 
 extern double carc_coerce_flonum(carc *c, value v);
 extern void carc_coerce_bignum(carc *c, value v, void *bignum);
