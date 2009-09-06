@@ -54,6 +54,22 @@ value carc_mkbignuml(carc *c, long val)
 #endif
 }
 
+value carc_mkrationall(carc *c, long num, long den)
+{
+#ifdef HAVE_GMP_H
+  value rat;
+
+  rat = c->get_cell(c);
+  BTYPE(rat) = T_RATIONAL;
+  mpq_init(REP(rat)._rational);
+  mpq_set_si(REP(rat)._rational, num, den);
+  return(rat);
+#else
+  c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+  return(CNIL);
+#endif
+}
+
 /* Type conversions */
 double carc_coerce_flonum(carc *c, value v)
 {
@@ -63,6 +79,9 @@ double carc_coerce_flonum(carc *c, value v)
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
     val = mpz_get_d(REP(v)._bignum);
+    break;
+  case T_RATIONAL:
+    val = mpq_get_d(REP(v)._rational);
     break;
 #endif
   case T_FLONUM:
@@ -86,6 +105,11 @@ void carc_coerce_bignum(carc *c, value v, void *bptr)
   switch (TYPE(v)) {
   case T_BIGNUM:
     mpz_set(*bignum, REP(v)._bignum);
+    break;
+  case T_RATIONAL:
+    mpz_cdiv_q(*bignum,
+	       mpq_numref(REP(v)._rational),
+	       mpq_denref(REP(v)._rational));
     break;
   case T_FLONUM:
     mpz_set_d(*bignum, REP(v)._flonum);
@@ -121,6 +145,29 @@ value carc_coerce_fixnum(carc *c, value v)
     if (mpz_cmp_si(REP(v)._bignum, FIXNUM_MAX) <= 0
 	&& mpz_cmp_si(REP(v)._bignum, FIXNUM_MIN) >= 0) {
       return(INT2FIX(mpz_get_si(REP(v)._bignum)));
+    }
+#else
+    c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+#endif
+    break;
+  case T_RATIONAL:
+#ifdef HAVE_GMP_H
+    {
+      mpz_t temp;
+
+      mpz_init(temp);
+      mpz_cdiv_q(temp,
+		 mpq_numref(REP(v)._rational),
+		 mpq_denref(REP(v)._rational));
+      if (mpz_cmp_si(temp, FIXNUM_MAX) <= 0
+	  && mpz_cmp_si(temp, FIXNUM_MIN) >= 0) {
+	value val;
+
+	val = INT2FIX(mpz_get_si(temp));
+	mpz_clear(temp);
+	return(val);
+      }
+      mpz_clear(temp);
     }
 #else
     c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
@@ -216,6 +263,7 @@ value __carc_neg(carc *c, value arg)
   return(CNIL);
 }
 
+/*
 value __carc_sub2(carc *c, value arg1, value arg2)
 {
   long fixnum_diff;
@@ -229,6 +277,7 @@ value __carc_sub2(carc *c, value arg1, value arg2)
 
   return(__carc_add2(c, arg1, __carc_neg(c, arg2)));
 }
+*/
 
 static value mul2_flonum(carc *c, value arg1, value arg2)
 {
