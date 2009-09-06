@@ -74,9 +74,13 @@ if test "x$enable_bignum" != xno; then
     MP_HEADER="#include <gmp.h>"
     MP_TYPE="typedef mpz_t bignum_t"
     MP_BVALUE="bignum_t _bignum"
+    MPQ_TYPE="typedef mpq_t rational_t"
+    MPQ_BVALUE="rational_t _rational"
     AC_SUBST(MP_HEADER)
     AC_SUBST(MP_TYPE)
     AC_SUBST(MP_BVALUE)
+    AC_SUBST(MPQ_TYPE)
+    AC_SUBST(MPQ_BVALUE)
   else
     AC_MSG_FAILURE([Bignum (libgmp) test failed (--disable-bignum to disable)])
   fi
