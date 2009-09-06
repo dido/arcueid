@@ -45,8 +45,8 @@ value carc_mkbignuml(carc *c, long val)
 
   bignum = c->get_cell(c);
   BTYPE(bignum) = T_BIGNUM;
-  mpq_init(REP(bignum)._bignum);
-  mpq_set_si(REP(bignum)._bignum, val, 1);
+  mpz_init(REP(bignum)._bignum);
+  mpz_set_si(REP(bignum)._bignum, val);
   return(bignum);
 #else
   c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
@@ -62,7 +62,7 @@ double carc_coerce_flonum(carc *c, value v)
   switch (TYPE(v)) {
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
-    val = mpq_get_d(REP(v)._bignum);
+    val = mpz_get_d(REP(v)._bignum);
     break;
 #endif
   case T_FLONUM:
@@ -81,17 +81,17 @@ double carc_coerce_flonum(carc *c, value v)
 void carc_coerce_bignum(carc *c, value v, void *bptr)
 {
 #ifdef HAVE_GMP_H
-  mpq_t *bignum = (mpq_t *)bptr;
+  mpz_t *bignum = (mpz_t *)bptr;
 
   switch (TYPE(v)) {
   case T_BIGNUM:
-    mpq_set(*bignum, REP(v)._bignum);
+    mpz_set(*bignum, REP(v)._bignum);
     break;
   case T_FLONUM:
-    mpq_set_d(*bignum, REP(v)._flonum);
+    mpz_set_d(*bignum, REP(v)._flonum);
     break;
   case T_FIXNUM:
-    mpq_set_si(*bignum, FIX2INT(v), 1);
+    mpz_set_si(*bignum, FIX2INT(v));
     break;
   default:
     c->signal_error(c, "Cannot convert operand %v into a bignum", v);
@@ -118,13 +118,9 @@ value carc_coerce_fixnum(carc *c, value v)
     return(INT2FIX(val));
   case T_BIGNUM:
 #ifdef HAVE_GMP_H
-    if (mpq_cmp_si(REP(v)._bignum, FIXNUM_MAX, 1) <= 0
-	&& mpq_cmp_si(REP(v)._bignum, FIXNUM_MIN, 1) >= 0) {
-      long num, den;
-
-      num = mpz_get_si(mpq_numref(REP(v)._bignum));
-      den = mpz_get_si(mpq_denref(REP(v)._bignum));
-      return(INT2FIX(num/den));
+    if (mpz_cmp_si(REP(v)._bignum, FIXNUM_MAX) <= 0
+	&& mpz_cmp_si(REP(v)._bignum, FIXNUM_MIN) >= 0) {
+      return(INT2FIX(mpz_get_si(REP(v)._bignum)));
     }
 #else
     c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
@@ -149,16 +145,16 @@ static value add2_flonum(carc *c, value arg1, value arg2)
 static value add2_bignum(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
-  mpq_t coerced_bignum;
+  mpz_t coerced_bignum;
   value coerced_fixnum;
 
   if (TYPE(arg2) == T_BIGNUM) {
-    mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
   } else {
-    mpq_init(coerced_bignum);
+    mpz_init(coerced_bignum);
     carc_coerce_bignum(c, arg2, &coerced_bignum);
-    mpq_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
-    mpq_clear(coerced_bignum);
+    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
+    mpz_clear(coerced_bignum);
   }
   /* Attempt to coerce back to a fixnum if possible */
   coerced_fixnum = carc_coerce_fixnum(c, arg1);
@@ -210,7 +206,7 @@ value __carc_neg(carc *c, value arg)
     {
       value big;
       big = carc_mkbignuml(c, 0);
-      mpq_neg(REP(big)._bignum, REP(arg)._bignum);
+      mpz_neg(REP(big)._bignum, REP(arg)._bignum);
       return(big);
     }
 #endif
@@ -247,16 +243,16 @@ static value mul2_flonum(carc *c, value arg1, value arg2)
 static value mul2_bignum(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
-  mpq_t coerced_bignum;
+  mpz_t coerced_bignum;
   value coerced_fixnum;
 
   if (TYPE(arg2) == T_BIGNUM) {
-    mpq_mul(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+    mpz_mul(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
   } else {
-    mpq_init(coerced_bignum);
+    mpz_init(coerced_bignum);
     carc_coerce_bignum(c, arg2, &coerced_bignum);
-    mpq_mul(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
-    mpq_clear(coerced_bignum);
+    mpz_mul(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
+    mpz_clear(coerced_bignum);
   }
   /* Attempt to coerce back to a fixnum if possible */
   coerced_fixnum = carc_coerce_fixnum(c, arg1);
