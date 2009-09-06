@@ -30,6 +30,7 @@
 
 typedef unsigned long value;
 @MP_TYPE@;
+@MPQ_TYPE@;
 
 typedef struct carc {
   value (*get_cell)(struct carc *);
@@ -44,10 +45,11 @@ enum carc_types {
   T_FIXNUM=0x02,
   T_BIGNUM=0x03,
   T_FLONUM=0x04,
-  T_STRING=0x05,
-  T_SYMBOL=0x06,
-  T_FOREIGN_FUNC=0x07,
-  T_CONS=0x08,
+  T_RATIONAL=0x05,
+  T_STRING=0x06,
+  T_SYMBOL=0x07,
+  T_FOREIGN_FUNC=0x08,
+  T_CONS=0x09,
   T_NONE=0xff
 };
 
@@ -61,6 +63,7 @@ struct cell {
       int length;
     } _str;
     @MP_BVALUE@;
+    @MPQ_BVALUE@;
     double _flonum;
     struct {
       value car;
