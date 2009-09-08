@@ -252,7 +252,33 @@ value carc_coerce_bignum_nf(carc *c, value v, void *bptr)
   return(CTRUE);
 }
 
-/* Basic arithmetic functions */
+/* Coerce a rational back to an integral type where possible.  Otherwise
+   return v. */
+static value integer_coerce(carc *c, value v)
+{
+#ifdef HAVE_GMP_H
+  value v;
+
+  /* Attempt to coerce back to a fixnum if possible.  If the denominator
+     is 1 in this case, try to convert back. */
+  if (!mpz_cmp_si(mpq_denref(REP(v)._rational, 1))) {
+    /* Not 1, cannot coerce */
+    return(v);
+  }
+
+  /* It is an integer--try to convert to fixnum or bignum */
+  v = carc_coerce_fixnum(c, v);
+  if (v != CNIL)
+    return(v);
+
+  /* Coerce to bignum */
+  v = carc_mkbignuml(c, 0);
+  carc_coerce_bignum(c, v, &REP(v)._bignum);
+  return(v);
+#endif
+}
+
+/*================================= Basic arithmetic functions */
 
 static value add2_flonum(carc *c, value arg1, value arg2)
 {
@@ -303,21 +329,7 @@ static value add2_rational(carc *c, value arg1, value arg2)
     mpq_clear(coerced_rational);
   }
 
-  /* Attempt to coerce back to a fixnum if possible */
-  coerced_ret = carc_coerce_fixnum_nf(c, arg1);
-  if (coerced_ret == CNIL) {
-    /* Try to coerce to a bignum if possible */
-    mpz_init(coerced_bignum);
-    if (carc_coerce_bignum_nf(c, arg2, &coerced_bignum) == CNIL) {
-      /* failed */
-      mpz_clear(coerced_bignum);
-      return(arg1);
-    }
-    coerced_ret = carc_mkbignuml(c, 0);
-    mpz_set(REP(coerced_ret)._bignum, coerced_bignum);
-    mpz_clear(coerced_bignum);
-  }
-  return(coerced_ret);
+  return(integer_coerce(c, arg1));
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
   return(CNIL);
