@@ -199,7 +199,7 @@ value carc_coerce_fixnum(carc *c, value v)
     break;
   case T_RATIONAL:
 #ifdef HAVE_GMP_H
-    if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1)) {
+    {
       mpz_t temp;
 
       mpz_init(temp);
@@ -214,7 +214,6 @@ value carc_coerce_fixnum(carc *c, value v)
 	mpz_clear(temp);
 	return(val);
       }
-      mpz_clear(temp);
     }
 #else
     c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
@@ -233,7 +232,7 @@ static value integer_coerce(carc *c, value v)
 
   /* Attempt to coerce back to a fixnum if possible.  If the denominator
      is 1 in this case, try to convert back. */
-  if (!mpz_cmp_si(mpq_denref(REP(v)._rational), 1)) {
+  if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1) != 0) {
     /* Not 1, cannot coerce */
     return(v);
   }
@@ -288,18 +287,17 @@ static value add2_flonum(carc *c, value arg1, value arg2)
 static value add2_rational(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
-  mpq_t coerced_rational;
+  value sum;
 
+  sum = carc_mkrationall(c, 0, 1);
   if (TYPE(arg2) == T_RATIONAL) {
-    mpq_add(REP(arg1)._rational, REP(arg1)._rational, REP(arg2)._rational);
+    mpq_add(REP(sum)._rational, REP(arg1)._rational, REP(arg2)._rational);
   } else {
-    mpq_init(coerced_rational);
-    carc_coerce_rational(c, arg2, &coerced_rational);
-    mpq_add(REP(arg1)._rational, REP(arg1)._rational, coerced_rational);
-    mpq_clear(coerced_rational);
+    carc_coerce_rational(c, arg2, &REP(sum)._rational);
+    mpq_add(REP(sum)._rational, REP(arg1)._rational, REP(sum)._rational);
   }
 
-  return(integer_coerce(c, arg1));
+  return(integer_coerce(c, sum));
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
   return(CNIL);
