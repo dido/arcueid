@@ -211,14 +211,14 @@ value carc_coerce_fixnum(carc *c, value v)
    Returns nil if this is impossible. */
 value carc_coerce_fixnum_nf(carc *c, value v)
 {
-  double iptr, v;
+  double iptr, frac;
 
   switch (TYPE(v)) {
   case T_FLONUM:
     /* If the flonum is not too close to being an integer, do not
        perform the coercion. */
-    v = modf(REP(v)._flonum, &iptr);
-    if (ABS(v) > __carc_flonum_conv_tolerance)
+    frac = modf(REP(v)._flonum, &iptr);
+    if (ABS(frac) > __carc_flonum_conv_tolerance)
       return(CNIL);
     break;
   case T_RATIONAL:
@@ -235,12 +235,12 @@ value carc_coerce_fixnum_nf(carc *c, value v)
    Returns nil if this is impossible, CTRUE if it can be done. */
 value carc_coerce_bignum_nf(carc *c, value v, void *bptr)
 {
-  double iptr, v;
+  double frac, iptr;
 
   switch (TYPE(v)) {
   case T_FLONUM:
-    v = modf(REP(v)._flonum, &iptr);
-    if (ABS(v) > __carc_flonum_conv_tolerance)
+    frac = modf(REP(v)._flonum, &iptr);
+    if (ABS(frac) > __carc_flonum_conv_tolerance)
       return(CNIL);
     break;
   case T_RATIONAL:
@@ -376,7 +376,7 @@ value __carc_neg(carc *c, value arg)
   case T_RATIONAL:
     {
       value rat;
-      rat = carc_mkrationall(carc *c, 0, 1);
+      rat = carc_mkrationall(c, 0, 1);
       mpq_neg(REP(rat)._rational, REP(arg)._rational);
       return(rat);
     }
