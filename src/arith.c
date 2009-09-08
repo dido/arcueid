@@ -244,7 +244,7 @@ static value integer_coerce(carc *c, value v)
 
   /* Coerce to bignum */
   val = carc_mkbignuml(c, 0);
-  carc_coerce_bignum(c, val, &REP(v)._bignum);
+  carc_coerce_bignum(c, v, &REP(val)._bignum);
   return(val);
 #endif
 }
