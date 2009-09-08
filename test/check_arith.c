@@ -140,6 +140,7 @@ START_TEST(test_add_bignum)
   mpz_init(expected);
   mpz_set_str(expected, "300000000000000000000000000000", 10);
   fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
+  mpz_clear(expected);
 #endif
 }
 END_TEST
@@ -172,6 +173,7 @@ START_TEST(test_add_rational)
   mpz_init(expected);
   mpz_set_str(expected, "401734511064747568885490523085290650630550748445698208825344", 10);
   fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
+  mpz_clear(expected);
 #endif
 
 }
@@ -232,21 +234,19 @@ START_TEST(test_mul_fixnum)
 
   prod = __carc_mul2(&c, INT2FIX(-2), INT2FIX(-FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
-  mpz_init(expected);
   mpz_set_si(expected, 2*FIXNUM_MAX);
   fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
 
   prod = __carc_mul2(&c, INT2FIX(-2), INT2FIX(FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
-  mpz_init(expected);
   mpz_set_si(expected, -2*FIXNUM_MAX);
   fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
 
   prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(-FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
-  mpz_init(expected);
   mpz_set_si(expected, -2*FIXNUM_MAX);
   fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
+  mpz_clear(expected);
 #else
   prod = __carc_mul2(&c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_NIL);
@@ -279,6 +279,7 @@ START_TEST(test_mul_bignum)
   mpz_init(expected);
   mpz_set_str(expected, "120000000000000000000000000000000000000000000000000000000000", 10);
   fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
+  mpz_clear(expected);
 #endif
 }
 END_TEST
@@ -315,6 +316,7 @@ START_TEST(test_mul_fixnum2bignum)
   mpz_init(expected);
   mpz_set_str(expected, "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000", 10);
   fail_unless(mpz_cmp(expected, REP(factorial)._bignum) == 0);
+  mpz_clear(expected);
 #endif
 }
 END_TEST
@@ -388,6 +390,7 @@ START_TEST(test_neg)
   mpz_set_str(expected, "-100000000000000000000000000000", 10);
   fail_unless(TYPE(neg) == T_BIGNUM);
   fail_unless(mpz_cmp(expected, REP(neg)._bignum) == 0);
+  mpz_clear(expected);
 #endif
 
   neg = __carc_neg(&c, CNIL);
