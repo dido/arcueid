@@ -73,6 +73,23 @@ value carc_mkrationall(carc *c, long num, long den)
 #endif
 }
 
+value carc_mkrationalb(carc *c, value b)
+{
+#ifdef HAVE_GMP_H
+  value rat;
+
+  rat = c->get_cell(c);
+  BTYPE(rat) = T_RATIONAL;
+  mpq_init(REP(rat)._rational);
+  mpq_set_z(REP(rat)._rational, REP(b)._bignum);
+  return(rat);
+#else
+  c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+  return(CNIL);
+#endif
+}
+
+
 /* Type conversions */
 double carc_coerce_flonum(carc *c, value v)
 {
@@ -207,118 +224,71 @@ value carc_coerce_fixnum(carc *c, value v)
   return(CNIL);
 }
 
-/* Coerce value to a fixnum where possible without losing precision.
-   Returns nil if this is impossible. */
-value carc_coerce_fixnum_nf(carc *c, value v)
-{
-  double iptr, frac;
-
-  switch (TYPE(v)) {
-  case T_FLONUM:
-    /* If the flonum is not too close to being an integer, do not
-       perform the coercion. */
-    frac = modf(REP(v)._flonum, &iptr);
-    if (ABS(frac) > __carc_flonum_conv_tolerance)
-      return(CNIL);
-    break;
-  case T_RATIONAL:
-    /* If the denominator of the rational is not 1, we cannot exactly
-       convert the rational, so do not coerce. */
-    if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1) != 0)
-      return(CNIL);
-    break;
-  }
-  return(carc_coerce_fixnum(c, v));
-}
-
-/* Coerce value to a bignum where possible without losing precision.
-   Returns nil if this is impossible, CTRUE if it can be done. */
-value carc_coerce_bignum_nf(carc *c, value v, void *bptr)
-{
-  double frac, iptr;
-
-  switch (TYPE(v)) {
-  case T_FLONUM:
-    frac = modf(REP(v)._flonum, &iptr);
-    if (ABS(frac) > __carc_flonum_conv_tolerance)
-      return(CNIL);
-    break;
-  case T_RATIONAL:
-    if (mpz_cmp_si(mpq_denref(REP(v)._rational), 1) != 0)
-      return(CNIL);
-    break;
-  }
-  carc_coerce_bignum(c, v, bptr);
-  return(CTRUE);
-}
-
 /* Coerce a rational back to an integral type where possible.  Otherwise
-   return v. */
+   return v.  Used by most rational arithmetic operators. */
 static value integer_coerce(carc *c, value v)
 {
 #ifdef HAVE_GMP_H
-  value v;
+  value val;
 
   /* Attempt to coerce back to a fixnum if possible.  If the denominator
      is 1 in this case, try to convert back. */
-  if (!mpz_cmp_si(mpq_denref(REP(v)._rational, 1))) {
+  if (!mpz_cmp_si(mpq_denref(REP(v)._rational), 1)) {
     /* Not 1, cannot coerce */
     return(v);
   }
 
   /* It is an integer--try to convert to fixnum or bignum */
-  v = carc_coerce_fixnum(c, v);
-  if (v != CNIL)
-    return(v);
+  val = carc_coerce_fixnum(c, v);
+  if (val != CNIL)
+    return(val);
 
   /* Coerce to bignum */
-  v = carc_mkbignuml(c, 0);
-  carc_coerce_bignum(c, v, &REP(v)._bignum);
-  return(v);
+  val = carc_mkbignuml(c, 0);
+  carc_coerce_bignum(c, val, &REP(v)._bignum);
+  return(val);
 #endif
 }
 
 /*================================= Basic arithmetic functions */
 
+/* All arithmetic functions take two arguments, and return their
+   result, not modifying their arguments.  A new cell is allocated
+   from the heap for the result if this is needed.
+
+   The following implicit type conversions occur for arithmetic
+   operations:
+
+              Fixnum   Bignum   Rational   Flonum   Complex
+   Fixnum     Fixnum   Bignum   Rational   Flonum   Complex
+   Bignum     Bignum   Bignum   Rational   Flonum   Complex
+   Rational   Rational Rational Rational   Flonum   Complex
+   Flonum     Flonum   Flonum   Flonum     Flonum   Complex
+   Complex    Complex  Complex  Complex    Complex  Complex
+
+   If a bignum result is smaller than ±FIXNUM_MAX, it is implicitly
+   converted to a fixnum.
+
+   If a rational has a denominator of 1, the result is implicitly
+   converted to a fixnum, if the range allows, or a bignum if not.
+
+   If a complex has an imaginary part of 0, the result is implicitly
+   converted to a flonum.
+ */
 static value add2_flonum(carc *c, value arg1, value arg2)
 {
   double coerced_flonum;
 
   coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)._flonum
     : carc_coerce_flonum(c, arg2);
-  REP(arg1)._flonum += coerced_flonum;
-  return(arg1);
-}
-
-static value add2_bignum(carc *c, value arg1, value arg2)
-{
-#ifdef HAVE_GMP_H
-  mpz_t coerced_bignum;
-  value coerced_fixnum;
-
-  if (TYPE(arg2) == T_BIGNUM) {
-    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
-  } else {
-    mpz_init(coerced_bignum);
-    carc_coerce_bignum(c, arg2, &coerced_bignum);
-    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
-    mpz_clear(coerced_bignum);
-  }
-  /* Attempt to coerce back to a fixnum if possible */
-  coerced_fixnum = carc_coerce_fixnum(c, arg1);
-  return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
-#else
-  c->signal_error(c, "Overflow error (no bignum support)");
-  return(CNIL);
-#endif
+  coerced_flonum += REP(arg1)._flonum;
+  return(carc_mkflonum(c, coerced_flonum));
 }
 
 static value add2_rational(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
   mpq_t coerced_rational;
-  mpz_t coerced_bignum;
-  value coerced_ret;
 
   if (TYPE(arg2) == T_RATIONAL) {
     mpq_add(REP(arg1)._rational, REP(arg1)._rational, REP(arg2)._rational);
@@ -330,6 +300,36 @@ static value add2_rational(carc *c, value arg1, value arg2)
   }
 
   return(integer_coerce(c, arg1));
+#else
+  c->signal_error(c, "Overflow error (no bignum support)");
+  return(CNIL);
+#endif
+}
+
+static value add2_bignum(carc *c, value arg1, value arg2)
+{
+#ifdef HAVE_GMP_H
+  value sum, coerced_fixnum;
+
+  switch (TYPE(arg2)) {
+  case T_BIGNUM:
+    sum = carc_mkbignuml(c, 0);
+    mpz_add(REP(sum)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+    break;
+  case T_RATIONAL:
+    sum = carc_mkrationalb(c, arg1);
+    return(add2_rational(c, arg1, sum));
+    break;
+  default:
+    sum = carc_mkbignuml(c, 0);
+    carc_coerce_bignum(c, arg2, &REP(sum)._bignum);
+    mpz_add(REP(sum)._bignum, REP(arg1)._bignum, REP(sum)._bignum);
+    break;
+  }
+
+  /* Attempt to coerce back to a fixnum if possible */
+  coerced_fixnum = carc_coerce_fixnum(c, sum);
+  return((coerced_fixnum == CNIL) ? sum : coerced_fixnum);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
   return(CNIL);
