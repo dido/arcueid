@@ -232,8 +232,8 @@ value carc_coerce_fixnum_nf(carc *c, value v)
 }
 
 /* Coerce value to a bignum where possible without losing precision.
-   Returns nil if this is impossible. */
-value carc_coerce_bignum_nf(carc *c, value v)
+   Returns nil if this is impossible, CTRUE if it can be done. */
+value carc_coerce_bignum_nf(carc *c, value v, void *bptr)
 {
   double iptr, v;
 
@@ -248,7 +248,8 @@ value carc_coerce_bignum_nf(carc *c, value v)
       return(CNIL);
     break;
   }
-  return(carc_coerce_fixnum(c, v));
+  carc_coerce_bignum(c, v, bptr);
+  return(CTRUE);
 }
 
 /* Basic arithmetic functions */
@@ -289,20 +290,34 @@ static value add2_bignum(carc *c, value arg1, value arg2)
 static value add2_rational(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
+  mpq_t coerced_rational;
   mpz_t coerced_bignum;
-  value coerced_fixnum;
+  value coerced_ret;
 
-  if (TYPE(arg2) == T_BIGNUM) {
-    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+  if (TYPE(arg2) == T_RATIONAL) {
+    mpq_add(REP(arg1)._rational, REP(arg1)._rational, REP(arg2)._rational);
   } else {
+    mpq_init(coerced_rational);
+    carc_coerce_rational(c, arg2, &coerced_rational);
+    mpq_add(REP(arg1)._rational, REP(arg1)._rational, coerced_rational);
+    mpq_clear(coerced_rational);
+  }
+
+  /* Attempt to coerce back to a fixnum if possible */
+  coerced_ret = carc_coerce_fixnum_nf(c, arg1);
+  if (coerced_ret == CNIL) {
+    /* Try to coerce to a bignum if possible */
     mpz_init(coerced_bignum);
-    carc_coerce_bignum(c, arg2, &coerced_bignum);
-    mpz_add(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
+    if (carc_coerce_bignum_nf(c, arg2, &coerced_bignum) == CNIL) {
+      /* failed */
+      mpz_clear(coerced_bignum);
+      return(arg1);
+    }
+    coerced_ret = carc_mkbignuml(c, 0);
+    mpz_set(REP(coerced_ret)._bignum, coerced_bignum);
     mpz_clear(coerced_bignum);
   }
-  /* Attempt to coerce back to a fixnum if possible */
-  coerced_fixnum = carc_coerce_fixnum(c, arg1);
-  return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
+  return(coerced_ret);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
   return(CNIL);
@@ -325,6 +340,8 @@ value __carc_add2(carc *c, value arg1, value arg2)
     return(add2_flonum(c, arg1, arg2));
   case T_BIGNUM:
     return(add2_bignum(c, arg1, arg2));
+  case T_RATIONAL:
+    return(add2_rational(c, arg1, arg2));
   }
 
   switch (TYPE(arg2)) {
@@ -332,6 +349,8 @@ value __carc_add2(carc *c, value arg1, value arg2)
     return(add2_flonum(c, arg2, arg1));
   case T_BIGNUM:
     return(add2_bignum(c, arg2, arg1));
+  case T_RATIONAL:
+    return(add2_rational(c, arg1, arg2));
   }
 
   c->signal_error(c, "Invalid types for addition");
@@ -345,14 +364,23 @@ value __carc_neg(carc *c, value arg)
     return(INT2FIX(-FIX2INT(arg)));
   case T_FLONUM:
     return(carc_mkflonum(c, -REP(arg)._flonum));
-  case T_BIGNUM:
 #ifdef HAVE_GMP_H
+  case T_BIGNUM:
     {
       value big;
       big = carc_mkbignuml(c, 0);
       mpz_neg(REP(big)._bignum, REP(arg)._bignum);
       return(big);
     }
+    break;
+  case T_RATIONAL:
+    {
+      value rat;
+      rat = carc_mkrationall(carc *c, 0, 1);
+      mpq_neg(REP(rat)._rational, REP(arg)._rational);
+      return(rat);
+    }
+    break;
 #endif
   default:
     c->signal_error(c, "Invalid type for negation");
