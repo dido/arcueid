@@ -149,6 +149,7 @@ START_TEST(test_add_rational)
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
   carc c;
+  mpz_t expected;
 
   c.get_cell = get_cell_test;
   val1 = carc_mkrationall(&c, 1, 2);
@@ -161,6 +162,16 @@ START_TEST(test_add_rational)
   sum = __carc_add2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_FIXNUM);
   fail_unless(FIX2INT(sum) == 1);
+
+  val1 = carc_mkrationall(&c, 0, 1);
+  mpq_set_str(REP(val1)._rational, "1606938044258990275541962092341162602522202993782792835301375/4", 10);
+  val2 = carc_mkrationall(&c, 0, 1);
+  mpq_set_str(REP(val2)._rational, "1/4", 10);
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "401734511064747568885490523085290650630550748445698208825344", 10);
+  fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
 #endif
 
 }
