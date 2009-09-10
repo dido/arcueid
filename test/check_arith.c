@@ -133,6 +133,21 @@ START_TEST(test_add_flonum)
 }
 END_TEST
 
+START_TEST(test_add_flonum2rational)
+{
+  value val1, val2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkflonum(&c, 0.5);
+  val2 = carc_mkrationall(&c, 1, 2);
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(1.0 - REP(sum)._flonum) < 1e-6);
+}
+END_TEST
+
 static int error = 0;
 
 static void signal_error_test(struct carc *c, const char *fmt, ...)
@@ -607,6 +622,7 @@ int main(void)
   tcase_add_test(tc_ops, test_add_fixnum2rational);
   tcase_add_test(tc_ops, test_add_bignum2flonum);
   tcase_add_test(tc_ops, test_add_bignum2rational);
+  tcase_add_test(tc_ops, test_add_flonum2rational);
   tcase_add_test(tc_ops, test_add_misc);
   tcase_add_test(tc_ops, test_neg);
   tcase_add_test(tc_ops, test_mul_fixnum);
