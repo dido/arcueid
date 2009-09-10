@@ -486,6 +486,11 @@ START_TEST(test_neg)
   fail_unless(TYPE(neg) == T_BIGNUM);
   fail_unless(mpz_cmp(expected, REP(neg)._bignum) == 0);
   mpz_clear(expected);
+
+  v = carc_mkrationall(&c, 1, 2);
+  neg = __carc_neg(&c, v);
+  fail_unless(TYPE(neg) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(neg)._rational, -1, 2) == 0);
 #endif
 
   neg = __carc_neg(&c, CNIL);
