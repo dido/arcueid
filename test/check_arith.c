@@ -117,6 +117,37 @@ START_TEST(test_add_fixnum2rational)
 }
 END_TEST
 
+START_TEST(test_add_bignum2rational)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, sum;
+  carc c;
+  mpq_t expected;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkrationall(&c, 1, 2);
+  v2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "100000000000000000000000000000", 10);
+  sum = __carc_add2(&c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "200000000000000000000000000001/2", 10);
+  fail_unless(mpq_cmp(expected, REP(sum)._rational) == 0);
+  mpq_clear(expected);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "100000000000000000000000000000", 10);
+  v2 = carc_mkrationall(&c, 1, 2);
+  sum = __carc_add2(&c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "200000000000000000000000000001/2", 10);
+  fail_unless(mpq_cmp(expected, REP(sum)._rational) == 0);
+  mpq_clear(expected);
+#endif
+}
+END_TEST
 
 START_TEST(test_add_flonum)
 {
@@ -549,6 +580,7 @@ int main(void)
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
   tcase_add_test(tc_ops, test_add_fixnum2rational);
+  tcase_add_test(tc_ops, test_add_bignum2rational);
   tcase_add_test(tc_ops, test_add_misc);
   tcase_add_test(tc_ops, test_neg);
   tcase_add_test(tc_ops, test_mul_fixnum);
