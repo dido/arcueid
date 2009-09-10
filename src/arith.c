@@ -451,6 +451,26 @@ static value mul2_bignum(carc *c, value arg1, value arg2)
 #endif
 }
 
+static value mul2_rational(carc *c, value arg1, value arg2)
+{
+#ifdef HAVE_GMP_H
+  value prod;
+
+  prod = carc_mkrationall(c, 1, 1);
+  if (TYPE(arg2) == T_RATIONAL) {
+    mpq_mul(REP(prod)._rational, REP(arg1)._rational, REP(arg2)._rational);
+  } else {
+    carc_coerce_rational(c, arg2, &REP(prod)._rational);
+    mpq_mul(REP(prod)._rational, REP(arg1)._rational, REP(prod)._rational);
+  }
+
+  return(integer_coerce(c, prod));
+#else
+  c->signal_error(c, "Overflow error (no bignum support)");
+  return(CNIL);
+#endif
+}
+
 value __carc_mul2(carc *c, value arg1, value arg2)
 {
 
@@ -487,6 +507,8 @@ value __carc_mul2(carc *c, value arg1, value arg2)
     return(mul2_flonum(c, arg1, arg2));
   case T_BIGNUM:
     return(mul2_bignum(c, arg1, arg2));
+  case T_RATIONAL:
+    return(mul2_rational(c, arg1, arg2));
   }
 
   switch (TYPE(arg2)) {
@@ -494,6 +516,8 @@ value __carc_mul2(carc *c, value arg1, value arg2)
     return(mul2_flonum(c, arg2, arg1));
   case T_BIGNUM:
     return(mul2_bignum(c, arg2, arg1));
+  case T_RATIONAL:
+    return(mul2_rational(c, arg2, arg1));
   }
 
   c->signal_error(c, "Invalid types for multiplication");
