@@ -94,6 +94,30 @@ START_TEST(test_add_fixnum2flonum)
 }
 END_TEST
 
+START_TEST(test_add_fixnum2rational)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkrationall(&c, 1, 2);
+  v2 = INT2FIX(1);
+  sum = __carc_add2(&c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(sum)._rational, 3, 2) == 0);
+
+  v1 = INT2FIX(1);
+  v2 = carc_mkrationall(&c, 1, 2);
+  sum = __carc_add2(&c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(sum)._rational, 3, 2) == 0);
+#endif
+}
+END_TEST
+
+
 START_TEST(test_add_flonum)
 {
   value val1, val2, sum;
@@ -524,6 +548,7 @@ int main(void)
   tcase_add_test(tc_ops, test_add_rational);
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
+  tcase_add_test(tc_ops, test_add_fixnum2rational);
   tcase_add_test(tc_ops, test_add_misc);
   tcase_add_test(tc_ops, test_neg);
   tcase_add_test(tc_ops, test_mul_fixnum);
