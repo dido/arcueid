@@ -606,6 +606,44 @@ START_TEST(test_coerce_bignum)
   carc_coerce_bignum(&c, v, &v2);
   fail_unless(error == 1);
   error = 0;
+  mpz_clear(v2);
+#endif
+}
+END_TEST
+
+START_TEST(test_coerce_rational)
+{
+#ifdef HAVE_GMP_H
+  carc c;
+  value v;
+  mpq_t v2;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+
+  mpq_init(v2);
+
+  v = carc_mkrationall(&c, 1, 2);
+  carc_coerce_rational(&c, v, &v2);
+  fail_unless(mpq_cmp(REP(v)._rational, v2) == 0);
+
+  error = 0;
+  v = carc_mkbignuml(&c, 1000);
+  carc_coerce_rational(&c, v, &v2);
+  fail_unless(mpq_cmp_si(v2, 1000, 1) == 0);
+
+  v = carc_mkflonum(&c, 3.14159);
+  carc_coerce_rational(&c, v, &v2);
+  fail_unless(fabs(mpq_get_d(v2) - 3.14159) < 1e-6);
+
+  v = INT2FIX(32);
+  carc_coerce_rational(&c, v, &v2);
+  fail_unless(mpq_cmp_si(v2, 32, 1) == 0);
+
+  v = cons(&c, 1,2);
+  carc_coerce_rational(&c, v, &v2);
+  fail_unless(error == 1);
+  error = 0;
 #endif
 }
 END_TEST
@@ -640,6 +678,7 @@ int main(void)
   tcase_add_test(tc_conv, test_coerce_fixnum);
   tcase_add_test(tc_conv, test_coerce_flonum);
   tcase_add_test(tc_conv, test_coerce_bignum);
+  tcase_add_test(tc_conv, test_coerce_rational);
 
   suite_add_tcase(s, tc_ops);
   suite_add_tcase(s, tc_conv);
