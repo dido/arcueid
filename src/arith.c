@@ -318,6 +318,10 @@ static value add2_bignum(carc *c, value arg1, value arg2)
     sum = carc_mkrationalb(c, arg1);
     return(add2_rational(c, arg2, sum));
     break;
+  case T_FLONUM:
+    sum = carc_mkflonum(c, REP(arg1)._flonum);
+    return(add2_flonum(c, arg1, arg2));
+    break;
   default:
     sum = carc_mkbignuml(c, 0);
     carc_coerce_bignum(c, arg2, &REP(sum)._bignum);
