@@ -316,7 +316,7 @@ static value add2_bignum(carc *c, value arg1, value arg2)
     break;
   case T_RATIONAL:
     sum = carc_mkrationalb(c, arg1);
-    return(add2_rational(c, arg1, sum));
+    return(add2_rational(c, arg2, sum));
     break;
   default:
     sum = carc_mkbignuml(c, 0);
