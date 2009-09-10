@@ -1,3 +1,7 @@
+2009-09-10  Rafael Sevilla  <dido@localhost>
+
+	* Complete work on addition and multiplication primitives
+
 2009-04-08  Rafael Sevilla  <dido@localhost>
 
 	* Create files required by autoconf/automake/libtool build
