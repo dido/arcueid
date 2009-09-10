@@ -360,7 +360,7 @@ value __carc_add2(carc *c, value arg1, value arg2)
   case T_BIGNUM:
     return(add2_bignum(c, arg2, arg1));
   case T_RATIONAL:
-    return(add2_rational(c, arg1, arg2));
+    return(add2_rational(c, arg2, arg1));
   }
 
   c->signal_error(c, "Invalid types for addition");
