@@ -395,6 +395,46 @@ START_TEST(test_mul_flonum)
 }
 END_TEST
 
+START_TEST(test_mul_rational)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, prod;
+  carc c;
+  mpz_t expected;
+
+  c.get_cell = get_cell_test;
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkrationall(&c, 1, 4);
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(prod)._rational, 1, 8) == 0);
+
+  val1 = carc_mkrationall(&c, 3, 4);
+  val2 = carc_mkrationall(&c, 4, 3);
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 1);
+
+  val1 = carc_mkrationall(&c, 3, 4);
+  val2 = carc_mkrationall(&c, 4, 3);
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 1);
+
+  val1 = carc_mkrationall(&c, 0, 1);
+  mpq_set_str(REP(val1)._rational, "115792089237316195423570985008687907853269984665640564039457584007913129639936/3", 10);
+  val2 = carc_mkrationall(&c, 3, 4);
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "28948022309329048855892746252171976963317496166410141009864396001978282409984", 10);
+  fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
+  mpz_clear(expected);
+#endif
+
+}
+END_TEST
+
 START_TEST(test_mul_fixnum2bignum)
 {
 #ifdef HAVE_GMP_H
@@ -671,6 +711,7 @@ int main(void)
   tcase_add_test(tc_ops, test_mul_fixnum);
   tcase_add_test(tc_ops, test_mul_bignum);
   tcase_add_test(tc_ops, test_mul_flonum);
+  tcase_add_test(tc_ops, test_mul_rational);
   tcase_add_test(tc_ops, test_mul_fixnum2bignum);
   tcase_add_test(tc_ops, test_mul_fixnum2flonum);
   tcase_add_test(tc_ops, test_mul_misc);
