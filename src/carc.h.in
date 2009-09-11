@@ -137,7 +137,7 @@ extern value carc_mkbignuml(carc *c, long val);
 extern value carc_mkrationall(carc *c, long num, long den);
 
 extern double carc_coerce_flonum(carc *c, value v);
-extern value carc_coerce_complex(carc *c, value v);
+extern void carc_coerce_complex(carc *c, value v, double *re, double *im);
 extern void carc_coerce_bignum(carc *c, value v, void *bignum);
 extern void carc_coerce_rational(carc *c, value v, void *rat);
 extern value carc_coerce_fixnum(carc *c, value v);
