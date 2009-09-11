@@ -428,29 +428,6 @@ static value mul2_flonum(carc *c, value arg1, value arg2)
   return(arg1);
 }
 
-static value mul2_bignum(carc *c, value arg1, value arg2)
-{
-#ifdef HAVE_GMP_H
-  mpz_t coerced_bignum;
-  value coerced_fixnum;
-
-  if (TYPE(arg2) == T_BIGNUM) {
-    mpz_mul(REP(arg1)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
-  } else {
-    mpz_init(coerced_bignum);
-    carc_coerce_bignum(c, arg2, &coerced_bignum);
-    mpz_mul(REP(arg1)._bignum, REP(arg1)._bignum, coerced_bignum);
-    mpz_clear(coerced_bignum);
-  }
-  /* Attempt to coerce back to a fixnum if possible */
-  coerced_fixnum = carc_coerce_fixnum(c, arg1);
-  return((coerced_fixnum == CNIL) ? arg1 : coerced_fixnum);
-#else
-  c->signal_error(c, "Overflow error (no bignum support)");
-  return(CNIL);
-#endif
-}
-
 static value mul2_rational(carc *c, value arg1, value arg2)
 {
 #ifdef HAVE_GMP_H
@@ -465,6 +442,40 @@ static value mul2_rational(carc *c, value arg1, value arg2)
   }
 
   return(integer_coerce(c, prod));
+#else
+  c->signal_error(c, "Overflow error (no bignum support)");
+  return(CNIL);
+#endif
+}
+
+static value mul2_bignum(carc *c, value arg1, value arg2)
+{
+#ifdef HAVE_GMP_H
+  value prod, coerced_fixnum;
+
+  switch (TYPE(arg2)) {
+  case T_BIGNUM:
+    prod = carc_mkbignuml(c, 0);
+    mpz_mul(REP(prod)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+    break;
+  case T_RATIONAL:
+    prod = carc_mkrationalb(c, arg1);
+    return(mul2_rational(c, arg2, prod));
+    break;
+  case T_FLONUM:
+    prod = carc_mkflonum(c, REP(arg1)._flonum);
+    return(mul2_flonum(c, prod, arg2));
+    break;
+  default:
+    prod = carc_mkbignuml(c, 0);
+    carc_coerce_bignum(c, arg2, &REP(prod)._bignum);
+    mpz_mul(REP(prod)._bignum, REP(arg1)._bignum, REP(prod)._bignum);
+    break;
+  }
+
+  /* Attempt to coerce back to a fixnum if possible */
+  coerced_fixnum = carc_coerce_fixnum(c, prod);
+  return((coerced_fixnum == CNIL) ? prod : coerced_fixnum);
 #else
   c->signal_error(c, "Overflow error (no bignum support)");
   return(CNIL);
