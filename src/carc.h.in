@@ -46,10 +46,11 @@ enum carc_types {
   T_BIGNUM=0x03,
   T_FLONUM=0x04,
   T_RATIONAL=0x05,
-  T_STRING=0x06,
-  T_SYMBOL=0x07,
-  T_FOREIGN_FUNC=0x08,
-  T_CONS=0x09,
+  T_COMPLEX=0x06,
+  T_STRING=0x07,
+  T_SYMBOL=0x08,
+  T_FOREIGN_FUNC=0x09,
+  T_CONS=0x0a,
   T_NONE=0xff
 };
 
@@ -65,6 +66,10 @@ struct cell {
     @MP_BVALUE@;
     @MPQ_BVALUE@;
     double _flonum;
+    struct {
+      double re;
+      double im;
+    } _complex;
     struct {
       value car;
       value cdr;
@@ -127,10 +132,12 @@ static inline int TYPE(value v)
 }
 
 extern value carc_mkflonum(carc *c, double val);
+extern value carc_mkcomplex(carc *c, double re, double im);
 extern value carc_mkbignuml(carc *c, long val);
 extern value carc_mkrationall(carc *c, long num, long den);
 
 extern double carc_coerce_flonum(carc *c, value v);
+extern value carc_coerce_complex(carc *c, value v);
 extern void carc_coerce_bignum(carc *c, value v, void *bignum);
 extern void carc_coerce_rational(carc *c, value v, void *rat);
 extern value carc_coerce_fixnum(carc *c, value v);
