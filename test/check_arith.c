@@ -145,6 +145,12 @@ START_TEST(test_add_flonum2rational)
   sum = __carc_add2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_FLONUM);
   fail_unless(fabs(1.0 - REP(sum)._flonum) < 1e-6);
+
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkflonum(&c, 0.5);
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(1.0 - REP(sum)._flonum) < 1e-6);
 }
 END_TEST
 
@@ -549,6 +555,78 @@ START_TEST(test_mul_bignum2flonum)
 }
 END_TEST
 
+START_TEST(test_mul_bignum2rational)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, prod;
+  carc c;
+  mpq_t expected;
+  mpz_t zexpected;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkrationall(&c, 1, 3);
+  v2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "100000000000000000000000000000", 10);
+  prod = __carc_mul2(&c, v1, v2);
+  fail_unless(TYPE(prod) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "100000000000000000000000000000/3", 10);
+  fail_unless(mpq_cmp(expected, REP(prod)._rational) == 0);
+  mpq_clear(expected);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "100000000000000000000000000000", 10);
+  v2 = carc_mkrationall(&c, 1, 3);
+  prod = __carc_mul2(&c, v1, v2);
+  fail_unless(TYPE(prod) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "100000000000000000000000000000/3", 10);
+  fail_unless(mpq_cmp(expected, REP(prod)._rational) == 0);
+  mpq_clear(expected);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "100000000000000000000000000000", 10);
+  v2 = carc_mkrationall(&c, 1, 2);
+  prod = __carc_mul2(&c, v1, v2);
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpz_init(zexpected);
+  mpz_set_str(zexpected, "50000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(zexpected, REP(prod)._bignum) == 0);
+  mpz_clear(zexpected);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "100000000000000000000000000000", 10);
+  v2 = carc_mkrationall(&c, 0, 1);
+  mpq_set_str(REP(v2)._rational, "1/100000000000000000000000000000", 10);
+  prod = __carc_mul2(&c, v1, v2);
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 1);
+#endif
+}
+END_TEST
+
+START_TEST(test_mul_flonum2rational)
+{
+  value val1, val2, prod;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkflonum(&c, 2.0);
+  val2 = carc_mkrationall(&c, 1, 2);
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(1.0 - REP(prod)._flonum) < 1e-6);
+
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkflonum(&c, 2.0);
+  prod = __carc_mul2(&c, val1, val2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(1.0 - REP(prod)._flonum) < 1e-6);
+}
+END_TEST
+
 START_TEST(test_neg)
 {
   carc c;
@@ -761,7 +839,6 @@ int main(void)
   tcase_add_test(tc_ops, test_add_bignum2rational);
   tcase_add_test(tc_ops, test_add_flonum2rational);
   tcase_add_test(tc_ops, test_add_misc);
-  tcase_add_test(tc_ops, test_neg);
   tcase_add_test(tc_ops, test_mul_fixnum);
   tcase_add_test(tc_ops, test_mul_bignum);
   tcase_add_test(tc_ops, test_mul_flonum);
@@ -770,7 +847,10 @@ int main(void)
   tcase_add_test(tc_ops, test_mul_fixnum2flonum);
   tcase_add_test(tc_ops, test_mul_fixnum2rational);
   tcase_add_test(tc_ops, test_mul_bignum2flonum);
+  tcase_add_test(tc_ops, test_mul_bignum2rational);
+  tcase_add_test(tc_ops, test_mul_flonum2rational);
   tcase_add_test(tc_ops, test_mul_misc);
+  tcase_add_test(tc_ops, test_neg);
 
   tcase_add_test(tc_conv, test_coerce_fixnum);
   tcase_add_test(tc_conv, test_coerce_flonum);
