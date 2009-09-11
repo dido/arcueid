@@ -41,6 +41,17 @@ value carc_mkflonum(carc *c, double val)
   return(fnum);
 }
 
+value carc_mkcomplex(carc *c, double re, double im)
+{
+  value cnum;
+
+  cnum = c->get_cell(c);
+  BTYPE(cnum) = T_COMPLEX;
+  REP(cnum)._complex.re = re;
+  REP(cnum)._complex.im = im;
+  return(cnum);
+}
+
 value carc_mkbignuml(carc *c, long val)
 {
 #ifdef HAVE_GMP_H
@@ -89,7 +100,6 @@ value carc_mkrationalb(carc *c, value b)
 #endif
 }
 
-
 /* Type conversions */
 double carc_coerce_flonum(carc *c, value v)
 {
@@ -115,6 +125,35 @@ double carc_coerce_flonum(carc *c, value v)
     break;
   }
   return(val);
+}
+
+void carc_coerce_complex(carc *c, value v, double *re, double *im)
+{
+  switch (TYPE(v)) {
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    *re = mpz_get_d(REP(v)._bignum);
+    break;
+  case T_RATIONAL:
+    *re = mpq_get_d(REP(v)._rational);
+    break;
+#endif
+  case T_FLONUM:
+    *re = REP(v)._flonum;
+    break;
+  case T_COMPLEX:
+    *re = REP(v)._complex.re;
+    *im = REP(v)._complex.im;
+    return;
+    break;
+  case T_FIXNUM:
+    *re = (double)FIX2INT(v);
+    break;
+  default:
+    c->signal_error(c, "Cannot convert operand %v into a flonum", v);
+    break;
+  }
+  *im = 0.0;
 }
 
 void carc_coerce_bignum(carc *c, value v, void *bptr)
@@ -270,10 +309,23 @@ static value integer_coerce(carc *c, value v)
 
    If a rational has a denominator of 1, the result is implicitly
    converted to a fixnum, if the range allows, or a bignum if not.
-
-   If a complex has an imaginary part of 0, the result is implicitly
-   converted to a flonum.
  */
+
+static value add2_complex(carc *c, value arg1, value arg2)
+{
+  double re, im;
+
+  if (TYPE(arg2) == T_COMPLEX)
+    carc_coerce_complex(c, arg2, &re, &im);
+  else {
+    re = REP(arg2)._complex.re;
+    im = REP(arg2)._complex.im;
+  }
+  re += REP(arg1)._complex.re;
+  im += REP(arg1)._complex.im;
+  return(carc_mkcomplex(c, re, im));
+}
+
 static value add2_flonum(carc *c, value arg1, value arg2)
 {
   double coerced_flonum;
@@ -317,12 +369,13 @@ static value add2_bignum(carc *c, value arg1, value arg2)
     mpz_add(REP(sum)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
     break;
   case T_RATIONAL:
-    sum = carc_mkrationalb(c, arg1);
-    return(add2_rational(c, arg2, sum));
+    return(add2_rational(c, arg2, arg1));
     break;
   case T_FLONUM:
-    sum = carc_mkflonum(c, mpz_get_d(REP(arg1)._bignum));
-    return(add2_flonum(c, arg1, arg2));
+    return(add2_flonum(c, arg2, arg1));
+    break;
+  case T_COMPLEX:
+    return(add2_complex(c, arg2, arg1));
     break;
   default:
     sum = carc_mkbignuml(c, 0);
@@ -352,21 +405,25 @@ value __carc_add2(carc *c, value arg1, value arg2)
   }
 
   switch (TYPE(arg1)) {
+  case T_COMPLEX:
+    return(add2_complex(c, arg1, arg2));
   case T_FLONUM:
     return(add2_flonum(c, arg1, arg2));
-  case T_BIGNUM:
-    return(add2_bignum(c, arg1, arg2));
   case T_RATIONAL:
     return(add2_rational(c, arg1, arg2));
+  case T_BIGNUM:
+    return(add2_bignum(c, arg1, arg2));
   }
 
   switch (TYPE(arg2)) {
+  case T_COMPLEX:
+    return(add2_complex(c, arg2, arg1));
   case T_FLONUM:
     return(add2_flonum(c, arg2, arg1));
-  case T_BIGNUM:
-    return(add2_bignum(c, arg2, arg1));
   case T_RATIONAL:
     return(add2_rational(c, arg2, arg1));
+  case T_BIGNUM:
+    return(add2_bignum(c, arg2, arg1));
   }
 
   c->signal_error(c, "Invalid types for addition");
@@ -380,6 +437,8 @@ value __carc_neg(carc *c, value arg)
     return(INT2FIX(-FIX2INT(arg)));
   case T_FLONUM:
     return(carc_mkflonum(c, -REP(arg)._flonum));
+  case T_COMPLEX:
+    return(carc_mkcomplex(c, -REP(arg)._complex.re, -REP(arg)._complex.im));
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
     {
