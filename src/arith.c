@@ -292,6 +292,8 @@ static value add2_rational(carc *c, value arg1, value arg2)
   sum = carc_mkrationall(c, 0, 1);
   if (TYPE(arg2) == T_RATIONAL) {
     mpq_add(REP(sum)._rational, REP(arg1)._rational, REP(arg2)._rational);
+  } else if (TYPE(arg2) == T_FLONUM) {
+    return(add2_flonum(c, arg2, arg1));
   } else {
     carc_coerce_rational(c, arg2, &REP(sum)._rational);
     mpq_add(REP(sum)._rational, REP(arg1)._rational, REP(sum)._rational);
@@ -319,7 +321,7 @@ static value add2_bignum(carc *c, value arg1, value arg2)
     return(add2_rational(c, arg2, sum));
     break;
   case T_FLONUM:
-    sum = carc_mkflonum(c, REP(arg1)._flonum);
+    sum = carc_mkflonum(c, mpz_get_d(REP(arg1)._bignum));
     return(add2_flonum(c, arg1, arg2));
     break;
   default:
@@ -436,6 +438,8 @@ static value mul2_rational(carc *c, value arg1, value arg2)
   prod = carc_mkrationall(c, 1, 1);
   if (TYPE(arg2) == T_RATIONAL) {
     mpq_mul(REP(prod)._rational, REP(arg1)._rational, REP(arg2)._rational);
+  } else if (TYPE(arg2) == T_FLONUM) {
+    return(mul2_flonum(c, arg2, arg1));
   } else {
     carc_coerce_rational(c, arg2, &REP(prod)._rational);
     mpq_mul(REP(prod)._rational, REP(arg1)._rational, REP(prod)._rational);
