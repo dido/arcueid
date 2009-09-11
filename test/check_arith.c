@@ -524,6 +524,31 @@ START_TEST(test_mul_fixnum2rational)
 }
 END_TEST
 
+START_TEST(test_mul_bignum2flonum)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, prod;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkflonum(&c, 2.0);
+  v2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "100000000000000000000000000000", 10);
+  prod = __carc_mul2(&c, v1, v2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(prod - 2e29) > 1e-6);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "100000000000000000000000000000", 10);
+  v2 = carc_mkflonum(&c, 2.0);
+  prod = __carc_mul2(&c, v1, v2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(prod - 2e29) > 1e-6);
+#endif
+}
+END_TEST
+
 START_TEST(test_neg)
 {
   carc c;
@@ -744,6 +769,7 @@ int main(void)
   tcase_add_test(tc_ops, test_mul_fixnum2bignum);
   tcase_add_test(tc_ops, test_mul_fixnum2flonum);
   tcase_add_test(tc_ops, test_mul_fixnum2rational);
+  tcase_add_test(tc_ops, test_mul_bignum2flonum);
   tcase_add_test(tc_ops, test_mul_misc);
 
   tcase_add_test(tc_conv, test_coerce_fixnum);
