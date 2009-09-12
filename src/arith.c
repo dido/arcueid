@@ -365,6 +365,25 @@ static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
     return((cf == CNIL) ? v : cf);				\
   }
 
+#define TYPE_CASES(func, arg1, arg2) {			\
+    if (TYPE(arg1) == T_COMPLEX) {			\
+      COERCE_OP_COMPLEX(func##2_complex, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_COMPLEX) {		\
+      COERCE_OP_COMPLEX(func##2_complex, arg2, arg1);	\
+    } else if (TYPE(arg1) == T_FLONUM) {		\
+      COERCE_OP_FLONUM(func##2_flonum, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_FLONUM) {		\
+      COERCE_OP_FLONUM(func##2_flonum, arg2, arg1);	\
+    } else if (TYPE(arg1) == T_RATIONAL) {		\
+      COERCE_OP_RATIONAL(func##2_rational, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_RATIONAL) {		\
+      COERCE_OP_RATIONAL(func##2_rational, arg2, arg1);	\
+    } else if (TYPE(arg1) == T_BIGNUM) {		\
+      COERCE_OP_BIGNUM(func##2_bignum, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_BIGNUM) {		\
+      COERCE_OP_BIGNUM(func##2_bignum, arg2, arg1);	\
+    }							\
+  }
 
 value __carc_add2(carc *c, value arg1, value arg2)
 {
@@ -375,23 +394,8 @@ value __carc_add2(carc *c, value arg1, value arg2)
     if (ABS(fixnum_sum) > FIXNUM_MAX)
       return(carc_mkbignuml(c, fixnum_sum));
     return(INT2FIX(fixnum_sum));
-  } else if (TYPE(arg1) == T_COMPLEX) {
-    COERCE_OP_COMPLEX(add2_complex, arg1, arg2);
-  } else if (TYPE(arg2) == T_COMPLEX) {
-    COERCE_OP_COMPLEX(add2_complex, arg2, arg1);
-  } else if (TYPE(arg1) == T_FLONUM) {
-    COERCE_OP_FLONUM(add2_flonum, arg1, arg2);
-  } else if (TYPE(arg2) == T_FLONUM) {
-    COERCE_OP_FLONUM(add2_flonum, arg2, arg1);
-  } else if (TYPE(arg1) == T_RATIONAL) {
-    COERCE_OP_RATIONAL(add2_rational, arg1, arg2);
-  } else if (TYPE(arg2) == T_RATIONAL) {
-    COERCE_OP_RATIONAL(add2_rational, arg2, arg1);
-  } else if (TYPE(arg1) == T_BIGNUM) {
-    COERCE_OP_BIGNUM(add2_bignum, arg1, arg2);
-  } else if (TYPE(arg2) == T_BIGNUM) {
-    COERCE_OP_BIGNUM(add2_bignum, arg2, arg1);
-  }
+  } 
+  TYPE_CASES(add, arg1, arg2);
 
   c->signal_error(c, "Invalid types for addition");
   return(CNIL);
@@ -430,91 +434,37 @@ value __carc_neg(carc *c, value arg)
   return(CNIL);
 }
 
-/*
-value __carc_sub2(carc *c, value arg1, value arg2)
+static inline value mul2_complex(carc *c, value arg1, double re, double im)
 {
-  long fixnum_diff;
+  double r2, i2;
 
-  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
-    fixnum_diff = FIX2INT(arg1) - FIX2INT(arg2);
-    if (ABS(fixnum_diff) > FIXNUM_MAX)
-      return(carc_mkbignuml(c, fixnum_diff));
-    return(INT2FIX(fixnum_diff));
-  }
-
-  return(__carc_add2(c, arg1, __carc_neg(c, arg2)));
-}
-*/
-
-static value mul2_flonum(carc *c, value arg1, value arg2)
-{
-  double coerced_flonum;
-
-  coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)._flonum
-    : carc_coerce_flonum(c, arg2);
-  REP(arg1)._flonum *= coerced_flonum;
-  return(arg1);
+  r2 = REP(arg1)._complex.re * re - REP(arg1)._complex.im * im;
+  i2 = REP(arg1)._complex.im * re + REP(arg1)._complex.re * im;
+  return(carc_mkcomplex(c, r2, i2));
 }
 
-static value mul2_rational(carc *c, value arg1, value arg2)
+
+static inline value mul2_flonum(carc *c, value arg1, double arg2)
 {
+  arg2 *= REP(arg1)._flonum;
+  return(carc_mkflonum(c, arg2));
+}
+
 #ifdef HAVE_GMP_H
-  value prod;
-
-  prod = carc_mkrationall(c, 1, 1);
-  if (TYPE(arg2) == T_RATIONAL) {
-    mpq_mul(REP(prod)._rational, REP(arg1)._rational, REP(arg2)._rational);
-  } else if (TYPE(arg2) == T_FLONUM) {
-    return(mul2_flonum(c, arg2, arg1));
-  } else {
-    carc_coerce_rational(c, arg2, &REP(prod)._rational);
-    mpq_mul(REP(prod)._rational, REP(arg1)._rational, REP(prod)._rational);
-  }
-
-  return(integer_coerce(c, prod));
-#else
-  c->signal_error(c, "Overflow error (no bignum support)");
-  return(CNIL);
-#endif
-}
-
-static value mul2_bignum(carc *c, value arg1, value arg2)
+static inline void mul2_rational(carc *c, value arg1, mpq_t *arg2)
 {
-#ifdef HAVE_GMP_H
-  value prod, coerced_fixnum;
-
-  switch (TYPE(arg2)) {
-  case T_BIGNUM:
-    prod = carc_mkbignuml(c, 0);
-    mpz_mul(REP(prod)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
-    break;
-  case T_RATIONAL:
-    prod = carc_mkrationalb(c, arg1);
-    return(mul2_rational(c, arg2, prod));
-    break;
-  case T_FLONUM:
-    prod = carc_mkflonum(c, REP(arg1)._flonum);
-    return(mul2_flonum(c, prod, arg2));
-    break;
-  default:
-    prod = carc_mkbignuml(c, 0);
-    carc_coerce_bignum(c, arg2, &REP(prod)._bignum);
-    mpz_mul(REP(prod)._bignum, REP(arg1)._bignum, REP(prod)._bignum);
-    break;
-  }
-
-  /* Attempt to coerce back to a fixnum if possible */
-  coerced_fixnum = carc_coerce_fixnum(c, prod);
-  return((coerced_fixnum == CNIL) ? prod : coerced_fixnum);
-#else
-  c->signal_error(c, "Overflow error (no bignum support)");
-  return(CNIL);
-#endif
+  mpq_mul(*arg2, REP(arg1)._rational, *arg2);
 }
+
+static inline void mul2_bignum(carc *c, value arg1, mpz_t *arg2)
+{
+  mpz_mul(*arg2, REP(arg1)._bignum, *arg2);
+}
+#endif
 
 value __carc_mul2(carc *c, value arg1, value arg2)
 {
-
+  
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
     long varg1, varg2;
 
@@ -524,10 +474,10 @@ value __carc_mul2(carc *c, value arg1, value arg2)
     /* 64-bit platform.  We can mask against the high bits of the
        absolute value to determine whether or not bignum arithmetic
        is necessary. */
-    if ((ABS(varg1) | ABS(varg2)) & 0xffffffff80000000) {
+    if ((ABS(varg1) | ABS(varg2)) & 0xffffffff80000000)
 #elif VALUE_SIZE == 4
       /* 32-bit platform.  Similarly. */
-    if ((ABS(varg1) | ABS(varg2)) & 0xffff8000) {
+    if ((ABS(varg1) | ABS(varg2)) & 0xffff8000)
 #else
     /* This rather complicated test is a (sorta) portable check for
        multiplication overflow.  If the product would overflow, we need to
@@ -536,30 +486,16 @@ value __carc_mul2(carc *c, value arg1, value arg2)
     if ((varg1 > 0 && varg2 > 0 && varg1 > (FIXNUM_MAX / varg2))
 	|| (varg1 > 0 && varg2 <= 0 && (varg2 < (FIXNUM_MIN / varg1)))
 	|| (varg1 <= 0 && varg2 > 0 && (varg1 < (FIXNUM_MIN / varg2)))
-	|| (varg1 != 0 && (varg2 < (FIXNUM_MAX / varg1)))) {
+	|| (varg1 != 0 && (varg2 < (FIXNUM_MAX / varg1))))
 #endif
-      return(mul2_bignum(c, carc_mkbignuml(c, varg1), arg2));
+    {
+      value v1 = carc_mkbignuml(c, varg1);
+      COERCE_OP_BIGNUM(mul2_bignum, v1, arg2);
     }
     return(INT2FIX(varg1 * varg2));
   }
 
-  switch (TYPE(arg1)) {
-  case T_FLONUM:
-    return(mul2_flonum(c, arg1, arg2));
-  case T_BIGNUM:
-    return(mul2_bignum(c, arg1, arg2));
-  case T_RATIONAL:
-    return(mul2_rational(c, arg1, arg2));
-  }
-
-  switch (TYPE(arg2)) {
-  case T_FLONUM:
-    return(mul2_flonum(c, arg2, arg1));
-  case T_BIGNUM:
-    return(mul2_bignum(c, arg2, arg1));
-  case T_RATIONAL:
-    return(mul2_rational(c, arg2, arg1));
-  }
+  TYPE_CASES(mul, arg1, arg2);
 
   c->signal_error(c, "Invalid types for multiplication");
   return(CNIL);
