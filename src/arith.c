@@ -311,87 +311,60 @@ static value integer_coerce(carc *c, value v)
    converted to a fixnum, if the range allows, or a bignum if not.
  */
 
-static value add2_complex(carc *c, value arg1, value arg2)
+static inline value add2_complex(carc *c, value arg1, double re, double im)
 {
-  double re, im;
-
-  if (TYPE(arg2) == T_COMPLEX)
-    carc_coerce_complex(c, arg2, &re, &im);
-  else {
-    re = REP(arg2)._complex.re;
-    im = REP(arg2)._complex.im;
-  }
   re += REP(arg1)._complex.re;
   im += REP(arg1)._complex.im;
   return(carc_mkcomplex(c, re, im));
 }
 
-static value add2_flonum(carc *c, value arg1, value arg2)
+static inline value add2_flonum(carc *c, value arg1, double arg2)
 {
-  double coerced_flonum;
-
-  coerced_flonum = (TYPE(arg2) == T_FLONUM) ? REP(arg2)._flonum
-    : carc_coerce_flonum(c, arg2);
-  coerced_flonum += REP(arg1)._flonum;
-  return(carc_mkflonum(c, coerced_flonum));
+  arg2 += REP(arg1)._flonum;
+  return(carc_mkflonum(c, arg2));
 }
 
-static value add2_rational(carc *c, value arg1, value arg2)
-{
 #ifdef HAVE_GMP_H
-  value sum;
+static inline void add2_rational(carc *c, value arg1, mpq_t *arg2)
+{
+  mpq_add(*arg2, REP(arg1)._rational, *arg2);
+}
 
-  sum = carc_mkrationall(c, 0, 1);
-  if (TYPE(arg2) == T_RATIONAL) {
-    mpq_add(REP(sum)._rational, REP(arg1)._rational, REP(arg2)._rational);
-  } else if (TYPE(arg2) == T_FLONUM) {
-    return(add2_flonum(c, arg2, arg1));
-  } else {
-    carc_coerce_rational(c, arg2, &REP(sum)._rational);
-    mpq_add(REP(sum)._rational, REP(arg1)._rational, REP(sum)._rational);
+static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
+{
+  mpz_add(*arg2, REP(arg1)._bignum, *arg2);
+}
+#endif
+
+#define COERCE_OP_COMPLEX(func, arg1, arg2) {	\
+    double re, im;				\
+    carc_coerce_complex(c, arg2, &re, &im);	\
+    return(func(c, arg1, re, im));		\
   }
 
-  return(integer_coerce(c, sum));
-#else
-  c->signal_error(c, "Overflow error (no bignum support)");
-  return(CNIL);
-#endif
-}
-
-static value add2_bignum(carc *c, value arg1, value arg2)
-{
-#ifdef HAVE_GMP_H
-  value sum, coerced_fixnum;
-
-  switch (TYPE(arg2)) {
-  case T_BIGNUM:
-    sum = carc_mkbignuml(c, 0);
-    mpz_add(REP(sum)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
-    break;
-  case T_RATIONAL:
-    return(add2_rational(c, arg2, arg1));
-    break;
-  case T_FLONUM:
-    return(add2_flonum(c, arg2, arg1));
-    break;
-  case T_COMPLEX:
-    return(add2_complex(c, arg2, arg1));
-    break;
-  default:
-    sum = carc_mkbignuml(c, 0);
-    carc_coerce_bignum(c, arg2, &REP(sum)._bignum);
-    mpz_add(REP(sum)._bignum, REP(arg1)._bignum, REP(sum)._bignum);
-    break;
+#define COERCE_OP_FLONUM(func, arg1, arg2) {	\
+    double f;					\
+    f = carc_coerce_flonum(c, arg2);		\
+    return(func(c, arg1, f));			\
   }
 
-  /* Attempt to coerce back to a fixnum if possible */
-  coerced_fixnum = carc_coerce_fixnum(c, sum);
-  return((coerced_fixnum == CNIL) ? sum : coerced_fixnum);
-#else
-  c->signal_error(c, "Overflow error (no bignum support)");
-  return(CNIL);
-#endif
-}
+#define COERCE_OP_RATIONAL(func, arg1, arg2) {		\
+    value v;						\
+    v = carc_mkrationall(c, 0, 1);			\
+    carc_coerce_rational(c, arg2, &(REP(v)._rational)); \
+    func(c, arg1, &(REP(v)._rational));			\
+    return(integer_coerce(c, v));			\
+  }
+
+#define COERCE_OP_BIGNUM(func, arg1, arg2) {			\
+    value v, cf;						\
+    v = carc_mkbignuml(c, 0);					\
+    carc_coerce_bignum(c, arg2, &(REP(v)._bignum));		\
+    func(c, arg1, &(REP(v)._bignum));				\
+    cf = carc_coerce_fixnum(c, v);				\
+    return((cf == CNIL) ? v : cf);				\
+  }
+
 
 value __carc_add2(carc *c, value arg1, value arg2)
 {
@@ -402,28 +375,22 @@ value __carc_add2(carc *c, value arg1, value arg2)
     if (ABS(fixnum_sum) > FIXNUM_MAX)
       return(carc_mkbignuml(c, fixnum_sum));
     return(INT2FIX(fixnum_sum));
-  }
-
-  switch (TYPE(arg1)) {
-  case T_COMPLEX:
-    return(add2_complex(c, arg1, arg2));
-  case T_FLONUM:
-    return(add2_flonum(c, arg1, arg2));
-  case T_RATIONAL:
-    return(add2_rational(c, arg1, arg2));
-  case T_BIGNUM:
-    return(add2_bignum(c, arg1, arg2));
-  }
-
-  switch (TYPE(arg2)) {
-  case T_COMPLEX:
-    return(add2_complex(c, arg2, arg1));
-  case T_FLONUM:
-    return(add2_flonum(c, arg2, arg1));
-  case T_RATIONAL:
-    return(add2_rational(c, arg2, arg1));
-  case T_BIGNUM:
-    return(add2_bignum(c, arg2, arg1));
+  } else if (TYPE(arg1) == T_COMPLEX) {
+    COERCE_OP_COMPLEX(add2_complex, arg1, arg2);
+  } else if (TYPE(arg2) == T_COMPLEX) {
+    COERCE_OP_COMPLEX(add2_complex, arg2, arg1);
+  } else if (TYPE(arg1) == T_FLONUM) {
+    COERCE_OP_FLONUM(add2_flonum, arg1, arg2);
+  } else if (TYPE(arg2) == T_FLONUM) {
+    COERCE_OP_FLONUM(add2_flonum, arg2, arg1);
+  } else if (TYPE(arg1) == T_RATIONAL) {
+    COERCE_OP_RATIONAL(add2_rational, arg1, arg2);
+  } else if (TYPE(arg2) == T_RATIONAL) {
+    COERCE_OP_RATIONAL(add2_rational, arg2, arg1);
+  } else if (TYPE(arg1) == T_BIGNUM) {
+    COERCE_OP_BIGNUM(add2_bignum, arg1, arg2);
+  } else if (TYPE(arg2) == T_BIGNUM) {
+    COERCE_OP_BIGNUM(add2_bignum, arg2, arg1);
   }
 
   c->signal_error(c, "Invalid types for addition");
