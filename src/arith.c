@@ -28,8 +28,6 @@
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
-double __carc_flonum_conv_tolerance = DBL_EPSILON;
-
 /* Type constructors */
 value carc_mkflonum(carc *c, double val)
 {
