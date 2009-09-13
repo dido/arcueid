@@ -94,6 +94,29 @@ START_TEST(test_add_fixnum2flonum)
 }
 END_TEST
 
+START_TEST(test_add_fixnum2complex)
+{
+  value val1, val2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = INT2FIX(1);
+  val2 = carc_mkcomplex(&c, 1.1, 2.2);
+
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(2.1 - REP(sum)._complex.re) < 1e-6);
+  fail_unless(fabs(2.2 - REP(sum)._complex.im) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  sum = __carc_add2(&c, sum, val1);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(1.1 - REP(sum)._complex.re) < 1e-6);
+  fail_unless(fabs(2.2 - REP(sum)._complex.im) < 1e-6);
+}
+END_TEST
+
 START_TEST(test_add_fixnum2rational)
 {
 #ifdef HAVE_GMP_H
@@ -130,6 +153,46 @@ START_TEST(test_add_flonum)
   sum = __carc_add2(&c, val1, val2);
   fail_unless(TYPE(sum) == T_FLONUM);
   fail_unless(fabs(5.85987 - REP(sum)._flonum) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_add_complex)
+{
+  value val1, val2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkcomplex(&c, 1, -2);
+  val2 = carc_mkcomplex(&c, 3, -4);
+
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(4 - REP(sum)._complex.re) < 1e-6);
+  fail_unless(fabs(-6 - REP(sum)._complex.im) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_add_rational2complex)
+{
+  value val1, val2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkcomplex(&c, 0.5, 0.5);
+  val2 = carc_mkrationall(&c, 1, 2);
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(1.0 - REP(sum)._complex.re) < 1e-6);
+  fail_unless(fabs(0.5 - REP(sum)._complex.im) < 1e-6);
+
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkcomplex(&c, 0.5, 0.5);
+  sum = __carc_add2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(1.0 - REP(sum)._complex.re) < 1e-6);
+  fail_unless(fabs(0.5 - REP(sum)._complex.im) < 1e-6);
 }
 END_TEST
 
@@ -199,17 +262,44 @@ START_TEST(test_add_bignum2flonum)
 
   v1 = carc_mkflonum(&c, 0.0);
   v2 = carc_mkbignuml(&c, 0);
-  mpz_set_str(REP(v2)._bignum, "100000000000000000000000000000", 10);
+  mpz_set_str(REP(v2)._bignum, "10000000000000000000000", 10);
   sum = __carc_add2(&c, v1, v2);
   fail_unless(TYPE(sum) == T_FLONUM);
-  fail_unless(fabs(sum - 1e29) > 1e-6);
+  fail_unless(fabs(REP(sum)._flonum - 1e22) < 1e-6);
 
   v1 = carc_mkbignuml(&c, 0);
-  mpz_set_str(REP(v1)._bignum, "100000000000000000000000000000", 10);
+  mpz_set_str(REP(v1)._bignum, "10000000000000000000000", 10);
   v2 = carc_mkflonum(&c, 0.0);
   sum = __carc_add2(&c, v1, v2);
   fail_unless(TYPE(sum) == T_FLONUM);
-  fail_unless(fabs(sum - 1e29) > 1e-6);
+  fail_unless(fabs(REP(sum)._flonum - 1e22) < 1e-6);
+#endif
+}
+END_TEST
+
+START_TEST(test_add_bignum2complex)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, sum;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkcomplex(&c, 0.0, 1.1);
+  v2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "10000000000000000000000", 10);
+  sum = __carc_add2(&c, v1, v2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(REP(sum)._complex.re - 1e22) < 1e-6);
+  fail_unless(fabs(REP(sum)._complex.im - 1.1) < 1e-6);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "10000000000000000000000", 10);
+  v2 = carc_mkcomplex(&c, 0.0, 1.1);
+  sum = __carc_add2(&c, v1, v2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(REP(sum)._complex.re - 1e22) < 1e-6);
+  fail_unless(fabs(REP(sum)._complex.im - 1.1) < 1e-6);
 #endif
 }
 END_TEST
@@ -649,6 +739,13 @@ START_TEST(test_neg)
   fail_unless(TYPE(neg) == T_FLONUM);
   fail_unless(fabs(REP(neg)._flonum - 1.234) < 1e-6);
 
+  v = carc_mkcomplex(&c, -1.234, 5.678);
+  neg = __carc_neg(&c, v);
+  fail_unless(TYPE(neg) == T_COMPLEX);
+  fail_unless(fabs(REP(neg)._complex.re - 1.234) < 1e-6);
+  fail_unless(fabs(REP(neg)._complex.im + 5.678) < 1e-6);
+
+
 #ifdef HAVE_GMP_H
   v = carc_mkbignuml(&c, 0);
   mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
@@ -832,12 +929,16 @@ int main(void)
   tcase_add_test(tc_ops, test_add_bignum);
   tcase_add_test(tc_ops, test_add_flonum);
   tcase_add_test(tc_ops, test_add_rational);
+  tcase_add_test(tc_ops, test_add_complex);
   tcase_add_test(tc_ops, test_add_fixnum2bignum);
   tcase_add_test(tc_ops, test_add_fixnum2flonum);
   tcase_add_test(tc_ops, test_add_fixnum2rational);
+  tcase_add_test(tc_ops, test_add_fixnum2complex);
   tcase_add_test(tc_ops, test_add_bignum2flonum);
   tcase_add_test(tc_ops, test_add_bignum2rational);
+  tcase_add_test(tc_ops, test_add_bignum2complex);
   tcase_add_test(tc_ops, test_add_flonum2rational);
+  tcase_add_test(tc_ops, test_add_rational2complex);
   tcase_add_test(tc_ops, test_add_misc);
   tcase_add_test(tc_ops, test_mul_fixnum);
   tcase_add_test(tc_ops, test_mul_bignum);
