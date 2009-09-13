@@ -82,22 +82,6 @@ value carc_mkrationall(carc *c, long num, long den)
 #endif
 }
 
-value carc_mkrationalb(carc *c, value b)
-{
-#ifdef HAVE_GMP_H
-  value rat;
-
-  rat = c->get_cell(c);
-  BTYPE(rat) = T_RATIONAL;
-  mpq_init(REP(rat)._rational);
-  mpq_set_z(REP(rat)._rational, REP(b)._bignum);
-  return(rat);
-#else
-  c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
-  return(CNIL);
-#endif
-}
-
 /* Type conversions */
 double carc_coerce_flonum(carc *c, value v)
 {
