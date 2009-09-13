@@ -1016,6 +1016,12 @@ START_TEST(test_coerce_bignum)
   carc_coerce_bignum(&c, v, &v2);
   fail_unless(error == 1);
   error = 0;
+
+  v = carc_mkcomplex(&c, 3.14159, 2.71828);
+  carc_coerce_bignum(&c, v, &v2);
+  fail_unless(error == 1);
+  error = 0;
+
   mpz_clear(v2);
 #endif
 }
@@ -1054,7 +1060,52 @@ START_TEST(test_coerce_rational)
   carc_coerce_rational(&c, v, &v2);
   fail_unless(error == 1);
   error = 0;
+
+  v = carc_mkcomplex(&c, 3.14159, 2.71828);
+  carc_coerce_rational(&c, v, &v2);
+  fail_unless(error == 1);
+  error = 0;
 #endif
+}
+END_TEST
+
+START_TEST(test_coerce_complex)
+{
+  carc c;
+  double re, im;
+  value v;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+
+#ifdef HAVE_GMP_H
+  v = carc_mkbignuml(&c, 1);
+  mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  carc_coerce_complex(&c, v, &re, &im);
+  fail_unless(fabs(1e29 - re) < 1e-6);
+  fail_unless(fabs(im) < 1e-6);
+#endif
+
+  v = carc_mkcomplex(&c, 3.14159, 2.71828);
+  carc_coerce_complex(&c, v, &re, &im);
+  fail_unless(fabs(3.14159 - re) < 1e-6);
+  fail_unless(fabs(2.71828 - im) < 1e-6);
+
+  v = carc_mkflonum(&c, 3.14159);
+  carc_coerce_complex(&c, v, &re, &im);
+  fail_unless(fabs(3.14159 - re) < 1e-6);
+  fail_unless(fabs(im) < 1e-6);
+
+  v = INT2FIX(0xdeadbeef);
+  carc_coerce_complex(&c, v, &re, &im);
+  fail_unless(fabs(3735928559.0 - re) < 1e-6);
+  fail_unless(fabs(im) < 1e-6);
+
+  v = c.get_cell(&c);
+  BTYPE(v) = T_CONS;
+  carc_coerce_complex(&c, v, &re, &im);
+  fail_unless(error == 1);
+  error = 0;
 }
 END_TEST
 
@@ -1117,6 +1168,7 @@ int main(void)
   tcase_add_test(tc_conv, test_coerce_flonum);
   tcase_add_test(tc_conv, test_coerce_bignum);
   tcase_add_test(tc_conv, test_coerce_rational);
+  tcase_add_test(tc_conv, test_coerce_complex);
 
   suite_add_tcase(s, tc_ops);
   suite_add_tcase(s, tc_conv);
