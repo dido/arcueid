@@ -561,41 +561,6 @@ static inline void sub2r_bignum(carc *c, value arg1, mpz_t *arg2)
 }
 #endif
 
-#ifdef HAVE_GMP_H
-
-#define TYPE_CASES2(func, arg1, arg2) {				\
-    if (TYPE(arg1) == T_COMPLEX) {				\
-      COERCE_OP_COMPLEX(func##2_complex, arg1, arg2);		\
-    } else if (TYPE(arg2) == T_COMPLEX) {			\
-      COERCE_OP_COMPLEX(func##2r_complex, arg1, arg2);		\
-    } else if (TYPE(arg1) == T_FLONUM) {			\
-      COERCE_OP_FLONUM(func##2_flonum, arg1, arg2);		\
-    } else if (TYPE(arg2) == T_FLONUM) {			\
-      COERCE_OP_FLONUM(func##2r_flonum, arg1, arg2);		\
-    } else if (TYPE(arg1) == T_RATIONAL) {			\
-      COERCE_OP_RATIONAL(func##2_rational, arg1, arg2);		\
-    } else if (TYPE(arg2) == T_RATIONAL) {			\
-      COERCE_OP_RATIONAL(func##2r_rational, arg1, arg2);	\
-    } else if (TYPE(arg1) == T_BIGNUM) {			\
-      COERCE_OP_BIGNUM(func##2_bignum, arg1, arg2);		\
-    } else if (TYPE(arg2) == T_BIGNUM) {			\
-      COERCE_OP_BIGNUM(func##2r_bignum, arg1, arg2);		\
-    }								\
-  }
-#else
-#define TYPE_CASES2(func, arg1, arg2) {			\
-    if (TYPE(arg1) == T_COMPLEX) {			\
-      COERCE_OP_COMPLEX(func##2_complex, arg1, arg2);	\
-    } else if (TYPE(arg2) == T_COMPLEX) {		\
-      COERCE_OP_COMPLEX(func##2r_complex, arg1, arg2);	\
-    } else if (TYPE(arg1) == T_FLONUM) {		\
-      COERCE_OP_FLONUM(func##2_flonum, arg1, arg2);	\
-    } else if (TYPE(arg2) == T_FLONUM) {		\
-      COERCE_OP_FLONUM(func##2r_flonum, arg1, arg2);	\
-    }							\
-  }
-#endif
-
 value __carc_sub2(carc *c, value arg1, value arg2)
 {
   long fixnum_diff;
@@ -606,7 +571,27 @@ value __carc_sub2(carc *c, value arg1, value arg2)
       return(carc_mkbignuml(c, fixnum_diff));
     return(INT2FIX(fixnum_diff));
   } 
-  TYPE_CASES2(sub, arg1, arg2);
+
+  if (TYPE(arg1) == T_COMPLEX) {
+    COERCE_OP_COMPLEX(sub2_complex, arg1, arg2);
+  } else if (TYPE(arg2) == T_COMPLEX) {
+    COERCE_OP_COMPLEX(sub2r_complex, arg2, arg1);
+  } else if (TYPE(arg1) == T_FLONUM) {
+    COERCE_OP_FLONUM(sub2_flonum, arg1, arg2);
+  } else if (TYPE(arg2) == T_FLONUM) {
+    COERCE_OP_FLONUM(sub2r_flonum, arg2, arg1);
+  }
+#ifdef HAVE_GMP_H
+  else if (TYPE(arg1) == T_RATIONAL) {
+    COERCE_OP_RATIONAL(sub2_rational, arg1, arg2);
+  } else if (TYPE(arg2) == T_RATIONAL) {
+    COERCE_OP_RATIONAL(sub2r_rational, arg2, arg1);
+  } else if (TYPE(arg1) == T_BIGNUM) {
+    COERCE_OP_BIGNUM(sub2_bignum, arg1, arg2);
+  } else if (TYPE(arg2) == T_BIGNUM) {
+    COERCE_OP_BIGNUM(sub2r_bignum, arg2, arg1);
+  }
+#endif
 
   c->signal_error(c, "Invalid types for subtraction");
   return(CNIL);
