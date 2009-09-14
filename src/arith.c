@@ -347,6 +347,8 @@ static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
     return((cf == CNIL) ? v : cf);				\
   }
 
+#ifdef HAVE_GMP_H
+
 #define TYPE_CASES(func, arg1, arg2) {			\
     if (TYPE(arg1) == T_COMPLEX) {			\
       COERCE_OP_COMPLEX(func##2_complex, arg1, arg2);	\
@@ -366,6 +368,19 @@ static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
       COERCE_OP_BIGNUM(func##2_bignum, arg2, arg1);	\
     }							\
   }
+#else
+#define TYPE_CASES(func, arg1, arg2) {			\
+    if (TYPE(arg1) == T_COMPLEX) {			\
+      COERCE_OP_COMPLEX(func##2_complex, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_COMPLEX) {		\
+      COERCE_OP_COMPLEX(func##2_complex, arg2, arg1);	\
+    } else if (TYPE(arg1) == T_FLONUM) {		\
+      COERCE_OP_FLONUM(func##2_flonum, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_FLONUM) {		\
+      COERCE_OP_FLONUM(func##2_flonum, arg2, arg1);	\
+    }							\
+  }
+#endif
 
 value __carc_add2(carc *c, value arg1, value arg2)
 {
@@ -471,8 +486,13 @@ value __carc_mul2(carc *c, value arg1, value arg2)
 	|| (varg1 != 0 && (varg2 < (FIXNUM_MAX / varg1))))
 #endif
     {
+#ifdef HAVE_GMP_H
       value v1 = carc_mkbignuml(c, varg1);
       COERCE_OP_BIGNUM(mul2_bignum, v1, arg2);
+#else
+      c->signal_error(c, "Overflow error in multiplication");
+      return(CNIL);
+#endif
     }
     return(INT2FIX(varg1 * varg2));
   }
