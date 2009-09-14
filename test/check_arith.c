@@ -970,6 +970,94 @@ START_TEST(test_sub_complex)
 }
 END_TEST
 
+START_TEST(test_sub_fixnum2bignum)
+{
+#ifdef HAVE_GMP_H
+  value maxfixnum, one, negone, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  maxfixnum = INT2FIX(-FIXNUM_MAX);
+  one = INT2FIX(1);
+  negone = INT2FIX(-1);
+  diff = __carc_sub2(&c, maxfixnum, one);
+  fail_unless(TYPE(diff) == T_BIGNUM);
+  fail_unless(mpz_get_si(REP(diff)._bignum) == -FIXNUM_MAX - 1);
+
+  diff = __carc_sub2(&c, negone, diff);
+  fail_unless(TYPE(diff) == T_FIXNUM);
+  fail_unless(FIX2INT(diff) == FIXNUM_MAX);
+#endif
+}
+END_TEST
+
+START_TEST(test_sub_fixnum2flonum)
+{
+  value val1, val2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = INT2FIX(1);
+  val2 = carc_mkflonum(&c, 3.14159);
+
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(-2.14159 - REP(diff)._flonum) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  diff = __carc_sub2(&c, diff, val1);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(-1.14159 - REP(diff)._flonum) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_sub_fixnum2rational)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkrationall(&c, 1, 2);
+  v2 = INT2FIX(1);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(diff)._rational, -1, 2) == 0);
+
+  v1 = INT2FIX(1);
+  v2 = carc_mkrationall(&c, 1, 2);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(diff)._rational, 1, 2) == 0);
+#endif
+}
+END_TEST
+
+START_TEST(test_sub_fixnum2complex)
+{
+  value val1, val2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = INT2FIX(1);
+  val2 = carc_mkcomplex(&c, 1.1, 2.2);
+
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(-0.1 - REP(diff)._complex.re) < 1e-6);
+  fail_unless(fabs(-2.2 - REP(diff)._complex.im) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  diff = __carc_sub2(&c, diff, val1);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(0.9 - REP(diff)._complex.re) < 1e-6);
+  fail_unless(fabs(-2.2 - REP(diff)._complex.im) < 1e-6);
+}
+END_TEST
 
 START_TEST(test_neg)
 {
@@ -1229,29 +1317,6 @@ int main(void)
   TCase *tc_conv = tcase_create("Conversions");
   SRunner *sr;
 
-  tcase_add_test(tc_ops, test_add_fixnum);
-  tcase_add_test(tc_ops, test_add_bignum);
-  tcase_add_test(tc_ops, test_add_flonum);
-  tcase_add_test(tc_ops, test_add_rational);
-  tcase_add_test(tc_ops, test_add_complex);
-
-  tcase_add_test(tc_ops, test_add_fixnum2bignum);
-  tcase_add_test(tc_ops, test_add_fixnum2flonum);
-  tcase_add_test(tc_ops, test_add_fixnum2rational);
-  tcase_add_test(tc_ops, test_add_fixnum2complex);
-
-  tcase_add_test(tc_ops, test_add_bignum2flonum);
-  tcase_add_test(tc_ops, test_add_bignum2rational);
-  tcase_add_test(tc_ops, test_add_bignum2complex);
-
-  tcase_add_test(tc_ops, test_add_flonum2rational);
-  tcase_add_test(tc_ops, test_add_flonum2complex);
-
-  tcase_add_test(tc_ops, test_add_rational2complex);
-
-  tcase_add_test(tc_ops, test_add_misc);
-
-
   tcase_add_test(tc_ops, test_mul_fixnum);
   tcase_add_test(tc_ops, test_mul_bignum);
   tcase_add_test(tc_ops, test_mul_flonum);
@@ -1274,11 +1339,38 @@ int main(void)
 
   tcase_add_test(tc_ops, test_mul_misc);
 
+  tcase_add_test(tc_ops, test_add_fixnum);
+  tcase_add_test(tc_ops, test_add_bignum);
+  tcase_add_test(tc_ops, test_add_flonum);
+  tcase_add_test(tc_ops, test_add_rational);
+  tcase_add_test(tc_ops, test_add_complex);
+
+  tcase_add_test(tc_ops, test_add_fixnum2bignum);
+  tcase_add_test(tc_ops, test_add_fixnum2flonum);
+  tcase_add_test(tc_ops, test_add_fixnum2rational);
+  tcase_add_test(tc_ops, test_add_fixnum2complex);
+
+  tcase_add_test(tc_ops, test_add_bignum2flonum);
+  tcase_add_test(tc_ops, test_add_bignum2rational);
+  tcase_add_test(tc_ops, test_add_bignum2complex);
+
+  tcase_add_test(tc_ops, test_add_flonum2rational);
+  tcase_add_test(tc_ops, test_add_flonum2complex);
+
+  tcase_add_test(tc_ops, test_add_rational2complex);
+
+  tcase_add_test(tc_ops, test_add_misc);
+
   tcase_add_test(tc_ops, test_sub_fixnum);
   tcase_add_test(tc_ops, test_sub_bignum);
   tcase_add_test(tc_ops, test_sub_flonum);
   tcase_add_test(tc_ops, test_sub_rational);
   tcase_add_test(tc_ops, test_sub_complex);
+
+  tcase_add_test(tc_ops, test_sub_fixnum2bignum);
+  tcase_add_test(tc_ops, test_sub_fixnum2flonum);
+  tcase_add_test(tc_ops, test_sub_fixnum2rational);
+  tcase_add_test(tc_ops, test_sub_fixnum2complex);
 
   tcase_add_test(tc_ops, test_neg);
 
