@@ -280,17 +280,26 @@ static value integer_coerce(carc *c, value v)
    operations:
 
               Fixnum   Bignum   Rational   Flonum   Complex
-   Fixnum     Fixnum   Bignum   Rational   Flonum   Complex
+   Fixnum     Fixnum*  Bignum   Rational   Flonum   Complex
    Bignum     Bignum   Bignum   Rational   Flonum   Complex
    Rational   Rational Rational Rational   Flonum   Complex
    Flonum     Flonum   Flonum   Flonum     Flonum   Complex
    Complex    Complex  Complex  Complex    Complex  Complex
 
-   If a bignum result is smaller than ±FIXNUM_MAX, it is implicitly
-   converted to a fixnum.
+   * If a bignum result is smaller than ±FIXNUM_MAX, it is
+   implicitly converted to a fixnum.  If arithmetic on fixnums
+   would give a result greater than ±FIXNUM_MAX, it will
+   automatically extend to a bignum unless bignum support is not
+   compiled in (in which case an overflow error is signaled).
 
    If a rational has a denominator of 1, the result is implicitly
    converted to a fixnum, if the range allows, or a bignum if not.
+
+   Division of fixnums and/or bignums will result in a fixnum or a
+   bignum only if the two numbers divide each other exactly.  If the
+   division is inexact, the result will be a rational number if
+   support for bignum/rational arithmetic has been compiled in.  If
+   not, the quotient alone is returned.
  */
 
 static inline value add2_complex(carc *c, value arg1, double re, double im)
@@ -502,4 +511,103 @@ value __carc_mul2(carc *c, value arg1, value arg2)
   c->signal_error(c, "Invalid types for multiplication");
   return(CNIL);
 
+}
+
+static inline value sub2_complex(carc *c, value arg1, double re, double im)
+{
+  re = REP(arg1)._complex.re - re;
+  im = REP(arg1)._complex.im - im;
+  return(carc_mkcomplex(c, re, im));
+}
+
+static inline value sub2r_complex(carc *c, value arg1, double re, double im)
+{
+  re -= REP(arg1)._complex.re;
+  im -= REP(arg1)._complex.im;
+  return(carc_mkcomplex(c, re, im));
+}
+
+static inline value sub2_flonum(carc *c, value arg1, double arg2)
+{
+  arg2 = REP(arg1)._flonum - arg2;
+  return(carc_mkflonum(c, arg2));
+}
+
+static inline value sub2r_flonum(carc *c, value arg1, double arg2)
+{
+  arg2 -= REP(arg1)._flonum;
+  return(carc_mkflonum(c, arg2));
+}
+
+#ifdef HAVE_GMP_H
+static inline void sub2_rational(carc *c, value arg1, mpq_t *arg2)
+{
+  mpq_sub(*arg2, REP(arg1)._rational, *arg2);
+}
+
+static inline void sub2r_rational(carc *c, value arg1, mpq_t *arg2)
+{
+  mpq_sub(*arg2, *arg2, REP(arg1)._rational);
+}
+
+static inline void sub2_bignum(carc *c, value arg1, mpz_t *arg2)
+{
+  mpz_sub(*arg2, REP(arg1)._bignum, *arg2);
+}
+
+static inline void sub2r_bignum(carc *c, value arg1, mpz_t *arg2)
+{
+  mpz_sub(*arg2, *arg2, REP(arg1)._bignum);
+}
+#endif
+
+#ifdef HAVE_GMP_H
+
+#define TYPE_CASES2(func, arg1, arg2) {				\
+    if (TYPE(arg1) == T_COMPLEX) {				\
+      COERCE_OP_COMPLEX(func##2_complex, arg1, arg2);		\
+    } else if (TYPE(arg2) == T_COMPLEX) {			\
+      COERCE_OP_COMPLEX(func##2r_complex, arg1, arg2);		\
+    } else if (TYPE(arg1) == T_FLONUM) {			\
+      COERCE_OP_FLONUM(func##2_flonum, arg1, arg2);		\
+    } else if (TYPE(arg2) == T_FLONUM) {			\
+      COERCE_OP_FLONUM(func##2r_flonum, arg1, arg2);		\
+    } else if (TYPE(arg1) == T_RATIONAL) {			\
+      COERCE_OP_RATIONAL(func##2_rational, arg1, arg2);		\
+    } else if (TYPE(arg2) == T_RATIONAL) {			\
+      COERCE_OP_RATIONAL(func##2r_rational, arg1, arg2);	\
+    } else if (TYPE(arg1) == T_BIGNUM) {			\
+      COERCE_OP_BIGNUM(func##2_bignum, arg1, arg2);		\
+    } else if (TYPE(arg2) == T_BIGNUM) {			\
+      COERCE_OP_BIGNUM(func##2r_bignum, arg1, arg2);		\
+    }								\
+  }
+#else
+#define TYPE_CASES2(func, arg1, arg2) {			\
+    if (TYPE(arg1) == T_COMPLEX) {			\
+      COERCE_OP_COMPLEX(func##2_complex, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_COMPLEX) {		\
+      COERCE_OP_COMPLEX(func##2r_complex, arg1, arg2);	\
+    } else if (TYPE(arg1) == T_FLONUM) {		\
+      COERCE_OP_FLONUM(func##2_flonum, arg1, arg2);	\
+    } else if (TYPE(arg2) == T_FLONUM) {		\
+      COERCE_OP_FLONUM(func##2r_flonum, arg1, arg2);	\
+    }							\
+  }
+#endif
+
+value __carc_sub2(carc *c, value arg1, value arg2)
+{
+  long fixnum_diff;
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    fixnum_diff = FIX2INT(arg1) - FIX2INT(arg2);
+    if (ABS(fixnum_diff) > FIXNUM_MAX)
+      return(carc_mkbignuml(c, fixnum_diff));
+    return(INT2FIX(fixnum_diff));
+  } 
+  TYPE_CASES2(sub, arg1, arg2);
+
+  c->signal_error(c, "Invalid types for subtraction");
+  return(CNIL);
 }
