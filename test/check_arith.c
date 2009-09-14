@@ -792,6 +792,7 @@ END_TEST
 
 START_TEST(test_mul_flonum2rational)
 {
+#ifdef HAVE_GMP_H
   value val1, val2, prod;
   carc c;
 
@@ -808,6 +809,7 @@ START_TEST(test_mul_flonum2rational)
   prod = __carc_mul2(&c, val1, val2);
   fail_unless(TYPE(prod) == T_FLONUM);
   fail_unless(fabs(1.0 - REP(prod)._flonum) < 1e-6);
+#endif
 }
 END_TEST
 
