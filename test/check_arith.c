@@ -861,6 +861,100 @@ START_TEST(test_mul_rational2complex)
 }
 END_TEST
 
+START_TEST(test_sub_fixnum)
+{
+  int i;
+  carc c;
+  value v = INT2FIX(0);
+
+  for (i=1; i<=100; i++)
+    v = __carc_sub2(&c, v, INT2FIX(i));
+  fail_unless(TYPE(v) == T_FIXNUM);
+  fail_unless(FIX2INT(v) == -5050);
+  
+}
+END_TEST
+
+START_TEST(test_sub_bignum)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, sum;
+  carc c;
+  mpz_t expected;
+
+  c.get_cell = get_cell_test;
+  val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
+  val2 = carc_mkbignuml(&c, FIXNUM_MAX+2);
+  sum = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_FIXNUM);
+  fail_unless(FIX2INT(sum) == -1);
+
+  val1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val1)._bignum, "300000000000000000000000000000", 10);
+  val2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val2)._bignum, "100000000000000000000000000000", 10);
+  sum = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "200000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
+  mpz_clear(expected);
+#endif
+}
+END_TEST
+
+START_TEST(test_sub_rational)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, diff;
+  carc c;
+  mpz_t expected;
+
+  c.get_cell = get_cell_test;
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkrationall(&c, 1, 4);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(diff)._rational, 1, 4) == 0);
+
+  val1 = diff;
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_FIXNUM);
+  fail_unless(FIX2INT(diff) == 0);
+
+  val1 = carc_mkrationall(&c, 0, 1);
+  mpq_set_str(REP(val1)._rational, "1606938044258990275541962092341162602522202993782792835301375/4", 10);
+  val2 = carc_mkrationall(&c, 0, 1);
+  mpq_set_str(REP(val2)._rational, "3/4", 10);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "401734511064747568885490523085290650630550748445698208825343", 10);
+  fail_unless(mpz_cmp(expected, REP(diff)._bignum) == 0);
+  mpz_clear(expected);
+#endif
+
+}
+END_TEST
+
+START_TEST(test_sub_complex)
+{
+  value val1, val2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkcomplex(&c, 1, -2);
+  val2 = carc_mkcomplex(&c, 3, -4);
+
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(-2 - REP(diff)._complex.re) < 1e-6);
+  fail_unless(fabs(2 - REP(diff)._complex.im) < 1e-6);
+}
+END_TEST
+
+
 START_TEST(test_neg)
 {
   carc c;
@@ -1163,6 +1257,11 @@ int main(void)
   tcase_add_test(tc_ops, test_mul_rational2complex);
 
   tcase_add_test(tc_ops, test_mul_misc);
+
+  tcase_add_test(tc_ops, test_sub_fixnum);
+  tcase_add_test(tc_ops, test_sub_bignum);
+  tcase_add_test(tc_ops, test_sub_rational);
+  tcase_add_test(tc_ops, test_sub_complex);
 
   tcase_add_test(tc_ops, test_neg);
 
