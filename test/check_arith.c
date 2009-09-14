@@ -878,28 +878,44 @@ END_TEST
 START_TEST(test_sub_bignum)
 {
 #ifdef HAVE_GMP_H
-  value val1, val2, sum;
+  value val1, val2, diff;
   carc c;
   mpz_t expected;
 
   c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
   val2 = carc_mkbignuml(&c, FIXNUM_MAX+2);
-  sum = __carc_sub2(&c, val1, val2);
-  fail_unless(TYPE(sum) == T_FIXNUM);
-  fail_unless(FIX2INT(sum) == -1);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_FIXNUM);
+  fail_unless(FIX2INT(diff) == -1);
 
   val1 = carc_mkbignuml(&c, 0);
   mpz_set_str(REP(val1)._bignum, "300000000000000000000000000000", 10);
   val2 = carc_mkbignuml(&c, 0);
   mpz_set_str(REP(val2)._bignum, "100000000000000000000000000000", 10);
-  sum = __carc_sub2(&c, val1, val2);
-  fail_unless(TYPE(sum) == T_BIGNUM);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_BIGNUM);
   mpz_init(expected);
   mpz_set_str(expected, "200000000000000000000000000000", 10);
-  fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
+  fail_unless(mpz_cmp(expected, REP(diff)._bignum) == 0);
   mpz_clear(expected);
 #endif
+}
+END_TEST
+
+START_TEST(test_sub_flonum)
+{
+  value val1, val2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkflonum(&c, 2.71828);
+  val2 = carc_mkflonum(&c, 3.14159);
+
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(-0.42331 - REP(diff)._flonum) < 1e-6);
 }
 END_TEST
 
@@ -1260,6 +1276,7 @@ int main(void)
 
   tcase_add_test(tc_ops, test_sub_fixnum);
   tcase_add_test(tc_ops, test_sub_bignum);
+  tcase_add_test(tc_ops, test_sub_flonum);
   tcase_add_test(tc_ops, test_sub_rational);
   tcase_add_test(tc_ops, test_sub_complex);
 
