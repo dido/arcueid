@@ -75,6 +75,7 @@ value carc_mkrationall(carc *c, long num, long den)
   BTYPE(rat) = T_RATIONAL;
   mpq_init(REP(rat)._rational);
   mpq_set_si(REP(rat)._rational, num, den);
+  mpq_canonicalize(REP(rat)._rational);
   return(rat);
 #else
   c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
@@ -594,5 +595,121 @@ value __carc_sub2(carc *c, value arg1, value arg2)
 #endif
 
   c->signal_error(c, "Invalid types for subtraction");
+  return(CNIL);
+}
+
+static inline value div2_complex(carc *c, value arg1, double re, double im)
+{
+  double den = (re*re + im*im);
+  double r2, i2;
+
+  r2 = (REP(arg1)._complex.re * re + REP(arg1)._complex.im * im)/den;
+  i2 = (REP(arg1)._complex.im * re - REP(arg1)._complex.re * im)/den;
+  return(carc_mkcomplex(c, r2, i2));
+}
+
+static inline value div2r_complex(carc *c, value arg1, double re, double im)
+{
+  double r1 = REP(arg1)._complex.re, i1 = REP(arg1)._complex.im, r2, i2;
+  double den = r1*r1 + i1*i1;
+
+  r2 = (REP(arg1)._complex.re * re + REP(arg1)._complex.im * im)/den;
+  i2 = im*(REP(arg1)._complex.re - re*REP(arg1)._complex.im)/den;
+  return(carc_mkcomplex(c, r2, i2));
+}
+
+static inline value div2_flonum(carc *c, value arg1, double arg2)
+{
+  arg2 = REP(arg1)._flonum / arg2;
+  return(carc_mkflonum(c, arg2));
+}
+
+static inline value div2r_flonum(carc *c, value arg1, double arg2)
+{
+  arg2 /= REP(arg1)._flonum;
+  return(carc_mkflonum(c, arg2));
+}
+
+#ifdef HAVE_GMP_H
+static inline void div2_rational(carc *c, value arg1, mpq_t *arg2)
+{
+  mpq_div(*arg2, REP(arg1)._rational, *arg2);
+}
+
+static inline void div2r_rational(carc *c, value arg1, mpq_t *arg2)
+{
+  mpq_div(*arg2, *arg2, REP(arg1)._rational);
+}
+
+/* Division of two bignums will return nil and the answer in arg2 if
+   the numbers divide each other exactly, or a new rational result as
+   a value. */
+static inline value div2_bignum(carc *c, value arg1, mpz_t *arg2)
+{
+  value rat;
+
+  if (mpz_divisible_p(REP(arg1)._bignum, *arg2)) {
+    mpz_divexact(*arg2, REP(arg1)._bignum, *arg2);
+    return(CNIL);
+  }
+  rat = carc_mkrationall(c, 0, 1);
+  mpq_set_num(REP(rat)._rational, REP(arg1)._bignum);
+  mpq_set_den(REP(rat)._rational, *arg2);
+  return(rat);
+}
+
+static inline value div2r_bignum(carc *c, value arg1, mpz_t *arg2)
+{
+  value rat;
+
+  if (mpz_divisible_p(*arg2, REP(arg1)._bignum)) {
+    mpz_divexact(*arg2, *arg2, REP(arg1)._bignum);
+    return(CNIL);
+  }
+  mpq_set_num(REP(rat)._rational, *arg2);
+  rat = carc_mkrationall(c, 0, 1);
+  mpq_set_den(REP(rat)._rational, REP(arg1)._bignum);
+  return(rat);
+}
+#endif
+
+value __carc_div2(carc *c, value arg1, value arg2)
+{
+  ldiv_t res;
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    long varg1, varg2;
+
+    varg1 = FIX2INT(arg1);
+    varg2 = FIX2INT(arg2);
+
+    res = ldiv(varg1, varg2);
+#ifdef HAVE_GMP_H
+    if (res.rem != 0) {
+      return(carc_mkrationall(c, varg1, varg2));
+    } else {
+      if (ABS(res.quot) > FIXNUM_MAX)
+	return(carc_mkbignuml(c, res.quot));
+#endif
+      /* The conditional compilation produces only this if
+	 we don't have GMP */
+      return(INT2FIX(res.quot));
+#ifdef HAVE_GMP_H
+    }
+#endif
+  } 
+
+  if (TYPE(arg1) == T_COMPLEX) {
+    COERCE_OP_COMPLEX(div2_complex, arg1, arg2);
+  } else if (TYPE(arg2) == T_COMPLEX) {
+    COERCE_OP_COMPLEX(div2r_complex, arg2, arg1);
+  } else if (TYPE(arg1) == T_FLONUM) {
+    COERCE_OP_FLONUM(div2_flonum, arg1, arg2);
+  } else if (TYPE(arg2) == T_FLONUM) {
+    COERCE_OP_FLONUM(div2r_flonum, arg2, arg1);
+  }
+
+  /* XXX: support for bignums and rationals */
+  c->signal_error(c, "Invalid types for division");
   return(CNIL);
 }
