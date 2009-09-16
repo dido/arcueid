@@ -1059,6 +1059,162 @@ START_TEST(test_sub_fixnum2complex)
 }
 END_TEST
 
+START_TEST(test_sub_bignum2flonum)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkflonum(&c, 0.0);
+  v2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "10000000000000000000000", 10);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REP(diff)._flonum + 1e22) < 1e-6);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "10000000000000000000000", 10);
+  v2 = carc_mkflonum(&c, 0.0);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REP(diff)._flonum - 1e22) < 1e-6);
+#endif
+}
+END_TEST
+
+START_TEST(test_sub_bignum2rational)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, diff;
+  carc c;
+  mpq_t expected;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkrationall(&c, 1, 2);
+  v2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "100000000000000000000000000000", 10);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "-199999999999999999999999999999/2", 10);
+  fail_unless(mpq_cmp(expected, REP(diff)._rational) == 0);
+  mpq_clear(expected);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "100000000000000000000000000000", 10);
+  v2 = carc_mkrationall(&c, 1, 2);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "199999999999999999999999999999/2", 10);
+  fail_unless(mpq_cmp(expected, REP(diff)._rational) == 0);
+  mpq_clear(expected);
+#endif
+}
+END_TEST
+
+START_TEST(test_sub_bignum2complex)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkcomplex(&c, 0.0, 1.1);
+  v2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "10000000000000000000000", 10);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(REP(diff)._complex.re + 1e22) < 1e-6);
+  fail_unless(fabs(REP(diff)._complex.im - 1.1) < 1e-6);
+
+  v1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "10000000000000000000000", 10);
+  v2 = carc_mkcomplex(&c, 0.0, 1.1);
+  diff = __carc_sub2(&c, v1, v2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(REP(diff)._complex.re - 1e22) < 1e-6);
+  fail_unless(fabs(REP(diff)._complex.im + 1.1) < 1e-6);
+#endif
+}
+END_TEST
+
+START_TEST(test_sub_flonum2rational)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkflonum(&c, 0.5);
+  val2 = carc_mkrationall(&c, 1, 2);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REP(diff)._flonum) < 1e-6);
+
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkflonum(&c, 0.5);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REP(diff)._flonum) < 1e-6);
+#endif
+}
+END_TEST
+
+START_TEST(test_sub_flonum2complex)
+{
+  value val1, val2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkflonum(&c, 0.5);
+  val2 = carc_mkcomplex(&c, 3, -4);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(-2.5 - REP(diff)._complex.re) < 1e-6);
+  fail_unless(fabs(4 - REP(diff)._complex.im) < 1e-6);
+
+  val1 = carc_mkcomplex(&c, 3, -4);
+  val2 = carc_mkflonum(&c, 0.5);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(2.5 - REP(diff)._complex.re) < 1e-6);
+  fail_unless(fabs(-4 - REP(diff)._complex.im) < 1e-6);
+
+}
+END_TEST
+
+START_TEST(test_sub_rational2complex)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, diff;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  val1 = carc_mkcomplex(&c, 0.5, 0.5);
+  val2 = carc_mkrationall(&c, 1, 2);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(REP(diff)._complex.re) < 1e-6);
+  fail_unless(fabs(0.5 - REP(diff)._complex.im) < 1e-6);
+
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkcomplex(&c, 0.5, 0.5);
+  diff = __carc_sub2(&c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(REP(diff)._complex.re) < 1e-6);
+  fail_unless(fabs(-0.5 - REP(diff)._complex.im) < 1e-6);
+#endif
+}
+END_TEST
+
 START_TEST(test_neg)
 {
   carc c;
@@ -1371,6 +1527,15 @@ int main(void)
   tcase_add_test(tc_ops, test_sub_fixnum2flonum);
   tcase_add_test(tc_ops, test_sub_fixnum2rational);
   tcase_add_test(tc_ops, test_sub_fixnum2complex);
+
+  tcase_add_test(tc_ops, test_sub_bignum2flonum);
+  tcase_add_test(tc_ops, test_sub_bignum2rational);
+  tcase_add_test(tc_ops, test_sub_bignum2complex);
+
+  tcase_add_test(tc_ops, test_sub_flonum2rational);
+  tcase_add_test(tc_ops, test_sub_flonum2complex);
+
+  tcase_add_test(tc_ops, test_sub_rational2complex);
 
   tcase_add_test(tc_ops, test_neg);
 
