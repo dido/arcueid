@@ -89,5 +89,5 @@ fi
 LIBCARC_LIBS="-L${libdir} -lcarc $GMP_LIBS $MATH_LIBS"
 AC_SUBST(LIBCARC_LIBS)
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([carc.pc Makefile src/Makefile $TEST_MAKEFILE src/carc.h])
+AC_CONFIG_FILES([carc.pc Makefile src/Makefile test/Makefile src/carc.h])
 AC_OUTPUT
