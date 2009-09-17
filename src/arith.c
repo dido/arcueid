@@ -641,36 +641,50 @@ static inline void div2r_rational(carc *c, value arg1, mpq_t *arg2)
   mpq_div(*arg2, *arg2, REP(arg1)._rational);
 }
 
-/* Division of two bignums will return nil and the answer in arg2 if
-   the numbers divide each other exactly, or a new rational result as
-   a value. */
-static inline value div2_bignum(carc *c, value arg1, mpz_t *arg2)
+/* Division of two bignums may change the type of the value.  This
+   assumes both arg1 and arg2 are bignums initially. This changes
+   arg2. */
+static inline void div2_bignum(carc *c, value arg1, value arg2)
 {
-  value rat;
+  mpz_t t;
+  value cf;
 
-  if (mpz_divisible_p(REP(arg1)._bignum, *arg2)) {
-    mpz_divexact(*arg2, REP(arg1)._bignum, *arg2);
-    return(CNIL);
+  if (mpz_divisible_p(REP(arg1)._bignum, REP(arg2)._bignum)) {
+    mpz_divexact(REP(arg2)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
+    return;
   }
-  rat = carc_mkrationall(c, 0, 1);
-  mpq_set_num(REP(rat)._rational, REP(arg1)._bignum);
-  mpq_set_den(REP(rat)._rational, *arg2);
-  return(rat);
+  mpz_init(t);
+  mpz_set(t, REP(arg2)._bignum);
+  mpz_clear(REP(arg2)._bignum);
+  mpq_init(REP(arg2)._rational);
+  BTYPE(arg2) = T_RATIONAL;
+  mpq_set_num(REP(arg2)._rational, REP(arg1)._bignum);
+  mpq_set_den(REP(arg2)._rational, t);
+  mpz_clear(t);
+  return;
 }
 
-static inline value div2r_bignum(carc *c, value arg1, mpz_t *arg2)
+/* This divides the two values in reverse, storing the result in arg2 */
+static inline void div2r_bignum(carc *c, value arg1, value arg2)
 {
-  value rat;
+  mpz_t t;
+  value cf;
 
-  if (mpz_divisible_p(*arg2, REP(arg1)._bignum)) {
-    mpz_divexact(*arg2, *arg2, REP(arg1)._bignum);
-    return(CNIL);
+  if (mpz_divisible_p(REP(arg1)._bignum, REP(arg2)._bignum)) {
+    mpz_divexact(REP(arg2)._bignum, REP(arg2)._bignum, REP(arg1)._bignum);
+    return;
   }
-  mpq_set_num(REP(rat)._rational, *arg2);
-  rat = carc_mkrationall(c, 0, 1);
-  mpq_set_den(REP(rat)._rational, REP(arg1)._bignum);
-  return(rat);
+  mpz_init(t);
+  mpz_set(t, REP(arg2)._bignum);
+  mpz_clear(REP(arg2)._bignum);
+  mpq_init(REP(arg2)._rational);
+  BTYPE(arg2) = T_RATIONAL;
+  mpq_set_num(REP(arg2)._rational, t);
+  mpq_set_den(REP(arg2)._rational, REP(arg1)._bignum);
+  mpz_clear(t);
+  return;
 }
+
 #endif
 
 value __carc_div2(carc *c, value arg1, value arg2)
@@ -708,8 +722,38 @@ value __carc_div2(carc *c, value arg1, value arg2)
   } else if (TYPE(arg2) == T_FLONUM) {
     COERCE_OP_FLONUM(div2r_flonum, arg2, arg1);
   }
+#ifdef HAVE_GMP_H
+  else if (TYPE(arg1) == T_RATIONAL) {
+    COERCE_OP_RATIONAL(div2_rational, arg1, arg2);
+  } else if (TYPE(arg2) == T_RATIONAL) {
+    COERCE_OP_RATIONAL(div2r_rational, arg2, arg1);
+  } else if (TYPE(arg1) == T_BIGNUM) {
+    value cf, v;
+    /* The old macros don't work here because bignum division
+       can result in a rational result. */
 
-  /* XXX: support for bignums and rationals */
+    v = carc_mkbignuml(c, 0);
+    carc_coerce_bignum(c, arg2, &REP(v)._bignum);
+    div2_bignum(c, arg1, v);
+    if (TYPE(v) == T_BIGNUM) {
+      cf = carc_coerce_fixnum(c, v);
+      return((cf == CNIL) ? v : cf);
+    }
+    return(v);
+  } else if (TYPE(arg2) == T_BIGNUM) {
+    value cf, v;
+
+    v = carc_mkbignuml(c, 0);
+    carc_coerce_bignum(c, arg1, &REP(v)._bignum);
+    div2r_bignum(c, arg2, v);
+    if (TYPE(v) == T_BIGNUM) {
+      cf = carc_coerce_fixnum(c, v);
+      return((cf == CNIL) ? v : cf);
+    }
+    return(v);
+  }
+#endif
+
   c->signal_error(c, "Invalid types for division");
   return(CNIL);
 }
