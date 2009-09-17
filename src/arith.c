@@ -640,7 +640,7 @@ static inline value div2_flonum(carc *c, value arg1, double arg2)
 
 static inline value div2r_flonum(carc *c, value arg1, double arg2)
 {
-  if (REP(arg1).flonum == 0.0) {
+  if (REP(arg1)._flonum == 0.0) {
     c->signal_error(c, "Division by zero");
     return(CNIL);
   }
@@ -652,7 +652,7 @@ static inline value div2r_flonum(carc *c, value arg1, double arg2)
 #ifdef HAVE_GMP_H
 static inline value div2_rational(carc *c, value arg1, mpq_t *arg2)
 {
-  if (mpq_cmp_si(arg2, 0, 1) == 0) {
+  if (mpq_cmp_si(*arg2, 0, 1) == 0) {
     c->signal_error(c, "Division by zero");
     return(CNIL);
   }
@@ -678,9 +678,8 @@ static inline value div2r_rational(carc *c, value arg1, mpq_t *arg2)
 static inline value div2_bignum(carc *c, value arg1, value arg2)
 {
   mpz_t t;
-  value cf;
 
-  if (mpz_cmp_si(REP(arg2)._bignum) == 0) {
+  if (mpz_cmp_si(REP(arg2)._bignum, 0) == 0) {
     c->signal_error(c, "Division by zero");
     return(CNIL);
   }
@@ -704,9 +703,8 @@ static inline value div2_bignum(carc *c, value arg1, value arg2)
 static inline value div2r_bignum(carc *c, value arg1, value arg2)
 {
   mpz_t t;
-  value cf;
 
-  if (mpz_cmp_si(REP(arg1)._bignum) == 0) {
+  if (mpz_cmp_si(REP(arg1)._bignum, 0) == 0) {
     c->signal_error(c, "Division by zero");
     return(CNIL);
   }
@@ -737,6 +735,11 @@ value __carc_div2(carc *c, value arg1, value arg2)
 
     varg1 = FIX2INT(arg1);
     varg2 = FIX2INT(arg2);
+
+    if (varg2 == 0) {
+      c->signal_error(c, "Division by zero");
+      return(CNIL);
+    }
 
     res = ldiv(varg1, varg2);
 #ifdef HAVE_GMP_H
