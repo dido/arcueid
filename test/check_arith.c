@@ -861,6 +861,45 @@ START_TEST(test_mul_rational2complex)
 }
 END_TEST
 
+START_TEST(test_div_fixnum)
+{
+  carc c;
+  value quot;
+#ifdef HAVE_GMP_H
+  /*  mpq_t expected; */
+#endif
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  quot = __carc_div2(&c, INT2FIX(168), INT2FIX(21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 8);
+
+  quot = __carc_div2(&c, INT2FIX(-168), INT2FIX(21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == -8);
+
+  quot = __carc_div2(&c, INT2FIX(168), INT2FIX(-21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == -8);
+
+  quot = __carc_div2(&c, INT2FIX(-168), INT2FIX(-21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 8);
+
+  quot = __carc_div2(&c, INT2FIX(168), INT2FIX(0));
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(quot == CNIL);
+  fail_unless(error == 1);
+  error = 0;
+
+  /* XXX add tests for divisions that result in rational results */
+}
+END_TEST
+
+
 START_TEST(test_sub_fixnum)
 {
   int i;
@@ -1513,6 +1552,8 @@ int main(void)
   tcase_add_test(tc_ops, test_mul_rational2complex);
 
   tcase_add_test(tc_ops, test_mul_misc);
+
+  tcase_add_test(tc_ops, test_div_fixnum);
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
