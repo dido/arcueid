@@ -1215,6 +1215,25 @@ START_TEST(test_sub_rational2complex)
 }
 END_TEST
 
+START_TEST(test_sub_misc)
+{
+  carc c;
+  value diff;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  diff = __carc_sub2(&c, CNIL, CNIL);
+  fail_unless(error == 1);
+  error = 0;
+
+  diff = __carc_sub2(&c, cons(&c, FIX2INT(1), CNIL), 
+		    cons(&c, FIX2INT(2), CNIL));
+  fail_unless(error == 1);
+}
+END_TEST
+
 START_TEST(test_neg)
 {
   carc c;
@@ -1536,6 +1555,8 @@ int main(void)
   tcase_add_test(tc_ops, test_sub_flonum2complex);
 
   tcase_add_test(tc_ops, test_sub_rational2complex);
+
+  tcase_add_test(tc_ops, test_sub_misc);
 
   tcase_add_test(tc_ops, test_neg);
 
