@@ -603,6 +603,11 @@ static inline value div2_complex(carc *c, value arg1, double re, double im)
   double den = (re*re + im*im);
   double r2, i2;
 
+  if (den == 0.0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
   r2 = (REP(arg1)._complex.re * re + REP(arg1)._complex.im * im)/den;
   i2 = (REP(arg1)._complex.im * re - REP(arg1)._complex.re * im)/den;
   return(carc_mkcomplex(c, r2, i2));
@@ -613,6 +618,11 @@ static inline value div2r_complex(carc *c, value arg1, double re, double im)
   double r1 = REP(arg1)._complex.re, i1 = REP(arg1)._complex.im, r2, i2;
   double den = r1*r1 + i1*i1;
 
+  if (den == 0.0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
   r2 = (REP(arg1)._complex.re * re + REP(arg1)._complex.im * im)/den;
   i2 = im*(REP(arg1)._complex.re - re*REP(arg1)._complex.im)/den;
   return(carc_mkcomplex(c, r2, i2));
@@ -620,38 +630,64 @@ static inline value div2r_complex(carc *c, value arg1, double re, double im)
 
 static inline value div2_flonum(carc *c, value arg1, double arg2)
 {
+  if (arg2 == 0.0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
   arg2 = REP(arg1)._flonum / arg2;
   return(carc_mkflonum(c, arg2));
 }
 
 static inline value div2r_flonum(carc *c, value arg1, double arg2)
 {
+  if (REP(arg1).flonum == 0.0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
   arg2 /= REP(arg1)._flonum;
   return(carc_mkflonum(c, arg2));
 }
 
 #ifdef HAVE_GMP_H
-static inline void div2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value div2_rational(carc *c, value arg1, mpq_t *arg2)
 {
+  if (mpq_cmp_si(arg2, 0, 1) == 0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
   mpq_div(*arg2, REP(arg1)._rational, *arg2);
+  return(CTRUE);
 }
 
-static inline void div2r_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value div2r_rational(carc *c, value arg1, mpq_t *arg2)
 {
+  if (mpq_cmp_si(REP(arg1)._rational, 0, 1) == 0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
   mpq_div(*arg2, *arg2, REP(arg1)._rational);
+  return(CTRUE);
 }
 
 /* Division of two bignums may change the type of the value.  This
    assumes both arg1 and arg2 are bignums initially. This changes
    arg2. */
-static inline void div2_bignum(carc *c, value arg1, value arg2)
+static inline value div2_bignum(carc *c, value arg1, value arg2)
 {
   mpz_t t;
   value cf;
 
+  if (mpz_cmp_si(REP(arg2)._bignum) == 0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
   if (mpz_divisible_p(REP(arg1)._bignum, REP(arg2)._bignum)) {
     mpz_divexact(REP(arg2)._bignum, REP(arg1)._bignum, REP(arg2)._bignum);
-    return;
+    return(CTRUE);
   }
   mpz_init(t);
   mpz_set(t, REP(arg2)._bignum);
@@ -661,18 +697,23 @@ static inline void div2_bignum(carc *c, value arg1, value arg2)
   mpq_set_num(REP(arg2)._rational, REP(arg1)._bignum);
   mpq_set_den(REP(arg2)._rational, t);
   mpz_clear(t);
-  return;
+  return(CTRUE);
 }
 
 /* This divides the two values in reverse, storing the result in arg2 */
-static inline void div2r_bignum(carc *c, value arg1, value arg2)
+static inline value div2r_bignum(carc *c, value arg1, value arg2)
 {
   mpz_t t;
   value cf;
 
+  if (mpz_cmp_si(REP(arg1)._bignum) == 0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
   if (mpz_divisible_p(REP(arg1)._bignum, REP(arg2)._bignum)) {
     mpz_divexact(REP(arg2)._bignum, REP(arg2)._bignum, REP(arg1)._bignum);
-    return;
+    return(CTRUE);
   }
   mpz_init(t);
   mpz_set(t, REP(arg2)._bignum);
@@ -682,7 +723,7 @@ static inline void div2r_bignum(carc *c, value arg1, value arg2)
   mpq_set_num(REP(arg2)._rational, t);
   mpq_set_den(REP(arg2)._rational, REP(arg1)._bignum);
   mpz_clear(t);
-  return;
+  return(CTRUE);
 }
 
 #endif
