@@ -778,7 +778,8 @@ value __carc_div2(carc *c, value arg1, value arg2)
 
     v = carc_mkbignuml(c, 0);
     carc_coerce_bignum(c, arg2, &REP(v)._bignum);
-    div2_bignum(c, arg1, v);
+    if (div2_bignum(c, arg1, v) == CNIL)
+      return(CNIL);
     if (TYPE(v) == T_BIGNUM) {
       cf = carc_coerce_fixnum(c, v);
       return((cf == CNIL) ? v : cf);
@@ -789,7 +790,8 @@ value __carc_div2(carc *c, value arg1, value arg2)
 
     v = carc_mkbignuml(c, 0);
     carc_coerce_bignum(c, arg1, &REP(v)._bignum);
-    div2r_bignum(c, arg2, v);
+    if (div2r_bignum(c, arg2, v) == CNIL)
+      return(CNIL);
     if (TYPE(v) == T_BIGNUM) {
       cf = carc_coerce_fixnum(c, v);
       return((cf == CNIL) ? v : cf);
