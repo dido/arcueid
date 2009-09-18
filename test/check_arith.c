@@ -1149,6 +1149,45 @@ START_TEST(test_div_fixnum2bignum)
 }
 END_TEST
 
+START_TEST(test_div_fixnum2flonum)
+{
+  value val1, val2, quot;
+  carc c;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  val1 = INT2FIX(2);
+  val2 = carc_mkflonum(&c, 3.14159);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(0.63662031 - REP(quot)._flonum) < 1e-6);
+
+  val1 = INT2FIX(2);
+  quot = __carc_div2(&c, quot, val1);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(0.3183101 - REP(quot)._flonum) < 1e-6);
+
+  /* Division by zero checks */
+  error = 0;
+  val1 = INT2FIX(2);
+  val2 = carc_mkflonum(&c, 0.0);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
+
+  val1 = carc_mkflonum(&c, 1.0);
+  val2 = INT2FIX(0);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
+
+}
+END_TEST
+
 START_TEST(test_sub_fixnum)
 {
   int i;
@@ -1810,7 +1849,7 @@ int main(void)
   tcase_add_test(tc_ops, test_div_complex);
 
   tcase_add_test(tc_ops, test_div_fixnum2bignum);
-
+  tcase_add_test(tc_ops, test_div_fixnum2flonum);
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
