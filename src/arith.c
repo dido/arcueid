@@ -317,9 +317,10 @@ static inline value add2_flonum(carc *c, value arg1, double arg2)
 }
 
 #ifdef HAVE_GMP_H
-static inline void add2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value add2_rational(carc *c, value arg1, mpq_t *arg2)
 {
   mpq_add(*arg2, REP(arg1)._rational, *arg2);
+  return(CTRUE);
 }
 
 static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
@@ -344,7 +345,8 @@ static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
     value v;						\
     v = carc_mkrationall(c, 0, 1);			\
     carc_coerce_rational(c, arg2, &(REP(v)._rational)); \
-    func(c, arg1, &(REP(v)._rational));			\
+    if (func(c, arg1, &(REP(v)._rational)) == CNIL)	\
+      return(CNIL);					\
     return(integer_coerce(c, v));			\
   }
 
@@ -458,9 +460,10 @@ static inline value mul2_flonum(carc *c, value arg1, double arg2)
 }
 
 #ifdef HAVE_GMP_H
-static inline void mul2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value mul2_rational(carc *c, value arg1, mpq_t *arg2)
 {
   mpq_mul(*arg2, REP(arg1)._rational, *arg2);
+  return(CTRUE);
 }
 
 static inline void mul2_bignum(carc *c, value arg1, mpz_t *arg2)
@@ -541,14 +544,16 @@ static inline value sub2r_flonum(carc *c, value arg1, double arg2)
 }
 
 #ifdef HAVE_GMP_H
-static inline void sub2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value sub2_rational(carc *c, value arg1, mpq_t *arg2)
 {
   mpq_sub(*arg2, REP(arg1)._rational, *arg2);
+  return(CTRUE);
 }
 
-static inline void sub2r_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value sub2r_rational(carc *c, value arg1, mpq_t *arg2)
 {
   mpq_sub(*arg2, *arg2, REP(arg1)._rational);
+  return(CTRUE);
 }
 
 static inline void sub2_bignum(carc *c, value arg1, mpz_t *arg2)
@@ -709,7 +714,7 @@ static inline value div2r_bignum(carc *c, value arg1, value arg2)
     return(CNIL);
   }
 
-  if (mpz_divisible_p(REP(arg1)._bignum, REP(arg2)._bignum)) {
+  if (mpz_divisible_p(REP(arg2)._bignum, REP(arg1)._bignum)) {
     mpz_divexact(REP(arg2)._bignum, REP(arg2)._bignum, REP(arg1)._bignum);
     return(CTRUE);
   }
