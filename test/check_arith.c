@@ -924,6 +924,7 @@ START_TEST(test_div_bignum)
   c.signal_error = signal_error_test;
   error = 0;
 
+  /* Bignum result */
   val1 = carc_mkbignuml(&c, 0);
   mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
   val2 = carc_mkbignuml(&c, 0);
@@ -935,6 +936,7 @@ START_TEST(test_div_bignum)
   fail_unless(mpz_cmp(expected, REP(quot)._bignum) == 0);
   mpz_clear(expected);
 
+  /* Fixnum result */
   val1 = carc_mkbignuml(&c, 0);
   mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
   val2 = carc_mkbignuml(&c, 0);
@@ -943,6 +945,7 @@ START_TEST(test_div_bignum)
   fail_unless(TYPE(quot) == T_FIXNUM);
   fail_unless(FIX2INT(quot) == 2);
 
+  /* Rational result */
   val1 = carc_mkbignuml(&c, 0);
   mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
   val2 = carc_mkbignuml(&c, 0);
@@ -951,6 +954,7 @@ START_TEST(test_div_bignum)
   fail_unless(TYPE(quot) == T_RATIONAL);
   fail_unless(mpq_cmp_si(REP(quot)._rational, 4, 3) == 0);
 
+  /* Division by zero */
   error = 0;
   val1 = carc_mkbignuml(&c, 0);
   mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
@@ -961,6 +965,102 @@ START_TEST(test_div_bignum)
   fail_unless(error == 1);
   error = 0;
 #endif
+}
+END_TEST
+
+START_TEST(test_div_flonum)
+{
+  value val1, val2, quot;
+  carc c;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  val1 = carc_mkflonum(&c, 1.20257);
+  val2 = carc_mkflonum(&c, 0.57721);
+
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(2.0834185 - REP(quot)._flonum) < 1e-6);
+
+  val1 = carc_mkflonum(&c, 1.20257);
+  val2 = carc_mkflonum(&c, 0.0);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
+}
+END_TEST
+
+START_TEST(test_div_rational)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, quot;
+  carc c;
+  mpz_t expected;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkrationall(&c, 1, 3);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(quot)._rational, 3, 2) == 0);
+
+  val1 = carc_mkrationall(&c, 1, 2);
+  val2 = carc_mkrationall(&c, 1, 4);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 2);
+
+  val1 = carc_mkrationall(&c, 0, 1);
+  mpq_set_str(REP(val1)._rational, "115792089237316195423570985008687907853269984665640564039457584007913129639936/3", 10);
+  val2 = carc_mkrationall(&c, 4, 3);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "28948022309329048855892746252171976963317496166410141009864396001978282409984", 10);
+  fail_unless(mpz_cmp(expected, REP(quot)._bignum) == 0);
+  mpz_clear(expected);
+
+  val1 = carc_mkrationall(&c, 1, 1);
+  val2 = carc_mkrationall(&c, 0, 1);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
+#endif
+
+}
+END_TEST
+
+START_TEST(test_div_complex)
+{
+  value val1, val2, quot;
+  carc c;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  val1 = carc_mkcomplex(&c, 2.0, 1.0);
+  val2 = carc_mkcomplex(&c, 3.0, 2.0);
+
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(0.61538462 - REP(quot)._complex.re) < 1e-6);
+  fail_unless(fabs(-0.07692308 - REP(quot)._complex.im) < 1e-6);
+
+  val1 = carc_mkcomplex(&c, 2.0, 1.0);
+  val2 = carc_mkcomplex(&c, 0.0, 0.0);
+
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
 }
 END_TEST
 
@@ -1619,6 +1719,9 @@ int main(void)
 
   tcase_add_test(tc_ops, test_div_fixnum);
   tcase_add_test(tc_ops, test_div_bignum);
+  tcase_add_test(tc_ops, test_div_flonum);
+  tcase_add_test(tc_ops, test_div_rational);
+  tcase_add_test(tc_ops, test_div_complex);
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
