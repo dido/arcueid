@@ -1188,6 +1188,36 @@ START_TEST(test_div_fixnum2flonum)
 }
 END_TEST
 
+START_TEST(test_div_fixnum2rational)
+{
+#ifdef HAVE_GMP_H
+  value v1, v2, quot;
+  carc c;
+
+  c.get_cell = get_cell_test;
+
+  v1 = carc_mkrationall(&c, 1, 2);
+  v2 = INT2FIX(3);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(quot)._rational, 1, 6) == 0);
+
+  v1 = INT2FIX(3);
+  v2 = carc_mkrationall(&c, 5, 2);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(quot)._rational, 6, 5) == 0);
+
+  v1 = INT2FIX(3);
+  v2 = carc_mkrationall(&c, 3, 2);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 2);
+
+#endif
+}
+END_TEST
+
 START_TEST(test_sub_fixnum)
 {
   int i;
@@ -1850,6 +1880,8 @@ int main(void)
 
   tcase_add_test(tc_ops, test_div_fixnum2bignum);
   tcase_add_test(tc_ops, test_div_fixnum2flonum);
+  tcase_add_test(tc_ops, test_div_fixnum2rational);
+
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
