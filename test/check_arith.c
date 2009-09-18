@@ -866,7 +866,7 @@ START_TEST(test_div_fixnum)
   carc c;
   value quot;
 #ifdef HAVE_GMP_H
-  /*  mpq_t expected; */
+  mpq_t expected;
 #endif
 
   c.get_cell = get_cell_test;
@@ -895,10 +895,74 @@ START_TEST(test_div_fixnum)
   fail_unless(error == 1);
   error = 0;
 
-  /* XXX add tests for divisions that result in rational results */
+#ifdef HAVE_GMP_H
+  quot = __carc_div2(&c, INT2FIX(1), INT2FIX(2));
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "1/2", 10);
+  fail_unless(mpq_cmp(expected, REP(quot)._rational) == 0);
+  mpq_clear(expected);
+
+  /* This is the only case where a division of two fixnums will
+     result in a bignum.  Happens because the fixnum range is
+     unsymmetric. */
+  quot = __carc_div2(&c, INT2FIX(FIXNUM_MIN), INT2FIX(-1));
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  fail_unless(mpz_cmp_si(REP(quot)._bignum, -FIXNUM_MIN) == 0);
+#endif
 }
 END_TEST
 
+START_TEST(test_div_bignum)
+{
+#ifdef HAVE_GMP_H
+  value val1, val2, quot;
+  carc c;
+  mpz_t expected;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  val1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
+  val2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val2)._bignum, "20000000000000000000000", 10);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "2000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REP(quot)._bignum) == 0);
+  mpz_clear(expected);
+
+  val1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
+  val2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val2)._bignum, "20000000000000000000000000000000000000000000000", 10);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 2);
+
+  val1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
+  val2 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val2)._bignum, "30000000000000000000000000000000000000000000000", 10);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(quot)._rational, 4, 3) == 0);
+
+  error = 0;
+  val1 = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
+  val2 = carc_mkbignuml(&c, 0);
+  quot = __carc_div2(&c, val1, val2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(quot == CNIL);
+  fail_unless(error == 1);
+  error = 0;
+#endif
+}
+END_TEST
 
 START_TEST(test_sub_fixnum)
 {
@@ -1554,6 +1618,7 @@ int main(void)
   tcase_add_test(tc_ops, test_mul_misc);
 
   tcase_add_test(tc_ops, test_div_fixnum);
+  tcase_add_test(tc_ops, test_div_bignum);
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
