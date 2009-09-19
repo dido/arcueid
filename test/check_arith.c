@@ -1278,6 +1278,27 @@ START_TEST(test_div_fixnum2complex)
 }
 END_TEST
 
+START_TEST(test_div_misc)
+{
+  carc c;
+  value quot;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  quot = __carc_div2(&c, CNIL, CNIL);
+  fail_unless(error == 1);
+  error = 0;
+
+  quot = __carc_div2(&c, cons(&c, FIX2INT(1), CNIL), 
+		     cons(&c, FIX2INT(2), CNIL));
+  fail_unless(error == 1);
+  error = 0;
+}
+END_TEST
+
+
 START_TEST(test_sub_fixnum)
 {
   int i;
@@ -1943,6 +1964,7 @@ int main(void)
   tcase_add_test(tc_ops, test_div_fixnum2rational);
   tcase_add_test(tc_ops, test_div_fixnum2complex);
 
+  tcase_add_test(tc_ops, test_div_misc);
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
