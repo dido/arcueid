@@ -629,7 +629,7 @@ static inline value div2r_complex(carc *c, value arg1, double re, double im)
   }
 
   r2 = (REP(arg1)._complex.re * re + REP(arg1)._complex.im * im)/den;
-  i2 = im*(REP(arg1)._complex.re - re*REP(arg1)._complex.im)/den;
+  i2 = (im*REP(arg1)._complex.re - re*REP(arg1)._complex.im)/den;
   return(carc_mkcomplex(c, r2, i2));
 }
 
