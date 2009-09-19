@@ -136,6 +136,7 @@ START_TEST(test_add_fixnum2rational)
   sum = __carc_add2(&c, v1, v2);
   fail_unless(TYPE(sum) == T_RATIONAL);
   fail_unless(mpq_cmp_si(REP(sum)._rational, 3, 2) == 0);
+
 #endif
 }
 END_TEST
@@ -1195,6 +1196,8 @@ START_TEST(test_div_fixnum2rational)
   carc c;
 
   c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
 
   v1 = carc_mkrationall(&c, 1, 2);
   v2 = INT2FIX(3);
@@ -1213,6 +1216,22 @@ START_TEST(test_div_fixnum2rational)
   quot = __carc_div2(&c, v1, v2);
   fail_unless(TYPE(quot) == T_FIXNUM);
   fail_unless(FIX2INT(quot) == 2);
+
+  /* Division by zero */
+  error = 0;
+  v1 = carc_mkrationall(&c, 1, 2);
+  v2 = INT2FIX(0);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
+
+  v1 = INT2FIX(1);
+  v2 = carc_mkrationall(&c, 0, 1);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
 
 #endif
 }
