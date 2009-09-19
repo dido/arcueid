@@ -1237,6 +1237,47 @@ START_TEST(test_div_fixnum2rational)
 }
 END_TEST
 
+START_TEST(test_div_fixnum2complex)
+{
+  value v1, v2, quot;
+  carc c;
+
+  c.get_cell = get_cell_test;
+  c.signal_error = signal_error_test;
+  error = 0;
+
+  v1 = carc_mkcomplex(&c, 1.0, 2.0);
+  v2 = INT2FIX(4);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(0.25 - REP(quot)._complex.re) < 1e-6);
+  fail_unless(fabs(0.50 - REP(quot)._complex.im) < 1e-6);
+
+  v1 = INT2FIX(2);
+  v2 = carc_mkcomplex(&c, 1.0, 2.0);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(fabs(0.4 - REP(quot)._complex.re) < 1e-6);
+  fail_unless(fabs(-0.8 - REP(quot)._complex.im) < 1e-6);
+
+  /* Division by zero */
+  error = 0;
+  v1 = INT2FIX(2);
+  v2 = carc_mkcomplex(&c, 0.0, 0.0);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
+
+  v1 = carc_mkcomplex(&c, 0.0, 0.0);
+  v2 = INT2FIX(0);
+  quot = __carc_div2(&c, v1, v2);
+  fail_unless(TYPE(quot) == T_NIL);
+  fail_unless(error == 1);
+  error = 0;
+
+}
+END_TEST
+
 START_TEST(test_sub_fixnum)
 {
   int i;
@@ -1900,6 +1941,7 @@ int main(void)
   tcase_add_test(tc_ops, test_div_fixnum2bignum);
   tcase_add_test(tc_ops, test_div_fixnum2flonum);
   tcase_add_test(tc_ops, test_div_fixnum2rational);
+  tcase_add_test(tc_ops, test_div_fixnum2complex);
 
 
   tcase_add_test(tc_ops, test_add_fixnum);
