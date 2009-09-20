@@ -34,7 +34,7 @@ typedef unsigned long value;
 
 typedef struct carc {
   value (*get_cell)(struct carc *);
-  void (*mem_alloc)(struct carc *, size_t size);
+  void *(*mem_alloc)(struct carc *, size_t size);
   void (*signal_error)(struct carc *, const char *, ...);
 } carc;
 
