@@ -1,0 +1,50 @@
+/* 
+  Copyright (C) 2009 Rafael R. Sevilla
+
+  This file is part of CArc
+
+  CArc is free software; you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+  02110-1301 USA.
+*/
+
+#ifndef _ALLOC_H_
+#define _ALLOC_H_
+
+/* These magic numbers are essentially the same as that used by
+   Inferno in its memory allocator. */
+#define MAGIC_A 0xa110c		      /* Allocated block */
+#define MAGIC_F	0xbadc0c0a	      /* Free block */
+#define MAGIC_I	0xabba		      /* Block is immutable (non-GC) */
+
+typedef struct Bhdr_t {
+  uint64_t magic;
+  uint64_t size;
+  uint64_t color;
+  uint64_t pad;	    /* so that the block header is exactly 16 bytes */
+  union {
+    char data[1];
+    struct Bhdr_t *next;
+  } u;
+} Bhdr;
+
+#define B2D(bp) ((void *)bp->u.data)
+#define D2B(b, dp) ((b) = ((Bhdr *)(((char *)dp) - ((Bhdr *)0)->u.data))
+#define B2NB(b) ((Bhdr *)((char *)(b) + (b)->size))
+#define FBNEXT(b) ((b)->u.next)
+#define BHDRSIZE ((long)(((Bhdr *)0)->u.data))
+/* round the heap size */
+#define ROUNDSIZE(ns, s) { (ns) = ((s) & 0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : ns; }
+
+#endif
