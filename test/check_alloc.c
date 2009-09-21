@@ -18,3 +18,47 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
   02110-1301 USA.
 */
+#include <stdlib.h>
+#include <string.h>
+#include <check.h>
+#include <math.h>
+#include <stdio.h>
+#include "../src/carc.h"
+#include "../src/alloc.h"
+#include "../config.h"
+
+START_TEST(test_size_rounding)
+{
+  size_t ns;
+  int i;
+
+  for (i=1; i<=16; i++) {
+    ROUNDSIZE(ns, i);
+    fail_unless(ns == 16);
+  }
+  for (; i<=32; i++) {
+    ROUNDSIZE(ns, i);
+    fail_unless(ns == 32);
+  }
+}
+END_TEST
+
+
+int main(void)
+{
+  int number_failed;
+  Suite *s = suite_create("Memory Allocation");
+  TCase *tc_alloc = tcase_create("Allocation");
+  TCase *tc_gc = tcase_create("Garbage Collection");
+  SRunner *sr;
+
+  tcase_add_test(tc_alloc, test_size_rounding);
+
+  suite_add_tcase(s, tc_alloc);
+  suite_add_tcase(s, tc_gc);
+  sr = srunner_create(s);
+  srunner_run_all(sr, CK_NORMAL);
+  number_failed = srunner_ntests_failed(sr);
+  srunner_free(sr);
+  return((number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE);
+}
