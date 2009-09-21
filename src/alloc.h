@@ -32,7 +32,7 @@ typedef struct Bhdr_t {
   uint64_t magic;
   uint64_t size;
   uint64_t color;
-  uint64_t pad;	    /* so that the block header is exactly 16 bytes */
+  uint64_t pad;	    /* so that the block header is exactly 32 bytes */
   union {
     char data[1];
     struct Bhdr_t *next;
