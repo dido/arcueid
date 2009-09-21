@@ -39,6 +39,16 @@ typedef struct Bhdr_t {
   } u;
 } Bhdr;
 
+typedef struct {
+  void *block;	   /* address of malloced block this chunk lives in */
+  size_t size;	   /* in bytes */
+  void *next;
+} Hhdr;
+
+#define HHDR_SIZE(h) ((((Hhdr *)(h))[-1]).size)
+#define HHDR_BLOCK(h) ((((Hhdr *)(h))[-1]).block)
+#define HHDR_NEXT(h) ((((Hhdr *)(h))[-1]).next)
+
 /* Page size is 4096 bytes */
 #define PAGE_LOG 12
 #define PAGE_SIZE (1 << PAGE_LOG)
