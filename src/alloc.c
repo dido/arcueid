@@ -18,41 +18,21 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
   02110-1301 USA.
 */
+/* This default memory allocator and garbage collector uses a simple
+   free-list to manage memory blocks, and the VCGC garbage collector
+   by Huelsbergen and Winterbottom (ISMM 1998).  Someone's been reading
+   the sources for Inferno emu and the OCaml bytecode interpreter! */
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 #include <inttypes.h>
 #include "carc.h"
-
-/* These magic numbers are essentially the same as that used by
-   Inferno in its memory allocator. */
-#define MAGIC_A 0xa110c		      /* Allocated block */
-#define MAGIC_F	0xbadc0c0a	      /* Free block */
-#define MAGIC_E	0xdeadbabe	      /* End of arena */
-#define MAGIC_I	0xabba		      /* Block is immutable (non-GC) */
-
-typedef struct Bhdr_t {
-  uint64_t magic;
-  uint64_t size;
-  uint64_t color;
-  uint64_t pad;	    /* so that the block header is exactly 16 bytes */
-  union {
-    char data[1];
-    struct Bhdr_t *next;
-  } u;
-} Bhdr;
-
-#define B2D(bp) ((void *)bp->u.data)
-#define D2B(b, dp) ((b) = ((Bhdr *)(((char *)dp) - ((Bhdr *)0)->u.data))
-#define B2NB(b) ((Bhdr *)((char *)(b) + (b)->size))
-#define FBNEXT(b) ((b)->u.next)
-#define BHDRSIZE ((long)(((Bhdr *)0)->u.data))
-/* round the heap size */
-#define ROUNDSIZE(ns, s) { (ns) = ((s) & 0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : ns; }
-  
+#include "alloc.h"
+#include "../config.h"
 
 static Bhdr *fl_head = NULL;
 static Bhdr *fl_prev = NULL;
+static Bhdr *fl_last = NULL;	/* Last block in the list.  Only valid just
+				   after fl_alloc returns NULL. */
 static uint64_t epoch = 3;
 static int mutator = 0;
 static int marker = 1;
@@ -96,6 +76,20 @@ static void *fl_get_block(size_t size, Bhdr *prev, Bhdr *cur)
   return(B2D(h));
 }
 
+static void *alloc_for_heap(size_t req)
+{
+  void *mem;
+  void *block;
+
+  mem = __carc_aligned_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
+  if (mem == NULL)
+    return(NULL);
+  mem += sizeof(Hhdr);
+  HHDR_SIZE(mem) = req;
+  HHDR_BLOCK(mem) = block;
+  return(mem);
+}
+
 static void fl_add_block(void *blk)
 {
 }
@@ -114,6 +108,7 @@ static void *fl_alloc(size_t size)
     prev = cur;
     cur = FBNEXT(prev);
   }
+  fl_last = prev;
   /* Search from the start of the list to fl_prev */
   prev = fl_head;
   cur = FBNEXT(prev);
@@ -128,7 +123,8 @@ static void *fl_alloc(size_t size)
   return(NULL);
 }
 
-/* Allocate more memory using malloc/mmap */
+/* Allocate more memory using malloc/mmap.  Return a pointer to the
+   new block. */
 static void *expand_heap(size_t request)
 {
   /* XXX fill this in */
