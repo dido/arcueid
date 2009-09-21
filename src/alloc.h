@@ -39,6 +39,10 @@ typedef struct Bhdr_t {
   } u;
 } Bhdr;
 
+/* Page size is 4096 bytes */
+#define PAGE_LOG 12
+#define PAGE_SIZE (1 << PAGE_LOG)
+
 #define B2D(bp) ((void *)bp->u.data)
 #define D2B(b, dp) ((b) = ((Bhdr *)(((char *)dp) - ((Bhdr *)0)->u.data))
 #define B2NB(b) ((Bhdr *)((char *)(b) + (b)->size))
@@ -46,5 +50,9 @@ typedef struct Bhdr_t {
 #define BHDRSIZE ((long)(((Bhdr *)0)->u.data))
 /* round the heap size */
 #define ROUNDSIZE(ns, s) { (ns) = ((s) & ~0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : ns; }
+
+extern void *__carc_aligned_alloc(size_t osize, int modulo, void **block);
+extern void __carc_aligned_free(void *addr, size_t size);
+
 
 #endif
