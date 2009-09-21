@@ -86,6 +86,12 @@ if test "x$enable_bignum" != xno; then
     AC_MSG_FAILURE([Bignum (libgmp) test failed (--disable-bignum to disable)])
   fi
 fi
+
+AC_ARG_ENABLE([mmap], [AS_HELP_STRING([--disable-mmap], [disable usage of mmap for memory allocation (fallback to malloc)])], [], [enable_mmap=yes])
+if test "x$enable_mmap" != xno; then
+   AC_CHECK_HEADERS(sys/mman.h)
+   AC_FUNC_MMAP
+fi
 LIBCARC_LIBS="-L${libdir} -lcarc $GMP_LIBS $MATH_LIBS"
 AC_SUBST(LIBCARC_LIBS)
 AC_CONFIG_HEADERS([config.h])
