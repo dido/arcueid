@@ -45,6 +45,6 @@ typedef struct Bhdr_t {
 #define FBNEXT(b) ((b)->u.next)
 #define BHDRSIZE ((long)(((Bhdr *)0)->u.data))
 /* round the heap size */
-#define ROUNDSIZE(ns, s) { (ns) = ((s) & 0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : ns; }
+#define ROUNDSIZE(ns, s) { (ns) = ((s) & ~0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : ns; }
 
 #endif
