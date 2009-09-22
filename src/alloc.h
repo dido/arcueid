@@ -22,6 +22,8 @@
 #ifndef _ALLOC_H_
 #define _ALLOC_H_
 
+#include <inttypes.h>
+
 /* These magic numbers are essentially the same as that used by
    Inferno in its memory allocator. */
 #define MAGIC_A 0xa110c		      /* Allocated block */
