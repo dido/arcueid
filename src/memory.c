@@ -29,7 +29,7 @@
 
 #ifdef HAVE_MMAP
 
-void *__carc_aligned_alloc(size_t osize, int modulo, void **block)
+void *__carc_aligned_mmap(size_t osize, int modulo, void **block)
 {
   char *raw_mem;
   static void *last_addr = NULL;
@@ -48,20 +48,22 @@ void *__carc_aligned_alloc(size_t osize, int modulo, void **block)
   return((void *)(aligned_mem - modulo));
 }
 
-void __carc_aligned_free(void *addr, size_t size)
+void __carc_aligned_munmap(void *addr, size_t size)
 {
   int retcode = munmap(addr, size + PAGE_SIZE);
   assert(retcode == 0);
 }
 
-#else
+#endif
 
 /* use malloc */
-void *__carc_aligned_alloc(size_t osize, int modulo, void **block)
+void *__carc_aligned_malloc(size_t osize, int modulo, void **block)
 {
   char *raw_mem;
   unsigned long aligned_mem;
+  size_t size;
 
+  ROUNDSIZE(size, osize);
   raw_mem = (char *)malloc(size + PAGE_SIZE);
   if (raw_mem == NULL)
     return(NULL);
@@ -75,5 +77,3 @@ void __carc_aligned_free(void *addr, size_t size)
 {
   free(addr);
 }
-
-#endif
