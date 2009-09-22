@@ -25,14 +25,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <assert.h>
 #include "carc.h"
 #include "alloc.h"
 #include "../config.h"
 
 static Bhdr *fl_head = NULL;
 static Bhdr *fl_prev = NULL;
-static Bhdr *fl_last = NULL;	/* Last block in the list.  Only valid just
-				   after fl_alloc returns NULL. */
 static uint64_t epoch = 3;
 static int mutator = 0;
 static int marker = 1;
@@ -90,8 +89,42 @@ static void *alloc_for_heap(size_t req)
   return(mem);
 }
 
+/* Add a block to the free list.  The block's header fields are filled
+   in by this function. */
 static void fl_add_block(void *blk)
 {
+  Bhdr *h = blk, *prev, *cur;
+
+  /* No blocks yet */
+  if (fl_head == NULL) {
+    fl_prev = fl_head = h;
+    FBNEXT(h) = NULL;
+    h->magic = MAGIC_F;
+    h->color = mutator;    
+    return;
+  }
+
+  /* See where in the list we should attempt to search */
+  if (h > fl_prev) {
+    /* Search from [fl_prev] to the end of the list */
+    prev = fl_prev;
+    cur = FBNEXT(prev);
+    while (cur != NULL) {
+      if (prev < h && cur > h) {
+	FBNEXT(prev) = h;
+	FBNEXT(h) = cur;
+	h->magic = MAGIC_F;
+	h->color = mutator;
+	return;
+      }
+      prev = cur;
+      cur = FBNEXT(prev);
+    }
+    /* If we get here, the address is greater than the last address */
+  } else {
+    /* Search from the head to fl_prev then */
+  }
+  assert(0);
 }
 
 static void *fl_alloc(size_t size)
@@ -108,11 +141,10 @@ static void *fl_alloc(size_t size)
     prev = cur;
     cur = FBNEXT(prev);
   }
-  fl_last = prev;
   /* Search from the start of the list to fl_prev */
   prev = fl_head;
   cur = FBNEXT(prev);
-  while (prev != fl_prev) {
+  while (cur != fl_prev) {
     if (cur->size >= size) {
       return(fl_get_block(size, prev, cur));
     }
@@ -127,6 +159,9 @@ static void *fl_alloc(size_t size)
    new block. */
 static void *expand_heap(size_t request)
 {
+  void *mem;
+
+  mem = alloc_for_heap(request);
   /* XXX fill this in */
   return(NULL);
 }
