@@ -33,8 +33,15 @@ typedef unsigned long value;
 @MPQ_TYPE@;
 
 typedef struct carc {
+  /* High-level allocation functions (allocate a cell, allocate a block) */
   value (*get_cell)(struct carc *);
-  void *(*mem_alloc)(struct carc *, size_t size);
+  void *(*get_block)(struct carc *, size_t);
+
+  /* Low-level allocation functions (bypass memory management--use only
+     from within an allocator or garbage collector) */
+  void *(*mem_alloc)(size_t, int, void **);
+  void (*mem_free)(void *, size_t);
+
   void (*signal_error)(struct carc *, const char *, ...);
 } carc;
 
