@@ -75,12 +75,12 @@ static void *fl_get_block(size_t size, Bhdr *prev, Bhdr *cur)
   return(B2D(h));
 }
 
-static void *alloc_for_heap(size_t req)
+static void *alloc_for_heap(carc *c, size_t req)
 {
   void *mem;
   void *block;
 
-  mem = __carc_aligned_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
+  mem = c->mem_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
   if (mem == NULL)
     return(NULL);
   mem += sizeof(Hhdr);
@@ -157,11 +157,11 @@ static void *fl_alloc(size_t size)
 
 /* Allocate more memory using malloc/mmap.  Return a pointer to the
    new block. */
-static void *expand_heap(size_t request)
+static void *expand_heap(carc *c, size_t request)
 {
   void *mem;
 
-  mem = alloc_for_heap(request);
+  mem = alloc_for_heap(c, request);
   /* XXX fill this in */
   return(NULL);
 }
@@ -176,7 +176,7 @@ static void *alloc(carc *c, size_t osize)
   ROUNDSIZE(size, osize);
   blk = fl_alloc(size);
   if (blk == NULL) {
-    nblk = expand_heap(size);
+    nblk = expand_heap(c, size);
     if (nblk == NULL) {
       c->signal_error(c, "Fatal error: out of memory!");
       return(NULL);
@@ -200,7 +200,7 @@ static value get_cell(carc *c)
 void carc_set_allocator(carc *c)
 {
   c->get_cell = get_cell;
-  c->mem_alloc = alloc;
+  c->get_block = alloc;
   epoch = 3;
   mutator = 0;
   marker = 1;
