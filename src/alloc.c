@@ -97,40 +97,47 @@ static void *alloc_for_heap(carc *c, size_t req)
 
 /* Add a block to the free list.  The block's header fields are filled
    in by this function. */
-static void fl_add_block(void *blk)
+static void fl_free_block(Bhdr *blk)
 {
-  Bhdr *h = blk, *prev, *cur;
+  Bhdr *prev, *cur;
+  int inserted = 0;
 
-  /* No blocks yet */
   if (fl_head == NULL) {
-    fl_prev = fl_head = h;
-    FBNEXT(h) = NULL;
-    h->magic = MAGIC_F;
-    h->color = mutator;    
+    fl_head = blk;
+    FBNEXT(fl_head) = NULL;
     return;
   }
+  /* Scan from the head of the list, and determine whether it is
+     possible to coalesce the freed block with another block. */
+  prev = fl_head;
+  cur = FBNEXT(prev);
 
-  /* See where in the list we should attempt to search */
-  if (h > fl_prev) {
-    /* Search from [fl_prev] to the end of the list */
-    prev = fl_prev;
-    cur = FBNEXT(prev);
-    while (cur != NULL) {
-      if (prev < h && cur > h) {
-	FBNEXT(prev) = h;
-	FBNEXT(h) = cur;
-	h->magic = MAGIC_F;
-	h->color = mutator;
-	return;
-      }
-      prev = cur;
-      cur = FBNEXT(prev);
+  while (cur != NULL) {
+    if (B2NB(prev) == blk) {
+      /* end of previous block coincides with this block.  Coalesce
+	 the freed block to this one. */
+      prev->size += blk->size + BHDRSIZE;
+      blk = prev;
+      inserted = 1;
     }
-    /* If we get here, the address is greater than the last address */
-  } else {
-    /* Search from the head to fl_prev then */
+    if (B2NB(blk) == cur) {
+      /* end of the block itself coincides with the start of the current
+	 block.  Coalesce with the current block. */
+      blk->size += cur->size + BHDRSIZE;
+      FBNEXT(blk) = FBNEXT(cur);
+      inserted = 1;
+      cur = blk;
+    }
+
+    if (!inserted && prev < blk && cur > blk) {
+      /* Cannot coalesce, just plain insert */
+      FBNEXT(prev) = blk;
+      FBNEXT(blk) = cur;
+      inserted = 1;
+    }
+    if (inserted)
+      break;
   }
-  assert(0);
 }
 
 static void *fl_alloc(size_t size)
@@ -163,9 +170,9 @@ static void *fl_alloc(size_t size)
 
 /* Allocate more memory using malloc/mmap.  Return a pointer to the
    new block. */
-static void *expand_heap(carc *c, size_t request)
+static Bhdr *expand_heap(carc *c, size_t request)
 {
-  void *mem;
+  Bhdr *mem;
   size_t over_request, rounded_request;
 
   /* Allocate c->over_percent more beyond the requested amount */
@@ -174,17 +181,22 @@ static void *expand_heap(carc *c, size_t request)
   if (over_request < c->minexp)
     over_request = c->minexp;
   ROUNDHEAP(rounded_request, over_request);
-  mem = alloc_for_heap(c, rounded_request);
+  mem = (Bhdr *)alloc_for_heap(c, rounded_request);
   if (mem == NULL) {
     c->signal_error(c, "No room for growing heap");
     return(NULL);
   }
+  mem->magic = MAGIC_F;
+  mem->size = rounded_request;
+  mem->color = mutator;
+  return(mem);
 }
 
 static void *alloc(carc *c, size_t osize)
 {
-  void *blk, *nblk;
+  void *blk;
   size_t size;
+  Bhdr *nblk;
 
   /* Adjust the size of the allocated block so that we maintain
      alignment of at least 16 bytes. */
@@ -196,7 +208,7 @@ static void *alloc(carc *c, size_t osize)
       c->signal_error(c, "Fatal error: out of memory!");
       return(NULL);
     }
-    fl_add_block(nblk);
+    fl_free_block(nblk);
     blk = fl_alloc(size);
   }
   return(blk);
