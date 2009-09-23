@@ -42,6 +42,8 @@ typedef struct carc {
   void *(*mem_alloc)(size_t, int, void **);
   void (*mem_free)(void *, size_t);
 
+  int max_alloc;		/* maximum allocation size */
+
   void (*signal_error)(struct carc *, const char *, ...);
 } carc;
 
@@ -152,7 +154,7 @@ extern value carc_coerce_fixnum(carc *c, value v);
 
 extern value carc_arith_op(carc *c, int opval, value args);
 
-/* Set the default allocator */
-extern void carc_set_allocator(carc *c);
+/* Set the default memory manager */
+void carc_set_memmgr(carc *c);
 
 #endif
