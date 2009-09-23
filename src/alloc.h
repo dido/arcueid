@@ -63,8 +63,8 @@ typedef struct {
 /* round the heap size */
 #define ROUNDSIZE(ns, s) { (ns) = ((s) & ~0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : ns; }
 
-/* default to 30% minimum free space on heap expansion */
-#define DFL_MIN_FREE 30
+/* default to 30% minimum extra space on heap expansion */
+#define DFL_OVER_PERCENT 30
 /* default to 1 megabyte minimum heap expansion at any given time */
 #define DFL_MIN_EXP 1048576
 
