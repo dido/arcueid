@@ -75,6 +75,8 @@ static void *fl_get_block(size_t size, Bhdr *prev, Bhdr *cur)
   return(B2D(h));
 }
 
+/* Allocate memory for the heap.  This uses the low level memory allocator
+   function specified. */
 static void *alloc_for_heap(carc *c, size_t req)
 {
   void *mem;
@@ -197,10 +199,17 @@ static value get_cell(carc *c)
   return((value)cellptr);
 }
 
-void carc_set_allocator(carc *c)
+void carc_set_memmgr(carc *c)
 {
   c->get_cell = get_cell;
   c->get_block = alloc;
+#ifdef HAVE_MMAP
+  c->mem_alloc = __carc_aligned_mmap;
+  c->mem_free = __carc_aligned_munmap;
+#else
+  c->mem_alloc = __carc_aligned_malloc;
+  c->mem_free = __carc_aligned_free;
+#endif
   epoch = 3;
   mutator = 0;
   marker = 1;
