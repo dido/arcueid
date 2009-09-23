@@ -32,6 +32,7 @@
 
 static Bhdr *fl_head = NULL;
 static Bhdr *fl_prev = NULL;
+static Hhdr *heaps = NULL;
 static uint64_t epoch = 3;
 static int mutator = 0;
 static int marker = 1;
@@ -76,7 +77,8 @@ static void *fl_get_block(size_t size, Bhdr *prev, Bhdr *cur)
 }
 
 /* Allocate memory for the heap.  This uses the low level memory allocator
-   function specified. */
+   function specified.  Takes care of filling in the heap header information
+   and adding the heap to the list of heaps. */
 static void *alloc_for_heap(carc *c, size_t req)
 {
   void *mem;
@@ -88,6 +90,8 @@ static void *alloc_for_heap(carc *c, size_t req)
   mem += sizeof(Hhdr);
   HHDR_SIZE(mem) = req;
   HHDR_BLOCK(mem) = block;
+  HHDR_NEXT(mem) = heaps;
+  heaps = mem;
   return(mem);
 }
 
@@ -162,10 +166,19 @@ static void *fl_alloc(size_t size)
 static void *expand_heap(carc *c, size_t request)
 {
   void *mem;
+  size_t over_request, rounded_request;
 
-  mem = alloc_for_heap(c, request);
-  /* XXX fill this in */
-  return(NULL);
+  /* Allocate c->over_percent more beyond the requested amount */
+  over_request = request + ((request / 100) * c->over_percent);
+  /* If less than minimum, expand to the minimum */
+  if (over_request < c->minexp)
+    over_request = c->minexp;
+  ROUNDHEAP(rounded_request, over_request);
+  mem = alloc_for_heap(c, rounded_request);
+  if (mem == NULL) {
+    c->signal_error(c, "No room for growing heap");
+    return(NULL);
+  }
 }
 
 static void *alloc(carc *c, size_t osize)
@@ -214,4 +227,8 @@ void carc_set_memmgr(carc *c)
   mutator = 0;
   marker = 1;
   sweeper = 2;
+
+  /* Set default parameters for heap expansion policy */
+  c->minexp = DFL_MIN_EXP;
+  c->over_percent = DFL_OVER_PERCENT;
 }
