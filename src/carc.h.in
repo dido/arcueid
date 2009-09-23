@@ -42,7 +42,8 @@ typedef struct carc {
   void *(*mem_alloc)(size_t, int, void **);
   void (*mem_free)(void *, size_t);
 
-  int max_alloc;		/* maximum allocation size */
+  int over_percent;    /* additional free space over heap expansion */
+  size_t minexp;       /* minimum expansion amount */
 
   void (*signal_error)(struct carc *, const char *, ...);
 } carc;
