@@ -63,7 +63,14 @@ typedef struct {
 /* round the heap size */
 #define ROUNDSIZE(ns, s) { (ns) = ((s) & ~0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : ns; }
 
-extern void *__carc_aligned_alloc(size_t osize, int modulo, void **block);
+/* default to 30% minimum free space on heap expansion */
+#define DFL_MIN_FREE 30
+/* default to 1 megabyte minimum heap expansion at any given time */
+#define DFL_MIN_EXP 1048576
+
+extern void *__carc_aligned_mmap(size_t osize, int modulo, void **block);
+extern void __carc_aligned_munmap(void *addr, size_t size);
+extern void *__carc_aligned_malloc(size_t osize, int modulo, void **block);
 extern void __carc_aligned_free(void *addr, size_t size);
 
 
