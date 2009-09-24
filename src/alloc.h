@@ -28,6 +28,7 @@
    Inferno in its memory allocator. */
 #define MAGIC_A 0xa110c		      /* Allocated block */
 #define MAGIC_F	0xbadc0c0a	      /* Free block */
+#define MAGIC_E 0xdeadbabe	      /* End of arena */
 #define MAGIC_I	0xabba		      /* Block is immutable (non-GC) */
 
 typedef struct Bhdr_t {
