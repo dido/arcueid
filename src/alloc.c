@@ -31,50 +31,12 @@
 #include "../config.h"
 
 static Bhdr *fl_head = NULL;
-static Bhdr *fl_prev = NULL;
 static Hhdr *heaps = NULL;
 static uint64_t epoch = 3;
 static int mutator = 0;
 static int marker = 1;
 static int sweeper = 2;
 #define propagator 3		/* propagator color */
-
-/* This function takes an eligible block and carves out of it a portion
-   of at least [size].  There are three cases:
-
-   1. The free block is exactly the size requested.  Detach it from
-      the free list and return it. 
-   2. The additional space after carving out the free block is less than
-      or equal to the size of a header.  The remaining space becomes
-      slack (internal fragmentation), and the block is returned as is.
-   3. The block is big enough.  Split it in two, and return the
-      right-side block.
-   In all cases the new allocated block is right-justified in the free
-   block, in the higher address portions.  This way, the linking of the
-   free list does not change in case 3.
- */
-static void *fl_get_block(size_t size, Bhdr *prev, Bhdr *cur)
-{
-  Bhdr *h;
-
-  if (cur->size <= (uint64_t)(size + BHDRSIZE)) {
-    /* Cases 1 and 2, unlink the block and use it as is. */
-    h = cur;
-    FBNEXT(prev) = FBNEXT(cur);
-  } else {
-    /* Case 3, the block is bigger than what we need.  Shrink the
-       current block by the size plus the size of the block header.
-       Since we are carving away the right-hand side, the linkage
-       of the free list does not change. */
-    cur->size -= size + BHDRSIZE;
-    h = B2NB(cur);
-  }
-  fl_prev = prev;
-  h->size = size;
-  h->magic = MAGIC_A;
-  h->color = mutator;
-  return(B2D(h));
-}
 
 /* Allocate memory for the heap.  This uses the low level memory allocator
    function specified in the carc structure.  Takes care of filling in the
@@ -162,31 +124,59 @@ static void fl_free_block(Bhdr *blk)
   FBNEXT(prev) = blk;
 }
 
+#define ALLOC_BLOCK(blk) { (blk)->magic = MAGIC_A; (blk)->color = mutator; }
+
+/* Get a block from the free list of at least [size].  Return NULL if
+   there are no suitable blocks in the free list. */
 static void *fl_alloc(size_t size)
 {
   Bhdr *prev, *cur;
 
-  /* Search from [fl_prev] to the end of the list */
-  prev = fl_prev;
-  cur = FBNEXT(prev);
-  while (cur != NULL) {
-    if (cur->size >= size) {
-      return(fl_get_block(size, prev, cur));
-    }
-    prev = cur;
-    cur = FBNEXT(prev);
+  if (fl_head == NULL)
+    return(NULL);
+
+  /* If the size of the head block is the size of the block or larger by
+     at most the size of a block header, just use the block as is.  If the
+     slack is less than that of a block header, we can't use the spare
+     space since a block header can't be added to it. */
+  if (fl_head->size >= size && fl_head->size <= size + BHDRSIZE) {
+    cur = fl_head;
+    fl_head = FBNEXT(cur);
+    ALLOC_BLOCK(cur);
+    return(B2D(cur));
   }
-  /* Search from the start of the list to fl_prev */
+
+  /* If the head block is larger than that, carve out the right
+     hand side and use that. */
+  if (fl_head->size > size + BHDRSIZE) {
+    fl_head->size -= size + BHDRSIZE;
+    cur = B2NB(fl_head);
+    cur->size = size;
+    ALLOC_BLOCK(cur);
+    return(B2D(cur));
+  }
+
+  /* The head is too small.  Traverse the free list to find the
+     first block which is suitable. */
   prev = fl_head;
-  cur = FBNEXT(prev);
-  while (cur != fl_prev) {
-    if (cur->size >= size) {
-      return(fl_get_block(size, prev, cur));
+  cur = FBNEXT(cur);
+  while (cur != NULL) {
+    if (cur->size >= size && cur->size <= size + BHDRSIZE) {
+      /* Unlink */
+      FBNEXT(prev) = FBNEXT(cur);
+      ALLOC_BLOCK(cur);
+      return(B2D(cur));
     }
-    prev = cur;
-    cur = FBNEXT(prev);
+
+    if (cur->size > size + BHDRSIZE) {
+      /* Carve */
+      cur->size -= size + BHDRSIZE;
+      cur = B2NB(cur);
+      cur->size = size;
+      ALLOC_BLOCK(cur);
+      return(B2D(cur));
+    }
   }
-  /* No block found */
   return(NULL);
 }
 
