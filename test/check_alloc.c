@@ -43,6 +43,23 @@ START_TEST(test_size_rounding)
 }
 END_TEST
 
+START_TEST(test_alloc1)
+{
+  value v1, v2, v3, v4;
+  carc c;
+
+  carc_set_memmgr(&c);
+  v1 = c.get_cell(&c);
+  v2 = c.get_cell(&c);
+  v3 = c.get_cell(&c);
+  v4 = c.get_cell(&c);
+  /* These are descending addresses */
+  fail_unless(v4 < v3);
+  fail_unless(v3 < v2);
+  fail_unless(v2 < v1);
+
+}
+END_TEST
 
 int main(void)
 {
@@ -53,6 +70,7 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_alloc, test_size_rounding);
+  tcase_add_test(tc_alloc, test_alloc1);
 
   suite_add_tcase(s, tc_alloc);
   suite_add_tcase(s, tc_gc);
