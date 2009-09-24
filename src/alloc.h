@@ -44,8 +44,10 @@ typedef struct Bhdr_t {
 
 typedef struct {
   void *block;	   /* address of malloced block this chunk lives in */
-  size_t size;	   /* in bytes */
-  void *next;
+  size_t size;	   /* size in bytes */
+  void *next;	   /* next pointer */
+  long pad;	   /* padding so the size is exactly four words, 16 bytes
+		      on 32-bit platforms or 32 bytes on 64-bit platforms. */
 } Hhdr;
 
 #define HHDR_SIZE(h) ((((Hhdr *)(h))[-1]).size)
