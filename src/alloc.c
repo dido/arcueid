@@ -45,7 +45,7 @@ static int sweeper = 2;
    1. The free block is exactly the size requested.  Detach it from
       the free list and return it. 
    2. The additional space after carving out the free block is less than
-      or equal to the size of the header.  The remaining space becomes
+      or equal to the size of a header.  The remaining space becomes
       slack (internal fragmentation), and the block is returned as is.
    3. The block is big enough.  Split it in two, and return the
       right-side block.
@@ -77,8 +77,8 @@ static void *fl_get_block(size_t size, Bhdr *prev, Bhdr *cur)
 }
 
 /* Allocate memory for the heap.  This uses the low level memory allocator
-   function specified.  Takes care of filling in the heap header information
-   and adding the heap to the list of heaps. */
+   function specified in the carc structure.  Takes care of filling in the
+   heap header information and adding the heap to the list of heaps. */
 static void *alloc_for_heap(carc *c, size_t req)
 {
   void *mem;
@@ -96,26 +96,42 @@ static void *alloc_for_heap(carc *c, size_t req)
 }
 
 /* Add a block to the free list.  The block's header fields are filled
-   in by this function. */
+   in by this function.  This also works to add a newly created block
+   from expand_heap to the free list. */
 static void fl_free_block(Bhdr *blk)
 {
   Bhdr *prev, *cur;
-  int inserted = 0;
+  int inserted;
 
-  if (fl_head == NULL) {
+  /* The boundary of the freed block exactly coincides with the
+     address of the head.  Coalesce the new block with the head
+     and let it become the new head. */
+  if (B2NB(blk) == fl_head) {
+    blk->size += fl_head->size + BHDRSIZE;
+    FBNEXT(blk) = fl_head;
     fl_head = blk;
-    FBNEXT(fl_head) = NULL;
     return;
   }
-  /* Scan from the head of the list, and determine whether it is
-     possible to coalesce the freed block with another block. */
+
+  /* If the free list head is less than the address of the head,
+     insert the new block at the head.  This also covers the case
+     where fl_head is NULL at the initial case, since any new
+     block we get will not be a null pointer. */
+  if (fl_head < blk) {
+    FBNEXT(blk) = fl_head;
+    fl_head = blk;
+    return;
+  }
+
+  /* Neither of these initial cases is true, so now we have to
+     search for the insertion point somewhere in the free list. */
   prev = fl_head;
   cur = FBNEXT(prev);
-
+  inserted = 0;
   while (cur != NULL) {
     if (B2NB(prev) == blk) {
       /* end of previous block coincides with this block.  Coalesce
-	 the freed block to this one. */
+	 the freed block to it. */
       prev->size += blk->size + BHDRSIZE;
       blk = prev;
       inserted = 1;
@@ -136,8 +152,14 @@ static void fl_free_block(Bhdr *blk)
       inserted = 1;
     }
     if (inserted)
-      break;
+      return;
   }
+  /* If we get here, we have reached the end of the free list.  The block
+     must have a higher address than any other block already present in
+     the free list.  Tack it onto the end. */
+  assert(prev < blk);
+  FBNEXT(blk) = FBNEXT(prev);
+  FBNEXT(prev) = blk;
 }
 
 static void *fl_alloc(size_t size)
@@ -168,8 +190,18 @@ static void *fl_alloc(size_t size)
   return(NULL);
 }
 
-/* Allocate more memory using malloc/mmap.  Return a pointer to the
-   new block. */
+/* Allocate more memory using malloc/mmap.  This creates a new heap chunk,
+   links it into the heap chunk list, and creates two block headers, one
+   marking the new free block that fills the entire heap chunk and a second
+   marking the end of the heap chunk.
+
+   The heap expansion algorithm basically works by allocating
+   [c->over_percent] more space than requested, plus the size of two
+   block headers.  If the heap is smaller than the minimum expansion
+   size, clamp it to the minimum expansion size.  It then rounds
+   up the size of the chunk to the next larger multiple of the page
+   size.
+ */
 static Bhdr *expand_heap(carc *c, size_t request)
 {
   Bhdr *mem, *tail;
