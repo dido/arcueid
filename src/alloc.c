@@ -172,11 +172,13 @@ static void *fl_alloc(size_t size)
    new block. */
 static Bhdr *expand_heap(carc *c, size_t request)
 {
-  Bhdr *mem;
+  Bhdr *mem, *tail;
   size_t over_request, rounded_request;
 
-  /* Allocate c->over_percent more beyond the requested amount */
-  over_request = request + ((request / 100) * c->over_percent);
+  /* Allocate c->over_percent more beyond the requested amount plus
+     space for the two headers, one for the header of the new free block
+     and another for the tail block marking the end of the arena. */
+  over_request = request + ((request / 100) * c->over_percent) + 2*BHDRSIZE;
   /* If less than minimum, expand to the minimum */
   if (over_request < c->minexp)
     over_request = c->minexp;
@@ -187,8 +189,14 @@ static Bhdr *expand_heap(carc *c, size_t request)
     return(NULL);
   }
   mem->magic = MAGIC_F;
-  mem->size = rounded_request;
+  mem->size = rounded_request - BHDRSIZE;
   mem->color = mutator;
+  /* Add a tail block to this new heap chunk so that the sweeper knows
+     that it has reached the end of the heap chunk and should begin
+     sweeping the next one, if any. */
+  tail = B2NB(mem);
+  tail->magic = MAGIC_E;
+  tail->size = 0;
   return(mem);
 }
 
