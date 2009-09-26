@@ -77,19 +77,19 @@ static void fl_free_block(Bhdr *blk)
     return;
   }
 
-  /* The boundary of the heap head exactly coincides with the address
-     of the block.  Grow the head to encompass the block to be freed. */
-  if (B2NB(fl_head) == blk) {
-    fl_head->size += blk->size + BHDRSIZE;
-    return;
-  }
-
   /* If the free list head is at a higher address than the address
      of the new block, insert the new block at the head.  This is
      also what should be done if the head is null. */
   if (fl_head == NULL || fl_head > blk) {
     FBNEXT(blk) = fl_head;
     fl_head = blk;
+    return;
+  }
+
+  /* The boundary of the heap head exactly coincides with the address
+     of the block.  Grow the head to encompass the block to be freed. */
+  if (B2NB(fl_head) == blk) {
+    fl_head->size += blk->size + BHDRSIZE;
     return;
   }
 
