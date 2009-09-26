@@ -77,11 +77,17 @@ static void fl_free_block(Bhdr *blk)
     return;
   }
 
-  /* If the free list head is less than the address of the head,
-     insert the new block at the head.  This also covers the case
-     where fl_head is NULL at the initial case, since any new
-     block we get will not be a null pointer. */
-  if (fl_head < blk) {
+  /* The boundary of the heap head exactly coincides with the address
+     of the block.  Grow the head to encompass the block to be freed. */
+  if (B2NB(fl_head) == blk) {
+    fl_head->size += blk->size + BHDRSIZE;
+    return;
+  }
+
+  /* If the free list head is at a higher address than the address
+     of the new block, insert the new block at the head.  This is
+     also what should be done if the head is null. */
+  if (fl_head == NULL || fl_head > blk) {
     FBNEXT(blk) = fl_head;
     fl_head = blk;
     return;
@@ -117,6 +123,7 @@ static void fl_free_block(Bhdr *blk)
     }
     if (inserted)
       return;
+    cur = FBNEXT(cur);
   }
   /* If we get here, we have reached the end of the free list.  The block
      must have a higher address than any other block already present in
@@ -131,6 +138,7 @@ static void free_block(struct carc *c, void *blk)
   Bhdr *h;
 
   D2B(h, blk);
+  h->magic = MAGIC_F;
   fl_free_block(h);
 }
 
