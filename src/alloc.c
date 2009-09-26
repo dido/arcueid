@@ -43,15 +43,15 @@ static int sweeper = 2;
    heap header information and adding the heap to the list of heaps. */
 static void *alloc_for_heap(carc *c, size_t req)
 {
-  void *mem;
+  char *mem;
   void *block;
   Hhdr *oldheaps;
 
-  mem = c->mem_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
+  mem = (char *)c->mem_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
   if (mem == NULL)
     return(NULL);
   oldheaps = heaps;
-  heaps = mem;
+  heaps = (Hhdr *)mem;
   mem += sizeof(Hhdr);
   HHDR_SIZE(mem) = req;
   HHDR_BLOCK(mem) = block;
@@ -161,7 +161,7 @@ static void *fl_alloc(size_t size)
   /* The head is too small.  Traverse the free list to find the
      first block which is suitable. */
   prev = fl_head;
-  cur = FBNEXT(cur);
+  cur = FBNEXT(prev);
   while (cur != NULL) {
     if (cur->size >= size && cur->size <= size + BHDRSIZE) {
       /* Unlink */
@@ -254,6 +254,11 @@ static value get_cell(carc *c)
   if (cellptr == NULL)
     return(CNIL);
   return((value)cellptr);
+}
+
+Hhdr *__carc_get_heap_start(void)
+{
+  return(heaps);
 }
 
 void carc_set_memmgr(carc *c)
