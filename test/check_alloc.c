@@ -47,13 +47,40 @@ START_TEST(test_alloc1)
 {
   value v1, v2, v3, v4;
   carc c;
+  char *ptr1, *ptr2, *ptr3;
+  int i;
 
   carc_set_memmgr(&c);
+ 
+  /* Allocate blocks of memory */
+  ptr1 = c.get_block(&c, 1024);
+  fail_if(ptr1 == NULL);
+
+  memset(ptr1, 1, 1024);
+
+  ptr2 = c.get_block(&c, 1024);
+  fail_if(ptr2 == NULL);
+  memset(ptr2, 2, 1024);
+
+  memset(ptr1, 1, 1024);
+  memset(ptr2, 2, 1024);
+
+  for (i=0; i<1024; i++) {
+    fail_unless(*(ptr1 + i) == 1);
+    fail_unless(*(ptr2 + i) == 2);
+  }
+
+  /* Do a large allocation */
+  ptr3 = c.get_block(&c, DFL_MIN_EXP*4);
+  fail_if(ptr3 == NULL);
+
   v1 = c.get_cell(&c);
   v2 = c.get_cell(&c);
   v3 = c.get_cell(&c);
   v4 = c.get_cell(&c);
-  /* These are descending addresses */
+  /* These should be descending addresses since the allocator
+     allocates blocks of memory by carving out the higher addresses
+     from a memory block. */
   fail_unless(v4 < v3);
   fail_unless(v3 < v2);
   fail_unless(v2 < v1);
