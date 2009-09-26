@@ -60,7 +60,7 @@ typedef struct {
 
 #define B2D(bp) ((void *)bp->u.data)
 #define D2B(b, dp) ((b) = ((Bhdr *)(((char *)dp) - ((Bhdr *)0)->u.data))
-#define B2NB(b) ((Bhdr *)((char *)(b) + (b)->size))
+#define B2NB(b) ((Bhdr *)((char *)(b) + (b)->size + BHDRSIZE))
 #define FBNEXT(b) ((b)->u.next)
 #define BHDRSIZE ((long)(((Bhdr *)0)->u.data))
 /* round to a multiple of 16 bytes to ensure alignment is maintained */
