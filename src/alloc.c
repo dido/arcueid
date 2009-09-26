@@ -49,11 +49,11 @@ static void *alloc_for_heap(carc *c, size_t req)
   mem = c->mem_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
   if (mem == NULL)
     return(NULL);
+  heaps = mem;
   mem += sizeof(Hhdr);
   HHDR_SIZE(mem) = req;
   HHDR_BLOCK(mem) = block;
   HHDR_NEXT(mem) = heaps;
-  heaps = mem;
   return(mem);
 }
 
