@@ -45,15 +45,17 @@ static void *alloc_for_heap(carc *c, size_t req)
 {
   void *mem;
   void *block;
+  Hhdr *oldheaps;
 
   mem = c->mem_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
   if (mem == NULL)
     return(NULL);
+  oldheaps = heaps;
   heaps = mem;
   mem += sizeof(Hhdr);
   HHDR_SIZE(mem) = req;
   HHDR_BLOCK(mem) = block;
-  HHDR_NEXT(mem) = heaps;
+  HHDR_NEXT(mem) = oldheaps;
   return(mem);
 }
 
