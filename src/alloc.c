@@ -75,11 +75,12 @@ static void fl_free_block(Bhdr *blk)
     if (B2NB(blk) == cur) {
       /* end of the block itself coincides with the start of the current
 	 block.  Coalesce with the current block. */
-      blk->size += cur->size + BHDRSIZE;
-      *prevnext = cur;
       FBNEXT(blk) = FBNEXT(cur);
-      cur = blk;
+      *prevnext = blk;
+      blk->size += cur->size + BHDRSIZE;
       inserted = 1;
+      cur = FBNEXT(cur);
+      continue;
     }
 
     if (B2NB(cur) == blk) {
@@ -88,6 +89,8 @@ static void fl_free_block(Bhdr *blk)
       cur->size += blk->size + BHDRSIZE;
       blk = cur;
       inserted = 1;
+      cur = FBNEXT(cur);
+      continue;
     }
 
     if (prev < blk && cur > blk) {
