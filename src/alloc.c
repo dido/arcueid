@@ -126,6 +126,14 @@ static void fl_free_block(Bhdr *blk)
   FBNEXT(prev) = blk;
 }
 
+static void free_block(struct carc *c, void *blk)
+{
+  Bhdr *h;
+
+  D2B(h, blk);
+  fl_free_block(h);
+}
+
 #define ALLOC_BLOCK(blk) { (blk)->magic = MAGIC_A; (blk)->color = mutator; }
 
 /* Get a block from the free list of at least [size].  Return NULL if
@@ -265,6 +273,7 @@ void carc_set_memmgr(carc *c)
 {
   c->get_cell = get_cell;
   c->get_block = alloc;
+  c->free_block = free_block;
 #ifdef HAVE_MMAP
   c->mem_alloc = __carc_aligned_mmap;
   c->mem_free = __carc_aligned_munmap;
