@@ -103,13 +103,6 @@ static void fl_free_block(Bhdr *blk)
     prev = cur;
     prevnext = &FBNEXT(prev);
     cur = FBNEXT(cur);
-    /* If the previous block has a higher address than us, we must have
-       already inserted the block between two blocks and/or coalesced it
-       at some point, so we should be done. */
-    if (prev > blk || prev == NULL) {
-      assert(inserted);
-      return;
-    }
   }
 
   if (inserted)
