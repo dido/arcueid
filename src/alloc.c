@@ -64,73 +64,59 @@ static void *alloc_for_heap(carc *c, size_t req)
    from expand_heap to the free list. */
 static void fl_free_block(Bhdr *blk)
 {
-  Bhdr *prev, *cur;
+  Bhdr *prev, **prevnext, *cur;
   int inserted;
 
-  /* The boundary of the freed block exactly coincides with the
-     address of the head.  Coalesce the new block with the head
-     and let it become the new head. */
-  if (B2NB(blk) == fl_head) {
-    blk->size += fl_head->size + BHDRSIZE;
-    FBNEXT(blk) = fl_head;
-    fl_head = blk;
-    return;
-  }
-
-  /* If the free list head is at a higher address than the address
-     of the new block, insert the new block at the head.  This is
-     also what should be done if the head is null. */
-  if (fl_head == NULL || fl_head > blk) {
-    FBNEXT(blk) = fl_head;
-    fl_head = blk;
-    return;
-  }
-
-  /* The boundary of the heap head exactly coincides with the address
-     of the block.  Grow the head to encompass the block to be freed. */
-  if (B2NB(fl_head) == blk) {
-    fl_head->size += blk->size + BHDRSIZE;
-    return;
-  }
-
-  /* Neither of these initial cases is true, so now we have to
-     search for the insertion point somewhere in the free list. */
-  prev = fl_head;
-  cur = FBNEXT(prev);
+  prev = NULL;
+  prevnext = &fl_head;
+  cur = fl_head;
   inserted = 0;
   while (cur != NULL) {
-    if (B2NB(prev) == blk) {
-      /* end of previous block coincides with this block.  Coalesce
-	 the freed block to it. */
-      prev->size += blk->size + BHDRSIZE;
-      blk = prev;
-      inserted = 1;
-    }
     if (B2NB(blk) == cur) {
       /* end of the block itself coincides with the start of the current
 	 block.  Coalesce with the current block. */
       blk->size += cur->size + BHDRSIZE;
+      *prevnext = cur;
       FBNEXT(blk) = FBNEXT(cur);
-      inserted = 1;
       cur = blk;
+      inserted = 1;
     }
 
-    if (!inserted && prev < blk && cur > blk) {
-      /* Cannot coalesce, just plain insert */
-      FBNEXT(prev) = blk;
-      FBNEXT(blk) = cur;
+    if (B2NB(cur) == blk) {
+      /* end of the current block coincides with the start of the block
+	 to be freed.  Coalesce them. */
+      cur->size += blk->size + BHDRSIZE;
+      blk = cur;
       inserted = 1;
     }
-    if (inserted)
+
+    if (prev < blk && cur > blk) {
+      /* Cannot coalesce, just plain insert */
+      inserted = 1;
+      *prevnext = blk;
+      FBNEXT(blk) = cur;
       return;
+    }
+    prev = cur;
+    prevnext = &FBNEXT(prev);
     cur = FBNEXT(cur);
+    /* If the previous block has a higher address than us, we must have
+       already inserted the block between two blocks and/or coalesced it
+       at some point, so we should be done. */
+    if (prev > blk || prev == NULL) {
+      assert(inserted);
+      return;
+    }
   }
+
+  if (inserted)
+    return;
   /* If we get here, we have reached the end of the free list.  The block
      must have a higher address than any other block already present in
      the free list.  Tack it onto the end. */
-  assert(prev < blk);
-  FBNEXT(blk) = FBNEXT(prev);
-  FBNEXT(prev) = blk;
+  assert(prev <= blk);
+  FBNEXT(blk) = *prevnext;
+  *prevnext = blk;
 }
 
 static void free_block(struct carc *c, void *blk)
