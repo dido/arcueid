@@ -32,7 +32,18 @@
 
 static Bhdr *fl_head = NULL;
 static Hhdr *heaps = NULL;
-static uint64_t epoch = 3;
+
+#define GC_QUANTA 50
+#define MAX_GC_QUANTA 15*GC_QUANTA
+
+static int quanta = GC_QUANTA;
+static int visit;
+static Hhdr *gchptr = NULL;
+static Bhdr *gcptr = NULL;
+static int gce = 0, gct = 1;
+static unsigned long long gcepochs = 0;
+static unsigned long long gccolor = 3;
+static int nprop = 0;
 static int mutator = 0;
 static int marker = 1;
 static int sweeper = 2;
@@ -259,6 +270,74 @@ Hhdr *__carc_get_heap_start(void)
   return(heaps);
 }
 
+static void mark(carc *c, value v)
+{
+}
+
+static void sweep(carc *c, value v)
+{
+}
+
+static void rootset(carc *c)
+{
+}
+
+static void rungc(carc *c)
+{
+  value h;
+
+  for (visit = quanta; visit > 0;) {
+    if (gchptr == NULL) {
+      gchptr = heaps;
+      if (gchptr == NULL)
+	return;
+    }
+    if (gcptr == NULL)
+      gcptr = (Bhdr *)((char *)gchptr + sizeof(Hhdr));
+    if (gcptr->magic == MAGIC_A) {
+      visit--;
+      gct++;
+      h = (value)B2D(gcptr);
+      if (gcptr->color == propagator) {
+	gce--;
+	gcptr->color = mutator;
+	mark(c, h);
+      } else if (gcptr->color == sweeper) {
+	gce++;
+	sweep(c, h);
+      }
+    }
+    gcptr = B2NB(gcptr);
+    if (gcptr->magic == MAGIC_E) {
+      /* reached the end of the heap block, go to the next one */
+      gchptr = (Hhdr *)gchptr->next;
+      if (gchptr == NULL)
+	break; 			/* stop if we finished the last heap block */
+      gcptr = NULL;
+    }
+  }
+
+  quanta = (MAX_GC_QUANTA + GC_QUANTA)/2
+    + ((MAX_GC_QUANTA-GC_QUANTA)/20)*((100*gce)/gct);
+  if (quanta < GC_QUANTA)
+    quanta = GC_QUANTA;
+  if (quanta > MAX_GC_QUANTA)
+    quanta = MAX_GC_QUANTA;
+
+  if (gchptr != NULL)		/* completed this iteration? */
+    return;
+
+  if (nprop == 0) {		/* completed the epoch? */
+    gcepochs++;
+    gccolor++;
+    rootset(c);
+    gce = 0;
+    gct = 1;
+    return;
+  }
+  nprop = 0;
+}
+
 void carc_set_memmgr(carc *c)
 {
   c->get_cell = get_cell;
@@ -271,10 +350,16 @@ void carc_set_memmgr(carc *c)
   c->mem_alloc = __carc_aligned_malloc;
   c->mem_free = __carc_aligned_free;
 #endif
-  epoch = 3;
+  c->rungc = rungc;
+
+  gcepochs = 0;
+  gccolor = 3;
   mutator = 0;
   marker = 1;
   sweeper = 2;
+
+  gce = 0;
+  gct = 1;
 
   /* Set default parameters for heap expansion policy */
   c->minexp = DFL_MIN_EXP;
