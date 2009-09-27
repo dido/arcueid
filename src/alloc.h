@@ -23,6 +23,7 @@
 #define _ALLOC_H_
 
 #include <inttypes.h>
+#include "carc.h"
 
 /* These magic numbers are essentially the same as that used by
    Inferno in its memory allocator. */
@@ -72,6 +73,21 @@ typedef struct {
 #define DFL_OVER_PERCENT 30
 /* default to 1 megabyte minimum heap expansion at any given time */
 #define DFL_MIN_EXP 1048576
+
+#define PROPAGATOR_COLOR 3	/* propagator color */
+extern int nprop;		/* propagator flag */
+
+static inline void write_barrier(value *loc, value nval)
+{
+  Bhdr *p;
+
+  if (!(IMMEDIATE_P(*loc) || *loc == CNIL || *loc == CTRUE)) {
+    D2B(p, (void *)*loc);
+    p->color = PROPAGATOR_COLOR;
+    nprop = 1;
+  }
+  *loc = nval;
+}
 
 extern void *__carc_aligned_mmap(size_t osize, int modulo, void **block);
 extern void __carc_aligned_munmap(void *addr, size_t size);
