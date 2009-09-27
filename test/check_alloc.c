@@ -45,46 +45,109 @@ END_TEST
 
 START_TEST(test_alloc1)
 {
-  value v1, v2, v3, v4;
   carc c;
-  char *ptr1, *ptr2, *ptr3;
+  char *ptr1, *ptr2, *ptr3, *ptr4, *ptr5, *ptr6, *ptr7, *ptr8;
   int i;
 
   carc_set_memmgr(&c);
+  c.minexp = 8192;		/* for testing */
  
   /* Allocate blocks of memory */
-  ptr1 = c.get_block(&c, 1024);
+  ptr1 = c.get_block(&c, 992);
   fail_if(ptr1 == NULL);
+  memset(ptr1, 1, 992);
 
-  memset(ptr1, 1, 1024);
-
-  ptr2 = c.get_block(&c, 1024);
+  ptr2 = c.get_block(&c, 992);
   fail_if(ptr2 == NULL);
-  memset(ptr2, 2, 1024);
+  memset(ptr2, 2, 992);
 
-  memset(ptr1, 1, 1024);
-  memset(ptr2, 2, 1024);
+  ptr3 = c.get_block(&c, 992);
+  fail_if(ptr3 == NULL);
+  memset(ptr3, 3, 992);
 
-  for (i=0; i<1024; i++) {
+  ptr4 = c.get_block(&c, 992);
+  fail_if(ptr4 == NULL);
+  memset(ptr4, 4, 992);
+
+  ptr5 = c.get_block(&c, 992);
+  fail_if(ptr5 == NULL);
+  memset(ptr5, 5, 992);
+
+  ptr6 = c.get_block(&c, 992);
+  fail_if(ptr6 == NULL);
+  memset(ptr6, 6, 992);
+
+  ptr7 = c.get_block(&c, 992);
+  fail_if(ptr7 == NULL);
+  memset(ptr7, 7, 992);
+
+  ptr8 = c.get_block(&c, 992);
+  fail_if(ptr8 == NULL);
+  memset(ptr8, 8, 992);
+
+  memset(ptr1, 1, 992);
+  memset(ptr2, 2, 992);
+  memset(ptr3, 3, 992);
+  memset(ptr4, 4, 992);
+  memset(ptr5, 5, 992);
+  memset(ptr6, 6, 992);
+  memset(ptr7, 7, 992);
+  memset(ptr8, 8, 992);
+
+  for (i=0; i<992; i++) {
     fail_unless(*(ptr1 + i) == 1);
     fail_unless(*(ptr2 + i) == 2);
+    fail_unless(*(ptr3 + i) == 3);
+    fail_unless(*(ptr4 + i) == 4);
+    fail_unless(*(ptr5 + i) == 5);
+    fail_unless(*(ptr6 + i) == 6);
+    fail_unless(*(ptr7 + i) == 7);
+    fail_unless(*(ptr8 + i) == 8);
   }
 
-  /* Do a large allocation */
-  ptr3 = c.get_block(&c, DFL_MIN_EXP*4);
+
+  /* Free the blocks in an order designed to put the freeing
+     routine through its paces. */
+  c.free_block(&c, ptr6);
+  c.free_block(&c, ptr1);
+  c.free_block(&c, ptr3);
+  c.free_block(&c, ptr2);
+  c.free_block(&c, ptr4);
+  c.free_block(&c, ptr8);
+  c.free_block(&c, ptr5);
+  c.free_block(&c, ptr7);
+
+  ptr1 = c.get_block(&c, 992);
+  fail_if(ptr1 == NULL);
+  ptr2 = c.get_block(&c, 992);
+  fail_if(ptr2 == NULL);
+  ptr3 = c.get_block(&c, 992);
   fail_if(ptr3 == NULL);
+  ptr4 = c.get_block(&c, 992);
+  fail_if(ptr4 == NULL);
+  ptr5 = c.get_block(&c, 992);
+  fail_if(ptr5 == NULL);
+  ptr6 = c.get_block(&c, 992);
+  fail_if(ptr6 == NULL);
+  ptr7 = c.get_block(&c, 992);
+  fail_if(ptr7 == NULL);
+  ptr8 = c.get_block(&c, 992);
+  fail_if(ptr8 == NULL);
 
-  v1 = c.get_cell(&c);
-  v2 = c.get_cell(&c);
-  v3 = c.get_cell(&c);
-  v4 = c.get_cell(&c);
-  /* These should be descending addresses since the allocator
-     allocates blocks of memory by carving out the higher addresses
-     from a memory block. */
-  fail_unless(v4 < v3);
-  fail_unless(v3 < v2);
-  fail_unless(v2 < v1);
+  /* Another permutation */
+  c.free_block(&c, ptr8);
+  c.free_block(&c, ptr1);
+  c.free_block(&c, ptr4);
+  c.free_block(&c, ptr6);
+  c.free_block(&c, ptr5);
+  c.free_block(&c, ptr2);
+  c.free_block(&c, ptr7);
+  c.free_block(&c, ptr3);
 
+  /* Try to allocate something big */
+  ptr1 = c.get_block(&c, 16384);
+  fail_if(ptr1 == NULL);
+  c.free_block(&c, ptr1);
 }
 END_TEST
 
