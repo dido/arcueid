@@ -45,7 +45,7 @@ END_TEST
 
 extern Hhdr *__carc_get_heap_start(void);
 
-START_TEST(test_alloc1)
+START_TEST(test_alloc)
 {
   carc c;
   char *ptr1, *ptr2, *ptr3, *ptr4, *ptr5, *ptr6, *ptr7, *ptr8;
@@ -203,6 +203,70 @@ START_TEST(test_alloc1)
 }
 END_TEST
 
+extern unsigned long long gcepochs;
+
+START_TEST(test_gc)
+{
+  carc c;
+  carc_set_memmgr(&c);
+  value list=CNIL, list2=CNIL;
+  int i, count;
+  Hhdr *h;
+  Bhdr *b;
+  unsigned long long oldepoch;
+
+  /* Create a two small lists */
+  for (i=0; i<4; i++)
+    list=cons(&c, INT2FIX(i), list);
+  for (i=4; i<8; i++) 
+    list2=cons(&c, INT2FIX(i), list);
+  
+  count = 0;
+  for (h = __carc_get_heap_start(); h; h = h->next) {
+    for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
+	 b = B2NB(b)) {
+      if (b->magic == MAGIC_A)
+	count++;
+    }
+  }
+  fail_unless(count == 8);
+  /* Mark [list] with a propagator, but not [list2] */
+  D2B(b, (void *)list);
+  oldepoch = gcepochs;
+  b->color = 3;	       /* mark [list] with propagator color */
+  while (gcepochs == oldepoch) {
+    c.rungc(&c);
+  }
+
+  oldepoch = gcepochs;
+  b->color = 3;	       /* mark [list] with propagator color */
+  while (gcepochs == oldepoch) {
+    c.rungc(&c);
+  }
+
+  oldepoch = gcepochs;
+  b->color = 3;	       /* mark [list] with propagator color */
+  while (gcepochs == oldepoch) {
+    c.rungc(&c);
+  }
+
+  /* After three epochs of the garbage collector, [list2], whose head was
+     never marked as a propagator, should have been garbage collected,
+     and the number of allocated blocks in memory must be only ten now. */
+  count = 0;
+  for (h = __carc_get_heap_start(); h; h = h->next) {
+    for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
+	 b = B2NB(b)) {
+      if (b->magic == MAGIC_A)
+	count++;
+    }
+  }
+  printf("count = %d\n", count);
+  fail_unless(count == 4);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -212,7 +276,8 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_alloc, test_size_rounding);
-  tcase_add_test(tc_alloc, test_alloc1);
+  tcase_add_test(tc_alloc, test_alloc);
+  tcase_add_test(tc_gc, test_gc);
 
   suite_add_tcase(s, tc_alloc);
   suite_add_tcase(s, tc_gc);
