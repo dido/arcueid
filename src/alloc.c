@@ -44,11 +44,11 @@ static int gce = 0, gct = 1;
 unsigned long long gcepochs = 0;
 static unsigned long long gccolor = 3;
 static unsigned long long gcnruns = 0;
-static int nprop = 0;
+int nprop = 0;
 static int mutator = 0;
 static int marker = 1;
 static int sweeper = 2;
-#define propagator 3		/* propagator color */
+#define propagator PROPAGATOR_COLOR
 #define MAX_MARK_RECURSION 64
 
 /* Allocate memory for the heap.  This uses the low level memory allocator
