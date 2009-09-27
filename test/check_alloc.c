@@ -261,7 +261,6 @@ START_TEST(test_gc)
 	count++;
     }
   }
-  printf("count = %d\n", count);
   fail_unless(count == 4);
 
 }
