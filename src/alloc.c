@@ -41,7 +41,7 @@ static int visit;
 static Hhdr *gchptr = NULL;
 static Bhdr *gcptr = NULL;
 static int gce = 0, gct = 1;
-static unsigned long long gcepochs = 0;
+unsigned long long gcepochs = 0;
 static unsigned long long gccolor = 3;
 static unsigned long long gcnruns = 0;
 static int nprop = 0;
@@ -279,10 +279,14 @@ static void mark(carc *c, value v, int reclevel)
 {
   Bhdr *b;
 
+  /* Do not try to mark an immediate value! */
+  if (IMMEDIATE_P(v) || v == CNIL || v == CTRUE)
+    return;
+
   D2B(b, (void *)v);
   SETMARK(b);
 
-  if (b->color == propagator && --visit >= 0 && reclevel < MAX_MARK_RECURSION) {
+  if (--visit >= 0 && reclevel < MAX_MARK_RECURSION) {
     gce--;
     b->color = mutator;
 
@@ -298,6 +302,9 @@ static void mark(carc *c, value v, int reclevel)
 
 static void sweep(carc *c, value v)
 {
+  if (IMMEDIATE_P(v))
+    return;
+
   switch (TYPE(v)) {
   case T_STRING:
     c->free_block(c, REP(v)._str.str); /* a string's actual data is marked T_IMMUTABLE */
@@ -322,6 +329,10 @@ static void sweep(carc *c, value v)
 
 static void rootset(carc *c)
 {
+  mutator = gccolor % 3;
+  marker = (gccolor-1)%3;
+  sweeper = (gccolor-2)%3;
+
   /* XXX fill this in with code that sets propagator marks on all the
      objects pointed to by the registers and the root environment. */
 }
@@ -357,9 +368,9 @@ static void rungc(carc *c)
     if (gcptr->magic == MAGIC_E) {
       /* reached the end of the heap block, go to the next one */
       gchptr = (Hhdr *)gchptr->next;
+      gcptr = NULL;
       if (gchptr == NULL)
 	break; 			/* stop if we finished the last heap block */
-      gcptr = NULL;
     }
   }
 
