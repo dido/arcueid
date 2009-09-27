@@ -43,11 +43,13 @@ static Bhdr *gcptr = NULL;
 static int gce = 0, gct = 1;
 static unsigned long long gcepochs = 0;
 static unsigned long long gccolor = 3;
+static unsigned long long gcnruns = 0;
 static int nprop = 0;
 static int mutator = 0;
 static int marker = 1;
 static int sweeper = 2;
 #define propagator 3		/* propagator color */
+#define MAX_MARK_RECURSION 64
 
 /* Allocate memory for the heap.  This uses the low level memory allocator
    function specified in the carc structure.  Takes care of filling in the
@@ -270,21 +272,65 @@ Hhdr *__carc_get_heap_start(void)
   return(heaps);
 }
 
-static void mark(carc *c, value v)
+#define SETMARK(h) if ((h)->color != mutator) { (h)->color = propagator; nprop=1; }
+
+
+static void mark(carc *c, value v, int reclevel)
 {
+  Bhdr *b;
+
+  D2B(b, (void *)v);
+  SETMARK(b);
+
+  if (b->color == propagator && --visit >= 0 && reclevel < MAX_MARK_RECURSION) {
+    gce--;
+    b->color = mutator;
+
+    switch (TYPE(v)) {
+    case T_CONS:
+      mark(c, car(v), reclevel+1);
+      mark(c, cdr(v), reclevel+1);
+      /* XXX fill in with other composite types as they are defined */
+      break;
+    }
+  }
 }
 
 static void sweep(carc *c, value v)
 {
+  switch (TYPE(v)) {
+  case T_STRING:
+    c->free_block(c, REP(v)._str.str); /* a string's actual data is marked T_IMMUTABLE */
+    c->free_block(c, (void *)v);
+    break;
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    mpz_clear(REP(v)._bignum);
+    c->free_block(c, (void *)v);
+    break;
+  case T_RATIONAL:
+    mpq_clear(REP(v)._rational);
+    c->free_block(c, (void *)v);
+    break;
+#endif
+  case T_FLONUM:
+  case T_COMPLEX:
+  case T_CONS:
+    c->free_block(c, (void *)v);
+  }
 }
 
 static void rootset(carc *c)
 {
+  /* XXX fill this in with code that sets propagator marks on all the
+     objects pointed to by the registers and the root environment. */
 }
 
 static void rungc(carc *c)
 {
   value h;
+
+  gcnruns++;
 
   for (visit = quanta; visit > 0;) {
     if (gchptr == NULL) {
@@ -301,7 +347,7 @@ static void rungc(carc *c)
       if (gcptr->color == propagator) {
 	gce--;
 	gcptr->color = mutator;
-	mark(c, h);
+	mark(c, h, 0);
       } else if (gcptr->color == sweeper) {
 	gce++;
 	sweep(c, h);
