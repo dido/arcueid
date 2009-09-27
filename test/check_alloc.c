@@ -43,11 +43,15 @@ START_TEST(test_size_rounding)
 }
 END_TEST
 
+extern Hhdr *__carc_get_heap_start(void);
+
 START_TEST(test_alloc1)
 {
   carc c;
   char *ptr1, *ptr2, *ptr3, *ptr4, *ptr5, *ptr6, *ptr7, *ptr8;
   int i;
+  Hhdr *h;
+  Bhdr *b;
 
   carc_set_memmgr(&c);
   c.minexp = 8192;		/* for testing */
@@ -105,6 +109,19 @@ START_TEST(test_alloc1)
     fail_unless(*(ptr8 + i) == 8);
   }
 
+  /* At the end of this, we should be able to see all eight
+     memory blocks in a single heap chunk. */
+  h = __carc_get_heap_start();
+  b = (Bhdr *)((char *)h + sizeof(Hhdr));
+  fail_unless(h->next == NULL);
+  i=0;
+  while (b->magic != MAGIC_E) {
+    i++;
+    fail_unless(b->magic == MAGIC_A);
+    fail_unless(b->size == 992);
+    b = B2NB(b);
+  }
+  fail_unless(i == 8);
 
   /* Free the blocks in an order designed to put the freeing
      routine through its paces. */
@@ -116,6 +133,18 @@ START_TEST(test_alloc1)
   c.free_block(&c, ptr8);
   c.free_block(&c, ptr5);
   c.free_block(&c, ptr7);
+
+  /* This freeing should leave the heap with a single chunk
+     of free memory which should be exactly 8192-32 = 8160 bytes
+     in size */
+  h = __carc_get_heap_start();
+  b = (Bhdr *)((char *)h + sizeof(Hhdr));
+  fail_unless(h->next == NULL);
+  fail_unless(b->magic == MAGIC_F);
+  fail_unless(b->u.next == NULL); /* no other free blocks besides me */
+  fail_unless(b->size == 8160);
+  b = B2NB(b);
+  fail_unless(b->magic == MAGIC_E); /* make sure it's the last block */
 
   ptr1 = c.get_block(&c, 992);
   fail_if(ptr1 == NULL);
@@ -134,6 +163,20 @@ START_TEST(test_alloc1)
   ptr8 = c.get_block(&c, 992);
   fail_if(ptr8 == NULL);
 
+  /* At the end of this, we should again be able to see all eight
+     memory blocks in a single heap chunk. */
+  h = __carc_get_heap_start();
+  b = (Bhdr *)((char *)h + sizeof(Hhdr));
+  fail_unless(h->next == NULL);
+  i=0;
+  while (b->magic != MAGIC_E) {
+    i++;
+    fail_unless(b->magic == MAGIC_A);
+    fail_unless(b->size == 992);
+    b = B2NB(b);
+  }
+  fail_unless(i == 8);
+
   /* Another permutation */
   c.free_block(&c, ptr8);
   c.free_block(&c, ptr1);
@@ -143,6 +186,15 @@ START_TEST(test_alloc1)
   c.free_block(&c, ptr2);
   c.free_block(&c, ptr7);
   c.free_block(&c, ptr3);
+
+  h = __carc_get_heap_start();
+  b = (Bhdr *)((char *)h + sizeof(Hhdr));
+  fail_unless(h->next == NULL);
+  fail_unless(b->magic == MAGIC_F);
+  fail_unless(b->u.next == NULL); /* no other free blocks besides me */
+  fail_unless(b->size == 8160);
+  b = B2NB(b);
+  fail_unless(b->magic == MAGIC_E); /* make sure it's the last block */
 
   /* Try to allocate something big */
   ptr1 = c.get_block(&c, 16384);
