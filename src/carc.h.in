@@ -46,6 +46,9 @@ typedef struct carc {
   int over_percent;    /* additional free space over heap expansion */
   size_t minexp;       /* minimum expansion amount */
 
+  /* Garbage collector */
+  void (*rungc)(struct carc *);
+
   void (*signal_error)(struct carc *, const char *, ...);
 } carc;
 
