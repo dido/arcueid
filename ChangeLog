@@ -1,3 +1,9 @@
+2009-09-29  Rafael Sevilla  <dido@cc>
+
+	* utf.c - the Plan 9/Inferno UTF-8 library, portions for decoding
+	UTF-8, extended to provide full compliance with RFC 2279
+	* string.c - string handling primitive functions
+
 2009-09-27  Rafael Sevilla  <dido@cc>
 
 	* alloc.c - rudimentary memory allocator and garbage collector
