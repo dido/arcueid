@@ -3,7 +3,7 @@ Copyright (C) 2009 Rafael R. Sevilla
 See the end for copying conditions.
 
 The copyright holder for CArc is Rafael R. Sevilla, 7th Floor YL
-Holdings Building, 114 V.A. Rufino Street, Legaspi Village, Makati
+Holdings Building, 115 V.A. Rufino Street, Legaspi Village, Makati
 City 1229, Philippines.
 
 Rafael R. Sevilla <dido@imperium.ph>
@@ -11,9 +11,10 @@ Current maintainer.
 
 The Unicode handling code in src/utf.c is based on the UTF-8 code in
 Inferno's lib9, originally written by Rob Pike and Ken Thompson,
-modified to handle astral plane characters.  Copyright (c) 1994-1999
-Lucent Technologies Inc.  Revisions Copyright (c) 2000-2007 Vita Nuova
-Holdings Limited (www.vitanuova.com).
+modified by Rafael Sevilla to handle astral plane characters in full
+compliance with RFC 2279.  Copyright (c) 1994-1999 Lucent Technologies
+Inc.  Revisions Copyright (c) 2000-2007 Vita Nuova Holdings Limited
+(www.vitanuova.com).
 
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
