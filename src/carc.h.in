@@ -62,12 +62,28 @@ enum carc_types {
   T_FLONUM=0x04,
   T_RATIONAL=0x05,
   T_COMPLEX=0x06,
-  T_STRING=0x07,
-  T_SYMBOL=0x08,
-  T_FOREIGN_FUNC=0x09,
+  T_CHAR=0x07,
+  T_STRING=0x08,
+  T_SYMBOL=0x09,
   T_CONS=0x0a,
+  T_PROC=0x0b,
+  T_FPROC=0x0c,
+  T_TABLE=0x0d,
+  T_TAGGED=0x0e,
+  T_TABLE=0x0f,
+  T_INPUT=0x10,
+  T_OUTPUT=0x11,
+  T_EXCEPTION=0x12,
+  T_SOCKET=0x13,
+  T_THREAD=0x14,
+
+  /* Internal types should be added as well... */
+
   T_NONE=0xff
 };
+
+/* Characters are internally stored as UCS-4 */
+typedef uint32_t Rune;
 
 /* Cells for boxed items */
 struct cell {
@@ -75,9 +91,10 @@ struct cell {
   unsigned int _flags;
   union {
     struct {
-      uint32_t *str;		/* Strings are stored internally as UCS-4 */
+      Rune *str;
       int length;
     } _str;
+    Rune _char;
     @MP_BVALUE@;
     @MPQ_BVALUE@;
     double _flonum;
