@@ -70,12 +70,11 @@ enum carc_types {
   T_FPROC=0x0c,
   T_TABLE=0x0d,
   T_TAGGED=0x0e,
-  T_TABLE=0x0f,
-  T_INPUT=0x10,
-  T_OUTPUT=0x11,
-  T_EXCEPTION=0x12,
-  T_SOCKET=0x13,
-  T_THREAD=0x14,
+  T_INPUT=0x0f,
+  T_OUTPUT=0x10,
+  T_EXCEPTION=0x11,
+  T_SOCKET=0x12,
+  T_THREAD=0x13,
 
   /* Internal types should be added as well... */
 
