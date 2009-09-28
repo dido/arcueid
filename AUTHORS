@@ -9,6 +9,12 @@ City 1229, Philippines.
 Rafael R. Sevilla <dido@imperium.ph>
 Current maintainer.
 
+The Unicode handling code in src/utf.c is based on the UTF-8 code in
+Inferno's lib9, originally written by Rob Pike and Ken Thompson,
+modified to handle astral plane characters.  Copyright (c) 1994-1999
+Lucent Technologies Inc.  Revisions Copyright (c) 2000-2007 Vita Nuova
+Holdings Limited (www.vitanuova.com).
+
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
