@@ -65,3 +65,14 @@ value carc_mkstringc(carc *c, const char *s)
   return(str);
 }
 
+value carc_mkchar(carc *c, Rune r)
+{
+  value ch;
+
+  ch = c->get_cell(c);
+  BTYPE(ch) = T_CHAR;
+  REP(ch)._char = r;
+  return(ch);
+}
+
+/* Real operations on strings come later! */
