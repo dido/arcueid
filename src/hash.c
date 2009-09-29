@@ -18,7 +18,6 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
   02110-1301 USA.
 */
-#include <stdio.h>
 #include <inttypes.h>
 #include "carc.h"
 #include "alloc.h"
@@ -95,7 +94,6 @@ void carc_hash_update(carc_hs *s, unsigned long val)
 unsigned long carc_hash_final(carc_hs *s, unsigned long len)
 {
   s->s[2] += len << 3;
-  printf("%d\n", s->state);
   if (s->state != 0) {
     FINAL(s->s[0], s->s[1], s->s[2]);
     s->state = 0;
