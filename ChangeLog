@@ -1,3 +1,7 @@
+2009-09-30  Rafael Sevilla  <dido@cc>
+
+	* hash.c - hash functions based on Bob Jenkins' algorithm
+
 2009-09-29  Rafael Sevilla  <dido@cc>
 
 	* utf.c - the Plan 9/Inferno UTF-8 library, portions for decoding
