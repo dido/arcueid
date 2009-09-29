@@ -1741,9 +1741,9 @@ START_TEST(test_coerce_flonum)
   v = carc_mkflonum(&c, 3.14159);
   d = carc_coerce_flonum(&c, v);
   fail_unless(fabs(3.14159 - d) < 1e-6);
-  v = INT2FIX(0xdeadbeef);
+  v = INT2FIX(0xdeadbee);
   d = carc_coerce_flonum(&c, v);
-  fail_unless(fabs(3735928559.0 - d) < 1e-6);
+  fail_unless(fabs(233495534.0 - d) < 1e-6);
   v = c.get_cell(&c);
   BTYPE(v) = T_CONS;
   d = carc_coerce_flonum(&c, v);
@@ -1909,9 +1909,9 @@ START_TEST(test_coerce_complex)
   fail_unless(fabs(3.14159 - re) < 1e-6);
   fail_unless(fabs(im) < 1e-6);
 
-  v = INT2FIX(0xdeadbeef);
+  v = INT2FIX(0xdeadbee);
   carc_coerce_complex(&c, v, &re, &im);
-  fail_unless(fabs(3735928559.0 - re) < 1e-6);
+  fail_unless(fabs(233495534.0 - re) < 1e-6);
   fail_unless(fabs(im) < 1e-6);
 
   v = c.get_cell(&c);
