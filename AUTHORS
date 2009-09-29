@@ -16,6 +16,10 @@ compliance with RFC 2279.  Copyright (c) 1994-1999 Lucent Technologies
 Inc.  Revisions Copyright (c) 2000-2007 Vita Nuova Holdings Limited
 (www.vitanuova.com).
 
+The hash functions used in hash.c are the hash functions proposed by
+Bob Jenkins (lookup3.c on 32-bit and lookup8.c on 64-bit builds).  See
+http://www.burtleburtle.net/bob/hash/index.html for more details.
+
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
