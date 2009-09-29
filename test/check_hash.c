@@ -31,10 +31,6 @@ START_TEST(test_hash)
   int i;
   unsigned long val;
 
-  carc_hash_init(&hs, 0);
-  for (i=0; i<8; i++)
-    carc_hash_update(&hs, i);
-  val = carc_hash_final(&hs, 8);
   /* These test values are based on Bob Jenkins' own reference code
      from his website.
 
@@ -46,10 +42,37 @@ START_TEST(test_hash)
 
      The 64-bit reference values are likely correct.
   */
+
+  carc_hash_init(&hs, 0);
+  for (i=0; i<6; i++)
+    carc_hash_update(&hs, i);
+  val = carc_hash_final(&hs, 6);
+
+#if SIZEOF_LONG >= 8
+  fail_unless(val == 0x88d7a582ec392ac7LL);
+#else
+  fail_unless(val == 0xf9491a35L);
+#endif
+
+  carc_hash_init(&hs, 0);
+  for (i=0; i<7; i++)
+    carc_hash_update(&hs, i);
+  val = carc_hash_final(&hs, 7);
+
+#if SIZEOF_LONG >= 8
+  fail_unless(val == 0x2e58f2b17158ae78LL);
+#else
+  fail_unless(val == 0xab6a297fL);
+#endif
+
+  carc_hash_init(&hs, 0);
+  for (i=0; i<8; i++)
+    carc_hash_update(&hs, i);
+  val = carc_hash_final(&hs, 8);
 #if SIZEOF_LONG >= 8
   fail_unless(val == 0x6d0b4a891c9c3e8aLL);
 #else
-  fail_unless(val == 0xef9315b);
+  fail_unless(val == 0xef9315bL);
 #endif
 
 }
