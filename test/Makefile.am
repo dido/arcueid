@@ -18,8 +18,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
 #  02110-1301 USA.
 #
-TESTS = check_arith check_alloc
-check_PROGRAMS = check_arith check_alloc
+TESTS = check_arith check_alloc check_hash
+check_PROGRAMS = check_arith check_alloc check_hash
 
 check_arith_SOURCES = check_arith.c $(top_builddir)/src/carc.h
 check_arith_CFLAGS = @CHECK_CFLAGS@
@@ -28,3 +28,7 @@ check_arith_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
 check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/carc.h
 check_alloc_CFLAGS = @CHECK_CFLAGS@
 check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+
+check_hash_SOURCES = check_hash.c $(top_builddir)/src/carc.h
+check_hash_CFLAGS = @CHECK_CFLAGS@
+check_hash_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
