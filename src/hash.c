@@ -50,6 +50,13 @@ void carc_hash_init(carc_hs *s, unsigned long level)
   s->state = 0;
 }
 
+unsigned long carc_hash_final(carc_hs *s, unsigned long len)
+{
+  s->s[2] += len << 3;
+  FINAL(s->s[0], s->s[1], s->s[2]);
+  return(s->s[2]);
+}
+
 #else
 
 #define ROT(x,k) (((x)<<(k)) | ((x)>>(32-(k))))
@@ -79,6 +86,13 @@ void carc_hash_init(carc_hs *s, unsigned long level)
 void carc_hash_init(carc_hs *s, unsigned long level)
 {
   s->s[0] = s->s[1] = s->s[2] = 0xdeadbeef + level;
+  s->state = 0;
+}
+
+unsigned long carc_hash_final(carc_hs *s, unsigned long len)
+{
+  FINAL(s->s[0], s->s[1], s->s[2]);
+  return(s->s[2]);
 }
 
 #endif
@@ -91,9 +105,3 @@ void carc_hash_update(carc_hs *s, unsigned long val)
     MIX(s->s[0], s->s[1], s->s[2]);
 }
 
-unsigned long carc_hash_final(carc_hs *s, unsigned long len)
-{
-  s->s[2] += len << 3;
-  FINAL(s->s[0], s->s[1], s->s[2]);
-  return(s->s[2]);
-}
