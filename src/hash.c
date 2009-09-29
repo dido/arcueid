@@ -57,23 +57,23 @@ void carc_hash_init(carc_hs *s, unsigned long level)
 
 #define MIX(a,b,c) \
 { \
-  a -= c;  a ^= rot(c, 4);  c += b; \
-  b -= a;  b ^= rot(a, 6);  a += c; \
-  c -= b;  c ^= rot(b, 8);  b += a; \
-  a -= c;  a ^= rot(c,16);  c += b; \
-  b -= a;  b ^= rot(a,19);  a += c; \
-  c -= b;  c ^= rot(b, 4);  b += a; \
+  a -= c;  a ^= ROT(c, 4);  c += b; \
+  b -= a;  b ^= ROT(a, 6);  a += c; \
+  c -= b;  c ^= ROT(b, 8);  b += a; \
+  a -= c;  a ^= ROT(c,16);  c += b; \
+  b -= a;  b ^= ROT(a,19);  a += c; \
+  c -= b;  c ^= ROT(b, 4);  b += a; \
 }
 
 #define FINAL(a,b,c) \
 { \
-  c ^= b; c -= rot(b,14); \
-  a ^= c; a -= rot(c,11); \
-  b ^= a; b -= rot(a,25); \
-  c ^= b; c -= rot(b,16); \
-  a ^= c; a -= rot(c,4);  \
-  b ^= a; b -= rot(a,14); \
-  c ^= b; c -= rot(b,24); \
+  c ^= b; c -= ROT(b,14); \
+  a ^= c; a -= ROT(c,11); \
+  b ^= a; b -= ROT(a,25); \
+  c ^= b; c -= ROT(b,16); \
+  a ^= c; a -= ROT(c,4);  \
+  b ^= a; b -= ROT(a,14); \
+  c ^= b; c -= ROT(b,24); \
 }
 
 void carc_hash_init(carc_hs *s, unsigned long level)
