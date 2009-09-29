@@ -94,9 +94,6 @@ void carc_hash_update(carc_hs *s, unsigned long val)
 unsigned long carc_hash_final(carc_hs *s, unsigned long len)
 {
   s->s[2] += len << 3;
-  if (s->state != 0) {
-    FINAL(s->s[0], s->s[1], s->s[2]);
-    s->state = 0;
-  }
+  FINAL(s->s[0], s->s[1], s->s[2]);
   return(s->s[2]);
 }
