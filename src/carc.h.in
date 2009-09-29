@@ -191,7 +191,7 @@ extern value carc_mkchar(carc *c, Rune r);
 
 extern void carc_hash_init(carc_hs *s, unsigned long level);
 extern void carc_hash_update(carc_hs *s, unsigned long val);
-extern unsigned long carc_hash_final(carc_hs *s);
+extern unsigned long carc_hash_final(carc_hs *s, unsigned long len);
 
 /* Set the default memory manager */
 void carc_set_memmgr(carc *c);
