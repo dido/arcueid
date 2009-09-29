@@ -137,6 +137,10 @@ struct cell {
 #define car(x) (REP(x)._cons.car)
 #define cdr(x) (REP(x)._cons.cdr)
 
+/* Definitions for strings */
+#define STRLEN(x) (REP(x)._str.length)
+#define STRINDEX(x,i) (REP(x)._str.str[(i)])
+
 static inline value cons(struct carc *c, value x, value y)
 {
   value cc = c->get_cell(c);
@@ -174,6 +178,10 @@ extern void carc_coerce_rational(carc *c, value v, void *rat);
 extern value carc_coerce_fixnum(carc *c, value v);
 
 extern value carc_arith_op(carc *c, int opval, value args);
+
+extern value carc_mkstring(carc *c, const Rune *data, int length);
+extern value carc_mkstringc(carc *c, const char *s);
+extern value carc_mkchar(carc *c, Rune r);
 
 /* Set the default memory manager */
 void carc_set_memmgr(carc *c);
