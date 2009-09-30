@@ -194,6 +194,7 @@ extern Rune carc_strindex(carc *c, value v, int index);
 extern void carc_hash_init(carc_hs *s, unsigned long level);
 extern void carc_hash_update(carc_hs *s, unsigned long val);
 extern unsigned long carc_hash_final(carc_hs *s, unsigned long len);
+extern unsigned long carc_hash(carc *c, value v);
 
 /* Set the default memory manager */
 void carc_set_memmgr(carc *c);
