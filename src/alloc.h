@@ -68,6 +68,7 @@ typedef struct {
 #define ROUNDSIZE(ns, s) { (ns) = ((s) & ~0x0f); (ns) = ((ns) < (s)) ? ((ns) + 0x10) : (ns); }
 /* round a heap request size to a page size */
 #define ROUNDHEAP(ns, s) { (ns) = ((s) & ~0x0fff); (ns) = ((ns) < (s)) ? ((ns) + 0x1000) : (ns); }
+#define BLOCK_IMM(dp) { Bhdr *b; D2B(b, dp); b->magic = MAGIC_I; }
 
 /* default to 30% minimum extra space on heap expansion */
 #define DFL_OVER_PERCENT 30
