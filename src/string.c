@@ -75,4 +75,13 @@ value carc_mkchar(carc *c, Rune r)
   return(ch);
 }
 
-/* Real operations on strings come later! */
+/* This becomes more complex later! */
+int carc_strlen(carc *c, value v)
+{
+  return(REP(v)._str.length);
+}
+
+Rune carc_strindex(carc *c, value v, int index)
+{
+  return(REP(v)._str.str[index]);
+}
