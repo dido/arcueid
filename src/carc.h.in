@@ -188,6 +188,8 @@ extern value carc_arith_op(carc *c, int opval, value args);
 extern value carc_mkstring(carc *c, const Rune *data, int length);
 extern value carc_mkstringc(carc *c, const char *s);
 extern value carc_mkchar(carc *c, Rune r);
+extern int carc_strlen(carc *c, value v);
+extern Rune carc_strindex(carc *c, value v, int index);
 
 extern void carc_hash_init(carc_hs *s, unsigned long level);
 extern void carc_hash_update(carc_hs *s, unsigned long val);
