@@ -34,3 +34,4 @@ check_*
 *.gcno
 *.gcov
 coverage/*
+src/carc.h
