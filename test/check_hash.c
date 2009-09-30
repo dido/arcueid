@@ -83,6 +83,47 @@ START_TEST(test_hash)
 }
 END_TEST
 
+START_TEST(test_hash_atomic_value)
+{
+  unsigned long hash;
+  carc c;
+  value v;
+
+  carc_set_memmgr(&c);
+
+  hash = carc_hash(&c, CNIL);
+  fail_unless(hash == 0xc2503378028494d6);
+  hash = carc_hash(&c, CTRUE);
+  fail_unless(hash == 0xa682854132f7af8e);
+  hash = carc_hash(&c, INT2FIX(1234));
+  fail_unless(hash == 0xf2e87bdaf56a2cfb);
+
+  v = carc_mkflonum(&c, 3.14159);
+  hash = carc_hash(&c, v);
+  fail_unless(hash == 0xa0c45deaa94dc4ae);
+
+  v = carc_mkcomplex(&c, 3.14159, 2.71828);
+  hash = carc_hash(&c, v);
+  fail_unless(hash == 0x4e587f004b90b15a);
+
+#ifdef HAVE_GMP_H
+  v = carc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  hash = carc_hash(&c, v);
+  fail_unless(hash == 0x1fdc09d537e098df);
+
+  v = carc_mkrationall(&c, 1, 2);
+  hash = carc_hash(&c, v);
+  fail_unless(hash == 0x78b0714df1847441);
+#endif
+
+  v = carc_mkstringc(&c, "unicode string \343\201\235\343\201\256\347\233\256\343\200\201\350\252\260\343\201\256\347\233\256\343\200\202\343\200\202\343\200\202");
+  printf("%d\n", REP(v)._str.length);
+  hash = carc_hash(&c, v);
+  fail_unless(hash == 0x51f424be55282439);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -91,6 +132,7 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_hash, test_hash);
+  tcase_add_test(tc_hash, test_hash_atomic_value);
 
   suite_add_tcase(s, tc_hash);
   sr = srunner_create(s);
