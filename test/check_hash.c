@@ -25,6 +25,8 @@
 #include "../src/carc.h"
 #include "../config.h"
 
+carc c;
+
 START_TEST(test_hash)
 {
   carc_hs hs;
@@ -86,10 +88,7 @@ END_TEST
 START_TEST(test_hash_atomic_value)
 {
   unsigned long hash;
-  carc c;
   value v;
-
-  carc_set_memmgr(&c);
 
   hash = carc_hash(&c, CNIL);
   fail_unless(hash == 0xc2503378028494d6);
@@ -118,9 +117,22 @@ START_TEST(test_hash_atomic_value)
 #endif
 
   v = carc_mkstringc(&c, "unicode string \343\201\235\343\201\256\347\233\256\343\200\201\350\252\260\343\201\256\347\233\256\343\200\202\343\200\202\343\200\202");
-  printf("%d\n", REP(v)._str.length);
   hash = carc_hash(&c, v);
   fail_unless(hash == 0x51f424be55282439);
+}
+END_TEST
+
+START_TEST(test_hash_nonatomic_value)
+{
+  value list = CNIL;
+  int i;
+  unsigned long hash;
+
+  for (i=0; i<10; i++)
+    list = cons(&c, INT2FIX(i), list);
+  hash = carc_hash(&c, list);
+  fail_unless(hash == 0xd43dd6e10d38e3fa);
+  /*  printf("%lx\n", hash); */
 }
 END_TEST
 
@@ -131,8 +143,11 @@ int main(void)
   TCase *tc_hash = tcase_create("Hash functions");
   SRunner *sr;
 
+  carc_set_memmgr(&c);
+
   tcase_add_test(tc_hash, test_hash);
   tcase_add_test(tc_hash, test_hash_atomic_value);
+  tcase_add_test(tc_hash, test_hash_nonatomic_value);
 
   suite_add_tcase(s, tc_hash);
   sr = srunner_create(s);
