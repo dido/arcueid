@@ -25,6 +25,8 @@
 
 #if SIZEOF_LONG >= 8
 
+#define HASH64BITS
+
 #define MIX(a,b,c)				\
   {						\
     a -= b; a -= c; a ^= (c>>43);		\
@@ -51,6 +53,8 @@ void carc_hash_init(carc_hs *s, unsigned long level)
 }
 
 #else
+
+#define HASH32BITS
 
 #define ROT(x,k) (((x)<<(k)) | ((x)>>(32-(k))))
 
@@ -97,4 +101,111 @@ unsigned long carc_hash_final(carc_hs *s, unsigned long len)
   s->s[2] += len << 3;
   FINAL(s->s[0], s->s[1], s->s[2]);
   return(s->s[2]);
+}
+
+#ifdef HAVE_GMP_H
+
+static unsigned long hash_bignum(carc *c, carc_hs *s, mpz_t bignum)
+{
+  unsigned long *rop;
+  size_t numb = sizeof(unsigned long);
+  size_t countp, calc_size;
+  int i;
+
+  calc_size = (mpz_sizeinbase(bignum,  2) + numb-1) / numb;
+  rop = c->get_block(c, calc_size * numb);
+  BLOCK_IMM(rop);
+  mpz_export(rop, &countp, 1, numb, 0, 0, bignum);
+  for (i=0; i<countp; i++)
+    carc_hash_update(s, rop[i]);
+  c->free_block(c, rop);
+  return((unsigned long)countp);
+}
+
+#endif
+
+/* incrementally calculate the hash code--may recurse for complex
+   data structures. */
+static unsigned long hash_increment(carc *c, value v, carc_hs *s)
+{
+  union {
+    double d;
+#if SIZEOF_LONG == 8
+    uint64_t a;
+#else
+    uint32_t a[2];
+#endif
+  } dbl;
+  unsigned long length=1;
+  int i;
+
+  switch (TYPE(v)) {
+  case T_NIL:
+    carc_hash_update(s, T_NIL);
+    break;
+  case T_TRUE:
+    carc_hash_update(s, T_TRUE);
+    break;
+  case T_FIXNUM:
+    carc_hash_update(s, (unsigned long)FIX2INT(v));
+    break;
+  case T_FLONUM:
+    dbl.d = REP(v)._flonum;
+#if SIZEOF_LONG == 8
+    carc_hash_update(s, (unsigned long)dbl.a);
+#else
+    carc_hash_update(s, (unsigned long)dbl.a[0]);
+    carc_hash_update(s, (unsigned long)dbl.a[1]);
+    length = 2;
+#endif
+    break;
+  case T_COMPLEX:
+    dbl.d = REP(v)._complex.re;
+#if SIZEOF_LONG == 8
+    carc_hash_update(s, (unsigned long)dbl.a);
+#else
+    carc_hash_update(s, (unsigned long)dbl.a[0]);
+    carc_hash_update(s, (unsigned long)dbl.a[1]);
+#endif
+    dbl.d = REP(v)._complex.im;
+#if SIZEOF_LONG == 8
+    carc_hash_update(s, (unsigned long)dbl.a);
+    length = 2;
+#else
+    carc_hash_update(s, (unsigned long)dbl.a[0]);
+    carc_hash_update(s, (unsigned long)dbl.a[1]);
+    length = 4;
+#endif
+    break;
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    length = hash_bignum(c, s, REP(v)._bignum);
+    break;
+  case T_RATIONAL:
+    length = hash_bignum(c, s, mpq_numref(REP(v)._rational));
+    length += hash_bignum(c, s, mpq_denref(REP(v)._rational));
+    break;
+#endif
+  case T_CONS:
+    carc_hash_update(s, T_CONS);
+    length += hash_increment(c, car(v), s);
+    length += hash_increment(c, cdr(v), s);
+    break;
+  case T_STRING:
+    length = carc_strlen(c, v);
+    for (i=0; i<length; i++)
+      carc_hash_update(s, (unsigned long)carc_strindex(c, v, i));
+    break;
+  }
+  return(length);
+}
+
+unsigned long carc_hash(carc *c, value v)
+{
+  unsigned long len;
+  carc_hs s;
+
+  carc_hash_init(&s, 0);
+  len = hash_increment(c, v, &s);
+  return(carc_hash_final(&s, len));
 }
