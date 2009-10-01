@@ -187,6 +187,8 @@ static unsigned long hash_increment(carc *c, value v, carc_hs *s)
     break;
 #endif
   case T_CONS:
+    /* XXX: This will recurse forever if the cons cells self-reference.
+       We need to use a more sophisticated algorithm to handle cycles. */
     carc_hash_update(s, T_CONS);
     length += hash_increment(c, car(v), s);
     length += hash_increment(c, cdr(v), s);
