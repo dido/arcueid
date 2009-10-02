@@ -208,6 +208,10 @@ extern void carc_hash_init(carc_hs *s, unsigned long level);
 extern void carc_hash_update(carc_hs *s, unsigned long val);
 extern unsigned long carc_hash_final(carc_hs *s, unsigned long len);
 extern unsigned long carc_hash(carc *c, value v);
+extern value carc_mkhash(carc *c, int hashbits);
+extern value carc_hash_insert(carc *c, value hash, value key, value val);
+extern value carc_hash_lookup(carc *c, value hash, value key);
+extern value carc_hash_delete(carc *c, value hash, value key);
 
 /* Set the default memory manager */
 void carc_set_memmgr(carc *c);
