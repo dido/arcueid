@@ -195,6 +195,8 @@ extern value carc_coerce_fixnum(carc *c, value v);
 extern value carc_arith_op(carc *c, int opval, value args);
 
 extern value carc_is(carc *c, value v1, value v2);
+extern value carc_equal(carc *c, value v1, value v2);
+
 
 extern value carc_mkstring(carc *c, const Rune *data, int length);
 extern value carc_mkstringc(carc *c, const char *s);
