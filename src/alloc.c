@@ -280,7 +280,7 @@ static void mark(carc *c, value v, int reclevel)
   Bhdr *b;
 
   /* Do not try to mark an immediate value! */
-  if (IMMEDIATE_P(v) || v == CNIL || v == CTRUE)
+  if (IMMEDIATE_P(v) || v == CNIL || v == CTRUE || v == CUNDEF)
     return;
 
   D2B(b, (void *)v);
