@@ -278,6 +278,8 @@ Hhdr *__carc_get_heap_start(void)
 static void mark(carc *c, value v, int reclevel)
 {
   Bhdr *b;
+  void *ctx;
+  value val;
 
   /* Do not try to mark an immediate value! */
   if (IMMEDIATE_P(v) || v == CNIL || v == CTRUE || v == CUNDEF)
@@ -294,8 +296,12 @@ static void mark(carc *c, value v, int reclevel)
     case T_CONS:
       mark(c, car(v), reclevel+1);
       mark(c, cdr(v), reclevel+1);
-      /* XXX fill in with other composite types as they are defined */
       break;
+    case T_TABLE:
+      while ((val = carc_hash_iter(c, v, &ctx)) != CNIL)
+	mark(c, val, reclevel+1);
+      break;
+      /* XXX fill in with other composite types as they are defined */
     }
   }
 }
@@ -324,6 +330,11 @@ static void sweep(carc *c, value v)
   case T_COMPLEX:
   case T_CONS:
     c->free_block(c, (void *)v);
+    break;
+  case T_TABLE:
+    c->free_block(c, REP(v)._hash.table); /* free the immutable memory of the hash table */
+    c->free_block(c, (void *)v);
+    break;
   }
 }
 
