@@ -27,7 +27,6 @@
 /* Make a string based on UCS-4 data */
 value carc_mkstring(carc *c, const Rune *data, int length)
 {
-  Bhdr *b;
   value str;
 
   str = c->get_cell(c);
@@ -35,8 +34,7 @@ value carc_mkstring(carc *c, const Rune *data, int length)
   REP(str)._str.length = length;
   REP(str)._str.str = c->get_block(c, length*sizeof(Rune));
   memcpy(REP(str)._str.str, data, length*sizeof(Rune));
-  D2B(b, REP(str)._str.str);
-  b->magic = MAGIC_I;		/* mark the block as immutable */
+  BLOCK_IMM(REP(str)._str.str);
   return(str);
 }
 
