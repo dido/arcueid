@@ -123,6 +123,7 @@ struct cell {
 /* Special constants -- non-zero and non-fixnum constants */
 #define CNIL ((value)0)
 #define CTRUE ((value)2)
+#define CUNDEF ((value)4)	/* "tombstone" value */
 
 #define BTYPE(v) (((struct cell *)(v))->_type)
 #define REP(v) (((struct cell *)(v))->obj)
@@ -171,6 +172,8 @@ static inline int TYPE(value v)
     return(T_NIL);
   if (v == CTRUE)
     return(T_TRUE);
+  if (v == CUNDEF)
+    return(T_NONE);
   if (!IMMEDIATE_P(v))
     return(BTYPE(v));
 
