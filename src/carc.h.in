@@ -109,7 +109,7 @@ struct cell {
       value *table;
       int hashbits;
       int nentries;
-      int load_factor;
+      int loadlimit;
     } _hash;
   } obj;
 };
