@@ -26,6 +26,10 @@
 
 #if SIZEOF_LONG >= 8
 
+/* This is the 64-bit hashing function defined by Bob Jenkins in
+   lookup8.c.  The hash function has been verified to be exactly the
+   same on x86_64 machines. */
+
 #define HASH64BITS
 
 #define MIX(a,b,c)				\
@@ -57,6 +61,16 @@ void carc_hash_init(carc_hs *s, unsigned long level)
 
 #define HASH32BITS
 
+/* NOTE: The 32-bit hash function here is sort of based on Bob Jenkins'
+   lookup3.c, however, unlike the 64-bit hash function, this is not
+   exactly the same as Jenkins' algorithm.  This is because lookup3.c
+   uses the length of the hashed data at the beginning of the hashing
+   process, so we can't compute the hash incrementally way and must
+   have the length of the function to begin with if we are to use
+   Jenkins' actual algorithm.  What we have here is a slight variant
+   which uses the length near the end the way the 64-bit hash function
+   does.  I cannot be sure whether this minor change might have
+   affected the characteristics of the hash, but my gut doubts it. */
 #define ROT(x,k) (((x)<<(k)) | ((x)>>(32-(k))))
 
 
@@ -221,13 +235,13 @@ unsigned long carc_hash(carc *c, value v)
 #define TABLEPTR(t) (REP(t)._hash.table)
 #define PROBE(i) ((i + i*i) >> 1)
 
-/* An empty slot is either CNIL or CTRUE.  CTRUE is used as a 'tombstone'
+/* An empty slot is either CNIL or CUNDEF.  CUNDEF is used as a 'tombstone'
    value for deleted elements.  If this is found, one may have to keep
    probing until either the actual element is found or one runs into a CNIL,
    meaning the element is definitely not in the table.  Since we enforce
    load factor, there will definitely be some table elements which
    remain unused. */
-#define EMPTYP(x) (((x) == CNIL) || ((x) == CTRUE))
+#define EMPTYP(x) (((x) == CNIL) || ((x) == CUNDEF))
 
 value carc_mkhash(carc *c, int hashbits)
 {
@@ -287,9 +301,47 @@ value carc_hash_insert(carc *c, value hash, value key, value val)
   /* Hash table entries are cons cells whose car is the key and the
      cdr is the value */
   e = cons(c, key, val);
-  /* Collision resolution. */
+  /* Collision resolution with open addressing */
   for (i=0; EMPTYP(TABLEPTR(hash)[index]); i++)
     index = (index + PROBE(i)) & TABLEMASK(hash); /* quadratic probe */
   TABLEPTR(hash)[index] = e;
   return(val);
+}
+
+static value hash_lookup(carc *c, value hash, value key, unsigned int *index)
+{
+  unsigned int hv, i;
+  value e;
+
+  hv = carc_hash(c, key);
+  *index = hv & TABLEMASK(hash);
+  for (i=0;; i++) {
+    *index = (*index + PROBE(i)) & TABLEMASK(hash);
+    e = TABLEPTR(hash)[*index];
+    if (e == CNIL)
+      return(CNIL);
+    if (e == CUNDEF)
+      continue;
+    if (carc_equal(c, car(e), key) == CTRUE)
+      return(cdr(e));
+  }
+}
+
+
+value carc_hash_lookup(carc *c, value hash, value key)
+{
+  unsigned int index;
+
+  return(hash_lookup(c, hash, key, &index));
+}
+
+value carc_hash_delete(carc *c, value hash, value key)
+{
+  unsigned int index;
+  value v;
+
+  v = hash_lookup(c, hash, key, &index);
+  if (v != CNIL)
+    TABLEPTR(hash)[index] = CUNDEF;
+  return(v);
 }
