@@ -19,6 +19,7 @@
   02110-1301 USA.
 */
 #include <inttypes.h>
+#include <string.h>
 #include "carc.h"
 #include "alloc.h"
 #include "../config.h"
@@ -218,12 +219,13 @@ unsigned long carc_hash(carc *c, value v)
 #define TABLESIZE(t) (HASHSIZE(REP(t)._hash.hashbits))
 #define TABLEMASK(t) (HASHMASK(REP(t)._hash.hashbits))
 #define TABLEPTR(t) (REP(t)._hash.table)
+#define PROBE(i) ((i + i*i) >> 1)
 
 /* An empty slot is either CNIL or CTRUE.  CTRUE is used as a 'tombstone'
    value for deleted elements.  If this is found, one may have to keep
    probing until either the actual element is found or one runs into a CNIL,
    meaning the element is definitely not in the table.  Since we enforce
-   a load factor of 65%, there will definitely be some table elements which
+   load factor, there will definitely be some table elements which
    remain unused. */
 #define EMPTYP(x) (((x) == CNIL) || ((x) == CTRUE))
 
@@ -236,7 +238,7 @@ value carc_mkhash(carc *c, int hashbits)
   REP(hash)._hash.hashbits = hashbits;
   REP(hash)._hash.nentries = 0;
   REP(hash)._hash.loadlimit = (HASHSIZE(hashbits) * MAX_LOAD_FACTOR) / 100;
-  TABLEPTR(hash)._hash.table = (value *)c->get_block(c, HASHSIZE(hashbits)*sizeof(value));
+  TABLEPTR(hash) = (value *)c->get_block(c, HASHSIZE(hashbits)*sizeof(value));
   memset(REP(hash)._hash.table, 0, HASHSIZE(hashbits)*sizeof(value));
   
   BLOCK_IMM(REP(hash)._hash.table);
@@ -246,14 +248,31 @@ value carc_mkhash(carc *c, int hashbits)
 /* Grow a hash table */
 static void hashtable_expand(carc *c, value hash)
 {
-  value *oldtbl, *newtbl;
-  int i, nhashbits;
+  unsigned int hv, index, i, nhashbits;
+  value *oldtbl, *newtbl, e;
 
   nhashbits = REP(hash)._hash.hashbits+1;
 
   newtbl = (value *)c->get_block(c, HASHSIZE(nhashbits)*sizeof(value));
   memset(newtbl, 0, HASHSIZE(nhashbits)*sizeof(value));
-  oldtbl = REP(hash)._hash.table;
+  BLOCK_IMM(newtbl);
+  oldtbl = TABLEPTR(hash);
+  /* Search for active keys and copy them into the new table */
+  for (i=0; i<TABLESIZE(hash); i++) {
+    if (!EMPTYP(oldtbl[i])) {
+      e = oldtbl[i];
+      /* insert the old key into the new table */
+      hv = carc_hash(c, car(oldtbl[i])); /* hash the key again */
+      index = hv & HASHMASK(nhashbits);
+      for (i=0; EMPTYP(newtbl[index]); i++)
+	index = (index + PROBE(i)) & TABLEMASK(hash);
+      newtbl[index] = e;
+    }
+  }
+  c->free_block(c, (void *)oldtbl);
+  REP(hash)._hash.hashbits = nhashbits;
+  REP(hash)._hash.loadlimit = (HASHSIZE(nhashbits) * MAX_LOAD_FACTOR) / 100;
+  TABLEPTR(hash) = newtbl;
 }
 
 value carc_hash_insert(carc *c, value hash, value key, value val)
@@ -263,15 +282,14 @@ value carc_hash_insert(carc *c, value hash, value key, value val)
 
   if (++(REP(hash)._hash.nentries) > REP(hash)._hash.loadlimit)
     hashtable_expand(c, hash);
-  hv = carc_hash(key);
+  hv = carc_hash(c, key);
   index = hv & TABLEMASK(hash);
   /* Hash table entries are cons cells whose car is the key and the
      cdr is the value */
   e = cons(c, key, val);
-  /* Collision resolution.  We use quadratic probing to find a new
-     index. */
+  /* Collision resolution. */
   for (i=0; EMPTYP(TABLEPTR(hash)[index]); i++)
-    index = (index + (i + i*i) >> 1) & TABLEMASK(hash); /* quadratic probe */
+    index = (index + PROBE(i)) & TABLEMASK(hash); /* quadratic probe */
   TABLEPTR(hash)[index] = e;
   return(val);
 }
