@@ -22,6 +22,7 @@
 #include <string.h>
 #include "carc.h"
 #include "alloc.h"
+#include "coroutine.h"
 #include "../config.h"
 
 #if SIZEOF_LONG >= 8
@@ -344,4 +345,18 @@ value carc_hash_delete(carc *c, value hash, value key)
   if (v != CNIL)
     TABLEPTR(hash)[index] = CUNDEF;
   return(v);
+}
+
+value carc_hash_iter(carc *c, value hash, ccrContParam)
+{
+  ccrBeginContext;
+  unsigned int index;
+  ccrEndContext(ctx);
+
+  ccrBegin(ctx);
+  for (ctx->index=0; ctx->index < TABLESIZE(hash); ctx->index++) {
+    if (!EMPTYP(TABLEPTR(hash)[ctx->index]))
+      ccrReturn(TABLEPTR(hash)[ctx->index]);
+  }
+  ccrFinish(CNIL);
 }
