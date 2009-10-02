@@ -108,7 +108,7 @@ struct cell {
     struct {
       int tablelength;
       value *table;
-      int nentries;
+      int hashbits;
       int load_limit;
     } _hash;
   } obj;
