@@ -211,3 +211,22 @@ unsigned long carc_hash(carc *c, value v)
   len = hash_increment(c, v, &s);
   return(carc_hash_final(&s, len));
 }
+
+#define HASHSIZE(n) ((unsigned long)1 << (n))
+#define HASHMASK(n) (HASHSIZE(n) - 1)
+#define MAX_LOAD_FACTOR 65	/* 65 percent load factor */
+
+value carc_mkhash(carc *c, int hashbits)
+{
+  value hash;
+
+  hash = c->get_cell(c);
+  BTYPE(hash) = T_HASH;
+  REP(hash)._hash.hashbits = hashbits;
+  REP(hash)._hash.nentries = 0;
+  REP(hash)._hash.loadlimit = (HASHSIZE(hashbits) * MAX_LOAD_FACTOR) / 100;
+  REP(hash)._hash.table = (value *)c->get_block(c, HASHSIZE(hashbits)*sizeof(value));
+  BLOCK_IMM(REP(hash)._hash.table);
+  return(hash);
+}
+
