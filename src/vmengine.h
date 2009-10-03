@@ -33,5 +33,6 @@ typedef long Inst;
 
 #endif
 
+extern Inst *vm_prim;
 
 #endif
