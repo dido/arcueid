@@ -136,6 +136,48 @@ START_TEST(test_hash_nonatomic_value)
 }
 END_TEST
 
+static char *names[] = {
+  "Saber",
+  "Archer",
+  "Berserker",
+  "Rider",
+  "Lancer",
+  "Caster",
+  "Assassin",
+  "Gilgamesh",
+  "Emiya Shir\305\215",
+  "T\305\215saka Rin",
+  "Ilyasviel von Einzbern",
+  "Sakura Mat\305\215",
+  "Shinji Mat\305\215",
+  "Kirei Kotomine",
+  "Emiya Kiritsugu",
+  "Fujimura Taiga",
+  "Kuzuki S\305\215ichir\305\215"
+};
+
+static value vnames[17];
+
+START_TEST(test_hash_table)
+{
+  value table;
+  int i;
+
+  /* Start with 4 bits.  This should expand to at least five bits after
+     we add the 17 names above. */
+  table = carc_mkhash(&c, 4);
+
+  for (i=0; i<17; i++) {
+    vnames[i] = carc_mkstringc(&c, names[i]);
+    carc_hash_insert(&c, table, vnames[i], INT2FIX(i));
+  }
+
+  /* verify */
+  for (i=0; i<17; i++)
+    fail_unless(carc_hash_lookup(&c, table, vnames[i]) == INT2FIX(i));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -148,6 +190,7 @@ int main(void)
   tcase_add_test(tc_hash, test_hash);
   tcase_add_test(tc_hash, test_hash_atomic_value);
   tcase_add_test(tc_hash, test_hash_nonatomic_value);
+  tcase_add_test(tc_hash, test_hash_table);
 
   suite_add_tcase(s, tc_hash);
   sr = srunner_create(s);
