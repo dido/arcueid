@@ -186,6 +186,16 @@ START_TEST(test_hash_table)
   while (carc_hash_iter(&c, table, &ctx) != CNIL)
     i++;
   fail_unless(i==17);
+
+  /* Test deletion */
+  for (i=16; i>=0; i--) {
+    carc_hash_delete(&c, table, vnames[i]);
+    fail_unless(carc_hash_lookup(&c, table, vnames[i]) == CNIL);
+  }
+  i=0;
+  while (carc_hash_iter(&c, table, &ctx) != CNIL)
+    i++;
+  fail_unless(i==0);
 }
 END_TEST
 
