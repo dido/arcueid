@@ -162,6 +162,7 @@ START_TEST(test_hash_table)
 {
   value table, notfoundstr;
   int i;
+  void *ctx = NULL;
 
   /* Start with 3 bits.  This should expand to at least five bits after
      we add the 17 names above. */
@@ -179,6 +180,12 @@ START_TEST(test_hash_table)
   /* Test not present key */
   notfoundstr = carc_mkstringc(&c, "Caren Ortensia");
   fail_unless(carc_hash_lookup(&c, table, notfoundstr) == CNIL);
+
+  /* Test iteration */
+  i=0;
+  while (carc_hash_iter(&c, table, &ctx) != CNIL)
+    i++;
+  fail_unless(i==17);
 }
 END_TEST
 
