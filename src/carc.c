@@ -21,6 +21,7 @@
 /* miscellaneous procedures and initialization */
 
 #include "carc.h"
+#include "alloc.h"
 #include "../config.h"
 
 value carc_is(carc *c, value v1, value v2)
@@ -109,4 +110,16 @@ value carc_equal(carc *c, value v1, value v2)
     return(carc_equal(c, v1, v2));
   }
   return(CNIL);
+}
+
+value scar(value x, value y)
+{
+  write_barrier(&car(x), y);
+  return(y);
+}
+
+value scdr(value x, value y)
+{
+  write_barrier(&cdr(x), y);
+  return(y);
 }
