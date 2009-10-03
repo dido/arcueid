@@ -263,7 +263,7 @@ value carc_mkhash(carc *c, int hashbits)
 /* Grow a hash table */
 static void hashtable_expand(carc *c, value hash)
 {
-  unsigned int hv, index, i, nhashbits;
+  unsigned int hv, index, i, j, nhashbits;
   value *oldtbl, *newtbl, e;
 
   nhashbits = REP(hash)._hash.hashbits+1;
@@ -279,8 +279,8 @@ static void hashtable_expand(carc *c, value hash)
       /* insert the old key into the new table */
       hv = carc_hash(c, car(oldtbl[i])); /* hash the key again */
       index = hv & HASHMASK(nhashbits);
-      for (i=0; EMPTYP(newtbl[index]); i++)
-	index = (index + PROBE(i)) & TABLEMASK(hash);
+      for (j=0; !EMPTYP(newtbl[index]); j++)
+	index = (index + PROBE(j)) & TABLEMASK(hash);
       newtbl[index] = e;
     }
   }
@@ -303,7 +303,7 @@ value carc_hash_insert(carc *c, value hash, value key, value val)
      cdr is the value */
   e = cons(c, key, val);
   /* Collision resolution with open addressing */
-  for (i=0; EMPTYP(TABLEPTR(hash)[index]); i++)
+  for (i=0; !EMPTYP(TABLEPTR(hash)[index]); i++)
     index = (index + PROBE(i)) & TABLEMASK(hash); /* quadratic probe */
   TABLEPTR(hash)[index] = e;
   return(val);
