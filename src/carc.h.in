@@ -50,6 +50,15 @@ typedef struct carc {
   void (*rungc)(struct carc *);
 
   void (*signal_error)(struct carc *, const char *, ...);
+
+  /* Registers */
+  value expr;			/* evaluated expression register */
+  value envr;			/* environment register */
+  value conr;			/* continuation register */
+  value tmpr;			/* template register */
+  int pc;			/* program counter */
+
+  value genv;			/* global environment */
 } carc;
 
 
@@ -78,6 +87,7 @@ enum carc_types {
 
   /* Internal types should be added as well... */
 
+  T_CONT = 0x14,
   T_NONE=0xff
 };
 
@@ -111,6 +121,12 @@ struct cell {
       int nentries;
       int loadlimit;
     } _hash;
+    struct {
+      value expr;		/* saved expression reg. */
+      value envr;		/* saved environment reg. */
+      value tmpr;		/* saved template reg. */
+      int pc;			/* saved program counter */
+    } _cont;
   } obj;
 };
 
@@ -197,6 +213,8 @@ extern value carc_arith_op(carc *c, int opval, value args);
 extern value carc_is(carc *c, value v1, value v2);
 extern value carc_equal(carc *c, value v1, value v2);
 
+extern value scar(value x, value y);
+extern value scdr(value x, value y);
 
 extern value carc_mkstring(carc *c, const Rune *data, int length);
 extern value carc_mkstringc(carc *c, const char *s);
