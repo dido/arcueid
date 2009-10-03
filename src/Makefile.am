@@ -21,8 +21,14 @@
 lib_LTLIBRARIES = libcarc.la
 
 libcarc_la_LDFLAGS = -version-info 0:0:0
-libcarc_la_SOURCES = arith.c alloc.c carc.c hash.c memory.c string.c utf.c
+libcarc_la_SOURCES = arith.c alloc.c carc.c hash.c memory.c string.c utf.c \
+	vmengine.c
 
 include_HEADERS = carc.h
-noinst_HEADERS = arith.h alloc.h utf.h
+noinst_HEADERS = arith.h alloc.h utf.h vmengine.h
+
+VMGEN=/usr/bin/vmgen
+
+carcvm-vm.i carcvm-disasm.i carcvm-gen.i carcvm-labels.i carcvm-profile.i carcvm-peephole.i: carcvm.vmg
+	$(VMGEN) carcvm.vmg
 
