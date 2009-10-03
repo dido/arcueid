@@ -163,9 +163,9 @@ START_TEST(test_hash_table)
   value table;
   int i;
 
-  /* Start with 4 bits.  This should expand to at least five bits after
+  /* Start with 3 bits.  This should expand to at least five bits after
      we add the 17 names above. */
-  table = carc_mkhash(&c, 4);
+  table = carc_mkhash(&c, 3);
 
   for (i=0; i<17; i++) {
     vnames[i] = carc_mkstringc(&c, names[i]);
