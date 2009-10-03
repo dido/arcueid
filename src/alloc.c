@@ -298,6 +298,7 @@ static void mark(carc *c, value v, int reclevel)
       mark(c, cdr(v), reclevel+1);
       break;
     case T_TABLE:
+      ctx = NULL;
       while ((val = carc_hash_iter(c, v, &ctx)) != CNIL)
 	mark(c, val, reclevel+1);
       break;
