@@ -160,7 +160,7 @@ static value vnames[17];
 
 START_TEST(test_hash_table)
 {
-  value table;
+  value table, notfoundstr;
   int i;
 
   /* Start with 3 bits.  This should expand to at least five bits after
@@ -175,6 +175,10 @@ START_TEST(test_hash_table)
   /* verify */
   for (i=0; i<17; i++)
     fail_unless(carc_hash_lookup(&c, table, vnames[i]) == INT2FIX(i));
+
+  /* Test not present key */
+  notfoundstr = carc_mkstringc(&c, "Caren Ortensia");
+  fail_unless(carc_hash_lookup(&c, table, notfoundstr) == CNIL);
 }
 END_TEST
 
