@@ -1,0 +1,95 @@
+\ Copyright (C) 2009 Rafael R. Sevilla
+\
+\ This file is part of CArc
+\
+\ CArc is free software; you can redistribute it and/or modify it
+\ under the terms of the GNU General Public License as published by
+\ the Free Software Foundation; either version 3 of the License, or
+\ (at your option) any later version.
+\
+\ This program is distributed in the hope that it will be useful,
+\ but WITHOUT ANY WARRANTY; without even the implied warranty of
+\ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+\ GNU General Public License for more details.
+\
+\ You should have received a copy of the GNU General Public License
+\ along with this program; if not, write to the Free Software
+\ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+\ 02110-1301 USA.
+
+\E stack data-stack sp value
+
+\E inst-stream stack-prefix #
+
+\E s" long"   single data-stack type-prefix i
+
+nop ( -- )
+
+jmpt ( #i -- )
+if (car(c->expr) != CNIL)
+  INC_IP(i);
+
+jmpf ( #i -- )
+if (car(c->expr) == CNIL)
+  INC_IP(i);
+
+jmp ( #i -- )
+INC_IP(i);
+
+lit ( #i -- )
+cons(c, carc_hash_lookup(c, c->tmpr, i), c->expr);
+
+gget ( -- )
+scar(c->expr, carc_hash_lookup(c, c->genv, car(c->expr)));
+
+gset ( -- )
+{
+  value name, bind;
+
+  name = car(c->expr);
+  c->expr = cdr(c->expr);
+  bind = car(c->expr);
+  c->expr = cdr(c->expr);
+
+  carc_hash_insert(c, c->genv, name, bind);
+}
+
+eget ( -- )
+scar(c->expr, carc_hash_lookup(c, c->envr, car(c->expr)));
+
+eset ( -- )
+{
+  value name, bind;
+
+  name = car(c->expr);
+  c->expr = cdr(c->expr);
+  bind = car(c->expr);
+  c->expr = cdr(c->expr);
+
+  carc_hash_insert(c, c->envr, name, bind);
+}
+
+cont (#i -- )
+{
+  value cc;
+
+  cc = c->get_cell(c);
+  BTYPE(cc) = T_CONT;
+  REP(cc)._cont.expr = c->expr;
+  REP(cc)._cont.envr = c->envr;
+  REP(cc)._cont.tmpr = c->tmpr;
+  REP(cc)._cont.pc = c->pc + i;
+  cons(c, cc, c->conr);
+}
+
+ret ( -- )
+{
+  value cc;
+
+  cc = car(c->conr);
+  c->expr = REP(cc)._cont.expr;
+  c->envr = REP(cc)._cont.envr;
+  c->tmpr = REP(cc)._cont.tmpr;
+  SET_IP(REP(cc)._cont.pc);
+  c->conr = cdr(c->conr);
+}
