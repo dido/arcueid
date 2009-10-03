@@ -35,3 +35,4 @@ check_*
 *.gcov
 coverage/*
 src/carc.h
+*.i
