@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include "carc.h"
 #include "vmengine.h"
+#include "alloc.h"
 
 #define NAME(_x)
 #define vm_Cell2i(_cell, x) ((x)=(long)_cell)
