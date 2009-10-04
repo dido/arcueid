@@ -67,6 +67,8 @@ enum {
 
 #endif /* !defined(__GNUC__) */
 
+Inst *vm_prim;
+
 void carc_vmengine(carc *c, Inst *code, int quanta)
 {
   static Label labels[] = {
