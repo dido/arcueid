@@ -305,7 +305,7 @@ value carc_hash_insert(carc *c, value hash, value key, value val)
   /* Collision resolution with open addressing */
   for (i=0; !EMPTYP(TABLEPTR(hash)[index]); i++)
     index = (index + PROBE(i)) & TABLEMASK(hash); /* quadratic probe */
-  TABLEPTR(hash)[index] = e;
+  WB(&TABLEPTR(hash)[index], e);
   return(val);
 }
 
@@ -343,7 +343,7 @@ value carc_hash_delete(carc *c, value hash, value key)
 
   v = hash_lookup(c, hash, key, &index);
   if (v != CNIL)
-    TABLEPTR(hash)[index] = CUNDEF;
+    WB(TABLEPTR(hash)[index], CUNDEF);
   return(v);
 }
 
