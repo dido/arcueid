@@ -37,7 +37,7 @@ jmp ( #i -- )
 INC_IP(i);
 
 lit ( #i -- )
-cons(c, carc_hash_lookup(c, c->tmpr, i), c->expr);
+WB(&c->expr, cons(c, carc_hash_lookup(c, c->tmpr, i), c->expr));
 
 gget ( -- )
 scar(c->expr, carc_hash_lookup(c, c->genv, car(c->expr)));
@@ -47,9 +47,9 @@ gset ( -- )
   value name, bind;
 
   name = car(c->expr);
-  c->expr = cdr(c->expr);
+  WB(&c->expr, cdr(c->expr));
   bind = car(c->expr);
-  c->expr = cdr(c->expr);
+  WB(&c->expr, cdr(c->expr));
 
   carc_hash_insert(c, c->genv, name, bind);
 }
@@ -62,9 +62,9 @@ eset ( -- )
   value name, bind;
 
   name = car(c->expr);
-  c->expr = cdr(c->expr);
+  WB(&c->expr, cdr(c->expr));
   bind = car(c->expr);
-  c->expr = cdr(c->expr);
+  WB(&c->expr, cdr(c->expr));
 
   carc_hash_insert(c, c->envr, name, bind);
 }
@@ -83,5 +83,15 @@ ret ( -- )
 
   cc = car(c->conr);
   c->conr = cdr(c->conr);
-  carc_restorecont(c);
+  carc_rcont(c, cc);
+  SET_IP(c->pc);
+}
+
+apply ( -- )
+{
+  value closure;
+
+  closure = car(c->expr);
+  c->expr = cdr(c->expr);
+  c->envr = car(closure);
 }
