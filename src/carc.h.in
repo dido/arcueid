@@ -88,7 +88,7 @@ enum carc_types {
 
   T_CONT = 0x15,		/* continuation */
   T_CLOS = 0x16,		/* closure */
-  T_CODE = 0x17			/* actual compiled code */
+  T_CODE = 0x17,		/* actual compiled code */
 
   T_NONE=0xff
 };
