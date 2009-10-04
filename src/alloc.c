@@ -280,6 +280,7 @@ static void mark(carc *c, value v, int reclevel)
   Bhdr *b;
   void *ctx;
   value val;
+  int i;
 
   /* Do not try to mark an immediate value! */
   if (IMMEDIATE_P(v) || v == CNIL || v == CTRUE || v == CUNDEF)
@@ -302,7 +303,17 @@ static void mark(carc *c, value v, int reclevel)
       while ((val = carc_hash_iter(c, v, &ctx)) != CNIL)
 	mark(c, val, reclevel+1);
       break;
+    case T_VECTOR:
+    case T_CLOSURE:
+    case T_CONTINUATION:
+      for (i=0; i<REP(v)._vector.length; i++)
+	mark(c, REP(v)._vector.data[i], reclevel+1);
+      break;
       /* XXX fill in with other composite types as they are defined */
+    default:
+      /* The other types do not contain further pointers inside them
+	 and do not require recursion. */
+      break;
     }
   }
 }
@@ -330,6 +341,10 @@ static void sweep(carc *c, value v)
   case T_FLONUM:
   case T_COMPLEX:
   case T_CONS:
+  case T_VECTOR:
+  case T_CLOSURE:
+  case T_CONTINUATION:
+  case T_CODE:
     c->free_block(c, (void *)v);
     break;
   case T_TABLE:
@@ -345,8 +360,11 @@ static void rootset(carc *c)
   marker = (gccolor-1)%3;
   sweeper = (gccolor-2)%3;
 
-  /* XXX fill this in with code that sets propagator marks on all the
-     objects pointed to by the registers and the root environment. */
+  /* Register marks */
+  MARKPROP(c->expr);
+  MARKPROP(c->envr);
+  MARKPROP(c->conr);
+  MARKPROP(c->tmpr);
 }
 
 static void rungc(carc *c)
