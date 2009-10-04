@@ -123,3 +123,13 @@ value scdr(value x, value y)
   WB(&cdr(x), y);
   return(y);
 }
+
+value carc_mkcont(carc *c)
+{
+  return(CNIL);
+}
+
+value carc_rcont(carc *c, value cont)
+{
+  return(CNIL);
+}
