@@ -74,7 +74,7 @@ cont (#i -- )
   value cc;
 
   cc = carc_mkcont(c);
-  c->conr = cons(c, cc, c->conr);
+  WB(&c->conr, cons(c, cc, c->conr));
 }
 
 ret ( -- )
@@ -82,7 +82,7 @@ ret ( -- )
   value cc;
 
   cc = car(c->conr);
-  c->conr = cdr(c->conr);
+  WB(&c->conr, cdr(c->conr));
   carc_rcont(c, cc);
   SET_IP(c->pc);
 }
@@ -92,6 +92,6 @@ apply ( -- )
   value closure;
 
   closure = car(c->expr);
-  c->expr = cdr(c->expr);
-  c->envr = car(closure);
+  WB(&c->expr, cdr(c->expr));
+  WB(&c->envr, car(closure));
 }
