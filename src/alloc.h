@@ -78,7 +78,7 @@ typedef struct {
 #define PROPAGATOR_COLOR 3	/* propagator color */
 extern int nprop;		/* propagator flag */
 
-MARKPROP(b) if (!(IMMEDIATE_P(b) || (b) == CNIL || (b) == CTRUE || (b) == CUNDEF)) { Bhdr *p; D2B(p, (void *)(b)); p->color = PROPAGATOR_COLOR; nprop = 1; }
+#define MARKPROP(b) if (!(IMMEDIATE_P(b) || (b) == CNIL || (b) == CTRUE || (b) == CUNDEF)) { Bhdr *p; D2B(p, (void *)(b)); p->color = PROPAGATOR_COLOR; nprop = 1; }
 
 static inline void WB(value *loc, value nval)
 {
