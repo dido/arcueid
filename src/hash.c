@@ -343,7 +343,7 @@ value carc_hash_delete(carc *c, value hash, value key)
 
   v = hash_lookup(c, hash, key, &index);
   if (v != CNIL)
-    WB(TABLEPTR(hash)[index], CUNDEF);
+    WB(&TABLEPTR(hash)[index], CUNDEF);
   return(v);
 }
 
