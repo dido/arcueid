@@ -78,15 +78,11 @@ typedef struct {
 #define PROPAGATOR_COLOR 3	/* propagator color */
 extern int nprop;		/* propagator flag */
 
+MARKPROP(b) if (!(IMMEDIATE_P(b) || (b) == CNIL || (b) == CTRUE || (b) == CUNDEF)) { Bhdr *p; D2B(p, (void *)(b)); p->color = PROPAGATOR_COLOR; nprop = 1; }
+
 static inline void write_barrier(value *loc, value nval)
 {
-  Bhdr *p;
-
-  if (!(IMMEDIATE_P(*loc) || *loc == CNIL || *loc == CTRUE)) {
-    D2B(p, (void *)*loc);
-    p->color = PROPAGATOR_COLOR;
-    nprop = 1;
-  }
+  MARKPROP(*loc);
   *loc = nval;
 }
 
