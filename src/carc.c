@@ -114,12 +114,12 @@ value carc_equal(carc *c, value v1, value v2)
 
 value scar(value x, value y)
 {
-  write_barrier(&car(x), y);
+  WB(&car(x), y);
   return(y);
 }
 
 value scdr(value x, value y)
 {
-  write_barrier(&cdr(x), y);
+  WB(&cdr(x), y);
   return(y);
 }
