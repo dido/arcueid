@@ -304,8 +304,8 @@ static void mark(carc *c, value v, int reclevel)
 	mark(c, val, reclevel+1);
       break;
     case T_VECTOR:
-    case T_CLOSURE:
-    case T_CONTINUATION:
+    case T_CLOS:
+    case T_CONT:
       for (i=0; i<REP(v)._vector.length; i++)
 	mark(c, REP(v)._vector.data[i], reclevel+1);
       break;
@@ -342,8 +342,8 @@ static void sweep(carc *c, value v)
   case T_COMPLEX:
   case T_CONS:
   case T_VECTOR:
-  case T_CLOSURE:
-  case T_CONTINUATION:
+  case T_CLOS:
+  case T_CONT:
   case T_CODE:
     c->free_block(c, (void *)v);
     break;
