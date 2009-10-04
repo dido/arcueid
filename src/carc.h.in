@@ -84,10 +84,12 @@ enum carc_types {
   T_EXCEPTION=0x11,
   T_SOCKET=0x12,
   T_THREAD=0x13,
+  T_VECTOR=0x14,
 
-  /* Internal types should be added as well... */
+  T_CONT = 0x15,		/* continuation */
+  T_CLOS = 0x16,		/* closure */
+  T_CODE = 0x17			/* actual compiled code */
 
-  T_CONT = 0x14,
   T_NONE=0xff
 };
 
@@ -121,12 +123,13 @@ struct cell {
       int nentries;
       int loadlimit;
     } _hash;
+    /* The vector struct is actually used for lots of other stuff,
+       such as compiled code, closures (which are three-vectors),
+       and continuations (which are four-vectors). */
     struct {
-      value expr;		/* saved expression reg. */
-      value envr;		/* saved environment reg. */
-      value tmpr;		/* saved template reg. */
-      int pc;			/* saved program counter */
-    } _cont;
+      int length;
+      value data[1];
+    } _vector;
   } obj;
 };
 
