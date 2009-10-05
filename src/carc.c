@@ -19,7 +19,8 @@
   02110-1301 USA.
 */
 /* miscellaneous procedures and initialization */
-
+#include <stdlib.h>
+#include <string.h>
 #include "carc.h"
 #include "alloc.h"
 #include "../config.h"
@@ -126,12 +127,22 @@ value scdr(value x, value y)
 
 value carc_mkcont(carc *c, int newpc)
 {
-  return(CNIL);
+  value cont = carc_mkvector(c, 4);
+
+  VINDEX(cont, 0) = c->expr;
+  VINDEX(cont, 1) = c->envr;
+  VINDEX(cont, 2) = c->tmpr;
+  VINDEX(cont, 3) = INT2FIX(newpc);
+  return(cont);
 }
 
 value carc_rcont(carc *c, value cont)
 {
-  return(CNIL);
+  WB(&c->expr, VINDEX(cont, 0));
+  WB(&c->envr, VINDEX(cont, 1));
+  WB(&c->tmpr, VINDEX(cont, 2));
+  c->pc = FIX2INT(VINDEX(cont, 2));
+  return(cont);
 }
 
 value carc_mkvector(carc *c, int length)
