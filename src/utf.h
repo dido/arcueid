@@ -43,5 +43,6 @@ enum
 
 extern int chartorune(Rune *rune, const char *str);
 extern int utflen(const char *s);
+extern int runetochar(char *str, Rune *rune);
 
 #endif
