@@ -133,3 +133,17 @@ value carc_rcont(carc *c, value cont)
 {
   return(CNIL);
 }
+
+value carc_mkvector(carc *c, int length)
+{
+  void *cellptr;
+  value vect;
+
+  cellptr = c->get_block(c, sizeof(struct cell) + sizeof(value)*length);
+  if (cellptr == NULL)
+    return(CNIL);
+  vect = (value)cellptr;
+  REP(vect)._vector.length = length;
+  memset(REP(vect)._vector.data, 0, sizeof(value)*length);
+  return(vect);
+}
