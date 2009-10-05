@@ -230,7 +230,7 @@ unsigned long carc_hash(carc *c, value v)
 
 #define HASHSIZE(n) ((unsigned long)1 << (n))
 #define HASHMASK(n) (HASHSIZE(n) - 1)
-#define MAX_LOAD_FACTOR 65	/* percentage */
+#define MAX_LOAD_FACTOR 70	/* percentage */
 #define TABLESIZE(t) (HASHSIZE(REP(t)._hash.hashbits))
 #define TABLEMASK(t) (HASHMASK(REP(t)._hash.hashbits))
 #define TABLEPTR(t) (REP(t)._hash.table)
@@ -280,7 +280,7 @@ static void hashtable_expand(carc *c, value hash)
       hv = carc_hash(c, car(oldtbl[i])); /* hash the key again */
       index = hv & HASHMASK(nhashbits);
       for (j=0; !EMPTYP(newtbl[index]); j++)
-	index = (index + PROBE(j)) & TABLEMASK(hash);
+	index = (index + PROBE(j)) & HASHMASK(nhashbits);
       newtbl[index] = e;
     }
   }
