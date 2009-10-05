@@ -238,7 +238,7 @@ extern value carc_hash_iter(carc *c, value hash, void **context);
 extern value carc_mkvector(carc *c, int length);
 extern value carc_vindex(carc *c, int idx);
 
-extern value carc_mkcont(carc *c);
+extern value carc_mkcont(carc *c, int newpc);
 extern value carc_rcont(carc *c, value cont);
 
 /* Set the default memory manager */
