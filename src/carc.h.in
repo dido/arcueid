@@ -163,9 +163,9 @@ struct cell {
 #define car(x) (REP(x)._cons.car)
 #define cdr(x) (REP(x)._cons.cdr)
 
-/* Definitions for strings */
-#define STRLEN(x) (REP(x)._str.length)
-#define STRINDEX(x,i) (REP(x)._str.str[(i)])
+/* Definitions for vectors */
+#define VECLEN(x) (REP(x)._vector.length)
+#define VINDEX(x,i) (REP(x)._vector.data[(i)])
 
 /* Definitions for hashing */
 typedef struct {
@@ -236,7 +236,6 @@ extern value carc_hash_delete(carc *c, value hash, value key);
 extern value carc_hash_iter(carc *c, value hash, void **context);
 
 extern value carc_mkvector(carc *c, int length);
-extern value carc_vindex(carc *c, int idx);
 
 extern value carc_mkcont(carc *c, int newpc);
 extern value carc_rcont(carc *c, value cont);
