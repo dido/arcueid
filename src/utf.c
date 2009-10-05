@@ -179,3 +179,71 @@ int utflen(const char *s)
   }
   return(0);
 }
+
+int runetochar(char *str, Rune *rune)
+{
+  Rune c;
+
+  /*
+   * one character sequence
+   *	00000-0007F => 00-7F
+   */
+  c = *rune;
+  if(c <= Rune1) {
+    str[0] = c;
+    return(1);
+  }
+
+  /*
+   * two character sequence
+   *	0080-07FF => T2 Tx
+   */
+  if(c <= Rune2) {
+    str[0] = T2 | (c >> 1*Bitx);
+    str[1] = Tx | (c & Maskx);
+    return(2);
+  }
+
+  /*
+   * three character sequence
+   *	0800-FFFF => T3 Tx Tx
+   */
+  if (c < Rune3) {
+    str[0] = T3 |  (c >> 2*Bitx);
+    str[1] = Tx | ((c >> 1*Bitx) & Maskx);
+    str[2] = Tx |  (c & Maskx);
+    return(3);
+  }
+
+  /* Four character sequence 0001_0000-001F_FFFF, T4 Tx Tx Tx */
+  if (c < Rune4) {
+    str[0] = T3 |  (c >> 3*Bitx);
+    str[1] = Tx | ((c >> 2*Bitx) & Maskx);
+    str[2] = Tx | ((c >> 1*Bitx) & Maskx);
+    str[3] = Tx |  (c & Maskx);
+    return(4);
+  }
+
+  /* Five character sequence 00200000-03FFFFFF, T5 Tx Tx Tx Tx*/
+  if (c < Rune5) {
+    str[0] = T5 |  (c >> 4*Bitx);
+    str[1] = Tx | ((c >> 3*Bitx) & Maskx);
+    str[2] = Tx | ((c >> 2*Bitx) & Maskx);
+    str[3] = Tx | ((c >> 1*Bitx) & Maskx);
+    str[4] = Tx |  (c & Maskx);
+    return(5);
+  }
+
+  /* Six character sequence 04000000-7FFFFFFF, T6 Tx Tx Tx Tx Tx */
+  if (c < Rune6) {
+    str[0] = T6 |  (c >> 5*Bitx);
+    str[1] = Tx | ((c >> 4*Bitx) & Maskx);
+    str[2] = Tx | ((c >> 3*Bitx) & Maskx);
+    str[3] = Tx | ((c >> 2*Bitx) & Maskx);
+    str[4] = Tx | ((c >> 1*Bitx) & Maskx);
+    str[5] = Tx |  (c & Maskx);
+    return(6);
+  }
+  /* invalid rune */
+  return(0);
+}
