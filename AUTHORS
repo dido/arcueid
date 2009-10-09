@@ -16,6 +16,11 @@ compliance with RFC 2279.  Copyright (c) 1994-1999 Lucent Technologies
 Inc.  Revisions Copyright (c) 2000-2007 Vita Nuova Holdings Limited
 (www.vitanuova.com).
 
+The Unicode character classification code in src/uctype.c is based on
+ucdata-2.9 by Mark Leisher.  Copyright (c) 2005 Computing Research
+Labs, New Mexico State University. For more details, see
+http://crl.nmsu.edu/~mleisher/ucdata.html
+
 The hash functions used in hash.c are the hash functions proposed by
 Bob Jenkins (lookup3.c on 32-bit and lookup8.c on 64-bit builds).  See
 http://www.burtleburtle.net/bob/hash/index.html for more details.
