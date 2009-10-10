@@ -27,10 +27,11 @@
 #include "../src/arith.h"
 #include "../config.h"
 
+carc c;
+
 START_TEST(test_add_fixnum)
 {
   int i;
-  carc c;
   value v = INT2FIX(0);
 
   for (i=1; i<=100; i++)
@@ -41,23 +42,10 @@ START_TEST(test_add_fixnum)
 }
 END_TEST
 
-/* This is a very basic memory allocation routine that essentially
-   "fakes" it out. */
-value get_cell_test(struct carc *c)
-{
-  static struct cell cells[1024];
-  static int cellptr = 0;
-
-  return((value)(cells + ((cellptr++) % 1024)));
-}
-
 START_TEST(test_add_fixnum2bignum)
 {
 #ifdef HAVE_GMP_H
   value maxfixnum, one, negone, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   maxfixnum = INT2FIX(FIXNUM_MAX);
   one = INT2FIX(1);
@@ -76,9 +64,6 @@ END_TEST
 START_TEST(test_add_fixnum2flonum)
 {
   value val1, val2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = INT2FIX(1);
   val2 = carc_mkflonum(&c, 3.14159);
@@ -97,9 +82,6 @@ END_TEST
 START_TEST(test_add_fixnum2complex)
 {
   value val1, val2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = INT2FIX(1);
   val2 = carc_mkcomplex(&c, 1.1, 2.2);
@@ -121,9 +103,6 @@ START_TEST(test_add_fixnum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkrationall(&c, 1, 2);
   v2 = INT2FIX(1);
@@ -144,9 +123,6 @@ END_TEST
 START_TEST(test_add_flonum)
 {
   value val1, val2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 2.71828);
   val2 = carc_mkflonum(&c, 3.14159);
@@ -160,9 +136,6 @@ END_TEST
 START_TEST(test_add_complex)
 {
   value val1, val2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkcomplex(&c, 1, -2);
   val2 = carc_mkcomplex(&c, 3, -4);
@@ -178,9 +151,6 @@ START_TEST(test_add_rational2complex)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkcomplex(&c, 0.5, 0.5);
   val2 = carc_mkrationall(&c, 1, 2);
@@ -203,9 +173,6 @@ START_TEST(test_add_flonum2rational)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 0.5);
   val2 = carc_mkrationall(&c, 1, 2);
@@ -233,10 +200,8 @@ START_TEST(test_add_bignum)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
   val2 = carc_mkbignuml(&c, -(FIXNUM_MAX+2));
   sum = __carc_add2(&c, val1, val2);
@@ -261,9 +226,6 @@ START_TEST(test_add_bignum2flonum)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkflonum(&c, 0.0);
   v2 = carc_mkbignuml(&c, 0);
@@ -286,9 +248,6 @@ START_TEST(test_add_bignum2complex)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkcomplex(&c, 0.0, 1.1);
   v2 = carc_mkbignuml(&c, 0);
@@ -313,10 +272,7 @@ START_TEST(test_add_bignum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, sum;
-  carc c;
   mpq_t expected;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkrationall(&c, 1, 2);
   v2 = carc_mkbignuml(&c, 0);
@@ -345,9 +301,6 @@ START_TEST(test_mul_bignum2complex)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkcomplex(&c, 1.0, 1.0);
   v2 = carc_mkbignuml(&c, 0);
@@ -372,10 +325,8 @@ START_TEST(test_add_rational)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
   val1 = carc_mkrationall(&c, 1, 2);
   val2 = carc_mkrationall(&c, 1, 4);
   sum = __carc_add2(&c, val1, val2);
@@ -405,9 +356,6 @@ END_TEST
 START_TEST(test_add_flonum2complex)
 {
   value val1, val2, sum;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 0.5);
   val2 = carc_mkcomplex(&c, 3, -4);
@@ -428,11 +376,8 @@ END_TEST
 
 START_TEST(test_add_misc)
 {
-  carc c;
   value sum;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   sum = __carc_add2(&c, CNIL, CNIL);
@@ -446,14 +391,11 @@ END_TEST
 
 START_TEST(test_mul_fixnum)
 {
-  carc c;
   value prod;
 #ifdef HAVE_GMP_H
   mpz_t expected;
 #endif
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   prod = __carc_mul2(&c, INT2FIX(8), INT2FIX(21));
@@ -507,10 +449,8 @@ START_TEST(test_mul_bignum)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, sum;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
   val2 = carc_mkbignuml(&c, -(FIXNUM_MAX+2));
   sum = __carc_add2(&c, val1, val2);
@@ -534,9 +474,6 @@ END_TEST
 START_TEST(test_mul_flonum)
 {
   value val1, val2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 1.20257);
   val2 = carc_mkflonum(&c, 0.57721);
@@ -550,9 +487,6 @@ END_TEST
 START_TEST(test_mul_complex)
 {
   value val1, val2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkcomplex(&c, 2.0, 1.0);
   val2 = carc_mkcomplex(&c, 3.0, 2.0);
@@ -568,10 +502,8 @@ START_TEST(test_mul_rational)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, prod;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
   val1 = carc_mkrationall(&c, 1, 2);
   val2 = carc_mkrationall(&c, 1, 4);
   prod = __carc_mul2(&c, val1, val2);
@@ -608,11 +540,9 @@ START_TEST(test_mul_fixnum2bignum)
 {
 #ifdef HAVE_GMP_H
   value factorial;
-  carc c;
   mpz_t expected;
   int i;
 
-  c.get_cell = get_cell_test;
   factorial = INT2FIX(1);
   for (i=1; i<=100; i++)
     factorial = __carc_mul2(&c, INT2FIX(i), factorial);
@@ -627,11 +557,8 @@ END_TEST
 
 START_TEST(test_mul_misc)
 {
-  carc c;
   value prod;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   prod = __carc_mul2(&c, CNIL, CNIL);
@@ -646,9 +573,6 @@ END_TEST
 START_TEST(test_mul_fixnum2flonum)
 {
   value val1, val2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = INT2FIX(2);
   val2 = carc_mkflonum(&c, 3.14159);
@@ -668,9 +592,6 @@ START_TEST(test_mul_fixnum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkrationall(&c, 1, 2);
   v2 = INT2FIX(3);
@@ -696,9 +617,6 @@ END_TEST
 START_TEST(test_mul_fixnum2complex)
 {
   value v1, v2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkcomplex(&c, 1.0, 2.0);
   v2 = INT2FIX(3);
@@ -719,9 +637,6 @@ START_TEST(test_mul_bignum2flonum)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkflonum(&c, 2.0);
   v2 = carc_mkbignuml(&c, 0);
@@ -744,11 +659,8 @@ START_TEST(test_mul_bignum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, prod;
-  carc c;
   mpq_t expected;
   mpz_t zexpected;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkrationall(&c, 1, 3);
   v2 = carc_mkbignuml(&c, 0);
@@ -795,9 +707,6 @@ START_TEST(test_mul_flonum2rational)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 2.0);
   val2 = carc_mkrationall(&c, 1, 2);
@@ -817,9 +726,6 @@ END_TEST
 START_TEST(test_mul_flonum2complex)
 {
   value val1, val2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 0.5);
   val2 = carc_mkcomplex(&c, 3, -4);
@@ -841,9 +747,6 @@ START_TEST(test_mul_rational2complex)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, prod;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkcomplex(&c, 0.5, 0.25);
   val2 = carc_mkrationall(&c, 1, 2);
@@ -864,14 +767,11 @@ END_TEST
 
 START_TEST(test_div_fixnum)
 {
-  carc c;
   value quot;
 #ifdef HAVE_GMP_H
   mpq_t expected;
 #endif
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   quot = __carc_div2(&c, INT2FIX(168), INT2FIX(21));
@@ -918,11 +818,8 @@ START_TEST(test_div_bignum)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, quot;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   /* Bignum result */
@@ -972,10 +869,7 @@ END_TEST
 START_TEST(test_div_flonum)
 {
   value val1, val2, quot;
-  carc c;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   val1 = carc_mkflonum(&c, 1.20257);
@@ -998,11 +892,8 @@ START_TEST(test_div_rational)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, quot;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   val1 = carc_mkrationall(&c, 1, 2);
@@ -1041,10 +932,7 @@ END_TEST
 START_TEST(test_div_complex)
 {
   value val1, val2, quot;
-  carc c;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   val1 = carc_mkcomplex(&c, 2.0, 1.0);
@@ -1069,13 +957,10 @@ START_TEST(test_div_fixnum2bignum)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, quot;
-  carc c;
   mpz_t expected;
   mpq_t qexpected;
   int i;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   /* Bignum / Fixnum = Bignum */
@@ -1153,10 +1038,7 @@ END_TEST
 START_TEST(test_div_fixnum2flonum)
 {
   value val1, val2, quot;
-  carc c;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   val1 = INT2FIX(2);
@@ -1193,10 +1075,7 @@ START_TEST(test_div_fixnum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, quot;
-  carc c;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   v1 = carc_mkrationall(&c, 1, 2);
@@ -1240,10 +1119,7 @@ END_TEST
 START_TEST(test_div_fixnum2complex)
 {
   value v1, v2, quot;
-  carc c;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   v1 = carc_mkcomplex(&c, 1.0, 2.0);
@@ -1280,11 +1156,8 @@ END_TEST
 
 START_TEST(test_div_misc)
 {
-  carc c;
   value quot;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   quot = __carc_div2(&c, CNIL, CNIL);
@@ -1302,7 +1175,6 @@ END_TEST
 START_TEST(test_sub_fixnum)
 {
   int i;
-  carc c;
   value v = INT2FIX(0);
 
   for (i=1; i<=100; i++)
@@ -1317,10 +1189,8 @@ START_TEST(test_sub_bignum)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, diff;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
   val1 = carc_mkbignuml(&c, FIXNUM_MAX+1);
   val2 = carc_mkbignuml(&c, FIXNUM_MAX+2);
   diff = __carc_sub2(&c, val1, val2);
@@ -1344,9 +1214,6 @@ END_TEST
 START_TEST(test_sub_flonum)
 {
   value val1, val2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 2.71828);
   val2 = carc_mkflonum(&c, 3.14159);
@@ -1361,10 +1228,8 @@ START_TEST(test_sub_rational)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, diff;
-  carc c;
   mpz_t expected;
 
-  c.get_cell = get_cell_test;
   val1 = carc_mkrationall(&c, 1, 2);
   val2 = carc_mkrationall(&c, 1, 4);
   diff = __carc_sub2(&c, val1, val2);
@@ -1394,9 +1259,6 @@ END_TEST
 START_TEST(test_sub_complex)
 {
   value val1, val2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkcomplex(&c, 1, -2);
   val2 = carc_mkcomplex(&c, 3, -4);
@@ -1412,9 +1274,6 @@ START_TEST(test_sub_fixnum2bignum)
 {
 #ifdef HAVE_GMP_H
   value maxfixnum, one, negone, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   maxfixnum = INT2FIX(-FIXNUM_MAX);
   one = INT2FIX(1);
@@ -1433,9 +1292,6 @@ END_TEST
 START_TEST(test_sub_fixnum2flonum)
 {
   value val1, val2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = INT2FIX(1);
   val2 = carc_mkflonum(&c, 3.14159);
@@ -1455,9 +1311,6 @@ START_TEST(test_sub_fixnum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkrationall(&c, 1, 2);
   v2 = INT2FIX(1);
@@ -1477,9 +1330,6 @@ END_TEST
 START_TEST(test_sub_fixnum2complex)
 {
   value val1, val2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = INT2FIX(1);
   val2 = carc_mkcomplex(&c, 1.1, 2.2);
@@ -1501,9 +1351,6 @@ START_TEST(test_sub_bignum2flonum)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkflonum(&c, 0.0);
   v2 = carc_mkbignuml(&c, 0);
@@ -1526,10 +1373,7 @@ START_TEST(test_sub_bignum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, diff;
-  carc c;
   mpq_t expected;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkrationall(&c, 1, 2);
   v2 = carc_mkbignuml(&c, 0);
@@ -1558,9 +1402,6 @@ START_TEST(test_sub_bignum2complex)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   v1 = carc_mkcomplex(&c, 0.0, 1.1);
   v2 = carc_mkbignuml(&c, 0);
@@ -1585,9 +1426,6 @@ START_TEST(test_sub_flonum2rational)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 0.5);
   val2 = carc_mkrationall(&c, 1, 2);
@@ -1607,9 +1445,6 @@ END_TEST
 START_TEST(test_sub_flonum2complex)
 {
   value val1, val2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkflonum(&c, 0.5);
   val2 = carc_mkcomplex(&c, 3, -4);
@@ -1632,9 +1467,6 @@ START_TEST(test_sub_rational2complex)
 {
 #ifdef HAVE_GMP_H
   value val1, val2, diff;
-  carc c;
-
-  c.get_cell = get_cell_test;
 
   val1 = carc_mkcomplex(&c, 0.5, 0.5);
   val2 = carc_mkrationall(&c, 1, 2);
@@ -1655,11 +1487,8 @@ END_TEST
 
 START_TEST(test_sub_misc)
 {
-  carc c;
   value diff;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   diff = __carc_sub2(&c, CNIL, CNIL);
@@ -1674,14 +1503,11 @@ END_TEST
 
 START_TEST(test_neg)
 {
-  carc c;
   value v, neg;
 #ifdef HAVE_GMP_H
   mpz_t expected;
 #endif
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   v = INT2FIX(1);
@@ -1724,12 +1550,9 @@ END_TEST
 
 START_TEST(test_coerce_flonum)
 {
-  carc c;
   double d;
   value v;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
 
 #ifdef HAVE_GMP_H
   v = carc_mkbignuml(&c, 1);
@@ -1754,11 +1577,8 @@ END_TEST
 
 START_TEST(test_coerce_fixnum)
 {
-  carc c;
   value v, v2;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
 
   /* Identity */
@@ -1805,12 +1625,9 @@ END_TEST
 START_TEST(test_coerce_bignum)
 {
 #ifdef HAVE_GMP_H
-  carc c;
   value v;
   mpz_t v2;
 
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
   error = 0;
   mpz_init(v2);
   v = carc_mkbignuml(&c, 1000);
@@ -1843,12 +1660,8 @@ END_TEST
 START_TEST(test_coerce_rational)
 {
 #ifdef HAVE_GMP_H
-  carc c;
   value v;
   mpq_t v2;
-
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
 
   mpq_init(v2);
 
@@ -1884,12 +1697,8 @@ END_TEST
 
 START_TEST(test_coerce_complex)
 {
-  carc c;
   double re, im;
   value v;
-
-  c.get_cell = get_cell_test;
-  c.signal_error = signal_error_test;
 
 #ifdef HAVE_GMP_H
   v = carc_mkbignuml(&c, 1);
@@ -2020,6 +1829,9 @@ int main(void)
   tcase_add_test(tc_conv, test_coerce_bignum);
   tcase_add_test(tc_conv, test_coerce_rational);
   tcase_add_test(tc_conv, test_coerce_complex);
+
+  carc_set_memmgr(&c);
+  c.signal_error = signal_error_test;
 
   suite_add_tcase(s, tc_ops);
   suite_add_tcase(s, tc_conv);
