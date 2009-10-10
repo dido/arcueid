@@ -31,6 +31,7 @@
 
 #define UTF_H
 
+#include <ctype.h>
 #include "carc.h"
 
 enum
@@ -58,6 +59,13 @@ static inline int ucisnl(Rune cc)
 {
   return(cc == 0x000d || cc == 0x000a || cc == 0x0085 || cc == 0x000c
 	 || cc == 0x2028 || cc == 0x2029);
+}
+
+static inline int ucisalnum(Rune cc)
+{
+  if (cc > 0x007f)
+    return(false);
+  return(isalnum(cc));
 }
 
 #endif
