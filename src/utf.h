@@ -54,4 +54,10 @@ static inline int ucisspace(Rune cc)
 	 || (cc == 0x3000));
 }
 
+static inline int ucisnl(Rune cc)
+{
+  return(cc == 0x000d || cc == 0x000a || cc == 0x0085 || cc == 0x000c
+	 || cc == 0x2028 || cc == 0x2029);
+}
+
 #endif
