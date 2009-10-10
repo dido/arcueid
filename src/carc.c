@@ -158,3 +158,18 @@ value carc_mkvector(carc *c, int length)
   memset(REP(vect)._vector.data, 0, sizeof(value)*length);
   return(vect);
 }
+
+value carc_list_append(value list1, value val)
+{
+  value list;
+
+  if (val == CNIL)
+    return(list1);
+  if (list1 == CNIL)
+    return(val);
+  list = list1;
+  while (cdr(list) != CNIL)
+    list = cdr(list);
+  scdr(list, val);
+  return(list1);
+}
