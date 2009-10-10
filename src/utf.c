@@ -109,7 +109,7 @@ int chartorune(Rune *rune, const char *str)
     goto bad;
   if (c < T4) {
     l = ((((c << Bitx) | c1) << Bitx) | c2) & Rune3;
-    if(l <= Rune2)
+    if(l <= Rune2 || (l >= 0xd800 && l <= 0xdfff))
       goto bad;
     *rune = l;
     return 3;
