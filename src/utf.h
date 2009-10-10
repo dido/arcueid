@@ -64,7 +64,7 @@ static inline int ucisnl(Rune cc)
 static inline int ucisalnum(Rune cc)
 {
   if (cc > 0x007f)
-    return(false);
+    return(0);
   return(isalnum(cc));
 }
 
