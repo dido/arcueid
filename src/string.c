@@ -24,8 +24,7 @@
 #include "alloc.h"
 #include "utf.h"
 
-/* Make a string based on UCS-4 data */
-value carc_mkstring(carc *c, const Rune *data, int length)
+value carc_mkstringlen(carc *c, int length)
 {
   value str;
 
@@ -33,8 +32,18 @@ value carc_mkstring(carc *c, const Rune *data, int length)
   BTYPE(str) = T_STRING;
   REP(str)._str.length = length;
   REP(str)._str.str = c->get_block(c, length*sizeof(Rune));
-  memcpy(REP(str)._str.str, data, length*sizeof(Rune));
   BLOCK_IMM(REP(str)._str.str);
+  return(str);
+
+}
+
+/* Make a string based on UCS-4 data */
+value carc_mkstring(carc *c, const Rune *data, int length)
+{
+  value str;
+
+  str = carc_mkstringlen(c, length);
+  memcpy(REP(str)._str.str, data, length*sizeof(Rune));
   return(str);
 }
 
@@ -42,18 +51,13 @@ value carc_mkstring(carc *c, const Rune *data, int length)
    UTF-8 string */
 value carc_mkstringc(carc *c, const char *s)
 {
-  Bhdr *b;
   value str;
   int len, ch;
   Rune *runeptr;
 
   len = utflen(s);
-  str = c->get_cell(c);
-  BTYPE(str) = T_STRING;
-  REP(str)._str.length = len;
-  runeptr = REP(str)._str.str = c->get_block(c, len*sizeof(Rune));
-  D2B(b, REP(str)._str.str);
-  b->magic = MAGIC_I;		/* mark the block as immutable */
+  str= carc_mkstringlen(c, len);
+  runeptr = REP(str)._str.str;
   for (;;) {
     ch = *(unsigned char *)s;
     if (ch == 0)
@@ -73,7 +77,10 @@ value carc_mkchar(carc *c, Rune r)
   return(ch);
 }
 
-/* This becomes more complex later! */
+/* Most of these trivial and inefficient functions should
+   become more complex and efficient later--they'll become
+   Boehm-Atkinson-Plass rope structures. */
+
 int carc_strlen(carc *c, value v)
 {
   return(REP(v)._str.length);
@@ -82,4 +89,19 @@ int carc_strlen(carc *c, value v)
 Rune carc_strindex(carc *c, value v, int index)
 {
   return(REP(v)._str.str[index]);
+}
+
+value carc_strcat(carc *c, value v1, value v2)
+{
+  value newstr;
+  int len;
+  Rune *runeptr;
+
+  len = REP(v1)._str.length + REP(v2)._str.length;
+  newstr = carc_mkstringlen(c, len);
+  runeptr = REP(newstr)._str.str;
+  memcpy(runeptr, REP(v1)._str.str, REP(v1)._str.length*sizeof(Rune));
+  runeptr += REP(v1)._str.length;
+  memcpy(runeptr, REP(v2)._str.str, REP(v2)._str.length*sizeof(Rune));
+  return(newstr);
 }
