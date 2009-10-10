@@ -32,6 +32,9 @@ typedef unsigned long value;
 @MP_TYPE@;
 @MPQ_TYPE@;
 
+/* Characters are internally stored as UCS-4 */
+typedef uint32_t Rune;
+
 typedef struct carc {
   /* High-level allocation functions (allocate a cell, allocate a block) */
   value (*get_cell)(struct carc *);
@@ -93,9 +96,6 @@ enum carc_types {
   T_NONE=0xff
 };
 
-/* Characters are internally stored as UCS-4 */
-typedef uint32_t Rune;
-
 /* Cells for boxed items */
 struct cell {
   unsigned int _type;
@@ -104,6 +104,7 @@ struct cell {
     struct {
       Rune *str;
       int length;
+      int maxlength;
     } _str;
     Rune _char;
     @MP_BVALUE@;
@@ -200,6 +201,8 @@ static inline int TYPE(value v)
   return(T_NONE);		/* unrecognized immediate type */
 }
 
+extern value carc_genv;		/* global environment */
+
 extern value carc_mkflonum(carc *c, double val);
 extern value carc_mkcomplex(carc *c, double re, double im);
 extern value carc_mkbignuml(carc *c, long val);
@@ -218,6 +221,7 @@ extern value carc_equal(carc *c, value v1, value v2);
 
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
+extern value carc_list_append(value list, value val);
 
 extern value carc_mkstring(carc *c, const Rune *data, int length);
 extern value carc_mkstringc(carc *c, const char *s);
@@ -234,6 +238,7 @@ extern value carc_hash_insert(carc *c, value hash, value key, value val);
 extern value carc_hash_lookup(carc *c, value hash, value key);
 extern value carc_hash_delete(carc *c, value hash, value key);
 extern value carc_hash_iter(carc *c, value hash, void **context);
+extern value carc_intern(carc *c, value name);
 
 extern value carc_mkvector(carc *c, int length);
 
