@@ -45,4 +45,13 @@ extern int chartorune(Rune *rune, const char *str);
 extern int utflen(const char *s);
 extern int runetochar(char *str, Rune *rune);
 
+static inline int ucisspace(Rune cc)
+{
+  return((cc >= 0x0009 && cc <= 0x000d) || (cc == 0x20) || (cc == 0x0085)
+	 || (cc == 0x00a0) || (cc == 0x1680) || (cc == 0x180e)
+	 || (cc >= 0x2000 && cc <= 0x200a) || (cc == 0x2028)
+	 || (cc == 0x2029) || (cc == 0x202f) || (cc == 0x205f)
+	 || (cc == 0x3000));
+}
+
 #endif
