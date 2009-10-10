@@ -52,6 +52,8 @@ START_TEST(test_ucisspace)
   fail_unless(ucisspace(0x3000));
   fail_if(ucisspace(0x30));
   fail_if(ucisspace(0x07));
+  fail_if(ucisspace(0x65));
+  fail_if(ucisspace(0x9f8d));
 }
 END_TEST
 
