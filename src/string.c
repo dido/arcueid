@@ -105,3 +105,18 @@ value carc_strcat(carc *c, value v1, value v2)
   memcpy(runeptr, REP(v2)._str.str, REP(v2)._str.length*sizeof(Rune));
   return(newstr);
 }
+
+Rune carc_strgetc(carc *c, value str, int *index)
+{
+  if (*index < carc_strlen(c, str))
+    return(carc_strindex(c, str, (*index)++));
+  return(Runeerror);
+}
+
+void carc_strungetc(carc *c, int *index)
+{
+  if (*index <= 0)
+    return;
+  (*index)--;
+}
+
