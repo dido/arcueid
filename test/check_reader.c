@@ -81,7 +81,7 @@ END_TEST
 
 START_TEST(test_arcsyntax)
 {
-  value str, sexpr;
+  value str, sexpr, fnbody;
   int index;
 
   index = 0;
@@ -93,8 +93,14 @@ START_TEST(test_arcsyntax)
   fail_unless(TYPE(car(cdr(sexpr))) == T_CONS);
   fail_unless(TYPE(car(car(cdr(sexpr)))) == T_SYMBOL);
   fail_unless(car(car(cdr(sexpr))) == c.us);
-  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_CONS);
-
+  fnbody = car(cdr(cdr(sexpr)));
+  fail_unless(TYPE(fnbody) == T_CONS);
+  fail_unless(TYPE(car(fnbody)) == T_SYMBOL);
+  fail_unless(car(fnbody) == carc_intern(&c, carc_mkstringc(&c, "+")));
+  fail_unless(TYPE(car(cdr(fnbody))) == T_FIXNUM);
+  fail_unless(FIX2INT(car(cdr(fnbody))) == 1);
+  fail_unless(TYPE(car(cdr(cdr(fnbody)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(fnbody))) == c.us);
 }
 END_TEST
 
