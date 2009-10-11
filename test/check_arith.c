@@ -1858,6 +1858,9 @@ START_TEST(test_string2num)
   num = carc_string2num(&c, str);
   fail_unless(num == CNIL);
 
+  str = carc_mkstringc(&c, "_");
+  num = carc_string2num(&c, str);
+  fail_unless(num == CNIL);
 }
 END_TEST
 
