@@ -79,6 +79,25 @@ START_TEST(test_list)
 }
 END_TEST
 
+START_TEST(test_arcsyntax)
+{
+  value str, sexpr;
+  int index;
+
+  index = 0;
+  str = carc_mkstringc(&c, "[+ 1 _]");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == c.fn);
+  fail_unless(TYPE(car(cdr(sexpr))) == T_CONS);
+  fail_unless(TYPE(car(car(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(car(cdr(sexpr))) == c.us);
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_CONS);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -90,6 +109,7 @@ int main(void)
   carc_init_reader(&c);
   tcase_add_test(tc_reader, test_atom);
   tcase_add_test(tc_reader, test_list);
+  tcase_add_test(tc_reader, test_arcsyntax);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
