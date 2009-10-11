@@ -47,6 +47,7 @@ START_TEST(test_list)
   value str, sexpr;
   int index;
 
+  index = 0;
   str = carc_mkstringc(&c, "(foo 1 2 3)");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
@@ -59,6 +60,22 @@ START_TEST(test_list)
   fail_unless(FIX2INT((car(cdr(cdr(sexpr))))) == 2);
   fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_FIXNUM);
   fail_unless(FIX2INT((car(cdr(cdr(cdr(sexpr)))))) == 3);
+
+  index = 0;
+  str = carc_mkstringc(&c, "(foo (bar 4) 5)");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(carc_is(&c, carc_mkstringc(&c, "foo"),
+		      carc_sym2name(&c, car(sexpr))) == CTRUE);
+  fail_unless(TYPE(car(cdr(sexpr))) == T_CONS);
+  fail_unless(TYPE(car(car(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(carc_is(&c, carc_mkstringc(&c, "bar"),
+		      carc_sym2name(&c, car(car(cdr(sexpr))))) == CTRUE);
+  fail_unless(TYPE(car(cdr(car(cdr(sexpr))))) == T_FIXNUM);
+  fail_unless(FIX2INT(car(cdr(car(cdr(sexpr))))) == 4);
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_FIXNUM);
+  fail_unless(FIX2INT(car(cdr(cdr(sexpr)))) == 5);
 }
 END_TEST
 
