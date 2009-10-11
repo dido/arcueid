@@ -1774,6 +1774,68 @@ START_TEST(test_string2num)
   fail_unless(TYPE(num) == T_FIXNUM);
   fail_unless(FIX2INT(num) == 42694);
 
+  str = carc_mkstringc(&c, "1.234");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FLONUM);
+  fail_unless(fabs(1.234 - REP(num)._flonum) < 1e-6);
+
+  str = carc_mkstringc(&c, "1.2E3");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FLONUM);
+  fail_unless(fabs(1.2e3 - REP(num)._flonum) < 1e-6);
+
+  str = carc_mkstringc(&c, "-1.234");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FLONUM);
+  fail_unless(fabs(-1.234 - REP(num)._flonum) < 1e-6);
+
+  str = carc_mkstringc(&c, "-1.2e-3");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FLONUM);
+  fail_unless(fabs(-1.2e-3 - REP(num)._flonum) < 1e-6);
+
+  str = carc_mkstringc(&c, "-1.2i");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_COMPLEX);
+  fail_unless(fabs(0.0 - REP(num)._complex.re) < 1e-6);
+  fail_unless(fabs(-1.2 - REP(num)._complex.im) < 1e-6);
+
+  str = carc_mkstringc(&c, "-1.2j");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_COMPLEX);
+  fail_unless(fabs(0.0 - REP(num)._complex.re) < 1e-6);
+  fail_unless(fabs(-1.2 - REP(num)._complex.im) < 1e-6);
+
+  str = carc_mkstringc(&c, "-1.2I");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_COMPLEX);
+  fail_unless(fabs(0.0 - REP(num)._complex.re) < 1e-6);
+  fail_unless(fabs(-1.2 - REP(num)._complex.im) < 1e-6);
+
+  str = carc_mkstringc(&c, "-1.2J");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_COMPLEX);
+  fail_unless(fabs(0.0 - REP(num)._complex.re) < 1e-6);
+  fail_unless(fabs(-1.2 - REP(num)._complex.im) < 1e-6);
+
+  str = carc_mkstringc(&c, "2.1-1.2i");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_COMPLEX);
+  fail_unless(fabs(2.1 - REP(num)._complex.re) < 1e-6);
+  fail_unless(fabs(-1.2 - REP(num)._complex.im) < 1e-6);
+
+  str = carc_mkstringc(&c, "-1i");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_COMPLEX);
+  fail_unless(fabs(0.0 - REP(num)._complex.re) < 1e-6);
+  fail_unless(fabs(-1.0 - REP(num)._complex.im) < 1e-6);
+
+  str = carc_mkstringc(&c, "2+3i");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_COMPLEX);
+  fail_unless(fabs(2.0 - REP(num)._complex.re) < 1e-6);
+  fail_unless(fabs(3.0 - REP(num)._complex.im) < 1e-6);
+
 #ifdef HAVE_GMP_H
   str = carc_mkstringc(&c, "36rzyxwvutsrqponmlkjihgfedcba9876543210");
   num = carc_string2num(&c, str);
