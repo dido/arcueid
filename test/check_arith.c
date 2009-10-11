@@ -1853,6 +1853,11 @@ START_TEST(test_string2num)
   fail_unless(mpq_cmp(qexpected, REP(num)._rational) == 0);
   mpq_clear(qexpected);
 #endif
+
+  str = carc_mkstringc(&c, "+");
+  num = carc_string2num(&c, str);
+  fail_unless(num == CNIL);
+
 }
 END_TEST
 
