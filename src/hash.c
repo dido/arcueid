@@ -360,8 +360,3 @@ value carc_hash_iter(carc *c, value hash, ccrContParam)
   }
   ccrFinish(CNIL);
 }
-
-value carc_intern(carc *c, value name)
-{
-  return(CNIL);
-}
