@@ -25,6 +25,7 @@
 #include "alloc.h"
 #include "utf.h"
 #include "arith.h"
+#include "../config.h"
 
 static Rune scan(carc *c, value str, int *index);
 static value read_list(carc *c, value str, int *index);
@@ -220,11 +221,11 @@ static value str2flonum(carc *c, value str)
   return(CNIL);
 }
 
-value carc_string2num(carc *c, value str)
+static value string2numindex(carc *c, value str, int index, int rational)
 {
-  int state = 1, sign = 1, index = 0, radsel = 0;
+  int state = 1, sign = 1, radsel = 0;
   Rune ch;
-  value nval = INT2FIX(0), digitval, radix = INT2FIX(10);
+  value nval = INT2FIX(0), digitval, radix = INT2FIX(10), denom;
 
   while ((ch = strgetc(c, str, &index)) != Runeerror) {
     switch (state) {
@@ -309,6 +310,12 @@ value carc_string2num(carc *c, value str)
 	  return(CNIL);		/* invalid radix selector */
 	}
 	break;
+      case '/':
+	if (rational)
+	  return(CNIL);
+	denom = string2numindex(c, str, index, 1);
+	return(__carc_div2(c, nval, denom));
+	break;
       default:
 	/* Digits */
 	digitval = rune2dig(ch, radix);
@@ -328,6 +335,11 @@ value carc_string2num(carc *c, value str)
     }
   }
   return(nval);
+}
+
+value carc_string2num(carc *c, value str)
+{
+  return(string2numindex(c, str, 0, 0));
 }
 
 /* XXX: stub! */
