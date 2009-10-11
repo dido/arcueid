@@ -104,6 +104,43 @@ START_TEST(test_arcsyntax)
 }
 END_TEST
 
+START_TEST(test_quote)
+{
+  value str, sexpr, qexpr;
+  int index;
+
+  index = 0;
+  str = carc_mkstringc(&c, "'(+ 1 2)");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == c.quote);
+  qexpr = car(cdr(sexpr));
+  fail_unless(TYPE(qexpr) == T_CONS);
+  fail_unless(TYPE(car(qexpr)) == T_SYMBOL);
+  fail_unless(car(qexpr) == carc_intern(&c, carc_mkstringc(&c, "+")));
+  fail_unless(TYPE(car(cdr(qexpr))) == T_FIXNUM);
+  fail_unless(FIX2INT(car(cdr(qexpr))) == 1);
+  fail_unless(TYPE(car(cdr(cdr(qexpr)))) == T_FIXNUM);
+  fail_unless(FIX2INT(car(cdr(cdr(qexpr)))) == 2);
+
+  index = 0;
+  str = carc_mkstringc(&c, "`(* 3 4)");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == c.qquote);
+  qexpr = car(cdr(sexpr));
+  fail_unless(TYPE(qexpr) == T_CONS);
+  fail_unless(TYPE(car(qexpr)) == T_SYMBOL);
+  fail_unless(car(qexpr) == carc_intern(&c, carc_mkstringc(&c, "*")));
+  fail_unless(TYPE(car(cdr(qexpr))) == T_FIXNUM);
+  fail_unless(FIX2INT(car(cdr(qexpr))) == 3);
+  fail_unless(TYPE(car(cdr(cdr(qexpr)))) == T_FIXNUM);
+  fail_unless(FIX2INT(car(cdr(cdr(qexpr)))) == 4);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -116,6 +153,7 @@ int main(void)
   tcase_add_test(tc_reader, test_atom);
   tcase_add_test(tc_reader, test_list);
   tcase_add_test(tc_reader, test_arcsyntax);
+  tcase_add_test(tc_reader, test_quote);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
