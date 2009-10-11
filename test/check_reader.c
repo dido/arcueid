@@ -25,7 +25,7 @@
 
 carc c;
 
-START_TEST(test_reader)
+START_TEST(test_atom)
 {
   value str, sexpr;
   int index;
@@ -42,6 +42,26 @@ START_TEST(test_reader)
 }
 END_TEST
 
+START_TEST(test_list)
+{
+  value str, sexpr;
+  int index;
+
+  str = carc_mkstringc(&c, "(foo 1 2 3)");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(carc_is(&c, carc_mkstringc(&c, "foo"),
+		      carc_sym2name(&c, car(sexpr))) == CTRUE);
+  fail_unless(TYPE(car(cdr(sexpr))) == T_FIXNUM);
+  fail_unless(FIX2INT((car(cdr(sexpr)))) == 1);
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_FIXNUM);
+  fail_unless(FIX2INT((car(cdr(cdr(sexpr))))) == 2);
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_FIXNUM);
+  fail_unless(FIX2INT((car(cdr(cdr(cdr(sexpr)))))) == 3);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -51,7 +71,8 @@ int main(void)
 
   carc_set_memmgr(&c);
   carc_init_reader(&c);
-  tcase_add_test(tc_reader, test_reader);
+  tcase_add_test(tc_reader, test_atom);
+  tcase_add_test(tc_reader, test_list);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
