@@ -38,6 +38,26 @@ static value read_special(carc *c, value src, int *index);
 static void read_comment(carc *c, value src, int *index);
 static value read_symbol(carc *c, value src, int *index);
 
+#define ID2SYM(x) ((value)(((long)(x))<<8|SYMBOL_FLAG))
+
+value carc_intern(carc *c, value name)
+{
+  value symval;
+
+  if ((symval = carc_hash_lookup(c, c->symtable, name)) != CNIL)
+    return(symval);
+
+  symval = ID2SYM(++c->lastsym);
+  carc_hash_insert(c, c->symtable, name, symval);
+  carc_hash_insert(c, c->rsymtable, symval, name);
+  return(symval);
+}
+
+value carc_sym2name(carc *c, value sym)
+{
+  return(carc_hash_lookup(c, c->rsymtable, sym));
+}
+
 value carc_read(carc *c, value src, int *index, value *pval)
 {
   Rune ch;
