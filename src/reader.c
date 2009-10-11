@@ -267,10 +267,13 @@ static value read_anonf(carc *c, value src, int *index)
 
 }
 
-/* XXX: stub! */
 static value read_quote(carc *c, value src, int *index, value sym)
 {
-  return(CNIL);
+  value val;
+
+  if (carc_read(c, src, index, &val) == CNIL)
+    c->signal_error(c, "unexpected end of source");
+  return(cons(c, sym, cons(c, val, CNIL)));
 }
 
 /* XXX: stub! */
