@@ -1731,6 +1731,69 @@ START_TEST(test_coerce_complex)
 }
 END_TEST
 
+START_TEST(test_string2num)
+{
+  value str, num;
+#ifdef HAVE_GMP_H
+  mpz_t expected;
+  mpq_t qexpected;
+#endif
+
+  str = carc_mkstringc(&c, "0");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FIXNUM);
+  fail_unless(FIX2INT(num) == 0);
+
+  str = carc_mkstringc(&c, "1234");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FIXNUM);
+  fail_unless(FIX2INT(num) == 1234);
+
+  str = carc_mkstringc(&c, "0x1234");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FIXNUM);
+  fail_unless(FIX2INT(num) == 0x1234);
+
+  str = carc_mkstringc(&c, "01234");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FIXNUM);
+  fail_unless(FIX2INT(num) == 01234);
+
+  str = carc_mkstringc(&c, "0b11011010");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FIXNUM);
+  fail_unless(FIX2INT(num) == 218);
+
+  str = carc_mkstringc(&c, "16r1234");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FIXNUM);
+  fail_unless(FIX2INT(num) == 0x1234);
+
+  str = carc_mkstringc(&c, "36rWxY");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FIXNUM);
+  fail_unless(FIX2INT(num) == 42694);
+
+#ifdef HAVE_GMP_H
+  str = carc_mkstringc(&c, "36rzyxwvutsrqponmlkjihgfedcba9876543210");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "zyxwvutsrqponmlkjihgfedcba9876543210", 36);
+  fail_unless(mpz_cmp(expected, REP(num)._bignum) == 0);
+  mpz_clear(expected);
+
+  str = carc_mkstringc(&c, "1/2");
+  num = carc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_RATIONAL);
+  mpq_init(qexpected);
+  mpq_set_str(qexpected, "1/2", 10);
+  fail_unless(mpq_cmp(qexpected, REP(num)._rational) == 0);
+  mpq_clear(qexpected);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1829,6 +1892,7 @@ int main(void)
   tcase_add_test(tc_conv, test_coerce_bignum);
   tcase_add_test(tc_conv, test_coerce_rational);
   tcase_add_test(tc_conv, test_coerce_complex);
+  tcase_add_test(tc_conv, test_string2num);
 
   carc_set_memmgr(&c);
   c.signal_error = signal_error_test;
