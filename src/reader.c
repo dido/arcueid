@@ -187,7 +187,7 @@ static Rune scan(carc *c, value str, int *index)
 static Rune strgetc(carc *c, value str, int *index)
 {
   if (*index < carc_strlen(c, str))
-    return(carc_strindex(c, str, *index++));
+    return(carc_strindex(c, str, (*index)++));
   return(Runeerror);
 }
 
@@ -222,9 +222,9 @@ static value str2flonum(carc *c, value str)
 
 value carc_string2num(carc *c, value str)
 {
-  int state = 1, sign = 1, radix = 10, index = 0;
+  int state = 1, sign = 1, index = 0, radsel = 0;
   Rune ch;
-  value nval = INT2FIX(0), digitval;
+  value nval = INT2FIX(0), digitval, radix = INT2FIX(10);
 
   while ((ch = strgetc(c, str, &index)) != Runeerror) {
     switch (state) {
@@ -251,7 +251,7 @@ value carc_string2num(carc *c, value str)
       /* digits, or possible radix */
       switch (ch) {
       case '0':
-	radix = 8;
+	radix = INT2FIX(8);
 	state = 3;
 	break;
       case '.':
@@ -270,11 +270,11 @@ value carc_string2num(carc *c, value str)
       /* digits, or possible radix */
       switch (ch) {
       case 'x':
-	radix = 16;
+	radix = INT2FIX(16);
 	state = 4;
 	break;
       case 'b':
-	radix = 2;
+	radix = INT2FIX(2);
 	state = 4;
 	break;
       case '.':
@@ -292,21 +292,22 @@ value carc_string2num(carc *c, value str)
     case 4:
       /* digits */
       switch (ch) {
-      case 'r':
-	/* Limbo-style radix selector: the base radix should
-	   still be 10, and the value should be between 2 and 36 */
-	if (radix == 10 && TYPE(nval) == T_FIXNUM
-	    && (FIX2INT(nval) >= 2 && FIX2INT(nval) <= 36)) {
-	  radix = FIX2INT(nval);
-	  nval = FIX2INT(0);
-	} else {
-	  return(CNIL);		/* invalid radix selector */
-	}
-	break;
       case '.':
 	if (radix == 10)
 	  return(str2flonum(c, str));
 	return(CNIL);
+	break;
+      case 'r':
+	/* Limbo-style radix selector: the base radix should
+	   still be 10, and the value should be between 2 and 36 */
+	if (radix == INT2FIX(10) && TYPE(nval) == T_FIXNUM
+	    && (FIX2INT(nval) >= 2 && FIX2INT(nval) <= 36)) {
+	  radix = nval;
+	  nval = INT2FIX(0);
+	  state = 5;
+	} else if (!radsel) {
+	  return(CNIL);		/* invalid radix selector */
+	}
 	break;
       default:
 	/* Digits */
@@ -316,6 +317,14 @@ value carc_string2num(carc *c, value str)
 	nval = __carc_add2(c, __carc_mul2(c, nval, radix), digitval);
 	break;
       }
+      break;
+    case 5:
+      /* Digits */
+      digitval = rune2dig(ch, radix);
+      if (digitval == CNIL)
+	return(CNIL);
+      nval = __carc_add2(c, __carc_mul2(c, nval, radix), digitval);
+      break;
     }
   }
   return(nval);
