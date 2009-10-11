@@ -45,15 +45,15 @@ END_TEST
 
 extern Hhdr *__carc_get_heap_start(void);
 
+carc c;
+
 START_TEST(test_alloc)
 {
-  carc c;
   char *ptr1, *ptr2, *ptr3, *ptr4, *ptr5, *ptr6, *ptr7, *ptr8;
   int i;
   Hhdr *h;
   Bhdr *b;
 
-  carc_set_memmgr(&c);
   c.minexp = 8192;		/* for testing */
  
   /* Allocate blocks of memory */
@@ -207,8 +207,6 @@ extern unsigned long long gcepochs;
 
 START_TEST(test_gc)
 {
-  carc c;
-  carc_set_memmgr(&c);
   value list=CNIL, list2=CNIL;
   int i, count;
   Hhdr *h;
@@ -220,7 +218,7 @@ START_TEST(test_gc)
     list=cons(&c, INT2FIX(i), list);
   for (i=4; i<8; i++) 
     list2=cons(&c, INT2FIX(i), list);
-  
+
   count = 0;
   for (h = __carc_get_heap_start(); h; h = h->next) {
     for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
@@ -273,6 +271,8 @@ int main(void)
   TCase *tc_alloc = tcase_create("Allocation");
   TCase *tc_gc = tcase_create("Garbage Collection");
   SRunner *sr;
+
+  carc_set_memmgr(&c);
 
   tcase_add_test(tc_alloc, test_size_rounding);
   tcase_add_test(tc_alloc, test_alloc);
