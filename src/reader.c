@@ -143,6 +143,7 @@ static value read_list(carc *c, value src, int *index)
     case ')':
       return(top);
     default:
+      unreadchar(c, src, ch, index);
       if (!carc_read(c, src, index, &val))
 	c->signal_error(c, "unexpected end of source");
       val = cons(c, val, CNIL);
