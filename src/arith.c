@@ -1118,7 +1118,11 @@ static value string2numindex(carc *c, value str, int index, int rational)
       break;
     }
   }
-  return(nval);
+  /* For nval to be a valid number, we must have entered at least state 3.
+     If we have not, the number is not valid. */
+  if (state >= 3)
+    return(nval);
+  return(CNIL);
 }
 
 value carc_string2num(carc *c, value str)
