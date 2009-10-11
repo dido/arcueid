@@ -31,7 +31,7 @@
 static Rune scan(carc *c, value src, int *index);
 static value read_list(carc *c, value src, int *index);
 static value read_anonf(carc *c, value src, int *index);
-static value read_quote(carc *c, value src, int *index, const char *sym);
+static value read_quote(carc *c, value src, int *index, value sym);
 static value read_comma(carc *c, value src, int *index);
 static value read_string(carc *c, value src, int *index);
 static value read_special(carc *c, value src, int *index);
@@ -103,10 +103,10 @@ value carc_read(carc *c, value src, int *index, value *pval)
       c->signal_error(c, "misplaced right bracket");
       return(CNIL);
     case '\'':
-      *pval = read_quote(c, src, index, "quote");
+      *pval = read_quote(c, src, index, c->quote);
       return(CTRUE);
     case '`':
-      *pval = read_quote(c, src, index, "quasiquote");
+      *pval = read_quote(c, src, index, c->qquote);
       return(CTRUE);
     case ',':
       *pval = read_comma(c, src, index);
@@ -232,14 +232,43 @@ static Rune scan(carc *c, value src, int *index)
   return(ch);
 }
 
-/* XXX: stub! */
+/* Read an Arc square bracketed anonymous function.  This expands to
+   (fn (_) ...) */
 static value read_anonf(carc *c, value src, int *index)
 {
+  value top, val, last, ret;
+  Rune ch;
+
+  top = val = last = CNIL;
+  while ((ch = scan(c, src, index)) != Runeerror) {
+    switch (ch) {
+    case ';':
+      read_comment(c, src, index);
+      break;
+    case ']':
+      ret = cons(c, c->fn, cons(c, cons(c, c->us, CNIL), cons(c, top, CNIL)));
+
+      return(ret);
+    default:
+      unreadchar(c, src, ch, index);
+      if (!carc_read(c, src, index, &val))
+	c->signal_error(c, "unexpected end of source");
+      val = cons(c, val, CNIL);
+      if (last)
+	scdr(last, val);
+      else
+	top = val;
+      last = val;
+      break;
+    }
+  }
+  c->signal_error(c, "unexpected end of source");
   return(CNIL);
+
 }
 
 /* XXX: stub! */
-static value read_quote(carc *c, value src, int *index, const char *sym)
+static value read_quote(carc *c, value src, int *index, value sym)
 {
   return(CNIL);
 }
@@ -266,4 +295,10 @@ void carc_init_reader(carc *c)
 {
   c->symtable = carc_mkhash(c, 10);
   c->rsymtable = carc_mkhash(c, 10);
+  c->fn = carc_intern(c, carc_mkstringc(c, "fn"));
+  c->us = carc_intern(c, carc_mkstringc(c, "_"));
+  c->quote = carc_intern(c, carc_mkstringc(c, "quote"));
+  c->qquote = carc_intern(c, carc_mkstringc(c, "quasiquote"));
+  c->unquote = carc_intern(c, carc_mkstringc(c, "unquote"));
+  c->unquotesp = carc_intern(c, carc_mkstringc(c, "unquote-splicing"));
 }
