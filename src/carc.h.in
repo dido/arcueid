@@ -76,6 +76,8 @@ typedef struct carc {
   value qquote;			/* syntax symbol quasiquote */
   value unquote;		/* syntax symbol unquote */
   value unquotesp;		/* syntax symbol unquote-splicing */
+  value compose;		/* syntax symbol compose */
+  value complement;		/* syntax symbol complement */
 } carc;
 
 
