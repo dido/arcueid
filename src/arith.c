@@ -25,6 +25,7 @@
 #include "carc.h"
 #include "arith.h"
 #include "../config.h"
+#include "utf.h"
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
@@ -808,3 +809,320 @@ value __carc_div2(carc *c, value arg1, value arg2)
   c->signal_error(c, "Invalid types for division");
   return(CNIL);
 }
+
+
+static value rune2dig(Rune r, int radix)
+{
+  Rune rl;
+  value v;
+
+  if (!ucisalnum(r))
+    return(CNIL);
+  rl = tolower(r);
+  if (rl >= 0x30 && rl <= 0x39)
+    v = rl - 0x30;
+  else if (rl >= 0x61 && rl <= 0x7a)
+    v = (rl - 0x61) + 10;
+  if (v > radix)
+    return(CNIL);
+  return(INT2FIX(v));
+}
+
+static double str2flonum(carc *c, value str, int index, int imagflag)
+{
+  int state = 1, expn = 0, expnsign = 1;
+  double sign = 1.0, mantissa=0.0, mult=0.1, fnum;
+  value digitval, imag;
+  Rune ch;
+
+  while ((ch = carc_strgetc(c, str, &index)) != Runeerror) {
+    switch (state) {
+    case 1:
+      /* sign */
+      switch (ch) {
+      case '-':
+	sign = -1;
+	state = 2;
+	break;
+      case '+':
+	sign = 1;
+	state = 2;
+	break;
+      default:
+	if (!isdigit(ch))
+	  return(CNIL);
+	carc_strungetc(c, &index);
+	state = 2;
+	break;
+      }
+      break;
+    case 2:
+      /* non-fractional part of mantissa */
+      switch (ch) {
+      case '.':
+	state = 3;
+	break;
+      case 'e':
+      case 'E':
+	state = 4;
+	break;
+      case '+':
+      case '-':
+	/* Complex */
+	if (imagflag) {
+	  return(CNIL);
+	} else {
+	  /* read the imaginary part */
+	  imag = str2flonum(c, str, index-1, 1);
+	  if (TYPE(imag) != T_COMPLEX)
+	    return(CNIL);
+	  REP(imag)._complex.re = sign * (mantissa * pow(10, expnsign * expn));
+	  return(imag);
+	}
+	break;
+      case 'i':
+      case 'I':
+      case 'j':
+      case 'J':
+	/* imaginary */
+	return(carc_mkcomplex(c, 0.0,
+			      sign * (mantissa
+				      * pow(10, expnsign * expn))));
+      default:
+	if (!isdigit(ch))
+	  return(CNIL);
+	mantissa = (mantissa * 10) + FIX2INT(rune2dig(ch, 10));
+	break;
+      }
+      break;
+    case 3:
+      /* fractional part of mantissa */
+      switch (ch) {
+      case 'e':
+      case 'E':
+	state = 4;
+	break;
+      case '+':
+      case '-':
+	/* Complex */
+	if (imagflag) {
+	  return(CNIL);
+	} else {
+	  /* read the imaginary part */
+	  imag = str2flonum(c, str, index-1, 1);
+	  if (TYPE(imag) != T_COMPLEX)
+	    return(CNIL);
+	  REP(imag)._complex.re = sign * (mantissa * pow(10, expnsign * expn));
+	  return(imag);
+	}
+	break;
+      case 'i':
+      case 'I':
+      case 'j':
+      case 'J':
+	/* imaginary */
+	return(carc_mkcomplex(c, 0.0,
+			      sign * (mantissa
+				      * pow(10, expnsign * expn))));
+      default:
+	if (!isdigit(ch))
+	  return(CNIL);
+	mantissa += FIX2INT(rune2dig(ch, 10)) * mult;
+	mult *= 0.1;
+	break;
+      }
+      break;
+    case 4:
+      /* exponent sign */
+      switch (ch) {
+      case '-':
+	expnsign = -1;
+	state = 5;
+	break;
+      case '+':
+	expnsign = 1;
+	state = 5;
+	break;
+      default:
+	if (!isdigit(ch))
+	  return(CNIL);
+	carc_strungetc(c, &index);
+	state = 5;
+	break;
+      }
+      break;
+    case 5:
+      switch (ch) {
+      case '+':
+      case '-':
+	/* Complex */
+	if (imagflag) {
+	  return(CNIL);
+	} else {
+	  /* read the imaginary part */
+	  imag = str2flonum(c, str, index-1, 1);
+	  if (TYPE(imag) != T_COMPLEX)
+	    return(CNIL);
+	  REP(imag)._complex.re = sign * (mantissa * pow(10, expnsign * expn));
+	  return(imag);
+	}
+	break;
+      case 'i':
+      case 'I':
+      case 'j':
+      case 'J':
+	/* imaginary */
+	return(carc_mkcomplex(c, 0.0,
+			      sign * (mantissa
+				      * pow(10, expnsign * expn))));
+      default:
+	/* exponent magnitude */
+	digitval = rune2dig(ch, 10);
+	if (digitval == CNIL)
+	  return(CNIL);
+	expn = expn * 10 + FIX2INT(digitval);
+	break;
+      }
+      break;
+    }
+  }
+  /* Combine */
+  fnum = sign * (mantissa * pow(10, expnsign * expn));
+  return(carc_mkflonum(c, fnum));
+}
+
+static value string2numindex(carc *c, value str, int index, int rational)
+{
+  int state = 1, sign = 1, radsel = 0;
+  Rune ch;
+  value nval = INT2FIX(0), digitval, radix = INT2FIX(10), denom;
+
+  while ((ch = carc_strgetc(c, str, &index)) != Runeerror) {
+    switch (state) {
+    case 1:
+      /* sign */
+      switch (ch) {
+      case '-':
+	sign = -1;
+	state = 2;
+	break;
+      case '+':
+	sign = 1;
+	state = 2;
+	break;
+      case '.':
+	return(str2flonum(c, str, 0, 0));
+	break;
+      default:
+	if (!isdigit(ch))
+	  return(CNIL);
+	carc_strungetc(c, &index);
+	state = 2;
+	break;
+      }
+      break;
+    case 2:
+      /* digits, or possible radix */
+      switch (ch) {
+      case '0':
+	radix = INT2FIX(8);
+	state = 3;
+	break;
+      case '.':
+	return(str2flonum(c, str, 0, 0));
+	break;
+      default:
+	if (!isdigit(ch))
+	  return(CNIL);
+	/* more digits */
+	carc_strungetc(c, &index);
+	state = 4;
+	break;
+      }
+      break;
+    case 3:
+      /* digits, or possible radix */
+      switch (ch) {
+      case 'x':
+	radix = INT2FIX(16);
+	state = 4;
+	break;
+      case 'b':
+	radix = INT2FIX(2);
+	state = 4;
+	break;
+      case '.':
+	return(str2flonum(c, str, 0, 0));
+	break;
+      default:
+	if (!isdigit(ch))
+	  return(CNIL);
+	/* more digits */
+	carc_strungetc(c, &index);
+	state = 4;
+	break;
+      }
+      break;
+    case 4:
+      /* digits */
+      switch (ch) {
+      case '.':
+      case 'e':
+      case 'E':
+	return(str2flonum(c, str, 0, 0));
+	break;
+      case 'r':
+	/* Limbo-style radix selector: the base radix should
+	   still be 10, and the value should be between 2 and 36 */
+	if (radix == INT2FIX(10) && TYPE(nval) == T_FIXNUM
+	    && (FIX2INT(nval) >= 2 && FIX2INT(nval) <= 36)) {
+	  radix = nval;
+	  nval = INT2FIX(0);
+	  state = 5;
+	} else if (!radsel) {
+	  return(CNIL);		/* invalid radix selector */
+	}
+	break;
+      case '/':
+	if (rational)
+	  return(CNIL);
+	denom = string2numindex(c, str, index, 1);
+	if (TYPE(denom) == T_FIXNUM || TYPE(denom) == T_FLONUM)
+	  return(__carc_div2(c, nval, denom));
+	else
+	  return(CNIL);
+	break;
+      case 'i':
+      case 'I':
+      case 'j':
+      case 'J':
+	return(str2flonum(c, str, 0, 0));
+      case '+':
+      case '-':
+	return(str2flonum(c, str, 0, 0));
+      default:
+	/* Digits */
+	digitval = rune2dig(ch, radix);
+	if (digitval == CNIL)
+	  return(CNIL);
+	nval = __carc_add2(c, __carc_mul2(c, nval, radix), digitval);
+	break;
+      }
+      break;
+    case 5:
+      /* Digits */
+      digitval = rune2dig(ch, radix);
+      if (digitval == CNIL)
+	return(CNIL);
+      nval = __carc_add2(c, __carc_mul2(c, nval, radix), digitval);
+      break;
+    }
+  }
+  return(nval);
+}
+
+value carc_string2num(carc *c, value str)
+{
+  return(string2numindex(c, str, 0, 0));
+}
+
