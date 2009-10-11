@@ -69,6 +69,13 @@ typedef struct carc {
   value symtable;		/* symbol table */
   value rsymtable;		/* reverse symbol table */
   value genv;			/* global environment */
+
+  value fn;			/* syntax symbol fn */
+  value us;			/* syntax symbol underscore */
+  value quote;			/* syntax symbol quote */
+  value qquote;			/* syntax symbol quasiquote */
+  value unquote;		/* syntax symbol unquote */
+  value unquotesp;		/* syntax symbol unquote-splicing */
 } carc;
 
 
