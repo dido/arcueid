@@ -58,6 +58,32 @@ value carc_sym2name(carc *c, value sym)
   return(carc_hash_lookup(c, c->rsymtable, sym));
 }
 
+/* Reader */
+static Rune readchar(struct carc *c, value src, int *index)
+{
+  switch (TYPE(src)) {
+  case T_STRING:
+    return(carc_strgetc(c, src, index));
+    break;
+  default:
+    c->signal_error(c, "Attempt to read from an invalid source");
+    break;
+  }
+  return(CNIL);
+}
+
+static void unreadchar(struct carc *c, value src, Rune ch, int *index)
+{
+  switch (TYPE(src)) {
+  case T_STRING:
+    return(carc_strungetc(c, index));
+    break;
+  default:
+    c->signal_error(c, "Attempt to unread from an invalid source");
+    break;
+  }
+}
+
 value carc_read(carc *c, value src, int *index, value *pval)
 {
   Rune ch;
@@ -135,10 +161,10 @@ static void read_comment(carc *c, value src, int *index)
 {
   Rune ch;
 
-  while ((ch = c->readchar(c, src, index)) != Runeerror && !ucisnl(ch))
+  while ((ch = readchar(c, src, index)) != Runeerror && !ucisnl(ch))
     ;
   if (ch != Runeerror)
-    c->unreadchar(c, src, ch, index);
+    unreadchar(c, src, ch, index);
 }
 
 static int issym(Rune ch)
@@ -165,7 +191,7 @@ static value getsymbol(carc *c, value src, int *index)
 
   sym = CNIL;
   i=0;
-  while ((ch = c->readchar(c, src, index)) != Runeerror && issym(ch)) {
+  while ((ch = readchar(c, src, index)) != Runeerror && issym(ch)) {
     if (i < STRMAX) {
       buf[i++] = ch;
     } else {
@@ -179,7 +205,7 @@ static value getsymbol(carc *c, value src, int *index)
   nstr = carc_mkstring(c, buf, i);
   sym = (sym == CNIL) ? nstr : carc_strcat(c, sym, nstr);
 
-  c->unreadchar(c, src, ch, index);
+  unreadchar(c, src, ch, index);
   return(sym);
 }
 
@@ -199,7 +225,7 @@ static Rune scan(carc *c, value src, int *index)
 {
   Rune ch;
 
-  while ((ch = c->readchar(c, src, index)) != Runeerror && ucisspace(ch))
+  while ((ch = readchar(c, src, index)) != Runeerror && ucisspace(ch))
     ;
   return(ch);
 }
@@ -232,4 +258,8 @@ static value read_string(carc *c, value src, int *index)
 static value read_special(carc *c, value src, int *index)
 {
   return(CNIL);
+}
+
+void carc_init_reader(carc *c)
+{
 }
