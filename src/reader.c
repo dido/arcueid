@@ -121,6 +121,7 @@ value carc_read(carc *c, value src, int *index, value *pval)
       read_comment(c, src, index);
       return(CTRUE);
     default:
+      unreadchar(c, src, ch, index);
       *pval = read_symbol(c, src, index);
       return(CTRUE);
     }
@@ -262,4 +263,6 @@ static value read_special(carc *c, value src, int *index)
 
 void carc_init_reader(carc *c)
 {
+  c->symtable = carc_mkhash(c, 10);
+  c->rsymtable = carc_mkhash(c, 10);
 }
