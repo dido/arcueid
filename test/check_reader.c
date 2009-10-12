@@ -48,6 +48,12 @@ START_TEST(test_list)
   int index;
 
   index = 0;
+  str = carc_mkstringc(&c, "()");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_NIL);
+  fail_unless(sexpr == CNIL);
+
+  index = 0;
   str = carc_mkstringc(&c, "(foo 1 2 3)");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
