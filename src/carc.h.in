@@ -78,6 +78,8 @@ typedef struct carc {
   value unquotesp;		/* syntax symbol unquote-splicing */
   value compose;		/* syntax symbol compose */
   value complement;		/* syntax symbol complement */
+  value t;			/* syntax symbol t */
+  value nil;			/* syntax symbol nil */
 } carc;
 
 
