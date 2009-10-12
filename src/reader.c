@@ -306,4 +306,6 @@ void carc_init_reader(carc *c)
   c->unquotesp = carc_intern(c, carc_mkstringc(c, "unquote-splicing"));
   c->compose = carc_intern(c, carc_mkstringc(c, "compose"));
   c->complement = carc_intern(c, carc_mkstringc(c, "complement"));
+  c->t = carc_intern(c, carc_mkstringc(c, "t"));
+  c->nil = carc_intern(c, carc_mkstringc(c, "nil"));
 }
