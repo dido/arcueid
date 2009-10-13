@@ -285,6 +285,7 @@ static value read_comma(carc *c, value src, int *index)
   return(read_quote(c, src, index, c->unquote));
 }
 
+/* XXX - we need to add support for octal and hexadecimal escapes as well */
 static value read_string(carc *c, value src, int *index)
 {
   Rune buf[STRMAX], ch, escrune;
@@ -395,10 +396,87 @@ static value read_string(carc *c, value src, int *index)
   return(CNIL);			/* to pacify -Wall */
 }
 
-/* XXX: stub! */
+/* These character constants are inherited by Arc from MzScheme.
+   Frankly, I think they're stupid, and one would be better off using
+   the same character escape sequences as for strings.  But well,
+   we have to live with these types of complications for the sake of
+   compatibility--maybe later on we can add a variable that modifies
+   this reader behavior to something more rational (such as sharp
+   followed by the actual character, with slash for escapes).  Arc
+   does not otherwise use the #-sign for anything else. */
 static value read_char(carc *c, value src, int *index)
 {
-  return(CNIL);
+  value tok, symch;
+  int alldigits, i;
+  Rune val, ch, digit;
+
+  if ((ch = readchar(c, src, index)) != '\\') {
+    c->signal_error(c, "invalid character constant");
+    return(CNIL);
+  }
+
+  tok = getsymbol(c, src, index);
+  if (carc_strlen(c, tok) == 1)	/* single character */
+    return(carc_mkchar(c, carc_strindex(c, tok, 0)));
+  if (carc_strlen(c, tok) == 3) {
+    /* Possible octal escape */
+    alldigits = 1;
+    val = 0;
+    for (i=0; i<3; i++) {
+      digit = carc_strindex(c, tok, i);
+      if (!isdigit(digit)) {
+	alldigits = 0;
+	break;
+      }
+      val = val * 8 + (digit - '0');
+    }
+    if (alldigits)
+      return(carc_mkchar(c, val));
+
+    /* Possible hexadecimal escape */
+    if (carc_strindex(c, tok, 0) == 'x') {
+      alldigits = 1;
+      val = 0;
+      for (i=1; i<3; i++) {
+	digit = carc_strindex(c, tok, i);
+	if (!isxdigit(digit)) {
+	  alldigits = 0;
+	  break;
+	}
+	digit = tolower(digit);
+	digit = (digit >= '0' && digit <= '9') ? (digit - '0') : (digit - 'a');
+	val = val * 16 + digit;
+      }
+      if (alldigits)
+	return(carc_mkchar(c, val));
+    }
+    /* Not an octal or hexadecimal escape */
+  }
+
+  /* Possible Unicode escape? */
+  if (tolower(carc_strindex(c, tok, 0)) == 'U') {
+    alldigits = 1;
+    val = 0;
+    for (i=1; i<carc_strlen(c, tok); i++) {
+      digit = carc_strindex(c, tok, i);
+      if (!isxdigit(digit)) {
+	alldigits = 0;
+	break;
+      }
+      digit = tolower(digit);
+      digit = (digit >= '0' && digit <= '9') ? (digit - '0') : (digit - 'a');
+      val = val * 16 + digit;
+    }
+    if (alldigits)
+      return(carc_mkchar(c, val));
+    c->signal_error(c, "invalid Unicode escape");
+  }
+
+  /* Symbolic character escape */
+  symch = carc_hash_lookup(c, c->charesctbl, tok);
+  if (symch == CNIL)
+    c->signal_error(c, "invalid character constant");
+  return(symch);
 }
 
 void carc_init_reader(carc *c)
@@ -415,4 +493,28 @@ void carc_init_reader(carc *c)
   c->complement = carc_intern(c, carc_mkstringc(c, "complement"));
   c->t = carc_intern(c, carc_mkstringc(c, "t"));
   c->nil = carc_intern(c, carc_mkstringc(c, "nil"));
+
+  c->charesctbl = carc_mkhash(c, 4);
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "nul"),
+		   carc_mkchar(c, 0));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "null"),
+		   carc_mkchar(c, 0));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "backspace"),
+		   carc_mkchar(c, 8));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "tab"),
+		   carc_mkchar(c, 9));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "newline"),
+		   carc_mkchar(c, 10));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "linefeed"),
+		   carc_mkchar(c, 10));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "vtab"),
+		   carc_mkchar(c, 11));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "page"),
+		   carc_mkchar(c, 12));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "return"),
+		   carc_mkchar(c, 13));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "space"),
+		   carc_mkchar(c, 32));
+  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "rubout"),
+		   carc_mkchar(c, 127));
 }
