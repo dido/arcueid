@@ -37,6 +37,10 @@ static value read_string(carc *c, value src, int *index);
 static value read_char(carc *c, value src, int *index);
 static void read_comment(carc *c, value src, int *index);
 static value read_symbol(carc *c, value src, int *index);
+static value expand_ssyntax(carc *c, value sym);
+static value expand_compose(carc *c, value sym);
+static value expand_sexpr(carc *c, value sym);
+static value expand_and(carc *c, value sym);
 
 #define ID2SYM(x) ((value)(((long)(x))<<8|SYMBOL_FLAG))
 
@@ -213,12 +217,16 @@ static value getsymbol(carc *c, value src, int *index)
 /* parse a symbol name or number */
 static value read_symbol(carc *c, value str, int *index)
 {
-  value sym, num;
+  value sym, num, ssx;
 
   if ((sym = getsymbol(c, str, index)) == CNIL)
     c->signal_error(c, "expecting symbol name");
   num = carc_string2num(c, sym);
-  return((num == CNIL) ? carc_intern(c, sym) : num);
+  if (num == CNIL) {
+    ssx = expand_ssyntax(c, sym);
+    return((ssx == CNIL) ? carc_intern(c, sym) : ssx);    
+  } else
+    return(num);
 }
 
 /* scan for first non-blank character */
@@ -479,6 +487,89 @@ static value read_char(carc *c, value src, int *index)
   return(symch);
 }
 
+static value expand_compose(carc *c, value sym)
+{
+  value top, last, nelt, elt;
+  Rune ch, buf[STRMAX];
+  int index = 0, negate = 0, i=0, run = 1;
+
+  top = elt = last = CNIL;
+  while (run) {
+    ch = readchar(c, sym, &index);
+    switch (ch) {
+    case ':':
+    case Runeerror:
+      nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
+      elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+      if (elt != CNIL)
+	elt = carc_intern(c, elt);
+      i=0;
+      if (negate) {
+	elt = (elt == CNIL) ? c->no 
+	  : cons(c, c->complement, cons(c, elt, CNIL));
+	if (ch == Runeerror && top == CNIL)
+	  return(elt);
+	negate = 0;
+      }
+      if (elt == CNIL)
+	continue;
+      elt = cons(c, elt, CNIL);
+      if (last)
+	scdr(last, elt);
+      else
+	top = elt;
+      last = elt;
+      elt = CNIL;
+      if (ch == Runeerror)
+	run = 0;
+      break;
+    case '~':
+      negate = 1;
+      break;
+    default:
+      if (i >= STRMAX) {
+	nelt = carc_mkstring(c, buf, i);
+	elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+	i=0;
+      }
+      buf[i++] = ch;
+      break;
+    }
+  }
+  return(cons(c, c->compose, top));
+}
+
+static value expand_sexpr(carc *c, value sym)
+{
+  return(CNIL);  
+}
+
+static value expand_and(carc *c, value sym)
+{
+  return(CNIL);
+}
+
+static value expand_ssyntax(carc *c, value sym)
+{
+  if (carc_strchr(c, sym, ':') != CNIL || carc_strchr(c, sym, '~') != CNIL)
+    return(expand_compose(c, sym));
+  if (carc_strchr(c, sym, '.') != CNIL || carc_strchr(c, sym, '!') != CNIL)
+    return(expand_sexpr(c, sym));
+  if (carc_strchr(c, sym, '&') != CNIL)
+    return(expand_and(c, sym));
+  return(CNIL);
+} 
+
+value carc_ssexpand(carc *c, value sym)
+{
+  value x;
+
+  if (TYPE(sym) != T_SYMBOL)
+    return(sym);
+  x = carc_sym2name(c, sym);
+  return(expand_ssyntax(c, x));
+}
+
 void carc_init_reader(carc *c)
 {
   c->symtable = carc_mkhash(c, 10);
@@ -493,6 +584,7 @@ void carc_init_reader(carc *c)
   c->complement = carc_intern(c, carc_mkstringc(c, "complement"));
   c->t = carc_intern(c, carc_mkstringc(c, "t"));
   c->nil = carc_intern(c, carc_mkstringc(c, "nil"));
+  c->no = carc_intern(c, carc_mkstringc(c, "no"));
 
   c->charesctbl = carc_mkhash(c, 4);
   carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "nul"),
