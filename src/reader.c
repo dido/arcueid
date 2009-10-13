@@ -18,6 +18,9 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
   02110-1301 USA.
 */
+/* XXX -- We should change this parser to being an incremental
+   continuation-based parser so that we can interrupt the parser
+   to run other threads and the garbage collector. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -547,7 +550,44 @@ static value expand_compose(carc *c, value sym)
 
 static value expand_sexpr(carc *c, value sym)
 {
-  return(CNIL);  
+  Rune ch, buf[STRMAX];
+  value last, cur, nelt, elt;
+  int i=0, index=0;
+
+  last = cur = elt = nelt = CNIL;
+  while ((ch = readchar(c, sym, &index)) != Runeerror) {
+    switch (ch) {
+    case '.':
+      nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
+      elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+      i=0;
+      if (elt == CNIL) {
+	c->signal_error(c, "Bad ssyntax %s", sym);
+	return(CNIL);
+      }
+      elt = carc_intern(c, elt);
+      last = (last == CNIL) ? elt : cons(c, last, cons(c, elt, CNIL));
+      elt = CNIL;
+      break;
+    default:
+      if (i >= STRMAX) {
+	nelt = carc_mkstring(c, buf, i);
+	elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+	i=0;
+      }
+      buf[i++] = ch;
+      break;
+    }
+  }
+
+  nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
+  elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+  elt = carc_intern(c, elt);
+  if (elt == CNIL) {
+    c->signal_error(c, "Bad ssyntax %s", sym);
+    return(CNIL);
+  }
+  return(cons(c, last, cons(c, elt, CNIL)));
 }
 
 static value expand_and(carc *c, value sym)
@@ -634,6 +674,7 @@ void carc_init_reader(carc *c)
   c->nil = carc_intern(c, carc_mkstringc(c, "nil"));
   c->no = carc_intern(c, carc_mkstringc(c, "no"));
   c->andf = carc_intern(c, carc_mkstringc(c, "andf"));
+  c->get = carc_intern(c, carc_mkstringc(c, "get"));
 
   c->charesctbl = carc_mkhash(c, 4);
   carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "nul"),
