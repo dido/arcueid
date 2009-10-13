@@ -120,3 +120,13 @@ void carc_strungetc(carc *c, int *index)
   (*index)--;
 }
 
+value carc_strchr(carc *c, value str, Rune ch)
+{
+  int i;
+
+  for (i=0; i<carc_strlen(c, str); i++) {
+    if (carc_strindex(c, str, i) == ch)
+      return(INT2FIX(i));
+  }
+  return(CNIL);
+}
