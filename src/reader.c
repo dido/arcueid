@@ -487,6 +487,7 @@ static value read_char(carc *c, value src, int *index)
   return(symch);
 }
 
+/* I imagine this can be done a lot more cleanly! */
 static value expand_compose(carc *c, value sym)
 {
   value top, last, nelt, elt;
@@ -511,8 +512,11 @@ static value expand_compose(carc *c, value sym)
 	  return(elt);
 	negate = 0;
       }
-      if (elt == CNIL)
+      if (elt == CNIL) {
+	if (ch == Runeerror)
+	  run = 0;
 	continue;
+      }
       elt = cons(c, elt, CNIL);
       if (last)
 	scdr(last, elt);
@@ -536,6 +540,8 @@ static value expand_compose(carc *c, value sym)
       break;
     }
   }
+  if (cdr(top) == CNIL)
+    return(car(top));
   return(cons(c, c->compose, top));
 }
 
@@ -546,7 +552,49 @@ static value expand_sexpr(carc *c, value sym)
 
 static value expand_and(carc *c, value sym)
 {
-  return(CNIL);
+  value top, last, nelt, elt;
+  Rune ch, buf[STRMAX];
+  int index = 0, i=0, run = 1;
+
+  top = elt = last = CNIL;
+  while (run) {
+    ch = readchar(c, sym, &index);
+    switch (ch) {
+    case '&':
+    case Runeerror:
+      nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
+      elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+      if (elt != CNIL)
+	elt = carc_intern(c, elt);
+      i=0;
+      if (elt == CNIL) {
+	if (ch == Runeerror)
+	  run = 0;
+	continue;
+      }
+      elt = cons(c, elt, CNIL);
+      if (last)
+	scdr(last, elt);
+      else
+	top = elt;
+      last = elt;
+      elt = CNIL;
+      if (ch == Runeerror)
+	run = 0;
+      break;
+    default:
+      if (i >= STRMAX) {
+	nelt = carc_mkstring(c, buf, i);
+	elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+	i=0;
+      }
+      buf[i++] = ch;
+      break;
+    }
+  }
+  if (cdr(top) == CNIL)
+    return(car(top));
+  return(cons(c, c->andf, top));
 }
 
 static value expand_ssyntax(carc *c, value sym)
@@ -585,6 +633,7 @@ void carc_init_reader(carc *c)
   c->t = carc_intern(c, carc_mkstringc(c, "t"));
   c->nil = carc_intern(c, carc_mkstringc(c, "nil"));
   c->no = carc_intern(c, carc_mkstringc(c, "no"));
+  c->andf = carc_intern(c, carc_mkstringc(c, "andf"));
 
   c->charesctbl = carc_mkhash(c, 4);
   carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "nul"),
