@@ -34,7 +34,7 @@ static value read_anonf(carc *c, value src, int *index);
 static value read_quote(carc *c, value src, int *index, value sym);
 static value read_comma(carc *c, value src, int *index);
 static value read_string(carc *c, value src, int *index);
-static value read_special(carc *c, value src, int *index);
+static value read_char(carc *c, value src, int *index);
 static void read_comment(carc *c, value src, int *index);
 static value read_symbol(carc *c, value src, int *index);
 
@@ -115,7 +115,7 @@ value carc_read(carc *c, value src, int *index, value *pval)
       *pval = read_string(c, src, index);
       return(CTRUE);
     case '#':
-      *pval = read_special(c, src, index);
+      *pval = read_char(c, src, index);
       return(CTRUE);
     case ';':
       read_comment(c, src, index);
@@ -194,13 +194,12 @@ static value getsymbol(carc *c, value src, int *index)
   sym = CNIL;
   i=0;
   while ((ch = readchar(c, src, index)) != Runeerror && issym(ch)) {
-    if (i < STRMAX) {
-      buf[i++] = ch;
-    } else {
+    if (i >= STRMAX) {
       nstr = carc_mkstring(c, buf, i);
       sym = (sym == CNIL) ? nstr : carc_strcat(c, sym, nstr);
       i = 0;
     }
+    buf[i++] = ch;
   }
   if (i==0 && sym == CNIL)
     return(CNIL);
@@ -276,20 +275,128 @@ static value read_quote(carc *c, value src, int *index, value sym)
   return(cons(c, sym, cons(c, val, CNIL)));
 }
 
-/* XXX: stub! */
 static value read_comma(carc *c, value src, int *index)
 {
-  return(CNIL);
+  Rune ch;
+
+  if ((ch = readchar(c, src, index)) == '@')
+    return(read_quote(c, src, index, c->unquotesp));
+  unreadchar(c, src, ch, index);
+  return(read_quote(c, src, index, c->unquote));
 }
 
-/* XXX: stub! */
 static value read_string(carc *c, value src, int *index)
 {
-  return(CNIL);
+  Rune buf[STRMAX], ch, escrune;
+  int i=0, state=1, digval, digcount;
+  value nstr, str = CNIL;
+
+  while ((ch = readchar(c, src, index)) != Runeerror) {
+    switch (state) {
+    case 1:
+      switch (ch) {
+      case '\"':
+	/* end of string */
+	nstr = carc_mkstring(c, buf, i);
+	str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	return(str);		/* proper termination */
+	break;
+      case '\\':
+	/* escape character */
+	state = 2;
+	break;
+      default:
+	if (i >= STRMAX) {
+	  nstr = carc_mkstring(c, buf, i);
+	  str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	  i = 0;
+	}
+	buf[i++] = ch;
+	break;
+      }
+      break;
+    case 2:
+      /* escape code */
+      switch (ch) {
+      case '\'':
+      case '\"':
+      case '\\':
+	/* ch is as is */
+	break;
+      case '0':
+	ch = 0x0000;
+	break;
+      case 'a':
+	ch = 0x0007;
+	break;
+      case 'b':
+	ch = 0x0008;
+	break;
+      case 't':
+	ch = 0x0009;
+	break;
+      case 'n':
+	ch = 0x000a;
+	break;
+      case 'v':
+	ch = 0x000b;
+	break;
+      case 'f':
+	ch = 0x000c;
+	break;
+      case 'r':
+	ch = 0x000d;
+	break;
+      case 'U':
+      case 'u':
+	escrune = 0;
+        digcount = 0;
+	state = 3;
+        continue;
+      default:
+	c->signal_error(c, "unknown escape code");
+	break;
+      }
+      if (i >= STRMAX) {
+	nstr = carc_mkstring(c, buf, i);
+	str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	i = 0;
+      }
+      buf[i++] = ch;
+      state = 1;
+      break;
+    case 3:
+      /* Unicode escape */
+      if (digcount >= 5) {
+	unreadchar(c, src, ch, index);
+	if (i >= STRMAX) {
+	  nstr = carc_mkstring(c, buf, i);
+	  str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	  i = 0;
+	}
+	buf[i++] = escrune;
+	state = 1;
+      } else {
+	if (ch >= '0' && ch <= '9')
+	  digval = ch - '0';
+	else if (ch >= 'A' && ch <= 'F')
+	  digval = ch - 'A' + 10;
+	else if (ch >= 'a' && ch <= 'f')
+	  digval = ch - 'a' + 10;
+	else
+	  c->signal_error(c, "invalid character in Unicode escape");
+	escrune = escrune * 16 + digval;
+	digcount++;
+      }
+      break;
+    }
+  }
+  c->signal_error(c, "unterminated string reaches end of input");
+  return(CNIL);			/* to pacify -Wall */
 }
 
 /* XXX: stub! */
-static value read_special(carc *c, value src, int *index)
+static value read_char(carc *c, value src, int *index)
 {
   return(CNIL);
 }
