@@ -127,7 +127,81 @@ START_TEST(test_list)
 }
 END_TEST
 
-START_TEST(test_arcsyntax)
+START_TEST(test_character)
+{
+  value str, sexpr;
+  int index;
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\a");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 'a');
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\\351\276\215");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 0x9f8d);
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\102");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 'B');
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\102");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 'B');
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\newline");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == '\n');
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\null");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == '\0');
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\u5a");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 0x5a);
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\x5a");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 0x5a);
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\u4e9c");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 0x4e9c);
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\U12031");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 0x12031);
+
+  index = 0;
+  str = carc_mkstringc(&c, "#\\\346\227\245");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 0x65e5);
+
+}
+END_TEST
+
+START_TEST(test_bracketfn)
 {
   value str, sexpr, fnbody;
   int index;
@@ -200,8 +274,9 @@ int main(void)
   carc_init_reader(&c);
   tcase_add_test(tc_reader, test_atom);
   tcase_add_test(tc_reader, test_string);
+  tcase_add_test(tc_reader, test_character);
   tcase_add_test(tc_reader, test_list);
-  tcase_add_test(tc_reader, test_arcsyntax);
+  tcase_add_test(tc_reader, test_bracketfn);
   tcase_add_test(tc_reader, test_quote);
 
   suite_add_tcase(s, tc_reader);
