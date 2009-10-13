@@ -80,6 +80,9 @@ typedef struct carc {
   value complement;		/* syntax symbol complement */
   value t;			/* syntax symbol t */
   value nil;			/* syntax symbol nil */
+
+  /* Table of MzScheme-like character constants */
+  value charesctbl;		/* character escapes */
 } carc;
 
 
