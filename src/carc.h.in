@@ -82,6 +82,7 @@ typedef struct carc {
   value nil;			/* syntax symbol nil */
   value no;			/* syntax symbol no */
   value andf;			/* syntax symbol andf */
+  value get;			/* syntax symbol get */
 
   /* Table of MzScheme-like character constants */
   value charesctbl;		/* character escapes */
