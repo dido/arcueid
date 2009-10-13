@@ -375,6 +375,23 @@ START_TEST(test_ssyntax)
   fail_unless(car(cdr(cdr(sexpr))) == carc_intern(&c, carc_mkstringc(&c, "b")));
   fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
   fail_unless(car(cdr(cdr(cdr(sexpr)))) == carc_intern(&c, carc_mkstringc(&c, "c")));
+
+  index = 0;
+  str = carc_mkstringc(&c, "a.b");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == carc_intern(&c, carc_mkstringc(&c, "a")));
+  fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "b")));
+
+  index = 0;
+  str = carc_mkstringc(&c, "a.b.c");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_CONS);
+  fail_unless(car(car(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
+  fail_unless(car(cdr(car(sexpr))) == carc_intern(&c, carc_mkstringc(&c, "b")));
+  fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "c")));
 }
 END_TEST
 
