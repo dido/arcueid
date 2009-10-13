@@ -67,12 +67,20 @@ START_TEST(test_string)
 
   /* Unicode */
   index = 0;
-  str = carc_mkstringc(&c, "\"\\U086df\351\276\215\"");
+  str = carc_mkstringc(&c, "\"\\U086dF\351\276\215\"");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_STRING);
-  printf("%x\n", carc_strindex(&c, sexpr, 1));
   fail_unless(carc_strindex(&c, sexpr, 0) == 0x86df);
   fail_unless(carc_strindex(&c, sexpr, 1) == 0x9f8d);
+
+  /* A long string */
+  index = 0;
+  teststr = "\"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\"";
+  str = carc_mkstringc(&c, teststr);
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  for (i=0; i<carc_strlen(&c, sexpr); i++)
+    fail_unless((Rune)teststr[i+1] == carc_strindex(&c, sexpr, i));
 }
 END_TEST
 
