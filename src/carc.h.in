@@ -80,6 +80,7 @@ typedef struct carc {
   value complement;		/* syntax symbol complement */
   value t;			/* syntax symbol t */
   value nil;			/* syntax symbol nil */
+  value no;			/* syntax symbol no */
 
   /* Table of MzScheme-like character constants */
   value charesctbl;		/* character escapes */
@@ -258,7 +259,7 @@ extern Rune carc_strindex(carc *c, value v, int index);
 extern value carc_strcat(carc *c, value v1, value v2);
 extern Rune carc_strgetc(carc *c, value src, int *index);
 extern void carc_strungetc(carc *c, int *index);
-
+extern value carc_strchr(carc *c, value str, Rune ch);
 
 extern void carc_hash_init(carc_hs *s, unsigned long level);
 extern void carc_hash_update(carc_hs *s, unsigned long val);
