@@ -30,15 +30,49 @@ START_TEST(test_atom)
   value str, sexpr;
   int index;
 
+  index = 0;
   str = carc_mkstringc(&c, "0");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_FIXNUM);
   fail_unless(FIX2INT(sexpr) == 0);
 
+  index = 0;
   str = carc_mkstringc(&c, "foo");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(carc_is(&c, str, carc_sym2name(&c, sexpr)) == CTRUE);
+
+}
+END_TEST
+
+START_TEST(test_string)
+{
+  value str, sexpr;
+  int index, i;
+  char *teststr;
+
+  index = 0;
+  str = carc_mkstringc(&c, "\"foo\"");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  fail_unless(carc_is(&c, carc_mkstringc(&c, "foo"), sexpr) == CTRUE);
+
+  index = 0;
+  teststr = "\b\t\n\v\f\r\\\'\"\a";
+  str = carc_mkstringc(&c, "\"\\b\\t\\n\\v\\f\\r\\\\\'\\\"\\a\"");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  for (i=0; i<carc_strlen(&c, sexpr); i++)
+    fail_unless((Rune)teststr[i] == carc_strindex(&c, sexpr, i));
+
+  /* Unicode */
+  index = 0;
+  str = carc_mkstringc(&c, "\"\\U086df\351\276\215\"");
+  fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  printf("%x\n", carc_strindex(&c, sexpr, 1));
+  fail_unless(carc_strindex(&c, sexpr, 0) == 0x86df);
+  fail_unless(carc_strindex(&c, sexpr, 1) == 0x9f8d);
 }
 END_TEST
 
@@ -157,6 +191,7 @@ int main(void)
   carc_set_memmgr(&c);
   carc_init_reader(&c);
   tcase_add_test(tc_reader, test_atom);
+  tcase_add_test(tc_reader, test_string);
   tcase_add_test(tc_reader, test_list);
   tcase_add_test(tc_reader, test_arcsyntax);
   tcase_add_test(tc_reader, test_quote);
