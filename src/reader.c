@@ -444,7 +444,7 @@ static value read_char(carc *c, value src, int *index)
 	  break;
 	}
 	digit = tolower(digit);
-	digit = (digit >= '0' && digit <= '9') ? (digit - '0') : (digit - 'a');
+	digit = (digit >= '0' && digit <= '9') ? (digit - '0') : (digit - 'a' + 10);
 	val = val * 16 + digit;
       }
       if (alldigits)
@@ -454,7 +454,7 @@ static value read_char(carc *c, value src, int *index)
   }
 
   /* Possible Unicode escape? */
-  if (tolower(carc_strindex(c, tok, 0)) == 'U') {
+  if (tolower(carc_strindex(c, tok, 0)) == 'u') {
     alldigits = 1;
     val = 0;
     for (i=1; i<carc_strlen(c, tok); i++) {
@@ -464,7 +464,7 @@ static value read_char(carc *c, value src, int *index)
 	break;
       }
       digit = tolower(digit);
-      digit = (digit >= '0' && digit <= '9') ? (digit - '0') : (digit - 'a');
+      digit = (digit >= '0' && digit <= '9') ? (digit - '0') : (digit - 'a' + 10);
       val = val * 16 + digit;
     }
     if (alldigits)
