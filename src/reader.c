@@ -550,7 +550,7 @@ static value expand_compose(carc *c, value sym)
 
 static value expand_sexpr(carc *c, value sym)
 {
-  Rune ch, buf[STRMAX];
+  Rune ch, buf[STRMAX], prevchar;
   value last, cur, nelt, elt;
   int i=0, index=0;
 
@@ -558,15 +558,20 @@ static value expand_sexpr(carc *c, value sym)
   while ((ch = readchar(c, sym, &index)) != Runeerror) {
     switch (ch) {
     case '.':
+    case '!':
+      prevchar = ch;
       nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
       elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
       i=0;
-      if (elt == CNIL) {
-	c->signal_error(c, "Bad ssyntax %s", sym);
-	return(CNIL);
-      }
+      if (elt == CNIL)
+	continue;
       elt = carc_intern(c, elt);
-      last = (last == CNIL) ? elt : cons(c, last, cons(c, elt, CNIL));
+      if (last == CNIL)
+	last = elt;
+      else if (prevchar == '!')
+	last = cons(c, last, cons(c, c->quote, cons(c, elt, CNIL)));
+      else
+	last = cons(c, last, cons(c, elt, CNIL));
       elt = CNIL;
       break;
     default:
@@ -587,6 +592,13 @@ static value expand_sexpr(carc *c, value sym)
     c->signal_error(c, "Bad ssyntax %s", sym);
     return(CNIL);
   }
+  if (last == CNIL) {
+    if (prevchar == '!')
+      return(cons(c, c->get, cons(c, c->quote, cons(c, elt, CNIL))));
+    return(cons(c, c->get, cons(c, elt, CNIL)));
+  }
+  if (prevchar == '!')
+    return(cons(c, last, cons(c, c->quote, cons(c, elt, CNIL))));
   return(cons(c, last, cons(c, elt, CNIL)));
 }
 
