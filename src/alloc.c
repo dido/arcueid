@@ -361,11 +361,13 @@ static void rootset(carc *c)
   marker = (gccolor-1)%3;
   sweeper = (gccolor-2)%3;
 
-  /* Register marks */
-  MARKPROP(c->expr);
-  MARKPROP(c->envr);
-  MARKPROP(c->conr);
-  MARKPROP(c->tmpr);
+  /* Mark the threads, symbol tables, and global environment with
+     propagators so that the virtual machine considers them part
+     of the rootset. */
+  MARKPROP(c->vmthreads);
+  MARKPROP(c->symtable);
+  MARKPROP(c->rsymtable);
+  MARKPROP(c->genv);
 }
 
 static void rungc(carc *c)
