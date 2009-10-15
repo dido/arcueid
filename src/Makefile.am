@@ -20,7 +20,7 @@
 lib_LTLIBRARIES = libcarc.la
 
 libcarc_la_LDFLAGS = -version-info 0:0:0
-libcarc_la_SOURCES = arith.c alloc.c carc.c hash.c memory.c reader.c \
+libcarc_la_SOURCES = arith.c alloc.c carc.c hash.c osdep.c reader.c \
 	string.c utf.c vmengine.c
 
 include_HEADERS = carc.h
