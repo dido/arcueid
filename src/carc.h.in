@@ -307,9 +307,6 @@ extern value carc_sym2name(carc *c, value sym);
 
 extern value carc_mkvector(carc *c, int length);
 
-extern value carc_mkcont(carc *c, int newpc);
-extern value carc_rcont(carc *c, value cont);
-
 extern value carc_read(carc *c, value src, int *index, value *pval);
 extern value carc_ssexpand(carc *c, value sym);
 
