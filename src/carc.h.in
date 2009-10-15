@@ -58,12 +58,8 @@ typedef struct carc {
   Rune (*readchar)(struct carc *, value, int *);
   void (*unreadchar)(struct carc *, value, Rune, int *);
 
-  /* Registers */
-  value expr;			/* evaluated expression register */
-  value envr;			/* environment register */
-  value conr;			/* continuation register */
-  value tmpr;			/* template register */
-  int pc;			/* program counter */
+  value vmthreads;		/* virtual machine thread objects */
+  value vmqueue;		/* virtual machine run queue */
 
   unsigned long lastsym;	/* last symbol value */
   value symtable;		/* symbol table */
@@ -120,6 +116,39 @@ enum carc_types {
   T_NONE=0xff
 };
 
+enum threadstate {
+  Talt,				/* blocked in alt instruction */
+  Tsend,			/* waiting to send */
+  Trecv,			/* waiting to recv */
+  Tdebug,			/* debugged */
+  Tready,			/* ready to be scheduled */
+  Trelease,			/* interpreter released */
+  Texiting,			/* exit because of kill or error */
+  Tbroken,			/* thread crashed */
+};
+
+/* default thread timeslice */
+#define PQUANTA 2048
+
+struct vmthread {
+  /* virtual machine registers */
+  value funr;		/* current function pointer register */
+  value envr;		/* current environment register */
+  value valr;		/* value of most recent instruction */
+  value *sp;		/* stack pointer */
+  value stack;		/* the actual stack itself (a vector) */
+  value *stkbase;		/* base pointer of the stack */
+  value *stktop;		/* top of value stack */
+  int ip;			/* instruction pointer */
+  
+  /* thread scheduling variables */
+  enum threadstate state;	/* thread state */
+  int tid;			/* unique thread id */
+  int quanta;		/* time slice */
+  unsigned long long ticks;	/* time used */
+};
+
+
 /* Cells for boxed items */
 struct cell {
   unsigned int _type;
@@ -155,6 +184,7 @@ struct cell {
       int length;
       value data[1];
     } _vector;
+    struct vmthread _thread;
   } obj;
 };
 
