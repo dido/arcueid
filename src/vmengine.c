@@ -31,13 +31,13 @@
 #ifdef __GNUC__
 
 /* direct threading scheme 5: early fetching (Alpha, MIPS) */
-#define NEXT_P0	({cfa=&code[c->pc];})
-#define IP		(code[c->pc])
-#define SET_IP(p)	({c->pc=(p); NEXT_P0;})
+#define NEXT_P0	({cfa=&code[t->ip];})
+#define IP		(code[t->ip])
+#define SET_IP(p)	({t->ip=(p); NEXT_P0;})
 #define NEXT_INST	(cfa)
-#define INC_IP(const_inc)	({cfa=&code[c->pc + const_inc]; c->pc+=(const_inc);})
+#define INC_IP(const_inc)	({cfa=&code[t->ip + const_inc]; t->ip+=(const_inc);})
 #define DEF_CA
-#define NEXT_P1	(c->pc++)
+#define NEXT_P1	(t->ip++)
 #define NEXT_P2	({if (--quanta <= 0) return; goto *cfa;})
 
 #define NEXT ({DEF_CA NEXT_P1; NEXT_P2;})
@@ -54,9 +54,9 @@
 #define NEXT_P0
 #define NEXT_P1
 #define NEXT_P2 goto next_inst;
-#define IP              code[c->pc]
-#define NEXT_INST	(*code[c->pc])
-#define INC_IP(const_inc)	(c->pc+=(const_inc))
+#define IP              code[t->ip]
+#define NEXT_INST	(*code[t->ip])
+#define INC_IP(const_inc)	(t->ip+=(const_inc))
 #define IPTOS NEXT_INST
 #define INST_ADDR(name) I_##name
 #define LABEL(name) case I_##name:
@@ -69,8 +69,11 @@ enum {
 
 Inst *vm_prim;
 
-void carc_vmengine(carc *c, Inst *code, int quanta)
+void carc_vmengine(carc *c, value thr, Inst *code, int quanta)
 {
+  struct vmthread *t;
+
+  t = &REP(thr)._thread;
   static Label labels[] = {
 #include "carcvm-labels.i"
   };
@@ -85,7 +88,7 @@ void carc_vmengine(carc *c, Inst *code, int quanta)
 #include "carcvm-vm.i"
 #else
  next_inst:
-  switch (code[c->pc]) {
+  switch (code[t->ip]) {
 #include "carcvm-vm.i"
   default:
     fprintf(stderr,"unknown instruction at %d\n", c->pc);
