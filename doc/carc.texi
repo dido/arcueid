@@ -100,11 +100,11 @@ function and its cdr is the saved environment.
 Compiled functions are represented as vectors.  The element at offset 0
 is the bytecode itself, as required by the interpreter.  The element at
 offset 1 is the function name.  The element at offset 2 is a list of
-names of the function arguments.  The elements at offsets above 2 are
-the literals referred to by the compiled bytecodes.
+symbols giving the names of the function arguments.  The elements at
+offsets above 2 are the literals referred to by the compiled bytecodes.
 
-Environments are represented as lists of vectors.  Each vector is an
-environment frame.  
+Environments are represented as lists of conses.  Each cons is an
+environment frame, 
 
 @section Registers
 
