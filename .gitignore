@@ -36,3 +36,14 @@ check_*
 coverage/*
 src/carc.h
 *.i
+*.aux
+*.cp
+*.fn
+*.ky
+*.log
+*.pg
+*.toc
+*.tp
+*.vr
+mdate-sh
+texinfo.tex
