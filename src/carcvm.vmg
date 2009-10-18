@@ -21,7 +21,19 @@
 
 \E inst-stream stack-prefix #
 
-\E s" long"   single data-stack type-prefix i
+\E s" value"   single data-stack type-prefix i
 
 nop ( -- )
 
+drop ( i -- )
+
+\ The lit instruction loads a literal value from the literal values
+\ in the funr register into the stack.  The instruction's argument
+\ is its index into the funr vector and should in most cases be 3 or
+\ higher for properly compiled code.
+lit ( #i2 -- i )
+i = VINDEX(t->funr, i2);
+
+\ The jmp instruction is a relative unconditional jump
+jmp ( #i -- )
+INC_IP(i);
