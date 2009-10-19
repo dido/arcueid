@@ -284,7 +284,7 @@ static void mark(carc *c, value v, int reclevel)
   int i;
 
   /* Do not try to mark an immediate value! */
-  if (IMMEDIATE_P(v) || v == CNIL || v == CTRUE || v == CUNDEF)
+  if (IMMEDIATE_P(v))
     return;
 
   D2B(b, (void *)v);
