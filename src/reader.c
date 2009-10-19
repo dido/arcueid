@@ -51,7 +51,7 @@ value carc_intern(carc *c, value name)
 {
   value symval;
 
-  if ((symval = carc_hash_lookup(c, c->symtable, name)) != CNIL)
+  if ((symval = carc_hash_lookup(c, c->symtable, name)) != CUNBOUND)
     return(symval);
 
   symval = ID2SYM(++c->lastsym);
