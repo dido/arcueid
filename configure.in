@@ -38,10 +38,8 @@ AC_C_BIGENDIAN
 
 AC_HEADER_STDC
 
-MATH_LIBS=
+MATH_LIBS=-lm
 AC_CHECK_HEADERS(math.h,, AC_MSG_FAILURE([Math library header seems to be missing.]))
-#AC_CHECK_LIB(m, fabs, MATH_LIBS=-lm, AC_MSG_FAILURE(Your math library seems to be incomplete))
-#AC_CHECK_LIB(m, modf, MATH_LIBS=-lm, AC_MSG_FAILURE(Your math library seems to be incomplete))
 
 AX_LIB_READLINE
 
