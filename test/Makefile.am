@@ -19,9 +19,9 @@
 #  02110-1301 USA.
 #
 TESTS = check_arith check_alloc check_hash check_reader \
-	check_unicode
+	check_unicode check_vm
 check_PROGRAMS = check_arith check_alloc check_hash check_reader \
-	check_unicode
+	check_unicode check_vm
 
 check_arith_SOURCES = check_arith.c $(top_builddir)/src/carc.h
 check_arith_CFLAGS = @CHECK_CFLAGS@
@@ -42,3 +42,7 @@ check_reader_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
 check_unicode_SOURCES = check_unicode.c $(top_builddir)/src/utf.h
 check_unicode_CFLAGS = @CHECK_CFLAGS@
 check_unicode_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+
+check_vm_SOURCES = check_vm.c $(top_builddir)/src/vmengine.h
+check_vm_CFLAGS = @CHECK_CFLAGS@
+check_vm_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
