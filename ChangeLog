@@ -1,26 +1,4575 @@
-2009-09-30  Rafael Sevilla  <dido@cc>
+commit 79db6591bbfa686d37b8c3e35fecfdcbded29762
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 01:19:37 2009 +0800
 
-	* hash.c - hash functions based on Bob Jenkins' algorithm
+    Define ldg and stg instructions for manipulating the global environment
 
-2009-09-29  Rafael Sevilla  <dido@cc>
+src/carcvm.vmg
 
-	* utf.c - the Plan 9/Inferno UTF-8 library, portions for decoding
-	UTF-8, extended to provide full compliance with RFC 2279
-	* string.c - string handling primitive functions
+commit 41eee23a54205c3d636f17d6fa6faec25cf30026
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 01:17:38 2009 +0800
 
-2009-09-27  Rafael Sevilla  <dido@cc>
+    Change the collision resolution policy so that it can determine that a key is already in the hash and change its binding as needed
 
-	* alloc.c - rudimentary memory allocator and garbage collector
-	based on VCGC (c.f. Inferno/Limbo)
+src/hash.c
 
-2009-09-10  Rafael Sevilla  <dido@localhost>
+commit 03c706d01244d117b4ed33fb577f9229ad04e842
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 01:15:47 2009 +0800
 
-	* arith.c - complete work on addition and multiplication
-	primitives
+    Add a test for rebinding keys
 
-2009-04-08  Rafael Sevilla  <dido@localhost>
+test/check_hash.c
 
-	* configure.in - create files required by
-	autoconf/automake/libtool build toolchain for first real
-	compilation of the sources.
+commit 2e714377d4ead3b669c9a5254fdb2dacf141c862
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 00:58:10 2009 +0800
 
+    Modify the tests to recognize CUNBOUND responses rather than CNIL
+
+test/check_hash.c
+
+commit 0cfb38426187fbaa360c17fb9fb52647a90cc2f4
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 00:57:48 2009 +0800
+
+    Revise the hash lookup so that it uses CUNBOUND rather than CNIL
+
+src/reader.c
+
+commit d16002be0444f5c17a4f7431a4d6a7f1f96b0f9f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 00:57:03 2009 +0800
+
+    Make CUNBOUND the response whenever a hash table lookup finds nothing, rather than CNIL (which may be a valid binding)
+
+src/hash.c
+
+commit 2b75441ba469974dbca3232add419116d31710bb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 00:56:24 2009 +0800
+
+    Add CUNBOUND immediate value, and set up IMMEDIATE_P to recognize it
+
+src/carc.h.in
+
+commit ba426e0e5c88b668c7902a1b001e3c0a27af4326
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 20 00:55:54 2009 +0800
+
+    Remove redundant tests for misc. immediate values
+
+src/alloc.c
+
+commit 49fc2e113c78de7b623be41d60fa8153a68d8d81
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 15:31:00 2009 +0800
+
+    Add virtual machine test
+
+test/Makefile.am
+
+commit ffb0c6389725a771e444c9d02df7d1fc5fc5f9ab
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 15:30:26 2009 +0800
+
+    Trivial hand-assembled virtual machine code wrapped in a test
+
+test/check_vm.c
+
+commit da9ad4ba7cebd097aed0467f3180f2a8b239eb70
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 15:29:55 2009 +0800
+
+    gen_inst and genarg_i prototyped
+
+src/vmengine.h
+
+commit d90c0e28273198956dfed99e1ac1bb3015b000d4
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 15:29:39 2009 +0800
+
+    More revisions to virtual machine driver code
+
+src/vmengine.c
+
+commit 507ea07b0b16822cf42cea87bedfa76163051195
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 15:28:32 2009 +0800
+
+    More virtual machine instructions
+
+src/carcvm.vmg
+
+commit 2551901500e5912f9989332cb3e285cbf7a6b6d6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 15:27:41 2009 +0800
+
+    Accessors for threads and virtual machine and thread prototypes
+
+src/carc.h.in
+
+commit bd0fd120273c225c5c1c5a39d186cc59f3e7e92a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 15:27:08 2009 +0800
+
+    Some weird stuff on checks with -lm that we need to investigate later
+
+configure.in
+
+commit 1242326dc94ab12e61a4f1a5139f29d211f2fe09
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 01:03:43 2009 +0800
+
+    rewrite the vmengine to better reflect macro changes
+
+src/vmengine.c
+
+commit b52590cc12308072d223bd9fe6a0ef146bb4bd8e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 01:03:14 2009 +0800
+
+    A few basic instructions added (lit and jmp)
+
+src/carcvm.vmg
+
+commit 005772bf89c684b013ec49605b6a81a8e6ff1f32
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 01:00:51 2009 +0800
+
+    Fill out the version numbers
+
+doc/version.texi
+
+commit 34a770ef02c859d3c27c2a493a9294de9e93629c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 01:00:34 2009 +0800
+
+    Comment out math library checks for now
+
+configure.in
+
+commit ee006a01f04e323e54afc222450614b864b4f5b9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 01:00:11 2009 +0800
+
+    Initial attempt at documentation
+
+doc/carc.texi
+
+commit 0682afe3565e813bd89bd948cfb4fa03b64efcd7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 19 00:59:58 2009 +0800
+
+    Ignore the files generated by texinfo
+
+.gitignore
+
+commit fc1822e35facf20debdba4fde27596fabe6b3a8a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 17 00:52:21 2009 +0800
+
+    simple makefile for texinfo
+
+doc/Makefile.am
+
+commit c015e4ae33e4353b87ba6fdab585db23d3cf82d1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 17 00:51:11 2009 +0800
+
+    rudimentary texinfo docs
+
+doc/carc.texi
+
+commit 65409b95f059cff6e5ff8b3a8ed4b600a4b21fb5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 17 00:35:44 2009 +0800
+
+    Version code
+
+doc/version.texi
+
+commit bbcaedaa3d4ccbab28861f4b8a1590826c5bba4a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 17 00:35:18 2009 +0800
+
+    Moved as a chapter in carc.texi
+
+doc/VIRTUAL_MACHINE.txt
+
+commit eac4e48e59917b9f3f8c3f6b4e44af25187abee7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 18:39:04 2009 +0800
+
+    remove the continuation function prototypes (for rethinking)
+
+src/carc.h.in
+
+commit ccf55d361bd1c1113b661b3b33d8f39f2e30785b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 18:38:55 2009 +0800
+
+    Remove the continuation functions
+
+src/carc.c
+
+commit eb0adba8668c18c567a4c04f57c05e5699093ed0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 18:38:21 2009 +0800
+
+    Create a definition for a virtual machine thread
+
+src/carc.h.in
+
+commit 2964c747d0185691cd8194af34323f6cda965e2f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 18:38:04 2009 +0800
+
+    The rootset includes the thread table, the symbol tables, and the global environment
+
+src/alloc.c
+
+commit 24b97de706d38a2597f7578e423a4b7e275ba0e2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 18:37:30 2009 +0800
+
+    change stuff so that we can do thread scheduling stuff
+
+src/vmengine.c
+
+commit a0a5913095885a432ab4f699c79cd41eb5cb617c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 18:36:59 2009 +0800
+
+    Empty this first, we need to reassess how the virtual machine should work
+
+src/carcvm.vmg
+
+commit 2d43f46e155a1ff88f4c7603e8b3d6cac74b3063
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 14:12:44 2009 +0800
+
+    Use osdep.c instead of memory.c
+
+src/Makefile.am
+
+commit a2112cca325d440f10f03eb12d00afab98f26049
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 14:12:29 2009 +0800
+
+    Renamed
+
+src/memory.c
+
+commit fac41c953d571764c53828a2b322dd7722917027
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 14:11:32 2009 +0800
+
+    Rename memory.c to osdep.c
+
+src/osdep.c
+
+commit 5f0b8f8b33f859491423f0522123e0bcdbebf8e5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 00:49:39 2009 +0800
+
+    Test special syntax support for ! expressions
+
+test/check_reader.c
+
+commit ba7c47330f94f0865b57f8782bf717fcc4bbb9e8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 15 00:49:28 2009 +0800
+
+    Special syntax support for ! in expand_sexpr
+
+src/reader.c
+
+commit 704e2ae15526ce3eebbb0311750755ff6ea685c7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Oct 14 01:20:36 2009 +0800
+
+    Add tests for dots (function application)
+
+test/check_reader.c
+
+commit 8272f5d82220ccd3a79524491d318f2beccd4d26
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Oct 14 01:20:17 2009 +0800
+
+    fill in expand_sexpr
+
+src/reader.c
+
+commit 9891bbfd5717f49eca207fc89eeaf6f15d0a532f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 23:26:55 2009 +0800
+
+    add test for carc_ssexpand
+
+test/check_reader.c
+
+commit 76f9b80d0a8f9e1233b7103656aefd9c294cab77
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 22:46:39 2009 +0800
+
+    add get to list of syntax symbols
+
+src/carc.h.in
+
+commit c8ba93cade305e74e01848e58e2fa21b4adab2da
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 22:44:40 2009 +0800
+
+    add andf syntax symbol
+
+src/carc.h.in
+
+commit c7ee520997b8602c881225854f4e611a656ed293
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 22:44:25 2009 +0800
+
+    Add tests for special syntax '&'
+
+test/check_reader.c
+
+commit c61fbf3320340f85c4a6a40712f2991664d91bad
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 22:44:07 2009 +0800
+
+    Fill in expand_and
+
+src/reader.c
+
+commit 9f5d87098e02ae6e5ec8b15879d08224775a7164
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 22:19:33 2009 +0800
+
+    add syntax no and strchr proto
+
+src/carc.h.in
+
+commit 1a86bc8fdc38c7b84a4b2edb7e0407732fe02229
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 22:19:15 2009 +0800
+
+    Expand composes filled in
+
+src/reader.c
+
+commit bf334074d50a44babc351d93fc90287f57444b2a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 22:19:04 2009 +0800
+
+    Tests for composition special syntax added
+
+test/check_reader.c
+
+commit b29f0550885a4be7da69f116567e2d99356adb73
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 21:16:01 2009 +0800
+
+    Add a strchr
+
+src/string.c
+
+commit 0453c8d105bd4dcf5f057629a431f98a39e98409
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 21:04:12 2009 +0800
+
+    Some bugfixes in the character parsing department
+
+src/reader.c
+
+commit 270b2eb5bd39cdbc382e08372175fb475951fb27
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 21:03:58 2009 +0800
+
+    Tests for character parsing written
+
+test/check_reader.c
+
+commit 180bc78d3d2dfd07c8decfb71b4df35fc3d83452
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 18:15:07 2009 +0800
+
+    Add table of MzScheme-like character constants to the carc structure
+
+src/carc.h.in
+
+commit 04d735c1288055eee361b8b875ef4e099e773c60
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 18:14:50 2009 +0800
+
+    untested version of read_char
+
+src/reader.c
+
+commit 92915d503e7d0a55ac006471879095242c4d3319
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 17:16:44 2009 +0800
+
+    Fill in the string reader
+
+src/reader.c
+
+commit 5d9c9ebd22df23b853e4e8edbcdc50f100a435d0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 17:16:19 2009 +0800
+
+    Add a test for long strings
+
+test/check_reader.c
+
+commit 51527bdb01fd6faebb85748d66b4c93161ad9df5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Oct 13 17:08:16 2009 +0800
+
+    Add various tests for strings, including escapes and Unicode
+
+test/check_reader.c
+
+commit 6afac1b62c13a726c06af5a441538a26f52ceb92
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 23:52:18 2009 +0800
+
+    add prototype for ssexpand
+
+src/carc.h.in
+
+commit cb91eb53ed72f3118a4ca7b7df308daf86b8998a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 23:32:09 2009 +0800
+
+    add t and nil to interned functions
+
+src/reader.c
+
+commit 3165f81c60b76f17af39c5865bb2a3925e059b8a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 23:31:59 2009 +0800
+
+    Add static symbols for t and nil
+
+src/carc.h.in
+
+commit 4c6c657d9ac2d61518c9eb6bf37e067905c31f79
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 22:43:52 2009 +0800
+
+    Add test for empty list (should be nil)
+
+test/check_reader.c
+
+commit 41b2c385646e997765f049b6d533649a4ff0e109
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 16:51:16 2009 +0800
+
+    Add note on ax_lib_readline.m4
+
+AUTHORS
+
+commit e1d7793e895f3d07fccdd707ea2cbf6ce2736409
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 16:49:36 2009 +0800
+
+    AX_LIB_READLINE to check for readline
+
+configure.in
+
+commit 430985c0adc5e1a102c8ae3f9eb075808e3cdb07
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 16:49:26 2009 +0800
+
+    Add Ville Laurikari's readline tester
+
+m4/ax_lib_readline.m4
+
+commit e82954ae2874e37ad2165f7fbbfc89657fa91a83
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:43:43 2009 +0800
+
+    Fill in read_quote
+
+src/reader.c
+
+commit 7434c7bf796142f3ce061ca98c5fb1b0862b0f3d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:43:29 2009 +0800
+
+    Add tests for quote and quasiquote
+
+test/check_reader.c
+
+commit 47b34e875db3686e9ab2308d78f0ae7160f855be
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:26:13 2009 +0800
+
+    Initialize the compose and complement elements of the carc structure
+
+src/reader.c
+
+commit e86d80479901066e0b13b1ecac5f7ee3434aa0b1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:16:06 2009 +0800
+
+    add compose and complement to symbolic constants
+
+src/carc.h.in
+
+commit a2b038a78e640106aee71b60780f059d233694af
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:13:44 2009 +0800
+
+    Fill out read_anonf
+
+src/reader.c
+
+commit ce23abc36cca47d493c63cf2ab39cb5b080059d6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:13:34 2009 +0800
+
+    Add elements in carc structure for some symbolic constants
+
+src/carc.h.in
+
+commit d2453721608e373e70bd59b3d6eea65d0421a3b2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:13:06 2009 +0800
+
+    complete the test for arc square bracket anonymous function syntax
+
+test/check_reader.c
+
+commit 59633f0f44d542190953e90f6d56cdfed8d2f1f3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:12:48 2009 +0800
+
+    add additional tests for non-numbers
+
+test/check_arith.c
+
+commit 421d42e246f238442dd42ea3c0d0c302f92750f3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:07:58 2009 +0800
+
+    Add check for plain +
+
+test/check_arith.c
+
+commit 6db9c9ac96bb937ea512091516c4ee9b09b1fa98
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 01:07:40 2009 +0800
+
+    Add a check for the final state for the number parsing routine
+
+src/arith.c
+
+commit e10b1e13e9a23fb6512e41ae511c253cf837cd8b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 12 00:25:53 2009 +0800
+
+    Add test for Arc's bracketed anonymous functions
+
+test/check_reader.c
+
+commit 827e5c0cb21c9a552985e070eef3c694dd8c6d17
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 23:15:49 2009 +0800
+
+    verify nested lists
+
+test/check_reader.c
+
+commit 5f597ea8e0577ec94536bf968e161b9a2b830802
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 23:05:37 2009 +0800
+
+    Test suite for lists
+
+test/check_reader.c
+
+commit ee06b059b6d7f6f3fa440cb781f923692ed2320f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 23:05:21 2009 +0800
+
+    unread the extra character when reading something other than a list
+
+src/reader.c
+
+commit 0e48ac32be460a1d8a606c246a742a451733bc2e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 22:48:29 2009 +0800
+
+    Basic reader tests for numbers and symbols
+
+test/check_reader.c
+
+commit 28411229a15b8087085503eb0016d811fabbecd2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 22:48:17 2009 +0800
+
+    Add check_reader to the list of tests
+
+test/Makefile.am
+
+commit 176c58dd5d36b90d2dc912c4cb59dc8827b389ee
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 22:46:57 2009 +0800
+
+    add symbol typing
+
+src/carc.h.in
+
+commit 7fbcca076a22ebec4b9f1ec62c59b3862d34ca32
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 22:46:39 2009 +0800
+
+    Set up initialization for the reader (set up symbol tables)
+
+src/reader.c
+
+commit d6fe2ebbc5ad61e3ccda54dcf83e2171d9491c1b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 22:14:39 2009 +0800
+
+    readchar and unreadchar now fixed
+
+src/reader.c
+
+commit ff407c099c26ec77d29df76e7f32823117214da2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 22:14:16 2009 +0800
+
+    call set_memmgr once only
+
+test/check_alloc.c
+
+commit d84dbe5a484405845fee9b176a6536bc36e6d0e5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 19:50:40 2009 +0800
+
+    Add symbol tables to carc struct and carc_intern/carc_sym2name
+
+src/carc.h.in
+
+commit 478b9df19d925b112c327dac26d8eb3828701375
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 19:48:36 2009 +0800
+
+    Definitions for carc_intern and carc_sym2name added
+
+src/reader.c
+
+commit 85ae4a40ccb5c369cf89935d792e70e8cf859e10
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 19:38:33 2009 +0800
+
+    remove intern here
+
+src/hash.c
+
+commit 9eec85f573ad1845fa62fdd616c5ba79fe45c389
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 18:42:03 2009 +0800
+
+    Add prototypes for carc_strgetc and carc_strungetc and defines for the reader
+
+src/carc.h.in
+
+commit 1c93febe9e89452d4ff68958e65ba6c54595f821
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 18:41:39 2009 +0800
+
+    Make carc_strgetc and carc_strungetc be here
+
+src/string.c
+
+commit 9adb44edc2abcc292f5ed4316cf4a8cbfc2403ef
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 18:41:09 2009 +0800
+
+    move the carc_string2num to arith.c
+
+src/reader.c
+
+commit bd1e674c6c52556e0fe848042ad2ab5ec35f2614
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 18:40:34 2009 +0800
+
+    Move carc_str2flonum and related auxiliary functions here
+
+src/arith.c
+
+commit 7311374d17aad5d9c82d7ecafe646540322d426f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 18:37:00 2009 +0800
+
+    stub for intern added
+
+src/hash.c
+
+commit 3d4db36a541c220d14fce74a8303457e7dff934c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 18:04:12 2009 +0800
+
+    Add checks for rational, flonum, and complex string conversions
+
+test/check_arith.c
+
+commit 9a18dda1da66e99e67fa4baf400e3f425d7f25a6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 18:03:46 2009 +0800
+
+    Fill in str2flonum (which also handles complex numbers), and add cases for complex number parsing
+
+src/reader.c
+
+commit f89ea67ee3260abf7d00394d26d712f485c3fe0f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 16:48:36 2009 +0800
+
+    Add a test for rationals
+
+test/check_arith.c
+
+commit aead57e1573beb35db4dba82c145416b05fcdfe6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 16:48:24 2009 +0800
+
+    modify string2num so that it can do rational numbers
+
+src/reader.c
+
+commit 6cd58281362f1664ac6a4048aa691491f57ce62b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 11:50:55 2009 +0800
+
+    Corrections to the numeric parsing code
+
+src/reader.c
+
+commit b042bf7cb03eb67646e36160d3b44af14289e5a8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 02:54:17 2009 +0800
+
+    Change to use the actual memory manager rather than adhoc one for testing
+
+test/check_arith.c
+
+commit 90bdfe52111afc950b85538db4c83df5ca719896
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 00:34:00 2009 +0800
+
+    initial notes on the virtual machine
+
+doc/VIRTUAL_MACHINE.txt
+
+commit 8366fd984db60910acbcadb0a47c732a48d863de
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 00:33:46 2009 +0800
+
+    return(0) instead of false
+
+src/utf.h
+
+commit b090084ae80510c1574c00953b94999c3da18531
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 00:33:34 2009 +0800
+
+    add carc_strcat and  and carc_string2num
+
+src/carc.h.in
+
+commit 305cad6802e08a813facb93abe44b4c3a459ab2d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 00:33:11 2009 +0800
+
+    add reader.c
+
+src/Makefile.am
+
+commit 7f2dbb8fc519d60013db307a8edd03e7117c561e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 11 00:32:58 2009 +0800
+
+    Parser for Arc s-expressions (incomplete)
+
+src/reader.c
+
+commit 25d8065bd7ee17eaa1085425cf9493321993885e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 23:29:49 2009 +0800
+
+    is alphanumeric function kluged to Unicode
+
+src/utf.h
+
+commit 2df0fc0fdc1889e718942d778fbbaa212230cfcd
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 21:18:12 2009 +0800
+
+    Refactor string creation routines, and add function to create an empty string
+
+src/string.c
+
+commit 57f65865549148f576ec9b11cebd83c0b5028408
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 19:05:51 2009 +0800
+
+    add maximum length for strings
+
+src/carc.h.in
+
+commit ec8ff4a533798d4d2155c5c25feba73d9c1947aa
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 18:45:54 2009 +0800
+
+    add predicate for Unicode newlines
+
+src/utf.h
+
+commit bb8f8e12d75dce1eb4231e57bb20957b2ede5807
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 13:09:28 2009 +0800
+
+    Use Markus Kuhn's UTF-8 decoder capability and stress test as the unit tests for the UTF-8 decoder
+
+test/check_unicode.c
+
+commit a6c1e12864dd864b3746b3270db75b7939d61027
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 13:01:46 2009 +0800
+
+    Check for UTF-16 surrogate characters (0xd800-0xdfff) and disable
+
+src/utf.c
+
+commit 1db8a1ea56f27de2153633ab8088b63738ef2548
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 11:33:26 2009 +0800
+
+    More checks for obvious non-space characters
+
+test/check_unicode.c
+
+commit ef136164e853a6a484043bbbc7567934713fa8b6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 11:28:38 2009 +0800
+
+    Unicode tests
+
+test/check_unicode.c
+
+commit c49368f49208972b750bed27c79ebc387af11266
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 11:28:21 2009 +0800
+
+    add check_unicode
+
+test/Makefile.am
+
+commit 96b70d796572a2863c999b5966dae62f0d0b1c83
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 11:27:32 2009 +0800
+
+    Note on licensing
+
+README
+
+commit c63d8e9758ddbc75c67dc50382fb11b67a8b7ed2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 11:27:03 2009 +0800
+
+    Remove reference to ucdata (no longer used)
+
+AUTHORS
+
+commit 2e696ccdcd05a884a5975d258af596cb3e9d8e9b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 11:26:10 2009 +0800
+
+    Function to append elements to a list
+
+src/carc.c
+
+commit 94c03ce06bfd59a0123c76639add959070cb3403
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 11:25:36 2009 +0800
+
+    whitespace predicate for Unicode
+
+src/utf.h
+
+commit 959ada28ba02ebb92c036f3624674cba97e41f40
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 10 00:30:41 2009 +0800
+
+    Note ucdata code
+
+AUTHORS
+
+commit 456630dae610f17a5ff123bbed8b41f30479bb5f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 16:32:13 2009 +0800
+
+    First shot at making continuation objects
+
+src/carc.c
+
+commit 18645c94ed09f555e7341a851caeca79be682e6c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 16:28:01 2009 +0800
+
+    Fix bug in masking for hash tables when performing table expansion
+
+src/hash.c
+
+commit c3f2d26978e20dc7b3a1d44aa3c2d9afe32fd707
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 16:11:46 2009 +0800
+
+    runetochar
+
+src/utf.h
+
+commit 20d41f6e4817d93e40aa4ffdca268cb572267da2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 16:11:41 2009 +0800
+
+    Add runetochar function
+
+src/utf.c
+
+commit a47e26e68215d669b9e83f37d1b409ce070412e5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 15:07:16 2009 +0800
+
+    Include mkvector here instead
+
+src/carc.c
+
+commit 3bffbad7904534fd21bfe971c77e425057810915
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 15:07:03 2009 +0800
+
+    remove reference to vector.c
+
+src/Makefile.am
+
+commit 7e8217fa6119359176a663263256d1aedd00519d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 15:06:36 2009 +0800
+
+    No need for this, merged to carc.c instead
+
+src/vector.c
+
+commit 7997dda04a98373d2a1c6fdc8255442a1b4976c0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 15:05:32 2009 +0800
+
+    LGPL license blurb
+
+Makefile.am
+
+commit 056f386bf94b97b0830f9f46d018615a2096683f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 15:05:02 2009 +0800
+
+    LGPL blurb
+
+configure.in
+
+commit ffec7533ecfd2004f0693c689889e2c9fbef0452
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 15:03:31 2009 +0800
+
+    Make a vector
+
+src/vector.c
+
+commit afb6176bc1f1bf677b4b4e161812f53924c21c35
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 15:03:22 2009 +0800
+
+    Vectors are now indexed by macros instead
+
+src/carc.h.in
+
+commit 98f15c6d136ca031762c1f0a651869567342fccf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:55:24 2009 +0800
+
+    add vector.c
+
+src/Makefile.am
+
+commit ae88acbf881aedd7b0a8a8470ff855977a421307
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:54:27 2009 +0800
+
+    Change license blurb to LGPL
+
+src/vmengine.c
+
+commit 34e6f0efdaeec3667876316e8793182d8be346f1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:53:36 2009 +0800
+
+    Change license blurb to LGPL
+
+src/vmengine.h
+
+commit 81b4b10a5fb0e1ceeb3405bc63e4bfc45f4b9088
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:52:41 2009 +0800
+
+    Change license blurb to LGPL instead of GPL
+
+src/string.c
+
+commit 0491bea42f5658670e2b8d48a5eabd90142f467c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:52:15 2009 +0800
+
+    Change license blurb to LGPL
+
+src/memory.c
+
+commit 3801335fde75a0fe1e5ba456ec6ac95412d9e77e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:51:44 2009 +0800
+
+    Change license blurb to read LGPL instead of GPL
+
+src/Makefile.am
+
+commit 22216a4467dee4e4c28879b996be76547037096c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:50:49 2009 +0800
+
+    Change license blurb to read LGPL instead of GPL
+
+src/hash.c
+
+commit 0667e0cc7ca0f7b56c3245299c0363ffaadf377b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:50:12 2009 +0800
+
+    Change license blurb to read LGPL
+
+src/carcvm.vmg
+
+commit 459fe5dfff97d0159852efe97875a5c1fb10f1f1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:48:36 2009 +0800
+
+    Change license blurb to LGPL3
+
+src/carc.h.in
+
+commit bfb164e47d11ca419ba0af107390b3bf3963ef34
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:47:58 2009 +0800
+
+    Change license blurb to read LGPL3
+
+src/carc.c
+
+commit aaf48af1ed49847f612f03d2345bf3b9d381d4d6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:47:00 2009 +0800
+
+    Change license blurb to read LGPL instead of GPL
+
+src/alloc.h
+
+commit 4b380499b2952a66cf98f95f7c482a996b3e5f32
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:46:19 2009 +0800
+
+    Change license blurb to read LGPL3 instead of GPL3
+
+src/alloc.c
+
+commit 5f445798b689b5c21eb6b029fd07bab73a46f745
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:44:18 2009 +0800
+
+    Lesser GPL added
+
+COPYING.LIB
+
+commit e722d41d2ae1d5ce4cc6899823c3a7b4bfd4d226
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 14:38:26 2009 +0800
+
+    change mkcont to have newpc as part of its prototype
+
+src/carc.h.in
+
+commit bca0dea3e3a7d692b005f1d9ed432f165a8896e9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:48:10 2009 +0800
+
+    vm_prim defined here
+
+src/vmengine.c
+
+commit 7b87fdb700f957bf9cd18b8cd320533ef73ab683
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:44:23 2009 +0800
+
+    Add write barriers for hash deletion (required for gc)
+
+src/hash.c
+
+commit 0ceaa4e15438e6c06e4913cd460980c8fcbfc681
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:44:00 2009 +0800
+
+    Missing comma added
+
+src/carc.h.in
+
+commit a0beae52da2ab8f25429e393d14176e9cf423380
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:43:41 2009 +0800
+
+    Add stubs for carc_mkcont and carc_rcont
+
+src/carc.c
+
+commit f6270c4fce6cf77b63faaf0412d039f5485a81a8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:43:28 2009 +0800
+
+    make MARKPROP into a proper define
+
+src/alloc.h
+
+commit d38379611de5555cb037d8e5ec0d07d8204c88b4
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:43:14 2009 +0800
+
+    Correct names of closure and continuation types
+
+src/alloc.c
+
+commit 4d4f358bbe1dd4eb988b573e86e1fff9673f924c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:39:28 2009 +0800
+
+    Add write barriers
+
+src/hash.c
+
+commit 9a86af2e188289279f85583d0e17cbee313c7342
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Oct 5 01:38:16 2009 +0800
+
+    Add write barriers to the various instructions which manipulate registers
+
+src/carcvm.vmg
+
+commit 4c1b5a7275770f5a8dd024cea9d988c39ff36544
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 18:51:53 2009 +0800
+
+    include alloc.h
+
+src/vmengine.c
+
+commit 659a446387b49bd08d983e55dd6a9b607e077c3a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 18:51:42 2009 +0800
+
+    change how to make continuations
+
+src/carcvm.vmg
+
+commit ceff706da55d58666241859e815cd61ccaa9982d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 18:51:18 2009 +0800
+
+    prototypes for vector and continuation functions
+
+src/carc.h.in
+
+commit dbace05a17cd305727662e662d9535e7acf2219f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 16:27:01 2009 +0800
+
+    use WB instead of write_barrier
+
+src/carc.c
+
+commit d7743112a2a87435e62149827c6951e418c4163a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 16:26:54 2009 +0800
+
+    Change the write barrier to WB
+
+src/alloc.h
+
+commit b9008f88b7aaae48f469eecbd414f2dae0c7550b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 16:10:15 2009 +0800
+
+    assume functions to create and restore continuations
+
+src/carcvm.vmg
+
+commit ab154bfedf3d11327ebf0fbb558824ff4fb633dd
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 16:09:15 2009 +0800
+
+    Incorporate the MARKPROP macro to the write barrier
+
+src/alloc.h
+
+commit eaaa607a432955bb1f3490fc6e955f2cda6caec8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 16:08:25 2009 +0800
+
+    Make the marker and sweeper recognize vectors and vector-like objects
+
+src/alloc.c
+
+commit 3a9219018c5bd50dc3f16d0bf43b94be9d8c266b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 16:07:44 2009 +0800
+
+    Add struct for vectors, and define related types: continuations, closures and compiled code
+
+src/carc.h.in
+
+commit fdc1413a4aa4bc118b60dc691acdad20b26d4bea
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 02:13:52 2009 +0800
+
+    define vm_prim
+
+src/vmengine.h
+
+commit 8521aa328d2fb82752a65fddbf8a1588969db9be
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 02:13:39 2009 +0800
+
+    Create a continuation type and registers
+
+src/carc.h.in
+
+commit b4a76b319d539059d4180ae046c045b7350b35fb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 02:10:47 2009 +0800
+
+    Add rules for vmgen stuff
+
+src/Makefile.am
+
+commit 1f5fb9cc8992fe56e98dc20f5472d946065b169d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 02:10:26 2009 +0800
+
+    ignore vmgen-generated instructions
+
+.gitignore
+
+commit 89067b7a7efb90dbe05a11cfa75ed9b37c20b1e1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 02:10:04 2009 +0800
+
+    Define additional macros and change behavior so that we stop the vm after quanta instructions
+
+src/vmengine.c
+
+commit f823403ffb88f600935834420fe815044a02ea3a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 00:55:44 2009 +0800
+
+    make scar and scdr return y
+
+src/carc.c
+
+commit 7ca9adf8287e034fcbad143b8d7d648680597d52
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 00:51:26 2009 +0800
+
+    Virtual machine definition
+
+src/carcvm.vmg
+
+commit b8f61426712d3280519e4b9c44aa61a45e4683de
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 00:44:05 2009 +0800
+
+    definitions for vmengine
+
+src/vmengine.h
+
+commit 5a1307e1bbbc8a484951cb9b91b99559a3eca5cb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Oct 4 00:43:57 2009 +0800
+
+    vmgen virtual machine engine driver
+
+src/vmengine.c
+
+commit 57735976c698c1cf5861dbfbc521fda53de53d10
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 14:14:56 2009 +0800
+
+    Add test for key deletion
+
+test/check_hash.c
+
+commit 26bb5e40a966dc6af358a24464ca7cf140e909b8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 14:09:46 2009 +0800
+
+    add a test for the hash iterator
+
+test/check_hash.c
+
+commit 4339aad4bb5ad6452a8ba4ba3ddd92924bb45f5e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 14:09:33 2009 +0800
+
+    Make sure context is null so hash iterator works properly
+
+src/alloc.c
+
+commit 64f187882b548f4ff6c2155907757b6f39e02267
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 14:04:44 2009 +0800
+
+    Add a test for a key not present in the table
+
+test/check_hash.c
+
+commit c0456995f7e8af63c08cec628bde3458d2629e6f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 12:54:54 2009 +0800
+
+    Change initial size of hash table to 3 bits so two expansions are performed
+
+test/check_hash.c
+
+commit a3ae458268b875a0303d16449b629555db5065ee
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 12:36:59 2009 +0800
+
+    Test hash table lookup and expansion
+
+test/check_hash.c
+
+commit 99b6c9ce40c950e2dd95dc274eea2cbf41171755
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 12:36:45 2009 +0800
+
+    hash table expansion reused variable i
+
+src/hash.c
+
+commit 4b89c2430b53547953e67553ecf75227190b7be5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 02:32:30 2009 +0800
+
+    Fill in procedure for marking and sweeping a hash table
+
+src/alloc.c
+
+commit e8745cc9cc46d897d59250f02a11500c808986a7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 02:28:25 2009 +0800
+
+    Hash iterator
+
+src/carc.h.in
+
+commit 38da09ba312ec159790d606e890847b6928a4b25
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 02:27:41 2009 +0800
+
+    Define a hash iterator function
+
+src/hash.c
+
+commit 280d45c64ba4319baf2917401f70650ca392752e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 02:18:34 2009 +0800
+
+    Simon Tatham's coroutine macros
+
+src/coroutine.h
+
+commit 27c5ac2d4916c78627594c6b162045ce042a7bc8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 02:16:45 2009 +0800
+
+    Add note on the C coroutines header
+
+AUTHORS
+
+commit ee8f859d6307851ee05ba0523d750790c2ec9f91
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 01:33:03 2009 +0800
+
+    Make hash, insert, lookup, and delete functions prototyped
+
+src/carc.h.in
+
+commit 7e541aece02cc2e46a06a86bda43efb0e3bab454
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 01:30:31 2009 +0800
+
+    Hash lookup and delete functions
+
+src/hash.c
+
+commit 5a975b99d053681b3693630d030e77d763bd7222
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 01:02:30 2009 +0800
+
+    Add carc_equal
+
+src/carc.h.in
+
+commit 9efe59acc3a3d3ba9c7c8c21177d767536ba8db9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 00:57:35 2009 +0800
+
+    use BLOCK_IMM macro
+
+src/string.c
+
+commit fd7d65c99fd6f5527d3a5001a9c8f02ca188bad6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 00:57:11 2009 +0800
+
+    Marker recognizes CUNDEF as an immediate
+
+src/alloc.c
+
+commit b14a1b71a24b38f3d1bacc9fe50100af92ec881a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 00:56:26 2009 +0800
+
+    Define CUNDEF, immediate value used for deleted entries in a hash table
+
+src/carc.h.in
+
+commit e7a72179b3c8ce108d97bfd5aa45856408e0554f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 00:48:27 2009 +0800
+
+    Hash table expansion to meet load factors
+
+src/hash.c
+
+commit c3c6ef11398357d45f3337a7ff717928cb93a8b0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Oct 3 00:30:16 2009 +0800
+
+    Hash table insertion function
+
+src/hash.c
+
+commit 16cab59ccc5730f897b26b451edc2c8c8cc17188
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Oct 2 22:47:01 2009 +0800
+
+    function to create a hash table
+
+src/hash.c
+
+commit 1bcc8fc35f817bad95f34dfb11bf75c1852020c2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Oct 2 22:38:51 2009 +0800
+
+    Change to loadlimit
+
+src/carc.h.in
+
+commit 7bdc19e53686c7be143315866d097aeb952150a7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Oct 2 22:38:16 2009 +0800
+
+    change load limit to load factor
+
+src/carc.h.in
+
+commit f7d1697cb0f6dbed30c3f48e38510000b4ef143d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Oct 2 22:36:22 2009 +0800
+
+    Remove tablesize (derived from hashbits) and add nentries (used entries)
+
+src/carc.h.in
+
+commit 9d11e01bb63e5114f4a1b277de247e3e67d6e40c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Oct 2 22:16:05 2009 +0800
+
+    change hashsize to hashbits
+
+src/carc.h.in
+
+commit a78d3432ccbea9dcfa4765ef4dd4324de2819d63
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 14:59:55 2009 +0800
+
+    Some basic defs for hash tables
+
+src/carc.h.in
+
+commit a5c17da64312022be1b74bc54be450f434c67317
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 14:22:20 2009 +0800
+
+    Note that the hash computation for cons cells may recurse forever with cycles
+
+src/hash.c
+
+commit 5a34404daf39fe3f2a6916ffa1ce6a19b5ba0c37
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 14:19:15 2009 +0800
+
+    Some typo fixes
+
+src/carc.c
+
+commit 39e0ad9a41af508f37c0c735f975b4ad0bafc83f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 14:18:26 2009 +0800
+
+    Naive traversal of cons cells for equality pred
+
+src/carc.c
+
+commit 13ab2e91bb9c237c29066135f107a070c65bc681
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 13:54:45 2009 +0800
+
+    Add carc.c
+
+src/Makefile.am
+
+commit 2844529305fe4699ddbed03f8b1729c6c6a95b64
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 00:11:31 2009 +0800
+
+    Add a test for hashing lists (only nonatomic type for now)
+
+test/check_hash.c
+
+commit 2f4c1837cc66cd967d3aeb30a70a0c46a1b9c202
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 00:07:22 2009 +0800
+
+    Add prototype for carc_hash
+
+src/carc.h.in
+
+commit 3d50ba5e7e94b8c82cfb594bad5b5c517f2f9979
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Oct 1 00:05:45 2009 +0800
+
+    Create a test for atomic values (64-bit only)
+
+test/check_hash.c
+
+commit a61ad19736bfb02bec12e778fb964dc6535eddab
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 13:19:49 2009 +0800
+
+    ignore carc.h (autogenerated from carc.h.in)
+
+.gitignore
+
+commit 2e8c6b83f94faef36361150bffecbc5a93ebcade
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 13:19:16 2009 +0800
+
+    Make a function to compute hashcodes for arbitrary data types
+
+src/hash.c
+
+commit 16d73a3bd2657895147a7c0db356220baccfaa0f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 13:18:46 2009 +0800
+
+    Create macro to mark a block immutable
+
+src/alloc.h
+
+commit b0ebc26a8254f1202bc193d925886874d39b1679
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 13:18:05 2009 +0800
+
+    Add length and indexing functions (for now they're trivial, but we want to move to a more advanced string representation later)
+
+src/string.c
+
+commit 45bcb369f078f39a2d1f11064f37c64157c2d96a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 13:16:05 2009 +0800
+
+    Add string length and string index functions
+
+src/carc.h.in
+
+commit 4c9d2e019c1282cabd530f5791b537bb341b8672
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 00:11:11 2009 +0800
+
+    Change the values to reflect the lookup3 variant which we are using
+
+test/check_hash.c
+
+commit 4026de6d45aa1bfb49aa3222d52d51287f4e9a76
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 00:10:43 2009 +0800
+
+    hash functions added
+
+ChangeLog
+
+commit 2b1a6a77066bb2b9a69e6a050a72b0108f1abbeb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 30 00:06:08 2009 +0800
+
+    Revert carc_hash_final to using the same algorithm on both 64- and 32-bit arches
+
+src/hash.c
+
+commit e95ef4b3b11afd5a15cae07aa7a5c20ac63b86b3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 23:41:27 2009 +0800
+
+    Initialize the state variable properly
+
+src/hash.c
+
+commit 98a3e9944dbff0b0d2d21a0bc3e1f046944a9f7d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 23:28:51 2009 +0800
+
+    use 0xdeadbee instead of 0xdeadbeef -- fails on 32-bit arches
+
+test/check_arith.c
+
+commit d007392d272be0c6006f667b0bcdf8eb0a7dfad5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 23:25:46 2009 +0800
+
+    change rot to ROT
+
+src/hash.c
+
+commit 221205b4758e9c3c31bff32af7a53d86d470eb78
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 22:18:52 2009 +0800
+
+    Fix hash finalization
+
+src/hash.c
+
+commit 2acfe9af28b1ece5f7b91abc0305eb19901e33ce
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 22:18:32 2009 +0800
+
+    add tests for hash values
+
+test/check_hash.c
+
+commit 087c46caede86debda2f51ef87dd7053d62250cc
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 18:26:08 2009 +0800
+
+    Add the tests for the hash functions
+
+test/Makefile.am
+
+commit ab958ceb2f0517e703dd40bbf2174335b6f931c3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 18:25:54 2009 +0800
+
+    Change the carc_hash_final prototype to reflect the new len parameter
+
+src/carc.h.in
+
+commit 0fd2f5a44d8f028d0f6f75bcf5d7b7d611b681c8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 18:25:24 2009 +0800
+
+    Create a test for the hash values based on Bob Jenkins' code
+
+test/check_hash.c
+
+commit feb633abc0c1542c64c56b760cc644b70c131fa0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 18:15:57 2009 +0800
+
+    remove debugging printfs
+
+src/hash.c
+
+commit f952ec825e0eeab1a2b28f0ffe1794b226f019c8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 18:15:04 2009 +0800
+
+    revise the final hash to include a length (to harmonize against Jenkins' hash)
+
+src/hash.c
+
+commit 3d8c6e4d2cbd6a75440a48aa8106c8076ebfcdef
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 17:59:59 2009 +0800
+
+    add the hash function prototypes
+
+src/carc.h.in
+
+commit 092dc869e1028f039441aaa080f8d722d9563483
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 17:59:42 2009 +0800
+
+    add hash.c to the list of sources
+
+src/Makefile.am
+
+commit 701c92894c7b04df902ea7cfd304fc84d954fa68
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 17:59:20 2009 +0800
+
+    Define the hash functions we are supposed to use
+
+src/hash.c
+
+commit 5e39e662f945e24ebe098f634c75bf27bf349e0e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 17:34:22 2009 +0800
+
+    Add note to the Jenkins hash functions which we use
+
+AUTHORS
+
+commit 826106647e8b32cc30ee5477392f64c9076fc998
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 17:28:21 2009 +0800
+
+    Add test for big-endianness
+
+configure.in
+
+commit bcc5ecec9f8324ff2da6b071110e3114c6f75ccd
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 17:15:18 2009 +0800
+
+    define string length and index macros, as well as prototypes for string and character constructors
+
+src/carc.h.in
+
+commit 044a98e84c960cb8284cb2acce26c039e412dbc1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 17:13:29 2009 +0800
+
+    Create a constructor function for characters as well
+
+src/string.c
+
+commit dab2527f349fcd56c201c356627034e13bb29a6f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 02:05:36 2009 +0800
+
+    utf.c and string.c added
+
+ChangeLog
+
+commit 1ea8fb9b08fb8569fa2999130fc4563c53376831
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 02:05:19 2009 +0800
+
+    Note the changes to lib9 UTF-8 to make it fully compliant to RFC 2279.
+
+AUTHORS
+
+commit 394b7aefc0b179c58c98cb1429c23b0b6b943312
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 01:56:39 2009 +0800
+
+    Add string.c and utf.c to the build files, as well as utf.h to the noinst
+
+src/Makefile.am
+
+commit ed2cab0aed390683a8e614bae11ff944e532034c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 01:56:15 2009 +0800
+
+    Simple string creation routines
+
+src/string.c
+
+commit ae5007f2998014a4f27b324d9b0f518d2eb562e8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 01:55:46 2009 +0800
+
+    Routines borrowed from Plan 9/Inferno UTF library extended to handle full RFC 2279 UTF-8 decoding
+
+src/utf.c
+
+commit f8ca9abdb1b618b03b057e3bcf8326a109d969f5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 01:55:17 2009 +0800
+
+    Portion of the Plan 9/Inferno UTF-8 library header
+
+src/utf.h
+
+commit 17b8241f610814ace7e84501e6590affb3681cad
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 01:43:23 2009 +0800
+
+    Renumber the types
+
+src/carc.h.in
+
+commit 39f2b4552fedb44e840b1150db3cb03b1c7d482f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 29 01:41:25 2009 +0800
+
+    Complete definition of Arc data types based on Ken Shirriff's documentation
+
+src/carc.h.in
+
+commit 1d192d987af9601372b4bf890aa930dd1fd28551
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 28 22:33:57 2009 +0800
+
+    Add note about src/utf.c and its origins from Plan 9/Inferno lib9
+
+AUTHORS
+
+commit 949da5bcd070267be3409c47a803bba4571813a1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 28 01:47:06 2009 +0800
+
+    remove debugging printf
+
+test/check_alloc.c
+
+commit 6c101c1e57c12252f554e2d541931454c650926b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 28 01:46:06 2009 +0800
+
+    Create new inline function to perform write barriers when pointer updates are made
+
+src/alloc.h
+
+commit 7666e17b85ac5b3d74959307b1bcdaa0d2dea4ef
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 28 01:44:38 2009 +0800
+
+    Change the propagator to a global def, and remove static qualifier from nprop
+
+src/alloc.c
+
+commit 8142b7f9a6628beb85e6ccb3d2dbf64c60b0f37b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 28 00:39:07 2009 +0800
+
+    Rudimentary test for the garbage collector
+
+test/check_alloc.c
+
+commit 6018fcf85bd511a3f0a8806f800d86952fb4f92b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 28 00:38:50 2009 +0800
+
+    Make some fixes to the mark routine so that immediate values are not traversed
+
+src/alloc.c
+
+commit 33c6a6dd58e29793ae7cd6323baa03779e3fe18b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 27 23:38:59 2009 +0800
+
+    Make checks to inspect the heap and determine whether the behavior of the allocation/freeing algorithm produces the expected results.
+
+test/check_alloc.c
+
+commit f94776a1ff42820447339e000f34bebef6f3a966
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 27 20:57:28 2009 +0800
+
+    Note alloc.c
+
+ChangeLog
+
+commit 285383e21f448b226e6460f309d060027868b489
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 27 18:42:52 2009 +0800
+
+    More thorough test of allocation primitive
+
+test/check_alloc.c
+
+commit dd247aaa4f389f938659f3111054e57180584071
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 27 13:18:39 2009 +0800
+
+    Rudimentary marker and sweeper
+
+src/alloc.c
+
+commit 22607f1a09ffdce5356b25db4efb98ec0989763f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 27 11:12:14 2009 +0800
+
+    add hook for garbage collector
+
+src/carc.h.in
+
+commit 2c192cd24ccfc52c8787535a116200073794dfcf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 27 11:10:06 2009 +0800
+
+    Skeleton of garbage collector
+
+src/alloc.c
+
+commit ba326d64dccf46098fb3b21fada7f4352d237b58
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 23:47:59 2009 +0800
+
+    Remove redundant case
+
+src/alloc.c
+
+commit 20f6a56fa7d66ea3fdb4d41c6003da4b290f34fb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 22:22:16 2009 +0800
+
+    Fix algorithm for merging blocks
+
+src/alloc.c
+
+commit bd687fb2d78df804d716860ed0d5d86c4fadffc9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 18:34:32 2009 +0800
+
+    Revise the freeing routine so as to coalesce blocks correctly
+
+src/alloc.c
+
+commit 4b13cadd17124a2a30277dd5956278c1d2e73628
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 17:31:36 2009 +0800
+
+    Reverse the order of the checks
+
+src/alloc.c
+
+commit 429c53f845cd2ba462e0cb19787c711ab96a2229
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 17:30:38 2009 +0800
+
+    Extra case where the free list head end hits the block to be freed
+
+src/alloc.c
+
+commit b034c678400d2414d5feea37d62cc74bc9953bca
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 14:41:23 2009 +0800
+
+    add function in carc struct to free memory
+
+src/carc.h.in
+
+commit 4913771b735cd1a4d4a19faf70eaddc20f9e60ab
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 14:41:01 2009 +0800
+
+    Add function to do a direct block free
+
+src/alloc.c
+
+commit 71cec5a6cbeedd01c1c960858f75486af4b634d5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 14:40:19 2009 +0800
+
+    Fix declaration for D2B
+
+src/alloc.h
+
+commit 79469669fb3610a039c023ba0796513bd6e5159d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 13:25:45 2009 +0800
+
+    allocation checks revised
+
+test/check_alloc.c
+
+commit dbe793e07fd3153d4eb1f66cbcb609e5f120c7a8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 13:24:45 2009 +0800
+
+    B2NB has to include block header size when traversing
+
+src/alloc.h
+
+commit afc13822e48474089863568dd9ee8281f27f73f7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 13:24:02 2009 +0800
+
+    bug fixes for heap headers and for searching blocks
+
+src/alloc.c
+
+commit e1146fe84782d2072855568948c28d71a45f7b7d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 12:49:34 2009 +0800
+
+    Fix further bugs in alloc_for_heap (wrong linkage)
+
+src/alloc.c
+
+commit 9bfbd8dab529060a0b2d5212ed965d3654b892cb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 12:47:06 2009 +0800
+
+    assign heaps to mem before changing it to point to the actual memory block
+
+src/alloc.c
+
+commit eb36501098e32e75f832750c6149602db603b98c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 26 12:43:30 2009 +0800
+
+    fix roundheap
+
+src/alloc.h
+
+commit 620fab0a29583a3f31fe36d940fc46234ba17012
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 25 03:10:31 2009 +0800
+
+    simple test for cell allocation
+
+test/check_alloc.c
+
+commit 05d0cef7e2e3e9fd3dedd9fcb91b90c671cd2a09
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 14:08:07 2009 +0800
+
+    Fill out the allocation and free functions
+
+src/alloc.c
+
+commit 36de3e775282895d6e2673dba23d5f34b74c6c8b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 12:52:10 2009 +0800
+
+    Specify further cases in fl_free_block
+
+src/alloc.c
+
+commit debc763a3bf49e5eaa57e51983018f90216823b0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 12:17:21 2009 +0800
+
+    Make expand_heap add a tail block with MAGIC_E to the new heap chunks it creates
+
+src/alloc.c
+
+commit d7584f312bb8e1d9ec9e05208081919e9655fe80
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 12:15:47 2009 +0800
+
+    add padding to the heap header structure
+
+src/alloc.h
+
+commit 9dae2d5ebd379a89444d7a035b1a05ec48b69c65
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 12:09:45 2009 +0800
+
+    Add definition for end of arena block
+
+src/alloc.h
+
+commit 489a3e38f3908acb336fc16c3f819a9cd767e506
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 03:54:22 2009 +0800
+
+    fill in function for block freeing
+
+src/alloc.c
+
+commit 5ee6e46e8186484f798cc143de83f1373c93af7a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 03:28:45 2009 +0800
+
+    Fill in heap expansion policy
+
+src/alloc.c
+
+commit d1ac78f60431275324e0d9e41e9523b583579720
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 03:18:27 2009 +0800
+
+    Add a macro to round the heap request to the page size
+
+src/alloc.h
+
+commit b157f4d2ed9848e18f7734603a94cb8d46778ef7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 03:18:01 2009 +0800
+
+    Rename the parameters for heap expansion policy
+
+src/carc.h.in
+
+commit f89fb4da51c31708ab42d3688e1b12e5c609d7f0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 03:06:43 2009 +0800
+
+    Change to DFL_OVER_PERCENT for heap expansion default value
+
+src/alloc.h
+
+commit fd5dde7f42f619ba0c527e96b45556895b1fa984
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 03:01:53 2009 +0800
+
+    Add definitions for the default minimum free percent and minimum heap expansion
+
+src/alloc.h
+
+commit 2b2bfd64f479b2111ac6473f987d5e9a65f31b9d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 02:41:17 2009 +0800
+
+    Add prototype for carc_set_memmgr
+
+src/carc.h.in
+
+commit 701ffe5f3ba472fc6b28e3de402f56e2370d1818
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 24 02:40:49 2009 +0800
+
+    Make carc_set_memmgr fill in the mem_alloc and mem_free functions in the carc structure
+
+src/alloc.c
+
+commit 6befbaa028d2e8c6e330f24f30886b38f4abc9e3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 23 00:09:39 2009 +0800
+
+    change alloc_for_heap and several other functions to pass the carc pointer
+
+src/alloc.c
+
+commit 08f43bf0acc5f08fa91a580e708ecbfa5b16c5ab
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 22 19:34:45 2009 +0800
+
+    make distinction between low and high-level memory allocation primitives within the carc struct
+
+src/carc.h.in
+
+commit 5e95133798010aac93fd83d9d881f5734232ddaf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 22 19:34:15 2009 +0800
+
+    include inttypes as well
+
+src/alloc.h
+
+commit 9099b87d86ca230f4ce99b08a4e2ec47aff82494
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 22 19:34:05 2009 +0800
+
+    Try to fill in block addition (not yet complete)
+
+src/alloc.c
+
+commit 4be6c3acf266318d7662bd961cfa8f72c460a304
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 22 19:33:44 2009 +0800
+
+    Add memory.c to sources
+
+src/Makefile.am
+
+commit ad5f0e11c1a3d2a6165523438f578f2b1b07573a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 22 19:33:17 2009 +0800
+
+    Make mmap and malloc separate functions that may both be present
+
+src/memory.c
+
+commit a441df624cf2e14801ce6a53c2e3a26185b079f7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 13:23:26 2009 +0800
+
+    32 bytes, not 16
+
+src/alloc.h
+
+commit 1503a6843f29143d9bbc4eeabbde1dfe881326a3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 13:09:49 2009 +0800
+
+    Function to allocate memory for the heap
+
+src/alloc.c
+
+commit a37c7dc191cf1e9ca26cc4ac2f4adbde0c54f5d4
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 13:08:30 2009 +0800
+
+    add definitions and macros for heap headers
+
+src/alloc.h
+
+commit c8393a12acfe0a5785ca2e27dde91ab167d92f1a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 13:02:31 2009 +0800
+
+    Add prototypes for alloc and free functions
+
+src/alloc.h
+
+commit 9ed0eb7b255a5708b5a742ed18bf8edc32909eb8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 13:00:45 2009 +0800
+
+    System-dependent memory allocation/freeing routines
+
+src/memory.c
+
+commit b24b58803f88fe9807d5f4bc4be7c2836429f043
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 12:31:03 2009 +0800
+
+    Add a check for mmap
+
+configure.in
+
+commit cf58447ee14e54b95547383d63c630826c17dc5c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 10:38:06 2009 +0800
+
+    Fix the ROUNDSIZE macro
+
+src/alloc.h
+
+commit 6436d6b08933457d1fcafe634c5f434d69b3fb3e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 10:37:58 2009 +0800
+
+    Add a test for size rounding that ensures sizes are always multiples of 16
+
+test/check_alloc.c
+
+commit 538199d1fea47155344855eec60f6920951671c2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 10:31:25 2009 +0800
+
+    Add check_alloc to the check sources
+
+test/Makefile.am
+
+commit cea7d67278b98d522a9c93c994e4c6912bd6a0c9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 01:28:42 2009 +0800
+
+    Add alloc.h to noinst_HEADERS
+
+src/Makefile.am
+
+commit 076cc22542e188a15358198722cf63d5ec085709
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 21 01:28:26 2009 +0800
+
+    Move allocated macros to this new file
+
+src/alloc.h
+
+commit 2174f5207263ded0d5204f30dacbfb70e64d50db
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 16:54:04 2009 +0800
+
+    Set up basic memory allocator stuff (lots to fill in yet)
+
+src/alloc.c
+
+commit 2d5f4fa8ff0cd97256c36e43c1b9c40c4aea56cb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 16:37:12 2009 +0800
+
+    Fix mem_alloc (again)
+
+src/carc.h.in
+
+commit 26406b6b1f96658ece684f0af85002002a3535c5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 16:33:50 2009 +0800
+
+    fix declaration for mem_alloc
+
+src/carc.h.in
+
+commit 7337f0909b49c1d0d3ea28a43ea7a766f4c34c30
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 16:19:57 2009 +0800
+
+    include the size in the allocator's sig
+
+src/carc.h.in
+
+commit ba2e4550ce18cd0759e07be141d634793209a1f8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 16:19:25 2009 +0800
+
+    Revise the decl
+
+src/carc.h.in
+
+commit 67c1f7be5d0a02d936c539974d66dbf20c227571
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 16:18:59 2009 +0800
+
+    Add a general memory allocator to the carc structore
+
+src/carc.h.in
+
+commit f30ab4b1fa313a9c9707925bb2e1e5dbf37ab759
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 15:54:50 2009 +0800
+
+    add carc_set_allocator to list of prototypes
+
+src/carc.h.in
+
+commit 01949914eb91ec57ff06101283f9f1d4d5ea1de5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 15:50:33 2009 +0800
+
+    add alloc.c to the sources
+
+src/Makefile.am
+
+commit b51ad22731be6848a6d7653b291050199e2b463d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 02:02:45 2009 +0800
+
+    Add a test for division of non-numbers
+
+test/check_arith.c
+
+commit 3668973bafee8045bad34b344bb42cff19dc5290
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 02:00:58 2009 +0800
+
+    Add test for division with fixnums and complex numbers
+
+test/check_arith.c
+
+commit d33806f33c2e7563411a90e272d1d7188e22b5eb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 20 01:58:20 2009 +0800
+
+    Fix formula for complex division in div2r_complex
+
+src/arith.c
+
+commit 07cfe2778855e79003cf81e7a4967c83a607ea09
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 19 14:08:38 2009 +0800
+
+    Add test for division by zero
+
+test/check_arith.c
+
+commit 0e02067ef8afa856d6d0b10f65b14f165d301557
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 19 02:27:23 2009 +0800
+
+    Add test for fixnum-rational division
+
+test/check_arith.c
+
+commit 25bcaad8103766593f3d034d9f7f0106829728c9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 18 19:01:03 2009 +0800
+
+    Test for division of fixnums and flonums added
+
+test/check_arith.c
+
+commit ff72656e2c830798ace0af266061a8a3249b6dbc
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 18 18:54:14 2009 +0800
+
+    Add check for divisions of fixnums and bignums
+
+test/check_arith.c
+
+commit 663642fcef69beddad7f0d0723228008547c77f9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 18 18:39:40 2009 +0800
+
+    Fix mpz_divisible_p test in div2r_bignum reversed arguments
+
+src/arith.c
+
+commit db2449c1382e3be839b15233ccc1cbd2e1d4a988
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 18 16:19:20 2009 +0800
+
+    Tests for division of rationals, flonums, and complex numbers created
+
+test/check_arith.c
+
+commit 65f6ed99be06477c25bce15502cc821465ebdaea
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 18 14:58:50 2009 +0800
+
+    Add a test for a division of FIXNUM_MIN by -1 (bignum result) and bignum division tests
+
+test/check_arith.c
+
+commit 9cb95878eff5198e7136c8fd778002049c27a830
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 18 14:53:31 2009 +0800
+
+    pass on the check for division by zero
+
+src/arith.c
+
+commit 14166f487188f170cdac0998be1033deade621b9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 17 18:07:11 2009 +0800
+
+    Simple division tests for fixnums that don't make rational numbers
+
+test/check_arith.c
+
+commit 3dd10c63519592bb150349fa2dea9726f08032a4
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 17 17:59:16 2009 +0800
+
+    Add a check for misc subtractions
+
+test/check_arith.c
+
+commit 06c3e5c78b241f19f276a6f7a5968de5bac28f98
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 17 17:59:01 2009 +0800
+
+    Some fixes in use of mpz_cmp_si in div2(r)_bignum
+
+src/arith.c
+
+commit 8450161134f97ecbc2c2205962476e2d79cac354
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 17 15:07:18 2009 +0800
+
+    Add checks for division by zero
+
+src/arith.c
+
+commit a8a4af58434e4d1ed16c804181da8827add67a25
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 17 14:04:33 2009 +0800
+
+    Fill out the code for doing division on rationals and bignums
+
+src/arith.c
+
+commit 772cc94224b0246fd635473c6f66c97ce4547f6b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 16 21:35:40 2009 +0800
+
+    Add the test/Makefile regardless
+
+configure.in
+
+commit 85a31d71b1cbcec0ba1af668622c529c0d338445
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 16 21:32:39 2009 +0800
+
+    Some rudimentary steps to doing division
+
+src/arith.c
+
+commit c2a31c613a7b25cf64ee7331157ce23554c01907
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 16 18:54:46 2009 +0800
+
+    Complete checks for subtraction
+
+test/check_arith.c
+
+commit a9733f237570fb31a97a3454e90f9aa0f701be7b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 14 18:12:27 2009 +0800
+
+    Implement fixnum-other type subtraction tests
+
+test/check_arith.c
+
+commit 0c862201ea5e7aaef65383fdf3ee6742dc282436
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 14 17:20:35 2009 +0800
+
+    Flonum subtraction missed, added in
+
+test/check_arith.c
+
+commit 310b2bd1ea225984acfa6208a29d9929b0818621
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 14 17:16:56 2009 +0800
+
+    Create basic tests for subtraction of various types with each other
+
+test/check_arith.c
+
+commit 0005084a601bdc7aced12a5280d1d953d72c1176
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 14 16:50:52 2009 +0800
+
+    Expand the TYPE_CASES2 macro because it won't be used anywhere but in sub
+
+src/arith.c
+
+commit cb3b21f8a58694207865b52c8e20a6c8700ce6f3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 14 14:25:58 2009 +0800
+
+    An effort to making the subtraction operator work
+
+src/arith.c
+
+commit 15475027a8f1c37e6d4cafba84adbb86adb9518f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 14 10:37:51 2009 +0800
+
+    Conditionally compile test_mul_flonum2rational so it doesn't appear with no GMP
+
+test/check_arith.c
+
+commit cf939c38ca793a6a4bb8211b220ed80351f3372a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Sep 14 10:37:24 2009 +0800
+
+    Cleanup so that the TYPE_CASES macro works even if gmp is unavailable or disabled
+
+src/arith.c
+
+commit 66a2027b2250adb768ef5e33e8dd7f3b59b103e8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 13 14:08:18 2009 +0800
+
+    Checks added for complex coercions
+
+test/check_arith.c
+
+commit 176d635da640469f29bdaf08f4ce7c7e31e349b8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 13 14:02:55 2009 +0800
+
+    Complete the tests for multiplication with complex numbers
+
+test/check_arith.c
+
+commit 00a9ed4eab3f0d689571395ee6ae562d2f678cf1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 13 13:52:53 2009 +0800
+
+    remove mkrationalb (not used)
+
+src/arith.c
+
+commit cb9b01582b38457d5dbaa58d7179c97f530d2240
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 13 12:44:51 2009 +0800
+
+    Complete the tests for complex addition
+
+test/check_arith.c
+
+commit e98b8dac284dd3a1eab256435e33b9a70a8d8fc1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 12 12:07:11 2009 +0800
+
+    empty test for alloc for the meantime
+
+test/check_alloc.c
+
+commit cc4cb083c7687d8b81fb36b6a287feb368a77ccb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 12 12:05:19 2009 +0800
+
+    Remove flonum conversion tolerance factor (not needed)
+
+src/arith.c
+
+commit 4be0252435286adb03172a08a533a92d4eacd453
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 12 12:04:36 2009 +0800
+
+    Refactor multiplication, and convert the type checks into a macro
+
+src/arith.c
+
+commit bd3ea3a52f6240799242d7672252e3a6fa8655b4
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 12 11:42:14 2009 +0800
+
+    Refactor code for addition logic to simplify test cases
+
+src/arith.c
+
+commit 7d45a9d48d796ae28c8e87da31df675c969cdb5a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 18:17:45 2009 +0800
+
+    Initial code towards supporting complex numbers
+
+src/arith.c
+
+commit d966ebcf0fb27f3cb3c7ca02d5227dbf0a252654
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 17:53:07 2009 +0800
+
+    Change carc_coerce_complex
+
+src/carc.h.in
+
+commit 8d714fc29820901b8a73e6ac40ce7ca76a2f9f5b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 17:50:44 2009 +0800
+
+    Add complex number data type
+
+src/carc.h.in
+
+commit 9c3b1c28a1ad55b0b0dd94ac10f7e6209bc39081
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 12:59:48 2009 +0800
+
+    Add case for flonum-rational addition/multiplication
+
+src/arith.c
+
+commit 4a3bf14b8f11e53294030b7bc67f7f770ed9af68
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 12:59:22 2009 +0800
+
+    Revise test for rational-flonum addition, make analogous test for multiplication
+
+test/check_arith.c
+
+commit 93720c5989e6d4d14896198ba269d3f3fb4555c9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 12:28:20 2009 +0800
+
+    Force coverage to clean up after itself
+
+coverage.sh
+
+commit 0d824cd4dbce8f6b9bdc9a0082f14d1b7ec206da
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 12:05:08 2009 +0800
+
+    tests for multiplying bignums and flonums together
+
+test/check_arith.c
+
+commit ffde0e5543b3d864f2f81e7409a8558203789dd1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 12:01:43 2009 +0800
+
+    Fix algorithm for performing bignum multiplication
+
+src/arith.c
+
+commit 3e4da31feb7bfa466934603df73aeafade8f5c7e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Sep 11 11:52:05 2009 +0800
+
+    Add test for multiplying fixnums to rationals
+
+test/check_arith.c
+
+commit 97af707e6fe5df6ed6388bc35599441dfddfebe0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 18:24:16 2009 +0800
+
+    Note addition/multiplication stuff
+
+ChangeLog
+
+commit d00a67fa8b9f931ee70a2d2f6bad278f2569d98d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 18:21:28 2009 +0800
+
+    Implement function for rational number multiplication
+
+src/arith.c
+
+commit 4aebb6f0bb09acd3469ea3ab2558f790cbd58115
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 18:21:10 2009 +0800
+
+    Add test for rational-rational multiplication (producing products of fixnum and bignum type as well as rational)
+
+test/check_arith.c
+
+commit 208148f9a4538aa05d1d97fc4e583638a459dd5e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 16:07:16 2009 +0800
+
+    Add test for rational coercions
+
+test/check_arith.c
+
+commit ec0f2471b46224f43385e52b233278259e7d6fae
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 14:14:05 2009 +0800
+
+    Add a check for rational number negation
+
+test/check_arith.c
+
+commit 513956c88c30a32be650996d79479c142a9b3774
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 14:11:29 2009 +0800
+
+    Add a check for flonum-rational arithmetic
+
+test/check_arith.c
+
+commit 6dcde16157c61a616f330b60961a25de55516509
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 14:08:11 2009 +0800
+
+    Add test for bignum and flonum addition
+
+test/check_arith.c
+
+commit dd9f083d9c2aa457ebaf1280c98c0e20b9637c08
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 14:07:55 2009 +0800
+
+    Make bignum to flonum arithmetic result in a flonum
+
+src/arith.c
+
+commit f97db0b331917a5d133623632ffa01f1a370d28d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 13:53:35 2009 +0800
+
+    Add a check for bignum-rational addition
+
+test/check_arith.c
+
+commit 93fbabf74596516f1b773f02865a91bfc8ecc854
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 13:53:22 2009 +0800
+
+    Fix the case where rationals and bignums are added
+
+src/arith.c
+
+commit 7cd3033fec599f5f28d309b301c9af4b7609a847
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 13:41:07 2009 +0800
+
+    Add test for adding rationals and fixnums
+
+test/check_arith.c
+
+commit bf0f2c9afa4b27919c1026212d42a78e337566df
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 10 13:32:15 2009 +0800
+
+    Reverse order of adding rational and some other type
+
+src/arith.c
+
+commit 223e41d2d0f9184915275207a2979063ab512eda
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 15:27:57 2009 +0800
+
+    Add mpz_clear where expected is used
+
+test/check_arith.c
+
+commit c26fcf59532969f20387798aedb7e5a1f130c094
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 15:12:13 2009 +0800
+
+    Add a test for addition of rationals that results in a bignum result
+
+test/check_arith.c
+
+commit 6154f534aa8d10a7668cdaba396a76d5ecf6b2f7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 15:09:58 2009 +0800
+
+    Fix bug when coercing rationals to bignums
+
+src/arith.c
+
+commit 7b28d35a287dbe81dff6b159e0010c4fe60cfaef
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 14:59:06 2009 +0800
+
+    Simple tests of rational arithmetic
+
+test/check_arith.c
+
+commit 469096ce3c80105b431fc6dfce8540cd238ba07c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 14:58:10 2009 +0800
+
+    Fix usage of rational to integer coercions on rational ops
+
+src/arith.c
+
+commit 606058c3d96b40eb23f15b289fa774e79e78ab46
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 14:26:45 2009 +0800
+
+    Add support for rational numbers in carc_add
+
+src/arith.c
+
+commit 2ab0a7a63d4955521cb00b59fada7f848ea2dc92
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 13:28:51 2009 +0800
+
+    Add new function for rational coercions
+
+src/arith.c
+
+commit 8c0a5c7b5c66a3485c4382e7480cb56845f9b6e8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 12:06:55 2009 +0800
+
+    Some syntax fixes in coercions
+
+src/arith.c
+
+commit 18a084744724ca85657aa260edf8b96ebbf0c3db
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 8 12:03:39 2009 +0800
+
+    Add support for rational add and negation
+
+src/arith.c
+
+commit 621313a2d28d45aa205fce0a78d7512c8704955d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 19:16:00 2009 +0800
+
+    Change tes test for flonum no-force conversion to use modf
+
+src/arith.c
+
+commit f39e4757922c40569c50b8a9a20674e6763ae1be
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 19:10:18 2009 +0800
+
+    Check for modf in -lm
+
+configure.in
+
+commit 717fc9567ce9678b00a432335bd8bb98bcf98826
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 19:04:06 2009 +0800
+
+    Add check for frexp
+
+configure.in
+
+commit 8bcb7c6c760618492aa11c9bbc1c2479fd533c98
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 18:57:12 2009 +0800
+
+    Add rational and no-force fixnum and bignum coercion functions
+
+src/arith.c
+
+commit e9c5db9968bca13e0eaff12efafda21cd1e35040
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 11:18:40 2009 +0800
+
+    Add carc_coerce_rational
+
+src/carc.h.in
+
+commit b025b49520a3537526cae824f6290642e994057a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 11:16:17 2009 +0800
+
+    Add support for rational numbers
+
+src/arith.c
+
+commit 8667d26ca1fa5714f92bc05e50478c9470ab0da9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 10:46:27 2009 +0800
+
+    Rational number constructor
+
+src/carc.h.in
+
+commit 70e30b2e92aa70df78a7374421f806f9dbd68465
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 10:45:29 2009 +0800
+
+    Add rational type and template entries for it
+
+src/carc.h.in
+
+commit 9ab459b1511d760e8fce8c3c7ee0a977f4c0457a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 10:42:44 2009 +0800
+
+    Add separate type for rationals
+
+configure.in
+
+commit 2066148d8fd526c77d0ff78d989382d0b6773b02
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 10:41:49 2009 +0800
+
+    Change the bignum type to mpz_t
+
+configure.in
+
+commit 3b6a7ba9678480d21e9e65bcc1cd5cea5680f284
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 10:41:27 2009 +0800
+
+    Modify tests to reflect bignum integer rather than rational arithmetic
+
+test/check_arith.c
+
+commit 873c0fb86711d5ff6d0d0a1a1bd8db2fd429b2db
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 10:41:05 2009 +0800
+
+    Use true bignum arithmetic instead of rational arithmetic (a rational type to be added)
+
+src/arith.c
+
+commit 4351e371a81aed9d13dde28e54bf922cfda64197
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 01:06:28 2009 +0800
+
+    Add test for flonum-flonum multiplication
+
+test/check_arith.c
+
+commit 0c71d3acd80f6774f3e77c2226901668d5f693f2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 01:02:12 2009 +0800
+
+    Add tests for flonum addition, multiplication of fix-flonums, and misc multiplication
+
+test/check_arith.c
+
+commit cc734d5a238cd641ce52d7438844d28c60c7661a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 00:54:10 2009 +0800
+
+    Add a check for bignum-fixnum multiplication (compute the factorial of 100)
+
+test/check_arith.c
+
+commit 42267e7b0a2401c856b68f28297db22dcc33b6e0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 00:39:15 2009 +0800
+
+    Add a check for negating a non-numeric type
+
+test/check_arith.c
+
+commit e37c5e4d49935107b2b9aac2c2ce49bae95431c7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 00:34:51 2009 +0800
+
+    Remove carc_arith_op
+
+src/arith.c
+
+commit 1f408365c862ac4a406f34b265cbee3e9470acda
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Sep 6 00:34:20 2009 +0800
+
+    Modify addition tests to use __carc_add2 directly
+
+test/check_arith.c
+
+commit 18aa447916fd319c9104445ae71ae6c0bc10c51c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 11:41:52 2009 +0800
+
+    Remove definitions for future use for the time being
+
+src/carc.h.in
+
+commit 2fae3055ca1d5aa527643f7490b6a1222243f486
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 11:41:19 2009 +0800
+
+    Clean up the tests when compiling with no bignum support
+
+test/check_arith.c
+
+commit 0ccfcc61f7f1212e9a1bbb98200462c841e578a8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 11:41:08 2009 +0800
+
+    Clean up the results when compiling with no bignum support
+
+src/arith.c
+
+commit e6d7d63a2434fa77c20794210af4855983d82b2c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 11:29:48 2009 +0800
+
+    Remove v1 and v2 from test_mul_fixnum (not needed)
+
+test/check_arith.c
+
+commit 747b6d248fe8e4957f5e003bb6b74a7a9eca777e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 11:29:13 2009 +0800
+
+    Perform platform-specific tests for multiplicative overflow.
+
+src/arith.c
+
+commit 63282d3985eadcb7df02eefaf066213f5103feed
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 11:26:05 2009 +0800
+
+    Substitute the VALUE_SIZE where it is needed.
+
+configure.in
+
+commit fe82d41d86e5efe16a36f7102c1039d6f51c2962
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 11:25:44 2009 +0800
+
+    Obtain VALUE_SIZE from configure at compile time rather than using sizeof
+
+src/carc.h.in
+
+commit 97836cebc5bc3b58e76d51febb6e5f8d6c41a87e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Sep 5 10:47:16 2009 +0800
+
+    Add checks for fixnum arithmetic
+
+test/check_arith.c
+
+commit 0a6b6704e87adc421830c9cb7d631013c803adb5
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Sep 3 17:36:30 2009 +0800
+
+    Preliminary basic support for multiplication
+
+src/arith.c
+
+commit b3598590615c0e7172fcf2f9793baaf5504cd599
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 2 17:48:44 2009 +0800
+
+    Internal header file for arithmetic functions
+
+src/arith.h
+
+commit 65ba1fc4d58eb26827469a72075d3b19a0f3a3bf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 2 17:48:17 2009 +0800
+
+    Functions for negation and subtraction created
+
+src/arith.c
+
+commit a2b8da02618718d65fbb819845406842a057afea
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 2 17:47:14 2009 +0800
+
+    Added tests for negation of numbers
+
+test/check_arith.c
+
+commit 5eeb741a52a05ebb15b5f17fcfd300c2d3077dfc
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 2 17:24:22 2009 +0800
+
+    Create a header file giving all the basic arithmetic operations
+
+src/arith.h
+
+commit 3f3a7a3a7ddae731bdeffccbf6d2ed1814347af0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Sep 2 17:21:50 2009 +0800
+
+    Add a header for arithmetic functions (not installed by default)
+
+src/Makefile.am
+
+commit 7563a515cac640db446d0cd604d58e60ce563a0e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 14:01:36 2009 +0800
+
+    Add tests for invalid data structures and the like
+
+test/check_arith.c
+
+commit c8845262cf0dee08fa838fc62f267acf60eae622
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 14:00:09 2009 +0800
+
+    Make carc_arith_op return CNIL on invalid operator
+
+src/arith.c
+
+commit 6cad903c9c8384afb01cf1d7c12f4ef92357d577
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 13:57:16 2009 +0800
+
+    Bignum coercion tests added
+
+test/check_arith.c
+
+commit 3141694c37fb05980f312c0088154015e1377a6b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 13:18:37 2009 +0800
+
+    Add fixnum coercion checks
+
+test/check_arith.c
+
+commit 00574cefee30bcc177b59b7db8e8e10012210f94
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 13:16:15 2009 +0800
+
+    Remove redundant check for flonum->fixnum overflow
+
+src/arith.c
+
+commit 3bc0e55d9d38ebbb42b26072d234cd2abd9bd77f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 13:06:31 2009 +0800
+
+    Change type tests to cover nils and trues.
+
+src/carc.h.in
+
+commit c9b32fc7da08b13b31df8af609bd40bf836a6081
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 12:59:18 2009 +0800
+
+    On fixnum coercion, add a check for big flonums (should convert to nil)
+
+src/arith.c
+
+commit f6997f1edf95819a8d1c35f4522836e8ee4d2daf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 12:58:29 2009 +0800
+
+    Add checks for math library
+
+configure.in
+
+commit 4c530763719699065a4673c83d978084442965be
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 12:58:13 2009 +0800
+
+    Change types for nil and none
+
+src/carc.h.in
+
+commit aaf4c10a7aef81b4da25ce14b838691dfbd87e37
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 11:59:15 2009 +0800
+
+    Add break statement at the end of T_BIGNUM
+
+src/arith.c
+
+commit 9f2f425402d2c9f495ed699253a455a6f4e69501
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 11:56:43 2009 +0800
+
+    Use the rep for flonums on fixnum coercion
+
+src/arith.c
+
+commit fdbd9c8cfcd77f3cd0bb318886d5501d74f831ba
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 11:50:24 2009 +0800
+
+    Fix prototype for cons
+
+src/carc.h.in
+
+commit 605e5b9a436848219b28fbd057db96626ccbd678
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Sep 1 11:49:38 2009 +0800
+
+    Add an inline function for consing values
+
+src/carc.h.in
+
+commit c60e72cec839f98bf01d22cb10b6c7d85f15c516
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 14:14:24 2009 +0800
+
+    Complete bignum addition tests
+
+test/check_arith.c
+
+commit de7fd0687df149a2b2e2c4079075a104b87e205b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 13:31:51 2009 +0800
+
+    Change test for fixnum arithmetic
+
+test/check_arith.c
+
+commit 6afe6f481ef7685b4df2599d66b828bd77925640
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 13:30:50 2009 +0800
+
+    Add some simple tests for adding bignums yielding a fixnum
+
+test/check_arith.c
+
+commit 3496ec2fca14f3d00f0e07738869b6d86b85e43c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 13:21:05 2009 +0800
+
+    Added tests for the conversion of fixnums to flonums
+
+test/check_arith.c
+
+commit ab986a90cbb0ff79608f8c085632e6dbd5208b35
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 13:18:49 2009 +0800
+
+    change signal_error message in carc_coerce_bignum
+
+src/arith.c
+
+commit d4a484c2c6c1b84ab8a6753ae9aaade08dfc520e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 13:12:03 2009 +0800
+
+    return the representation of the flonum in a flonum "coercion"
+
+src/arith.c
+
+commit 1cca95862130b74c6d4a2f29f70e4e4a7b5cef37
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 13:10:38 2009 +0800
+
+    test conversions of bignums to flonums
+
+test/check_arith.c
+
+commit 886b301afe90d15d5c00ffcb6ecf87994f8a6e8d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 12:41:37 2009 +0800
+
+    Add test of adding flonums + fixnum as well
+
+test/check_arith.c
+
+commit bc48674a4270578f7e6b93224459876f0c84f250
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 31 12:33:54 2009 +0800
+
+    Added test for fixnum + flonum
+
+test/check_arith.c
+
+commit ed9bb423bcc6e1f9ae74dc0b54d06c27f3bb4b47
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 26 03:51:31 2009 +0800
+
+    Substitute SRC_SUBDIRS (for unit tests)
+
+Makefile.am
+
+commit 82d6128f14dbe4b36ef6d85d1b404628fffffcaa
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 26 03:50:43 2009 +0800
+
+    Change behavior of the system when gmp and check are unavailable
+
+configure.in
+
+commit d4a69ad0f311dfe55d85a318d8d5f7437ccfca42
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 26 03:45:03 2009 +0800
+
+    Failures for (optional) dependencies on GNU Check and GMP now cause configure to abort
+
+configure.in
+
+commit 95643b6b48b0a24fb69ae6390ce09963835e58cf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 26 03:34:31 2009 +0800
+
+    Use AC_MSG_FAILURE to flag the sizeof(long) != sizeof(void *) unequal case
+
+configure.in
+
+commit 7175ca51f2130783921763d99f887c0418043ce8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 26 03:32:24 2009 +0800
+
+    Make the unit tests based on GNU Check optional
+
+configure.in
+
+commit cbfab71025855c332b51db1bffd9ae17e292b70a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 26 03:05:29 2009 +0800
+
+    Add switch to enable/disable readline support as desired
+
+configure.in
+
+commit 0747dabf22229ce82f2be69f49e694ba87a496ed
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 23:28:31 2009 +0800
+
+    Modify the conditionals for the case when we don't have gmp
+
+src/arith.c
+
+commit 875f3946b8f6ae72b3e8f6436fbed9dcd289c95e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 18:37:09 2009 +0800
+
+    Ignore all the files in the coverage dir
+
+.gitignore
+
+commit 1d7edf029adfa7bf66ef9b27546d18f33d6bfcfb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 18:35:48 2009 +0800
+
+    Create new cript to generate a code coverage report based on lcov
+
+coverage.sh
+
+commit effc6f40a7b9d00eb12ba6309a535cc2c55ced31
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 18:17:12 2009 +0800
+
+    ignore gcov files
+
+.gitignore
+
+commit e3b618bab1ee61646663090962774c57bb9e0f13
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 18:14:40 2009 +0800
+
+    Ignore files generated by gcov options
+
+.gitignore
+
+commit 783cde1f40c800c7a4e092675f2be1e090f76b33
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 17:56:20 2009 +0800
+
+    Revise the test so that conversions of bignums to fixnums occur where possible
+
+test/check_arith.c
+
+commit 932679bc91436bd63019876df46e14be6dd3370a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 17:51:25 2009 +0800
+
+    Try to perform automatic conversion of a bignum value into a fixnum when possible
+
+src/arith.c
+
+commit d73d72b8311738d1645e052e922fbbfa65ed4bc3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 17:22:32 2009 +0800
+
+    Add test for bignum promotion in adding fixnums to bignums
+
+test/check_arith.c
+
+commit 43d2bf8d89582adf64cab2a7eef3cfa9fb9340d6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 16:55:44 2009 +0800
+
+    Ignore the check_* files
+
+.gitignore
+
+commit c82fe16155c23b124d9857b1d4b0f159395a61c0
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 16:55:17 2009 +0800
+
+    Make check_arith the main test here
+
+test/Makefile.am
+
+commit ad38c174e3005e0c29eb2953a0930fe4015ed61e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 16:54:52 2009 +0800
+
+    Remove useless variables
+
+src/arith.c
+
+commit 525e01437c92fae15ab360ade4e44585736cab36
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 16:54:32 2009 +0800
+
+    use LIBCARC_LIBS as subst
+
+carc.pc.in
+
+commit 768f9b55cc462ece32e773c68140e8d1ea560a47
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 16:51:54 2009 +0800
+
+    Create test case for fixnum arithmetic
+
+test/check_arith.c
+
+commit b4207b93ece7c6472cdc99447744d104a942b243
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:55:50 2009 +0800
+
+    Define LIBCARC_LIBS properly
+
+configure.in
+
+commit 80909a1976b4170886241e744ae54caa01dbd5de
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:42:38 2009 +0800
+
+    Test is now check_arith
+
+test/Makefile.am
+
+commit aef43d01e580e74dc13ea83989c16d9875926691
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:41:08 2009 +0800
+
+    conses now hold values
+
+src/carc.h.in
+
+commit 024a0618dc8d9b60bd2d489bf3131acc02521527
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:40:04 2009 +0800
+
+    Delcare a value x
+
+src/arith.c
+
+commit ba6fecef1b1f0f60b992f58f96cd0606200c708e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:39:41 2009 +0800
+
+    Call to signal_error fixed
+
+src/arith.c
+
+commit a03612ceabda510ac7a03fdb56cf542096687026
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:39:20 2009 +0800
+
+    Missing colon added
+
+src/arith.c
+
+commit dd50daa3ac17068c4271249423240445608693da
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:38:50 2009 +0800
+
+    Define FIXNUM_MAX in terms of LONG_MAX instead
+
+src/carc.h.in
+
+commit 4b619fc77f77af05e75a5875e8355cb09a9fda8f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:36:44 2009 +0800
+
+    Clean up add2_bignum, generating a temporary bignum for coercion
+
+src/arith.c
+
+commit b51a2bc283410738eaa6c464df4ece685166ba46
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:29:56 2009 +0800
+
+    Remove extra semicolon in MP_BVALUE
+
+configure.in
+
+commit 54ff96ddf64a3d09ae02c9e887fa837d6041eb3f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:27:02 2009 +0800
+
+    Remove carc_load_file
+
+src/carc.h.in
+
+commit 2bf583efa1fb2afe0f9e7e68ce8572a06ec8a8ca
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:26:15 2009 +0800
+
+    Restore definition of struct carc;
+
+src/carc.h.in
+
+commit da93cdb490d615c69dc990e54662f55a13db6b1b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:18:43 2009 +0800
+
+    rethink definition for foreign functions
+
+src/carc.h.in
+
+commit 2ab64f6fa1d499e86ef4de705969bba342468f52
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:17:21 2009 +0800
+
+    Add semicolons after substitutions
+
+src/carc.h.in
+
+commit 1f9a53c46dcfb1e2b8088244dad02e4ff90fbe8d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:15:25 2009 +0800
+
+    Remove carcP.h
+
+src/Makefile.am
+
+commit e820d340201cebca3e2db1cf65e831fa4437bd26
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:13:11 2009 +0800
+
+    Create entry point for arithmetic operators
+
+src/arith.c
+
+commit 9282e8124193a794fed86acc665f124be1582345
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:12:38 2009 +0800
+
+    Add prototype for carc_arith_op
+
+src/carc.h.in
+
+commit 7a1e7bdaf20cf6be16d22b45e3b10e8f2a33abcd
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:03:16 2009 +0800
+
+    Define CAR and CDR macros for lists
+
+src/carc.h.in
+
+commit 3a18959da73d8d6c9a2c57f53d191151c29c01c7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 14:00:52 2009 +0800
+
+    implement bignum addition
+
+src/arith.c
+
+commit 9d94bd12c20ce210ce0120d7a3bb00128fe571bf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 12:49:26 2009 +0800
+
+    Change carc_coerce_flonum to not allocate, and define carc_coerce_bignum
+
+src/arith.c
+
+commit 4263a6ac3a96d6e58b5a8014ded8be2b5a8b8aa1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 12:48:40 2009 +0800
+
+    Modify the carc_coerce_flonum and carc_coerce_bignum so they don't allocate
+
+src/carc.h.in
+
+commit da1da007191a860449be2581700dd74380800963
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 12:26:04 2009 +0800
+
+    Add prototypes for flonum and bignum creators as well as numeric coercions
+
+src/carc.h.in
+
+commit 75fde38fc4dd8010d45109a75f5cedd7948713d8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 25 12:24:28 2009 +0800
+
+    Code to make bignums and coerce types into flonums added
+
+src/arith.c
+
+commit 51c6b11e3d9bdb600f934935bbd37ba17db05853
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 24 17:53:57 2009 +0800
+
+    More definitions
+
+src/carc.h.in
+
+commit 1d39dbb23679522c663fabd49aee57640024d812
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 24 17:53:51 2009 +0800
+
+    Preliminary code for adding numbers
+
+src/arith.c
+
+commit 205bf2b54f4c31ee010729c02a4a18778d371d3d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Aug 24 17:47:45 2009 +0800
+
+    Make a typedef for bignum_t instead of using mpq_t directly
+
+configure.in
+
+commit 48f8b60c958e4a13226865b3045dd74fe9b4a9ed
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 14:16:39 2009 +0800
+
+    Readd fixnum type to type enumerations
+
+src/carc.h.in
+
+commit f8be2effa4aeb69fced09a8d48d4597cce0eb6fe
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 14:05:48 2009 +0800
+
+    Add fixnum predicate
+
+src/carc.h.in
+
+commit c15437c20753c83e8b108f1a1cb89ecee7b7c93b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 14:02:21 2009 +0800
+
+    Merged definitions from carcP.h.in to here
+
+src/carc.h.in
+
+commit 1354aa868de478fa986bcb3e88c6f7de4455a812
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 14:01:48 2009 +0800
+
+    Add check for gmp.h
+
+configure.in
+
+commit a7de8a08a67028bdc0ada26a48a69ab41c8965a7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:59:06 2009 +0800
+
+    Ignore carc.h instead of carcP.h
+
+.gitignore
+
+commit 2796c12374d998f701aad98fee3d935f2b969b31
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:58:29 2009 +0800
+
+    Generated from carc.h.in
+
+src/carc.h
+
+commit 7486775eb5e83fd83dce4e4e65bf8748a0e08883
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:57:59 2009 +0800
+
+    Merged to carc.h.in
+
+src/carcP.h.in
+
+commit 470d713bb093a10ff096a559b017e33e3b5640ac
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:57:17 2009 +0800
+
+    Use carc.h.in instead of carcP.h.in
+
+configure.in
+
+commit 7055aae9b5fb46f2290c846ea89eca098e5c55c2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:51:16 2009 +0800
+
+    Remove type tag for fixnums since fixnums aren't boxed
+
+src/carcP.h.in
+
+commit 1b70230da304361069125ceb63ecc94a4c42c7f8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:50:40 2009 +0800
+
+    Basic definitions for fixed point numbers
+
+src/carc.h
+
+commit 91cb79941af14f04e32f113d0e023c8c346bce67
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:48:00 2009 +0800
+
+    Empty file -- for revision
+
+src/alloc.c
+
+commit 787fb8350e2ae6d4bd9b7c2b56d7fc45a8b7cbbe
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Aug 23 13:46:33 2009 +0800
+
+    add arith.h to sources
+
+src/Makefile.am
+
+commit 223694296d3044be9681e67829d66169b0abcd59
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Aug 20 17:50:38 2009 +0800
+
+    remove uint64_t definition of fixnum
+
+src/carcP.h.in
+
+commit d33944788322d632bdffd454b0410c469e08c144
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Aug 20 17:49:48 2009 +0800
+
+    use mpq_t instead of mpz_t to represent bignums/rationals
+
+configure.in
+
+commit fc6611dec392ffc238d6c4252f18abfbfc69b39c
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 19 16:11:07 2009 +0800
+
+    Add definitions for fixnums, flonums, and bignums
+
+src/carcP.h.in
+
+commit 812dac755b32894564a82ae6161f9ebccd916c8a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Aug 19 15:55:11 2009 +0800
+
+    Add checks that sizeof(long) == sizeof(void *)
+
+configure.in
+
+commit 39a43bd8dd5629c25dfdb5a436e5eaebc8331091
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 23:51:35 2009 +0800
+
+    Not required (should merge into carcP.h)
+
+src/alloc.h
+
+commit ed28009274461c174628d0225d1a9b6af3270303
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 23:07:51 2009 +0800
+
+    New source file
+
+src/carc.c
+
+commit ff8d8ceb3583a631b167e0c6fd7cadb10842e443
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 23:07:27 2009 +0800
+
+    ignore carcP.h (autogenerated file)
+
+.gitignore
+
+commit a8ec045277640e13cdeec27b2f32ce0aaf9db39d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 23:06:56 2009 +0800
+
+    Core source file
+
+src/carc.c
+
+commit 4d9af7c0cd370880fa1c878de93771621b72b270
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 23:06:29 2009 +0800
+
+    Generated from carcP.h.in
+
+src/carcP.h
+
+commit 919daf827794ba96e5284786e7c7ba2e58997836
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 23:05:34 2009 +0800
+
+    Detect GMP
+
+configure.in
+
+commit 8643ad01dc2718b5ea214d01080d5107f5c78d54
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 17:57:33 2009 +0800
+
+    Change the definition of a value structure into an unsigned long
+
+src/carc.h
+
+commit fd732723574d943b8879dbc170c1ca78498b95b6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 17:55:09 2009 +0800
+
+    carcP.h should be generated from here instead
+
+src/carcP.h.in
+
+commit fde097fb2827f108bd76466590300c5ae1b2c148
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 17:53:14 2009 +0800
+
+    Restore this file (rewrite carcP.h instead)
+
+src/carc.h
+
+commit 23d7693ca2c760bbd9233040bcc26d53b0871971
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 17:32:10 2009 +0800
+
+    Make this carc.h.in
+
+src/carc.h
+
+commit 33f52eac1a33efcb7b5b26fb0cb041094ba52ec2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Aug 11 17:28:43 2009 +0800
+
+    empty
+
+src/carc.h
+
+commit 11cd8905333f7bb5a6c8d42502025a0e4e8b1cec
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Jul 8 14:29:10 2009 +0800
+
+    Define a basic cell
+
+src/carcP.h
+
+commit 091bdfcb550479db520ca9bdca48da95c32864f1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Jul 8 14:26:53 2009 +0800
+
+    Add number definition
+
+src/carc.h
+
+commit 426a1c05acb42d1cfc0417c252119809b6e21900
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Jul 8 14:23:46 2009 +0800
+
+    Create some basic definitions.
+
+src/carc.h
+
+commit 3ac174f62fbdec993c2e1b8535bca96d0784d017
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Jul 6 15:02:23 2009 +0800
+
+    Remove TLSF first
+
+src/target.h
+src/tlsf.c
+src/tlsf.h
+
+commit be1d9c7c14190b0fcf86e4901250f444a979c3d3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Jul 6 15:01:31 2009 +0800
+
+    Remove checks for mmap, sbrk, and pthread (temporarily)
+
+configure.in
+
+commit 12d6adf0d80e48741040f820cb41880a1da6ccf4
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Jul 6 15:00:58 2009 +0800
+
+    Remove note about TLSF
+
+AUTHORS
+
+commit 0b00f837cece1829e64a58f5da5040594ab2808b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Jul 2 13:04:06 2009 +0800
+
+    Add cscope.out to the list of ignored files.
+
+.gitignore
+
+commit a0c05b4fa36a65c65e72e732c27c4bb7f57add50
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Jul 2 13:02:10 2009 +0800
+
+    Misc changes (soon to be discarded)
+
+test/check_alloc.c
+
+commit 154cc676f3055b7622740781f97060c5047b6273
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Jul 2 13:01:29 2009 +0800
+
+    Lay the groundwork for moving to use of TLSF for memory allocation.
+
+src/alloc.c
+
+commit 4d9592f3a55057bd5cc5a2c662b3b67ceaaaaa8f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Jul 2 13:00:42 2009 +0800
+
+    Add tlsf_each_block function
+
+src/tlsf.h
+
+commit e17758a6d9409650549e33b0d04653960aa23e7f
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Jul 2 13:00:21 2009 +0800
+
+    Use autoconf-defined macros to control use of locks, mmap, and sbrk.
+
+src/tlsf.c
+
+commit 7894d229b02c007a46d38215f180d4915606c0e3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Jul 2 12:59:09 2009 +0800
+
+    Add tlsf.* to the sources
+
+src/Makefile.am
+
+commit 3477f38455eb18c4e8bbafcc1620e9656caffd00
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Jul 2 12:58:47 2009 +0800
+
+    Add checks for pthread and friends (used by tlsf)
+
+configure.in
+
+commit 709bf12bda2f69549e7f369d76538c7271d0b6d3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 18 13:32:47 2009 +0800
+
+    Add a note that we're using the TLSF memory allocator
+
+AUTHORS
+
+commit 57bb7adebc6e11040ff265f264857083de1c5a10
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 18 13:16:43 2009 +0800
+
+    Preliminary use of the TLSF allocator inline
+
+src/target.h
+src/tlsf.c
+src/tlsf.h
+
+commit f2b10e53138a5d519f210f8b27fc00a9b83d1a1b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 18 12:20:20 2009 +0800
+
+    Sketch the code for carc_heap_free
+
+src/alloc.c
+
+commit 1188c353a2c447aeb4d9b61a612a5727362f6111
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 17 13:55:16 2009 +0800
+
+    Revise _carc_ftree_delete
+
+src/alloc.c
+
+commit 12e74813a18e2cdb3a7aa30f80eaf509bf77b2ef
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 17 13:55:05 2009 +0800
+
+    Write test for _carc_ftree_delete
+
+test/check_alloc.c
+
+commit 42d9ffdcdf8c6122609f59f01d36e7f3137889a2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 17 13:39:15 2009 +0800
+
+    Change the address of the FSF in all comment headers.
+
+Makefile.am
+configure.in
+src/Makefile.am
+src/alloc.c
+src/alloc.h
+src/carc.h
+test/Makefile.am
+test/check_alloc.c
+
+commit 6237a42dca5ad8397916c7299c88c333fc48fb55
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 17 13:29:46 2009 +0800
+
+    Add alloc.h to the sources.
+
+src/Makefile.am
+
+commit 95f2e3a11ade23845253731a3f744de1826b6c92
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Apr 12 18:01:28 2009 +0800
+
+    Add an extra file so that the m4 directory isn't deleted.
+
+m4/.keep
+
+commit 4a52afad3cef2c787b7a7f5992d010cab9d1f7bf
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Apr 12 04:20:44 2009 +0800
+
+    Add untested code for Cartesian tree deletion.
+
+src/alloc.c
+
+commit 3edc701f8f801899da7936308f0e6aa0e064f1bc
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Apr 12 03:23:30 2009 +0800
+
+    Reorganize into tests for allocation, tree operations, and freeing.
+
+test/check_alloc.c
+
+commit 92ba1a12c4283228a6b6ed49af9d58864215f003
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Apr 12 03:06:16 2009 +0800
+
+    Use the new FTREE_SIZE macro to compute sizes in _carc_ftree_demote
+
+src/alloc.c
+
+commit ecbe56a9caf213dbc565ddcd49f51662e3197a41
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Apr 12 03:05:17 2009 +0800
+
+    Write test for _carc_ftree_demote
+    
+          * Simple test that uses the sample demotion tree in Johnson 1991.
+
+test/check_alloc.c
+
+commit ea43fc46e52dabe98a30e4b84423e3fecbfcaf59
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sun Apr 12 00:39:27 2009 +0800
+
+    Fill out _carc_ftree_demote.
+
+src/alloc.c
+
+commit 9fc7ea38c5166be8c26b67a9ffaddcc9760e8579
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 11 22:19:23 2009 +0800
+
+    Inline the node splitting procedure
+
+src/alloc.c
+
+commit 01299d55293b9c6fc6629ef0be4ef027f7150ab6
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 11 19:40:38 2009 +0800
+
+    add -static to LDFLAGS
+
+test/Makefile.am
+
+commit 4e119846eddb6f05393733a12157d7a306421a76
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 11 16:30:07 2009 +0800
+
+    Add more skeleton code for car_heap_alloc
+
+src/alloc.c
+
+commit 47ebeea124a087b871385a65f442e4a684e6671e
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 11 16:23:19 2009 +0800
+
+    Add a quick check for the D2B macro.
+
+test/check_alloc.c
+
+commit f505a147b492d88b1a28896e1c1e11bd204ba7cd
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Sat Apr 11 16:22:30 2009 +0800
+
+    Correct definition of D2B, using BHDRSIZE.
+
+src/alloc.h
+
+commit 4085167b744d2b6f1c92af4981163665895a9857
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 04:55:48 2009 +0800
+
+    Delete the node from the tree if splitting would yield a block smaller than a Bhdr.
+
+src/alloc.c
+
+commit 72048bf69b7f3d6098548e57a7d06158ddaf87eb
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 04:41:47 2009 +0800
+
+    Add skeleton code for ftree_alloc and related functions.
+
+src/alloc.c
+
+commit 31e2f1daaf010dfedd17f5018ec4fa7df953728b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 04:01:59 2009 +0800
+
+    Ensure that the left and right nodes of the new free node are NULL.
+
+src/alloc.c
+
+commit 68a8625f4a1749f8507af106a8c19cb0d8a5b692
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 04:01:32 2009 +0800
+
+    Check the left and right nodes of the free block created by _carc_new_segment.
+
+test/check_alloc.c
+
+commit 569ec7d0520668714068adab8235cb51864ec439
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 04:00:09 2009 +0800
+
+    Undo the wrong comment-region
+
+src/alloc.h
+
+commit 56e949355c23d7391ac058b4949fd05dfaa2b33d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:54:45 2009 +0800
+
+    Make _carc_new_segment declare the size of the actual memory represented by the Bhdr
+
+src/alloc.c
+
+commit b646d557808305473b85f11da2b73ea80b0d75e2
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:51:29 2009 +0800
+
+    Change the formula for the B2NB macro for change in the size field of a Bhdr.
+
+src/alloc.h
+
+commit a5ff45498b26385f1a72ef71dbc510a39ff5d594
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:29:08 2009 +0800
+
+    Write out basic structure of carc_heap_alloc
+
+src/alloc.c
+
+commit 98ce05406e33a02b3d40e2c79ff4afdc8f172ee1
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:19:24 2009 +0800
+
+    Define carc_alloc_init.
+
+src/alloc.c
+
+commit f257a6db55402c74f13de8a48be871d2eb391a09
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:07:20 2009 +0800
+
+    Change carc_alloc_init to a void function.
+
+src/alloc.h
+
+commit ead1e014c9ef17c87b24fdb8a8af6f1ceb32bb58
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:06:47 2009 +0800
+
+    Add carc_alloc_init to the prototypes.
+
+src/alloc.h
+
+commit d674376c54e6f99088a9363ee9eeb065f677ee83
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:05:16 2009 +0800
+
+    Define default heap increment (16 pages).
+
+src/alloc.h
+
+commit c59a79e9063c3f9178bc6375658f215e3cc6463d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 03:01:58 2009 +0800
+
+    Add directives for building carc.pc
+
+configure.in
+
+commit 77a0c0ec0b66c1a38c17e3cbeebcd171cb2d5c04
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 02:54:39 2009 +0800
+
+    Install carc.pc in the pkgconfig directory.
+
+Makefile.am
+
+commit 4a91520363a12bf0f208ca144d9e4f93ccc5a780
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Fri Apr 10 02:52:30 2009 +0800
+
+    Add carc.pc to the ignore list (autogenerated from carc.pc.in).
+
+.gitignore
+
+commit b1f4ea54d5b69ef2a28a775402d2c27c74368c77
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 18:20:00 2009 +0800
+
+    pkgconfig stuff
+
+carc.pc.in
+
+commit bf862526ac7764d90cfc2af6fd11c6dad8655108
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 17:50:26 2009 +0800
+
+    Revise unit test for segment allocation for fixup.
+
+test/check_alloc.c
+
+commit a7e8f57af8dd4db4c4a57e6dfdff8615747a0ddd
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 17:49:26 2009 +0800
+
+    definitions cleanup
+
+src/carc.h
+
+commit 3c61ef1f4ab758c32deb83fcb5cd59e9242b712d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 17:49:08 2009 +0800
+
+    Add block header size calculations
+
+src/alloc.h
+
+commit 40056cd239fc1b92932bc05c7e5bc0df8ebd2bfc
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 17:47:24 2009 +0800
+
+    ignored executables and libraries
+
+.gitignore
+
+commit 7f242bbd57ea99b4479a2e1cd543a654cb5ea7ae
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 17:46:27 2009 +0800
+
+    revised computations for allocation and stuff
+
+src/alloc.c
+
+commit 07b990daafa7e53b0534659285fc753937fc6dd3
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 17:45:44 2009 +0800
+
+    added stuff for unit tests
+
+configure.in
+
+commit 8a17598b59d5ffe106d747d8143c8811c5197cf8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 16:58:17 2009 +0800
+
+    add compile to ignored files
+
+.gitignore
+
+commit 452c3f6692e25d24154c4bc232f89808fa1252c8
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 16:56:01 2009 +0800
+
+    basic checks added
+
+test/check_alloc.c
+
+commit 8c8ce57c594048ecbe9fbf13d18a245f2a7dabad
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 16:50:18 2009 +0800
+
+    Set the next field when a new segment is created.
+
+src/alloc.c
+
+commit bef3258657e5b6fafa5a3aebadc23ae451e3b28b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 16:49:06 2009 +0800
+
+    In _carc_new_segment, set the new segments size properly.
+
+src/alloc.c
+
+commit 79644ddaa7181ac37613c63a6be7c1eeeb10e93b
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 16:33:13 2009 +0800
+
+    Create new makefile for unit tests.
+
+test/Makefile.am
+
+commit 23e231293254cd03249a24b94cd5059481afab20
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Thu Apr 9 16:30:41 2009 +0800
+
+    Add test subdirectory
+
+Makefile.am
+
+commit 8e2232cc366a94da01fd4fb4c1e08cae75e26f44
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 21:22:00 2009 +0800
+
+    Make fixes to get the function to compile.
+
+src/alloc.c
+
+commit b484df468e6094f64fbb1ba7959d6a13160630c9
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 21:21:41 2009 +0800
+
+    Modified Shdr structure to make everything compile cleanly.
+
+src/alloc.h
+
+commit d679b2dd4da464981b63e32485991c5c0a41bfce
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:59:01 2009 +0800
+
+    Add autoconf-generated files to the ignore list.
+    
+        * Obviously it's pointless to put these files in version control
+          or to make git worry about them.
+
+.gitignore
+
+commit 5203412cb96d65766d4bbf04408d57b46e8c11f7
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:54:18 2009 +0800
+
+    Create somewhat empty README file just to satisfy autoconf et. al.
+
+README
+
+commit 6ec1eea02508e99430ec778b1869a83f04e08647
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:51:18 2009 +0800
+
+    Dummy NEWS file required by automake, et. al.
+
+NEWS
+
+commit d58047abe4e7e907fde54321173598a53ee13d63
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:48:00 2009 +0800
+
+    Initial changelog.
+
+ChangeLog
+
+commit 389b3124df1ad473ae54400bc089181088832638
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:47:05 2009 +0800
+
+    Authors list
+
+AUTHORS
+
+commit 26e41aedf2ebe14641197ca4a881db7a39a0a8dc
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:42:52 2009 +0800
+
+    add ACLOCAL_AMFLAGS as suggested by autoreconf
+
+Makefile.am
+
+commit 69c630a6b8c149d94b60f83ea8776a3dd46b5dcc
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:42:31 2009 +0800
+
+    Add AC_CONFIG_MACRO_DIR directive as suggested by autoreconf
+
+configure.in
+
+commit 21b3e4fe09fdcece69706bbab8df40bc86a5985d
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:37:20 2009 +0800
+
+    Make a basic version of the segment allocator
+
+src/alloc.c
+
+commit 80f783b6bfa117ca7935bc9c6cf8938a42aa7c15
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 20:36:33 2009 +0800
+
+    Initial version of automake makefile for main CArc.
+
+src/Makefile.am
+
+commit 96e515bab48b2a47cfcc74f51b9a7782f65f8a24
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 17:23:54 2009 +0800
+
+    Create initial toplevel Makefile
+
+Makefile.am
+
+commit e3b5296ba07d1748a09fab91c1ed5d0bc77fa258
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Wed Apr 8 17:22:25 2009 +0800
+
+    Created configure.in with basic checks.
+
+configure.in
+
+commit f015a3c5b23328550a820f34e4f9758c7236c11a
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Apr 7 04:34:17 2009 +0800
+
+    Initial common defines used everywhere
+
+src/carc.h
+
+commit e7e3458bf6622470b845336862e6d8d9ab91b6ca
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Apr 7 04:30:20 2009 +0800
+
+    Add idempotent ifdefs.
+
+src/alloc.h
+
+commit 33c9c6969f0554154b9d4ddefc04001a249d9093
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Apr 7 01:55:24 2009 +0800
+
+    add info about page sizes
+
+src/alloc.h
+
+commit a18bc08fdcc9041ee347334223a6be4749693c14
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Tue Apr 7 01:55:09 2009 +0800
+
+    mmap-based allocator for memory segments
+
+src/alloc.c
+
+commit a0b793feb727ff10bcbfebaecffaed25a29d9442
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Apr 6 11:35:15 2009 +0800
+
+    Change firstblock so that it becomes a pointer, so we can align it properly
+
+src/alloc.h
+
+commit 374f60f3c388284b5aa736dfd9a14632a4ba5b96
+Author: Rafael Sevilla <dido@imperium.ph>
+Date:   Mon Apr 6 11:05:40 2009 +0800
+
+    segment headers
+
+src/alloc.h
+
+commit 623b38148d7c06dfc3f0fe67e5bfa11e7f9e3b00
+Author: Rafael Sevilla <dido@cc.(none)>
+Date:   Wed Apr 1 02:56:31 2009 +0800
+
+    Add carc_heap_alloc, carc_heap_free, and include extra pointers for a linked list of allocated blocks
+
+src/alloc.h
+
+commit 07e17e92d8dfa2ccd3648502b218457c67b3d439
+Author: Rafael Sevilla <dido@cc.(none)>
+Date:   Wed Apr 1 02:10:42 2009 +0800
+
+    fill out doxygen-style documentation, create new D2B macro
+
+src/alloc.h
+
+commit bcad91efade555e4df7226b538e905e21abb2ed6
+Author: Rafael Sevilla <dido@cc.(none)>
+Date:   Tue Mar 31 17:51:39 2009 +0800
+
+    Add some skeleton code for doing the Cartesian tree rebalancing algorithm
+
+src/alloc.c
+
+commit 9d7e3c1e299314447b12d8cc1c634d732f4a8e81
+Author: Rafael Sevilla <dido@cc.(none)>
+Date:   Tue Mar 31 17:44:19 2009 +0800
+
+    Define the block header and other constants, as well as a macro for the block header stuff
+
+src/alloc.h
+
+commit d0d757b13ac79da298be038e8b38eb20de758a32
+Author: Rafael Sevilla <dido@cc.(none)>
+Date:   Tue Mar 31 16:52:17 2009 +0800
+
+    gitignore
+
+.gitignore
+
+commit 8193a84955e722c8a60beb27cf1a877bbc87f204
+Author: Rafael Sevilla <dido@cc.(none)>
+Date:   Tue Mar 31 16:02:05 2009 +0800
+
+    GPLv3 license text
+
+COPYING
+
+commit 92d35b74397bb8e308e99878563c8f6886a560ea
+Author: Rafael Sevilla <dido@cc.(none)>
+Date:   Tue Mar 17 17:35:37 2009 +0800
+
+    initial import (nearly empty)
+
+src/alloc.c
