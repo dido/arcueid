@@ -18,15 +18,27 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
   02110-1301 USA.
 */
+#include <stdio.h>
 #include <stdlib.h>
 #include "carc.h"
 #include "vmengine.h"
 #include "alloc.h"
+#include "arith.h"
+
+int vm_debug = 0;
+FILE *vm_out;
+
+#undef VM_DEBUG
+
+#ifdef VM_DEBUG
+#define NAME(_x) if (vm_debug) {fprintf(vm_out, "%p: %-20s, ", ip-1, _x); fprintf(vm_out,"sp=%p", sp);}
+#else
+#define NAME(_x)
+#endif
 
 /* do not use spTOS */
 #define IF_spTOS(x)
 
-#define NAME(_x)
 #define IMM_ARG(access, value) (access)
 #define vm_value2i(x,y) (y=x)
 #define vm_Cell2i(x,y) (y=(value)x)
@@ -41,7 +53,7 @@
 #define IP		(ip)
 #define SET_IP(p)	({ip=(p); NEXT_P0;})
 #define NEXT_INST	(cfa)
-#define INC_IP(const_inc)	({cfa=ip[const_inc]; ip += (const_inc);})
+#define INC_IP(const_inc)	({cfa=IP[const_inc]; ip+=(const_inc);})
 #define DEF_CA
 #define NEXT_P1	(ip++)
 #define NEXT_P2	({if (--quanta <= 0) goto endquantum; goto *cfa;})
@@ -73,7 +85,14 @@ enum {
 
 #endif /* !defined(__GNUC__) */
 
+#define spTOS (sp[0])
+
 Inst *vm_prim;
+
+void printarg_i(value i)
+{
+  fprintf(vm_out, "%ld ", i);
+}
 
 void carc_vmengine(carc *c, value thr, int quanta)
 {
@@ -81,14 +100,6 @@ void carc_vmengine(carc *c, value thr, int quanta)
   value *sp;
   Inst *ip, *ip0;
   value code;
-
-#define spTOS (sp[0])
-
-  t = &REP(thr)._thread;
-
-  code = VINDEX(t->funr, 0);
-  ip0 = ip = (Inst *)&VINDEX(code, t->ip);
-  sp = t->sp;
   static Label labels[] = {
 #include "carcvm-labels.i"
   };
@@ -96,8 +107,18 @@ void carc_vmengine(carc *c, value thr, int quanta)
 
   if (thr == CNIL) {
     vm_prim = labels;
+    vm_out = stdout;
     return;
   }
+
+  t = &REP(thr)._thread;
+
+  code = VINDEX(t->funr, 0);
+  ip0 = (Inst *)&VINDEX(code, t->ip);
+  sp = t->sp;
+
+  SET_IP(ip0);
+
 #ifdef __GNUC__
   NEXT;
 #include "carcvm-vm.i"
@@ -106,7 +127,7 @@ void carc_vmengine(carc *c, value thr, int quanta)
   switch (*ip++) {
 #include "carcvm-vm.i"
   default:
-    fprintf(stderr,"unknown instruction %d at %p\n", ip[-1], ip-1);
+    fprintof(stderr,"unknown instruction %d at %p\n", ip[-1], ip-1);
     exit(1);
   }
 #endif
@@ -116,3 +137,34 @@ void carc_vmengine(carc *c, value thr, int quanta)
   t->sp = sp;
   t->ip = ip - ip0;
 }
+
+value carc_mkthread(carc *c, value funptr, int stksize, int ip)
+{
+  value thr;
+
+  thr = c->get_cell(c);
+  BTYPE(thr) = T_THREAD;
+  TSTACK(thr) = carc_mkvector(c, stksize);
+  TSBASE(thr) = &VINDEX(TSTACK(thr), 0);
+  TSP(thr) = TSTOP(thr) = &VINDEX(TSTACK(thr), stksize-1);
+  TIP(thr) = ip;
+  TSTATE(thr) = Tready;  
+  TFUNR(thr) = funptr;
+  TENVR(thr) = TVALR(thr) = CNIL;
+  return(thr);
+}
+
+
+void gen_inst(Inst **vmcodepp, Inst i)
+{
+  **vmcodepp = i;
+  (*vmcodepp)++;
+}
+
+void genarg_i(Inst **vmcodepp, value i)
+{
+  *((value *) *vmcodepp) = i;
+  (*vmcodepp)++;
+}
+
+#include "carcvm-gen.i"
