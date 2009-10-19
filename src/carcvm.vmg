@@ -23,17 +23,50 @@
 
 \E s" value"   single data-stack type-prefix i
 
+\E s" Inst *"  single data-stack type-prefix target
+
 nop ( -- )
 
 drop ( i -- )
 
-\ The lit instruction loads a literal value from the literal values
-\ in the funr register into the stack.  The instruction's argument
+dup ( i -- i1 i2 )
+i1 = i2 = i;
+
+\ The ldl instruction loads a literal value from the literal values
+\ in the funr register into the stack.  The instruction argument
 \ is its index into the funr vector and should in most cases be 3 or
 \ higher for properly compiled code.
-lit ( #i2 -- i )
+ldl ( #i2 -- i )
 i = VINDEX(t->funr, i2);
 
-\ The jmp instruction is a relative unconditional jump
+\ Load an immediate fixnum argument
+ldi ( #i2 -- i )
+i = i2;
+
 jmp ( #i -- )
 INC_IP(i);
+
+jt ( #i icond -- )
+if (icond != CNIL) {
+  INC_IP(i);
+  NEXT_P0;
+}
+
+jf ( #i icond -- )
+if (icond == CNIL) {
+  INC_IP(i);
+  NEXT_P0;
+}
+
+add ( i1 i2 -- i )
+i = __carc_add2(c, i1, i2);
+
+is ( i1 i2 -- i )
+i = carc_is(c, i1, i2);
+
+\ Halt execution of this virtual machine thread
+hlt ( -- )
+t->state = Trelease;
+goto endquantum;
+
+
