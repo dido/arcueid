@@ -179,21 +179,21 @@ START_TEST(test_hash_table)
 
   /* Test not present key */
   notfoundstr = carc_mkstringc(&c, "Caren Ortensia");
-  fail_unless(carc_hash_lookup(&c, table, notfoundstr) == CNIL);
+  fail_unless(carc_hash_lookup(&c, table, notfoundstr) == CUNBOUND);
 
   /* Test iteration */
   i=0;
-  while (carc_hash_iter(&c, table, &ctx) != CNIL)
+  while (carc_hash_iter(&c, table, &ctx) != CUNBOUND)
     i++;
   fail_unless(i==17);
 
   /* Test deletion */
   for (i=16; i>=0; i--) {
     carc_hash_delete(&c, table, vnames[i]);
-    fail_unless(carc_hash_lookup(&c, table, vnames[i]) == CNIL);
+    fail_unless(carc_hash_lookup(&c, table, vnames[i]) == CUNBOUND);
   }
   i=0;
-  while (carc_hash_iter(&c, table, &ctx) != CNIL)
+  while (carc_hash_iter(&c, table, &ctx) != CUNBOUND)
     i++;
   fail_unless(i==0);
 }
