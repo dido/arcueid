@@ -39,9 +39,26 @@ i1 = i2 = i;
 ldl ( #i2 -- i )
 i = VINDEX(t->funr, i2);
 
-\ Load an immediate fixnum argument
+\ Load an immediate value (usually a fixnum)
 ldi ( #i2 -- i )
 i = i2;
+
+\ Load a global value.  The value in the instruction is generally a
+\ symbol, and indexes into the global symbol table.
+ldg ( #i2 -- i )
+{
+  value tmp;
+
+  tmp = VINDEX(t->funr, i2);
+  if ((i = carc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+    c->signal_error(c, "Unbound symbol %S\n", tmp);
+    i = CNIL;
+  }
+}
+
+\ Set a global value
+stg ( #i2 i -- )
+carc_hash_insert(c, c->genv, VINDEX(t->funr, i2), i);
 
 jmp ( #i -- )
 INC_IP(i);
