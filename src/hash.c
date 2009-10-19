@@ -236,17 +236,18 @@ unsigned long carc_hash(carc *c, value v)
 #define TABLEPTR(t) (REP(t)._hash.table)
 #define PROBE(i) ((i + i*i) >> 1)
 
-/* An empty slot is either CNIL or CUNDEF.  CUNDEF is used as a 'tombstone'
-   value for deleted elements.  If this is found, one may have to keep
-   probing until either the actual element is found or one runs into a CNIL,
-   meaning the element is definitely not in the table.  Since we enforce
-   load factor, there will definitely be some table elements which
-   remain unused. */
-#define EMPTYP(x) (((x) == CNIL) || ((x) == CUNDEF))
+/* An empty slot is either CUNBOUND or CUNDEF.  CUNDEF is used as a
+   'tombstone' value for deleted elements.  If this is found, one may have
+   to keep probing until either the actual element is found or one runs into
+   a CUNBOUND, meaning the element is definitely not in the table.
+   Since we enforce load factor, there will definitely be some table
+   elements which remain unused. */
+#define EMPTYP(x) (((x) == CUNBOUND) || ((x) == CUNDEF))
 
 value carc_mkhash(carc *c, int hashbits)
 {
   value hash;
+  int i;
 
   hash = c->get_cell(c);
   BTYPE(hash) = T_TABLE;
@@ -254,8 +255,8 @@ value carc_mkhash(carc *c, int hashbits)
   REP(hash)._hash.nentries = 0;
   REP(hash)._hash.loadlimit = (HASHSIZE(hashbits) * MAX_LOAD_FACTOR) / 100;
   TABLEPTR(hash) = (value *)c->get_block(c, HASHSIZE(hashbits)*sizeof(value));
-  memset(REP(hash)._hash.table, 0, HASHSIZE(hashbits)*sizeof(value));
-  
+  for (i=0; i<HASHSIZE(hashbits); i++)
+    REP(hash)._hash.table[i] = CUNBOUND;
   BLOCK_IMM(REP(hash)._hash.table);
   return(hash);
 }
@@ -269,7 +270,8 @@ static void hashtable_expand(carc *c, value hash)
   nhashbits = REP(hash)._hash.hashbits+1;
 
   newtbl = (value *)c->get_block(c, HASHSIZE(nhashbits)*sizeof(value));
-  memset(newtbl, 0, HASHSIZE(nhashbits)*sizeof(value));
+  for (i=0; i<HASHSIZE(nhashbits); i++)
+    newtbl[i] = CUNBOUND;
   BLOCK_IMM(newtbl);
   oldtbl = TABLEPTR(hash);
   /* Search for active keys and copy them into the new table */
@@ -319,8 +321,8 @@ static value hash_lookup(carc *c, value hash, value key, unsigned int *index)
   for (i=0;; i++) {
     *index = (*index + PROBE(i)) & TABLEMASK(hash);
     e = TABLEPTR(hash)[*index];
-    if (e == CNIL)
-      return(CNIL);
+    if (e == CUNBOUND)
+      return(CUNBOUND);
     if (e == CUNDEF)
       continue;
     if (carc_equal(c, car(e), key) == CTRUE)
@@ -342,7 +344,7 @@ value carc_hash_delete(carc *c, value hash, value key)
   value v;
 
   v = hash_lookup(c, hash, key, &index);
-  if (v != CNIL)
+  if (v != CUNBOUND)
     WB(&TABLEPTR(hash)[index], CUNDEF);
   return(v);
 }
@@ -358,5 +360,5 @@ value carc_hash_iter(carc *c, value hash, ccrContParam)
     if (!EMPTYP(TABLEPTR(hash)[ctx->index]))
       ccrReturn(TABLEPTR(hash)[ctx->index]);
   }
-  ccrFinish(CNIL);
+  ccrFinish(CUNBOUND);
 }
