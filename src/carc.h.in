@@ -127,8 +127,12 @@ enum threadstate {
   Tbroken,			/* thread crashed */
 };
 
+
 /* default thread timeslice */
 #define PQUANTA 2048
+
+/* default thread stack size */
+#define TSTKSIZE 512
 
 struct vmthread {
   /* virtual machine registers */
@@ -148,6 +152,15 @@ struct vmthread {
   unsigned long long ticks;	/* time used */
 };
 
+#define TFUNR(t) (REP(t)._thread.funr)
+#define TENVR(t) (REP(t)._thread.envr)
+#define TVALR(t) (REP(t)._thread.valr)
+#define TSP(t) (REP(t)._thread.sp)
+#define TSTACK(t) (REP(t)._thread.stack)
+#define TSBASE(t) (REP(t)._thread.stkbase)
+#define TSTOP(t) (REP(t)._thread.stktop)
+#define TIP(t) (REP(t)._thread.ip)
+#define TSTATE(t) (REP(t)._thread.state)
 
 /* Cells for boxed items */
 struct cell {
@@ -309,6 +322,10 @@ extern value carc_mkvector(carc *c, int length);
 
 extern value carc_read(carc *c, value src, int *index, value *pval);
 extern value carc_ssexpand(carc *c, value sym);
+
+extern void carc_vmengine(carc *c, value thr, int quanta);
+extern value carc_mkthread(carc *c, value funptr, int stksize, int ip);
+
 
 /* Set the default memory manager */
 extern void carc_set_memmgr(carc *c);
