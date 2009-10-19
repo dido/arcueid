@@ -160,7 +160,7 @@ static value vnames[17];
 
 START_TEST(test_hash_table)
 {
-  value table, notfoundstr;
+  value table, notfoundstr, str;
   int i;
   void *ctx = NULL;
 
@@ -180,6 +180,12 @@ START_TEST(test_hash_table)
   /* Test not present key */
   notfoundstr = carc_mkstringc(&c, "Caren Ortensia");
   fail_unless(carc_hash_lookup(&c, table, notfoundstr) == CUNBOUND);
+
+  /* Test rebinding key */
+  str = carc_mkstringc(&c, "Saber");
+  fail_unless(carc_hash_lookup(&c, table, str) == INT2FIX(0));
+  carc_hash_insert(&c, table, str, INT2FIX(100));
+  fail_unless(carc_hash_lookup(&c, table, str) == INT2FIX(100));
 
   /* Test iteration */
   i=0;
