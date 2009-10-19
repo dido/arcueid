@@ -205,7 +205,7 @@ struct cell {
 
 /* Immediate values */
 #define IMMEDIATE_MASK 0x03
-#define IMMEDIATE_P(x) ((value)(x) & IMMEDIATE_MASK)
+#define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
 
 #define SYMBOL_FLAG 0x0e
 #define SYMBOL_P(x) (((value)(x)&0xff)==SYMBOL_FLAG)
@@ -214,6 +214,7 @@ struct cell {
 #define CNIL ((value)0)
 #define CTRUE ((value)2)
 #define CUNDEF ((value)4)	/* "tombstone" value */
+#define CUNBOUND ((value)6)	/* returned when a hash has no binding value */
 
 #define BTYPE(v) (((struct cell *)(v))->_type)
 #define REP(v) (((struct cell *)(v))->obj)
@@ -264,7 +265,7 @@ static inline int TYPE(value v)
     return(T_NIL);
   if (v == CTRUE)
     return(T_TRUE);
-  if (v == CUNDEF)
+  if (v == CUNDEF || v == CUNBOUND)
     return(T_NONE);
   if (!IMMEDIATE_P(v))
     return(BTYPE(v));
