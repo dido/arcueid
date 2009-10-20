@@ -103,8 +103,20 @@ offset 1 is the function name.  The element at offset 2 is a list of
 symbols giving the names of the function arguments.  The elements at
 offsets above 2 are the literals referred to by the compiled bytecodes.
 
-Environments are represented as lists of conses.  Each cons is an
-environment frame, 
+Environments are represented as lists of vectors.  Each vector is an
+environment frame.  The element at offset 0 is the environment index,
+which is a hash table indexed by the symbols bound in that frame, whose
+values are offsets into the environment frame.  The actual symbol values
+start at offset 1.
+
+Fixnums are tagged, so that bit 1 is always 1.  To convert a fixnum into
+a normal C integer, one takes a right shift.  To convert a normal C
+integer into a fixnum, one shifts to the left once and sets the low bit
+of the number to 1.
+
+Symbols are small integers whose low 8 bits are 0x0e.  There is a symbol
+table and reverse symbol table hash that are used to transform the
+symbol back and forth to strings.
 
 @section Registers
 
