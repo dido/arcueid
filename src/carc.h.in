@@ -112,6 +112,7 @@ enum carc_types {
   T_CONT = 0x15,		/* continuation */
   T_CLOS = 0x16,		/* closure */
   T_CODE = 0x17,		/* actual compiled code */
+  T_ENV = 0x18,			/* environment */
 
   T_NONE=0xff
 };
@@ -141,9 +142,10 @@ struct vmthread {
   value valr;		/* value of most recent instruction */
   value *sp;		/* stack pointer */
   value stack;		/* the actual stack itself (a vector) */
-  value *stkbase;		/* base pointer of the stack */
-  value *stktop;		/* top of value stack */
-  int ip;			/* instruction pointer */
+  value *stkbase;	/* base pointer of the stack */
+  value *stktop;	/* top of value stack */
+  int ip;		/* instruction pointer */
+  int argc;		/* argument count register */
   
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -326,6 +328,9 @@ extern value carc_ssexpand(carc *c, value sym);
 
 extern void carc_vmengine(carc *c, value thr, int quanta);
 extern value carc_mkthread(carc *c, value funptr, int stksize, int ip);
+
+extern value carc_mkcont(carc *c, value offset, value funr, value envr);
+extern value carc_mkenv(carc *c, value parent, int size);
 
 
 /* Set the default memory manager */
