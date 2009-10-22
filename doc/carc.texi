@@ -104,10 +104,9 @@ symbols giving the names of the function arguments.  The elements at
 offsets above 2 are the literals referred to by the compiled bytecodes.
 
 Environments are represented as lists of vectors.  Each vector is an
-environment frame.  The element at offset 0 is the environment index,
-which is a hash table indexed by the symbols bound in that frame, whose
-values are offsets into the environment frame.  The actual symbol values
-start at offset 1.
+environment frame.  The element at offset 0 is a list of the symbols
+which are bound in that frame, and the remaining elements in the
+environment are the values of the symbols.
 
 Fixnums are tagged, so that bit 1 is always 1.  To convert a fixnum into
 a normal C integer, one takes a right shift.  To convert a normal C
