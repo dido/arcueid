@@ -280,7 +280,7 @@ static void mark(carc *c, value v, int reclevel)
 {
   Bhdr *b;
   void *ctx;
-  value val;
+  value val, *vptr;
   int i;
 
   /* Do not try to mark an immediate value! */
@@ -304,9 +304,20 @@ static void mark(carc *c, value v, int reclevel)
       while ((val = carc_hash_iter(c, v, &ctx)) != CNIL)
 	mark(c, val, reclevel+1);
       break;
+    case T_THREAD:
+      /* mark the registers inside of the stack */
+      mark(c, TFUNR(v), reclevel+1); /* function register */
+      mark(c, TENVR(v), reclevel+1); /* environment register */
+      mark(c, TVALR(v), reclevel+1); /* value register */
+      /* Mark the stack of this thread (used portions only) */
+      for (vptr = TSP(v); vptr == TSTOP(v); vptr++)
+	mark(c, *vptr, reclevel+1);
+      break;
     case T_VECTOR:
     case T_CLOS:
+    case T_CODE:
     case T_CONT:
+    case T_ENV:
       for (i=0; i<REP(v)._vector.length; i++)
 	mark(c, REP(v)._vector.data[i], reclevel+1);
       break;
@@ -324,6 +335,11 @@ static void sweep(carc *c, value v)
   if (IMMEDIATE_P(v))
     return;
 
+  /* The only special cases here are for those data types which point to
+     immutable memory blocks which are otherwise invisible to the sweeper
+     or allocate memory blocks not known to the allocator.  These include
+     strings and hash tables (immutable memory) and bignums and rationals
+     (use malloc/free directly I believe). */
   switch (TYPE(v)) {
   case T_STRING:
     c->free_block(c, REP(v)._str.str); /* a string's actual data is marked T_IMMUTABLE */
@@ -339,17 +355,12 @@ static void sweep(carc *c, value v)
     c->free_block(c, (void *)v);
     break;
 #endif
-  case T_FLONUM:
-  case T_COMPLEX:
-  case T_CONS:
-  case T_VECTOR:
-  case T_CLOS:
-  case T_CONT:
-  case T_CODE:
-    c->free_block(c, (void *)v);
-    break;
   case T_TABLE:
     c->free_block(c, REP(v)._hash.table); /* free the immutable memory of the hash table */
+    c->free_block(c, (void *)v);
+    break;
+  default:
+    /* this should do for almost everything else */
     c->free_block(c, (void *)v);
     break;
   }
