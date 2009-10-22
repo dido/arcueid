@@ -35,7 +35,7 @@ i1 = i2 = i;
 \ The ldl instruction loads a literal value from the literal values
 \ in the funr register into the stack.  The instruction argument
 \ is its index into the funr vector and should in most cases be 3 or
-\ higher for properly compiled code.
+\ higher for normal compiled code.
 ldl ( #i2 -- i )
 i = VINDEX(t->funr, i2);
 
@@ -89,10 +89,39 @@ WB(&VINDEX(car(t->envr), 0), VINDEX(t->funr, 2));
 
 \ Move an argument from the stack into the given slot number
 \ in the environment
-mvarg ( #islot -- i )
+mvarg ( #islot i -- )
 if (--(t->argc) < 0)
   c->signal_error(c, "too few arguments in call to %S", VINDEX(t->funr, 1));
 WB(&VINDEX(car(t->envr), islot), i);
+
+\ Move an optional argument from the stack into the given slot
+\ number.
+mvoarg ( #islot -- )
+WB(&VINDEX(car(t->envr), islot), (t->argc > 0) ? *sp++ : (--t->argc, CNIL));
+
+\ build a rest argument
+mvrarg ( #islot -- )
+{
+  value val;
+  int k;
+
+  for (val=CNIL, k=t->argc; --k >= 0; )
+    val = cons(c, sp[k], val);
+  t->argc = 0;
+  WB(&VINDEX(car(t->envr), islot), val);
+}
+
+lastarg ( -- )
+if (t->argc > 0)
+  c->signal_error(c, "too many arguments");
+
+\ apply a function
+apply ( #iargc ifun -- )
+t->argc = iargc;
+carc_apply(c, thr, ifun);
+
+ret ( icont -- )
+carc_return(c, thr, icont);
 
 \ Jump unconditional
 jmp ( #i -- )
@@ -103,6 +132,7 @@ jt ( #i icond -- )
 if (icond != CNIL) {
   INC_IP(i);
   NEXT_P0;
+  INST_TAIL;
 }
 
 \ Jump if top of stack is nil
@@ -110,6 +140,7 @@ jf ( #i icond -- )
 if (icond == CNIL) {
   INC_IP(i);
   NEXT_P0;
+  INST_TAIL;
 }
 
 true ( -- i )
@@ -147,6 +178,12 @@ ic = car(i);
 
 cdr (i -- ic )
 ic = cdr(i);
+
+scar (ic inc -- )
+scar(ic, inc);
+
+scdr (ic inc -- )
+scdr(ic, inc);
 
 is ( i1 i2 -- i )
 i = carc_is(c, i1, i2);
