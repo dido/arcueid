@@ -113,6 +113,7 @@ enum carc_types {
   T_CLOS = 0x16,		/* closure */
   T_CODE = 0x17,		/* actual compiled code */
   T_ENV = 0x18,			/* environment */
+  T_VMCODE = 0x19,		/* a VM code block */
 
   T_NONE=0xff
 };
