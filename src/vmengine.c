@@ -113,6 +113,9 @@ void carc_vmengine(carc *c, value thr, int quanta)
 
   t = &REP(thr)._thread;
 
+  if (t->state != Tready)
+    return;
+
   code = VINDEX(t->funr, 0);
   ip0 = (Inst *)&VINDEX(code, t->ip);
   sp = t->sp;
@@ -166,5 +169,3 @@ void genarg_i(Inst **vmcodepp, value i)
   *((value *) *vmcodepp) = i;
   (*vmcodepp)++;
 }
-
-#include "carcvm-gen.i"
