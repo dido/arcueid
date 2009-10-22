@@ -60,30 +60,94 @@ ldg ( #i2 -- i )
 stg ( #i2 i -- )
 carc_hash_insert(c, c->genv, VINDEX(t->funr, i2), i);
 
+\ Load the value of a variable in the environment.  The first
+\ operand is the number of the environment, and the second is
+\ the index into that environment.
+lde ( #ienv #iindx -- ival)
+{
+  value tmp = t->envr;
+  while (--ienv >= 0) tmp = cdr(tmp);
+  ival = VINDEX(car(tmp), iindx);
+}
+
+\ Store to an environment variable
+ste ( #ienv #iindx -- ival)
+{
+  value tmp = t->envr;
+  while (--ienv >= 0) tmp = cdr(tmp);
+  WB(&VINDEX(car(tmp), iindx), ival);
+}
+
+\ Make a continuation
+cont ( #icofs -- icont)
+icont = carc_mkcont(c, INT2FIX(icofs), t->funr, t->envr);
+
+\ Make an environment of a given size
+env ( #ienvsize -- )
+WB(&t->envr, carc_mkenv(c, t->envr, ienvsize));
+WB(&VINDEX(car(t->envr), 0), VINDEX(t->funr, 2));
+
+\ Move an argument from the stack into the given slot number
+\ in the environment
+mvarg ( #islot -- i )
+if (--(t->argc) < 0)
+  c->signal_error(c, "too few arguments in call to %S", VINDEX(t->funr, 1));
+WB(&VINDEX(car(t->envr), islot), i);
+
+\ Jump unconditional
 jmp ( #i -- )
 INC_IP(i);
 
+\ Jump if top of stack is not nil
 jt ( #i icond -- )
 if (icond != CNIL) {
   INC_IP(i);
   NEXT_P0;
 }
 
+\ Jump if top of stack is nil
 jf ( #i icond -- )
 if (icond == CNIL) {
   INC_IP(i);
   NEXT_P0;
 }
 
-add ( i1 i2 -- i )
-i = __carc_add2(c, i1, i2);
+true ( -- i )
+i = CTRUE;
 
-is ( i1 i2 -- i )
-i = carc_is(c, i1, i2);
+nil ( -- i )
+i = CNIL;
 
 \ Halt execution of this virtual machine thread
 hlt ( -- )
 t->state = Trelease;
 goto endquantum;
 
+\ Maybe we can do without the instructions below this point, and
+\ make everything a function call, however that would probably be
+\ very slow until we can figure out how to do inline caching
+\ properly.
+add ( i1 i2 -- i )
+i = __carc_add2(c, i1, i2);
+
+sub ( i1 i2 -- i )
+i = __carc_sub2(c, i1, i2);
+
+mul ( i1 i2 -- i )
+i = __carc_mul2(c, i1, i2);
+
+div ( i1 i2 -- i )
+i = __carc_div2(c, i1, i2);
+
+cons ( i1 i2 -- i )
+i = cons(c, i1, i2);
+
+car ( i -- ic )
+ic = car(i);
+
+cdr (i -- ic )
+ic = cdr(i);
+
+is ( i1 i2 -- i )
+i = carc_is(c, i1, i2);
 
