@@ -331,6 +331,8 @@ extern value carc_mkthread(carc *c, value funptr, int stksize, int ip);
 
 extern value carc_mkcont(carc *c, value offset, value funr, value envr);
 extern value carc_mkenv(carc *c, value parent, int size);
+extern void carc_apply(carc *c, value thr, value fun);
+extern void carc_return(carc *c, value thr, value cont);
 
 
 /* Set the default memory manager */
