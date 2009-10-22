@@ -169,3 +169,11 @@ void genarg_i(Inst **vmcodepp, value i)
   *((value *) *vmcodepp) = i;
   (*vmcodepp)++;
 }
+
+void carc_apply(carc *c, value thr, value fun)
+{
+}
+
+void carc_return(carc *c, value thr, value cont)
+{
+}
