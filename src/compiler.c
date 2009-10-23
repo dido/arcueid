@@ -26,3 +26,15 @@
 #include "arith.h"
 #include "carcvm-gen.i"
 
+void gen_inst(Inst **vmcodepp, Inst i)
+{
+  **vmcodepp = i;
+  (*vmcodepp)++;
+}
+
+void genarg_i(Inst **vmcodepp, value i)
+{
+  *((value *) *vmcodepp) = i;
+  (*vmcodepp)++;
+}
+
