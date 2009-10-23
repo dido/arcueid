@@ -157,19 +157,6 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
   return(thr);
 }
 
-
-void gen_inst(Inst **vmcodepp, Inst i)
-{
-  **vmcodepp = i;
-  (*vmcodepp)++;
-}
-
-void genarg_i(Inst **vmcodepp, value i)
-{
-  *((value *) *vmcodepp) = i;
-  (*vmcodepp)++;
-}
-
 void carc_apply(carc *c, value thr, value fun)
 {
 }
