@@ -25,95 +25,73 @@
 
 \E s" Inst *"  single data-stack type-prefix target
 
+\ No operation
 nop ( -- )
 
-drop ( i -- )
+\ Push a value in the value register into the stack
+push ( -- i )
+i = t->valr;
 
-dup ( i -- i1 i2 )
-i1 = i2 = i;
+\ Pop the stack, and place its topmost value into the value reg.
+pop ( i -- )
+t->valr = i;
 
 \ The ldl instruction loads a literal value from the literal values
-\ in the funr register into the stack.  The instruction argument
+\ in the funr register into value register.  The instruction argument
 \ is its index into the funr vector and should in most cases be 3 or
 \ higher for normal compiled code.
-ldl ( #i2 -- i )
-i = VINDEX(t->funr, i2);
+ldl ( #i2 -- )
+t->valr = VINDEX(t->funr, i2);
 
-\ Load an immediate value (usually a fixnum)
-ldi ( #i2 -- i )
-i = i2;
+\ Load an immediate value (usually a fixnum) into the value register
+ldi ( #i2 -- )
+t->valr = i2;
 
 \ Load a global value.  The value in the instruction is generally a
 \ symbol, and indexes into the global symbol table.
-ldg ( #i2 -- i )
+ldg ( #i2 -- )
 {
   value tmp;
 
   tmp = VINDEX(t->funr, i2);
-  if ((i = carc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+  if ((t->valr = carc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
     c->signal_error(c, "Unbound symbol %S\n", tmp);
-    i = CNIL;
+    t->valr = CNIL;
   }
 }
 
-\ Set a global value
-stg ( #i2 i -- )
-carc_hash_insert(c, c->genv, VINDEX(t->funr, i2), i);
+\ Set a global value with the value of the value register
+stg ( #i2 -- )
+carc_hash_insert(c, c->genv, VINDEX(t->funr, i2), t->valr);
 
 \ Load the value of a variable in the environment.  The first
 \ operand is the number of the environment, and the second is
 \ the index into that environment.
-lde ( #ienv #iindx -- ival)
+lde ( #ienv #iindx -- )
 {
   value tmp = t->envr;
   while (--ienv >= 0) tmp = cdr(tmp);
-  ival = VINDEX(car(tmp), iindx);
+  t->valr = VINDEX(car(tmp), iindx);
 }
 
 \ Store to an environment variable
-ste ( #ienv #iindx -- ival)
+ste ( #ienv #iindx -- )
 {
   value tmp = t->envr;
   while (--ienv >= 0) tmp = cdr(tmp);
-  WB(&VINDEX(car(tmp), iindx), ival);
+  WB(&VINDEX(car(tmp), iindx), t->valr);
 }
 
-\ Make a continuation
-cont ( #icofs -- icont)
-icont = carc_mkcont(c, INT2FIX(icofs), t->funr, t->envr);
+\ Make a continuation at offset icofs, placing it in the value register.
+\ Note that this is a relative address, but the absolute address is
+\ stored in the continuation.
+cont ( #icofs -- )
+WB(&t->valr, carc_mkcont(c, INT2FIX(icofs), t->funr, t->envr));
 
 \ Make an environment of a given size
 env ( #ienvsize -- )
 WB(&t->envr, carc_mkenv(c, t->envr, ienvsize));
 WB(&VINDEX(car(t->envr), 0), VINDEX(t->funr, 2));
-
-\ Move an argument from the stack into the given slot number
-\ in the environment
-mvarg ( #islot i -- )
-if (--(t->argc) < 0)
-  c->signal_error(c, "too few arguments in call to %S", VINDEX(t->funr, 1));
-WB(&VINDEX(car(t->envr), islot), i);
-
-\ Move an optional argument from the stack into the given slot
-\ number.
-mvoarg ( #islot -- )
-WB(&VINDEX(car(t->envr), islot), (t->argc > 0) ? *sp++ : (--t->argc, CNIL));
-
-\ build a rest argument
-mvrarg ( #islot -- )
-{
-  value val;
-  int k;
-
-  for (val=CNIL, k=t->argc; --k >= 0; )
-    val = cons(c, sp[k], val);
-  t->argc = 0;
-  WB(&VINDEX(car(t->envr), islot), val);
-}
-
-lastarg ( -- )
-if (t->argc > 0)
-  c->signal_error(c, "too many arguments");
 
 \ apply a function
 apply ( #iargc ifun -- )
@@ -158,33 +136,33 @@ goto endquantum;
 \ make everything a function call, however that would probably be
 \ very slow until we can figure out how to do inline caching
 \ properly.
-add ( i1 i2 -- i )
-i = __carc_add2(c, i1, i2);
+add  ( i -- )
+t->valr = __carc_add2(c, t->valr, i);
 
-sub ( i1 i2 -- i )
-i = __carc_sub2(c, i1, i2);
+sub ( i -- )
+t->valr = __carc_sub2(c, t->valr, i);
 
-mul ( i1 i2 -- i )
-i = __carc_mul2(c, i1, i2);
+mul ( i -- )
+t->valr = __carc_mul2(c, t->valr, i);
 
-div ( i1 i2 -- i )
-i = __carc_div2(c, i1, i2);
+div ( i -- )
+t->valr = __carc_div2(c, t->valr, i);
 
-cons ( i1 i2 -- i )
-i = cons(c, i1, i2);
+cons ( i -- )
+t->valr = cons(c, t->valr, i);
 
-car ( i -- ic )
-ic = car(i);
+car ( -- )
+t->valr = car(t->valr);
 
-cdr (i -- ic )
-ic = cdr(i);
+cdr ( -- )
+t->valr = cdr(t->valr);
 
-scar (ic inc -- )
-scar(ic, inc);
+scar ( inc -- )
+scar(t->valr, inc);
 
-scdr (ic inc -- )
-scdr(ic, inc);
+scdr ( inc -- )
+scdr(t->valr, inc);
 
-is ( i1 i2 -- i )
-i = carc_is(c, i1, i2);
+is ( i -- )
+t->valr = carc_is(c, t->valr, i);
 
