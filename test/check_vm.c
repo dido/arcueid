@@ -28,45 +28,10 @@
 #include "../config.h"
 #include "../src/vmengine.h"
 
-extern void gen_nop(Inst **ctp);
-extern void gen_drop(Inst **ctp);
-extern void gen_dup(Inst **ctp);
-extern void gen_ldl(Inst **ctp, value i2);
-extern void gen_ldi(Inst **ctp, value i2);
-extern void gen_jmp(Inst **ctp, value i);
-extern void gen_jt(Inst **ctp, value i);
-extern void gen_jf(Inst **ctp, value i);
-extern void gen_add(Inst **ctp);
-extern void gen_is(Inst **ctp);
-extern void gen_hlt(Inst **ctp);
-
 carc c;
 
 START_TEST(test_vm)
 {
-  value thr;
-  value fun;
-  Inst **ctp, *code;
-
-  /* Make a function manually */
-
-  carc_vmengine(&c, CNIL, 0);
-  fun = carc_mkvector(&c, 2);
-  VINDEX(fun, 0) = carc_mkvector(&c, 12);
-  code = (Inst *)&VINDEX(VINDEX(fun, 0), 0);
-  ctp = &code;
-  gen_ldi(ctp, INT2FIX(31330));
-  gen_ldi(ctp, INT2FIX(1));
-  gen_add(ctp);
-  gen_dup(ctp);
-  gen_ldi(ctp, INT2FIX(31337));
-  gen_is(ctp);
-  gen_jf(ctp, -9);
-  gen_hlt(ctp);
-  VINDEX(fun, 1) = carc_mkstringc(&c, "test");
-  thr = carc_mkthread(&c, fun, 64, 0);
-  carc_vmengine(&c, thr, 128);
-  fail_unless(*TSP(thr) == INT2FIX(31337));
 }
 END_TEST
 
