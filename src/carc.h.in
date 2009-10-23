@@ -98,22 +98,21 @@ enum carc_types {
   T_STRING=0x08,
   T_SYMBOL=0x09,
   T_CONS=0x0a,
-  T_PROC=0x0b,
-  T_FPROC=0x0c,
-  T_TABLE=0x0d,
-  T_TAGGED=0x0e,
-  T_INPUT=0x0f,
-  T_OUTPUT=0x10,
-  T_EXCEPTION=0x11,
-  T_SOCKET=0x12,
-  T_THREAD=0x13,
-  T_VECTOR=0x14,
+  T_TABLE=0x0b,
+  T_TAGGED=0x0c,
+  T_INPUT=0x0d,
+  T_OUTPUT=0x0e,
+  T_EXCEPTION=0x0f,
+  T_SOCKET=0x10,
+  T_THREAD=0x11,
+  T_VECTOR=0x12,
 
-  T_CONT = 0x15,		/* continuation */
-  T_CLOS = 0x16,		/* closure */
-  T_CODE = 0x17,		/* actual compiled code */
-  T_ENV = 0x18,			/* environment */
-  T_VMCODE = 0x19,		/* a VM code block */
+  T_CONT = 0x13,		/* continuation */
+  T_CLOS = 0x14,		/* closure */
+  T_CODE = 0x15,		/* actual compiled code */
+  T_ENV = 0x16,			/* environment */
+  T_VMCODE = 0x17,		/* a VM code block */
+  T_CCODE = 0x18,		/* a callable C function */
 
   T_NONE=0xff
 };
