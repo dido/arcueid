@@ -25,6 +25,8 @@
 
 carc c;
 
+#define SYNTAX(sym) (c.syntax[(sym)])
+
 START_TEST(test_atom)
 {
   value str, sexpr;
@@ -211,10 +213,10 @@ START_TEST(test_bracketfn)
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
-  fail_unless(car(sexpr) == c.fn);
+  fail_unless(car(sexpr) == SYNTAX(S_FN));
   fail_unless(TYPE(car(cdr(sexpr))) == T_CONS);
   fail_unless(TYPE(car(car(cdr(sexpr)))) == T_SYMBOL);
-  fail_unless(car(car(cdr(sexpr))) == c.us);
+  fail_unless(car(car(cdr(sexpr))) == SYNTAX(S_US));
   fnbody = car(cdr(cdr(sexpr)));
   fail_unless(TYPE(fnbody) == T_CONS);
   fail_unless(TYPE(car(fnbody)) == T_SYMBOL);
@@ -222,7 +224,7 @@ START_TEST(test_bracketfn)
   fail_unless(TYPE(car(cdr(fnbody))) == T_FIXNUM);
   fail_unless(FIX2INT(car(cdr(fnbody))) == 1);
   fail_unless(TYPE(car(cdr(cdr(fnbody)))) == T_SYMBOL);
-  fail_unless(car(cdr(cdr(fnbody))) == c.us);
+  fail_unless(car(cdr(cdr(fnbody))) == SYNTAX(S_US));
 }
 END_TEST
 
@@ -236,7 +238,7 @@ START_TEST(test_quote)
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
-  fail_unless(car(sexpr) == c.quote);
+  fail_unless(car(sexpr) == SYNTAX(S_QUOTE));
   qexpr = car(cdr(sexpr));
   fail_unless(TYPE(qexpr) == T_CONS);
   fail_unless(TYPE(car(qexpr)) == T_SYMBOL);
@@ -251,7 +253,7 @@ START_TEST(test_quote)
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
-  fail_unless(car(sexpr) == c.qquote);
+  fail_unless(car(sexpr) == SYNTAX(S_QQUOTE));
   qexpr = car(cdr(sexpr));
   fail_unless(TYPE(qexpr) == T_CONS);
   fail_unless(TYPE(car(qexpr)) == T_SYMBOL);
@@ -272,7 +274,7 @@ START_TEST(test_ssyntax)
   str = carc_mkstringc(&c, "~");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
-  fail_unless(sexpr == c.no);
+  fail_unless(sexpr == SYNTAX(S_NO));
 
   index = 0;
   str = carc_mkstringc(&c, "a:");
@@ -290,7 +292,7 @@ START_TEST(test_ssyntax)
   str = carc_mkstringc(&c, "a:b");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
-  fail_unless(car(sexpr) == c.compose);
+  fail_unless(car(sexpr) == SYNTAX(S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
@@ -300,7 +302,7 @@ START_TEST(test_ssyntax)
   str = carc_mkstringc(&c, "a:b:c");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
-  fail_unless(car(sexpr) == c.compose);
+  fail_unless(car(sexpr) == SYNTAX(S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
@@ -312,7 +314,7 @@ START_TEST(test_ssyntax)
   str = carc_mkstringc(&c, "~a");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
-  fail_unless(car(sexpr) == c.complement);
+  fail_unless(car(sexpr) == SYNTAX(S_COMPLEMENT));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
 
@@ -320,11 +322,11 @@ START_TEST(test_ssyntax)
   str = carc_mkstringc(&c, "a:~b:c");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
-  fail_unless(car(sexpr) == c.compose);
+  fail_unless(car(sexpr) == SYNTAX(S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_CONS);
-  fail_unless(car(car(cdr(cdr(sexpr)))) == c.complement);
+  fail_unless(car(car(cdr(cdr(sexpr)))) == SYNTAX(S_COMPLEMENT));
   fail_unless(TYPE(car(cdr(car(cdr(cdr(sexpr)))))) == T_SYMBOL);
   fail_unless(car(cdr(car(cdr(cdr(sexpr))))) == carc_intern(&c, carc_mkstringc(&c, "b")));
   fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
@@ -332,11 +334,11 @@ START_TEST(test_ssyntax)
 
   sexpr = carc_ssexpand(&c, carc_intern(&c, carc_mkstringc(&c, "a:~b:c")));
   fail_unless(TYPE(sexpr) == T_CONS);
-  fail_unless(car(sexpr) == c.compose);
+  fail_unless(car(sexpr) == SYNTAX(S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_CONS);
-  fail_unless(car(car(cdr(cdr(sexpr)))) == c.complement);
+  fail_unless(car(car(cdr(cdr(sexpr)))) == SYNTAX(S_COMPLEMENT));
   fail_unless(TYPE(car(cdr(car(cdr(cdr(sexpr)))))) == T_SYMBOL);
   fail_unless(car(cdr(car(cdr(cdr(sexpr))))) == carc_intern(&c, carc_mkstringc(&c, "b")));
   fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
@@ -358,7 +360,7 @@ START_TEST(test_ssyntax)
   str = carc_mkstringc(&c, "a&b");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
-  fail_unless(car(sexpr) == c.andf);
+  fail_unless(car(sexpr) == SYNTAX(S_ANDF));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
@@ -368,7 +370,7 @@ START_TEST(test_ssyntax)
   str = carc_mkstringc(&c, "a&b&c");
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
-  fail_unless(car(sexpr) == c.andf);
+  fail_unless(car(sexpr) == SYNTAX(S_ANDF));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
@@ -398,7 +400,7 @@ START_TEST(test_ssyntax)
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
-  fail_unless(car(sexpr) == c.get);
+  fail_unless(car(sexpr) == SYNTAX(S_GET));
   fail_unless(car(cdr(sexpr)) == carc_intern(&c, carc_mkstringc(&c, "a")));
 
   index = 0;
@@ -407,7 +409,7 @@ START_TEST(test_ssyntax)
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == carc_intern(&c, carc_mkstringc(&c, "a")));
-  fail_unless(car(cdr(sexpr)) == c.quote);
+  fail_unless(car(cdr(sexpr)) == SYNTAX(S_QUOTE));
   fail_unless(car(cdr(cdr(sexpr))) == carc_intern(&c, carc_mkstringc(&c, "b")));
 
   index = 0;
@@ -415,8 +417,8 @@ START_TEST(test_ssyntax)
   fail_if(carc_read(&c, str, &index, &sexpr) == CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
-  fail_unless(car(sexpr) == c.get);
-  fail_unless(car(cdr(sexpr)) == c.quote);
+  fail_unless(car(sexpr) == SYNTAX(S_GET));
+  fail_unless(car(cdr(sexpr)) == SYNTAX(S_QUOTE));
   fail_unless(car(cdr(cdr(sexpr))) == carc_intern(&c, carc_mkstringc(&c, "a")));
 }
 END_TEST
