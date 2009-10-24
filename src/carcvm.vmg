@@ -97,9 +97,11 @@ WB(&VINDEX(car(t->envr), 0), VINDEX(t->funr, 2));
 apply ( #iargc -- )
 t->argc = iargc;
 carc_apply(c, thr, t->valr);
+goto restart;
 
 ret ( -- )
 carc_return(c, thr, t->valre);
+goto restart;
 
 \ Jump unconditional
 jmp ( #target -- )
