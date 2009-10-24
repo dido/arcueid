@@ -43,3 +43,21 @@ void genarg_target(Inst **vmcodepp, Inst *target)
   *((Inst **) *vmcodepp) = target;
   (*vmcodepp)++;
 }
+
+value carc_mkvmcode(carc *c, int length)
+{
+  value code = carc_mkvector(c, length);
+
+  BTYPE(code) = T_VMCODE;
+  return(code);
+}
+
+value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits)
+{
+  value code = carc_mkvector(c, nlits+3);
+
+  CODE_CODE(code) = vmccode;
+  CODE_NAME(code) = fname;
+  CODE_ARGS(code) = args;
+  return(code);
+}
