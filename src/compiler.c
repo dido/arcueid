@@ -38,3 +38,8 @@ void genarg_i(Inst **vmcodepp, value i)
   (*vmcodepp)++;
 }
 
+void genarg_target(Inst **vmcodepp, Inst *target)
+{
+  *((Inst **) *vmcodepp) = target;
+  (*vmcodepp)++;
+}
