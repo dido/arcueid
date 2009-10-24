@@ -105,16 +105,16 @@ carc_return(c, thr, t->valre);
 jmp ( #target -- )
 SET_IP(target);
 
-\ Jump if top of stack is not nil
-jt ( #target icond -- )
-if (icond != CNIL) {
+\ Jump if valr is not nil
+jt ( #target -- )
+if (t->valr != CNIL) {
   SET_IP(target);
   INST_TAIL;
 }
 
-\ Jump if top of stack is nil
-jf ( #target icond -- )
-if (icond == CNIL) {
+\ Jump if valr is nil
+jf ( #target -- )
+if (t->valr == CNIL) {
   SET_IP(target);
   INST_TAIL;
 }
