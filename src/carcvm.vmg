@@ -102,30 +102,28 @@ ret ( icont -- )
 carc_return(c, thr, icont);
 
 \ Jump unconditional
-jmp ( #i -- )
-INC_IP(i);
+jmp ( #target -- )
+SET_IP(target);
 
 \ Jump if top of stack is not nil
-jt ( #i icond -- )
+jt ( #target icond -- )
 if (icond != CNIL) {
-  INC_IP(i);
-  NEXT_P0;
+  SET_IP(target);
   INST_TAIL;
 }
 
 \ Jump if top of stack is nil
-jf ( #i icond -- )
+jf ( #target icond -- )
 if (icond == CNIL) {
-  INC_IP(i);
-  NEXT_P0;
+  SET_IP(target);
   INST_TAIL;
 }
 
-true ( -- i )
-i = CTRUE;
+true ( -- )
+t->valr = CTRUE;
 
-nil ( -- i )
-i = CNIL;
+nil ( -- )
+t->valr = CNIL;
 
 \ Halt execution of this virtual machine thread
 hlt ( -- )
