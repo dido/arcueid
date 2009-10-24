@@ -204,6 +204,7 @@ struct cell {
       value data[1];
     } _vector;
     struct vmthread _thread;
+    value (*cfunc)(int argc, value argv);
   } obj;
 };
 
@@ -337,7 +338,13 @@ extern value carc_mkcont(carc *c, value offset, value funr, value envr);
 extern value carc_mkenv(carc *c, value parent, int size);
 extern void carc_apply(carc *c, value thr, value fun);
 extern void carc_return(carc *c, value thr, value cont);
+extern value carc_mkvmcode(carc *c, int length);
+extern value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits);
 
+#define CODE_CODE(c) (VINDEX((c), 0))
+#define CODE_NAME(c) (VINDEX((c), 1))
+#define CODE_ARGS(c) (VINDEX((c), 2))
+#define CODE_LITERAL(c, idx) (VINDEX((c), 3+(idx)))
 
 /* Set the default memory manager */
 extern void carc_set_memmgr(carc *c);
