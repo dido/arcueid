@@ -31,6 +31,8 @@
 #include "arith.h"
 #include "../config.h"
 
+#define SYNTAX(sym) (c->syntax[(sym)])
+
 static Rune scan(carc *c, value src, int *index);
 static value read_list(carc *c, value src, int *index);
 static value read_anonf(carc *c, value src, int *index);
@@ -110,10 +112,10 @@ value carc_read(carc *c, value src, int *index, value *pval)
       c->signal_error(c, "misplaced right bracket");
       return(CNIL);
     case '\'':
-      *pval = read_quote(c, src, index, c->quote);
+      *pval = read_quote(c, src, index, SYNTAX(S_QUOTE));
       return(CTRUE);
     case '`':
-      *pval = read_quote(c, src, index, c->qquote);
+      *pval = read_quote(c, src, index, SYNTAX(S_QQUOTE));
       return(CTRUE);
     case ',':
       *pval = read_comma(c, src, index);
@@ -256,7 +258,7 @@ static value read_anonf(carc *c, value src, int *index)
       read_comment(c, src, index);
       break;
     case ']':
-      ret = cons(c, c->fn, cons(c, cons(c, c->us, CNIL), cons(c, top, CNIL)));
+      ret = cons(c, SYNTAX(S_FN), cons(c, cons(c, SYNTAX(S_US), CNIL), cons(c, top, CNIL)));
 
       return(ret);
     default:
@@ -291,9 +293,9 @@ static value read_comma(carc *c, value src, int *index)
   Rune ch;
 
   if ((ch = readchar(c, src, index)) == '@')
-    return(read_quote(c, src, index, c->unquotesp));
+    return(read_quote(c, src, index, SYNTAX(S_UNQUOTESP)));
   unreadchar(c, src, ch, index);
-  return(read_quote(c, src, index, c->unquote));
+  return(read_quote(c, src, index, SYNTAX(S_UNQUOTE)));
 }
 
 /* XXX - we need to add support for octal and hexadecimal escapes as well */
@@ -509,8 +511,8 @@ static value expand_compose(carc *c, value sym)
 	elt = carc_intern(c, elt);
       i=0;
       if (negate) {
-	elt = (elt == CNIL) ? c->no 
-	  : cons(c, c->complement, cons(c, elt, CNIL));
+	elt = (elt == CNIL) ? SYNTAX(S_NO) 
+	  : cons(c, SYNTAX(S_COMPLEMENT), cons(c, elt, CNIL));
 	if (ch == Runeerror && top == CNIL)
 	  return(elt);
 	negate = 0;
@@ -545,7 +547,7 @@ static value expand_compose(carc *c, value sym)
   }
   if (cdr(top) == CNIL)
     return(car(top));
-  return(cons(c, c->compose, top));
+  return(cons(c, SYNTAX(S_COMPOSE), top));
 }
 
 static value expand_sexpr(carc *c, value sym)
@@ -569,7 +571,7 @@ static value expand_sexpr(carc *c, value sym)
       if (last == CNIL)
 	last = elt;
       else if (prevchar == '!')
-	last = cons(c, last, cons(c, c->quote, cons(c, elt, CNIL)));
+	last = cons(c, last, cons(c, SYNTAX(S_QUOTE), cons(c, elt, CNIL)));
       else
 	last = cons(c, last, cons(c, elt, CNIL));
       elt = CNIL;
@@ -594,11 +596,11 @@ static value expand_sexpr(carc *c, value sym)
   }
   if (last == CNIL) {
     if (prevchar == '!')
-      return(cons(c, c->get, cons(c, c->quote, cons(c, elt, CNIL))));
-    return(cons(c, c->get, cons(c, elt, CNIL)));
+      return(cons(c, SYNTAX(S_GET), cons(c, SYNTAX(S_QUOTE), cons(c, elt, CNIL))));
+    return(cons(c, SYNTAX(S_GET), cons(c, elt, CNIL)));
   }
   if (prevchar == '!')
-    return(cons(c, last, cons(c, c->quote, cons(c, elt, CNIL))));
+    return(cons(c, last, cons(c, SYNTAX(S_QUOTE), cons(c, elt, CNIL))));
   return(cons(c, last, cons(c, elt, CNIL)));
 }
 
@@ -646,7 +648,7 @@ static value expand_and(carc *c, value sym)
   }
   if (cdr(top) == CNIL)
     return(car(top));
-  return(cons(c, c->andf, top));
+  return(cons(c, SYNTAX(S_ANDF), top));
 }
 
 static value expand_ssyntax(carc *c, value sym)
@@ -674,19 +676,19 @@ void carc_init_reader(carc *c)
 {
   c->symtable = carc_mkhash(c, 10);
   c->rsymtable = carc_mkhash(c, 10);
-  c->fn = carc_intern(c, carc_mkstringc(c, "fn"));
-  c->us = carc_intern(c, carc_mkstringc(c, "_"));
-  c->quote = carc_intern(c, carc_mkstringc(c, "quote"));
-  c->qquote = carc_intern(c, carc_mkstringc(c, "quasiquote"));
-  c->unquote = carc_intern(c, carc_mkstringc(c, "unquote"));
-  c->unquotesp = carc_intern(c, carc_mkstringc(c, "unquote-splicing"));
-  c->compose = carc_intern(c, carc_mkstringc(c, "compose"));
-  c->complement = carc_intern(c, carc_mkstringc(c, "complement"));
-  c->t = carc_intern(c, carc_mkstringc(c, "t"));
-  c->nil = carc_intern(c, carc_mkstringc(c, "nil"));
-  c->no = carc_intern(c, carc_mkstringc(c, "no"));
-  c->andf = carc_intern(c, carc_mkstringc(c, "andf"));
-  c->get = carc_intern(c, carc_mkstringc(c, "get"));
+  SYNTAX(S_FN) = carc_intern(c, carc_mkstringc(c, "fn"));
+  SYNTAX(S_US) = carc_intern(c, carc_mkstringc(c, "_"));
+  SYNTAX(S_QUOTE) = carc_intern(c, carc_mkstringc(c, "quote"));
+  SYNTAX(S_QQUOTE) = carc_intern(c, carc_mkstringc(c, "quasiquote"));
+  SYNTAX(S_UNQUOTE) = carc_intern(c, carc_mkstringc(c, "unquote"));
+  SYNTAX(S_UNQUOTESP) = carc_intern(c, carc_mkstringc(c, "unquote-splicing"));
+  SYNTAX(S_COMPOSE) = carc_intern(c, carc_mkstringc(c, "compose"));
+  SYNTAX(S_COMPLEMENT) = carc_intern(c, carc_mkstringc(c, "complement"));
+  SYNTAX(S_T) = carc_intern(c, carc_mkstringc(c, "t"));
+  SYNTAX(S_NIL) = carc_intern(c, carc_mkstringc(c, "nil"));
+  SYNTAX(S_NO) = carc_intern(c, carc_mkstringc(c, "no"));
+  SYNTAX(S_ANDF) = carc_intern(c, carc_mkstringc(c, "andf"));
+  SYNTAX(S_GET) = carc_intern(c, carc_mkstringc(c, "get"));
 
   c->charesctbl = carc_mkhash(c, 4);
   carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "nul"),
