@@ -56,7 +56,7 @@ FILE *vm_out;
 #define INC_IP(const_inc)	({cfa=IP[const_inc]; ip+=(const_inc);})
 #define DEF_CA
 #define NEXT_P1	(ip++)
-#define NEXT_P2	({if (--quanta <= 0) goto endquantum; goto *cfa;})
+#define NEXT_P2	({if (--quanta <= 0 || t->state != Tready) goto endquantum; goto *cfa;})
 
 #define NEXT ({DEF_CA NEXT_P1; NEXT_P2;})
 #define IPTOS NEXT_INST
@@ -104,6 +104,8 @@ void carc_vmengine(carc *c, value thr, int quanta)
 #include "carcvm-labels.i"
   };
   register Inst *cfa;
+
+ restart:
 
   if (thr == CNIL) {
     vm_prim = labels;
@@ -159,6 +161,12 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
 
 void carc_apply(carc *c, value thr, value fun)
 {
+  switch (TYPE(fun)) {
+  case T_CODE:
+    t->funr = fun;
+    t->ip = 0;
+    break;
+  }
 }
 
 void carc_return(carc *c, value thr, value cont)
