@@ -94,12 +94,12 @@ WB(&t->envr, carc_mkenv(c, t->envr, ienvsize));
 WB(&VINDEX(car(t->envr), 0), VINDEX(t->funr, 2));
 
 \ apply a function
-apply ( #iargc ifun -- )
+apply ( #iargc -- )
 t->argc = iargc;
-carc_apply(c, thr, ifun);
+carc_apply(c, thr, t->valr);
 
-ret ( icont -- )
-carc_return(c, thr, icont);
+ret ( -- )
+carc_return(c, thr, t->valre);
 
 \ Jump unconditional
 jmp ( #target -- )
