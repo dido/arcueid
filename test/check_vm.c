@@ -66,7 +66,7 @@ START_TEST(test_vm_basic)
   value vcode, func, thr;
 
   carc_vmengine(&c, CNIL, 0);
-  vcode = carc_mkvmcode(&c, 14);
+  vcode = carc_mkvmcode(&c, 15);
   code = (Inst*)&VINDEX(vcode, 0);
   ctp = &code;
   gen_ldi(ctp, INT2FIX(31330));
