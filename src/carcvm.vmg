@@ -100,7 +100,7 @@ carc_apply(c, thr, t->valr);
 goto restart;
 
 ret ( -- )
-carc_return(c, thr, t->valre);
+carc_return(c, thr, t->valr);
 goto restart;
 
 \ Jump unconditional
