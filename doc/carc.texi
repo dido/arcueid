@@ -130,6 +130,16 @@ as a vector, which is grown dynamically as necessary.
 
 @item
 o A continuation register, which is a linked list of all the
-continuations in use within the interpreter.
+me continuations in use within the interpreter.
 @end itemize
+
+@section Applying a function
+
+When a function is applied, the value register contains the function
+that is being applied, and the stack contains the values of the
+parameters, and the argc register contains the number of these
+parameters.  The continuation register also contains the continuation
+that was saved by the caller (or by its caller, in the case of a tail
+call).  When a function finishes, it should leave the value it wishes to
+return in the value register.
 
