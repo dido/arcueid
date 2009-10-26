@@ -94,6 +94,11 @@ void printarg_i(value i)
   fprintf(vm_out, "%ld ", i);
 }
 
+void printarg_target(Inst *target)
+{
+  fprintf(vm_out, "%p ", target);
+}
+
 void carc_vmengine(carc *c, value thr, int quanta)
 {
   struct vmthread *t;
@@ -161,12 +166,6 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
 
 void carc_apply(carc *c, value thr, value fun)
 {
-  switch (TYPE(fun)) {
-  case T_CODE:
-    t->funr = fun;
-    t->ip = 0;
-    break;
-  }
 }
 
 void carc_return(carc *c, value thr, value cont)
