@@ -18,10 +18,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
 #  02110-1301 USA.
 #
-TESTS = check_arith check_alloc check_hash check_reader \
+TESTS = check_arith check_alloc check_hash check_pp check_reader \
 	check_unicode check_vm
-check_PROGRAMS = check_arith check_alloc check_hash check_reader \
-	check_unicode check_vm
+check_PROGRAMS = check_arith check_alloc check_hash check_pp \
+	check_reader check_unicode check_vm
 
 check_arith_SOURCES = check_arith.c $(top_builddir)/src/carc.h
 check_arith_CFLAGS = @CHECK_CFLAGS@
@@ -34,6 +34,10 @@ check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
 check_hash_SOURCES = check_hash.c $(top_builddir)/src/carc.h
 check_hash_CFLAGS = @CHECK_CFLAGS@
 check_hash_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+
+check_pp_SOURCES = check_pp.c $(top_builddir)/src/carc.h
+check_pp_CFLAGS = @CHECK_CFLAGS@
+check_pp_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
 
 check_reader_SOURCES = check_reader.c $(top_builddir)/src/carc.h
 check_reader_CFLAGS = @CHECK_CFLAGS@
