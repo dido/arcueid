@@ -141,6 +141,47 @@ START_TEST(test_pp_atom)
       fail_unless(carc_strindex(&c, ppval, i) == (Rune)rat[i]);
   }
 #endif
+
+  ppval = carc_prettyprint(&c, carc_mkchar(&c, 0));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 5);
+  fail_unless(carc_strindex(&c, ppval, 0) == '#');
+  fail_unless(carc_strindex(&c, ppval, 1) == '\\');
+  fail_unless(carc_strindex(&c, ppval, 2) == 'n');
+  fail_unless(carc_strindex(&c, ppval, 3) == 'u');
+  fail_unless(carc_strindex(&c, ppval, 4) == 'l');
+
+  ppval = carc_prettyprint(&c, carc_mkchar(&c, 0));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 5);
+  fail_unless(carc_strindex(&c, ppval, 0) == '#');
+  fail_unless(carc_strindex(&c, ppval, 1) == '\\');
+  fail_unless(carc_strindex(&c, ppval, 2) == 'n');
+  fail_unless(carc_strindex(&c, ppval, 3) == 'u');
+  fail_unless(carc_strindex(&c, ppval, 4) == 'l');
+
+  ppval = carc_prettyprint(&c, carc_mkchar(&c, 9));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 5);
+  fail_unless(carc_strindex(&c, ppval, 0) == '#');
+  fail_unless(carc_strindex(&c, ppval, 1) == '\\');
+  fail_unless(carc_strindex(&c, ppval, 2) == 't');
+  fail_unless(carc_strindex(&c, ppval, 3) == 'a');
+  fail_unless(carc_strindex(&c, ppval, 4) == 'b');
+
+  ppval = carc_prettyprint(&c, carc_mkchar(&c, 'a'));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 3);
+  fail_unless(carc_strindex(&c, ppval, 0) == '#');
+  fail_unless(carc_strindex(&c, ppval, 1) == '\\');
+  fail_unless(carc_strindex(&c, ppval, 2) == 'a');
+
+  ppval = carc_prettyprint(&c, carc_mkchar(&c, 0x9f8d));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 3);
+  fail_unless(carc_strindex(&c, ppval, 0) == '#');
+  fail_unless(carc_strindex(&c, ppval, 1) == '\\');
+  fail_unless(carc_strindex(&c, ppval, 2) == 0x9f8d);
 }
 END_TEST
 
