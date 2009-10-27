@@ -65,9 +65,9 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       int len;
       char *outstr;
 
-      len = snprintf(NULL, 0, "%ld", val);
+      len = snprintf(NULL, 0, "%ld", val) + 1;
       outstr = (char *)alloca(sizeof(char)*len);
-      snprintf(outstr, len, "%ld", val);
+      snprintf(outstr, len+1, "%ld", val);
       append_cstring(c, outstr, ppstr);
     }
     break;
@@ -77,7 +77,7 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       int len;
       char *outstr;
 
-      len = snprintf(NULL, 0, "%lf", val);
+      len = snprintf(NULL, 0, "%lf", val) + 1;
       outstr = (char *)alloca(sizeof(char)*len);
       snprintf(outstr, len, "%lf", val);
       append_cstring(c, outstr, ppstr);
@@ -91,7 +91,7 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
 
       re = REP(sexpr)._complex.re;
       im = REP(sexpr)._complex.im;
-      len = snprintf(NULL, 0, "%lf%+lfi", re, im);
+      len = snprintf(NULL, 0, "%lf%+lfi", re, im) + 1;
       outstr = (char *)alloca(sizeof(char)*len);
       snprintf(outstr, len, "%lf%+lfi", re, im);
       append_cstring(c, outstr, ppstr);
@@ -103,7 +103,7 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
 
 value carc_prettyprint(carc *c, value v)
 {
-  value ret;
+  value ret=CNIL;
 
   prettyprint(c, v, &ret);
   return(ret);
