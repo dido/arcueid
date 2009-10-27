@@ -676,18 +676,14 @@ static struct {
   char *str;
   Rune val;
 } chartbl[] = {
-  { "null", 0 },
-  { "nul", 0 },
-  { "backspace", 8 },
-  { "tab", 9 },
-  { "newline", 10 },
-  { "vtab", 11 },
-  { "page", 12 },
-  { "return", 13 },
-  { "space", 32 },
-  { "rubout", 127 },
-  { NULL, -1 }
+  { "null", 0 }, { "nul", 0 }, { "backspace", 8 }, { "tab", 9 },
+  { "newline", 10 }, { "vtab", 11 }, { "page", 12 }, { "return", 13 },
+  { "space", 32 }, { "rubout", 127 }, { NULL, -1 }
 };
+
+static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
+			"unquote-splicing", "compose", "complement",
+			"t", "nil", "no", "andf", "get" };
 
 void carc_init_reader(carc *c)
 {
@@ -695,19 +691,8 @@ void carc_init_reader(carc *c)
 
   c->symtable = carc_mkhash(c, 10);
   c->rsymtable = carc_mkhash(c, 10);
-  SYNTAX(S_FN) = carc_intern(c, carc_mkstringc(c, "fn"));
-  SYNTAX(S_US) = carc_intern(c, carc_mkstringc(c, "_"));
-  SYNTAX(S_QUOTE) = carc_intern(c, carc_mkstringc(c, "quote"));
-  SYNTAX(S_QQUOTE) = carc_intern(c, carc_mkstringc(c, "quasiquote"));
-  SYNTAX(S_UNQUOTE) = carc_intern(c, carc_mkstringc(c, "unquote"));
-  SYNTAX(S_UNQUOTESP) = carc_intern(c, carc_mkstringc(c, "unquote-splicing"));
-  SYNTAX(S_COMPOSE) = carc_intern(c, carc_mkstringc(c, "compose"));
-  SYNTAX(S_COMPLEMENT) = carc_intern(c, carc_mkstringc(c, "complement"));
-  SYNTAX(S_T) = carc_intern(c, carc_mkstringc(c, "t"));
-  SYNTAX(S_NIL) = carc_intern(c, carc_mkstringc(c, "nil"));
-  SYNTAX(S_NO) = carc_intern(c, carc_mkstringc(c, "no"));
-  SYNTAX(S_ANDF) = carc_intern(c, carc_mkstringc(c, "andf"));
-  SYNTAX(S_GET) = carc_intern(c, carc_mkstringc(c, "get"));
+  for (i=0; i<S_THE_END; i++)
+    SYNTAX(i) = carc_intern(c, carc_mkstringc(c, syms[i]));
 
   c->charesctbl = carc_mkhash(c, 6);
   for (i=0; chartbl[i].str; i++) {
