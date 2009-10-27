@@ -350,4 +350,7 @@ extern value carc_mkcode(carc *c, value vmccode, value fname, value args, int nl
 extern void carc_set_memmgr(carc *c);
 extern void carc_init_reader(carc *c);
 
+extern value carc_prettyprint(carc *c, value v);
+
+
 #endif
