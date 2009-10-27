@@ -672,8 +672,27 @@ value carc_ssexpand(carc *c, value sym)
   return(expand_ssyntax(c, x));
 }
 
+static struct {
+  char *str;
+  Rune val;
+} chartbl[] = {
+  { "null", 0 },
+  { "nul", 0 },
+  { "backspace", 8 },
+  { "tab", 9 },
+  { "newline", 10 },
+  { "vtab", 11 },
+  { "page", 12 },
+  { "return", 13 },
+  { "space", 32 },
+  { "rubout", 127 },
+  { NULL, -1 }
+};
+
 void carc_init_reader(carc *c)
 {
+  int i;
+
   c->symtable = carc_mkhash(c, 10);
   c->rsymtable = carc_mkhash(c, 10);
   SYNTAX(S_FN) = carc_intern(c, carc_mkstringc(c, "fn"));
@@ -690,27 +709,11 @@ void carc_init_reader(carc *c)
   SYNTAX(S_ANDF) = carc_intern(c, carc_mkstringc(c, "andf"));
   SYNTAX(S_GET) = carc_intern(c, carc_mkstringc(c, "get"));
 
-  c->charesctbl = carc_mkhash(c, 4);
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "nul"),
-		   carc_mkchar(c, 0));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "null"),
-		   carc_mkchar(c, 0));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "backspace"),
-		   carc_mkchar(c, 8));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "tab"),
-		   carc_mkchar(c, 9));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "newline"),
-		   carc_mkchar(c, 10));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "linefeed"),
-		   carc_mkchar(c, 10));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "vtab"),
-		   carc_mkchar(c, 11));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "page"),
-		   carc_mkchar(c, 12));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "return"),
-		   carc_mkchar(c, 13));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "space"),
-		   carc_mkchar(c, 32));
-  carc_hash_insert(c, c->charesctbl, carc_mkstringc(c, "rubout"),
-		   carc_mkchar(c, 127));
+  c->charesctbl = carc_mkhash(c, 6);
+  for (i=0; chartbl[i].str; i++) {
+    value str = carc_mkstringc(c, chartbl[i].str);
+    value chr = carc_mkchar(c, chartbl[i].val);
+    carc_hash_insert(c, c->charesctbl, str, chr);
+    carc_hash_insert(c, c->charesctbl, chr, str);
+  }
 }
