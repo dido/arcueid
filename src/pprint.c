@@ -121,6 +121,26 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       append_cstring(c, outstr, ppstr);
     }
     break;
+  case T_CHAR:
+    {
+      Rune outstr[3];
+      value escape;
+ 
+      if ((escape = carc_hash_lookup(c, c->charesctbl, sexpr)) != CUNBOUND) {
+	/* Escape character */
+	*ppstr = (*ppstr == CNIL)
+	  ? carc_strcat(c, carc_mkstringc(c, "#\\"), escape)
+	  : carc_strcat(c, *ppstr, carc_strcat(c, carc_mkstringc(c, "#\\"),
+						escape));
+      } else {
+	outstr[0] = '#';
+	outstr[1] = '\\';
+	outstr[2] = REP(sexpr)._char;
+	*ppstr = (*ppstr == CNIL) ? carc_mkstring(c, outstr, 3)
+	  : carc_strcat(c, *ppstr, carc_mkstring(c, outstr, 3));
+      }
+    }
+    break;
 #endif
   }
   return(*ppstr);
