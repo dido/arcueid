@@ -35,23 +35,6 @@ typedef unsigned long value;
 /* Characters are internally stored as UCS-4 */
 typedef uint32_t Rune;
 
-enum {
-  S_FN,				/* fn syntax */
-  S_US,				/* underscore */
-  S_QUOTE,			/* quote */
-  S_QQUOTE,			/* quasiquote */
-  S_UNQUOTE,			/* unquote */
-  S_UNQUOTESP,			/* unquote-splicing */
-  S_COMPOSE,			/* compose */
-  S_COMPLEMENT,			/* complement */
-  S_T,				/* true */
-  S_NIL,			/* nil */
-  S_NO,				/* no */
-  S_ANDF,			/* andf */
-  S_GET,			/* get */
-  S_THE_END			/* end of the line */
-};
-
 typedef struct carc {
   /* High-level allocation functions (allocate a cell, allocate a block) */
   value (*get_cell)(struct carc *);
@@ -83,7 +66,7 @@ typedef struct carc {
   value rsymtable;		/* reverse symbol table */
   value genv;			/* global environment */
 
-  value syntax[S_THE_END];	/* syntax symbols */
+  value builtin;      /* symbols for builtin functions */
   /* Table of MzScheme-like character constants */
   value charesctbl;		/* character escapes */
 } carc;
