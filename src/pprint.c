@@ -97,6 +97,31 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       append_cstring(c, outstr, ppstr);
     }
     break;
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    {
+      char *outstr;
+      int len;
+
+      len = mpz_sizeinbase(REP(sexpr)._bignum, 10) + 2;
+      outstr = (char *)alloca(sizeof(char)*len);
+      mpz_get_str(outstr, 10, REP(sexpr)._bignum);
+      append_cstring(c, outstr, ppstr);
+    }
+    break;
+  case T_RATIONAL:
+    {
+      char *outstr;
+      int len;
+
+      len = mpz_sizeinbase(mpq_numref(REP(sexpr)._rational), 10)
+	+ mpz_sizeinbase(mpq_denref(REP(sexpr)._rational), 10) + 3;
+      outstr = (char *)alloca(sizeof(char)*len);
+      mpq_get_str(outstr, 10, REP(sexpr)._rational);
+      append_cstring(c, outstr, ppstr);
+    }
+    break;
+#endif
   }
   return(*ppstr);
 }
