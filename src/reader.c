@@ -29,9 +29,8 @@
 #include "alloc.h"
 #include "utf.h"
 #include "arith.h"
+#include "symbols.h"
 #include "../config.h"
-
-#define SYNTAX(sym) (c->syntax[(sym)])
 
 static Rune scan(carc *c, value src, int *index);
 static value read_list(carc *c, value src, int *index);
@@ -112,10 +111,10 @@ value carc_read(carc *c, value src, int *index, value *pval)
       c->signal_error(c, "misplaced right bracket");
       return(CNIL);
     case '\'':
-      *pval = read_quote(c, src, index, SYNTAX(S_QUOTE));
+      *pval = read_quote(c, src, index, CARC_BUILTIN(c, S_QUOTE));
       return(CTRUE);
     case '`':
-      *pval = read_quote(c, src, index, SYNTAX(S_QQUOTE));
+      *pval = read_quote(c, src, index, CARC_BUILTIN(c, S_QQUOTE));
       return(CTRUE);
     case ',':
       *pval = read_comma(c, src, index);
@@ -258,7 +257,7 @@ static value read_anonf(carc *c, value src, int *index)
       read_comment(c, src, index);
       break;
     case ']':
-      ret = cons(c, SYNTAX(S_FN), cons(c, cons(c, SYNTAX(S_US), CNIL), cons(c, top, CNIL)));
+      ret = cons(c, CARC_BUILTIN(c, S_FN), cons(c, cons(c, CARC_BUILTIN(c, S_US), CNIL), cons(c, top, CNIL)));
 
       return(ret);
     default:
@@ -293,9 +292,9 @@ static value read_comma(carc *c, value src, int *index)
   Rune ch;
 
   if ((ch = readchar(c, src, index)) == '@')
-    return(read_quote(c, src, index, SYNTAX(S_UNQUOTESP)));
+    return(read_quote(c, src, index, CARC_BUILTIN(c, S_UNQUOTESP)));
   unreadchar(c, src, ch, index);
-  return(read_quote(c, src, index, SYNTAX(S_UNQUOTE)));
+  return(read_quote(c, src, index, CARC_BUILTIN(c, S_UNQUOTE)));
 }
 
 /* XXX - we need to add support for octal and hexadecimal escapes as well */
@@ -511,8 +510,8 @@ static value expand_compose(carc *c, value sym)
 	elt = carc_intern(c, elt);
       i=0;
       if (negate) {
-	elt = (elt == CNIL) ? SYNTAX(S_NO) 
-	  : cons(c, SYNTAX(S_COMPLEMENT), cons(c, elt, CNIL));
+	elt = (elt == CNIL) ? CARC_BUILTIN(c, S_NO) 
+	  : cons(c, CARC_BUILTIN(c, S_COMPLEMENT), cons(c, elt, CNIL));
 	if (ch == Runeerror && top == CNIL)
 	  return(elt);
 	negate = 0;
@@ -547,7 +546,7 @@ static value expand_compose(carc *c, value sym)
   }
   if (cdr(top) == CNIL)
     return(car(top));
-  return(cons(c, SYNTAX(S_COMPOSE), top));
+  return(cons(c, CARC_BUILTIN(c, S_COMPOSE), top));
 }
 
 static value expand_sexpr(carc *c, value sym)
@@ -571,7 +570,7 @@ static value expand_sexpr(carc *c, value sym)
       if (last == CNIL)
 	last = elt;
       else if (prevchar == '!')
-	last = cons(c, last, cons(c, SYNTAX(S_QUOTE), cons(c, elt, CNIL)));
+	last = cons(c, last, cons(c, CARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL)));
       else
 	last = cons(c, last, cons(c, elt, CNIL));
       elt = CNIL;
@@ -596,11 +595,11 @@ static value expand_sexpr(carc *c, value sym)
   }
   if (last == CNIL) {
     if (prevchar == '!')
-      return(cons(c, SYNTAX(S_GET), cons(c, SYNTAX(S_QUOTE), cons(c, elt, CNIL))));
-    return(cons(c, SYNTAX(S_GET), cons(c, elt, CNIL)));
+      return(cons(c, CARC_BUILTIN(c, S_GET), cons(c, CARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL))));
+    return(cons(c, CARC_BUILTIN(c, S_GET), cons(c, elt, CNIL)));
   }
   if (prevchar == '!')
-    return(cons(c, last, cons(c, SYNTAX(S_QUOTE), cons(c, elt, CNIL))));
+    return(cons(c, last, cons(c, CARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL))));
   return(cons(c, last, cons(c, elt, CNIL)));
 }
 
@@ -648,7 +647,7 @@ static value expand_and(carc *c, value sym)
   }
   if (cdr(top) == CNIL)
     return(car(top));
-  return(cons(c, SYNTAX(S_ANDF), top));
+  return(cons(c, CARC_BUILTIN(c, S_ANDF), top));
 }
 
 static value expand_ssyntax(carc *c, value sym)
@@ -681,6 +680,7 @@ static struct {
   { "space", 32 }, { "rubout", 127 }, { NULL, -1 }
 };
 
+/* We must synchronize this against symbols.h as necessary! */
 static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
 			"unquote-splicing", "compose", "complement",
 			"t", "nil", "no", "andf", "get" };
@@ -691,13 +691,22 @@ void carc_init_reader(carc *c)
 
   c->symtable = carc_mkhash(c, 10);
   c->rsymtable = carc_mkhash(c, 10);
+  /* So that we don't have to add this to the rootset, we mark the
+     builtin table and the character escape table and its entries as
+     immutable and immune from garbage collection. */
+  c->builtin = carc_mkvector(c, S_THE_END);
+  BLOCK_IMM(c->builtin);
   for (i=0; i<S_THE_END; i++)
-    SYNTAX(i) = carc_intern(c, carc_mkstringc(c, syms[i]));
+    CARC_BUILTIN(c, i) = carc_intern(c, carc_mkstringc(c, syms[i]));
 
   c->charesctbl = carc_mkhash(c, 6);
+  BLOCK_IMM(c->charesctbl);
   for (i=0; chartbl[i].str; i++) {
     value str = carc_mkstringc(c, chartbl[i].str);
     value chr = carc_mkchar(c, chartbl[i].val);
+
+    BLOCK_IMM(str);
+    BLOCK_IMM(chr);
     carc_hash_insert(c, c->charesctbl, str, chr);
     carc_hash_insert(c, c->charesctbl, chr, str);
   }
