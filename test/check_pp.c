@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <check.h>
 #include "../src/carc.h"
+#include "../config.h"
 
 carc c;
 
@@ -119,6 +120,27 @@ START_TEST(test_pp_atom)
   fail_unless(carc_strindex(&c, ppval, i+5) == '8');
 
   fail_unless(carc_strindex(&c, ppval, carc_strlen(&c, ppval)-1) == 'i');
+
+#ifdef HAVE_GMP_H
+  {
+    value n;
+    char digits[] = "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000";
+    char rat[] = "104348/33215";
+
+    n = carc_mkbignuml(&c, 0);
+    mpz_set_str(REP(n)._bignum, digits, 10);
+    ppval = carc_prettyprint(&c, n);
+    fail_unless(TYPE(ppval) == T_STRING);
+    for (i=0; digits[i]; i++)
+      fail_unless(carc_strindex(&c, ppval, i) == (Rune)digits[i]);
+
+    n = carc_mkrationall(&c, 104348, 33215);
+    ppval = carc_prettyprint(&c, n);
+    fail_unless(TYPE(ppval) == T_STRING);
+    for (i=0; rat[i]; i++)
+      fail_unless(carc_strindex(&c, ppval, i) == (Rune)rat[i]);
+  }
+#endif
 }
 END_TEST
 
