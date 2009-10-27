@@ -21,7 +21,7 @@ lib_LTLIBRARIES = libcarc.la
 
 libcarc_la_LDFLAGS = -version-info 0:0:0
 libcarc_la_SOURCES = arith.c alloc.c carc.c compiler.c hash.c osdep.c \
-	reader.c string.c utf.c vmengine.c
+	pprint.c reader.c string.c utf.c vmengine.c
 
 include_HEADERS = carc.h
 noinst_HEADERS = arith.h alloc.h utf.h vmengine.h
