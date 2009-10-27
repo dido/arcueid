@@ -699,7 +699,7 @@ void carc_init_reader(carc *c)
   for (i=0; i<S_THE_END; i++)
     CARC_BUILTIN(c, i) = carc_intern(c, carc_mkstringc(c, syms[i]));
 
-  c->charesctbl = carc_mkhash(c, 6);
+  c->charesctbl = carc_mkhash(c, 5);
   BLOCK_IMM(c->charesctbl);
   for (i=0; chartbl[i].str; i++) {
     value str = carc_mkstringc(c, chartbl[i].str);
