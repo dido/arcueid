@@ -50,7 +50,7 @@ static void append_cstring(carc *c, char *buf, value *ppstr)
   *ppstr = (*ppstr == CNIL) ? nstr : carc_strcat(c, *ppstr, nstr);
 }
 
-value carc_prettyprint(carc *c, value sexpr, value *ppstr)
+static value prettyprint(carc *c, value sexpr, value *ppstr)
 {
   switch (TYPE(sexpr)) {
   case T_NIL:
@@ -99,4 +99,12 @@ value carc_prettyprint(carc *c, value sexpr, value *ppstr)
     break;
   }
   return(*ppstr);
+}
+
+value carc_prettyprint(carc *c, value v)
+{
+  value ret;
+
+  prettyprint(c, v, &ret);
+  return(ret);
 }
