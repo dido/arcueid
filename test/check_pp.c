@@ -152,6 +152,7 @@ int main(void)
   SRunner *sr;
 
   carc_set_memmgr(&c);
+  carc_init_reader(&c);
   tcase_add_test(tc_pp, test_pp_atom);
 
   suite_add_tcase(s, tc_pp);
