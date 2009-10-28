@@ -208,7 +208,7 @@ extern unsigned long long gcepochs;
 START_TEST(test_gc)
 {
   value list=CNIL, list2=CNIL;
-  // value listsym1, listsym2, lss1, lss2;
+  value listsym1, listsym2, lss1, lss2;
   int i, count, startcount;
   Hhdr *h;
   Bhdr *b;
@@ -223,12 +223,12 @@ START_TEST(test_gc)
     list2=cons(&c, INT2FIX(i), list);
 
   /* Add a symbol at the end of each list */
-  // lss1 = carc_mkstringc(&c, "list1");
-  // lss2 = carc_mkstringc(&c, "list2");
-  // listsym1 = carc_intern(&c, lss1);
-  // listsym2 = carc_intern(&c, lss2);
-  //  list = cons(&c, listsym1, list);
-  // list2 = cons(&c, listsym2, list2);
+  lss1 = carc_mkstringc(&c, "list1");
+  lss2 = carc_mkstringc(&c, "list2");
+  listsym1 = carc_intern(&c, lss1);
+  listsym2 = carc_intern(&c, lss2);
+  list = cons(&c, listsym1, list);
+  list2 = cons(&c, listsym2, list2);
 
   count = 0;
   for (h = __carc_get_heap_start(); h; h = h->next) {
@@ -271,9 +271,9 @@ START_TEST(test_gc)
     }
   }
 
-  printf("count = %d\n", startcount - count);
-  fail_unless(startcount - count == 4);
-
+  fail_unless(startcount - count == 8);
+  /* check if the symbol is still there */
+  fail_unless(carc_sym2name(&c, listsym2) == CUNBOUND);
 }
 END_TEST
 
