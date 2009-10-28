@@ -43,6 +43,25 @@
 void *alloca (size_t);
 #endif
 
+#define STRMAX 256
+
+static void append_buffer_close(carc *c, Rune *buf, int *idx, value *ppstr)
+{
+  value nstr;
+
+  nstr = carc_mkstring(c, buf, *idx);
+  *ppstr = (*ppstr == CNIL) ? nstr : carc_strcat(c, *ppstr, nstr);
+  *idx = 0;
+}
+
+static void append_buffer(carc *c, Rune *buf, int *idx, Rune ch, value *ppstr)
+{
+
+  if (*idx >= STRMAX)
+    append_buffer_close(c, buf, idx, ppstr);
+  buf[(*idx)++] = ch;
+}
+
 static void append_cstring(carc *c, char *buf, value *ppstr)
 {
   value nstr = carc_mkstringc(c, buf);
@@ -141,6 +160,31 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       }
     }
     break;
+  case T_STRING:
+    {
+      Rune buf[STRMAX], ch;
+      int idx=0, i;
+      value nstr;
+      char outstr[4];
+
+      append_buffer(c, buf, &idx, '\"', ppstr);
+      for (i=0; i<carc_strlen(c, sexpr); i++) {
+	ch = carc_strindex(c, sexpr, i);
+	if (ch < 32) {
+	  snprintf(outstr, 4, "%.3o", ch);
+	  append_buffer(c, buf, &idx, '\\', ppstr);
+	  append_buffer(c, buf, &idx, outstr[0], ppstr);
+	  append_buffer(c, buf, &idx, outstr[1], ppstr);
+	  append_buffer(c, buf, &idx, outstr[2], ppstr);
+	} else {
+	  append_buffer(c, buf, &idx, ch, ppstr);
+	}
+      }
+      append_buffer(c, buf, &idx, '\"', ppstr);
+      append_buffer_close(c, buf, &idx, ppstr);
+    }
+    break;
+
 #endif
   }
   return(*ppstr);
