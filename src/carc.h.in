@@ -342,6 +342,7 @@ extern void carc_set_memmgr(carc *c);
 extern void carc_init_reader(carc *c);
 
 extern value carc_prettyprint(carc *c, value v);
+extern void carc_print_string(carc *c, value str);
 
 
 #endif
