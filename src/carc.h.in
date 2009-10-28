@@ -304,6 +304,7 @@ extern unsigned long carc_hash(carc *c, value v);
 extern value carc_mkhash(carc *c, int hashbits);
 extern value carc_hash_insert(carc *c, value hash, value key, value val);
 extern value carc_hash_lookup(carc *c, value hash, value key);
+extern value carc_hash_lookup2(carc *c, value hash, value key);
 extern value carc_hash_delete(carc *c, value hash, value key);
 extern value carc_hash_iter(carc *c, value hash, void **context);
 extern value carc_intern(carc *c, value name);
