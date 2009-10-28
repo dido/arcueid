@@ -25,6 +25,7 @@
 #include <string.h>
 #include "carc.h"
 #include "alloc.h"
+#include "utf.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -231,3 +232,19 @@ value carc_prettyprint(carc *c, value v)
   prettyprint(c, v, &ret);
   return(ret);
 }
+
+void carc_print_string(carc *c, value str)
+{
+  int i, j, nc;
+  char buf[UTFmax];
+  Rune r;
+
+  for (i=0; i<carc_strlen(c, str); i++) {
+    r = carc_strindex(c, str, i);
+    nc = runetochar(buf, &r);
+    for (j=0; j<nc; j++)
+      putchar(buf[j]);
+  }
+  putchar('\n');
+}
+
