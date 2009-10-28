@@ -283,6 +283,17 @@ static void mark(carc *c, value v, int reclevel)
   value val, *vptr;
   int i;
 
+  /* If we find a symbol here, find its hash buckets in the symbol
+     tables and mark those.  This provides symbol garbage collection,
+     leaving only symbols which are actually in active use. */
+  if (TYPE(v) == T_SYMBOL) {
+    val = carc_hash_lookup2(c, c->rsymtable, v);
+    mark(c, val, reclevel);
+    val = carc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
+    mark(c, val, reclevel);
+    return;
+  }
+
   /* Do not try to mark an immediate value! */
   if (IMMEDIATE_P(v))
     return;
@@ -300,23 +311,15 @@ static void mark(carc *c, value v, int reclevel)
       mark(c, cdr(v), reclevel+1);
       break;
     case T_SYMBOL:
-      /* If we find a symbol here, find its hash buckets in the symbol
-	 tables and mark those.  This provides symbol garbage collection,
-	 leaving only symbols which are actually in active use. */
-      val = carc_hash_lookup2(c, c->rsymtable, v);
-      mark(c, val, reclevel+1);
-      val = carc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
-      mark(c, val, reclevel+1);
       break;
     case T_TABLE:
       ctx = NULL;
-      while ((val = carc_hash_iter(c, v, &ctx)) != CNIL)
+      while ((val = carc_hash_iter(c, v, &ctx)) != CUNBOUND)
 	mark(c, val, reclevel+1);
       break;
     case T_TBUCKET:
-      mark(c, REP(val)._hashbucket.key, reclevel+1);
-      mark(c, REP(val)._hashbucket.val, reclevel+1);
-      mark(c, REP(val)._hashbucket.hash, reclevel+1);
+      mark(c, REP(v)._hashbucket.key, reclevel+1);
+      mark(c, REP(v)._hashbucket.val, reclevel+1);
       break;
     case T_THREAD:
       /* mark the registers inside of the stack */
@@ -348,6 +351,7 @@ static void sweep(carc *c, value v)
 {
   if (IMMEDIATE_P(v))
     return;
+  //  printf("sweeping %p (type) %d\n", (void *)v, TYPE(v));
 
   /* The only special cases here are for those data types which point to
      immutable memory blocks which are otherwise invisible to the sweeper
