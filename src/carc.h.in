@@ -86,20 +86,21 @@ enum carc_types {
   T_SYMBOL=0x09,
   T_CONS=0x0a,
   T_TABLE=0x0b,
-  T_TAGGED=0x0c,
-  T_INPUT=0x0d,
-  T_OUTPUT=0x0e,
-  T_EXCEPTION=0x0f,
-  T_SOCKET=0x10,
-  T_THREAD=0x11,
-  T_VECTOR=0x12,
+  T_TBUCKET=0x0c,
+  T_TAGGED=0x0d,
+  T_INPUT=0x0e,
+  T_OUTPUT=0x0f,
+  T_EXCEPTION=0x10,
+  T_SOCKET=0x11,
+  T_THREAD=0x12,
+  T_VECTOR=0x13,
 
-  T_CONT = 0x13,		/* continuation */
-  T_CLOS = 0x14,		/* closure */
-  T_CODE = 0x15,		/* actual compiled code */
-  T_ENV = 0x16,			/* environment */
-  T_VMCODE = 0x17,		/* a VM code block */
-  T_CCODE = 0x18,		/* a callable C function */
+  T_CONT = 0x14,		/* continuation */
+  T_CLOS = 0x15,		/* closure */
+  T_CODE = 0x16,		/* actual compiled code */
+  T_ENV = 0x17,			/* environment */
+  T_VMCODE = 0x18,		/* a VM code block */
+  T_CCODE = 0x19,		/* a callable C function */
 
   T_NONE=0xff
 };
@@ -179,6 +180,12 @@ struct cell {
       int nentries;
       int loadlimit;
     } _hash;
+    struct {
+      value key;
+      value val;
+      value hash;
+      int index;
+    } _hashbucket;
     /* The vector struct is actually used for lots of other stuff,
        such as compiled code, closures (which are three-vectors),
        and continuations (which are four-vectors). */
