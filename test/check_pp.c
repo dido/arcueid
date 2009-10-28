@@ -209,6 +209,51 @@ START_TEST(test_pp_atom)
 }
 END_TEST
 
+START_TEST(test_pp_cons)
+{
+  value val1, val2, val3, ppval;
+
+  val1 = INT2FIX(1);
+  val2 = INT2FIX(2);
+  val3 = INT2FIX(3);
+  ppval = carc_prettyprint(&c, cons(&c, val1, cons(&c, val2, cons(&c, val3, CNIL))));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 7);
+  fail_unless(carc_strindex(&c, ppval, 0) == '(');
+  fail_unless(carc_strindex(&c, ppval, 1) == '1');
+  fail_unless(carc_strindex(&c, ppval, 2) == ' ');
+  fail_unless(carc_strindex(&c, ppval, 3) == '2');
+  fail_unless(carc_strindex(&c, ppval, 4) == ' ');
+  fail_unless(carc_strindex(&c, ppval, 5) == '3');
+  fail_unless(carc_strindex(&c, ppval, 6) == ')');
+
+  ppval = carc_prettyprint(&c, cons(&c, val1, val2));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 7);
+  fail_unless(carc_strindex(&c, ppval, 0) == '(');
+  fail_unless(carc_strindex(&c, ppval, 1) == '1');
+  fail_unless(carc_strindex(&c, ppval, 2) == ' ');
+  fail_unless(carc_strindex(&c, ppval, 3) == '.');
+  fail_unless(carc_strindex(&c, ppval, 4) == ' ');
+  fail_unless(carc_strindex(&c, ppval, 5) == '2');
+  fail_unless(carc_strindex(&c, ppval, 6) == ')');
+
+  ppval = carc_prettyprint(&c, cons(&c, val1, cons(&c, val2, val3)));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 9);
+  fail_unless(carc_strindex(&c, ppval, 0) == '(');
+  fail_unless(carc_strindex(&c, ppval, 1) == '1');
+  fail_unless(carc_strindex(&c, ppval, 2) == ' ');
+  fail_unless(carc_strindex(&c, ppval, 3) == '2');
+  fail_unless(carc_strindex(&c, ppval, 4) == ' ');
+  fail_unless(carc_strindex(&c, ppval, 5) == '.');
+  fail_unless(carc_strindex(&c, ppval, 6) == ' ');
+  fail_unless(carc_strindex(&c, ppval, 7) == '3');
+  fail_unless(carc_strindex(&c, ppval, 8) == ')');
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -219,6 +264,7 @@ int main(void)
   carc_set_memmgr(&c);
   carc_init_reader(&c);
   tcase_add_test(tc_pp, test_pp_atom);
+  tcase_add_test(tc_pp, test_pp_cons);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
