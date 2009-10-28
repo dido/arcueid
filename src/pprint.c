@@ -198,6 +198,29 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       append_buffer_close(c, buf, &idx, ppstr);
     }
     break;
+    /* XXX: These cases that deal with composite data structures
+       are naive and do not deal with self-references properly.  Well,
+       Paul Graham's reference arc3 is no better, so I guess I shouldn't
+       feel too bad, but this is something we *really* need to deal with
+       in the near future. */
+  case T_CONS:
+    {
+      append_cstring(c, "(", ppstr);
+      while (TYPE(sexpr) == T_CONS) {
+	prettyprint(c, car(sexpr), ppstr);
+	sexpr = cdr(sexpr);
+	if (TYPE(sexpr) != CNIL)
+	  append_cstring(c, " ", ppstr);
+      }
+
+      if (sexpr != CNIL) {
+	append_cstring(c, ". ", ppstr);
+	prettyprint(c, sexpr, ppstr);
+      }
+
+      append_cstring(c, ")", ppstr);
+    }
+    break;
   case T_TABLE:
     {
       value val;
