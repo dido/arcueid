@@ -486,7 +486,7 @@ static value read_char(carc *c, value src, int *index)
 
   /* Symbolic character escape */
   symch = carc_hash_lookup(c, c->charesctbl, tok);
-  if (symch == CNIL)
+  if (symch == CUNBOUND)
     c->signal_error(c, "invalid character constant");
   return(symch);
 }
