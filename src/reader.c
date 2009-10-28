@@ -689,11 +689,13 @@ void carc_init_reader(carc *c)
 {
   int i;
 
+  /* So that we don't have to add them to the rootset, we mark the
+     symbol table, the builtin table, and the character escape table
+     and its entries as immutable and immune from garbage collection. */
   c->symtable = carc_mkhash(c, 10);
+  BLOCK_IMM(c->symtable);
   c->rsymtable = carc_mkhash(c, 10);
-  /* So that we don't have to add this to the rootset, we mark the
-     builtin table and the character escape table and its entries as
-     immutable and immune from garbage collection. */
+  BLOCK_IMM(c->rsymtable);
   c->builtin = carc_mkvector(c, S_THE_END);
   BLOCK_IMM(c->builtin);
   for (i=0; i<S_THE_END; i++)
