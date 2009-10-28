@@ -339,6 +339,20 @@ value carc_hash_lookup(carc *c, value hash, value key)
   return(hash_lookup(c, hash, key, &index));
 }
 
+/* Slightly different version which returns the actual cons cell with
+   the key and value if a binding is available. */
+value carc_hash_lookup2(carc *c, value hash, value key)
+{
+  unsigned int index;
+  value val;
+
+  val = hash_lookup(c, hash, key, &index);
+  if (val == CUNBOUND)
+    return(CUNBOUND);
+  return(TABLEPTR(hash)[index]);
+}
+
+
 value carc_hash_delete(carc *c, value hash, value key)
 {
   unsigned int index;
