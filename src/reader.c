@@ -705,10 +705,15 @@ void carc_init_reader(carc *c)
   for (i=0; chartbl[i].str; i++) {
     value str = carc_mkstringc(c, chartbl[i].str);
     value chr = carc_mkchar(c, chartbl[i].val);
+    value cell;
 
     BLOCK_IMM(str);
     BLOCK_IMM(chr);
     carc_hash_insert(c, c->charesctbl, str, chr);
+    cell = carc_hash_lookup2(c, c->charesctbl, str);
+    BLOCK_IMM(cell);
     carc_hash_insert(c, c->charesctbl, chr, str);
+    cell = carc_hash_lookup2(c, c->charesctbl, chr);
+    BLOCK_IMM(cell);
   }
 }
