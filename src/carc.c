@@ -134,6 +134,7 @@ value carc_mkvector(carc *c, int length)
   if (cellptr == NULL)
     return(CNIL);
   vect = (value)cellptr;
+  BTYPE(vect) = T_VECTOR;
   REP(vect)._vector.length = length;
   memset(REP(vect)._vector.data, 0, sizeof(value)*length);
   return(vect);
