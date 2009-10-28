@@ -164,7 +164,6 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
     {
       Rune buf[STRMAX], ch;
       int idx=0, i;
-      value nstr;
       char outstr[4];
 
       append_buffer(c, buf, &idx, '\"', ppstr);
@@ -184,7 +183,20 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       append_buffer_close(c, buf, &idx, ppstr);
     }
     break;
+  case T_SYMBOL:
+    {
+      Rune buf[STRMAX], ch;
+      int idx=0, i;
+      value sym;
 
+      sym = carc_sym2name(c, sexpr);
+      for (i=0; i<carc_strlen(c, sym); i++) {
+	ch = carc_strindex(c, sym, i);
+	append_buffer(c, buf, &idx, ch, ppstr);
+      }
+      append_buffer_close(c, buf, &idx, ppstr);
+    }
+    break;
 #endif
   }
   return(*ppstr);
