@@ -697,7 +697,6 @@ void carc_init_reader(carc *c)
   c->rsymtable = carc_mkhash(c, 10);
   BLOCK_IMM(c->rsymtable);
   c->builtin = carc_mkvector(c, S_THE_END);
-  BLOCK_IMM(c->builtin);
   for (i=0; i<S_THE_END; i++)
     CARC_BUILTIN(c, i) = carc_intern(c, carc_mkstringc(c, syms[i]));
 
