@@ -299,10 +299,24 @@ static void mark(carc *c, value v, int reclevel)
       mark(c, car(v), reclevel+1);
       mark(c, cdr(v), reclevel+1);
       break;
+    case T_SYMBOL:
+      /* If we find a symbol here, find its hash buckets in the symbol
+	 tables and mark those.  This provides symbol garbage collection,
+	 leaving only symbols which are actually in active use. */
+      val = carc_hash_lookup2(c, c->rsymtable, v);
+      mark(c, val, reclevel+1);
+      val = carc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
+      mark(c, val, reclevel+1);
+      break;
     case T_TABLE:
       ctx = NULL;
       while ((val = carc_hash_iter(c, v, &ctx)) != CNIL)
 	mark(c, val, reclevel+1);
+      break;
+    case T_TBUCKET:
+      mark(c, REP(val)._hashbucket.key, reclevel+1);
+      mark(c, REP(val)._hashbucket.val, reclevel+1);
+      mark(c, REP(val)._hashbucket.hash, reclevel+1);
       break;
     case T_THREAD:
       /* mark the registers inside of the stack */
@@ -359,6 +373,11 @@ static void sweep(carc *c, value v)
     c->free_block(c, REP(v)._hash.table); /* free the immutable memory of the hash table */
     c->free_block(c, (void *)v);
     break;
+  case T_TBUCKET:
+    /* Make the cell in the parent hash table unbound as well. */
+    REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index] = CUNBOUND;
+    c->free_block(c, (void *)v);
+    break;
   default:
     /* this should do for almost everything else */
     c->free_block(c, (void *)v);
@@ -372,13 +391,15 @@ static void rootset(carc *c)
   marker = (gccolor-1)%3;
   sweeper = (gccolor-2)%3;
 
-  /* Mark the threads, symbol tables, and global environment with
-     propagators so that the virtual machine considers them part
-     of the rootset. */
+  /* Mark the threads and global environment with propagators so that
+     the virtual machine considers them part of the rootset.  Note that
+     the symbol tables are *not* part of the rootset.  The symbol tables
+     themselves are marked as immutable, so they are not subject to
+     garbage collection, but the symbols inside them must be referenced
+     elsewhere to prevent their being GCed. */
   MARKPROP(c->vmthreads);
-  MARKPROP(c->symtable);
-  MARKPROP(c->rsymtable);
   MARKPROP(c->genv);
+  MARKPROP(c->builtin);
 }
 
 static void rungc(carc *c)
