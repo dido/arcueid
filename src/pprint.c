@@ -197,6 +197,28 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       append_buffer_close(c, buf, &idx, ppstr);
     }
     break;
+  case T_TABLE:
+    {
+      value val;
+      void *ctx = NULL;
+
+      append_cstring(c, "#hash(", ppstr);
+      while ((val = carc_hash_iter(c, sexpr, &ctx)) != CUNBOUND) {
+	prettyprint(c, val, ppstr);
+	append_cstring(c, " ", ppstr);
+      }
+      append_cstring(c, ")", ppstr);
+    }
+    break;
+  case T_TBUCKET:
+    {
+      append_cstring(c, "(", ppstr);
+      prettyprint(c, REP(sexpr)._hashbucket.key, ppstr);
+      append_cstring(c, " . ", ppstr);
+      prettyprint(c, REP(sexpr)._hashbucket.val, ppstr);
+      append_cstring(c, ")", ppstr);
+    }
+    break;
 #endif
   }
   return(*ppstr);
