@@ -208,16 +208,27 @@ extern unsigned long long gcepochs;
 START_TEST(test_gc)
 {
   value list=CNIL, list2=CNIL;
-  int i, count;
+  // value listsym1, listsym2, lss1, lss2;
+  int i, count, startcount;
   Hhdr *h;
   Bhdr *b;
   unsigned long long oldepoch;
+
+  carc_init_reader(&c);
 
   /* Create a two small lists */
   for (i=0; i<4; i++)
     list=cons(&c, INT2FIX(i), list);
   for (i=4; i<8; i++) 
     list2=cons(&c, INT2FIX(i), list);
+
+  /* Add a symbol at the end of each list */
+  // lss1 = carc_mkstringc(&c, "list1");
+  // lss2 = carc_mkstringc(&c, "list2");
+  // listsym1 = carc_intern(&c, lss1);
+  // listsym2 = carc_intern(&c, lss2);
+  //  list = cons(&c, listsym1, list);
+  // list2 = cons(&c, listsym2, list2);
 
   count = 0;
   for (h = __carc_get_heap_start(); h; h = h->next) {
@@ -227,7 +238,8 @@ START_TEST(test_gc)
 	count++;
     }
   }
-  fail_unless(count == 8);
+  startcount = count;
+
   /* Mark [list] with a propagator, but not [list2] */
   D2B(b, (void *)list);
   oldepoch = gcepochs;
@@ -249,8 +261,7 @@ START_TEST(test_gc)
   }
 
   /* After three epochs of the garbage collector, [list2], whose head was
-     never marked as a propagator, should have been garbage collected,
-     and the number of allocated blocks in memory must be only ten now. */
+     never marked as a propagator, should have been garbage collected. */
   count = 0;
   for (h = __carc_get_heap_start(); h; h = h->next) {
     for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
@@ -259,7 +270,9 @@ START_TEST(test_gc)
 	count++;
     }
   }
-  fail_unless(count == 4);
+
+  printf("count = %d\n", startcount - count);
+  fail_unless(startcount - count == 4);
 
 }
 END_TEST
