@@ -422,15 +422,34 @@ START_TEST(test_ssyntax)
 }
 END_TEST
 
+extern unsigned long long gcepochs;
+
 int main(void)
 {
   int number_failed;
   Suite *s = suite_create("Reader");
   TCase *tc_reader = tcase_create("Reader");
   SRunner *sr;
+  unsigned long long oldepoch;
 
   carc_set_memmgr(&c);
   carc_init_reader(&c);
+
+  oldepoch = gcepochs;
+  while (gcepochs == oldepoch) {
+    c.rungc(&c);
+  }
+
+  oldepoch = gcepochs;
+  while (gcepochs == oldepoch) {
+    c.rungc(&c);
+  }
+
+  oldepoch = gcepochs;
+  while (gcepochs == oldepoch) {
+    c.rungc(&c);
+  }
+
   cc = &c;
   tcase_add_test(tc_reader, test_atom);
   tcase_add_test(tc_reader, test_string);
