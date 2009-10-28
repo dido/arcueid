@@ -284,12 +284,26 @@ static void hashtable_expand(carc *c, value hash)
       for (j=0; !EMPTYP(newtbl[index]); j++)
 	index = (index + PROBE(j)) & HASHMASK(nhashbits);
       newtbl[index] = e;
+      REP(e)._hashbucket.index = index; /* change index */
     }
   }
   c->free_block(c, (void *)oldtbl);
   REP(hash)._hash.hashbits = nhashbits;
   REP(hash)._hash.loadlimit = (HASHSIZE(nhashbits) * MAX_LOAD_FACTOR) / 100;
   TABLEPTR(hash) = newtbl;
+}
+
+static value mkhashbucket(carc *c, value key, value val, value hash, int index)
+{
+  value bucket;
+
+  bucket = c->get_cell(c);
+  BTYPE(bucket) = T_TBUCKET;
+  REP(bucket)._hashbucket.key = key;
+  REP(bucket)._hashbucket.val = val;
+  REP(bucket)._hashbucket.hash = hash;
+  REP(bucket)._hashbucket.index = index;
+  return(bucket);
 }
 
 value carc_hash_insert(carc *c, value hash, value key, value val)
@@ -307,7 +321,7 @@ value carc_hash_insert(carc *c, value hash, value key, value val)
   i = 0;
   for (i=0; !EMPTYP(TABLEPTR(hash)[index]) && !carc_is(c, car(TABLEPTR(hash)[index]), key); i++)
     index = (index + PROBE(i)) & TABLEMASK(hash); /* quadratic probe */
-  e = cons(c, key, val);
+  e = mkhashbucket(c, key, val, hash, index);
   WB(&TABLEPTR(hash)[index], e);
   return(val);
 }
@@ -326,8 +340,8 @@ static value hash_lookup(carc *c, value hash, value key, unsigned int *index)
       return(CUNBOUND);
     if (e == CUNDEF)
       continue;
-    if (carc_equal(c, car(e), key) == CTRUE)
-      return(cdr(e));
+    if (carc_equal(c, REP(e)._hashbucket.key, key) == CTRUE)
+      return(REP(e)._hashbucket.val);
   }
 }
 
