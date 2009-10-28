@@ -197,6 +197,15 @@ START_TEST(test_pp_atom)
   fail_unless(carc_strindex(&c, ppval, 8) == '1');
   fail_unless(carc_strindex(&c, ppval, 9) == '2');
   fail_unless(carc_strindex(&c, ppval, 10) == '\"');
+
+  ppval = carc_prettyprint(&c, carc_intern(&c, carc_mkstringc(&c, "hello")));
+  fail_unless(TYPE(ppval) == T_STRING);
+  fail_unless(carc_strlen(&c, ppval) == 5);
+  fail_unless(carc_strindex(&c, ppval, 0) == 'h');
+  fail_unless(carc_strindex(&c, ppval, 1) == 'e');
+  fail_unless(carc_strindex(&c, ppval, 2) == 'l');
+  fail_unless(carc_strindex(&c, ppval, 3) == 'l');
+  fail_unless(carc_strindex(&c, ppval, 4) == 'o');
 }
 END_TEST
 
