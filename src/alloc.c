@@ -347,10 +347,6 @@ static void mark(carc *c, value v, int reclevel)
 
 static void sweep(carc *c, value v)
 {
-  if (IMMEDIATE_P(v))
-    return;
-  //  printf("sweeping %p (type) %d\n", (void *)v, TYPE(v));
-
   /* The only special cases here are for those data types which point to
      immutable memory blocks which are otherwise invisible to the sweeper
      or allocate memory blocks not known to the allocator.  These include
