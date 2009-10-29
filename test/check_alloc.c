@@ -208,7 +208,7 @@ extern unsigned long long gcepochs;
 START_TEST(test_gc)
 {
   value list=CNIL, list2=CNIL;
-  value listsym1, listsym2, lss1, lss2, hash1, hash2;
+  value listsym1, listsym2, lss1, lss2, hash1, hash2, vec1, vec2;
   int i, count, startcount;
   Hhdr *h;
   Bhdr *b;
@@ -250,6 +250,20 @@ START_TEST(test_gc)
   /* Add a character to the end of each list */
   list = cons(&c, carc_mkchar(&c, 0x86df), list);
   list2 = cons(&c, carc_mkchar(&c, 0x9f8d), list2);
+
+  /* Add a vector to each list, and populate it with fixnums and a string */
+  vec1 = carc_mkvector(&c, 10);
+  vec2 = carc_mkvector(&c, 10);
+
+  for (i=0; i<9; i++) {
+    VINDEX(vec1, i) = INT2FIX(i);
+    VINDEX(vec2, i) = INT2FIX(i);
+  }
+
+  VINDEX(vec1, 9) = carc_mkstringc(&c, "foo");
+  VINDEX(vec2, 9) = carc_mkstringc(&c, "bar");
+  list = cons(&c, vec1, list);
+  list2 = cons(&c, vec2, list2);
 
   /* Create two hash tables, put a fixnum and a string mapping in
      each, and add them to each list. */
@@ -312,12 +326,12 @@ START_TEST(test_gc)
 
   /*  printf("count = %d\n", startcount - count); */
 
-  /* There are 147 objects (151 if we have the bignum and the
+  /* There are 150 objects (154 if we have the bignum and the
      rational) represented by list2, and they must all be collected. */
 #ifdef HAVE_GMP_H
-  fail_unless(startcount - count == 151);
+  fail_unless(startcount - count == 154);
 #else
-  fail_unless(startcount - count == 147);
+  fail_unless(startcount - count == 150);
 #endif
   /* check if the symbol is still there */
   fail_unless(carc_sym2name(&c, listsym2) == CUNBOUND);
