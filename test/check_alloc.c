@@ -238,20 +238,36 @@ START_TEST(test_gc)
   list = cons(&c, carc_mkflonum(&c, 1.234), list);
   list2 = cons(&c, carc_mkflonum(&c, 5.678), list);
 
+#ifdef HAVE_GMP_H
+  /* Add a bignum and a rational to the end of each list */
+  list = cons(&c, carc_mkbignuml(&c, FIXNUM_MAX + 1), list);
+  list2 = cons(&c, carc_mkbignuml(&c, FIXNUM_MAX + 2), list);
+
+  list = cons(&c, carc_mkrationall(&c, 1, 4), list);
+  list2 = cons(&c, carc_mkrationall(&c, 3, 4), list);
+#endif
+
   /* Add a character to the end of each list */
   list = cons(&c, carc_mkchar(&c, 0x86df), list);
   list2 = cons(&c, carc_mkchar(&c, 0x9f8d), list2);
 
-  /* Create two hash tables, put a couple of fixnum mappings in each,
-     and add them to each list. */
+  /* Create two hash tables, put a fixnum and a string mapping in
+     each, and add them to each list. */
   hash1 = carc_mkhash(&c, 4);
   hash2 = carc_mkhash(&c, 4);
   carc_hash_insert(&c, hash1, INT2FIX(1), INT2FIX(2));
-  carc_hash_insert(&c, hash1, INT2FIX(3), INT2FIX(4));
+  carc_hash_insert(&c, hash1, INT2FIX(3), carc_mkstringc(&c, "three"));
   carc_hash_insert(&c, hash2, INT2FIX(5), INT2FIX(6));
-  carc_hash_insert(&c, hash2, INT2FIX(7), INT2FIX(8));
+  carc_hash_insert(&c, hash2, INT2FIX(7), carc_mkstringc(&c, "seven"));
   list = cons(&c, hash1, list);
   list2 = cons(&c, hash2, list2);
+
+  /* Cons up 128 more values to the lists just to make them longer
+     and ensure that the incremental collection works properly. */
+  for (i=0; i<128; i++) {
+    list=cons(&c, INT2FIX(i), list);
+    list2=cons(&c, INT2FIX(i), list2);
+  }
 
   count = 0;
   for (h = __carc_get_heap_start(); h; h = h->next) {
@@ -294,8 +310,15 @@ START_TEST(test_gc)
     }
   }
 
-  printf("count = %d\n", startcount - count);
-  fail_unless(startcount - count == 18);
+  /*  printf("count = %d\n", startcount - count); */
+
+  /* There are 147 objects (151 if we have the bignum and the
+     rational) represented by list2, and they must all be collected. */
+#ifdef HAVE_GMP_H
+  fail_unless(startcount - count == 151);
+#else
+  fail_unless(startcount - count == 147);
+#endif
   /* check if the symbol is still there */
   fail_unless(carc_sym2name(&c, listsym2) == CUNBOUND);
 }
