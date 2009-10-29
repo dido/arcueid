@@ -208,7 +208,7 @@ extern unsigned long long gcepochs;
 START_TEST(test_gc)
 {
   value list=CNIL, list2=CNIL;
-  value listsym1, listsym2, lss1, lss2;
+  value listsym1, listsym2, lss1, lss2, hash1, hash2;
   int i, count, startcount;
   Hhdr *h;
   Bhdr *b;
@@ -229,6 +229,29 @@ START_TEST(test_gc)
   listsym2 = carc_intern(&c, lss2);
   list = cons(&c, listsym1, list);
   list2 = cons(&c, listsym2, list2);
+
+  /* Add a string to the end of each list */
+  list = cons(&c, carc_mkstringc(&c, "foo"), list);
+  list2 = cons(&c, carc_mkstringc(&c, "bar"), list);
+
+  /* Add a flonum to the end of each list */
+  list = cons(&c, carc_mkflonum(&c, 1.234), list);
+  list2 = cons(&c, carc_mkflonum(&c, 5.678), list);
+
+  /* Add a character to the end of each list */
+  list = cons(&c, carc_mkchar(&c, 0x86df), list);
+  list2 = cons(&c, carc_mkchar(&c, 0x9f8d), list2);
+
+  /* Create two hash tables, put a couple of fixnum mappings in each,
+     and add them to each list. */
+  hash1 = carc_mkhash(&c, 4);
+  hash2 = carc_mkhash(&c, 4);
+  carc_hash_insert(&c, hash1, INT2FIX(1), INT2FIX(2));
+  carc_hash_insert(&c, hash1, INT2FIX(3), INT2FIX(4));
+  carc_hash_insert(&c, hash2, INT2FIX(5), INT2FIX(6));
+  carc_hash_insert(&c, hash2, INT2FIX(7), INT2FIX(8));
+  list = cons(&c, hash1, list);
+  list2 = cons(&c, hash2, list2);
 
   count = 0;
   for (h = __carc_get_heap_start(); h; h = h->next) {
@@ -271,7 +294,8 @@ START_TEST(test_gc)
     }
   }
 
-  fail_unless(startcount - count == 8);
+  printf("count = %d\n", startcount - count);
+  fail_unless(startcount - count == 18);
   /* check if the symbol is still there */
   fail_unless(carc_sym2name(&c, listsym2) == CUNBOUND);
 }
