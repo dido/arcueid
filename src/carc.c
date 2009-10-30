@@ -155,22 +155,3 @@ value carc_list_append(value list1, value val)
   return(list1);
 }
 
-value carc_mkcont(carc *c, value offset, value funr, value envr)
-{
-  value cont = carc_mkvector(c, 3);
-
-  BTYPE(cont) = T_CONT;
-  WB(&VINDEX(cont, 0), offset);
-  WB(&VINDEX(cont, 1), funr);
-  WB(&VINDEX(cont, 2), envr);
-  return(cont);
-}
-
-value carc_mkenv(carc *c, value parent, int size)
-{
-  value env;
-
-  env = cons(c, carc_mkvector(c, size), parent);
-  BTYPE(env) = T_ENV;
-  return(env);
-}
