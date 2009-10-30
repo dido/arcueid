@@ -110,13 +110,13 @@ void carc_vmengine(carc *c, value thr, int quanta)
   };
   register Inst *cfa;
 
- restart:
-
   if (thr == CNIL) {
     vm_prim = labels;
     vm_out = stdout;
     return;
   }
+
+ restart:
 
   t = &REP(thr)._thread;
 
@@ -166,8 +166,34 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
 
 void carc_apply(carc *c, value thr, value fun)
 {
+  switch (TYPE(TVALR(thr))) {
+  case T_CODE:
+    TFUNR(thr) = TVALR(thr);
+    TIP(thr) = 0;
+    break;
+  }
 }
 
 void carc_return(carc *c, value thr, value cont)
 {
+}
+
+value carc_mkcont(carc *c, value offset, value funr, value envr)
+{
+  value cont = carc_mkvector(c, 3);
+
+  BTYPE(cont) = T_CONT;
+  WB(&VINDEX(cont, 0), offset);
+  WB(&VINDEX(cont, 1), funr);
+  WB(&VINDEX(cont, 2), envr);
+  return(cont);
+}
+
+value carc_mkenv(carc *c, value parent, int size)
+{
+  value env;
+
+  env = cons(c, carc_mkvector(c, size), parent);
+  BTYPE(env) = T_ENV;
+  return(env);
 }
