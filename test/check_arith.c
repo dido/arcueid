@@ -1548,6 +1548,44 @@ START_TEST(test_neg)
 }
 END_TEST
 
+START_TEST(test_cmp_fixnum)
+{
+  value cmp;
+
+  cmp = carc_numcmp(&c, INT2FIX(8), INT2FIX(21));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == -1);
+
+  cmp = carc_numcmp(&c, INT2FIX(21), INT2FIX(8));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == 1);
+
+  cmp = carc_numcmp(&c, INT2FIX(8), INT2FIX(8));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == 0);
+
+  cmp = carc_numcmp(&c, INT2FIX(-21), INT2FIX(-8));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == -1);
+
+  cmp = carc_numcmp(&c, INT2FIX(-8), INT2FIX(-21));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == 1);
+
+  cmp = carc_numcmp(&c, INT2FIX(-8), INT2FIX(-8));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == 0);
+
+  cmp = carc_numcmp(&c, INT2FIX(-21), INT2FIX(8));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == -1);
+
+  cmp = carc_numcmp(&c, INT2FIX(8), INT2FIX(-21));
+  fail_unless(TYPE(cmp) == T_FIXNUM);
+  fail_unless(FIX2INT(cmp) == 1);
+}
+END_TEST
+
 START_TEST(test_coerce_flonum)
 {
   double d;
@@ -1956,6 +1994,8 @@ int main(void)
 
   tcase_add_test(tc_ops, test_neg);
 
+
+  tcase_add_test(tc_ops, test_cmp_fixnum);
 
   tcase_add_test(tc_conv, test_coerce_fixnum);
   tcase_add_test(tc_conv, test_coerce_flonum);
