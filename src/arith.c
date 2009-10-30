@@ -1130,3 +1130,39 @@ value carc_string2num(carc *c, value str)
   return(string2numindex(c, str, 0, 0));
 }
 
+#define COMPARE(x) {				\
+  if ((x) > 0)					\
+    return(INT2FIX(1));				\
+  else if ((x) < 0)				\
+    return(INT2FIX(-1));			\
+  else						\
+    return(INT2FIX(0));				\
+  }
+
+/* May be faster if implemented by direct comparison, but subtraction
+   is a lot easier! :p */
+value carc_numcmp(carc *c, value v1, value v2)
+{
+  value diff;
+
+  diff = __carc_sub2(c, v1, v2);
+  switch (TYPE(diff)) {
+  case T_FIXNUM:
+    COMPARE(FIX2INT(diff));
+    break;
+  case T_FLONUM:
+    COMPARE(REP(diff)._flonum);
+    break;
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    return(mpz_sgn(REP(diff)._bignum));
+    break;
+  case T_RATIONAL:
+    return(mpq_sgn(REP(diff)._rational));
+    break;
+#endif
+  default:
+    c->signal_error(c, "Invalid types for numeric comparison");
+    return(CNIL);
+  }
+}
