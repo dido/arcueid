@@ -128,6 +128,7 @@ struct vmthread {
   value funr;		/* current function pointer register */
   value envr;		/* current environment register */
   value valr;		/* value of most recent instruction */
+  value conr;		/* continuation register */
   value *sp;		/* stack pointer */
   value stack;		/* the actual stack itself (a vector) */
   value *stkbase;	/* base pointer of the stack */
@@ -145,11 +146,13 @@ struct vmthread {
 #define TFUNR(t) (REP(t)._thread.funr)
 #define TENVR(t) (REP(t)._thread.envr)
 #define TVALR(t) (REP(t)._thread.valr)
+#define TCONR(t) (REP(t)._thread.conr)
 #define TSP(t) (REP(t)._thread.sp)
 #define TSTACK(t) (REP(t)._thread.stack)
 #define TSBASE(t) (REP(t)._thread.stkbase)
 #define TSTOP(t) (REP(t)._thread.stktop)
 #define TIP(t) (REP(t)._thread.ip)
+#define TARGC(t) (REP(t)._thread.argc)
 #define TSTATE(t) (REP(t)._thread.state)
 
 /* Cells for boxed items */
@@ -286,6 +289,7 @@ extern value carc_coerce_fixnum(carc *c, value v);
 
 extern value carc_arith_op(carc *c, int opval, value args);
 extern value carc_string2num(carc *c, value v);
+extern value carc_numcmp(carc *c, value v1, value v2);
 
 extern value carc_is(carc *c, value v1, value v2);
 extern value carc_equal(carc *c, value v1, value v2);
