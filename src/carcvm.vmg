@@ -86,7 +86,7 @@ ste ( #ienv #iindx -- )
 \ Note that this is a relative address, but the absolute address is
 \ stored in the continuation.
 cont ( #icofs -- )
-WB(&t->valr, carc_mkcont(c, INT2FIX(icofs), t->funr, t->envr));
+WB(&t->conr, cons(c, carc_mkcont(c, INT2FIX(icofs), t->funr, t->envr), t->conr));
 
 \ Make an environment of a given size
 env ( #ienvsize -- )
@@ -100,7 +100,7 @@ carc_apply(c, thr, t->valr);
 goto restart;
 
 ret ( -- )
-carc_return(c, thr, t->valr);
+carc_return(c, thr);
 goto restart;
 
 \ Jump unconditional
@@ -166,3 +166,6 @@ scdr(t->valr, inc);
 is ( i -- )
 t->valr = carc_is(c, t->valr, i);
 
+\ XXX - right now this only works for numeric args.
+cmp ( i -- )
+t->valr = carc_numcmp(c, t->valr, i);
