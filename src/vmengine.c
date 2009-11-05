@@ -20,6 +20,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "carc.h"
 #include "vmengine.h"
 #include "alloc.h"
@@ -56,7 +57,7 @@ FILE *vm_out;
 #define INC_IP(const_inc)	({cfa=IP[const_inc]; ip+=(const_inc);})
 #define DEF_CA
 #define NEXT_P1	(ip++)
-#define NEXT_P2	({if (--quanta <= 0 || t->state != Tready) goto endquantum; goto *cfa;})
+#define NEXT_P2	({if (--quanta <= 0 || TSTATE(thr) != Tready) goto endquantum; goto *cfa;})
 
 #define NEXT ({DEF_CA NEXT_P1; NEXT_P2;})
 #define IPTOS NEXT_INST
@@ -101,7 +102,6 @@ void printarg_target(Inst *target)
 
 void carc_vmengine(carc *c, value thr, int quanta)
 {
-  struct vmthread *t;
   value *sp;
   Inst *ip, *ip0;
   value code;
@@ -118,14 +118,12 @@ void carc_vmengine(carc *c, value thr, int quanta)
 
  restart:
 
-  t = &REP(thr)._thread;
-
-  if (t->state != Tready)
+  if (TSTATE(thr) != Tready)
     return;
 
-  code = VINDEX(t->funr, 0);
-  ip0 = (Inst *)&VINDEX(code, t->ip);
-  sp = t->sp;
+  code = VINDEX(TFUNR(thr), 0);
+  ip0 = (Inst *)&VINDEX(code, TIP(thr));
+  sp = TSP(thr);
 
   SET_IP(ip0);
 
@@ -144,8 +142,8 @@ void carc_vmengine(carc *c, value thr, int quanta)
  endquantum:
   /* save values of stack pointer and instruction pointer to the
      thread after the quantum of execution finishes. */
-  t->sp = sp;
-  t->ip = ip - ip0;
+  TSP(thr) = sp;
+  TIP(thr) = ip - ip0;
 }
 
 value carc_mkthread(carc *c, value funptr, int stksize, int ip)
@@ -166,26 +164,86 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
 
 void carc_apply(carc *c, value thr, value fun)
 {
+  value argv;
+  int argc;
+
   switch (TYPE(TVALR(thr))) {
   case T_CODE:
     TFUNR(thr) = TVALR(thr);
     TIP(thr) = 0;
     break;
+  case T_CCODE:
+    argv = CNIL;
+    argc = TARGC(thr);
+    while (--TARGC(thr))
+      argv = cons(c, *TSP(thr)--, argv);
+    TVALR(thr) = REP(fun).cfunc(argc, argv);
+    carc_return(c, thr);
+    break;
+  case T_CONS:
+    if (TARGC(thr) != 1) {
+      c->signal_error(c, "list-ref expects 1 argument");
+      return;
+    }
+    argv = *TSP(thr)--;
+    if (TYPE(argv) != T_FIXNUM || TYPE(argv) != T_BIGNUM) {
+      c->signal_error(c, "list-ref expects non-negative exact integer as argument");
+      return;
+    }
+
+    if (carc_numcmp(c, argv, INT2FIX(0)) < 0) {
+      c->signal_error(c, "list-ref expects non-negative exact integer as argument");
+      return;
+    }
+
+    while (carc_numcmp(c, argv, INT2FIX(0)) < 0 && TVALR(thr) != CNIL)
+      WB(&TVALR(thr), cdr(TVALR(thr)));
+    if (TVALR(thr) != CNIL)
+      WB(&TVALR(thr), car(TVALR(thr)));
+    break;
+  default:
+    c->signal_error(c, "invalid function application");
   }
 }
 
-void carc_return(carc *c, value thr, value cont)
+/* Restore a continuation */
+void carc_restorecont(carc *c, value thr, value cont)
 {
+  int stklen;
+
+  TIP(thr) = VINDEX(cont, 0);
+  WB(&TFUNR(thr), VINDEX(cont, 1));
+  WB(&TENVR(thr), VINDEX(cont, 2));
+  stklen = VECLEN(VINDEX(cont, 3));
+  TSP(thr) = TSTOP(thr) + stklen;
+  memcpy(TSP(thr), &VINDEX(VINDEX(cont, 3), 0), stklen*sizeof(value));
 }
 
-value carc_mkcont(carc *c, value offset, value funr, value envr)
+/* Restore the continuation at the head of the continuation register */
+void carc_return(carc *c, value thr)
 {
-  value cont = carc_mkvector(c, 3);
+  value cont;
+
+  cont = car(TCONR(thr));
+  WB(&TCONR(thr), cdr(TCONR(thr)));
+  carc_restorecont(c, thr, cont);
+}
+
+value carc_mkcont(carc *c, value offset, value thr)
+{
+  value cont = carc_mkvector(c, 4);
+  value savedstk;
+  int stklen;
 
   BTYPE(cont) = T_CONT;
   WB(&VINDEX(cont, 0), offset);
-  WB(&VINDEX(cont, 1), funr);
-  WB(&VINDEX(cont, 2), envr);
+  WB(&VINDEX(cont, 1), TFUNR(thr));
+  WB(&VINDEX(cont, 2), TENVR(thr));
+  /* Save the used portion of the stack */
+  stklen = TSP(thr) - TSTOP(thr);
+  savedstk = carc_mkvector(c, stklen);
+  memcpy(&VINDEX(savedstk, 0), TSP(thr), stklen*sizeof(value));
+  WB(&VINDEX(cont, 3), savedstk);
   return(cont);
 }
 
