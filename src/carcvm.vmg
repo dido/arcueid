@@ -30,22 +30,22 @@ nop ( -- )
 
 \ Push a value in the value register into the stack
 push ( -- i )
-i = t->valr;
+i = TVALR(thr);
 
 \ Pop the stack, and place its topmost value into the value reg.
 pop ( i -- )
-t->valr = i;
+TVALR(thr) = i;
 
 \ The ldl instruction loads a literal value from the literal values
 \ in the funr register into value register.  The instruction argument
 \ is its index into the funr vector and should in most cases be 3 or
 \ higher for normal compiled code.
 ldl ( #i2 -- )
-t->valr = VINDEX(t->funr, i2);
+TVALR(thr) = VINDEX(TFUNR(thr), i2);
 
 \ Load an immediate value (usually a fixnum) into the value register
 ldi ( #i2 -- )
-t->valr = i2;
+TVALR(thr) = i2;
 
 \ Load a global value.  The value in the instruction is generally a
 \ symbol, and indexes into the global symbol table.
@@ -53,50 +53,50 @@ ldg ( #i2 -- )
 {
   value tmp;
 
-  tmp = VINDEX(t->funr, i2);
-  if ((t->valr = carc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+  tmp = VINDEX(TFUNR(thr), i2);
+  if ((TVALR(thr) = carc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
     c->signal_error(c, "Unbound symbol %S\n", tmp);
-    t->valr = CNIL;
+    TVALR(thr) = CNIL;
   }
 }
 
 \ Set a global value with the value of the value register
 stg ( #i2 -- )
-carc_hash_insert(c, c->genv, VINDEX(t->funr, i2), t->valr);
+carc_hash_insert(c, c->genv, VINDEX(TFUNR(thr), i2), TVALR(thr));
 
 \ Load the value of a variable in the environment.  The first
 \ operand is the number of the environment, and the second is
 \ the index into that environment.
 lde ( #ienv #iindx -- )
 {
-  value tmp = t->envr;
+  value tmp = TENVR(thr);
   while (--ienv >= 0) tmp = cdr(tmp);
-  t->valr = VINDEX(car(tmp), iindx);
+  TVALR(thr) = VINDEX(car(tmp), iindx);
 }
 
 \ Store to an environment variable
 ste ( #ienv #iindx -- )
 {
-  value tmp = t->envr;
+  value tmp = TENVR(thr);
   while (--ienv >= 0) tmp = cdr(tmp);
-  WB(&VINDEX(car(tmp), iindx), t->valr);
+  WB(&VINDEX(car(tmp), iindx), TVALR(thr));
 }
 
 \ Make a continuation at offset icofs, placing it in the value register.
 \ Note that this is a relative address, but the absolute address is
 \ stored in the continuation.
 cont ( #icofs -- )
-WB(&t->conr, cons(c, carc_mkcont(c, INT2FIX(icofs), t->funr, t->envr), t->conr));
+WB(&TCONR(thr), cons(c, carc_mkcont(c, INT2FIX(icofs), thr), TCONR(thr)));
 
 \ Make an environment of a given size
 env ( #ienvsize -- )
-WB(&t->envr, carc_mkenv(c, t->envr, ienvsize));
-WB(&VINDEX(car(t->envr), 0), VINDEX(t->funr, 2));
+WB(&TENVR(thr), carc_mkenv(c, TENVR(thr), ienvsize));
+WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
 
 \ apply a function
 apply ( #iargc -- )
-t->argc = iargc;
-carc_apply(c, thr, t->valr);
+TARGC(thr) = iargc;
+carc_apply(c, thr, TVALR(thr));
 goto restart;
 
 ret ( -- )
@@ -109,27 +109,27 @@ SET_IP(target);
 
 \ Jump if valr is not nil
 jt ( #target -- )
-if (t->valr != CNIL) {
+if (TVALR(thr) != CNIL) {
   SET_IP(target);
   INST_TAIL;
 }
 
 \ Jump if valr is nil
 jf ( #target -- )
-if (t->valr == CNIL) {
+if (TVALR(thr) == CNIL) {
   SET_IP(target);
   INST_TAIL;
 }
 
 true ( -- )
-t->valr = CTRUE;
+TVALR(thr) = CTRUE;
 
 nil ( -- )
-t->valr = CNIL;
+TVALR(thr) = CNIL;
 
 \ Halt execution of this virtual machine thread
 hlt ( -- )
-t->state = Trelease;
+TSTATE(thr) = Trelease;
 goto endquantum;
 
 \ Maybe we can do without the instructions below this point, and
@@ -137,35 +137,35 @@ goto endquantum;
 \ very slow until we can figure out how to do inline caching
 \ properly.
 add  ( i -- )
-t->valr = __carc_add2(c, t->valr, i);
+TVALR(thr) = __carc_add2(c, TVALR(thr), i);
 
 sub ( i -- )
-t->valr = __carc_sub2(c, t->valr, i);
+TVALR(thr) = __carc_sub2(c, TVALR(thr), i);
 
 mul ( i -- )
-t->valr = __carc_mul2(c, t->valr, i);
+TVALR(thr) = __carc_mul2(c, TVALR(thr), i);
 
 div ( i -- )
-t->valr = __carc_div2(c, t->valr, i);
+TVALR(thr) = __carc_div2(c, TVALR(thr), i);
 
 cons ( i -- )
-t->valr = cons(c, t->valr, i);
+TVALR(thr) = cons(c, TVALR(thr), i);
 
 car ( -- )
-t->valr = car(t->valr);
+TVALR(thr) = car(TVALR(thr));
 
 cdr ( -- )
-t->valr = cdr(t->valr);
+TVALR(thr) = cdr(TVALR(thr));
 
 scar ( inc -- )
-scar(t->valr, inc);
+scar(TVALR(thr), inc);
 
 scdr ( inc -- )
-scdr(t->valr, inc);
+scdr(TVALR(thr), inc);
 
 is ( i -- )
-t->valr = carc_is(c, t->valr, i);
+TVALR(thr) = carc_is(c, TVALR(thr), i);
 
 \ XXX - right now this only works for numeric args.
 cmp ( i -- )
-t->valr = carc_numcmp(c, t->valr, i);
+TVALR(thr) = carc_numcmp(c, TVALR(thr), i);
