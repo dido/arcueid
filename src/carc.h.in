@@ -329,10 +329,10 @@ extern value carc_ssexpand(carc *c, value sym);
 extern void carc_vmengine(carc *c, value thr, int quanta);
 extern value carc_mkthread(carc *c, value funptr, int stksize, int ip);
 
-extern value carc_mkcont(carc *c, value offset, value funr, value envr);
+extern value carc_mkcont(carc *c, value offset, value thr);
 extern value carc_mkenv(carc *c, value parent, int size);
 extern void carc_apply(carc *c, value thr, value fun);
-extern void carc_return(carc *c, value thr, value cont);
+extern void carc_return(carc *c, value thr);
 extern value carc_mkvmcode(carc *c, int length);
 extern value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits);
 
