@@ -320,10 +320,11 @@ static void mark(carc *c, value v, int reclevel)
       mark(c, REP(v)._hashbucket.val, reclevel+1);
       break;
     case T_THREAD:
-      /* mark the registers inside of the stack */
+      /* mark the registers inside of the thread */
       mark(c, TFUNR(v), reclevel+1); /* function register */
       mark(c, TENVR(v), reclevel+1); /* environment register */
       mark(c, TVALR(v), reclevel+1); /* value register */
+      mark(c, TCONR(v), reclevel+1); /* continuation register */
       /* Mark the stack of this thread (used portions only) */
       for (vptr = TSP(v); vptr == TSTOP(v); vptr++)
 	mark(c, *vptr, reclevel+1);
