@@ -116,7 +116,7 @@ void carc_vmengine(carc *c, value thr, int quanta)
     return;
   }
 
- restart:
+ restart2:
 
   if (TSTATE(thr) != Tready)
     return;
@@ -144,6 +144,11 @@ void carc_vmengine(carc *c, value thr, int quanta)
      thread after the quantum of execution finishes. */
   TSP(thr) = sp;
   TIP(thr) = ip - ip0;
+  return;
+
+ restart:
+  TSP(thr) = sp;
+  goto restart2;
 }
 
 value carc_mkthread(carc *c, value funptr, int stksize, int ip)
@@ -211,7 +216,7 @@ void carc_restorecont(carc *c, value thr, value cont)
 {
   int stklen;
 
-  TIP(thr) = VINDEX(cont, 0);
+  TIP(thr) = FIX2INT(VINDEX(cont, 0));
   WB(&TFUNR(thr), VINDEX(cont, 1));
   WB(&TENVR(thr), VINDEX(cont, 2));
   stklen = VECLEN(VINDEX(cont, 3));
