@@ -59,5 +59,6 @@ value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits)
   CODE_CODE(code) = vmccode;
   CODE_NAME(code) = fname;
   CODE_ARGS(code) = args;
+  BTYPE(code) = T_CODE;
   return(code);
 }
