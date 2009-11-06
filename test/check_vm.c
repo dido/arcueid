@@ -125,6 +125,41 @@ START_TEST(test_vm_apply)
 }
 END_TEST
 
+START_TEST(test_vm_loadstore)
+{
+  Inst **ctp, *code;
+  value vcode, func, thr;
+  value sym, str;
+
+  str = carc_mkstringc(&c, "foo");
+  sym = carc_intern(&c, str);
+
+  carc_vmengine(&c, CNIL, 0);
+
+  vcode = carc_mkvmcode(&c, 7);
+  code = (Inst*)&VINDEX(vcode, 0);
+  ctp = &code;
+  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 1);
+  CODE_LITERAL(func, 0) = sym;
+  gen_ldl(ctp, 0);
+  gen_hlt(ctp);
+  thr = carc_mkthread(&c, func, 2048, 0);
+  carc_vmengine(&c, thr, 1000);
+  fail_unless(TVALR(thr) == sym);
+
+  code = (Inst*)&VINDEX(vcode, 0);
+  ctp = &code;
+  gen_ldi(ctp, INT2FIX(31337));
+  gen_stg(ctp, 0);
+  gen_ldg(ctp, 0);
+  gen_hlt(ctp);
+  thr = carc_mkthread(&c, func, 2048, 0);
+  carc_vmengine(&c, thr, 1000);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+  fail_unless(carc_hash_lookup(&c, c.genv, sym) == INT2FIX(31337));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -133,9 +168,12 @@ int main(void)
   SRunner *sr;
 
   carc_set_memmgr(&c);
+  carc_init_reader(&c);
+  c.genv = carc_mkhash(&c, 8);
 
-  tcase_add_test(tc_vm, test_vm_basic);
-  tcase_add_test(tc_vm, test_vm_apply);
+  //  tcase_add_test(tc_vm, test_vm_basic);
+  // tcase_add_test(tc_vm, test_vm_apply);
+  tcase_add_test(tc_vm, test_vm_loadstore);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
