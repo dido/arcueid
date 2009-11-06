@@ -97,11 +97,12 @@ WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
 apply ( #iargc -- )
 TARGC(thr) = iargc;
 carc_apply(c, thr, TVALR(thr));
-goto restart;
+SET_IP(TIP(thr));
+
 
 ret ( -- )
 carc_return(c, thr);
-goto restart;
+SET_IP(TIP(thr));
 
 \ Jump unconditional
 jmp ( #target -- )
