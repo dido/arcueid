@@ -90,7 +90,7 @@ END_TEST
 
 START_TEST(test_vm_apply)
 {
-  Inst **ctp, *code, *ofs;
+  Inst **ctp, *code, *ofs, *base;
   value vcode, func, thr, vcode2, func2;
 
   carc_vmengine(&c, CNIL, 0);
@@ -102,22 +102,25 @@ START_TEST(test_vm_apply)
   gen_ret(ctp);
   func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 0);
 
-  vcode2 = carc_mkvmcode(&c, 8);
-  code = (Inst*)&VINDEX(vcode2, 0);
+  vcode2 = carc_mkvmcode(&c, 10);
+  base = code = (Inst*)&VINDEX(vcode2, 0);
   ctp = &code;
+  gen_ldi(ctp, INT2FIX(0xf1e));
+  gen_push(ctp);
   gen_cont(ctp, 0);
   ofs = *ctp - 1;
   gen_ldi(ctp, INT2FIX(7));
   gen_push(ctp);
   gen_ldi(ctp, func);
   gen_apply(ctp, 1);
-  ofs = *ctp - code;
+  *((int *)ofs) = (*ctp - base);
   gen_hlt(ctp);
 
   func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), CNIL, 0);
   thr = carc_mkthread(&c, func2, 2048, 0);
   carc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
+  fail_unless(*TSP(thr) == INT2FIX(0xf1e));
 
 }
 END_TEST
