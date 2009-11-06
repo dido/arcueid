@@ -37,23 +37,21 @@ pop ( i -- )
 TVALR(thr) = i;
 
 \ The ldl instruction loads a literal value from the literal values
-\ in the funr register into value register.  The instruction argument
-\ is its index into the funr vector and should in most cases be 3 or
-\ higher for normal compiled code.
-ldl ( #i2 -- )
-TVALR(thr) = VINDEX(TFUNR(thr), i2);
+\ in the funr register into value register.
+ldl ( #i -- )
+TVALR(thr) = CODE_LITERAL(TFUNR(thr), i);
 
 \ Load an immediate value (usually a fixnum) into the value register
-ldi ( #i2 -- )
-TVALR(thr) = i2;
+ldi ( #i -- )
+TVALR(thr) = i;
 
 \ Load a global value.  The value in the instruction is generally a
 \ symbol, and indexes into the global symbol table.
-ldg ( #i2 -- )
+ldg ( #i -- )
 {
   value tmp;
 
-  tmp = VINDEX(TFUNR(thr), i2);
+  tmp = CODE_LITERAL(TFUNR(thr), i);
   if ((TVALR(thr) = carc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
     c->signal_error(c, "Unbound symbol %S\n", tmp);
     TVALR(thr) = CNIL;
@@ -61,8 +59,8 @@ ldg ( #i2 -- )
 }
 
 \ Set a global value with the value of the value register
-stg ( #i2 -- )
-carc_hash_insert(c, c->genv, VINDEX(TFUNR(thr), i2), TVALR(thr));
+stg ( #i -- )
+carc_hash_insert(c, c->genv, CODE_LITERAL(TFUNR(thr), i), TVALR(thr));
 
 \ Load the value of a variable in the environment.  The first
 \ operand is the number of the environment, and the second is
