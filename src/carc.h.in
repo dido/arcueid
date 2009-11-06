@@ -129,11 +129,11 @@ struct vmthread {
   value envr;		/* current environment register */
   value valr;		/* value of most recent instruction */
   value conr;		/* continuation register */
-  value *sp;		/* stack pointer */
+  value *spr;		/* stack pointer register */
   value stack;		/* the actual stack itself (a vector) */
   value *stkbase;	/* base pointer of the stack */
   value *stktop;	/* top of value stack */
-  int ip;		/* instruction pointer */
+  value *ip;		/* instruction pointer */
   int argc;		/* argument count register */
   
   /* thread scheduling variables */
@@ -147,7 +147,7 @@ struct vmthread {
 #define TENVR(t) (REP(t)._thread.envr)
 #define TVALR(t) (REP(t)._thread.valr)
 #define TCONR(t) (REP(t)._thread.conr)
-#define TSP(t) (REP(t)._thread.sp)
+#define TSP(t) (REP(t)._thread.spr)
 #define TSTACK(t) (REP(t)._thread.stack)
 #define TSBASE(t) (REP(t)._thread.stkbase)
 #define TSTOP(t) (REP(t)._thread.stktop)
