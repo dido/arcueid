@@ -26,6 +26,9 @@
 #include "alloc.h"
 #include "arith.h"
 
+
+#define sp (TSP(thr))
+
 #define XTIP(thr) ((Inst *)TIP(thr))
 int vm_debug = 0;
 FILE *vm_out;
@@ -89,7 +92,6 @@ void printarg_target(Inst *target)
 
 void carc_vmengine(carc *c, value thr, int quanta)
 {
-  value *sp;
   static Label labels[] = {
 #include "carcvm-labels.i"
   };
@@ -101,12 +103,8 @@ void carc_vmengine(carc *c, value thr, int quanta)
     return;
   }
 
- restart2:
-
   if (TSTATE(thr) != Tready)
     return;
-
-  sp = TSP(thr);
 
   SET_IP(TIP(thr));
 
@@ -119,14 +117,7 @@ void carc_vmengine(carc *c, value thr, int quanta)
 
 #endif
  endquantum:
-  /* save values of stack pointer and instruction pointer to the
-     thread after the quantum of execution finishes. */
-  TSP(thr) = sp;
   return;
-
- restart:
-  TSP(thr) = sp;
-  goto restart2;
 }
 
 value carc_mkthread(carc *c, value funptr, int stksize, int ip)
@@ -226,7 +217,7 @@ value carc_mkcont(carc *c, value offset, value thr)
   WB(&VINDEX(cont, 1), TFUNR(thr));
   WB(&VINDEX(cont, 2), TENVR(thr));
   /* Save the used portion of the stack */
-  stklen = TSP(thr) - TSTOP(thr);
+  stklen = TSTOP(thr) - TSP(thr);
   savedstk = carc_mkvector(c, stklen);
   memcpy(&VINDEX(savedstk, 0), TSP(thr), stklen*sizeof(value));
   WB(&VINDEX(cont, 3), savedstk);
