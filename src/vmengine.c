@@ -26,13 +26,14 @@
 #include "alloc.h"
 #include "arith.h"
 
+#define XTIP(thr) ((Inst *)TIP(thr))
 int vm_debug = 0;
 FILE *vm_out;
 
 #undef VM_DEBUG
 
 #ifdef VM_DEBUG
-#define NAME(_x) if (vm_debug) {fprintf(vm_out, "%p: %-20s, ", ip-1, _x); fprintf(vm_out,"sp=%p", sp);}
+#define NAME(_x) if (vm_debug) {fprintf(vm_out, "%p: %-20s, ", XTIP(thr)-1, _x); fprintf(vm_out,"sp=%p", sp);}
 #else
 #define NAME(_x)
 #endif
@@ -50,13 +51,13 @@ FILE *vm_out;
 #ifdef __GNUC__
 
 /* direct threading scheme 5: early fetching (Alpha, MIPS) */
-#define NEXT_P0	({cfa=*ip;})
-#define IP		(ip)
-#define SET_IP(p)	({ip=(p); NEXT_P0;})
+#define NEXT_P0	({cfa=*XTIP(thr);})
+#define IP		(XTIP(thr))
+#define SET_IP(p)	({TIP(thr)=(value *)(p); NEXT_P0;})
 #define NEXT_INST	(cfa)
-#define INC_IP(const_inc)	({cfa=IP[const_inc]; ip+=(const_inc);})
+#define INC_IP(const_inc)	({cfa=IP[const_inc]; TIP(thr)+=(const_inc);})
 #define DEF_CA
-#define NEXT_P1	(ip++)
+#define NEXT_P1	(TIP(thr)++)
 #define NEXT_P2	({if (--quanta <= 0 || TSTATE(thr) != Tready) goto endquantum; goto *cfa;})
 
 #define NEXT ({DEF_CA NEXT_P1; NEXT_P2;})
@@ -68,21 +69,7 @@ FILE *vm_out;
 
 #else /* !defined(__GNUC__) */
 
-/* use switch dispatch */
-#define DEF_CA
-#define NEXT_P0
-#define NEXT_P1
-#define NEXT_P2 goto next_inst;
-#define IP              code[t->ip]
-#define NEXT_INST	(*code[t->ip])
-#define INC_IP(const_inc)	(t->ip+=(const_inc))
-#define IPTOS NEXT_INST
-#define INST_ADDR(name) I_##name
-#define LABEL(name) case I_##name:
-
-enum {
-#include "mini-labels.i"
-};
+#error "FIXME: UNTHREADED INTERPRETER IS NOT YET SUPPORTED"
 
 #endif /* !defined(__GNUC__) */
 
@@ -103,8 +90,6 @@ void printarg_target(Inst *target)
 void carc_vmengine(carc *c, value thr, int quanta)
 {
   value *sp;
-  Inst *ip, *ip0;
-  value code;
   static Label labels[] = {
 #include "carcvm-labels.i"
   };
@@ -121,29 +106,22 @@ void carc_vmengine(carc *c, value thr, int quanta)
   if (TSTATE(thr) != Tready)
     return;
 
-  code = VINDEX(TFUNR(thr), 0);
-  ip0 = (Inst *)&VINDEX(code, TIP(thr));
   sp = TSP(thr);
 
-  SET_IP(ip0);
+  SET_IP(TIP(thr));
 
 #ifdef __GNUC__
   NEXT;
 #include "carcvm-vm.i"
 #else
- next_inst:
-  switch (*ip++) {
-#include "carcvm-vm.i"
-  default:
-    fprintof(stderr,"unknown instruction %d at %p\n", ip[-1], ip-1);
-    exit(1);
-  }
+
+#error "FIXME: UNTHREADED INTERPRETER IS NOT YET SUPPORTED"
+
 #endif
  endquantum:
   /* save values of stack pointer and instruction pointer to the
      thread after the quantum of execution finishes. */
   TSP(thr) = sp;
-  TIP(thr) = ip - ip0;
   return;
 
  restart:
@@ -154,15 +132,17 @@ void carc_vmengine(carc *c, value thr, int quanta)
 value carc_mkthread(carc *c, value funptr, int stksize, int ip)
 {
   value thr;
+  value code;
 
   thr = c->get_cell(c);
   BTYPE(thr) = T_THREAD;
   TSTACK(thr) = carc_mkvector(c, stksize);
   TSBASE(thr) = &VINDEX(TSTACK(thr), 0);
   TSP(thr) = TSTOP(thr) = &VINDEX(TSTACK(thr), stksize-1);
-  TIP(thr) = ip;
   TSTATE(thr) = Tready;  
   TFUNR(thr) = funptr;
+  code = VINDEX(TFUNR(thr), 0);
+  TIP(thr) = &VINDEX(code, ip);
   TENVR(thr) = TVALR(thr) = CNIL;
   return(thr);
 }
@@ -175,7 +155,7 @@ void carc_apply(carc *c, value thr, value fun)
   switch (TYPE(TVALR(thr))) {
   case T_CODE:
     TFUNR(thr) = TVALR(thr);
-    TIP(thr) = 0;
+    TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
     break;
   case T_CCODE:
     argv = CNIL;
@@ -214,10 +194,11 @@ void carc_apply(carc *c, value thr, value fun)
 /* Restore a continuation */
 void carc_restorecont(carc *c, value thr, value cont)
 {
-  int stklen;
+  int stklen, offset;
 
-  TIP(thr) = FIX2INT(VINDEX(cont, 0));
   WB(&TFUNR(thr), VINDEX(cont, 1));
+  offset = FIX2INT(VINDEX(cont, 0));
+  TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
   WB(&TENVR(thr), VINDEX(cont, 2));
   stklen = VECLEN(VINDEX(cont, 3));
   TSP(thr) = TSTOP(thr) + stklen;
