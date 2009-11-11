@@ -140,12 +140,14 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
 
 void carc_apply(carc *c, value thr, value fun)
 {
-  value argv;
+  value argv, cl;
   int argc;
 
   switch (TYPE(TVALR(thr))) {
-  case T_CODE:
-    TFUNR(thr) = TVALR(thr);
+  case T_CLOS:
+    cl = TVALR(thr);
+    WB(&TFUNR(thr), car(cl));
+    WB(&TENVR(thr), cdr(cl));
     TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
     break;
   case T_CCODE:
@@ -153,7 +155,7 @@ void carc_apply(carc *c, value thr, value fun)
     argc = TARGC(thr);
     while (--TARGC(thr))
       argv = cons(c, *TSP(thr)--, argv);
-    TVALR(thr) = REP(fun).cfunc(argc, argv);
+    TVALR(thr) = REP(fun)._cfunc(argc, argv);
     carc_return(c, thr);
     break;
   case T_CONS:
@@ -231,4 +233,13 @@ value carc_mkenv(carc *c, value parent, int size)
   env = cons(c, carc_mkvector(c, size), parent);
   BTYPE(env) = T_ENV;
   return(env);
+}
+
+value carc_mkclosure(carc *c, value code, value env)
+{
+  value clos;
+
+  clos = cons(c, code, env);
+  BTYPE(clos) = T_CLOS;
+  return(clos);
 }
