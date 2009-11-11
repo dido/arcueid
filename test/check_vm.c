@@ -101,6 +101,7 @@ START_TEST(test_vm_apply)
   gen_add(ctp);
   gen_ret(ctp);
   func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 0);
+  func = carc_mkclosure(&c, func, CNIL);
 
   vcode2 = carc_mkvmcode(&c, 10);
   base = code = (Inst*)&VINDEX(vcode2, 0);
@@ -171,8 +172,8 @@ int main(void)
   carc_init_reader(&c);
   c.genv = carc_mkhash(&c, 8);
 
-  //  tcase_add_test(tc_vm, test_vm_basic);
-  // tcase_add_test(tc_vm, test_vm_apply);
+  tcase_add_test(tc_vm, test_vm_basic);
+  tcase_add_test(tc_vm, test_vm_apply);
   tcase_add_test(tc_vm, test_vm_loadstore);
 
   suite_add_tcase(s, tc_vm);
