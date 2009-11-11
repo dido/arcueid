@@ -20,11 +20,15 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "carc.h"
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
 #include "carcvm-gen.i"
+
+#define CONT_RETURN 1
+#define CONT_NEXT 2
 
 void gen_inst(Inst **vmcodepp, Inst i)
 {
@@ -61,4 +65,96 @@ value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits)
   CODE_ARGS(code) = args;
   BTYPE(code) = T_CODE;
   return(code);
+}
+
+/* XXX: This static array of instructions is the maximum that a single
+   s-expression can produce.  This should probably go away sometime for
+   something a bit more dynamic, but for now I think this should be
+   alright.  Once all the code has been generated here, it gets copied
+   off to the actual code object. */
+#define MAX_CODELEN 65536
+static Inst tmpcode[MAX_CODELEN];
+static Inst *vmcodep;
+
+static void compile_expr(carc *, value, value, int);
+
+
+value carc_compile(carc *c, value expr, value env)
+{
+  value vmccode;
+  int len;
+
+  vmcodep = tmpcode;
+  compile_expr(c, expr, env, CONT_RETURN);
+  /* Turn the generated code into a proper T_CODE object */
+  len = vmcodep - tmpcode;
+  vmccode = carc_mkvmcode(c, len);
+  memcpy(&VINDEX(vmccode, 0), tmpcode, len*sizeof(Inst *));
+  return(vmccode);
+}
+
+static void (*spl_form(carc *c, value func))(carc *, value, int)
+{
+  return(NULL);
+}
+
+static void (*inl_func(carc *c, value func))(Inst **)
+{
+  return(NULL);
+}
+
+static void compile_nary(carc *c, void (*instr)(Inst **), value args, int cont)
+{
+}
+
+static void compile_call(carc *c, value expr, int cont)
+{
+}
+
+static void compile_ident(carc *c, value expr, int cont)
+{
+}
+
+
+static void compile_literal(carc *c, value expr, int cont)
+{
+}
+
+static void compile_expr(carc *c, value expr, value env, int cont)
+{
+  value func;
+  void (*compile_sf)(carc *, value, int);
+  void (*instr)(Inst **);
+
+  switch (TYPE(expr)) {
+  case T_CONS:
+    func = car(expr);
+    if (SYMBOL_P(func)) {
+      /* See if it's a special form. */
+      compile_sf = spl_form(c, func);
+      if (compile_sf != NULL) {
+	(compile_sf)(c, expr, cont);
+	return;
+      }
+
+      /* See if it's an inlinable function */
+      instr = inl_func(c, func);
+      if (instr != NULL) {
+	compile_nary(c, instr, cdr(expr), cont);
+	return;
+      }
+    }
+    compile_call(c, expr, cont);
+    break;
+  case T_SYMBOL:
+    compile_ident(c, expr, cont);
+    break;
+  default:
+    compile_literal(c, expr, cont);
+    break;
+  }
+}
+
+void carc_init_compiler(carc *c)
+{
 }
