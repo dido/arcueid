@@ -155,3 +155,13 @@ value carc_list_append(value list1, value val)
   return(list1);
 }
 
+value carc_mkccode(carc *c, value (*cfunc)(int argc, value argv))
+{
+  value code;
+
+  code = c->get_cell(c);
+  BTYPE(code) = T_CCODE;
+  REP(code)._cfunc = cfunc;
+  return(code);
+}
+
