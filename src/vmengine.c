@@ -25,7 +25,23 @@
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
+#include "../config.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
 
 #define sp (TSP(thr))
 
@@ -140,8 +156,8 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
 
 void carc_apply(carc *c, value thr, value fun)
 {
-  value argv, cl;
-  int argc;
+  value *argv, cl, cfn, avec;
+  int argc, i;
 
   switch (TYPE(TVALR(thr))) {
   case T_CLOS:
@@ -151,33 +167,64 @@ void carc_apply(carc *c, value thr, value fun)
     TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
     break;
   case T_CCODE:
-    argv = CNIL;
+    cfn = TVALR(thr);
     argc = TARGC(thr);
-    while (--TARGC(thr))
-      argv = cons(c, *TSP(thr)--, argv);
-    TVALR(thr) = REP(fun)._cfunc(argc, argv);
+    if (REP(cfn)._cfunc.argc >= 0 && REP(cfn)._cfunc.argc != argc) {
+      c->signal_error(c, "wrong number of arguments (%d for %d)\n", argc,
+		      REP(cfn)._cfunc.argc);
+      return;
+    }
+    argv = alloca(sizeof(value)*argc);
+    for (i=0; i<argc; i++)
+      argv[i] = *TSP(thr)--;
+    switch (REP(cfn)._cfunc.argc) {
+    case -2:
+      avec = carc_mkvector(c, argc);
+      memcpy(&VINDEX(avec, 0), argv, sizeof(value)*argc);
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, avec);
+      break;
+    case -1:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argc, argv);
+      break;
+    case 0:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c);
+      break;
+    case 1:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0]);
+      break;
+    case 2:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1]);
+      break;
+    case 3:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2]);
+      break;
+    case 4:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					 argv[3]);
+      break;
+    case 5:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					 argv[3], argv[4]);
+      break;
+    case 6:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					 argv[3], argv[4], argv[5]);
+      break;
+    case 7:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					 argv[3], argv[4], argv[5],
+					 argv[6]);
+      break;
+    case 8:
+      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					 argv[3], argv[4], argv[5],
+					 argv[6], argv[7]);
+      break;
+    default:
+      c->signal_error(c, "too many arguments");
+      return;
+    }
     carc_return(c, thr);
-    break;
-  case T_CONS:
-    if (TARGC(thr) != 1) {
-      c->signal_error(c, "list-ref expects 1 argument");
-      return;
-    }
-    argv = *TSP(thr)--;
-    if (TYPE(argv) != T_FIXNUM || TYPE(argv) != T_BIGNUM) {
-      c->signal_error(c, "list-ref expects non-negative exact integer as argument");
-      return;
-    }
-
-    if (carc_numcmp(c, argv, INT2FIX(0)) < 0) {
-      c->signal_error(c, "list-ref expects non-negative exact integer as argument");
-      return;
-    }
-
-    while (carc_numcmp(c, argv, INT2FIX(0)) < 0 && TVALR(thr) != CNIL)
-      WB(&TVALR(thr), cdr(TVALR(thr)));
-    if (TVALR(thr) != CNIL)
-      WB(&TVALR(thr), car(TVALR(thr)));
     break;
   default:
     c->signal_error(c, "invalid function application");
