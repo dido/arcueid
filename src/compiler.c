@@ -56,13 +56,12 @@ value carc_mkvmcode(carc *c, int length)
   return(code);
 }
 
-value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits)
+value carc_mkcode(carc *c, value vmccode, value fname, int nlits)
 {
-  value code = carc_mkvector(c, nlits+3);
+  value code = carc_mkvector(c, nlits+2);
 
   CODE_CODE(code) = vmccode;
   CODE_NAME(code) = fname;
-  CODE_ARGS(code) = args;
   BTYPE(code) = T_CODE;
   return(code);
 }
@@ -76,21 +75,34 @@ value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits)
 static Inst tmpcode[MAX_CODELEN];
 static Inst *vmcodep;
 
+/* Similarly for compile-time literals.  This should be used to fill
+   in the literals vector. */
+#define MAX_LITERALS 4096
+static value literals[MAX_LITERALS];
+static int literalptr;
+
 static void compile_expr(carc *, value, value, int);
 
+/* A compile-time environment is basically an assoc list of symbol-index
+   pairs, where the indexes are  */
 
-value carc_compile(carc *c, value expr, value env)
+/* Compile an expression at the top-level.  This returns a code object
+   that can be bound into a closure, ready for execution. */
+value carc_compile(carc *c, value expr, value fname)
 {
-  value vmccode;
+  value vmccode, code;
   int len;
 
+  literalptr = 0;
   vmcodep = tmpcode;
-  compile_expr(c, expr, env, CONT_RETURN);
+  compile_expr(c, expr, CNIL, CONT_RETURN);
   /* Turn the generated code into a proper T_CODE object */
   len = vmcodep - tmpcode;
   vmccode = carc_mkvmcode(c, len);
   memcpy(&VINDEX(vmccode, 0), tmpcode, len*sizeof(Inst *));
-  return(vmccode);
+  code = carc_mkcode(c, vmccode, fname, literalptr);
+  memcpy(&CODE_LITERAL(code, 0), literals, literalptr*sizeof(value));
+  return(code);
 }
 
 static void (*spl_form(carc *c, value func))(carc *, value, int)
