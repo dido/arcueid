@@ -100,7 +100,7 @@ enum carc_types {
   T_CODE = 0x16,		/* actual compiled code */
   T_ENV = 0x17,			/* environment */
   T_VMCODE = 0x18,		/* a VM code block */
-  T_CCODE = 0x19,		/* a callable C function */
+  T_CCODE = 0x19,		/* a C function */
 
   T_NONE=0xff
 };
@@ -197,7 +197,23 @@ struct cell {
       value data[1];
     } _vector;
     struct vmthread _thread;
-    value (*_cfunc)(int argc, value argv);
+    /* C functions are defined here giving the actual function pointer,
+       followed by the arguments/calling sequence.  If argc is
+       non-negative, the C function will be called with the carc struct
+       as its first argument, and that number of additional arguments.
+       If argc is -1, the function will be called as:
+
+       value fnptr(carc *c, int argc, value *argv)
+
+       If argc is -2, the function will be alled as:
+
+       value fnptr(carc *c, value argv)
+
+       where argv is a Carc vector of the arguments. */
+    struct {
+      value (*fnptr)();
+      int argc;
+    } _cfunc;
   } obj;
 };
 
@@ -299,6 +315,8 @@ extern value carc_equal(carc *c, value v1, value v2);
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
 extern value carc_list_append(value list, value val);
+extern value carc_list_assoc(carc *c, value key, value a_list);
+extern value carc_list_length(carc *c, value list);
 
 extern value carc_mkstring(carc *c, const Rune *data, int length);
 extern value carc_mkstringc(carc *c, const char *s);
@@ -336,9 +354,9 @@ extern value carc_mkenv(carc *c, value parent, int size);
 extern void carc_apply(carc *c, value thr, value fun);
 extern void carc_return(carc *c, value thr);
 extern value carc_mkvmcode(carc *c, int length);
-extern value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits);
+extern value carc_mkcode(carc *c, value vmccode, value fname, int nlits);
 extern value carc_mkclosure(carc *c, value code, value env);
-extern value carc_mkccode(carc *c, value (*_cfunc)(int argc, value argv));
+extern value carc_mkccode(carc *c, int argc, value (*_cfunc)());
 
 #define CODE_CODE(c) (VINDEX((c), 0))
 #define CODE_NAME(c) (VINDEX((c), 1))
