@@ -66,9 +66,12 @@ typedef struct carc {
   value rsymtable;		/* reverse symbol table */
   value genv;			/* global environment */
 
-  value builtin;      /* symbols for builtin functions */
-  /* Table of MzScheme-like character constants */
-  value charesctbl;		/* character escapes */
+  /* Tables used by the reader and the compiler */
+  value builtin;		/* symbols for builtin functions */
+  value charesctbl;		/* mzscheme-like character escapes */
+
+  value splforms;		/* special forms */
+  value inlfuncs;		/* inlinable functions */
 } carc;
 
 
