@@ -399,6 +399,8 @@ static void rootset(carc *c)
   MARKPROP(c->vmthreads);
   MARKPROP(c->genv);
   MARKPROP(c->builtin);
+  MARKPROP(c->splforms);
+  MARKPROP(c->inlfuncs);
 }
 
 static void rungc(carc *c)
