@@ -182,14 +182,3 @@ value carc_list_length(carc *c, value list)
   return(n);
 }
 
-value carc_mkccode(carc *c, int argc, value (*cfunc)())
-{
-  value code;
-
-  code = c->get_cell(c);
-  BTYPE(code) = T_CCODE;
-  REP(code)._cfunc.fnptr = cfunc;
-  REP(code)._cfunc.argc = argc;
-  return(code);
-}
-
