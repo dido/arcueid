@@ -66,6 +66,17 @@ value carc_mkcode(carc *c, value vmccode, value fname, int nlits)
   return(code);
 }
 
+value carc_mkccode(carc *c, int argc, value (*cfunc)())
+{
+  value code;
+
+  code = c->get_cell(c);
+  BTYPE(code) = T_CCODE;
+  REP(code)._cfunc.fnptr = cfunc;
+  REP(code)._cfunc.argc = argc;
+  return(code);
+}
+
 /* XXX: This static array of instructions is the maximum that a single
    s-expression can produce.  This should probably go away sometime for
    something a bit more dynamic, but for now I think this should be
