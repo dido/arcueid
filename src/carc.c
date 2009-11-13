@@ -23,6 +23,7 @@
 #include <string.h>
 #include "carc.h"
 #include "alloc.h"
+#include "arith.h"
 #include "../config.h"
 
 value carc_is(carc *c, value v1, value v2)
@@ -155,13 +156,40 @@ value carc_list_append(value list1, value val)
   return(list1);
 }
 
-value carc_mkccode(carc *c, value (*cfunc)(int argc, value argv))
+value carc_list_assoc(carc *c, value key, value a_list)
+{
+  value cc;
+
+  while (a_list != CNIL) {
+    cc = car(a_list);
+    if (carc_is(c, car(cc), key) == CTRUE)
+      return(cc);
+    else
+      a_list = cdr(a_list);
+  }
+  return(CNIL);
+}
+
+value carc_list_length(carc *c, value list)
+{
+  value n;
+
+  n = INT2FIX(0);
+  while (list != CNIL) {
+    list = cdr(list);
+    n = __carc_add2(c, n, INT2FIX(1));
+  }
+  return(n);
+}
+
+value carc_mkccode(carc *c, int argc, value (*cfunc)())
 {
   value code;
 
   code = c->get_cell(c);
   BTYPE(code) = T_CCODE;
-  REP(code)._cfunc = cfunc;
+  REP(code)._cfunc.fnptr = cfunc;
+  REP(code)._cfunc.argc = argc;
   return(code);
 }
 
