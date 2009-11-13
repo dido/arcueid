@@ -161,6 +161,42 @@ START_TEST(test_vm_loadstore)
 }
 END_TEST
 
+static value test_fn(carc *c, value x)
+{
+  return(x + INT2FIX(31330) - 1);
+}
+
+START_TEST(test_vm_apply_cfunc)
+{
+  Inst **ctp, *code, *ofs, *base;
+  value func, thr, vcode2, func2;
+
+  carc_vmengine(&c, CNIL, 0);
+  func = carc_mkccode(&c, 1, test_fn);
+
+  vcode2 = carc_mkvmcode(&c, 10);
+  base = code = (Inst*)&VINDEX(vcode2, 0);
+  ctp = &code;
+  gen_ldi(ctp, INT2FIX(0xf1e));
+  gen_push(ctp);
+  gen_cont(ctp, 0);
+  ofs = *ctp - 1;
+  gen_ldi(ctp, INT2FIX(7));
+  gen_push(ctp);
+  gen_ldi(ctp, func);
+  gen_apply(ctp, 1);
+  *((int *)ofs) = (*ctp - base);
+  gen_hlt(ctp);
+
+  func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), 0);
+  thr = carc_mkthread(&c, func2, 2048, 0);
+  carc_vmengine(&c, thr, 1000);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+  fail_unless(*TSP(thr) == INT2FIX(0xf1e));
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -173,8 +209,9 @@ int main(void)
   c.genv = carc_mkhash(&c, 8);
 
   tcase_add_test(tc_vm, test_vm_basic);
-  tcase_add_test(tc_vm, test_vm_apply);
   tcase_add_test(tc_vm, test_vm_loadstore);
+  tcase_add_test(tc_vm, test_vm_apply);
+  tcase_add_test(tc_vm, test_vm_apply_cfunc);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
