@@ -28,7 +28,7 @@
 #include "carcvm-gen.i"
 
 #define CONT_RETURN 1
-#define CONT_NEXT 2
+#define CONT_NEXT 3
 
 void gen_inst(Inst **vmcodepp, Inst i)
 {
@@ -92,7 +92,7 @@ static Inst *vmcodep;
 static value literals[MAX_LITERALS];
 static int literalptr;
 
-static void compile_expr(carc *, value, value, int);
+static void compile_expr(carc *, value, value, value);
 
 /* A compile-time environment is basically an assoc list of symbol-index
    pairs, where the indexes are  */
@@ -116,7 +116,7 @@ value carc_compile(carc *c, value expr, value fname)
   return(code);
 }
 
-static void (*spl_form(carc *c, value func))(carc *, value, int)
+static void (*spl_form(carc *c, value func))(carc *, value, value)
 {
   return(NULL);
 }
@@ -126,27 +126,28 @@ static void (*inl_func(carc *c, value func))(Inst **)
   return(NULL);
 }
 
-static void compile_nary(carc *c, void (*instr)(Inst **), value args, int cont)
+static void compile_nary(carc *c, void (*instr)(Inst **), value args,
+			 value cont)
 {
 }
 
-static void compile_call(carc *c, value expr, int cont)
+static void compile_call(carc *c, value expr, value cont)
 {
 }
 
-static void compile_ident(carc *c, value expr, int cont)
+static void compile_ident(carc *c, value expr, value cont)
 {
 }
 
 
-static void compile_literal(carc *c, value expr, int cont)
+static void compile_literal(carc *c, value expr, value cont)
 {
 }
 
-static void compile_expr(carc *c, value expr, value env, int cont)
+static void compile_expr(carc *c, value expr, value env, value cont)
 {
   value func;
-  void (*compile_sf)(carc *, value, int);
+  void (*compile_sf)(carc *, value, value);
   void (*instr)(Inst **);
 
   switch (TYPE(expr)) {
@@ -160,7 +161,7 @@ static void compile_expr(carc *c, value expr, value env, int cont)
 	return;
       }
 
-      /* See if it's an inlinable function */
+      /* See if it's an inlinable n-ary function */
       instr = inl_func(c, func);
       if (instr != NULL) {
 	compile_nary(c, instr, cdr(expr), cont);
@@ -178,6 +179,77 @@ static void compile_expr(carc *c, value expr, value env, int cont)
   }
 }
 
+value compile_fn(carc *c, value expr, value env, value cont)
+{
+  return(CNIL);
+}
+
+value compile_if(carc *c, value expr, value env, value cont)
+{
+  return(CNIL);
+}
+
+value compile_quasiquote(carc *c, value expr, value env, value cont)
+{
+  return(CNIL);
+}
+
+value compile_quote(carc *c, value expr, value env, value cont)
+{
+  return(CNIL);
+}
+
+value compile_set(carc *c, value expr, value env, value cont)
+{
+  return(CNIL);
+}
+
+static struct {
+  char *name;
+  value (*sfcompiler)();
+} splformtbl[] = {
+  { "fn", compile_fn },
+  { "if", compile_if },
+  { "quasiquote", compile_quasiquote },
+  { "quote", compile_quote },
+  { "set", compile_set },
+  { NULL, NULL }
+};
+
+/* This table is still incomplete */
+static struct {
+  char *name;
+  void (*emitfn)(Inst **);
+} inl_functbl[] = {
+  { "+", gen_add },
+  { "-", gen_sub },
+  { "*", gen_mul },
+  { "/", gen_div },
+  { "cons", gen_cons },
+  { "car", gen_car },
+  { "cdr", gen_cdr },
+  { "scar", gen_scar },
+  { "scdr", gen_scdr },
+  { "is", gen_is },
+  { NULL, NULL }
+};
+
 void carc_init_compiler(carc *c)
 {
+  int i;
+
+  c->splforms = carc_mkhash(c, 4);
+  for (i=0; splformtbl[i].name != NULL; i++) {
+    carc_hash_insert(c, c->splforms,
+		     carc_intern(c, carc_mkstringc(c, splformtbl[i].name)),
+		     carc_mkccode(c, 4, splformtbl[i].sfcompiler));
+  }
+
+  c->inlfuncs = carc_mkhash(c, 4);
+  for (i=0; inl_functbl[i].name != NULL; i++) {
+    carc_hash_insert(c, c->inlfuncs,
+		     carc_intern(c, carc_mkstringc(c, inl_functbl[i].name)),
+		     carc_mkccode(c, 1, (value (*)())inl_functbl[i].emitfn));
+  }
+
 }
