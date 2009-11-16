@@ -123,7 +123,12 @@ static void (*spl_form(carc *c, value func))(carc *, value, value)
 
 static void (*inl_func(carc *c, value func))(Inst **)
 {
-  return(NULL);
+  value inlf;
+
+  inlf = carc_hash_lookup(c, c->inlfuncs, func);
+  if (inlf == CNIL)
+    return(NULL);
+  return((void (*)(Inst **))(REP(inlf)._cfunc.fnptr));
 }
 
 static void compile_nary(carc *c, void (*instr)(Inst **), value args,
@@ -249,7 +254,7 @@ void carc_init_compiler(carc *c)
   for (i=0; inl_functbl[i].name != NULL; i++) {
     carc_hash_insert(c, c->inlfuncs,
 		     carc_intern(c, carc_mkstringc(c, inl_functbl[i].name)),
-		     carc_mkccode(c, 1, (value (*)())inl_functbl[i].emitfn));
+		     carc_mkccode(c, 0, (value (*)())inl_functbl[i].emitfn));
   }
 
 }
