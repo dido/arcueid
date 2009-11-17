@@ -85,7 +85,7 @@ value carc_mkccode(carc *c, int argc, value (*cfunc)())
 #define MAX_CODELEN 65536
 static Inst tmpcode[MAX_CODELEN];
 static Inst *vmcodep;
--
+
 /* Similarly for compile-time literals.  This should be used to fill
    in the literals vector. */
 #define MAX_LITERALS 4096
@@ -93,14 +93,12 @@ static value literals[MAX_LITERALS];
 static int literalptr;
 
 /* This is a list of offsets for all jump instructions that require
-   relocation. */
+   relocation.  Jump instructions are generated with an absolute
+   offset of 0, so the base address of the code block into which the
+   instructions are copied must be addred to all instructions. */
 static value reloc;
 
 static void compile_expr(carc *, value, value, value);
-
-/* A compile-time environment is basically an assoc list of symbol-index
-   pair, where the indexes are the index values for the environment
-   in question. */
 
 /* Compile an expression at the top-level.  This returns a code object
    that can be bound into a closure, ready for execution. */
@@ -162,8 +160,25 @@ static void compile_call(carc *c, value expr, value env, value cont)
 {
 }
 
-static void compile_ident(carc *c, value expr, value env, value cont)
+static int find_var(carc *c, value sym, value env, int *level, int *off)
 {
+  /* A compile-time environment is basically an assoc list of symbol-index
+     pairs, where the indexes are the index values for the environment
+     in question. */
+  return(0);
+}
+
+static void compile_ident(carc *c, value sym, value env, value cont)
+{
+  int level, offset;
+
+  if (find_var(c, sym, env, &level, &offset))
+    gen_lde(&vmcodep, level, offset);
+  else {
+    literals[literalptr] = sym;
+    gen_ldg(&vmcodep, literalptr++);
+  }
+  compile_continuation(c, cont);
 }
 
 /* Compile a literal */
