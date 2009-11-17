@@ -127,6 +127,17 @@ value carc_compile(carc *c, value expr, value fname)
   return(code);
 }
 
+static void compile_continuation(carc *c, value cont)
+{
+  switch (cont) {
+  case CONT_RETURN:
+    gen_ret(&vmcodep);
+    break;
+  case CONT_NEXT:
+    break;
+  }
+}
+
 static void (*spl_form(carc *c, value func))(carc *, value, value)
 {
   return(NULL);
@@ -147,19 +158,8 @@ static void compile_nary(carc *c, void (*instr)(Inst **), value args,
 {
 }
 
-static void compile_call(carc *c, value expr, value cont)
+static void compile_call(carc *c, value expr, value env, value cont)
 {
-}
-
-static void compile_continuation(carc *c, value cont)
-{
-  switch (cont) {
-  case CONT_RETURN:
-    gen_ret(&vmcodep);
-    break;
-  case CONT_NEXT:
-    break;
-  }
 }
 
 static void compile_ident(carc *c, value expr, value env, value cont)
@@ -212,7 +212,7 @@ static void compile_expr(carc *c, value expr, value env, value cont)
 	return;
       }
     }
-    compile_call(c, expr, cont);
+    compile_call(c, expr, env, cont);
     break;
   case T_SYMBOL:
     compile_ident(c, expr, env, cont);
