@@ -85,17 +85,22 @@ value carc_mkccode(carc *c, int argc, value (*cfunc)())
 #define MAX_CODELEN 65536
 static Inst tmpcode[MAX_CODELEN];
 static Inst *vmcodep;
-
+-
 /* Similarly for compile-time literals.  This should be used to fill
    in the literals vector. */
 #define MAX_LITERALS 4096
 static value literals[MAX_LITERALS];
 static int literalptr;
 
+/* This is a list of offsets for all jump instructions that require
+   relocation. */
+static value reloc;
+
 static void compile_expr(carc *, value, value, value);
 
 /* A compile-time environment is basically an assoc list of symbol-index
-   pairs, where the indexes are  */
+   pair, where the indexes are the index values for the environment
+   in question. */
 
 /* Compile an expression at the top-level.  This returns a code object
    that can be bound into a closure, ready for execution. */
@@ -106,11 +111,17 @@ value carc_compile(carc *c, value expr, value fname)
 
   literalptr = 0;
   vmcodep = tmpcode;
+  reloc = CNIL;
   compile_expr(c, expr, CNIL, CONT_RETURN);
   /* Turn the generated code into a proper T_CODE object */
   len = vmcodep - tmpcode;
   vmccode = carc_mkvmcode(c, len);
   memcpy(&VINDEX(vmccode, 0), tmpcode, len*sizeof(Inst *));
+  /* Perform relocation fixups for compiled jumps */
+  while (reloc != CNIL) {
+    VINDEX(vmccode, FIX2INT(car(reloc))) += (value)&VINDEX(vmccode, 0);
+    reloc = cdr(reloc);
+  }
   code = carc_mkcode(c, vmccode, fname, literalptr);
   memcpy(&CODE_LITERAL(code, 0), literals, literalptr*sizeof(value));
   return(code);
@@ -140,13 +151,41 @@ static void compile_call(carc *c, value expr, value cont)
 {
 }
 
-static void compile_ident(carc *c, value expr, value cont)
+static void compile_continuation(carc *c, value cont)
+{
+  switch (cont) {
+  case CONT_RETURN:
+    gen_ret(&vmcodep);
+    break;
+  case CONT_NEXT:
+    break;
+  }
+}
+
+static void compile_ident(carc *c, value expr, value env, value cont)
 {
 }
 
-
-static void compile_literal(carc *c, value expr, value cont)
+/* Compile a literal */
+static void compile_literal(carc *c, value lit, value cont)
 {
+  switch (TYPE(lit)) {
+  case T_NIL:
+    gen_nil(&vmcodep);
+    break;
+  case T_TRUE:
+    gen_true(&vmcodep);
+    break;
+  case T_FIXNUM:
+    gen_ldi(&vmcodep, lit);
+    break;
+  default:
+    /* anything else, add it to the literal table and generate an ldl */
+    literals[literalptr] = lit;
+    gen_ldl(&vmcodep, literalptr++);
+    break;
+  }
+  compile_continuation(c, cont);
 }
 
 static void compile_expr(carc *c, value expr, value env, value cont)
@@ -176,7 +215,7 @@ static void compile_expr(carc *c, value expr, value env, value cont)
     compile_call(c, expr, cont);
     break;
   case T_SYMBOL:
-    compile_ident(c, expr, cont);
+    compile_ident(c, expr, env, cont);
     break;
   default:
     compile_literal(c, expr, cont);
