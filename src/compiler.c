@@ -168,16 +168,30 @@ static int find_var(carc *c, value sym, value env, int *level, int *off)
   return(0);
 }
 
+/* Return the index into the literal table for the literal lit, or
+   add the literal into the table if it's not already there, and return
+   its offset. */
+static int find_literal(carc *c, value lit)
+{
+  int i;
+
+  for (i=0; i<literalptr; i++) {
+    if (carc_equal(c, literals[i], lit) == CTRUE)
+      return(i);
+  }
+  /* Not found, add it */
+  literals[literalptr] = lit;
+  return(literalptr++);
+}
+
 static void compile_ident(carc *c, value sym, value env, value cont)
 {
   int level, offset;
 
   if (find_var(c, sym, env, &level, &offset))
     gen_lde(&vmcodep, level, offset);
-  else {
-    literals[literalptr] = sym;
-    gen_ldg(&vmcodep, literalptr++);
-  }
+  else
+    gen_ldg(&vmcodep, find_literal(c, sym));
   compile_continuation(c, cont);
 }
 
@@ -195,9 +209,9 @@ static void compile_literal(carc *c, value lit, value cont)
     gen_ldi(&vmcodep, lit);
     break;
   default:
-    /* anything else, add it to the literal table and generate an ldl */
-    literals[literalptr] = lit;
-    gen_ldl(&vmcodep, literalptr++);
+    /* anything else, look it up (or put it in) the literal table and
+       generate an ldl */
+    gen_ldl(&vmcodep, find_literal(c, lit));
     break;
   }
   compile_continuation(c, cont);
