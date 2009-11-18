@@ -22,15 +22,43 @@
 #include <stdlib.h>
 #include <check.h>
 #include "../src/carc.h"
+#include "../src/vmengine.h"
+
+extern void gen_ldi(Inst **ctp, value i2);
+extern void gen_cont(Inst **ctp, value icofs);
+extern void gen_apply(Inst **ctp, value iargc);
+extern void gen_hlt(Inst **ctp);
 
 carc c;
+
+static value stub_call(value func)
+{
+  Inst **ctp, *code, *ofs, *base;
+  value vcode, stub, thr;
+
+  vcode = carc_mkvmcode(&c, 3);
+  base = code = (Inst *)&VINDEX(vcode, 0);
+  ctp = &code;
+  gen_cont(ctp, 0);
+  ofs = *ctp - 1;
+  gen_ldi(ctp, func);
+  gen_apply(ctp, 0);
+  gen_hlt(ctp);
+
+  stub = carc_mkcode(&c, vcode, CNIL, 0);
+  thr = carc_mkthread(&c, stub, 2048, 0);
+  carc_vmengine(&c, thr, 1000);
+  return(thr);
+}
 
 START_TEST(test_literal)
 {
   value expr = INT2FIX(31337);
-  value code;
+  value code, thr;
 
-  code = carc_compile(&c, expr, CNIL);
+  code = carc_mkclosure(&c, carc_compile(&c, expr, CNIL), CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
 }
 END_TEST
 
@@ -43,6 +71,7 @@ int main(void)
 
   carc_set_memmgr(&c);
   carc_init_reader(&c);
+  carc_vmengine(&c, CNIL, 0);
 
   tcase_add_test(tc_compiler, test_literal);
 
