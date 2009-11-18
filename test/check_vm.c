@@ -81,7 +81,7 @@ START_TEST(test_vm_basic)
   gen_jf(ctp, ofs);
   gen_pop(ctp);
   gen_hlt(ctp);
-  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), 0);
+  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 0);
   thr = carc_mkthread(&c, func, 2048, 0);
   carc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
@@ -100,7 +100,7 @@ START_TEST(test_vm_apply)
   gen_ldi(ctp, INT2FIX(31330));
   gen_add(ctp);
   gen_ret(ctp);
-  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), 0);
+  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 0);
   func = carc_mkclosure(&c, func, CNIL);
 
   vcode2 = carc_mkvmcode(&c, 10);
@@ -117,7 +117,7 @@ START_TEST(test_vm_apply)
   *((int *)ofs) = (*ctp - base);
   gen_hlt(ctp);
 
-  func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), 0);
+  func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), CNIL, 0);
   thr = carc_mkthread(&c, func2, 2048, 0);
   carc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
@@ -140,7 +140,7 @@ START_TEST(test_vm_loadstore)
   vcode = carc_mkvmcode(&c, 7);
   code = (Inst*)&VINDEX(vcode, 0);
   ctp = &code;
-  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), 1);
+  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 1);
   CODE_LITERAL(func, 0) = sym;
   gen_ldl(ctp, 0);
   gen_hlt(ctp);
@@ -188,7 +188,7 @@ START_TEST(test_vm_apply_cfunc)
   *((int *)ofs) = (*ctp - base);
   gen_hlt(ctp);
 
-  func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), 0);
+  func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), CNIL, 0);
   thr = carc_mkthread(&c, func2, 2048, 0);
   carc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
