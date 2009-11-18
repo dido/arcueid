@@ -69,7 +69,7 @@ lde ( #ienv #iindx -- )
 {
   value tmp = TENVR(thr);
   while (--ienv >= 0) tmp = cdr(tmp);
-  TVALR(thr) = VINDEX(car(tmp), iindx);
+  TVALR(thr) = ENV_VALUE(car(tmp), iindx);
 }
 
 \ Store to an environment variable
@@ -77,18 +77,17 @@ ste ( #ienv #iindx -- )
 {
   value tmp = TENVR(thr);
   while (--ienv >= 0) tmp = cdr(tmp);
-  WB(&VINDEX(car(tmp), iindx), TVALR(thr));
+  WB(&ENV_VALUE(car(tmp), iindx), TVALR(thr));
 }
 
 \ Make a continuation at offset icofs, placing it in the value register.
-\ Note that this is a relative address, but the absolute address is
-\ stored in the continuation.
 cont ( #icofs -- )
 WB(&TCONR(thr), cons(c, carc_mkcont(c, INT2FIX(icofs), thr), TCONR(thr)));
 
-\ Make an environment of a given size
+\ Make an environment of a given size, with names from the function register
 env ( #ienvsize -- )
 WB(&TENVR(thr), carc_mkenv(c, TENVR(thr), ienvsize));
+ENV_NAMES(TENVR(thr)) = CODE_NAME(TFUNR(thr));
 WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
 
 \ apply a function
