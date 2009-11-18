@@ -277,7 +277,7 @@ value carc_mkenv(carc *c, value parent, int size)
 {
   value env;
 
-  env = cons(c, carc_mkvector(c, size), parent);
+  env = cons(c, carc_mkvector(c, size), parent+1);
   BTYPE(env) = T_ENV;
   return(env);
 }
