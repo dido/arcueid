@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include <math.h>
 #include "../src/carc.h"
 #include "../src/vmengine.h"
 
@@ -45,7 +46,7 @@ static value stub_call(value func)
   gen_apply(ctp, 0);
   gen_hlt(ctp);
 
-  stub = carc_mkcode(&c, vcode, CNIL, 0);
+  stub = carc_mkcode(&c, vcode, CNIL, CNIL, 0);
   thr = carc_mkthread(&c, stub, 2048, 0);
   carc_vmengine(&c, thr, 1000);
   return(thr);
@@ -53,15 +54,22 @@ static value stub_call(value func)
 
 START_TEST(test_literal)
 {
-  value expr = INT2FIX(31337);
+  value expr;
   value code, thr;
 
-  code = carc_mkclosure(&c, carc_compile(&c, expr, CNIL), CNIL);
+  expr = INT2FIX(31337);
+  code = carc_compile(&c, expr, CNIL, CNIL);
   thr = stub_call(code);
   fail_unless(TVALR(thr) == INT2FIX(31337));
+
+  expr = carc_mkflonum(&c, 3.14159);
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TYPE(TVALR(thr)) == T_FLONUM);
+  fail_unless(fabs(REP(TVALR(thr))._flonum - 3.14159) < 1e-6);
 }
 END_TEST
-
+\
 int main(void)
 {
   int number_failed;
