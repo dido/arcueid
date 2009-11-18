@@ -56,11 +56,12 @@ value carc_mkvmcode(carc *c, int length)
   return(code);
 }
 
-value carc_mkcode(carc *c, value vmccode, value fname, int nlits)
+value carc_mkcode(carc *c, value vmccode, value fname, value args, int nlits)
 {
-  value code = carc_mkvector(c, nlits+2);
+  value code = carc_mkvector(c, nlits+3);
 
   CODE_CODE(code) = vmccode;
+  CODE_ARGS(code) = args;
   CODE_NAME(code) = fname;
   BTYPE(code) = T_CODE;
   return(code);
@@ -100,9 +101,8 @@ static value reloc;
 
 static void compile_expr(carc *, value, value, value);
 
-/* Compile an expression at the top-level.  This returns a code object
-   that can be bound into a closure, ready for execution. */
-value carc_compile(carc *c, value expr, value fname)
+/* Compile an expression at the top-level.  This returns a closure object. */
+value carc_compile(carc *c, value expr, value env, value fname)
 {
   value vmccode, code;
   int len;
@@ -110,7 +110,7 @@ value carc_compile(carc *c, value expr, value fname)
   literalptr = 0;
   vmcodep = tmpcode;
   reloc = CNIL;
-  compile_expr(c, expr, CNIL, CONT_RETURN);
+  compile_expr(c, expr, env, CONT_RETURN);
   /* Turn the generated code into a proper T_CODE object */
   len = vmcodep - tmpcode;
   vmccode = carc_mkvmcode(c, len);
@@ -120,9 +120,9 @@ value carc_compile(carc *c, value expr, value fname)
     VINDEX(vmccode, FIX2INT(car(reloc))) += (value)&VINDEX(vmccode, 0);
     reloc = cdr(reloc);
   }
-  code = carc_mkcode(c, vmccode, fname, literalptr);
+  code = carc_mkcode(c, vmccode, fname, CNIL, literalptr);
   memcpy(&CODE_LITERAL(code, 0), literals, literalptr*sizeof(value));
-  return(code);
+  return(carc_mkclosure(c, code, CNIL));
 }
 
 static void compile_continuation(carc *c, value cont)
