@@ -357,7 +357,8 @@ extern value carc_mkenv(carc *c, value parent, int size);
 extern void carc_apply(carc *c, value thr, value fun);
 extern void carc_return(carc *c, value thr);
 extern value carc_mkvmcode(carc *c, int length);
-extern value carc_mkcode(carc *c, value vmccode, value fname, int nlits);
+extern value carc_mkcode(carc *c, value vmccode, value fname, value args,
+			 int nlits);
 extern value carc_mkclosure(carc *c, value code, value env);
 extern value carc_mkccode(carc *c, int argc, value (*_cfunc)());
 extern value carc_compile(carc *c, value expr, value env, value fname);
@@ -366,6 +367,9 @@ extern value carc_compile(carc *c, value expr, value env, value fname);
 #define CODE_NAME(c) (VINDEX((c), 1))
 #define CODE_ARGS(c) (VINDEX((c), 2))
 #define CODE_LITERAL(c, idx) (VINDEX((c), 3+(idx)))
+
+#define ENV_NAMES(e) (VINDEX((e), 0))
+#define ENV_VALUE(e, idx) (VINDEX((e), (idx)+1))
 
 /* Initialization functions */
 extern void carc_set_memmgr(carc *c);
