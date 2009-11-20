@@ -136,7 +136,7 @@ static void compile_continuation(carc *c, value cont)
   }
 }
 
-static void (*spl_form(carc *c, value func))(carc *, value, value)
+static void (*spl_form(carc *c, value func))(carc *, value, value, value)
 {
   return(NULL);
 }
@@ -152,7 +152,7 @@ static void (*inl_func(carc *c, value func))(Inst **)
 }
 
 static void compile_nary(carc *c, void (*instr)(Inst **), value args,
-			 value cont)
+			 value env, value cont)
 {
 }
 
@@ -160,11 +160,23 @@ static void compile_call(carc *c, value expr, value env, value cont)
 {
 }
 
-static int find_var(carc *c, value sym, value env, int *level, int *off)
+/* Find a variable in the environment.  This returns 0 or 1 depending on
+   whether the variable was found or not, and the pointers to level and
+   offset are set accordingly. */
+static int find_var(carc *c, value sym, value env, int *plev, int *poff)
 {
-  /* A compile-time environment is basically an assoc list of symbol-index
-     pairs, where the indexes are the index values for the environment
-     in question. */
+  int level, offset;
+  value e, a;
+
+  for (e = env, level = 0; ENV_P(e); e = cdr(e), ++level) {
+    for (a = ENV_NAMES(e), offset=0; CONS_P(a); a = cdr(a), ++offset) {
+      if (sym == car(a)) {
+	*plev = level;
+	*poff = offset;
+	return(1);
+      }
+    }
+  }
   return(0);
 }
 
@@ -188,6 +200,10 @@ static void compile_ident(carc *c, value sym, value env, value cont)
 {
   int level, offset;
 
+  /* First, try to look through the environment to see if the symbol
+     is represented there, and if it is generate an instruction to
+     load it.  If not, generate an instruction to try to load the
+     symbol from the global environment. */
   if (find_var(c, sym, env, &level, &offset))
     gen_lde(&vmcodep, level, offset);
   else
@@ -220,7 +236,7 @@ static void compile_literal(carc *c, value lit, value cont)
 static void compile_expr(carc *c, value expr, value env, value cont)
 {
   value func;
-  void (*compile_sf)(carc *, value, value);
+  void (*compile_sf)(carc *, value, value, value);
   void (*instr)(Inst **);
 
   switch (TYPE(expr)) {
@@ -230,14 +246,14 @@ static void compile_expr(carc *c, value expr, value env, value cont)
       /* See if it's a special form. */
       compile_sf = spl_form(c, func);
       if (compile_sf != NULL) {
-	(compile_sf)(c, expr, cont);
+	(compile_sf)(c, expr, env, cont);
 	return;
       }
 
       /* See if it's an inlinable n-ary function */
       instr = inl_func(c, func);
       if (instr != NULL) {
-	compile_nary(c, instr, cdr(expr), cont);
+	compile_nary(c, instr, cdr(expr), env, cont);
 	return;
       }
     }
