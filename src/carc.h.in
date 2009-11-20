@@ -370,6 +370,7 @@ extern value carc_compile(carc *c, value expr, value env, value fname);
 
 #define ENV_NAMES(e) (VINDEX((e), 0))
 #define ENV_VALUE(e, idx) (VINDEX((e), (idx)+1))
+#define ENV_P(e) (TYPE(e) == T_ENV)
 
 /* Initialization functions */
 extern void carc_set_memmgr(carc *c);
