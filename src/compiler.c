@@ -25,28 +25,31 @@
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
-#include "carcvm-gen.i"
 
 #define CONT_RETURN 1
 #define CONT_NEXT 3
 
-void gen_inst(Inst **vmcodepp, Inst i)
+static void gen_inst(Inst **vmcodepp, Inst i)
 {
   **vmcodepp = i;
   (*vmcodepp)++;
 }
 
-void genarg_i(Inst **vmcodepp, value i)
+static void genarg_i(Inst **vmcodepp, value i)
 {
   *((value *) *vmcodepp) = i;
   (*vmcodepp)++;
 }
 
-void genarg_target(Inst **vmcodepp, Inst *target)
+/*
+static void genarg_target(Inst **vmcodepp, Inst *target)
 {
   *((Inst **) *vmcodepp) = target;
   (*vmcodepp)++;
 }
+*/
+
+#include "carcvm-gen.i"
 
 value carc_mkvmcode(carc *c, int length)
 {
@@ -93,12 +96,6 @@ static Inst *vmcodep;
 static value literals[MAX_LITERALS];
 static int literalptr;
 
-/* This is a list of offsets for all jump instructions that require
-   relocation.  Jump instructions are generated with an absolute
-   offset of 0, so the base address of the code block into which the
-   instructions are copied must be addred to all instructions. */
-static value reloc;
-
 static void compile_expr(carc *, value, value, value);
 
 /* Compile an expression at the top-level.  This returns a closure object. */
@@ -115,11 +112,6 @@ value carc_compile(carc *c, value expr, value env, value fname)
   len = vmcodep - tmpcode;
   vmccode = carc_mkvmcode(c, len);
   memcpy(&VINDEX(vmccode, 0), tmpcode, len*sizeof(Inst *));
-  /* Perform relocation fixups for compiled jumps */
-  while (reloc != CNIL) {
-    VINDEX(vmccode, FIX2INT(car(reloc))) += (value)&VINDEX(vmccode, 0);
-    reloc = cdr(reloc);
-  }
   code = carc_mkcode(c, vmccode, fname, CNIL, literalptr);
   memcpy(&CODE_LITERAL(code, 0), literals, literalptr*sizeof(value));
   return(carc_mkclosure(c, code, CNIL));
@@ -270,6 +262,10 @@ static void compile_expr(carc *c, value expr, value env, value cont)
 
 value compile_fn(carc *c, value expr, value env, value cont)
 {
+  value args, body;
+
+  args = cadr(expr);
+  body = caddr(expr);
   return(CNIL);
 }
 
