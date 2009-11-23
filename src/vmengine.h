@@ -35,8 +35,4 @@ typedef long Inst;
 
 extern Inst *vm_prim;
 
-extern void gen_inst(Inst **vmcodepp, Inst i);
-extern void genarg_i(Inst **vmcodepp, value i);
-extern void genarg_target(Inst **vmcodepp, Inst *target);
-
 #endif
