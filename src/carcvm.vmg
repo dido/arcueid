@@ -102,20 +102,20 @@ carc_return(c, thr);
 SET_IP(TIP(thr));
 
 \ Jump unconditional
-jmp ( #target -- )
-SET_IP(target);
+jmp ( #itarget -- )
+INC_IP(itarget - 2);
 
 \ Jump if valr is not nil
-jt ( #target -- )
+jt ( #itarget -- )
 if (TVALR(thr) != CNIL) {
-  SET_IP(target);
+  INC_IP(itarget - 2);
   INST_TAIL;
 }
 
 \ Jump if valr is nil
-jf ( #target -- )
+jf ( #itarget -- )
 if (TVALR(thr) == CNIL) {
-  SET_IP(target);
+  INC_IP(itarget - 2);
   INST_TAIL;
 }
 
