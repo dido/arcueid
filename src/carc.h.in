@@ -253,6 +253,9 @@ struct cell {
 /* Definitions for conses */
 #define car(x) (REP(x)._cons.car)
 #define cdr(x) (REP(x)._cons.cdr)
+#define cadr(x) (car(cdr(x)))
+#define cddr(x) (cdr(cdr(x)))
+#define caddr(x) (car(cddr(x)))
 
 /* Definitions for vectors */
 #define VECLEN(x) (REP(x)._vector.length)
