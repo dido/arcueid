@@ -29,6 +29,103 @@
 #define CONT_RETURN 1
 #define CONT_NEXT 3
 
+/* A code generation context (cctx) is a vector with the following
+   items as indexes:
+
+   0. A code pointer into the vmcode object (usually a fixnum)
+   1. A vmcode object.
+   2. A pointer into the literal vector (usually a fixnum)
+   3. A vector of literals
+
+   The following functions are intended to manage the data
+   structure, and to generate code and literals for the system.
+ */
+
+#define CCTX_VCPTR(cctx) (VINDEX(cctx, 0))
+#define CCTX_VCODE(cctx) (VINDEX(cctx, 1))
+#define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
+#define CCTX_LITS(cctx) (VINDEX(cctx, 3))
+
+/* Expand the vmcode object of a cctx, doubling it in size.  All entries
+   are copied, and the old vmcode object is freed manually.  The fit
+   parameter, if true, will instead resize the cctx to exactly the number
+   of instructions which are already present. */
+static value __resize_vmcode(carc *c, value cctx, int fit)
+{
+  value nvcode, vcode;
+  int size, vptr;
+
+  vptr = FIX2INT(VINDEX(cctx, 0));
+  vcode = VINDEX(cctx, 1);
+  size = (fit) ? vptr : 2*VECLEN(vcode);
+  nvcode = carc_mkvmcode(c, size);
+  memcpy(&VINDEX(nvcode, 0), &(VINDEX(vcode, 0)), vptr*sizeof(value));
+  VINDEX(cctx, 1) = nvcode;
+  c->free_block(c, (void *)vcode);
+  return(nvcode);
+}
+
+static value expand_vmcode(carc *c, value cctx)
+{
+  return(__resize_vmcode(c, cctx, 0));
+}
+
+static value fit_vmcode(carc *c, value cctx)
+{
+  return(__resize_vmcode(c, cctx, 1));
+}
+
+static void gcode(carc *c, value cctx, void (*igen)(Inst **))
+{
+  value vcode;
+  int vptr;
+  Inst *vmcodep;
+
+  vptr = FIX2INT(VINDEX(cctx, 0));
+  vcode = VINDEX(cctx, 1);
+  if (vptr >= VECLEN(vcode))
+    vcode = expand_vmcode(c, cctx);
+  vmcodep = (Inst *)(&VINDEX(vcode, vptr));
+  igen(&vmcodep);
+  vptr++;
+  VINDEX(cctx, 0) = INT2FIX(vptr);
+}
+
+static void gcode1(carc *c, value cctx, void (*igen)(Inst **, value),
+		   value arg)
+{
+  value vcode;
+  int vptr;
+  Inst *vmcodep;
+
+  vptr = FIX2INT(VINDEX(cctx, 0));
+  vcode = VINDEX(cctx, 1);
+  if (vptr+1 >= VECLEN(vcode))
+    vcode = expand_vmcode(c, cctx);
+  vmcodep = (Inst *)(&VINDEX(vcode, vptr));
+  igen(&vmcodep, arg);
+  vptr += 2;
+  VINDEX(cctx, 0) = INT2FIX(vptr);
+}
+
+static void gcode2(carc *c, value cctx,
+			  void (*igen)(Inst **, value, value),
+			  value arg1, value arg2)
+{
+  value vcode;
+  int vptr;
+  Inst *vmcodep;
+
+  vptr = FIX2INT(VINDEX(cctx, 0));
+  vcode = VINDEX(cctx, 1);
+  if (vptr+2 >= VECLEN(vcode))
+    vcode = expand_vmcode(c, cctx);
+  vmcodep = (Inst *)(&VINDEX(vcode, vptr));
+  igen(&vmcodep, arg1, arg2);
+  vptr += 2;
+  VINDEX(cctx, 0) = INT2FIX(vptr);
+}
+
 static void gen_inst(Inst **vmcodepp, Inst i)
 {
   **vmcodepp = i;
@@ -81,75 +178,42 @@ value carc_mkccode(carc *c, int argc, value (*cfunc)())
   return(code);
 }
 
-/* XXX: This static array of instructions is the maximum that a single
-   s-expression can produce.  This should probably go away sometime for
-   something a bit more dynamic, but for now I think this should be
-   alright.  Once all the code has been generated here, it gets copied
-   off to the actual code object. */
-#define MAX_CODELEN 65536
-static Inst tmpcode[MAX_CODELEN];
-static Inst *vmcodep;
+static void compile_expr(carc *, value, value, value, value);
 
-/* Similarly for compile-time literals.  This should be used to fill
-   in the literals vector. */
-#define MAX_LITERALS 4096
-static value literals[MAX_LITERALS];
-static int literalptr;
+#define INITIAL_VMCODE_SIZE 128 /* Initial number of instruction slots in
+				   the vmcode */
+#define INITIAL_LITERAL_SIZE 16	/* Initial number of literal slots */
 
-static void compile_expr(carc *, value, value, value);
-
-/* Compile an expression at the top-level.  This returns a closure object. */
+/* Compile an expression.  This returns a closure object. */
 value carc_compile(carc *c, value expr, value env, value fname)
 {
-  value vmccode, code;
-  int len;
+  value cctx, code;
+  int nlits;
 
-  literalptr = 0;
-  vmcodep = tmpcode;
-  reloc = CNIL;
-  compile_expr(c, expr, env, CONT_RETURN);
-  /* Turn the generated code into a proper T_CODE object */
-  len = vmcodep - tmpcode;
-  vmccode = carc_mkvmcode(c, len);
-  memcpy(&VINDEX(vmccode, 0), tmpcode, len*sizeof(Inst *));
-  code = carc_mkcode(c, vmccode, fname, CNIL, literalptr);
-  memcpy(&CODE_LITERAL(code, 0), literals, literalptr*sizeof(value));
-  return(carc_mkclosure(c, code, CNIL));
+  /* create a new code context */
+  cctx = carc_mkvector(c, 4);
+  VINDEX(cctx, 0) = INT2FIX(0);
+  VINDEX(cctx, 1) = carc_mkvmcode(c, INITIAL_VMCODE_SIZE);
+  VINDEX(cctx, 2) = INT2FIX(0);
+  VINDEX(cctx, 3) = carc_mkvector(c, INITIAL_LITERAL_SIZE);
+  compile_expr(c, cctx, expr, env, CONT_RETURN);
+
+  /* Turn the code context into a closure */
+  nlits = FIX2INT(VINDEX(cctx, 2));
+  code = carc_mkcode(c, fit_vmcode(c, cctx), fname, CNIL, nlits);
+  memcpy(&CODE_LITERAL(code, 0), &VINDEX(VINDEX(cctx, 3), 0), nlits*sizeof(value));
+  return(carc_mkclosure(c, code, env));
 }
 
-static void compile_continuation(carc *c, value cont)
+static void compile_continuation(carc *c, value cctx, value cont)
 {
   switch (cont) {
   case CONT_RETURN:
-    gen_ret(&vmcodep);
+    gcode(c, cctx, gen_ret);
     break;
   case CONT_NEXT:
     break;
   }
-}
-
-static void (*spl_form(carc *c, value func))(carc *, value, value, value)
-{
-  return(NULL);
-}
-
-static void (*inl_func(carc *c, value func))(Inst **)
-{
-  value inlf;
-
-  inlf = carc_hash_lookup(c, c->inlfuncs, func);
-  if (inlf == CNIL)
-    return(NULL);
-  return((void (*)(Inst **))(REP(inlf)._cfunc.fnptr));
-}
-
-static void compile_nary(carc *c, void (*instr)(Inst **), value args,
-			 value env, value cont)
-{
-}
-
-static void compile_call(carc *c, value expr, value env, value cont)
-{
 }
 
 /* Find a variable in the environment.  This returns 0 or 1 depending on
@@ -175,20 +239,32 @@ static int find_var(carc *c, value sym, value env, int *plev, int *poff)
 /* Return the index into the literal table for the literal lit, or
    add the literal into the table if it's not already there, and return
    its offset. */
-static int find_literal(carc *c, value lit)
+static int find_literal(carc *c, value cctx, value lit)
 {
-  int i;
+  int i, literalptr;
 
+  literalptr = FIX2INT(CCTX_LPTR(cctx));
   for (i=0; i<literalptr; i++) {
-    if (carc_equal(c, literals[i], lit) == CTRUE)
+    if (carc_equal(c, VINDEX(CCTX_LITS(cctx), i), lit) == CTRUE)
       return(i);
   }
   /* Not found, add it */
-  literals[literalptr] = lit;
+  if (VECLEN(CCTX_LITS(cctx)) >= literalptr) {
+    /* Alloc new, copy, and free old */
+    value nlitvect = carc_mkvector(c, 2*literalptr);
+
+    memcpy(&VINDEX(nlitvect, 0), &VINDEX(CCTX_LITS(cctx), 0),
+	   literalptr*sizeof(value));
+    c->free_block(c, (void *)CCTX_LITS(cctx));
+    CCTX_LITS(cctx) = nlitvect;
+  }
+  VINDEX(CCTX_LITS(cctx), literalptr) = lit;
+  CCTX_LPTR(cctx) = INT2FIX(literalptr+1);
   return(literalptr++);
 }
 
-static void compile_ident(carc *c, value sym, value env, value cont)
+static void compile_ident(carc *c, value cctx, value sym, value env,
+			  value cont)
 {
   int level, offset;
 
@@ -197,65 +273,43 @@ static void compile_ident(carc *c, value sym, value env, value cont)
      load it.  If not, generate an instruction to try to load the
      symbol from the global environment. */
   if (find_var(c, sym, env, &level, &offset))
-    gen_lde(&vmcodep, level, offset);
+    gcode2(c, cctx, gen_lde, level, offset);
   else
-    gen_ldg(&vmcodep, find_literal(c, sym));
-  compile_continuation(c, cont);
+    gcode1(c, cctx, gen_ldg, find_literal(c, cctx, sym));
+  compile_continuation(c, cctx, cont);
 }
 
 /* Compile a literal */
-static void compile_literal(carc *c, value lit, value cont)
+static void compile_literal(carc *c, value cctx, value lit, value cont)
 {
   switch (TYPE(lit)) {
   case T_NIL:
-    gen_nil(&vmcodep);
+    gcode(c, cctx, gen_nil);
     break;
   case T_TRUE:
-    gen_true(&vmcodep);
+    gcode(c, cctx, gen_true);
     break;
   case T_FIXNUM:
-    gen_ldi(&vmcodep, lit);
+    gcode1(c, cctx, gen_ldi, lit);
     break;
   default:
     /* anything else, look it up (or put it in) the literal table and
        generate an ldl */
-    gen_ldl(&vmcodep, find_literal(c, lit));
+    gcode1(c, cctx, gen_ldl, find_literal(c, cctx, lit));
     break;
   }
-  compile_continuation(c, cont);
+  compile_continuation(c, cctx, cont);
 }
 
-static void compile_expr(carc *c, value expr, value env, value cont)
+static void compile_expr(carc *c, value cctx, value expr,
+			 value env, value cont)
 {
-  value func;
-  void (*compile_sf)(carc *, value, value, value);
-  void (*instr)(Inst **);
-
   switch (TYPE(expr)) {
-  case T_CONS:
-    func = car(expr);
-    if (SYMBOL_P(func)) {
-      /* See if it's a special form. */
-      compile_sf = spl_form(c, func);
-      if (compile_sf != NULL) {
-	(compile_sf)(c, expr, env, cont);
-	return;
-      }
-
-      /* See if it's an inlinable n-ary function */
-      instr = inl_func(c, func);
-      if (instr != NULL) {
-	compile_nary(c, instr, cdr(expr), env, cont);
-	return;
-      }
-    }
-    compile_call(c, expr, env, cont);
-    break;
   case T_SYMBOL:
-    compile_ident(c, expr, env, cont);
+    compile_ident(c, cctx, expr, env, cont);
     break;
   default:
-    compile_literal(c, expr, cont);
+    compile_literal(c, cctx, expr, cont);
     break;
   }
 }
