@@ -105,7 +105,7 @@ int main(void)
   carc_init_compiler(&c);
   carc_vmengine(&c, CNIL, 0);
 
-  /*  tcase_add_test(tc_compiler, test_literal); */
+  tcase_add_test(tc_compiler, test_literal);
   tcase_add_test(tc_compiler, test_if);
 
   suite_add_tcase(s, tc_compiler);
