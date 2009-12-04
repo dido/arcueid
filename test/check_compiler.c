@@ -40,10 +40,11 @@ static value stub_call(value func)
   vcode = carc_mkvmcode(&c, 3);
   base = code = (Inst *)&VINDEX(vcode, 0);
   ctp = &code;
+  ofs = *ctp;
   gen_cont(ctp, 0);
-  ofs = *ctp - 1;
   gen_ldi(ctp, func);
   gen_apply(ctp, 0);
+  *(ofs+1) = (Inst)(*ctp - ofs);
   gen_hlt(ctp);
 
   stub = carc_mkcode(&c, vcode, CNIL, CNIL, 0);
@@ -69,7 +70,29 @@ START_TEST(test_literal)
   fail_unless(fabs(REP(TVALR(thr))._flonum - 3.14159) < 1e-6);
 }
 END_TEST
-\
+
+START_TEST(test_if)
+{
+  value expr, ifkwd;
+  value code, thr;
+
+  ifkwd = carc_intern(&c, carc_mkstringc(&c, "if"));
+  expr = cons(&c, ifkwd,
+	      cons(&c, CTRUE, cons(&c, INT2FIX(1),
+				   cons(&c, INT2FIX(2), CNIL))));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  expr = cons(&c, ifkwd,
+	      cons(&c, CNIL, cons(&c, INT2FIX(1),
+				    cons(&c, INT2FIX(2), CNIL))));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -79,9 +102,11 @@ int main(void)
 
   carc_set_memmgr(&c);
   carc_init_reader(&c);
+  carc_init_compiler(&c);
   carc_vmengine(&c, CNIL, 0);
 
-  tcase_add_test(tc_compiler, test_literal);
+  /*  tcase_add_test(tc_compiler, test_literal); */
+  tcase_add_test(tc_compiler, test_if);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
