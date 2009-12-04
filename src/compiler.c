@@ -75,6 +75,8 @@ static value fit_vmcode(carc *c, value cctx)
   return(__resize_vmcode(c, cctx, 1));
 }
 
+#define VMCODEP(cctx) ((Inst *)(&VINDEX(VINDEX(cctx, 1), FIX2INT(VINDEX(cctx, 0)))))
+
 static void gcode(carc *c, value cctx, void (*igen)(Inst **))
 {
   value vcode;
@@ -210,7 +212,7 @@ static void compile_continuation(carc *c, value cctx, value cont)
   switch (cont) {
   case CONT_RETURN:
     gcode(c, cctx, gen_ret);
-    break;
+     break;
   case CONT_NEXT:
     break;
   }
@@ -301,10 +303,36 @@ static void compile_literal(carc *c, value cctx, value lit, value cont)
   compile_continuation(c, cctx, cont);
 }
 
+static value (*spl_form(carc *c, value func))()
+{
+  value sf;
+
+  sf = carc_hash_lookup(c, c->splforms, func);
+  if (sf == CUNBOUND || sf == CNIL)
+    return(NULL);
+  return(REP(sf)._cfunc.fnptr);
+}
+
 static void compile_expr(carc *c, value cctx, value expr,
 			 value env, value cont)
 {
+  value func;
+  value (*compile_sf)();
+
   switch (TYPE(expr)) {
+  case T_CONS:
+    func = car(expr);
+    if (SYMBOL_P(func)) {
+      /* Special forms */
+      compile_sf = spl_form(c, func);
+      if (compile_sf != NULL) {
+	(compile_sf)(c, cctx, expr, env, cont);
+	return;
+      }
+      /* XXX: See about inlinable functions */
+    }
+    /* XXX: see about function calls */
+    break;
   case T_SYMBOL:
     compile_ident(c, cctx, expr, env, cont);
     break;
@@ -314,7 +342,7 @@ static void compile_expr(carc *c, value cctx, value expr,
   }
 }
 
-value compile_fn(carc *c, value expr, value env, value cont)
+static value compile_fn(carc *c, value cctx, value expr, value env, value cont)
 {
   value args, body;
 
@@ -323,29 +351,76 @@ value compile_fn(carc *c, value expr, value env, value cont)
   return(CNIL);
 }
 
-value compile_if(carc *c, value expr, value env, value cont)
+static void compile_if_core(carc *c, value cctx, value ifbody, value env,
+			    value cont)
+{
+  value cond, ifpart, elsepart;
+  Inst *jump_addr;
+
+  /* On entering this function, the car of ifbody should be the condition.
+     cadr is the then portion, and caddr is the else portion. */
+  if (!CONS_P(ifbody))
+    goto finish_if;
+  cond = car(ifbody);
+  if (CONS_P(cdr(ifbody))) {
+    ifpart = cadr(ifbody);
+    elsepart = cddr(ifbody);
+  } else {
+    ifpart = CNIL;
+    elsepart = CNIL;
+  }
+
+  /* Now, try to compile the cond. */
+  compile_expr(c, cctx, cond, env, CONT_NEXT);
+  /* we're done if there are no further limbs */
+  if (ifpart == CNIL)
+    goto finish_if;
+  /* Add a conditional jump so we can jump over the ifpart to the
+     elsepart.  We need to patch this later once the elsepart
+     target address is known. */
+  jump_addr = VMCODEP(cctx);
+  gcode1(c, cctx, gen_jf, 0);
+  compile_expr(c, cctx, ifpart, env, CONT_NEXT);
+  /* The elsepart target address is here.  Compute the relative
+     target address and put it in the instruction. */
+  *jump_addr = (Inst)(VMCODEP(cctx) - jump_addr);
+  /* Generate an unconditional jump so that we jump over the else portion */
+  jump_addr = VMCODEP(cctx);
+  gcode1(c, cctx, gen_jmp, 0);
+  /* Recurse to compile the else portion */
+  compile_if_core(c, cctx, elsepart, env, cont);
+  /* Fix the target address of the jump over the else portion */
+  *jump_addr = (Inst)(VMCODEP(cctx) - jump_addr);
+  /* Finished */
+ finish_if:
+  compile_continuation(c, cctx, cont);
+}
+
+static value compile_if(carc *c, value cctx, value expr, value env, value cont)
+{
+  /* dump the 'if */
+  compile_if_core(c, cctx, cdr(expr), env, cont);
+  return(CNIL);
+}
+
+value compile_quasiquote(carc *c, value cctx, value expr, value env, value cont)
 {
   return(CNIL);
 }
 
-value compile_quasiquote(carc *c, value expr, value env, value cont)
+value compile_quote(carc *c, value cctx, value expr, value env, value cont)
 {
   return(CNIL);
 }
 
-value compile_quote(carc *c, value expr, value env, value cont)
-{
-  return(CNIL);
-}
-
-value compile_set(carc *c, value expr, value env, value cont)
+value compile_set(carc *c, value cctx, value expr, value env, value cont)
 {
   return(CNIL);
 }
 
 static struct {
   char *name;
-  value (*sfcompiler)();
+  value (*sfcompiler)(carc *, value, value, value, value);
 } splformtbl[] = {
   { "fn", compile_fn },
   { "if", compile_if },
