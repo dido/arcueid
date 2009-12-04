@@ -355,7 +355,7 @@ static void compile_if_core(carc *c, value cctx, value ifbody, value env,
 			    value cont)
 {
   value cond, ifpart, elsepart;
-  Inst *jump_addr;
+  Inst *jump_addr, *jump_addr2;
 
   /* On entering this function, the car of ifbody should be the condition.
      cadr is the then portion, and caddr is the else portion. */
@@ -381,16 +381,15 @@ static void compile_if_core(carc *c, value cctx, value ifbody, value env,
   jump_addr = VMCODEP(cctx);
   gcode1(c, cctx, gen_jf, 0);
   compile_expr(c, cctx, ifpart, env, CONT_NEXT);
-  /* The elsepart target address is here.  Compute the relative
-     target address and put it in the instruction. */
-  *jump_addr = (Inst)(VMCODEP(cctx) - jump_addr);
   /* Generate an unconditional jump so that we jump over the else portion */
-  jump_addr = VMCODEP(cctx);
+  jump_addr2 = VMCODEP(cctx);
   gcode1(c, cctx, gen_jmp, 0);
+  /* The address of the else portion is here, jump to this location */
+  *(jump_addr+1) = (Inst)(VMCODEP(cctx) - jump_addr);
   /* Recurse to compile the else portion */
   compile_if_core(c, cctx, elsepart, env, cont);
   /* Fix the target address of the jump over the else portion */
-  *jump_addr = (Inst)(VMCODEP(cctx) - jump_addr);
+  *(jump_addr2+1) = (Inst)(VMCODEP(cctx) - jump_addr2);
   /* Finished */
  finish_if:
   compile_continuation(c, cctx, cont);
