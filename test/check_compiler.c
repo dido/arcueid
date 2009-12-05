@@ -71,12 +71,16 @@ START_TEST(test_literal)
 }
 END_TEST
 
+extern int vm_debug;
+
 START_TEST(test_if)
 {
   value expr, ifkwd;
   value code, thr;
 
   ifkwd = carc_intern(&c, carc_mkstringc(&c, "if"));
+
+  /* (if t 1 2) */
   expr = cons(&c, ifkwd,
 	      cons(&c, CTRUE, cons(&c, INT2FIX(1),
 				   cons(&c, INT2FIX(2), CNIL))));
@@ -84,12 +88,64 @@ START_TEST(test_if)
   thr = stub_call(code);
   fail_unless(TVALR(thr) == INT2FIX(1));
 
+  /* (if nil 1 2) */
   expr = cons(&c, ifkwd,
 	      cons(&c, CNIL, cons(&c, INT2FIX(1),
 				    cons(&c, INT2FIX(2), CNIL))));
   code = carc_compile(&c, expr, CNIL, CNIL);
   thr = stub_call(code);
   fail_unless(TVALR(thr) == INT2FIX(2));
+
+  /* Test the cases where there aren't enough elements in the statement
+     (if) */
+  expr = cons(&c, ifkwd, CNIL);
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == CNIL);
+
+  /* (if t) */
+  expr = cons(&c, ifkwd, cons(&c, CTRUE, CNIL));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == CNIL);
+
+  /* (if t 1) */
+  expr = cons(&c, ifkwd, cons(&c, CTRUE, cons(&c, INT2FIX(1), CNIL)));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  /* Test the cases where there are more than three elements (nested if)
+     (if nil 1 nil 2 3) */
+  expr = cons(&c, ifkwd,
+	      cons(&c, CNIL,
+		   cons(&c, INT2FIX(1),
+			cons(&c, CNIL, cons(&c, INT2FIX(2),
+					    cons(&c, INT2FIX(3), CNIL))))));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(3));
+
+  /* (if nil 1 t 2 3) */
+  expr = cons(&c, ifkwd,
+	      cons(&c, CNIL,
+		   cons(&c, INT2FIX(1),
+			cons(&c, CTRUE, cons(&c, INT2FIX(2),
+					     cons(&c, INT2FIX(3), CNIL))))));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+
+  /* (if t 1 nil 2 3) */
+  expr = cons(&c, ifkwd,
+	      cons(&c, CTRUE,
+		   cons(&c, INT2FIX(1),
+			cons(&c, CNIL, cons(&c, INT2FIX(2),
+					    cons(&c, INT2FIX(3), CNIL))))));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
 }
 END_TEST
 
