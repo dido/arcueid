@@ -352,15 +352,22 @@ static value compile_fn(carc *c, value cctx, value expr, value env, value cont)
 }
 
 static void compile_if_core(carc *c, value cctx, value ifbody, value env,
-			    value cont)
+			    value cont, int nested)
 {
   value cond, ifpart, elsepart;
   Inst *jump_addr, *jump_addr2;
 
   /* On entering this function, the car of ifbody should be the condition.
      cadr is the then portion, and caddr is the else portion. */
-  if (!CONS_P(ifbody))
-    goto finish_if;
+  if (ifbody == CNIL) {
+    gcode(c, cctx, gen_nil);
+    compile_continuation(c, cctx, cont);
+    return;
+  }
+  if (!CONS_P(ifbody)) {
+    compile_continuation(c, cctx, cont);
+    return;
+  }
   cond = car(ifbody);
   if (CONS_P(cdr(ifbody))) {
     ifpart = cadr(ifbody);
@@ -372,13 +379,16 @@ static void compile_if_core(carc *c, value cctx, value ifbody, value env,
 
   /* Now, try to compile the cond. */
   compile_expr(c, cctx, cond, env, CONT_NEXT);
-  /* we're done if there are no further limbs */
-  if (ifpart == CNIL)
-    goto finish_if;
   /* Add a conditional jump so we can jump over the ifpart to the
      elsepart.  We need to patch this later once the elsepart
      target address is known. */
   jump_addr = VMCODEP(cctx);
+  /* If this is a supposed nested statement and the branches
+     are all empty, we are done */
+  if (nested && ifpart == CNIL && elsepart == CNIL) {
+    compile_continuation(c, cctx, cont);
+    return;
+  }
   gcode1(c, cctx, gen_jf, 0);
   compile_expr(c, cctx, ifpart, env, CONT_NEXT);
   /* Generate an unconditional jump so that we jump over the else portion */
@@ -387,18 +397,17 @@ static void compile_if_core(carc *c, value cctx, value ifbody, value env,
   /* The address of the else portion is here, jump to this location */
   *(jump_addr+1) = (Inst)(VMCODEP(cctx) - jump_addr);
   /* Recurse to compile the else portion */
-  compile_if_core(c, cctx, elsepart, env, cont);
+  compile_if_core(c, cctx, elsepart, env, cont, 1);
   /* Fix the target address of the jump over the else portion */
   *(jump_addr2+1) = (Inst)(VMCODEP(cctx) - jump_addr2);
   /* Finished */
- finish_if:
   compile_continuation(c, cctx, cont);
 }
 
 static value compile_if(carc *c, value cctx, value expr, value env, value cont)
 {
   /* dump the 'if */
-  compile_if_core(c, cctx, cdr(expr), env, cont);
+  compile_if_core(c, cctx, cdr(expr), env, cont, 0);
   return(CNIL);
 }
 
