@@ -49,8 +49,6 @@ void *alloca (size_t);
 int vm_debug = 0;
 FILE *vm_out;
 
-#undef VM_DEBUG
-
 #ifdef VM_DEBUG
 #define NAME(_x) if (vm_debug) {fprintf(vm_out, "%p: %-20s, ", XTIP(thr)-1, _x); fprintf(vm_out,"sp=%p", sp);}
 #else
