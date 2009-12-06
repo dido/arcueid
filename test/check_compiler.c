@@ -71,8 +71,6 @@ START_TEST(test_literal)
 }
 END_TEST
 
-extern int vm_debug;
-
 START_TEST(test_if)
 {
   value expr, ifkwd;
@@ -146,6 +144,24 @@ START_TEST(test_if)
   thr = stub_call(code);
   fail_unless(TVALR(thr) == INT2FIX(1));
 
+  /* Further cases where the second branch has only a then portion:
+     (if nil 1 t 2) */
+  expr = cons(&c, ifkwd,
+	      cons(&c, CNIL,
+		   cons(&c, INT2FIX(1),
+			cons(&c, CTRUE, cons(&c, INT2FIX(2), CNIL)))));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+
+  /* (if nil 1 nil 2) */
+  expr = cons(&c, ifkwd,
+	      cons(&c, CNIL,
+		   cons(&c, INT2FIX(1),
+			cons(&c, CNIL, cons(&c, INT2FIX(2), CNIL)))));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == CNIL);
 }
 END_TEST
 
