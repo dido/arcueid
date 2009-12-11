@@ -165,6 +165,39 @@ START_TEST(test_if)
 }
 END_TEST
 
+extern int vm_debug;
+
+START_TEST(test_quote)
+{
+  value expr, qkwd;
+  value code, thr;
+
+  qkwd = carc_intern(&c, carc_mkstringc(&c, "quote"));
+
+  /* (quote 1) */
+  expr = cons(&c, qkwd, cons(&c, INT2FIX(1), CNIL));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  /* (quote 1 2) */
+  expr = cons(&c, qkwd, cons(&c, INT2FIX(1), cons(&c, INT2FIX(2), CNIL)));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  /* (quote (1 2)) */
+  expr = cons(&c, qkwd, cons(&c, cons(&c, INT2FIX(1),
+				      cons(&c, INT2FIX(2), CNIL)),
+			     CNIL));
+  code = carc_compile(&c, expr, CNIL, CNIL);
+  thr = stub_call(code);
+  fail_unless(CONS_P(TVALR(thr)));
+  fail_unless(car(TVALR(thr)) == INT2FIX(1));
+  fail_unless(cadr(TVALR(thr)) == INT2FIX(2));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -179,6 +212,7 @@ int main(void)
 
   tcase_add_test(tc_compiler, test_literal);
   tcase_add_test(tc_compiler, test_if);
+  tcase_add_test(tc_compiler, test_quote);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
