@@ -418,6 +418,13 @@ value compile_quasiquote(carc *c, value cctx, value expr, value env, value cont)
 
 value compile_quote(carc *c, value cctx, value expr, value env, value cont)
 {
+  value qexpr = cdr(expr);
+
+  /* This is relatively simple: just store the quoted portion as a
+     literal. */
+  if (!CONS_P(qexpr))
+    c->signal_error(c, "expecting quoted expression");
+  compile_literal(c, cctx, car(qexpr), cont);
   return(CNIL);
 }
 
