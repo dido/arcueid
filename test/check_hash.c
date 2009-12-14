@@ -89,6 +89,7 @@ START_TEST(test_hash_atomic_value)
 {
   unsigned long hash;
   value v;
+  char *ucstr;
 
   hash = carc_hash(&c, CNIL);
   fail_unless(hash == 0xc2503378028494d6);
@@ -116,8 +117,12 @@ START_TEST(test_hash_atomic_value)
   fail_unless(hash == 0x78b0714df1847441);
 #endif
 
-  v = carc_mkstringc(&c, "unicode string \343\201\235\343\201\256\347\233\256\343\200\201\350\252\260\343\201\256\347\233\256\343\200\202\343\200\202\343\200\202");
+  ucstr = "unicode string \343\201\235\343\201\256\347\233\256\343\200\201\350\252\260\343\201\256\347\233\256\343\200\202\343\200\202\343\200\202";
+  v = carc_mkstringc(&c, ucstr);
   hash = carc_hash(&c, v);
+  fail_unless(hash == 0x51f424be55282439);
+
+  hash = carc_hash_cstr(&c, ucstr);
   fail_unless(hash == 0x51f424be55282439);
 }
 END_TEST
