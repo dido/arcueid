@@ -182,6 +182,14 @@ START_TEST(test_hash_table)
   for (i=0; i<17; i++)
     fail_unless(carc_hash_lookup(&c, table, vnames[i]) == INT2FIX(i));
 
+  /* verify with cstrings */
+  for (i=0; i<17; i++) {
+    value v;
+
+    v = carc_hash_lookup_cstr(&c, table, names[i]);
+    fail_unless(v == INT2FIX(i));
+  }
+
   /* Test not present key */
   notfoundstr = carc_mkstringc(&c, "Caren Ortensia");
   fail_unless(carc_hash_lookup(&c, table, notfoundstr) == CUNBOUND);
