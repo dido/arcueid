@@ -378,11 +378,61 @@ static value hash_lookup(carc *c, value hash, value key, unsigned int *index)
   }
 }
 
+static value hash_lookup_cstr(carc *c, value hash, const char *key,
+			      unsigned int *index)
+{
+  unsigned int hv, i, n, ch;
+  value e, k2;
+  Rune rune;
+  const char *kptr;
+  int equal;
+
+  hv = carc_hash_cstr(c, key);
+  *index = hv & TABLEMASK(hash);
+  for (i=0;; i++) {
+    *index = (*index + PROBE(i)) & TABLEMASK(hash);
+    e = TABLEPTR(hash)[*index];
+    if (e == CUNBOUND)
+      return(CUNBOUND);
+    if (e == CUNDEF)
+      continue;
+    if (TYPE(REP(e)._hashbucket.key) == T_STRING) {
+      /* Compare the string of the key to this one */
+      k2 = REP(e)._hashbucket.key;
+      n = 0;
+      equal = 0;
+      kptr = key;
+      for (;;) {
+	ch = *(unsigned char *)kptr;
+	if (ch == 0) {
+	  equal = (carc_strlen(c, k2) == n);
+	  break;
+	}
+	kptr += chartorune(&rune, kptr);
+	if (rune != carc_strindex(c, k2, n)) {
+	  equal = 0;
+	  break;
+	}
+	n++;
+      }
+      if (equal)
+	return(REP(e)._hashbucket.val);
+    }
+  }
+}
+
 value carc_hash_lookup(carc *c, value hash, value key)
 {
   unsigned int index;
 
   return(hash_lookup(c, hash, key, &index));
+}
+
+value carc_hash_lookup_cstr(carc *c, value hash, const char *key)
+{
+  unsigned int index;
+
+  return(hash_lookup_cstr(c, hash, key, &index));
 }
 
 /* Slightly different version which returns the actual cons cell with
