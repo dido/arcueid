@@ -443,7 +443,6 @@ static struct {
   { "fn", compile_fn },
   { "if", compile_if },
   { "quasiquote", compile_quasiquote },
-  { "unquote", compile_unquote },
   { "quote", compile_quote },
   { "assign", compile_assign },
   /* The next three special forms could be removed without changing
