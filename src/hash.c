@@ -22,6 +22,7 @@
 #include <string.h>
 #include "carc.h"
 #include "alloc.h"
+#include "utf.h"
 #include "coroutine.h"
 #include "../config.h"
 
@@ -218,6 +219,38 @@ static unsigned long hash_increment(carc *c, value v, carc_hs *s)
   return(length);
 }
 
+static unsigned long hash_increment_string(const char *s, carc_hs *hs)
+{
+  int c;
+  long n;
+  Rune rune;
+
+  n = 0;
+  for (;;) {
+    c = *(unsigned char *)s;
+    if (c == 0) {
+      /* End of string */
+      return(n);
+    }
+    s += chartorune(&rune, s);
+    carc_hash_update(hs, (unsigned long)rune);
+    n++;
+  }
+  return(0);
+}
+
+/* This function should produce exactly the same results as
+   carc_hash(c, carc_mkstring(c, str)) */
+unsigned long carc_hash_cstr(carc *c, const char *str)
+{
+  unsigned long len;
+  carc_hs s;
+
+  carc_hash_init(&s, 0);
+  len = hash_increment_string(str, &s);
+  return(carc_hash_final(&s, len));
+}
+
 unsigned long carc_hash(carc *c, value v)
 {
   unsigned long len;
@@ -344,7 +377,6 @@ static value hash_lookup(carc *c, value hash, value key, unsigned int *index)
       return(REP(e)._hashbucket.val);
   }
 }
-
 
 value carc_hash_lookup(carc *c, value hash, value key)
 {
