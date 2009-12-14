@@ -182,3 +182,14 @@ value carc_list_length(carc *c, value list)
   return(n);
 }
 
+/* Create a tagged object.  Type should be a symbol, and rep
+   should be the representation.  This is most commonly used
+   for macros. */
+value carc_tag(carc *c, value type, value rep)
+{
+  value tag;
+
+  tag = cons(c, type, rep);
+  BTYPE(tag) = T_TAGGED;
+  return(tag);
+}
