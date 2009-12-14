@@ -428,11 +428,14 @@ value compile_quote(carc *c, value cctx, value expr, value env, value cont)
   return(CNIL);
 }
 
-value compile_set(carc *c, value cctx, value expr, value env, value cont)
+/* The foundation set function in previous Arc versions has been replaced
+   by the assign function, which has the exact same syntax. */
+value compile_assign(carc *c, value cctx, value expr, value env, value cont)
 {
   return(CNIL);
 }
 
+/* Table of special forms. */
 static struct {
   char *name;
   value (*sfcompiler)(carc *, value, value, value, value);
@@ -440,8 +443,17 @@ static struct {
   { "fn", compile_fn },
   { "if", compile_if },
   { "quasiquote", compile_quasiquote },
+  { "unquote", compile_unquote },
   { "quote", compile_quote },
-  { "set", compile_set },
+  { "assign", compile_assign },
+  /* The next three special forms could be removed without changing
+     semantics, except that they work for macros (so prob should do this
+     for every elt of s, not just the car */
+#if 0
+  { "compose", compile_compose },
+  { "complement", compile_complement },
+  { "andf", compile_andf },
+#endif
   { NULL, NULL }
 };
 
