@@ -347,6 +347,7 @@ extern value carc_hash_lookup_cstr(carc *c, value hash, const char *key);
 extern value carc_hash_delete(carc *c, value hash, value key);
 extern value carc_hash_iter(carc *c, value hash, void **context);
 extern value carc_intern(carc *c, value name);
+extern value carc_intern_cstr(carc *c, const char *name);
 extern value carc_sym2name(carc *c, value sym);
 
 extern value carc_mkvector(carc *c, int length);
