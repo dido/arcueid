@@ -35,5 +35,50 @@
 			  (is ((car ctx) 4) 1)
 			  (is ((car ctx) 5) 2))))))
 
+(= test-compile-literal
+   (describe "The compilation of literals"
+	     (it "should compile character literals"
+		 (do (= ctx '(nil nil nil))
+		     (compile #\a ctx nil)
+		     (and (is ((car ctx) 0) 'ildl)
+			  (is ((car ctx) 1) 0)
+			  (is (len (car:cddr ctx)) 1)
+			  (is ((car:cddr ctx) 0) #\a))))
+	     (it "should compile string literals"
+		 (do (= ctx '(nil nil nil))
+		     (compile "foo" ctx nil)
+		     (and (is ((car ctx) 0) 'ildl)
+			  (is ((car ctx) 1) 0)
+			  (is (len (car:cddr ctx)) 1)
+			  (is ((car:cddr ctx) 0) "foo"))))
+	     (it "should compile nils"
+		 (do (= ctx '(nil nil nil))
+		     (compile nil ctx nil)
+		     (is ((car ctx) 0) 'inil)))
+	     (it "should compile t"
+		 (do (= ctx '(nil nil nil))
+		     (compile t ctx nil)
+		     (is ((car ctx) 0) 'itrue)))
+	     (it "should compile fixnums"
+		 (do (= ctx '(nil nil nil))
+		     (compile 1234 ctx nil)
+		     (and (is ((car ctx) 0) 'ildi)
+			  (is ((car ctx) 1) (+ (* 1234 2) 1)))))
+	     (it "should compile bignums"
+		 (do (= ctx '(nil nil nil))
+		     (compile 340282366920938463463374607431768211456 ctx nil)
+		     (and (is ((car ctx) 0) 'ildl)
+			  (is ((car ctx) 1) 0)
+			  (is (len (car:cddr ctx)) 1)
+			  (is ((car:cddr ctx) 0) 340282366920938463463374607431768211456))))
+	     (it "should compile flonums"
+		 (do (= ctx '(nil nil nil))
+		     (compile 3.1415926535 ctx nil)
+		     (and (is ((car ctx) 0) 'ildl)
+			  (is ((car ctx) 1) 0)
+			  (is (len (car:cddr ctx)) 1)
+			  (< (abs (- ((car:cddr ctx) 0) 3.1415926535)) 1e-6))))))
+
 (print-results (test-literals) t)
 (print-results (test-codegen) t)
+(print-results (test-compile-literal) t)
