@@ -41,12 +41,12 @@
 ;; for testing.
 (def fixnump (val)
   (and (is (type val) 'int)
-       (val >= -9223372036854775808)	; valid for 64-bit arches
-       (val <= 9223372036854775807)))
+       (>= val -9223372036854775808)	; valid for 64-bit arches
+       (<= val 9223372036854775807)))
 
-(def list-append (elem list)
-  (if (no (cdr list)) (scdr list (cons elem nil))
-      (list-append elem (cdr list))))
+(def list-append (list2 list)
+  (if (no (cdr list)) (scdr list list2)
+      (list-append list2 (cdr list))))
 
 ;; This should be a C function as well.  The context argument is a
 ;; compiler context, which is in the CArc runtime an opaque type
@@ -56,22 +56,23 @@
 ;; structure, and a list of literals used in the code being
 ;; generated.
 (def generate (ctx opcode . args)
-  (do (let code (car ctx) (if (no code)
-			      (scar ctx (cons opcode args))
-			      (list-append (cons opcode args) code)))
+  (do (let code (car ctx)
+	(if (no code)
+	    (scar ctx (cons opcode args))
+	    (list-append (cons opcode args) code)))
       ctx))
 
 ;; This should be a C function as well.  If the literal +lit+ is not
 ;; found in the literal list of the context, it will add the literal
 ;; to the context.
 (def find-literal (lit ctx)
-  (let literals (caddr ctx)
+  (let literals (car (cddr ctx))
     (if (no literals)
 	(do (scar (cddr ctx) (cons lit nil)) 0)
 	(aif ((afn (lit literals idx)
 	       (if (no literals) nil
-		   (is (car literal) lit) idx
+		   (is (car literals) lit) idx
 		   (self lit (cdr literals) (+ 1 idx)))) lit literals 0)
 	     it
 	     (do1 (len literals)
-		  (list-append lit literals))))))
+		  (list-append (cons lit nil) literals))))))
