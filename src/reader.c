@@ -61,6 +61,16 @@ value carc_intern(carc *c, value name)
   return(symval);
 }
 
+value carc_intern_cstr(carc *c, const char *name)
+{
+  value symval, symstr;
+
+  if ((symval = carc_hash_lookup_cstr(c, c->symtable, name)) != CUNBOUND)
+    return(symval);
+  symstr = carc_mkstringc(c, name);
+  return(carc_intern(c, symstr));
+}
+
 value carc_sym2name(carc *c, value sym)
 {
   return(carc_hash_lookup(c, c->rsymtable, sym));
