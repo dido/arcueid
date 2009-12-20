@@ -76,3 +76,21 @@
 	     it
 	     (do1 (len literals)
 		  (list-append (cons lit nil) literals))))))
+
+;; These should be parts of a C function as well.  Environments are
+;; defined as lists of vectors (they appear here as lists as well because
+;; standard Arc doesn't have vectors).  The first element of the
+;; environment is all we really care about.
+(def find-in-frame (var frame idx)
+  (if (no frame) nil
+      (is (car frame) var) idx
+      (find-in-frame var (cdr frame) (+ idx 1))))
+
+(def find-in-env (var env idx)
+  (if (no env) '(nil 0 0)
+      (aif (find-in-frame var (car (car env)) 0) `(t ,idx ,it)
+	   (find-in-env var (cdr env) (+ idx 1)))))
+
+(def find-var (var ctx)
+  (do prn ctx
+      (find-in-env var (cadr ctx) 0)))
