@@ -15,8 +15,8 @@
 
 (def compile-ident (expr ctx cont)
   (do (let (found level offset) (find-var expr ctx)
-	(if found (generate ctx cont 'ilde level offset)
-	    (generate ctx cont 'ildg (find-literal expr ctx))))
+	(if found (generate ctx 'ilde level offset)
+	    (generate ctx 'ildg (find-literal expr ctx))))
       (compile-continuation ctx cont)))
   
 (def compile-list (expr ctx cont)
