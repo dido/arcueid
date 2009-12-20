@@ -134,8 +134,33 @@
 		 (let (found frame idx) (find-var 'nopq ctx)
 		   (no found)))))
 
+(= test-compile-ident
+   (describe "The compilation of identifiers"
+	     (prolog (do (= env '(((foo bar baz) 1 2 3)
+				  ((abc def ghi) 4 5 6)
+				  ((quux fred jklm) 7 8 9)))
+			 (= ctx `(nil ,env nil))))
+	     (it "should compile an identifier referring to the environment"
+		 (do (compile 'foo ctx nil)
+		     (and (is ((car ctx) 0) 'ilde)
+			  (is ((car ctx) 1) 0)
+			  (is ((car ctx) 2) 0))))
+	     (it "should compile another identifier referring to the environment"
+		 (do (scar ctx nil)
+		     (compile 'fred ctx nil)
+		     (and (is ((car ctx) 0) 'ilde)
+			  (is ((car ctx) 1) 2)
+			  (is ((car ctx) 2) 1))))
+	     (it "should compile an identifier referring to the global environment"
+		 (do (scar ctx nil)
+		     (compile 'xyzzy ctx nil)
+		     (and (is ((car ctx) 0) 'ildg)
+			  (is ((car ctx) 1) 0)
+			  (is (len (car:cddr ctx)) 1)
+			  (is ((car:cddr ctx) 0) 'xyzzy))))))
 
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
 (print-results (test-environments))
+(print-results (test-compile-ident))
