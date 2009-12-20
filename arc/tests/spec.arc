@@ -1,4 +1,6 @@
-;; This is Will Fitzgerald's spec.arc
+;; This is Will Fitzgerald's spec.arc.  Reproduced with permission.
+;; See http://willwhim.wordpress.com/2008/02/02/more-better-spec-for-arc/
+;; for more details.
 
 (= first car)
 (= rest cdr)
