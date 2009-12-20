@@ -79,6 +79,63 @@
 			  (is (len (car:cddr ctx)) 1)
 			  (< (abs (- ((car:cddr ctx) 0) 3.1415926535)) 1e-6))))))
 
-(print-results (test-literals) t)
-(print-results (test-codegen) t)
-(print-results (test-compile-literal) t)
+(= test-environments
+   (describe "Environment management functions"
+	     (prolog (do (= env '(((foo bar baz) 1 2 3)
+				  ((abc def ghi) 4 5 6)
+				  ((quux fred jklm) 7 8 9)))
+			 (= ctx `(nil ,env nil))))
+	     (it "should find variables in the environment"
+		 (let (found frame idx) (find-var 'foo ctx)
+		   (and found
+			(is frame 0)
+			(is idx 0))))
+	     (it "should find more (1) variables in the environment"
+		 (let (found frame idx) (find-var 'bar ctx)
+		   (and found
+			(is frame 0)
+			(is idx 1))))
+	     (it "should find more (2) variables in the environment"
+		 (let (found frame idx) (find-var 'baz ctx)
+		   (and found
+			(is frame 0)
+			(is idx 2))))
+	     (it "should find more (0) variables in deeper environment frames (1)"
+		 (let (found frame idx) (find-var 'abc ctx)
+		   (and found
+			(is frame 1)
+			(is idx 0))))
+	     (it "should find more (1) variables in deeper environment frames (1)"
+		 (let (found frame idx) (find-var 'def ctx)
+		   (and found
+			(is frame 1)
+			(is idx 1))))
+	     (it "should find more (2) variables in deeper environment frames (1)"
+		 (let (found frame idx) (find-var 'ghi ctx)
+		   (and found
+			(is frame 1)
+			(is idx 2))))
+	     (it "should find more (0) variables in deeper environment frames (2)"
+		 (let (found frame idx) (find-var 'quux ctx)
+		   (and found
+			(is frame 2)
+			(is idx 0))))
+	     (it "should find more (1) variables in deeper environment frames (2)"
+		 (let (found frame idx) (find-var 'fred ctx)
+		   (and found
+			(is frame 2)
+			(is idx 1))))
+	     (it "should find more (2) variables in deeper environment frames (2)"
+		 (let (found frame idx) (find-var 'jklm ctx)
+		   (and found
+			(is frame 2)
+			(is idx 2))))
+	     (it "should not find variables which are not there"
+		 (let (found frame idx) (find-var 'nopq ctx)
+		   (no found)))))
+
+
+(print-results (test-literals))
+(print-results (test-codegen))
+(print-results (test-compile-literal))
+(print-results (test-environments))
