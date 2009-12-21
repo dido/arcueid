@@ -1,9 +1,28 @@
+;; Copyright (C) 2009 Rafael R. Sevilla
+;;
+;; This file is part of CArc
+;;
+;; CArc is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU Lesser General Public License as
+;; published by the Free Software Foundation; either version 3 of the
+;; License, or (at your option) any later version.
+;;
+;; This library is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU Lesser General Public License for more details.
+;;
+;; You should have received a copy of the GNU Lesser General Public
+;; License along with this library; if not, write to the Free Software
+;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+;; 02110-1301 USA.
+;;
 
 ;; Compile an expression with all special syntax expanded.
 (def compile (expr ctx cont)
   (if (literalp expr) (compile-literal expr ctx cont)
-      (is (type expr) 'sym) (compile-ident expr ctx cont)
-      (is (type expr) 'cons) (compile-list expr ctx cont)
+      (isa expr 'sym) (compile-ident expr ctx cont)
+      (isa expr 'cons) (compile-list expr ctx cont)
       (syntax-error "invalid expression" expr)))
 
 (def compile-literal (expr ctx cont)
@@ -20,10 +39,40 @@
       (compile-continuation ctx cont)))
   
 (def compile-list (expr ctx cont)
-  (do (if (spformp (car expr)) (compile-spform expr ctx cont)
+  (do (aif (spform (car expr)) (it expr ctx cont)
 	  (inlinablep (car expr)) (compile-inline expr ctx cont)
 	  (compile-apply expr ctx cont))
       (compile-continuation ctx cont)))
+
+(def spform (ident)
+  (case ident
+    if compile-if
+    fn compile-fn
+    quasiquote compile-quasiquote
+    assign compile-assign
+    compose compile-compose
+    andf compile-andf))
+
+(def compile-if (expr ctx cont)
+  (do
+    ((afn (args)
+       (if (no args) (generate ctx 'inil)
+	   ;; compile tail end if no additional
+	   (no:cdr args) (compile (car args) ctx nil)
+	   (do (compile (car args) ctx nil)
+	       (let jumpaddr (code-ptr ctx)
+		 (generate ctx 'ijf 0)
+		 (compile (cadr args) ctx nil)
+		 (let jumpaddr2 (code-ptr ctx)
+		   (generate ctx 'ijmp 0)
+		   (code-patch ctx (+ jumpaddr 1) (- (code-ptr ctx) jumpaddr))
+		   ;; compile the else portion
+		   (self (cddr args))
+		   ;; Fix target address of jump
+		   (code-patch ctx (+ jumpaddr2 1)
+			       (- (code-ptr ctx) jumpaddr2)))))))
+     (cdr expr))
+    (compile-continuation ctx cont)))
 
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
@@ -37,10 +86,13 @@
 	(is tp 'int)
 	(is tp 'num))))
 
+;; THE FUNCTIONS BELOW THIS MARK SHOULD BE PROVIDED FOR WITHIN THE
+;; CARC RUNTIME CORE.  DEFINITIONS GIVEN HERE ARE FOR TESTING ONLY.
+
 ;; This should be a C function (not standard Arc), but is defined here
 ;; for testing.
 (def fixnump (val)
-  (and (is (type val) 'int)
+  (and (isa val 'int)
        (>= val -9223372036854775808)	; valid for 64-bit arches
        (<= val 9223372036854775807)))
 
@@ -61,6 +113,16 @@
 	    (scar ctx (cons opcode args))
 	    (list-append (cons opcode args) code)))
       ctx))
+
+;; This should also be a C function.  Returns the current offset
+;; for code generation.
+(def code-ptr (ctx)
+  (len (car ctx)))
+
+;; This should also be a C function.  Patch an opcode at the provided
+;; offset.
+(def code-patch (ctx offset value)
+  (= ((car ctx) offset) value))
 
 ;; This should be a C function as well.  If the literal +lit+ is not
 ;; found in the literal list of the context, it will add the literal
