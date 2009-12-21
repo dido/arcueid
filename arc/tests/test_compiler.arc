@@ -22,7 +22,7 @@
 
 (= test-literals
    (describe "Literal management function"
-	     (prolog (= ctx '(nil nil nil)))
+	     (prolog (= ctx (cons nil nil)))
 	     (it "should add a literal not already present to the list"
 		 (is (find-literal 1.0 ctx) 0))
 	     (it "should add another literal to the list"
@@ -34,10 +34,10 @@
 	     (it "should not add the symbol more than once"
 		 (is (find-literal 'some-symbol ctx) 2))
 	     (it "should have added three elements to the literal list"
-		 (is (len (car:cddr ctx)) 3))))
+		 (is (len (cdr ctx)) 3))))
 (= test-codegen
    (describe "Code generation"
-	     (prolog (= ctx '(nil nil nil)))
+	     (prolog (= ctx '(nil . nil)))
 	     (it "should generate an instruction with no arguments"
 		 (do (generate ctx 'inop)
 		     (and (is (len (car ctx)) 1)
@@ -57,100 +57,102 @@
 (= test-compile-literal
    (describe "The compilation of literals"
 	     (it "should compile character literals"
-		 (do (= ctx '(nil nil nil))
-		     (compile #\a ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile #\a ctx nil nil)
 		     (and (is ((car ctx) 0) 'ildl)
 			  (is ((car ctx) 1) 0)
-			  (is (len (car:cddr ctx)) 1)
-			  (is ((car:cddr ctx) 0) #\a))))
+			  (is (len (cdr ctx)) 1)
+			  (is ((cdr ctx) 0) #\a))))
 	     (it "should compile string literals"
-		 (do (= ctx '(nil nil nil))
-		     (compile "foo" ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile "foo" ctx nil nil)
 		     (and (is ((car ctx) 0) 'ildl)
 			  (is ((car ctx) 1) 0)
-			  (is (len (car:cddr ctx)) 1)
-			  (is ((car:cddr ctx) 0) "foo"))))
+			  (is (len (cdr ctx)) 1)
+			  (is ((cdr ctx) 0) "foo"))))
 	     (it "should compile nils"
-		 (do (= ctx '(nil nil nil))
-		     (compile nil ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile nil ctx nil nil)
 		     (is ((car ctx) 0) 'inil)))
 	     (it "should compile t"
-		 (do (= ctx '(nil nil nil))
-		     (compile t ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile t ctx nil nil)
 		     (is ((car ctx) 0) 'itrue)))
 	     (it "should compile fixnums"
-		 (do (= ctx '(nil nil nil))
-		     (compile 1234 ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile 1234 ctx nil nil)
 		     (and (is ((car ctx) 0) 'ildi)
 			  (is ((car ctx) 1) (+ (* 1234 2) 1)))))
 	     (it "should compile bignums"
-		 (do (= ctx '(nil nil nil))
-		     (compile 340282366920938463463374607431768211456 ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile 340282366920938463463374607431768211456
+			      ctx nil nil)
 		     (and (is ((car ctx) 0) 'ildl)
 			  (is ((car ctx) 1) 0)
-			  (is (len (car:cddr ctx)) 1)
-			  (is ((car:cddr ctx) 0) 340282366920938463463374607431768211456))))
+			  (is (len (cdr ctx)) 1)
+			  (is ((cdr ctx) 0)
+			      340282366920938463463374607431768211456))))
 	     (it "should compile flonums"
-		 (do (= ctx '(nil nil nil))
-		     (compile 3.1415926535 ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile 3.1415926535 ctx nil nil)
 		     (and (is ((car ctx) 0) 'ildl)
 			  (is ((car ctx) 1) 0)
-			  (is (len (car:cddr ctx)) 1)
-			  (< (abs (- ((car:cddr ctx) 0) 3.1415926535)) 1e-6))))))
+			  (is (len (cdr ctx)) 1)
+			  (< (abs (- ((cdr ctx) 0)
+				     3.1415926535)) 1e-6))))))
 
 (= test-environments
    (describe "Environment management functions"
-	     (prolog (do (= env '(((foo bar baz) 1 2 3)
-				  ((abc def ghi) 4 5 6)
-				  ((quux fred jklm) 7 8 9)))
-			 (= ctx `(nil ,env nil))))
+	     (prolog (= env '(((foo bar baz) 1 2 3)
+			      ((abc def ghi) 4 5 6)
+			      ((quux fred jklm) 7 8 9))))
 	     (it "should find variables in the environment"
-		 (let (found frame idx) (find-var 'foo ctx)
+		 (let (found frame idx) (find-var 'foo env)
 		   (and found
 			(is frame 0)
 			(is idx 0))))
 	     (it "should find more (1) variables in the environment"
-		 (let (found frame idx) (find-var 'bar ctx)
+		 (let (found frame idx) (find-var 'bar env)
 		   (and found
 			(is frame 0)
 			(is idx 1))))
 	     (it "should find more (2) variables in the environment"
-		 (let (found frame idx) (find-var 'baz ctx)
+		 (let (found frame idx) (find-var 'baz env)
 		   (and found
 			(is frame 0)
 			(is idx 2))))
 	     (it "should find more (0) variables in deeper environment frames (1)"
-		 (let (found frame idx) (find-var 'abc ctx)
+		 (let (found frame idx) (find-var 'abc env)
 		   (and found
 			(is frame 1)
 			(is idx 0))))
 	     (it "should find more (1) variables in deeper environment frames (1)"
-		 (let (found frame idx) (find-var 'def ctx)
+		 (let (found frame idx) (find-var 'def env)
 		   (and found
 			(is frame 1)
 			(is idx 1))))
 	     (it "should find more (2) variables in deeper environment frames (1)"
-		 (let (found frame idx) (find-var 'ghi ctx)
+		 (let (found frame idx) (find-var 'ghi env)
 		   (and found
 			(is frame 1)
 			(is idx 2))))
 	     (it "should find more (0) variables in deeper environment frames (2)"
-		 (let (found frame idx) (find-var 'quux ctx)
+		 (let (found frame idx) (find-var 'quux env)
 		   (and found
 			(is frame 2)
 			(is idx 0))))
 	     (it "should find more (1) variables in deeper environment frames (2)"
-		 (let (found frame idx) (find-var 'fred ctx)
+		 (let (found frame idx) (find-var 'fred env)
 		   (and found
 			(is frame 2)
 			(is idx 1))))
 	     (it "should find more (2) variables in deeper environment frames (2)"
-		 (let (found frame idx) (find-var 'jklm ctx)
+		 (let (found frame idx) (find-var 'jklm env)
 		   (and found
 			(is frame 2)
 			(is idx 2))))
 	     (it "should not find variables which are not there"
-		 (let (found frame idx) (find-var 'nopq ctx)
+		 (let (found frame idx) (find-var 'nopq env)
 		   (no found)))))
 
 (= test-compile-ident
@@ -158,48 +160,48 @@
 	     (prolog (do (= env '(((foo bar baz) 1 2 3)
 				  ((abc def ghi) 4 5 6)
 				  ((quux fred jklm) 7 8 9)))
-			 (= ctx `(nil ,env nil))))
+			 (= ctx `(nil . nil))))
 	     (it "should compile an identifier referring to the environment"
-		 (do (compile 'foo ctx nil)
+		 (do (compile 'foo ctx env nil)
 		     (and (is ((car ctx) 0) 'ilde)
 			  (is ((car ctx) 1) 0)
 			  (is ((car ctx) 2) 0))))
 	     (it "should compile another identifier referring to the environment"
 		 (do (scar ctx nil)
-		     (compile 'fred ctx nil)
+		     (compile 'fred ctx env nil)
 		     (and (is ((car ctx) 0) 'ilde)
 			  (is ((car ctx) 1) 2)
 			  (is ((car ctx) 2) 1))))
 	     (it "should compile an identifier referring to the global environment"
 		 (do (scar ctx nil)
-		     (compile 'xyzzy ctx nil)
+		     (compile 'xyzzy ctx env nil)
 		     (and (is ((car ctx) 0) 'ildg)
 			  (is ((car ctx) 1) 0)
-			  (is (len (car:cddr ctx)) 1)
-			  (is ((car:cddr ctx) 0) 'xyzzy))))))
+			  (is (len (cdr ctx)) 1)
+			  (is ((cdr ctx) 0) 'xyzzy))))))
 
 (= test-compile-if
    (describe "The compilation of the if special form"
 	     (it "should compile an empty if statement to nil"
-		 (do (= ctx '(nil nil nil))
-		     (compile '(if) ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile '(if) ctx nil nil)
 		     (is ((car ctx) 0) 'inil)))
 	     (it "should compile (if x) to simply x"
-		 (do (= ctx '(nil nil nil))
-		     (compile '(if 4) ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile '(if 4) ctx nil nil)
 		     (and (is ((car ctx) 0) 'ildi)
 			  (is ((car ctx) 1) (+ (* 4 2) 1)))))
 	     (it "should compile a full if statement properly"
-		 (do (= ctx '(nil nil nil))
-		     (compile '(if t 1 2) ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile '(if t 1 2) ctx nil nil)
 		     (iso (car ctx) '(itrue ijf 6 ildi 3 ijmp 4 ildi 5))))
 	     (it "should compile a partial if statement properly"
-		 (do (= ctx '(nil nil nil))
-		     (compile '(if t 1) ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile '(if t 1) ctx nil nil)
 		     (iso (car ctx) '(itrue ijf 6 ildi 3 ijmp 3 inil))))
 	     (it "should compile a compound if statement properly"
-		 (do (= ctx '(nil nil nil))
-		     (compile '(if t 1 2 3 4 5 6) ctx nil)
+		 (do (= ctx '(nil . nil))
+		     (compile '(if t 1 2 3 4 5 6) ctx nil nil)
 		     (iso (car ctx) '(itrue ijf 6 ildi 3 ijmp 20
 					    ildi 5 ijf 6 ildi 7
 					    ijmp 12 ildi 9 ijf 6
