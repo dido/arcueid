@@ -19,12 +19,13 @@
 ;;
 
 ;; Compile an expression with all special syntax expanded.
-(def compile (expr ctx cont)
+(def compile (expr ctx env cont)
   (if (literalp expr) (compile-literal expr ctx cont)
-      (isa expr 'sym) (compile-ident expr ctx cont)
-      (isa expr 'cons) (compile-list expr ctx cont)
+      (isa expr 'sym) (compile-ident expr ctx env cont)
+      (isa expr 'cons) (compile-list expr ctx env cont)
       (syntax-error "invalid expression" expr)))
 
+;; Compile a literal value.
 (def compile-literal (expr ctx cont)
   (do (if (no expr) (generate ctx 'inil)
 	  (is expr t) (generate ctx 'itrue)
@@ -32,37 +33,38 @@
 	  (generate ctx 'ildl (find-literal expr ctx)))
       (compile-continuation ctx cont)))
 
-(def compile-ident (expr ctx cont)
-  (do (let (found level offset) (find-var expr ctx)
+(def compile-ident (expr ctx env cont)
+  (do (let (found level offset) (find-var expr env)
 	(if found (generate ctx 'ilde level offset)
 	    (generate ctx 'ildg (find-literal expr ctx))))
       (compile-continuation ctx cont)))
   
-(def compile-list (expr ctx cont)
-  (do (aif (spform (car expr)) (it expr ctx cont)
-	  (inlinablep (car expr)) (compile-inline expr ctx cont)
-	  (compile-apply expr ctx cont))
+(def compile-list (expr ctx env cont)
+  (do (aif (spform (car expr)) (it expr ctx env cont)
+	  (inlinablep (car expr)) (compile-inline expr ctx env cont)
+	  (compile-apply expr ctx env cont))
       (compile-continuation ctx cont)))
 
 (def spform (ident)
   (case ident
     if compile-if
     fn compile-fn
+    quote compile-quote
     quasiquote compile-quasiquote
     assign compile-assign
     compose compile-compose
     andf compile-andf))
 
-(def compile-if (expr ctx cont)
+(def compile-if (expr ctx env cont)
   (do
     ((afn (args)
        (if (no args) (generate ctx 'inil)
 	   ;; compile tail end if no additional
-	   (no:cdr args) (compile (car args) ctx nil)
-	   (do (compile (car args) ctx nil)
+	   (no:cdr args) (compile (car args) ctx env nil)
+	   (do (compile (car args) ctx env nil)
 	       (let jumpaddr (code-ptr ctx)
 		 (generate ctx 'ijf 0)
-		 (compile (cadr args) ctx nil)
+		 (compile (cadr args) ctx env nil)
 		 (let jumpaddr2 (code-ptr ctx)
 		   (generate ctx 'ijmp 0)
 		   (code-patch ctx (+ jumpaddr 1) (- (code-ptr ctx) jumpaddr))
@@ -73,6 +75,12 @@
 			       (- (code-ptr ctx) jumpaddr2)))))))
      (cdr expr))
     (compile-continuation ctx cont)))
+
+(def compile-fn (expr ctx env cont)
+  (with (args (car expr) body (cdr expr))
+    (do (compile-args args ctx)
+	(compile-body body ctx)
+	(compile-continuation ctx cont))))
 
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
@@ -103,10 +111,9 @@
 ;; This should be a C function as well.  The context argument is a
 ;; compiler context, which is in the CArc runtime an opaque type
 ;; which can only be manipulated from within an Arc function in
-;; limited ways.  For development purposes, we let it be a list of
-;; three elements, giving a list of instructions, an environment
-;; structure, and a list of literals used in the code being
-;; generated.
+;; limited ways.  For development purposes, we let it be a cons
+;; cell whose car is a list of instructions and whose cdr is a list
+;; of literals used in the code being generated.
 (def generate (ctx opcode . args)
   (do (let code (car ctx)
 	(if (no code)
@@ -128,12 +135,12 @@
 ;; found in the literal list of the context, it will add the literal
 ;; to the context.
 (def find-literal (lit ctx)
-  (let literals (car (cddr ctx))
+  (let literals (cdr ctx)
     (if (no literals)
-	(do (scar (cddr ctx) (cons lit nil)) 0)
+	(do (scdr ctx (cons lit nil)) 0)
 	(aif ((afn (lit literals idx)
 	       (if (no literals) nil
-		   (is (car literals) lit) idx
+		   (iso (car literals) lit) idx
 		   (self lit (cdr literals) (+ 1 idx)))) lit literals 0)
 	     it
 	     (do1 (len literals)
@@ -148,11 +155,7 @@
       (is (car frame) var) idx
       (find-in-frame var (cdr frame) (+ idx 1))))
 
-(def find-in-env (var env idx)
+(def find-var (var env (o idx 0))
   (if (no env) '(nil 0 0)
       (aif (find-in-frame var (car (car env)) 0) `(t ,idx ,it)
-	   (find-in-env var (cdr env) (+ idx 1)))))
-
-(def find-var (var ctx)
-  (do prn ctx
-      (find-in-env var (cadr ctx) 0)))
+	   (find-var var (cdr env) (+ idx 1)))))
