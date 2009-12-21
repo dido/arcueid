@@ -1,3 +1,22 @@
+;; Copyright (C) 2009 Rafael R. Sevilla
+;;
+;; This file is part of CArc
+;;
+;; CArc is free software; you can redistribute it and/or modify it
+;; under the terms of the GNU Lesser General Public License as
+;; published by the Free Software Foundation; either version 3 of the
+;; License, or (at your option) any later version.
+;;
+;; This library is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU Lesser General Public License for more details.
+;;
+;; You should have received a copy of the GNU Lesser General Public
+;; License along with this library; if not, write to the Free Software
+;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+;; 02110-1301 USA.
+;;
 (load "spec.arc")
 (load "../compiler.arc")
 
@@ -159,8 +178,36 @@
 			  (is (len (car:cddr ctx)) 1)
 			  (is ((car:cddr ctx) 0) 'xyzzy))))))
 
+(= test-compile-if
+   (describe "The compilation of the if special form"
+	     (it "should compile an empty if statement to nil"
+		 (do (= ctx '(nil nil nil))
+		     (compile '(if) ctx nil)
+		     (is ((car ctx) 0) 'inil)))
+	     (it "should compile (if x) to simply x"
+		 (do (= ctx '(nil nil nil))
+		     (compile '(if 4) ctx nil)
+		     (and (is ((car ctx) 0) 'ildi)
+			  (is ((car ctx) 1) (+ (* 4 2) 1)))))
+	     (it "should compile a full if statement properly"
+		 (do (= ctx '(nil nil nil))
+		     (compile '(if t 1 2) ctx nil)
+		     (iso (car ctx) '(itrue ijf 6 ildi 3 ijmp 4 ildi 5))))
+	     (it "should compile a partial if statement properly"
+		 (do (= ctx '(nil nil nil))
+		     (compile '(if t 1) ctx nil)
+		     (iso (car ctx) '(itrue ijf 6 ildi 3 ijmp 3 inil))))
+	     (it "should compile a compound if statement properly"
+		 (do (= ctx '(nil nil nil))
+		     (compile '(if t 1 2 3 4 5 6) ctx nil)
+		     (iso (car ctx) '(itrue ijf 6 ildi 3 ijmp 20
+					    ildi 5 ijf 6 ildi 7
+					    ijmp 12 ildi 9 ijf 6
+					    ildi 11 ijmp 4 ildi 13))))))
+
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
 (print-results (test-environments))
 (print-results (test-compile-ident))
+(print-results (test-compile-if))
