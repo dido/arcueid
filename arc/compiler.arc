@@ -77,22 +77,51 @@
     (compile-continuation ctx cont)))
 
 (def compile-fn (expr ctx env cont)
-  (with (args (car expr) body (cdr expr))
-    (do (compile-args args ctx)
-	(compile-body body ctx)
-	(compile-continuation ctx cont))))
+  (with (args (cadr expr) body (cddr expr) nctx (compiler-new-context))
+    (let nenv (compile-args args nctx env)
+      ;; The body of a fn works as an implicit do/progn
+      (map [compile _ nctx nenv nil] body)
+      (compile-continuation nctx t)
+      ;; Convert the new context into a code object and generate
+      ;; an instruction in the present context to load it as a
+      ;; literal, and then create a closure using the code object
+      ;; and the current environment.
+      (let newcode (context->code nctx)
+	(generate ctx 'ildl (find-literal newcode ctx))
+	(generate ctx 'icls)
+	(compile-continuation ctx cont)))))
+
+;; This sets up the new environment given the arguments.
+;; XXX - For now, this only handles ordinary arguments.
+;; This needs to be revised to provide for optional, rest
+;; and destructuring arguments as well.
+(def compile-args (args ctx env)
+  (if (no args) env
+      (let nargs (len args)
+	;; Create a new environment frame
+	(generate ctx 'ienv nargs)
+	;; Generate instructions to bind the values of the
+	;; of the arguments to the environment
+	((afn (arg count)
+	   (if (no arg)
+	       ;; only valid for ordinary arguments
+	       (do (generate ctx 'ipop)
+		   ;; All bindings refer to the current environment
+		   (generate ctx 'iste 0 count)
+		   (self (cdr arg) (+ 1 count))))) args 0)
+	;; Create a new environment frame
+	(cons (cons args nil) env))))
 
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
 
 (def literalp (expr)
-  (let tp (type expr)
-    (or (no expr)
-	(is expr t)
-	(is tp 'char)
-	(is tp 'string)
-	(is tp 'int)
-	(is tp 'num))))
+  (or (no expr)
+      (is expr t)
+      (isa expr 'char)
+      (isa expr 'string)
+      (isa expr 'int)
+      (isa expr 'num)))
 
 ;; THE FUNCTIONS BELOW THIS MARK SHOULD BE PROVIDED FOR WITHIN THE
 ;; CARC RUNTIME CORE.  DEFINITIONS GIVEN HERE ARE FOR TESTING ONLY.
@@ -159,3 +188,11 @@
   (if (no env) '(nil 0 0)
       (aif (find-in-frame var (car (car env)) 0) `(t ,idx ,it)
 	   (find-var var (cdr env) (+ idx 1)))))
+
+;; This C function creates a new empty compilation context
+(def compiler-new-context ()
+  (cons nil nil))
+
+;; This C function turns a compilation context into a code object
+(def context->code (ctx)
+  (annotate 'code ctx))
