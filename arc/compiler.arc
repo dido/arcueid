@@ -93,24 +93,33 @@
 
 ;; This sets up the new environment given the arguments.
 ;; XXX - For now, this only handles ordinary arguments.
-;; This needs to be revised to provide for optional, rest
+;; This needs to be revised to provide for optional
 ;; and destructuring arguments as well.
 (def compile-args (args ctx env)
   (if (no args) env
-      (let nargs (len args)
+      (let (nargs names rest)
+	  ((afn (args count names)
+	     (if (no args) (list count (rev names) nil)
+		 (atom args) (list (+ 1 count) (rev (cons args names)) t)
+		 (self (cdr args) (+ 1 count)
+		       (cons (car args) names))))
+	   args 0 nil)
 	;; Create a new environment frame
 	(generate ctx 'ienv nargs)
 	;; Generate instructions to bind the values of the
 	;; of the arguments to the environment
-	((afn (arg count)
-	   (if (no arg)
-	       ;; only valid for ordinary arguments
+	((afn (arg count rest)
+	   (if (and (no (cdr arg)) rest)
+	       (do (generate ctx 'iprest) ; XXX still undefined instruction
+		   (generate ctx 'iste 0 count))
+	       (no arg) nil	  ; done
+	       ;; ordinary arguments
 	       (do (generate ctx 'ipop)
 		   ;; All bindings refer to the current environment
 		   (generate ctx 'iste 0 count)
-		   (self (cdr arg) (+ 1 count))))) args 0)
+		   (self (cdr arg) (+ 1 count) rest)))) names 0 rest)
 	;; Create a new environment frame
-	(cons (cons args nil) env))))
+	(cons (cons names nil) env))))
 
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
