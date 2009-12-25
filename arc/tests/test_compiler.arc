@@ -225,7 +225,16 @@
 		     (and  (iso (car ctx) '(ildl 0 icls))
 			   (iso (car (rep ((cdr ctx) 0)))
 				'(ienv 2 ipop iste 0 0 ipop iste 0 1
-				       ilde 0 0 ilde 0 1 iret)))))))
+				       ilde 0 0 ilde 0 1 iret)))))
+	     (it "should compile a function with a rest argument"
+		 (do (= ctx '(nil . nil))
+		     (compile '(fn (x y . z) x y z) ctx nil nil)
+		     (prn ctx)
+		     (and (iso (car ctx) '(ildl 0 icls))
+			  (iso (car (rep ((cdr ctx) 0)))
+			       '(ienv 3 ipop iste 0 0 ipop iste 0 1
+				      iprest iste 0 2 ilde 0 0 ilde 0 1
+				      ilde 0 2 iret)))))))
 
 (print-results (test-literals))
 (print-results (test-codegen))
@@ -233,4 +242,4 @@
 (print-results (test-environments))
 (print-results (test-compile-ident))
 (print-results (test-compile-if))
-(print-results (test-compile-fn) t)
+(print-results (test-compile-fn))
