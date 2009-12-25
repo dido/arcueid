@@ -207,9 +207,26 @@
 					    ijmp 12 ildi 9 ijf 6
 					    ildi 11 ijmp 4 ildi 13))))))
 
+(= test-compile-fn
+   (describe "The compilation of the fn special form"
+	     (it "should compile a function with no arguments"
+		 (do (= ctx '(nil . nil))
+		     (compile '(fn () 1) ctx nil nil)
+		     (iso (car (rep ((cdr ctx) 0))) '(ildi 3 iret))))
+	     (it "should compile a function with one argument"
+		 (do (= ctx '(nil . nil))
+		     (compile '(fn (x) x) ctx nil nil)
+		     (iso (car (rep ((cdr ctx) 0))) '(ienv 1 ilde 0 0 iret))))
+	     (it "should compile a function with two arguments"
+		 (do (= ctx '(nil . nil))
+		     (compile '(fn (x y) x y) ctx nil nil)
+		     (and  (iso (car ctx) '(ildl 0 icls))
+			   (iso (car (rep ((cdr ctx) 0))) '(ienv 2 ilde 0 0 ilde 0 1 iret)))))))
+
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
 (print-results (test-environments))
 (print-results (test-compile-ident))
 (print-results (test-compile-if))
+(print-results (test-compile-fn))
