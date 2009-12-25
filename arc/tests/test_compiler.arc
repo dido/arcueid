@@ -216,12 +216,16 @@
 	     (it "should compile a function with one argument"
 		 (do (= ctx '(nil . nil))
 		     (compile '(fn (x) x) ctx nil nil)
-		     (iso (car (rep ((cdr ctx) 0))) '(ienv 1 ilde 0 0 iret))))
+		     (prn ctx)
+		     (iso (car (rep ((cdr ctx) 0)))
+			  '(ienv 1 ipop iste 0 0 ilde 0 0 iret))))
 	     (it "should compile a function with two arguments"
 		 (do (= ctx '(nil . nil))
 		     (compile '(fn (x y) x y) ctx nil nil)
 		     (and  (iso (car ctx) '(ildl 0 icls))
-			   (iso (car (rep ((cdr ctx) 0))) '(ienv 2 ilde 0 0 ilde 0 1 iret)))))))
+			   (iso (car (rep ((cdr ctx) 0)))
+				'(ienv 2 ipop iste 0 0 ipop iste 0 1
+				       ilde 0 0 ilde 0 1 iret)))))))
 
 (print-results (test-literals))
 (print-results (test-codegen))
@@ -229,4 +233,4 @@
 (print-results (test-environments))
 (print-results (test-compile-ident))
 (print-results (test-compile-if))
-(print-results (test-compile-fn))
+(print-results (test-compile-fn) t)
