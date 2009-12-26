@@ -110,13 +110,12 @@
 	;; of the arguments to the environment
 	((afn (arg count rest)
 	   (if (and (no (cdr arg)) rest)
-	       (do (generate ctx 'iprest) ; XXX still undefined instruction
-		   (generate ctx 'iste 0 count))
+	       (generate ctx 'imvrarg count) ; XXX still undefined instruction
 	       (no arg) nil	  ; done
-	       ;; ordinary arguments
-	       (do (generate ctx 'ipop)
-		   ;; All bindings refer to the current environment
-		   (generate ctx 'iste 0 count)
+	       (do (generate ctx 'imvoarg count) ; XXX still undefinede
+		   (if 
+	       ;; ordinary arguments XXX - mvarg undefined instruction
+	       (do (generate ctx 'imvarg count)
 		   (self (cdr arg) (+ 1 count) rest)))) names 0 rest)
 	;; Create a new environment frame
 	(cons (cons names nil) env))))
