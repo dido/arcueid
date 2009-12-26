@@ -216,7 +216,6 @@
 	     (it "should compile a function with one argument"
 		 (do (= ctx '(nil . nil))
 		     (compile '(fn (x) x) ctx nil nil)
-		     (prn ctx)
 		     (iso (car (rep ((cdr ctx) 0)))
 			  '(ienv 1 ipop iste 0 0 ilde 0 0 iret))))
 	     (it "should compile a function with two arguments"
@@ -229,7 +228,6 @@
 	     (it "should compile a function with a rest argument"
 		 (do (= ctx '(nil . nil))
 		     (compile '(fn (x y . z) x y z) ctx nil nil)
-		     (prn ctx)
 		     (and (iso (car ctx) '(ildl 0 icls))
 			  (iso (car (rep ((cdr ctx) 0)))
 			       '(ienv 3 ipop iste 0 0 ipop iste 0 1
