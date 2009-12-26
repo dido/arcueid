@@ -217,21 +217,21 @@
 		 (do (= ctx '(nil . nil))
 		     (compile '(fn (x) x) ctx nil nil)
 		     (iso (car (rep ((cdr ctx) 0)))
-			  '(ienv 1 ipop iste 0 0 ilde 0 0 iret))))
+			  '(ienv 1 imvarg 0 ilde 0 0 iret))))
 	     (it "should compile a function with two arguments"
 		 (do (= ctx '(nil . nil))
 		     (compile '(fn (x y) x y) ctx nil nil)
 		     (and  (iso (car ctx) '(ildl 0 icls))
 			   (iso (car (rep ((cdr ctx) 0)))
-				'(ienv 2 ipop iste 0 0 ipop iste 0 1
+				'(ienv 2 imvarg 0 imvarg 1
 				       ilde 0 0 ilde 0 1 iret)))))
 	     (it "should compile a function with a rest argument"
 		 (do (= ctx '(nil . nil))
 		     (compile '(fn (x y . z) x y z) ctx nil nil)
 		     (and (iso (car ctx) '(ildl 0 icls))
 			  (iso (car (rep ((cdr ctx) 0)))
-			       '(ienv 3 ipop iste 0 0 ipop iste 0 1
-				      iprest iste 0 2 ilde 0 0 ilde 0 1
+			       '(ienv 3 imvarg 0 imvarg 1
+				      imvrarg 2 ilde 0 0 ilde 0 1
 				      ilde 0 2 iret)))))))
 
 (print-results (test-literals))
