@@ -112,8 +112,6 @@
 	   (if (and (no (cdr arg)) rest)
 	       (generate ctx 'imvrarg count) ; XXX still undefined instruction
 	       (no arg) nil	  ; done
-	       (do (generate ctx 'imvoarg count) ; XXX still undefinede
-		   (if 
 	       ;; ordinary arguments XXX - mvarg undefined instruction
 	       (do (generate ctx 'imvarg count)
 		   (self (cdr arg) (+ 1 count) rest)))) names 0 rest)
