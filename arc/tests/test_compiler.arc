@@ -232,8 +232,22 @@
 			  (iso (car (rep ((cdr ctx) 0)))
 			       '(ienv 3 imvarg 0 imvarg 1
 				      imvrarg 2 ilde 0 0 ilde 0 1
-				      ilde 0 2 iret)))))))
-
+				      ilde 0 2 iret)))))
+	     (it "should compile a function with an optional argument"
+		 (do (= ctx '(nil . nil))
+		     (compile '(fn (x (o y)) x y) ctx nil nil)
+		     (and (iso (car ctx) '(ildl 0 icls))
+			  (iso (car (rep ((cdr ctx) 0)))
+			       '(ienv 2 imvarg 0 imvoarg 1
+				      ilde 0 0 ilde 0 1 iret)))))
+	     (it "should compile a function with an optional argument with a default value"
+		 (do (= ctx '(nil . nil))
+		     (compile '(fn (x (o y 1)) x y) ctx nil nil)
+		     (and (iso (car ctx) '(ildl 0 icls))
+			  (iso (car (rep ((cdr ctx) 0)))
+			       '(ienv 2 imvarg 0 imvoarg 1
+				      ilde 0 1 ijt 6 ildi 3
+				      mvoarg 1 ilde 0 0 ilde 0 1 iret)))))))
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
