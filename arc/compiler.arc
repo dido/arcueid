@@ -161,10 +161,6 @@
        (>= val -9223372036854775808)	; valid for 64-bit arches
        (<= val 9223372036854775807)))
 
-(def list-append (list2 list)
-  (if (no (cdr list)) (scdr list list2)
-      (list-append list2 (cdr list))))
-
 ;; This should be a C function as well.  The context argument is a
 ;; compiler context, which is in the CArc runtime an opaque type
 ;; which can only be manipulated from within an Arc function in
@@ -175,7 +171,7 @@
   (do (let code (car ctx)
 	(if (no code)
 	    (scar ctx (cons opcode args))
-	    (list-append (cons opcode args) code)))
+	    (= (car ctx) (join (cons opcode args) code))))
       ctx))
 
 ;; This should also be a C function.  Returns the current offset
@@ -201,7 +197,7 @@
 		   (self lit (cdr literals) (+ 1 idx)))) lit literals 0)
 	     it
 	     (do1 (len literals)
-		  (list-append (cons lit nil) literals))))))
+		  (= (cdr ctx) (join (cons lit nil) literals)))))))
 
 ;; These should be parts of a C function as well.  Environments are
 ;; defined as lists of vectors (they appear here as lists as well because
