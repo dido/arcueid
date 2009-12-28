@@ -101,6 +101,10 @@
 	  ((afn (args count names)
 	     (if (no args) (list count (rev names) nil)
 		 (atom args) (list (+ 1 count) (rev (cons args names)) t)
+		 (and (isa (car args) 'cons) (isnt (caar args) 'o))
+		 (let dsb (dsb-args (car args))
+		   (self (cdr args) (+ (len dsb) args)
+			 (join (rev dsb) names) rest))
 		 (self (cdr args) (+ 1 count)
 		       (cons (car args) names))))
 	   args 0 nil)
@@ -132,6 +136,10 @@
 					      jumpaddr)))))
 		     (self (cdr arg) (+ 1 count) rest
 			   (cons (cadr oarg) rnames)))
+		   ;; Destructuring bind argument.
+		   (and (isa (car arg) 'cons) (isnt (caar arg) 'o))
+		   (do (map [generate ctx _] (cddr arg))
+		       (generate ctx 'mvarg count))
 		   ;; ordinary arguments XXX - mvarg undefined instruction
 		   (do (generate ctx 'imvarg count)
 		       (self (cdr arg) (+ 1 count) rest
@@ -139,6 +147,23 @@
 	     names 0 rest nil)
 	;; Create a new environment frame
 	(cons (cons realnames nil) env)))))
+
+;; Unroll and generate instructions for a destructuring bind of a list.
+;; This function will return an assoc list of each element in the
+;; original list followed by a list of car/cdr instructions that are
+;; needed to get at that particular value given a copy of the original
+;; list.
+(def dsb-list (list)
+  (let dsbinst
+      ((afn (list instr ret)
+	 (if (no list) ret
+	     (isa list 'cons) (join
+				(self (car list)
+				      (cons 'icar instr) ret)
+				(self (cdr list)
+				      (cons 'icdr instr) ret))
+	     (cons (cons list (cons 'idup (rev instr))) ret))) list)
+    dsbinst))
 
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
