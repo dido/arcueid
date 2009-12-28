@@ -115,7 +115,7 @@
 		       (rev (cons (car arg) rnames)))
 		   (no arg) (rev rnames) ; done
 		   ;; some optional argument
-		   (and (isa (car arg) 'cons) (is caar arg 'o))
+		   (and (isa (car arg) 'cons) (is (caar arg) 'o))
 		   (let oarg (car arg)
 		     (generate ctx 'imvoarg count) ; XXX still undefined
 		     ;; To handle default parameters
@@ -125,16 +125,17 @@
 			     ;; if necessary.
 			     (let jumpaddr (code-ptr ctx)
 			       (generate ctx 'ijt 0)
-			       (compile (cddr arg) ctx env nil)
+			       (compile (car:cddr oarg) ctx env nil)
+			       (generate ctx 'mvoarg count)
 			       (code-patch ctx (+ jumpaddr 1)
 					   (- (code-ptr ctx)
 					      jumpaddr)))))
-		     (self (cdr arg) (+1 count) rest
+		     (self (cdr arg) (+ 1 count) rest
 			   (cons (cadr oarg) rnames)))
-	       ;; ordinary arguments XXX - mvarg undefined instruction
-	       (do (generate ctx 'imvarg count)
-		   (self (cdr arg) (+ 1 count) rest
-			 (cons (car arg) rnames)))))
+		   ;; ordinary arguments XXX - mvarg undefined instruction
+		   (do (generate ctx 'imvarg count)
+		       (self (cdr arg) (+ 1 count) rest
+			     (cons (car arg) rnames)))))
 	     names 0 rest nil)
 	;; Create a new environment frame
 	(cons (cons realnames nil) env)))))
