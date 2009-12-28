@@ -258,7 +258,29 @@
 			  (iso (car (rep ((cdr ctx) 0)))
 			       '(ienv 2 imvarg 0 imvoarg 1
 				      ilde 0 1 ijt 6 ildi 3
-				      mvoarg 1 ilde 0 0 ilde 0 1 iret)))))))
+				      imvoarg 1 ilde 0 0 ilde 0 1 iret)))))
+	     (it "should compile a function with destructuring bind arguments"
+		 (do (= ctx '(nil . nil))
+		     (compile '(fn (x (a b (c d) e) y) x a b c d e y) ctx nil nil)
+		     (and (iso (car ctx) '(ildl 0 icls))
+			  (iso (car (rep ((cdr ctx) 0)))
+			       '(ienv 7 imvarg 0
+				      idup icar imvarg 1
+				      idup icdr icar imvarg 2
+				      idup icdr icdr icar icar imvarg 3
+				      idup icdr icdr icar icdr icar imvarg 4
+				      idup icdr icdr icdr icar imvarg 5
+				      ipop
+				      imvarg 6
+				      ilde 0 0
+				      ilde 0 1
+				      ilde 0 2
+				      ilde 0 3
+				      ilde 0 4
+				      ilde 0 5
+				      ilde 0 6
+				      iret)))))))
+
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
