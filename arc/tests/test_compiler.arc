@@ -281,6 +281,14 @@
 				      ilde 0 6
 				      iret)))))))
 
+(= test-compile-quote
+   (describe "The compilation of the quote special form"
+	     (prolog (= ctx (cons nil nil)))
+	     (it "should generate quoted expressions correctly"
+		 (compile '(quote (a b c)) ctx nil nil)
+		 (and (iso (car ctx) '(ildl 0))
+		      (iso (cadr ctx) '(a b c))))))
+
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
@@ -289,3 +297,4 @@
 (print-results (test-compile-if))
 (print-results (test-compile-fn))
 (print-results (test-dsb-list))
+(print-results (test-compile-quote))
