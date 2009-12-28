@@ -207,6 +207,17 @@
 					    ijmp 12 ildi 9 ijf 6
 					    ildi 11 ijmp 4 ildi 13))))))
 
+(= test-dsb-list
+   (describe "Tests for the destructuring bind instruction generator"
+	     (it "should generate destructuring bind instructions (1)"
+		 (let res (dsb-list '(a b (c d) e))
+		   (and (is (len res) 5)
+			(iso (assoc 'a res) '(a idup icar))
+			(iso (assoc 'b res) '(b idup icdr icar))
+			(iso (assoc 'c res) '(c idup icdr icdr icar icar))
+			(iso (assoc 'd res) '(d idup icdr icdr icar icdr icar))
+			(iso (assoc 'e res) '(e idup icdr icdr icdr icar)))))))
+
 (= test-compile-fn
    (describe "The compilation of the fn special form"
 	     (it "should compile a function with no arguments"
@@ -255,3 +266,4 @@
 (print-results (test-compile-ident))
 (print-results (test-compile-if))
 (print-results (test-compile-fn))
+(print-results (test-dsb-list))
