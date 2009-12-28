@@ -102,9 +102,9 @@
 	     (if (no args) (list count (rev names) nil)
 		 (atom args) (list (+ 1 count) (rev (cons args names)) t)
 		 (and (isa (car args) 'cons) (isnt (caar args) 'o))
-		 (let dsb (dsb-args (car args))
-		   (self (cdr args) (+ (len dsb) args)
-			 (join (rev dsb) names) rest))
+		 (let dsb (dsb-list (car args))
+		   (self (cdr args) (+ (len dsb) count)
+			 (join (rev dsb) names)))
 		 (self (cdr args) (+ 1 count)
 		       (cons (car args) names))))
 	   args 0 nil)
@@ -130,7 +130,7 @@
 			     (let jumpaddr (code-ptr ctx)
 			       (generate ctx 'ijt 0)
 			       (compile (car:cddr oarg) ctx env nil)
-			       (generate ctx 'mvoarg count)
+			       (generate ctx 'imvoarg count)
 			       (code-patch ctx (+ jumpaddr 1)
 					   (- (code-ptr ctx)
 					      jumpaddr)))))
@@ -138,8 +138,16 @@
 			   (cons (cadr oarg) rnames)))
 		   ;; Destructuring bind argument.
 		   (and (isa (car arg) 'cons) (isnt (caar arg) 'o))
-		   (do (map [generate ctx _] (cddr arg))
-		       (generate ctx 'mvarg count))
+		   (do (map [generate ctx _] (cdr:car arg))
+		       (generate ctx 'imvarg count)
+		       ;; Check if this is the last destructuring bind
+		       ;; in the group.  If so, generate a pop instruction
+		       ;; to discard the argument on the stack.
+		       (let next (cadr arg)
+			 (if (no (and (isa next 'cons) (isnt (car next) 'o)))
+			     (generate ctx 'ipop)))
+		       (self (cdr arg) (+ 1 count) rest
+			     (cons (caar arg) rnames)))
 		   ;; ordinary arguments XXX - mvarg undefined instruction
 		   (do (generate ctx 'imvarg count)
 		       (self (cdr arg) (+ 1 count) rest
@@ -152,7 +160,10 @@
 ;; This function will return an assoc list of each element in the
 ;; original list followed by a list of car/cdr instructions that are
 ;; needed to get at that particular value given a copy of the original
-;; list.
+;; list.  XXX: This is a rather naive algorithm, and we can probably
+;; do better by generating code to load and store all values as we visit
+;; them while traversing the conses, but I think it will do nicely for
+;; a simple interpreter.
 (def dsb-list (list)
   (let dsbinst
       ((afn (list instr ret)
@@ -162,7 +173,7 @@
 				      (cons 'icar instr) ret)
 				(self (cdr list)
 				      (cons 'icdr instr) ret))
-	     (cons (cons list (cons 'idup (rev instr))) ret))) list)
+	     (cons (cons list (cons 'idup (rev instr))) ret))) list nil nil)
     dsbinst))
 
 (def compile-continuation (ctx cont)
