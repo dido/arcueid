@@ -92,9 +92,9 @@
 	(compile-continuation ctx cont)))))
 
 ;; This sets up the new environment given the arguments.
-;; XXX - For now, this only handles ordinary arguments.
-;; This needs to be revised to provide for optional
-;; and destructuring arguments as well.
+;; XXX - For now, this only handles ordinary, rest, and optional
+;; arguments. This needs to be revised to provide for destructuring
+;; arguments as well.
 (def compile-args (args ctx env)
   (if (no args) env
       (let (nargs names rest)
@@ -107,16 +107,37 @@
 	;; Create a new environment frame
 	(generate ctx 'ienv nargs)
 	;; Generate instructions to bind the values of the
-	;; of the arguments to the environment
-	((afn (arg count rest)
-	   (if (and (no (cdr arg)) rest)
-	       (generate ctx 'imvrarg count) ; XXX still undefined instruction
-	       (no arg) nil	  ; done
+	;; of the arguments to the environment.
+	(let realnames
+	    ((afn (arg count rest rnames)
+	       (if (and (no (cdr arg)) rest)
+		   (do (generate ctx 'imvrarg count) ; XXX still undefined instruction
+		       (rev (cons (car arg) rnames)))
+		   (no arg) (rev rnames) ; done
+		   ;; some optional argument
+		   (and (isa (car arg) 'cons) (is caar arg 'o))
+		   (let oarg (car arg)
+		     (generate ctx 'imvoarg count) ; XXX still undefined
+		     ;; To handle default parameters
+		     (if (cddr oarg)
+			 (do (generate ctx 'ilde 0 count)
+			     ;; If we have a default value, fill it in
+			     ;; if necessary.
+			     (let jumpaddr (code-ptr ctx)
+			       (generate ctx 'ijt 0)
+			       (compile (cddr arg) ctx env nil)
+			       (code-patch ctx (+ jumpaddr 1)
+					   (- (code-ptr ctx)
+					      jumpaddr)))))
+		     (self (cdr arg) (+1 count) rest
+			   (cons (cadr oarg) rnames)))
 	       ;; ordinary arguments XXX - mvarg undefined instruction
 	       (do (generate ctx 'imvarg count)
-		   (self (cdr arg) (+ 1 count) rest)))) names 0 rest)
+		   (self (cdr arg) (+ 1 count) rest
+			 (cons (car arg) rnames)))))
+	     names 0 rest nil)
 	;; Create a new environment frame
-	(cons (cons names nil) env))))
+	(cons (cons realnames nil) env)))))
 
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
