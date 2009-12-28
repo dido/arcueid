@@ -176,6 +176,14 @@
 	     (cons (cons list (cons 'idup (rev instr))) ret))) list nil nil)
     dsbinst))
 
+;; Compile a quoted expression.  This is fairly trivial: all that it
+;; actually does is convert the expression passed as argument into
+;; a literal which then gets folded into the literal list, and an
+;; instruction is added to load ito onto the stack.
+(def compile-quote (expr ctx env cont)
+  (generate ctx 'ildl (find-literal (cadr expr) ctx))
+  (compile-continuation ctx cont))
+
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
 
