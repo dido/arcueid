@@ -168,10 +168,7 @@
 ;; cell whose car is a list of instructions and whose cdr is a list
 ;; of literals used in the code being generated.
 (def generate (ctx opcode . args)
-  (do (let code (car ctx)
-	(if (no code)
-	    (scar ctx (cons opcode args))
-	    (= (car ctx) (join (cons opcode args) code))))
+  (do (= (car ctx) (join (car ctx) (cons opcode args)))
       ctx))
 
 ;; This should also be a C function.  Returns the current offset
@@ -189,15 +186,13 @@
 ;; to the context.
 (def find-literal (lit ctx)
   (let literals (cdr ctx)
-    (if (no literals)
-	(do (scdr ctx (cons lit nil)) 0)
-	(aif ((afn (lit literals idx)
-	       (if (no literals) nil
-		   (iso (car literals) lit) idx
-		   (self lit (cdr literals) (+ 1 idx)))) lit literals 0)
-	     it
-	     (do1 (len literals)
-		  (= (cdr ctx) (join (cons lit nil) literals)))))))
+    (aif ((afn (lit literals idx)
+	    (if (no literals) nil
+		(iso (car literals) lit) idx
+		(self lit (cdr literals) (+ 1 idx)))) lit literals 0)
+	 it
+	 (do1 (len literals)
+	      (= (cdr ctx) (join literals (cons lit nil)))))))
 
 ;; These should be parts of a C function as well.  Environments are
 ;; defined as lists of vectors (they appear here as lists as well because
