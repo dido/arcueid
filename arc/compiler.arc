@@ -197,13 +197,13 @@
      (if (no rexpr) nil
 	 (and (isa (car rexpr) 'cons) (is (caar rexpr) 'unquote))
 	 (do (generate ctx 'ipush)
-	     (compile (cdr:car rexpr) ctx env cont)
+	     (compile (car:cdr:car rexpr) ctx env cont)
 	     (generate ctx 'cons)
 	     (self (cdr rexpr)))
 	 (and (isa (car rexpr) 'cons) (is (caar rexpr)
 					  'unquote-splicing))
 	 (do (generate ctx 'ipush)
-	     (compile (cdr:car rexpr) ctx env cont)
+	     (compile (car:cdr:car rexpr) ctx env cont)
 	     (generate ctx 'ispl)	; XXX - undefined instruction for splicing a list
 	     (self (cdr rexpr)))
 	 (do (generate ctx 'ipush)
