@@ -291,13 +291,22 @@
 
 (= test-compile-quasiquote
    (describe "The compilation of the quasiquote special form, with unquote and unquote-splicing"
-	     (prolog (= ctx (cons nil nil)))
-	     (it "should generate code for simple quasiquoted expression correctly"
-		 (compile '(quasiquote (a b c)) ctx nil nil)
-		 (and (iso (car ctx) '(inil ipush ildl 0 cons
-					    ipush ildl 1 cons
-					    ipush ildl 2 cons))
-		      (iso (cdr ctx) '(c b a))))))
+ 	     (it "should generate code for a trivial quasiquoted expression correctly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(quasiquote (a b c)) ctx nil nil)
+		     (and (iso (car ctx) '(inil ipush ildl 0 cons
+						ipush ildl 1 cons
+						ipush ildl 2 cons))
+			  (iso (cdr ctx) '(c b a)))))
+	     (it "should generate code for a quasiquoted expression with an unquote"
+		 (do (= ctx (cons nil nil))
+		     (compile '(quasiquote (a b c (unquote d))) ctx nil nil)
+		     (and (iso (car ctx) '(inil ipush
+						ildg 0 cons ipush
+						ildl 1 cons ipush
+						ildl 2 cons ipush
+						ildl 3 cons))
+			  (iso (cdr ctx) '(d c b a)))))))
 
 (print-results (test-literals))
 (print-results (test-codegen))
@@ -308,4 +317,4 @@
 (print-results (test-compile-fn))
 (print-results (test-dsb-list))
 (print-results (test-compile-quote))
-(print-results (test-compile-quasiquote))
+(print-results (test-compile-quasiquote) t)
