@@ -23,7 +23,7 @@
   (if (literalp expr) (compile-literal expr ctx cont)
       (isa expr 'sym) (compile-ident expr ctx env cont)
       (isa expr 'cons) (compile-list expr ctx env cont)
-      (syntax-error "invalid expression" expr)))
+      (compile-error "invalid expression" expr)))
 
 ;; Compile a literal value.
 (def compile-literal (expr ctx cont)
@@ -41,8 +41,8 @@
   
 (def compile-list (expr ctx env cont)
   (do (aif (spform (car expr)) (it expr ctx env cont)
-	  (inlinablep (car expr)) (compile-inline expr ctx env cont)
-	  (compile-apply expr ctx env cont))
+	   (inline-func (car expr)) (it expr ctx env cont)
+	   (compile-apply expr ctx env cont))
       (compile-continuation ctx cont)))
 
 (def spform (ident)
@@ -51,9 +51,7 @@
     fn compile-fn
     quote compile-quote
     quasiquote compile-quasiquote
-    assign compile-assign
-    compose compile-compose
-    andf compile-andf))
+    assign compile-assign))
 
 (def compile-if (expr ctx env cont)
   (do
@@ -213,6 +211,30 @@
    (rev (cadr expr)))
   (compile-continuation ctx cont))
 
+;; Expand a macro.  This is taken from arc.arc.  This causes compile-time
+;; expansion of macros.
+(def macex (e)
+  (if (atom e) e
+      (let op (and (atom (car e)) (eval (car e)))
+        (if (isa op 'mac) (apply (rep op) (cdr e))
+            e))))
+
+;; Compile an assign special form.  Called in previous versions of Arc
+;; set, the assign form takes symbol-value pairs in its argument and
+;; assigns them.
+(def compile-assign (expr ctx env cont)
+  ((afn (x)
+     (if (no x) nil
+	 (with (a (macex (car x)) val (cadr x))
+	   (compile val ctx env cont)
+	   (if (no a) (compile-error "Can't rebind nil")
+	       (is a 't) (compile-error "Can't rebind t")
+	       (let (found level offset) (find-var a env)
+		 (if found (generate ctx 'iste level offset)
+		     (generate ctx 'istg (find-literal a ctx)))))
+	   (self (cddr x))))) (cdr expr))
+  (compile-continuation ctx cont))
+
 (def compile-continuation (ctx cont)
   (if cont (generate ctx 'iret) ctx))
 
@@ -225,7 +247,8 @@
       (isa expr 'num)))
 
 ;; THE FUNCTIONS BELOW THIS MARK SHOULD BE PROVIDED FOR WITHIN THE
-;; CARC RUNTIME CORE.  DEFINITIONS GIVEN HERE ARE FOR TESTING ONLY.
+;; CARC RUNTIME CORE.  DEFINITIONS GIVEN HERE ARE FOR TESTING AND
+;; BOOTSTRAP ONLY.
 
 ;; This should be a C function (not standard Arc), but is defined here
 ;; for testing.
