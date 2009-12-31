@@ -194,19 +194,22 @@
 (def compile-quasiquote (expr ctx env cont)
   (generate ctx 'inil)
   ((afn (rexpr)
-     (if (and (isa (car rexpr) 'cons) (is (caar rexpr) 'unquote))
+     (if (no rexpr) nil
+	 (and (isa (car rexpr) 'cons) (is (caar rexpr) 'unquote))
 	 (do (generate ctx 'ipush)
 	     (compile (cdr:car rexpr) ctx env cont)
-	     (generate ctx 'cons))
+	     (generate ctx 'cons)
+	     (self (cdr rexpr)))
 	 (and (isa (car rexpr) 'cons) (is (caar rexpr)
 					  'unquote-splicing))
 	 (do (generate ctx 'ipush)
 	     (compile (cdr:car rexpr) ctx env cont)
-	     (generate ctx 'ispl))	; XXX - undefined instruction for splicing a list
+	     (generate ctx 'ispl)	; XXX - undefined instruction for splicing a list
+	     (self (cdr rexpr)))
 	 (do (generate ctx 'ipush)
 	     (generate ctx 'ildl (find-literal (car rexpr) ctx))
-	     (generate ctx 'cons)))
-     (self (cdr rexpr)))
+	     (generate ctx 'cons)
+	     (self (cdr rexpr)))))
    (rev (cadr expr)))
   (compile-continuation ctx cont))
 
