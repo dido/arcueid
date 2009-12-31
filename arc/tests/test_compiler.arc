@@ -320,6 +320,22 @@
 						ildl 3 cons))
 			  (iso (cdr ctx) '((d e) c b a)))))))
 
+(= test-compile-assign
+   (describe "The compilation of the assign special form"
+	     (it "should generate the code for assignments correctly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(assign a 1 b 2) ctx nil nil)
+		     (and (iso (car ctx) '(ildi 3 istg 0 ildi 5 istg 1))
+			  (iso (cdr ctx) '(a b)))))
+	     (it "should generate the code for assignments to environment-defined variables correctly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(fn (x y) (assign x 1) (assign y 2)) ctx nil nil)
+		     (iso (car (rep ((cdr ctx) 0)))
+			  '(ienv 2 imvarg 0 imvarg 1
+				 ildi 3 iste 0 0
+				 ildi 5 iste 0 1
+				 iret))))))
+
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
@@ -330,3 +346,4 @@
 (print-results (test-dsb-list))
 (print-results (test-compile-quote))
 (print-results (test-compile-quasiquote))
+(print-results (test-compile-assign))
