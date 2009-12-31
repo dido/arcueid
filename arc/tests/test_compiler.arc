@@ -306,7 +306,19 @@
 						ildl 1 cons ipush
 						ildl 2 cons ipush
 						ildl 3 cons))
-			  (iso (cdr ctx) '(d c b a)))))))
+			  (iso (cdr ctx) '(d c b a)))))
+	     (it "should generate code for a quasiquoted expression with an unquote-splicing"
+		 (do (= ctx (cons nil nil))
+		     (compile '(quasiquote (a b c
+					      (unquote-splicing
+						(quote (d e)))))
+			      ctx nil nil)
+		     (and (iso (car ctx) '(inil ipush
+						ildl 0 ispl ipush
+						ildl 1 cons ipush
+						ildl 2 cons ipush
+						ildl 3 cons))
+			  (iso (cdr ctx) '((d e) c b a)))))))
 
 (print-results (test-literals))
 (print-results (test-codegen))
@@ -317,4 +329,4 @@
 (print-results (test-compile-fn))
 (print-results (test-dsb-list))
 (print-results (test-compile-quote))
-(print-results (test-compile-quasiquote) t)
+(print-results (test-compile-quasiquote))
