@@ -284,10 +284,20 @@
 (= test-compile-quote
    (describe "The compilation of the quote special form"
 	     (prolog (= ctx (cons nil nil)))
-	     (it "should generate quoted expressions correctly"
+	     (it "should generate code for quoted expressions correctly"
 		 (compile '(quote (a b c)) ctx nil nil)
 		 (and (iso (car ctx) '(ildl 0))
 		      (iso (cadr ctx) '(a b c))))))
+
+(= test-compile-quasiquote
+   (describe "The compilation of the quasiquote special form, with unquote and unquote-splicing"
+	     (prolog (= ctx (cons nil nil)))
+	     (it "should generate code for simple quasiquoted expression correctly"
+		 (compile '(quasiquote (a b c)) ctx nil nil)
+		 (and (iso (car ctx) '(inil ipush ildl 0 cons
+					    ipush ildl 1 cons
+					    ipush ildl 2 cons))
+		      (iso (cdr ctx) '(c b a))))))
 
 (print-results (test-literals))
 (print-results (test-codegen))
@@ -298,3 +308,4 @@
 (print-results (test-compile-fn))
 (print-results (test-dsb-list))
 (print-results (test-compile-quote))
+(print-results (test-compile-quasiquote))
