@@ -336,6 +336,33 @@
 				 ildi 5 iste 0 1
 				 iret))))))
 
+(= test-compile-inline
+   (describe "The compilation inlinable functions"
+	     (it "should generate the code for the cons function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(cons 1 2) ctx nil nil)
+		     (iso (car ctx) '(ildi 3 ipush ildi 5 icons))))
+	     (it "should generate the code for the car function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(car (quote (1 2))) ctx nil nil)
+		     (iso (car ctx) '(ildl 0 icar))))
+	     (it "should generate the code for the cdr function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(cdr (quote (1 2))) ctx nil nil)
+		     (iso (car ctx) '(ildl 0 icdr))))
+	     (it "should generate the code for the scar function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(scar (quote (1 2)) 3) ctx nil nil)
+		     (iso (car ctx) '(ildl 0 ipush ildi 7 iscar))))
+	     (it "should generate the code for the scdr function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(scdr (quote (1 2)) 3) ctx nil nil)
+		     (iso (car ctx) '(ildl 0 ipush ildi 7 iscdr))))
+	     (it "should generate the code for the is function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(is a b) ctx nil nil)
+		     (iso (car ctx) '(ildg 0 ipush ildg 1 iis))))))
+
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
@@ -347,3 +374,4 @@
 (print-results (test-compile-quote))
 (print-results (test-compile-quasiquote))
 (print-results (test-compile-assign))
+(print-results (test-compile-inline))
