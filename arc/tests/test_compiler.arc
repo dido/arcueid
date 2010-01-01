@@ -18,6 +18,7 @@
 ;; 02110-1301 USA.
 ;;
 (load "spec.arc")
+(load "../comp-bsdef.arc")
 (load "../compiler.arc")
 
 (= test-literals
