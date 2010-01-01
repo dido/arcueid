@@ -53,6 +53,44 @@
     quasiquote compile-quasiquote
     assign compile-assign))
 
+(def inline-func (ident)
+  (case ident
+    cons (fn (expr ctx env cont) (compile-inline 'icons 2 expr ctx env cont))
+    car (fn (expr ctx env cont) (compile-inline 'icar 1 expr ctx env cont))
+    cdr (fn (expr ctx env cont) (compile-inline 'icdr 1 expr ctx env cont))
+    scar (fn (expr ctx env cont) (compile-inline 'iscar 2 expr ctx env cont))
+    scdr (fn (expr ctx env cont) (compile-inline 'iscdr 2 expr ctx env cont))
+    is (fn (expr ctx env cont) (compile-inline 'iis 2 expr ctx env cont))
+    + (fn (expr ctx env cont) (compile-inlinen 'iadd expr ctx env cont))
+    - (fn (expr ctx env cont) (compile-inlinen 'isub expr ctx env cont))
+    * (fn (expr ctx env cont) (compile-inlinen 'imul expr ctx env cont))
+    / (fn (expr ctx env cont) (compile-inlinen 'idiv expr ctx env cont))))
+
+(def compile-inline (instr narg expr ctx env cont)
+  ((afn (xexpr count)
+     (if (and (<= count 0) (no xexpr)) nil
+	 (no expr) (compile-error "procedure " (car expr) " expects " narg
+				  " arguments")
+	 (do (compile (car xexpr) ctx env cont)
+	     (if (no (cdr xexpr)) nil
+		 (generate ctx 'ipush))
+	     (self (cdr xexpr) (- count 1))))) (cdr expr) narg)
+  (generate ctx instr)
+  (compile-continuation ctx cont))
+
+(def compile-inlinen (instr expr ctx env cont)
+  (if (is (len (cdr expr) 1)) (compile (cadr expr) ctx env cont)
+      ((afn (expr toggle)
+	 (if (no expr)
+	     (if (toggle)
+		 (generate ctx instr)
+		 nil)
+	     (do (compile (car expr) ctx env cont)
+		 (if (toggle)
+		     (generate ctx instr)
+		     (generate ctx 'ipush))
+		 (self (cdr expr) (no toggle))))) (cdr expr) nil)))
+
 (def compile-if (expr ctx env cont)
   (do
     ((afn (args)
@@ -213,7 +251,7 @@
 
 ;; Expand a macro.  This is taken from arc.arc.  This causes compile-time
 ;; expansion of macros.
-(def macex (e)
+(def cmacex (e)
   (if (atom e) e
       (let op (and (atom (car e)) (eval (car e)))
         (if (isa op 'mac) (apply (rep op) (cdr e))
@@ -225,7 +263,7 @@
 (def compile-assign (expr ctx env cont)
   ((afn (x)
      (if (no x) nil
-	 (with (a (macex (car x)) val (cadr x))
+	 (with (a (cmacex (car x)) val (cadr x))
 	   (compile val ctx env cont)
 	   (if (no a) (compile-error "Can't rebind nil")
 	       (is a 't) (compile-error "Can't rebind t")
