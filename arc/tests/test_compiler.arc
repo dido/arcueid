@@ -403,7 +403,6 @@
 	     (it "should generate the code for the - function properly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(- 1 2 3 4) ctx nil nil)
-		     (prn (car ctx))
 		     (iso (car ctx) '(ildi 3 ipush
 					   ildi 5 isub ipush
 					   ildi 7 isub ipush
@@ -416,7 +415,6 @@
 	     (it "should generate the code for the / function properly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(/ 1 2 3 4) ctx nil nil)
-		     (prn (car ctx))
 		     (iso (car ctx) '(ildi 3 ipush
 					   ildi 5 idiv ipush
 					   ildi 7 idiv ipush
@@ -426,6 +424,19 @@
 		     (compile '(/ 1) ctx nil nil)
 		     (iso (car ctx) '(ildi 3 ipush
 					   ildi 3 idiv))))))
+
+(= test-compile-apply
+   (describe "The compilation of function applications"
+	     (it "should generate the correct code for a function application"
+		 (do (= ctx (cons nil nil))
+		     (compile '(foo 1 2 3) ctx nil nil)
+		     (iso (car ctx) '(icont 15
+					    ildi 7 ipush
+					    ildi 5 ipush
+					    ildi 3 ipush
+					    ildg 0
+					    iapply 3))))))
+
 
 (print-results (test-literals))
 (print-results (test-codegen))
@@ -439,4 +450,5 @@
 (print-results (test-compile-quasiquote))
 (print-results (test-compile-assign))
 (print-results (test-compile-inline))
-(print-results (test-compile-inline-vararg) t)
+(print-results (test-compile-inline-vararg))
+(print-results (test-compile-apply))
