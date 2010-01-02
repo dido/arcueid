@@ -364,6 +364,69 @@
 		     (compile '(is a b) ctx nil nil)
 		     (iso (car ctx) '(ildg 0 ipush ildg 1 iis))))))
 
+(= test-compile-inline-vararg
+   (describe "The compilation of inlinable variadic functions"
+	     (it "should generate the code for the + function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(+ 1 2 3 4) ctx nil nil)
+		     (iso (car ctx) '(ildi 1 ipush
+					   ildi 3 iadd ipush
+					   ildi 5 iadd ipush
+					   ildi 7 iadd ipush
+					   ildi 9 iadd))))
+	     (it "should generate the correct code for an empty +"
+		 (do (= ctx (cons nil nil))
+		     (compile '(+) ctx nil nil)
+		     (iso (car ctx) '(ildi 1))))
+	     (it "should generate the correct code for a + with only one arg"
+		 (do (= ctx (cons nil nil))
+		     (compile '(+ 1) ctx nil nil)
+		     (iso (car ctx) '(ildi 1 ipush
+					   ildi 3 iadd))))
+	     (it "should generate the code for the * function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(* 1 2 3 4) ctx nil nil)
+		     (iso (car ctx) '(ildi 3 ipush
+					   ildi 3 imul ipush
+					   ildi 5 imul ipush
+					   ildi 7 imul ipush
+					   ildi 9 imul))))
+	     (it "should generate the correct code for an empty *"
+		 (do (= ctx (cons nil nil))
+		     (compile '(*) ctx nil nil)
+		     (iso (car ctx) '(ildi 3))))
+	     (it "should generate the correct code for a * with only one arg"
+		 (do (= ctx (cons nil nil))
+		     (compile '(* 1) ctx nil nil)
+		     (iso (car ctx) '(ildi 3 ipush
+					   ildi 3 imul))))
+	     (it "should generate the code for the - function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(- 1 2 3 4) ctx nil nil)
+		     (prn (car ctx))
+		     (iso (car ctx) '(ildi 3 ipush
+					   ildi 5 isub ipush
+					   ildi 7 isub ipush
+					   ildi 9 isub))))
+	     (it "should generate the code for - with only one arg"
+		 (do (= ctx (cons nil nil))
+		     (compile '(- 1) ctx nil nil)
+		     (iso (car ctx) '(ildi 1 ipush
+					   ildi 3 isub))))
+	     (it "should generate the code for the / function properly"
+		 (do (= ctx (cons nil nil))
+		     (compile '(/ 1 2 3 4) ctx nil nil)
+		     (prn (car ctx))
+		     (iso (car ctx) '(ildi 3 ipush
+					   ildi 5 idiv ipush
+					   ildi 7 idiv ipush
+					   ildi 9 idiv))))
+	     (it "should generate the code for / with only one arg"
+		 (do (= ctx (cons nil nil))
+		     (compile '(/ 1) ctx nil nil)
+		     (iso (car ctx) '(ildi 3 ipush
+					   ildi 3 idiv))))))
+
 (print-results (test-literals))
 (print-results (test-codegen))
 (print-results (test-compile-literal))
@@ -376,3 +439,4 @@
 (print-results (test-compile-quasiquote))
 (print-results (test-compile-assign))
 (print-results (test-compile-inline))
+(print-results (test-compile-inline-vararg) t)
