@@ -104,7 +104,7 @@
 		 (compile (cadr args) ctx env nil)
 		 (let jumpaddr2 (code-ptr ctx)
 		   (generate ctx 'ijmp 0)
-		   (code-patch ctx (+ jumpaddr 1) (- (code-ptr ctx) jumpaddr))
+		   (code-patch ctx (+ jumpaddr 1) (- (code-ptr ctx) jumpaddr)) c
 		   ;; compile the else portion
 		   (self (cddr args))
 		   ;; Fix target address of jump
@@ -249,6 +249,16 @@
 	     (self (cdr rexpr)))))
    (rev (cadr expr)))
   (compile-continuation ctx cont))
+
+(def compile-apply (expr ctx env cont)
+  (with (fname (car expr) args (cdr expr) contaddr (code-ptr ctx))
+    (generate ctx 'icont 0)
+    (walk (rev args) [do (compile _ ctx env cont)
+			 (generate ctx 'ipush)])
+    (compile fname ctx env cont)
+    (generate ctx 'iapply (len args))
+    (code-patch ctx (+ contaddr 1) (- (code-ptr ctx) contaddr))
+    (compile-continuation ctx cont)))
 
 ;; Expand a macro.  This is taken from arc.arc.  This causes compile-time
 ;; expansion of macros.
