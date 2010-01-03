@@ -131,6 +131,10 @@
 ;; This generates code to set up the new environment given the arguments.
 (def compile-args (args ctx env)
   (if (no args) env
+      (atom args)			; if args is a single name...
+      (do (generate ctx 'ienv 1)
+	  (generate ctx 'imvrarg 0)
+	  (cons (cons '(args) nil) env))
       (let (nargs names rest)
 	  ((afn (args count names)
 	     (if (no args) (list count (rev names) nil)
@@ -243,6 +247,8 @@
 	     (compile (car:cdr:car rexpr) ctx env cont)
 	     (generate ctx 'ispl)	; XXX - undefined instruction for splicing a list
 	     (self (cdr rexpr)))
+	 (isa (car rexpr) 'cons)
+	 (self (car rexpr))
 	 (do (generate ctx 'ipush)
 	     (generate ctx 'ildl (find-literal (car rexpr) ctx))
 	     (generate ctx 'cons)
