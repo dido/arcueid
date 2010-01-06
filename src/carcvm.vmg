@@ -80,6 +80,45 @@ ste ( #ienv #iindx -- )
   WB(&ENV_VALUE(car(tmp), iindx), TVALR(thr));
 }
 
+\ Move an argument from the stack to the environment slot.  If the
+\ stack is empty signal an error
+mvarg ( #iindx i -- )
+{
+  if (sp > TSTOP(thr))
+    c->signal_error(c, "too few arguments");
+  WB(&ENV_VALUE(car(TENVR(thr)), iindx), i);
+}
+
+\ Move an optional argument from the stack to the environment slot.
+\ If the argument is unavailable, store nil.
+mvoarg ( #iindx -- )
+{
+  value i;
+
+  if (sp >= TSTOP(thr)) {
+    sp = TSTOP(thr);
+    i = CNIL;
+  } else {
+    vm_value2i(spTOS,i);
+    sp++;
+  }
+  WB(&ENV_VALUE(car(TENVR(thr)), iindx), i);
+}
+
+\ Build the rest of the arguments on the stack into a list, and store
+\ the list into the environment slot indicated.
+mvrarg ( #iindx -- )
+{
+  value list = CNIL, i;
+
+  while (sp < TSTOP(thr)) {
+    vm_value2i(spTOS, i);
+    sp++;
+    list = cons(c, i, list);
+  }
+  WB(&ENV_VALUE(car(TENVR(thr)), iindx), i);
+}
+
 \ Make a continuation at offset icofs, placing it in the value register.
 cont ( #icofs -- )
 WB(&TCONR(thr), cons(c, carc_mkcont(c, INT2FIX(icofs), thr), TCONR(thr)));
