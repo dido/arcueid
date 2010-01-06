@@ -19,11 +19,12 @@
 ;;
 
 ;; Compile an expression with all special syntax expanded.
-(def compile (expr ctx env cont)
-  (if (literalp expr) (compile-literal expr ctx cont)
-      (isa expr 'sym) (compile-ident expr ctx env cont)
-      (isa expr 'cons) (compile-list expr ctx env cont)
-      (compile-error "invalid expression" expr)))
+(def compile (nexpr ctx env cont)
+  (let expr (macex nexpr)
+    (if (literalp expr) (compile-literal expr ctx cont)
+	(isa expr 'sym) (compile-ident expr ctx env cont)
+	(isa expr 'cons) (compile-list expr ctx env cont)
+	(compile-error "invalid expression" expr))))
 
 ;; Compile a literal value.
 (def compile-literal (expr ctx cont)
