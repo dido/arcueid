@@ -25,6 +25,12 @@
 ;  not sure this is a mistake; strings may be subtly different from 
 ;  lists of chars
 
+; Changes made for CArc:
+;
+; Uncommented macex definition.  Doing otherwise would require macex
+; to be defined in C.
+;
+
 (assign current-load-file* "arc.arc")
 (assign source-file* (table))
 (assign source* (table))
@@ -775,13 +781,13 @@
        (while (no (,gf (= ,var ,expr)))
          ,@body))))
   
-;(def macex (e)
-;  (if (atom e)
-;      e
-;      (let op (and (atom (car e)) (eval (car e)))
-;        (if (isa op 'mac)
-;            (apply (rep op) (cdr e))
-;            e))))
+(def macex (e)
+  (if (atom e)
+      e
+      (let op (and (atom (car e)) (eval (car e)))
+        (if (isa op 'mac)
+            (apply (rep op) (cdr e))
+            e))))
 
 (def consif (x y) (if x (cons x y) y))
 
