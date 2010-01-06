@@ -267,21 +267,13 @@
     (code-patch ctx (+ contaddr 1) (- (code-ptr ctx) contaddr))
     (compile-continuation ctx cont)))
 
-;; Expand a macro.  This is taken from arc.arc.  This causes compile-time
-;; expansion of macros.
-(def cmacex (e)
-  (if (atom e) e
-      (let op (and (atom (car e)) (eval (car e)))
-        (if (isa op 'mac) (apply (rep op) (cdr e))
-            e))))
-
 ;; Compile an assign special form.  Called in previous versions of Arc
 ;; set, the assign form takes symbol-value pairs in its argument and
 ;; assigns them.
 (def compile-assign (expr ctx env cont)
   ((afn (x)
      (if (no x) nil
-	 (with (a (cmacex (car x)) val (cadr x))
+	 (with (a (macex (car x)) val (cadr x))
 	   (compile val ctx env cont)
 	   (if (no a) (compile-error "Can't rebind nil")
 	       (is a 't) (compile-error "Can't rebind t")
