@@ -91,16 +91,11 @@ mvarg ( #iindx i -- )
 
 \ Move an optional argument from the stack to the environment slot.
 \ If the argument is unavailable, store nil.
-mvoarg ( #iindx -- )
+mvoarg ( #iindx i -- )
 {
-  value i;
-
-  if (sp >= TSTOP(thr)) {
+  if (sp > TSTOP(thr)) {
     sp = TSTOP(thr);
     i = CNIL;
-  } else {
-    vm_value2i(spTOS,i);
-    sp++;
   }
   WB(&ENV_VALUE(car(TENVR(thr)), iindx), i);
 }
@@ -206,3 +201,16 @@ TVALR(thr) = carc_is(c, TVALR(thr), i);
 \ XXX - right now this only works for numeric args.
 cmp ( i -- )
 TVALR(thr) = carc_numcmp(c, TVALR(thr), i);
+
+\ Splice two lists together.  The list at the top of the stack is
+\ considered the tail.
+spl ( i -- )
+{
+  value list = TVALR(thr), nlist = i;
+
+  while (list != CNIL) {
+    nlist = cons(c, car(list), nlist);
+    list = cdr(list);
+  }
+  TVALR(thr) = nlist;
+}
