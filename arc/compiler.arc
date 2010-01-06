@@ -154,13 +154,13 @@
 	(let realnames
 	    ((afn (arg count rest rnames)
 	       (if (and (no (cdr arg)) rest)
-		   (do (generate ctx 'imvrarg count) ; XXX still undefined instruction
+		   (do (generate ctx 'imvrarg count)
 		       (rev (cons (car arg) rnames)))
 		   (no arg) (rev rnames) ; done
 		   ;; some optional argument
 		   (and (isa (car arg) 'cons) (is (caar arg) 'o))
 		   (let oarg (car arg)
-		     (generate ctx 'imvoarg count) ; XXX still undefined
+		     (generate ctx 'imvoarg count)
 		     ;; To handle default parameters
 		     (if (cddr oarg)
 			 (do (generate ctx 'ilde 0 count)
@@ -187,7 +187,6 @@
 			     (generate ctx 'ipop)))
 		       (self (cdr arg) (+ 1 count) rest
 			     (cons (caar arg) rnames)))
-		   ;; ordinary arguments XXX - mvarg undefined instruction
 		   (do (generate ctx 'imvarg count)
 		       (self (cdr arg) (+ 1 count) rest
 			     (cons (car arg) rnames)))))
