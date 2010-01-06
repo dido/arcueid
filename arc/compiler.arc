@@ -245,7 +245,7 @@
 					  'unquote-splicing))
 	 (do (generate ctx 'ipush)
 	     (compile (car:cdr:car rexpr) ctx env cont)
-	     (generate ctx 'ispl)	; XXX - undefined instruction for splicing a list
+	     (generate ctx 'ispl)
 	     (self (cdr rexpr)))
 	 (isa (car rexpr) 'cons)
 	 (self (car rexpr))
