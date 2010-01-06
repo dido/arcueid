@@ -104,7 +104,7 @@
 		 (compile (cadr args) ctx env nil)
 		 (let jumpaddr2 (code-ptr ctx)
 		   (generate ctx 'ijmp 0)
-		   (code-patch ctx (+ jumpaddr 1) (- (code-ptr ctx) jumpaddr)) c
+		   (code-patch ctx (+ jumpaddr 1) (- (code-ptr ctx) jumpaddr))
 		   ;; compile the else portion
 		   (self (cddr args))
 		   ;; Fix target address of jump
