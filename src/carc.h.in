@@ -316,7 +316,7 @@ extern value carc_string2num(carc *c, value v);
 extern value carc_numcmp(carc *c, value v1, value v2);
 
 extern value carc_is(carc *c, value v1, value v2);
-extern value carc_equal(carc *c, value v1, value v2);
+extern value carc_iso(carc *c, value v1, value v2);
 
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
