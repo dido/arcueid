@@ -214,3 +214,6 @@ spl ( i -- )
   }
   TVALR(thr) = nlist;
 }
+
+iso (i -- )
+TVALR(thr) = carc_iso(c, TVALR(thr), i);
