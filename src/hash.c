@@ -373,7 +373,7 @@ static value hash_lookup(carc *c, value hash, value key, unsigned int *index)
       return(CUNBOUND);
     if (e == CUNDEF)
       continue;
-    if (carc_equal(c, REP(e)._hashbucket.key, key) == CTRUE)
+    if (carc_iso(c, REP(e)._hashbucket.key, key) == CTRUE)
       return(REP(e)._hashbucket.val);
   }
 }
