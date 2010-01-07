@@ -63,7 +63,7 @@ value carc_is(carc *c, value v1, value v2)
   return(CNIL);
 }
 
-value carc_equal(carc *c, value v1, value v2)
+value carc_iso(carc *c, value v1, value v2)
 {
   value elem1, elem2;
   int i;
@@ -105,11 +105,11 @@ value carc_equal(carc *c, value v1, value v2)
 	 v1 = cdr(v1), v2 = cdr(v2)) {
       elem1 = car(v1);
       elem2 = car(v2);
-      if (!carc_equal(c, elem1, elem2))
+      if (!carc_iso(c, elem1, elem2))
 	return(CNIL);
     }
     /* compare last cdr */
-    return(carc_equal(c, v1, v2));
+    return(carc_iso(c, v1, v2));
   }
   return(CNIL);
 }
