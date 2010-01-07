@@ -247,7 +247,7 @@ static int find_literal(carc *c, value cctx, value lit)
 
   literalptr = FIX2INT(CCTX_LPTR(cctx));
   for (i=0; i<literalptr; i++) {
-    if (carc_equal(c, VINDEX(CCTX_LITS(cctx), i), lit) == CTRUE)
+    if (carc_iso(c, VINDEX(CCTX_LITS(cctx), i), lit) == CTRUE)
       return(i);
   }
   /* Not found, add it */
