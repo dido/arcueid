@@ -86,3 +86,41 @@
 ;; This C function turns a compilation context into a code object
 (def context->code (ctx)
   (annotate 'code ctx))
+
+(def bytecode (code)
+  (case code
+    inop 0
+    ipush 1
+    ipop 2
+    ildl 3
+    ildi 4
+    ildg 5
+    istg 6
+    iste 7
+    imvarg 8
+    imvoarg 9
+    imvrarg 10
+    icont 11
+    ienv 12
+    iapply 13
+    iret 14
+    ijmp 15
+    ijt 16
+    ijf 17
+    itrue 18
+    inil 19
+    ihlt 20
+    iadd 21
+    isub 22
+    imul 23
+    idiv 24
+    icons 25
+    icar 26
+    icdr 27
+    iscar 28
+    iscdr 29
+    iis 30
+    icmp 31
+    ispl 32
+    iiso 33
+    code))
