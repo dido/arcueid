@@ -193,3 +193,26 @@ value carc_tag(carc *c, value type, value rep)
   BTYPE(tag) = T_TAGGED;
   return(tag);
 }
+
+value carc_cmp(carc *c, value v1, value v2)
+{
+  if (TYPE(v1) != TYPE(v2)) {
+    c->signal_error(c, "Invalid types for comparison");
+    return(CNIL);
+  }
+  switch (TYPE(v1)) {
+  case T_FIXNUM:
+  case T_FLONUM:
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+  case T_RATIONAL:
+#endif
+    return(carc_numcmp(c, v1, v2));
+    break;
+  case T_STRING:
+    return(carc_strcmp(c, v1, v2));
+    break;
+  }
+  c->signal_error(c, "Invalid types for comparison");
+  return(CNIL);
+}
