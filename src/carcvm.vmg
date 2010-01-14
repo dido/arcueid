@@ -195,13 +195,6 @@ scar(TVALR(thr), inc);
 scdr ( inc -- )
 scdr(TVALR(thr), inc);
 
-is ( i -- )
-TVALR(thr) = carc_is(c, TVALR(thr), i);
-
-\ XXX - right now this only works for numeric args.
-cmp ( i -- )
-TVALR(thr) = carc_numcmp(c, TVALR(thr), i);
-
 \ Splice two lists together.  The list at the top of the stack is
 \ considered the tail.
 spl ( i -- )
@@ -215,5 +208,14 @@ spl ( i -- )
   TVALR(thr) = nlist;
 }
 
+is ( i -- )
+TVALR(thr) = carc_is(c, TVALR(thr), i);
+
 iso (i -- )
 TVALR(thr) = carc_iso(c, TVALR(thr), i);
+
+gt ( i -- )
+TVALR(thr) = (FIX2INT(carc_cmp(c, TVALR(thr), i)) > 0) ? CTRUE : CNIL;
+
+lt ( i -- )
+TVALR(thr) = (FIX2INT(carc_cmp(c, TVALR(thr), i)) < 0) ? CTRUE : CNIL;
