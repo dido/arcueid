@@ -317,6 +317,7 @@ extern value carc_numcmp(carc *c, value v1, value v2);
 
 extern value carc_is(carc *c, value v1, value v2);
 extern value carc_iso(carc *c, value v1, value v2);
+extern value carc_cmp(carc *c, value v1, value v2);
 
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
@@ -333,6 +334,7 @@ extern value carc_strcat(carc *c, value v1, value v2);
 extern Rune carc_strgetc(carc *c, value src, int *index);
 extern void carc_strungetc(carc *c, int *index);
 extern value carc_strchr(carc *c, value str, Rune ch);
+extern value carc_strcmp(carc *c, value vs1, value vs2);
 
 extern void carc_hash_init(carc_hs *s, unsigned long level);
 extern void carc_hash_update(carc_hs *s, unsigned long val);
