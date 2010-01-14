@@ -130,3 +130,39 @@ value carc_strchr(carc *c, value str, Rune ch)
   }
   return(CNIL);
 }
+
+/* This is a simple binary comparison of strings, giving a
+   lexicographic ordering of the input strings based on the Unicode
+   code point ordering.
+
+   XXX: We should eventually implement UTS #10 (Unicode Collation
+   algorithm) for this function someday and a parser for Unicode
+   collation element tables. */
+value carc_strcmp(carc *c, value vs1, value vs2)
+{
+  Rune c1, c2, *s1, *s2;
+  int sl1, sl2;
+
+  sl1 = REP(vs1)._str.length;
+  sl2 = REP(vs2)._str.length;
+  s1 = REP(vs1)._str.str;
+  s2 = REP(vs2)._str.str;
+  for (;;) {
+    if (sl1 == 0 && sl2 != 0)
+      return(INT2FIX(-1));
+    if (sl2 == 0 && sl1 != 0)
+      return(INT2FIX(1));
+    if (sl1 == 0 && sl2 == 0)
+      return(INT2FIX(0));
+    c1 = *s1++;
+    c2 = *s2++;
+    if (c1 != c2) {
+      if (c1 > c2)
+	return(INT2FIX(1));
+      return(INT2FIX(-1));
+    }
+    sl1--;
+    sl2--;
+  }
+  return(INT2FIX(0));
+}
