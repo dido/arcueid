@@ -120,8 +120,9 @@
     icdr 28
     iscar 29
     iscdr 30
-    iis 31
-    icmp 32
-    ispl 33
-    iiso 34
+    ispl 31
+    iis 32
+    iiso 33
+    igt 34
+    ilt 35
     code))
