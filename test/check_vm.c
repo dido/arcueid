@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 3 of the License, or
   (at your option) any later version.
@@ -23,7 +23,7 @@
 #include <check.h>
 #include <math.h>
 #include <stdio.h>
-#include "../src/carc.h"
+#include "../src/arcueid.h"
 #include "../src/alloc.h"
 #include "../config.h"
 #include "../src/vmengine.h"
@@ -58,15 +58,15 @@ void gen_scar(Inst **ctp);
 void gen_scdr(Inst **ctp);
 void gen_is(Inst **ctp);
 
-carc c;
+arc c;
 
 START_TEST(test_vm_basic)
 {
   Inst **ctp, *code, *ofs;
   value vcode, func, thr;
 
-  carc_vmengine(&c, CNIL, 0);
-  vcode = carc_mkvmcode(&c, 15);
+  arc_vmengine(&c, CNIL, 0);
+  vcode = arc_mkvmcode(&c, 15);
   code = (Inst*)&VINDEX(vcode, 0);
   ctp = &code;
   gen_ldi(ctp, INT2FIX(31330));
@@ -85,9 +85,9 @@ START_TEST(test_vm_basic)
   gen_jf(ctp, ofs - *ctp);
   gen_pop(ctp);
   gen_hlt(ctp);
-  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 0);
-  thr = carc_mkthread(&c, func, 2048, 0);
-  carc_vmengine(&c, thr, 1000);
+  func = arc_mkcode(&c, vcode, arc_mkstringc(&c, "test"), CNIL, 0);
+  thr = arc_mkthread(&c, func, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
 END_TEST
@@ -97,17 +97,17 @@ START_TEST(test_vm_apply)
   Inst **ctp, *code, *ofs, *base;
   value vcode, func, thr, vcode2, func2;
 
-  carc_vmengine(&c, CNIL, 0);
-  vcode = carc_mkvmcode(&c, 4);
+  arc_vmengine(&c, CNIL, 0);
+  vcode = arc_mkvmcode(&c, 4);
   code = (Inst*)&VINDEX(vcode, 0);
   ctp = &code;
   gen_ldi(ctp, INT2FIX(31330));
   gen_add(ctp);
   gen_ret(ctp);
-  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 0);
-  func = carc_mkclosure(&c, func, CNIL);
+  func = arc_mkcode(&c, vcode, arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkclosure(&c, func, CNIL);
 
-  vcode2 = carc_mkvmcode(&c, 10);
+  vcode2 = arc_mkvmcode(&c, 10);
   base = code = (Inst*)&VINDEX(vcode2, 0);
   ctp = &code;
   gen_ldi(ctp, INT2FIX(0xf1e));
@@ -121,9 +121,9 @@ START_TEST(test_vm_apply)
   *((int *)ofs) = (*ctp - base);
   gen_hlt(ctp);
 
-  func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), CNIL, 0);
-  thr = carc_mkthread(&c, func2, 2048, 0);
-  carc_vmengine(&c, thr, 1000);
+  func2 = arc_mkcode(&c, vcode2, arc_mkstringc(&c, "test"), CNIL, 0);
+  thr = arc_mkthread(&c, func2, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
   fail_unless(*TSP(thr) == INT2FIX(0xf1e));
 
@@ -136,20 +136,20 @@ START_TEST(test_vm_loadstore)
   value vcode, func, thr;
   value sym, str;
 
-  str = carc_mkstringc(&c, "foo");
-  sym = carc_intern(&c, str);
+  str = arc_mkstringc(&c, "foo");
+  sym = arc_intern(&c, str);
 
-  carc_vmengine(&c, CNIL, 0);
+  arc_vmengine(&c, CNIL, 0);
 
-  vcode = carc_mkvmcode(&c, 7);
+  vcode = arc_mkvmcode(&c, 7);
   code = (Inst*)&VINDEX(vcode, 0);
   ctp = &code;
-  func = carc_mkcode(&c, vcode, carc_mkstringc(&c, "test"), CNIL, 1);
+  func = arc_mkcode(&c, vcode, arc_mkstringc(&c, "test"), CNIL, 1);
   CODE_LITERAL(func, 0) = sym;
   gen_ldl(ctp, 0);
   gen_hlt(ctp);
-  thr = carc_mkthread(&c, func, 2048, 0);
-  carc_vmengine(&c, thr, 1000);
+  thr = arc_mkthread(&c, func, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == sym);
 
   code = (Inst*)&VINDEX(vcode, 0);
@@ -158,14 +158,14 @@ START_TEST(test_vm_loadstore)
   gen_stg(ctp, 0);
   gen_ldg(ctp, 0);
   gen_hlt(ctp);
-  thr = carc_mkthread(&c, func, 2048, 0);
-  carc_vmengine(&c, thr, 1000);
+  thr = arc_mkthread(&c, func, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
-  fail_unless(carc_hash_lookup(&c, c.genv, sym) == INT2FIX(31337));
+  fail_unless(arc_hash_lookup(&c, c.genv, sym) == INT2FIX(31337));
 }
 END_TEST
 
-static value test_fn(carc *c, value x)
+static value test_fn(arc *c, value x)
 {
   return(x + INT2FIX(31330) - 1);
 }
@@ -175,10 +175,10 @@ START_TEST(test_vm_apply_cfunc)
   Inst **ctp, *code, *ofs, *base;
   value func, thr, vcode2, func2;
 
-  carc_vmengine(&c, CNIL, 0);
-  func = carc_mkccode(&c, 1, test_fn);
+  arc_vmengine(&c, CNIL, 0);
+  func = arc_mkccode(&c, 1, test_fn);
 
-  vcode2 = carc_mkvmcode(&c, 10);
+  vcode2 = arc_mkvmcode(&c, 10);
   base = code = (Inst*)&VINDEX(vcode2, 0);
   ctp = &code;
   gen_ldi(ctp, INT2FIX(0xf1e));
@@ -192,9 +192,9 @@ START_TEST(test_vm_apply_cfunc)
   *((int *)ofs) = (*ctp - base);
   gen_hlt(ctp);
 
-  func2 = carc_mkcode(&c, vcode2, carc_mkstringc(&c, "test"), CNIL, 0);
-  thr = carc_mkthread(&c, func2, 2048, 0);
-  carc_vmengine(&c, thr, 1000);
+  func2 = arc_mkcode(&c, vcode2, arc_mkstringc(&c, "test"), CNIL, 0);
+  thr = arc_mkthread(&c, func2, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
   fail_unless(*TSP(thr) == INT2FIX(0xf1e));
 
@@ -208,9 +208,9 @@ int main(void)
   TCase *tc_vm = tcase_create("Virtual Machine");
   SRunner *sr;
 
-  carc_set_memmgr(&c);
-  carc_init_reader(&c);
-  c.genv = carc_mkhash(&c, 8);
+  arc_set_memmgr(&c);
+  arc_init_reader(&c);
+  c.genv = arc_mkhash(&c, 8);
 
   tcase_add_test(tc_vm, test_vm_basic);
   tcase_add_test(tc_vm, test_vm_loadstore);

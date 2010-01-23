@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 3 of the
   License, or (at your option) any later version.
@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "carc.h"
+#include "arcueid.h"
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
@@ -104,10 +104,10 @@ void printarg_target(Inst *target)
   fprintf(vm_out, "%p ", target);
 }
 
-void carc_vmengine(carc *c, value thr, int quanta)
+void arc_vmengine(arc *c, value thr, int quanta)
 {
   static Label labels[] = {
-#include "carcvm-labels.i"
+#include "arcueid-labels.i"
   };
   register Inst *cfa;
 
@@ -124,7 +124,7 @@ void carc_vmengine(carc *c, value thr, int quanta)
 
 #ifdef __GNUC__
   NEXT;
-#include "carcvm-vm.i"
+#include "arcueid-vm.i"
 #else
 
 #error "FIXME: UNTHREADED INTERPRETER IS NOT YET SUPPORTED"
@@ -134,14 +134,14 @@ void carc_vmengine(carc *c, value thr, int quanta)
   return;
 }
 
-value carc_mkthread(carc *c, value funptr, int stksize, int ip)
+value arc_mkthread(arc *c, value funptr, int stksize, int ip)
 {
   value thr;
   value code;
 
   thr = c->get_cell(c);
   BTYPE(thr) = T_THREAD;
-  TSTACK(thr) = carc_mkvector(c, stksize);
+  TSTACK(thr) = arc_mkvector(c, stksize);
   TSBASE(thr) = &VINDEX(TSTACK(thr), 0);
   TSP(thr) = TSTOP(thr) = &VINDEX(TSTACK(thr), stksize-1);
   TSTATE(thr) = Tready;  
@@ -152,7 +152,7 @@ value carc_mkthread(carc *c, value funptr, int stksize, int ip)
   return(thr);
 }
 
-void carc_apply(carc *c, value thr, value fun)
+void arc_apply(arc *c, value thr, value fun)
 {
   value *argv, cl, cfn, avec;
   int argc, i;
@@ -177,7 +177,7 @@ void carc_apply(carc *c, value thr, value fun)
       argv[i] = *TSP(thr)--;
     switch (REP(cfn)._cfunc.argc) {
     case -2:
-      avec = carc_mkvector(c, argc);
+      avec = arc_mkvector(c, argc);
       memcpy(&VINDEX(avec, 0), argv, sizeof(value)*argc);
       TVALR(thr) = REP(cfn)._cfunc.fnptr(c, avec);
       break;
@@ -222,7 +222,7 @@ void carc_apply(carc *c, value thr, value fun)
       c->signal_error(c, "too many arguments");
       return;
     }
-    carc_return(c, thr);
+    arc_return(c, thr);
     break;
   default:
     c->signal_error(c, "invalid function application");
@@ -230,7 +230,7 @@ void carc_apply(carc *c, value thr, value fun)
 }
 
 /* Restore a continuation */
-void carc_restorecont(carc *c, value thr, value cont)
+void arc_restorecont(arc *c, value thr, value cont)
 {
   int stklen, offset;
 
@@ -244,18 +244,18 @@ void carc_restorecont(carc *c, value thr, value cont)
 }
 
 /* Restore the continuation at the head of the continuation register */
-void carc_return(carc *c, value thr)
+void arc_return(arc *c, value thr)
 {
   value cont;
 
   cont = car(TCONR(thr));
   WB(&TCONR(thr), cdr(TCONR(thr)));
-  carc_restorecont(c, thr, cont);
+  arc_restorecont(c, thr, cont);
 }
 
-value carc_mkcont(carc *c, value offset, value thr)
+value arc_mkcont(arc *c, value offset, value thr)
 {
-  value cont = carc_mkvector(c, 4);
+  value cont = arc_mkvector(c, 4);
   value savedstk;
   int stklen;
 
@@ -265,22 +265,22 @@ value carc_mkcont(carc *c, value offset, value thr)
   WB(&VINDEX(cont, 2), TENVR(thr));
   /* Save the used portion of the stack */
   stklen = TSTOP(thr) - TSP(thr);
-  savedstk = carc_mkvector(c, stklen);
+  savedstk = arc_mkvector(c, stklen);
   memcpy(&VINDEX(savedstk, 0), TSP(thr), stklen*sizeof(value));
   WB(&VINDEX(cont, 3), savedstk);
   return(cont);
 }
 
-value carc_mkenv(carc *c, value parent, int size)
+value arc_mkenv(arc *c, value parent, int size)
 {
   value env;
 
-  env = cons(c, carc_mkvector(c, size), parent+1);
+  env = cons(c, arc_mkvector(c, size), parent+1);
   BTYPE(env) = T_ENV;
   return(env);
 }
 
-value carc_mkclosure(carc *c, value code, value env)
+value arc_mkclosure(arc *c, value code, value env)
 {
   value clos;
 

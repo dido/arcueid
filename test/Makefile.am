@@ -1,9 +1,9 @@
 # 
-# Copyright (C) 2009 Rafael R. Sevilla
+# Copyright (C) 2010 Rafael R. Sevilla
 #
-# This file is part of CArc
+# This file is part of Arcueid
 #
-# CArc is free software; you can redistribute it and/or modify it
+# Arcueid is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
@@ -19,39 +19,35 @@
 #  02110-1301 USA.
 #
 TESTS = check_arith check_alloc check_hash check_pp check_reader \
-	check_unicode check_vm check_compiler
+	check_unicode check_vm
 check_PROGRAMS = check_arith check_alloc check_hash check_pp \
-	check_reader check_unicode check_vm check_compiler
+	check_reader check_unicode check_vm
 
 
-check_arith_SOURCES = check_arith.c $(top_builddir)/src/carc.h
+check_arith_SOURCES = check_arith.c $(top_builddir)/src/arcueid.h
 check_arith_CFLAGS = @CHECK_CFLAGS@
-check_arith_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_arith_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
-check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/carc.h
+check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/arcueid.h
 check_alloc_CFLAGS = @CHECK_CFLAGS@
-check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
-check_hash_SOURCES = check_hash.c $(top_builddir)/src/carc.h
+check_hash_SOURCES = check_hash.c $(top_builddir)/src/arcueid.h
 check_hash_CFLAGS = @CHECK_CFLAGS@
-check_hash_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_hash_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
-check_pp_SOURCES = check_pp.c $(top_builddir)/src/carc.h
+check_pp_SOURCES = check_pp.c $(top_builddir)/src/arcueid.h
 check_pp_CFLAGS = @CHECK_CFLAGS@
-check_pp_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_pp_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
-check_reader_SOURCES = check_reader.c $(top_builddir)/src/carc.h
+check_reader_SOURCES = check_reader.c $(top_builddir)/src/arcueid.h
 check_reader_CFLAGS = @CHECK_CFLAGS@
-check_reader_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_reader_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
 check_unicode_SOURCES = check_unicode.c $(top_builddir)/src/utf.h
 check_unicode_CFLAGS = @CHECK_CFLAGS@
-check_unicode_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_unicode_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
 check_vm_SOURCES = check_vm.c $(top_builddir)/src/vmengine.h
 check_vm_CFLAGS = @CHECK_CFLAGS@
-check_vm_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
-
-check_compiler_SOURCES = check_compiler.c $(top_builddir)/src/vmengine.h
-check_compiler_CFLAGS = @CHECK_CFLAGS@
-check_compiler_LDADD = @CHECK_LIBS@ -L../src @LIBCARC_LIBS@
+check_vm_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@

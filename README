@@ -1,13 +1,13 @@
-CARC README -- Important introductory notes.
-Copyright (C) 2009 Rafael R. Sevilla
+ARCUEID README -- Important introductory notes.
+Copyright (C) 2009,2010 Rafael R. Sevilla
 See the end for copying conditions.
 
-This is CArc, an implementation of Paul Graham's Arc dialect of Lisp
-in C.
+This is Arcueid, an implementation of Paul Graham's Arc dialect of
+Lisp in C.
 
-The main core library, libcarc, is licensed under the GNU Lesser
-General public license.  The main REPL interpreter, carc is licensed
-under the GPL.
+The main core library, libarcueid, is licensed under the GNU Lesser
+General public license.  The main REPL interpreter, arcueid is
+licensed under the GPL.
 
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,

@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 3 of the
   License, or (at your option) any later version.
@@ -29,7 +29,7 @@
 
 #ifdef HAVE_MMAP
 
-void *__carc_aligned_mmap(size_t osize, int modulo, void **block)
+void *__arc_aligned_mmap(size_t osize, int modulo, void **block)
 {
   char *raw_mem;
   static void *last_addr = NULL;
@@ -48,7 +48,7 @@ void *__carc_aligned_mmap(size_t osize, int modulo, void **block)
   return((void *)(aligned_mem - modulo));
 }
 
-void __carc_aligned_munmap(void *addr, size_t size)
+void __arc_aligned_munmap(void *addr, size_t size)
 {
   int retcode = munmap(addr, size + PAGE_SIZE);
   assert(retcode == 0);
@@ -57,7 +57,7 @@ void __carc_aligned_munmap(void *addr, size_t size)
 #endif
 
 /* use malloc */
-void *__carc_aligned_malloc(size_t osize, int modulo, void **block)
+void *__arc_aligned_malloc(size_t osize, int modulo, void **block)
 {
   char *raw_mem;
   unsigned long aligned_mem;
@@ -73,7 +73,7 @@ void *__carc_aligned_malloc(size_t osize, int modulo, void **block)
   return((void *)(aligned_mem - modulo));
 }
 
-void __carc_aligned_free(void *addr, size_t size)
+void __arc_aligned_free(void *addr, size_t size)
 {
   free(addr);
 }

@@ -1,9 +1,9 @@
 /* 
   Copyright (C) 2009 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 3 of the
   License, or (at your option) any later version.
@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "carc.h"
+#include "arcueid.h"
 #include "alloc.h"
 #include "utf.h"
 #include "../config.h"
@@ -46,16 +46,16 @@ void *alloca (size_t);
 
 #define STRMAX 256
 
-static void append_buffer_close(carc *c, Rune *buf, int *idx, value *ppstr)
+static void append_buffer_close(arc *c, Rune *buf, int *idx, value *ppstr)
 {
   value nstr;
 
-  nstr = carc_mkstring(c, buf, *idx);
-  *ppstr = (*ppstr == CNIL) ? nstr : carc_strcat(c, *ppstr, nstr);
+  nstr = arc_mkstring(c, buf, *idx);
+  *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
   *idx = 0;
 }
 
-static void append_buffer(carc *c, Rune *buf, int *idx, Rune ch, value *ppstr)
+static void append_buffer(arc *c, Rune *buf, int *idx, Rune ch, value *ppstr)
 {
 
   if (*idx >= STRMAX)
@@ -63,14 +63,14 @@ static void append_buffer(carc *c, Rune *buf, int *idx, Rune ch, value *ppstr)
   buf[(*idx)++] = ch;
 }
 
-static void append_cstring(carc *c, char *buf, value *ppstr)
+static void append_cstring(arc *c, char *buf, value *ppstr)
 {
-  value nstr = carc_mkstringc(c, buf);
+  value nstr = arc_mkstringc(c, buf);
 
-  *ppstr = (*ppstr == CNIL) ? nstr : carc_strcat(c, *ppstr, nstr);
+  *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
 }
 
-static value prettyprint(carc *c, value sexpr, value *ppstr)
+static value prettyprint(arc *c, value sexpr, value *ppstr)
 {
   switch (TYPE(sexpr)) {
   case T_NIL:
@@ -146,18 +146,18 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       Rune outstr[3];
       value escape;
  
-      if ((escape = carc_hash_lookup(c, c->charesctbl, sexpr)) != CUNBOUND) {
+      if ((escape = arc_hash_lookup(c, c->charesctbl, sexpr)) != CUNBOUND) {
 	/* Escape character */
 	*ppstr = (*ppstr == CNIL)
-	  ? carc_strcat(c, carc_mkstringc(c, "#\\"), escape)
-	  : carc_strcat(c, *ppstr, carc_strcat(c, carc_mkstringc(c, "#\\"),
+	  ? arc_strcat(c, arc_mkstringc(c, "#\\"), escape)
+	  : arc_strcat(c, *ppstr, arc_strcat(c, arc_mkstringc(c, "#\\"),
 						escape));
       } else {
 	outstr[0] = '#';
 	outstr[1] = '\\';
 	outstr[2] = REP(sexpr)._char;
-	*ppstr = (*ppstr == CNIL) ? carc_mkstring(c, outstr, 3)
-	  : carc_strcat(c, *ppstr, carc_mkstring(c, outstr, 3));
+	*ppstr = (*ppstr == CNIL) ? arc_mkstring(c, outstr, 3)
+	  : arc_strcat(c, *ppstr, arc_mkstring(c, outstr, 3));
       }
     }
     break;
@@ -168,8 +168,8 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       char outstr[4];
 
       append_buffer(c, buf, &idx, '\"', ppstr);
-      for (i=0; i<carc_strlen(c, sexpr); i++) {
-	ch = carc_strindex(c, sexpr, i);
+      for (i=0; i<arc_strlen(c, sexpr); i++) {
+	ch = arc_strindex(c, sexpr, i);
 	if (ch < 32) {
 	  snprintf(outstr, 4, "%.3o", ch);
 	  append_buffer(c, buf, &idx, '\\', ppstr);
@@ -190,9 +190,9 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       int idx=0, i;
       value sym;
 
-      sym = carc_sym2name(c, sexpr);
-      for (i=0; i<carc_strlen(c, sym); i++) {
-	ch = carc_strindex(c, sym, i);
+      sym = arc_sym2name(c, sexpr);
+      for (i=0; i<arc_strlen(c, sym); i++) {
+	ch = arc_strindex(c, sym, i);
 	append_buffer(c, buf, &idx, ch, ppstr);
       }
       append_buffer_close(c, buf, &idx, ppstr);
@@ -227,7 +227,7 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
       void *ctx = NULL;
 
       append_cstring(c, "#hash(", ppstr);
-      while ((val = carc_hash_iter(c, sexpr, &ctx)) != CUNBOUND) {
+      while ((val = arc_hash_iter(c, sexpr, &ctx)) != CUNBOUND) {
 	prettyprint(c, val, ppstr);
 	append_cstring(c, " ", ppstr);
       }
@@ -248,7 +248,7 @@ static value prettyprint(carc *c, value sexpr, value *ppstr)
   return(*ppstr);
 }
 
-value carc_prettyprint(carc *c, value v)
+value arc_prettyprint(arc *c, value v)
 {
   value ret=CNIL;
 
@@ -256,14 +256,14 @@ value carc_prettyprint(carc *c, value v)
   return(ret);
 }
 
-void carc_print_string(carc *c, value str)
+void arc_print_string(arc *c, value str)
 {
   int i, j, nc;
   char buf[UTFmax];
   Rune r;
 
-  for (i=0; i<carc_strlen(c, str); i++) {
-    r = carc_strindex(c, str, i);
+  for (i=0; i<arc_strlen(c, str); i++) {
+    r = arc_strindex(c, str, i);
     nc = runetochar(buf, &r);
     for (j=0; j<nc; j++)
       putchar(buf[j]);

@@ -1,9 +1,9 @@
 /* 
   Copyright (C) 2009 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 3 of the License, or
   (at your option) any later version.
@@ -21,15 +21,15 @@
 #ifndef _ARITH_H_
 #define _ARITH_H_
 
-extern value __carc_neg(carc *c, value arg);
+extern value __arc_neg(arc *c, value arg);
 
-extern value __carc_add2(carc *c, value arg1, value arg2);
-extern value __carc_sub2(carc *c, value arg1, value arg2);
-extern value __carc_mul2(carc *c, value arg1, value arg2);
-extern value __carc_div2(carc *c, value arg1, value arg2);
-extern value __carc_mod2(carc *c, value arg1, value arg2);
-extern value __carc_bitand2(carc *c, value arg1, value arg2);
-extern value __carc_bitor2(carc *c, value arg1, value arg2);
-extern value __carc_bitxor2(carc *c, value arg1, value arg2);
+extern value __arc_add2(arc *c, value arg1, value arg2);
+extern value __arc_sub2(arc *c, value arg1, value arg2);
+extern value __arc_mul2(arc *c, value arg1, value arg2);
+extern value __arc_div2(arc *c, value arg1, value arg2);
+extern value __arc_mod2(arc *c, value arg1, value arg2);
+extern value __arc_bitand2(arc *c, value arg1, value arg2);
+extern value __arc_bitor2(arc *c, value arg1, value arg2);
+extern value __arc_bitxor2(arc *c, value arg1, value arg2);
 
 #endif

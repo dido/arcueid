@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 3 of the License, or
   (at your option) any later version.
@@ -22,14 +22,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
-#include "../src/carc.h"
+#include "../src/arcueid.h"
 #include "../config.h"
 
-carc c;
+arc c;
 
 START_TEST(test_hash)
 {
-  carc_hs hs;
+  arc_hs hs;
   int i;
   unsigned long val;
 
@@ -50,10 +50,10 @@ START_TEST(test_hash)
      what he thinks.
   */
 
-  carc_hash_init(&hs, 0);
+  arc_hash_init(&hs, 0);
   for (i=0; i<6; i++)
-    carc_hash_update(&hs, i);
-  val = carc_hash_final(&hs, 6);
+    arc_hash_update(&hs, i);
+  val = arc_hash_final(&hs, 6);
 
 #if SIZEOF_LONG >= 8
   fail_unless(val == 0x88d7a582ec392ac7LL);
@@ -61,10 +61,10 @@ START_TEST(test_hash)
   fail_unless(val == 0x5d482818L);
 #endif
 
-  carc_hash_init(&hs, 0);
+  arc_hash_init(&hs, 0);
   for (i=0; i<7; i++)
-    carc_hash_update(&hs, i);
-  val = carc_hash_final(&hs, 7);
+    arc_hash_update(&hs, i);
+  val = arc_hash_final(&hs, 7);
 
 #if SIZEOF_LONG >= 8
   fail_unless(val == 0x2e58f2b17158ae78LL);
@@ -72,10 +72,10 @@ START_TEST(test_hash)
   fail_unless(val == 0xe7433410L);
 #endif
 
-  carc_hash_init(&hs, 0);
+  arc_hash_init(&hs, 0);
   for (i=0; i<8; i++)
-    carc_hash_update(&hs, i);
-  val = carc_hash_final(&hs, 8);
+    arc_hash_update(&hs, i);
+  val = arc_hash_final(&hs, 8);
 #if SIZEOF_LONG >= 8
   fail_unless(val == 0x6d0b4a891c9c3e8aLL);
 #else
@@ -91,38 +91,38 @@ START_TEST(test_hash_atomic_value)
   value v;
   char *ucstr;
 
-  hash = carc_hash(&c, CNIL);
+  hash = arc_hash(&c, CNIL);
   fail_unless(hash == 0xc2503378028494d6);
-  hash = carc_hash(&c, CTRUE);
+  hash = arc_hash(&c, CTRUE);
   fail_unless(hash == 0xa682854132f7af8e);
-  hash = carc_hash(&c, INT2FIX(1234));
+  hash = arc_hash(&c, INT2FIX(1234));
   fail_unless(hash == 0xf2e87bdaf56a2cfb);
 
-  v = carc_mkflonum(&c, 3.14159);
-  hash = carc_hash(&c, v);
+  v = arc_mkflonum(&c, 3.14159);
+  hash = arc_hash(&c, v);
   fail_unless(hash == 0xa0c45deaa94dc4ae);
 
-  v = carc_mkcomplex(&c, 3.14159, 2.71828);
-  hash = carc_hash(&c, v);
+  v = arc_mkcomplex(&c, 3.14159, 2.71828);
+  hash = arc_hash(&c, v);
   fail_unless(hash == 0x4e587f004b90b15a);
 
 #ifdef HAVE_GMP_H
-  v = carc_mkbignuml(&c, 0);
+  v = arc_mkbignuml(&c, 0);
   mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
-  hash = carc_hash(&c, v);
+  hash = arc_hash(&c, v);
   fail_unless(hash == 0x1fdc09d537e098df);
 
-  v = carc_mkrationall(&c, 1, 2);
-  hash = carc_hash(&c, v);
+  v = arc_mkrationall(&c, 1, 2);
+  hash = arc_hash(&c, v);
   fail_unless(hash == 0x78b0714df1847441);
 #endif
 
   ucstr = "unicode string \343\201\235\343\201\256\347\233\256\343\200\201\350\252\260\343\201\256\347\233\256\343\200\202\343\200\202\343\200\202";
-  v = carc_mkstringc(&c, ucstr);
-  hash = carc_hash(&c, v);
+  v = arc_mkstringc(&c, ucstr);
+  hash = arc_hash(&c, v);
   fail_unless(hash == 0x51f424be55282439);
 
-  hash = carc_hash_cstr(&c, ucstr);
+  hash = arc_hash_cstr(&c, ucstr);
   fail_unless(hash == 0x51f424be55282439);
 }
 END_TEST
@@ -135,7 +135,7 @@ START_TEST(test_hash_nonatomic_value)
 
   for (i=0; i<10; i++)
     list = cons(&c, INT2FIX(i), list);
-  hash = carc_hash(&c, list);
+  hash = arc_hash(&c, list);
   fail_unless(hash == 0xd43dd6e10d38e3fa);
   /*  printf("%lx\n", hash); */
 }
@@ -171,48 +171,48 @@ START_TEST(test_hash_table)
 
   /* Start with 3 bits.  This should expand to at least five bits after
      we add the 17 names above. */
-  table = carc_mkhash(&c, 3);
+  table = arc_mkhash(&c, 3);
 
   for (i=0; i<17; i++) {
-    vnames[i] = carc_mkstringc(&c, names[i]);
-    carc_hash_insert(&c, table, vnames[i], INT2FIX(i));
+    vnames[i] = arc_mkstringc(&c, names[i]);
+    arc_hash_insert(&c, table, vnames[i], INT2FIX(i));
   }
 
   /* verify */
   for (i=0; i<17; i++)
-    fail_unless(carc_hash_lookup(&c, table, vnames[i]) == INT2FIX(i));
+    fail_unless(arc_hash_lookup(&c, table, vnames[i]) == INT2FIX(i));
 
   /* verify with cstrings */
   for (i=0; i<17; i++) {
     value v;
 
-    v = carc_hash_lookup_cstr(&c, table, names[i]);
+    v = arc_hash_lookup_cstr(&c, table, names[i]);
     fail_unless(v == INT2FIX(i));
   }
 
   /* Test not present key */
-  notfoundstr = carc_mkstringc(&c, "Caren Ortensia");
-  fail_unless(carc_hash_lookup(&c, table, notfoundstr) == CUNBOUND);
+  notfoundstr = arc_mkstringc(&c, "Caren Ortensia");
+  fail_unless(arc_hash_lookup(&c, table, notfoundstr) == CUNBOUND);
 
   /* Test rebinding key */
-  str = carc_mkstringc(&c, "Saber");
-  fail_unless(carc_hash_lookup(&c, table, str) == INT2FIX(0));
-  carc_hash_insert(&c, table, str, INT2FIX(100));
-  fail_unless(carc_hash_lookup(&c, table, str) == INT2FIX(100));
+  str = arc_mkstringc(&c, "Saber");
+  fail_unless(arc_hash_lookup(&c, table, str) == INT2FIX(0));
+  arc_hash_insert(&c, table, str, INT2FIX(100));
+  fail_unless(arc_hash_lookup(&c, table, str) == INT2FIX(100));
 
   /* Test iteration */
   i=0;
-  while (carc_hash_iter(&c, table, &ctx) != CUNBOUND)
+  while (arc_hash_iter(&c, table, &ctx) != CUNBOUND)
     i++;
   fail_unless(i==17);
 
   /* Test deletion */
   for (i=16; i>=0; i--) {
-    carc_hash_delete(&c, table, vnames[i]);
-    fail_unless(carc_hash_lookup(&c, table, vnames[i]) == CUNBOUND);
+    arc_hash_delete(&c, table, vnames[i]);
+    fail_unless(arc_hash_lookup(&c, table, vnames[i]) == CUNBOUND);
   }
   i=0;
-  while (carc_hash_iter(&c, table, &ctx) != CUNBOUND)
+  while (arc_hash_iter(&c, table, &ctx) != CUNBOUND)
     i++;
   fail_unless(i==0);
 }
@@ -225,7 +225,7 @@ int main(void)
   TCase *tc_hash = tcase_create("Hash functions");
   SRunner *sr;
 
-  carc_set_memmgr(&c);
+  arc_set_memmgr(&c);
 
   tcase_add_test(tc_hash, test_hash);
   tcase_add_test(tc_hash, test_hash_atomic_value);

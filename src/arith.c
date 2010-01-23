@@ -1,9 +1,9 @@
 /* 
   Copyright (C) 2009 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 3 of the License, or
   (at your option) any later version.
@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-#include "carc.h"
+#include "arcueid.h"
 #include "arith.h"
 #include "../config.h"
 #include "utf.h"
@@ -30,7 +30,7 @@
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
 /* Type constructors */
-value carc_mkflonum(carc *c, double val)
+value arc_mkflonum(arc *c, double val)
 {
   value fnum;
 
@@ -40,7 +40,7 @@ value carc_mkflonum(carc *c, double val)
   return(fnum);
 }
 
-value carc_mkcomplex(carc *c, double re, double im)
+value arc_mkcomplex(arc *c, double re, double im)
 {
   value cnum;
 
@@ -51,7 +51,7 @@ value carc_mkcomplex(carc *c, double re, double im)
   return(cnum);
 }
 
-value carc_mkbignuml(carc *c, long val)
+value arc_mkbignuml(arc *c, long val)
 {
 #ifdef HAVE_GMP_H
   value bignum;
@@ -62,12 +62,12 @@ value carc_mkbignuml(carc *c, long val)
   mpz_set_si(REP(bignum)._bignum, val);
   return(bignum);
 #else
-  c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+  c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
   return(CNIL);
 #endif
 }
 
-value carc_mkrationall(carc *c, long num, long den)
+value arc_mkrationall(arc *c, long num, long den)
 {
 #ifdef HAVE_GMP_H
   value rat;
@@ -79,13 +79,13 @@ value carc_mkrationall(carc *c, long num, long den)
   mpq_canonicalize(REP(rat)._rational);
   return(rat);
 #else
-  c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+  c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
   return(CNIL);
 #endif
 }
 
 /* Type conversions */
-double carc_coerce_flonum(carc *c, value v)
+double arc_coerce_flonum(arc *c, value v)
 {
   double val;
 
@@ -111,7 +111,7 @@ double carc_coerce_flonum(carc *c, value v)
   return(val);
 }
 
-void carc_coerce_complex(carc *c, value v, double *re, double *im)
+void arc_coerce_complex(arc *c, value v, double *re, double *im)
 {
   switch (TYPE(v)) {
 #ifdef HAVE_GMP_H
@@ -140,7 +140,7 @@ void carc_coerce_complex(carc *c, value v, double *re, double *im)
   *im = 0.0;
 }
 
-void carc_coerce_bignum(carc *c, value v, void *bptr)
+void arc_coerce_bignum(arc *c, value v, void *bptr)
 {
 #ifdef HAVE_GMP_H
   mpz_t *bignum = (mpz_t *)bptr;
@@ -169,7 +169,7 @@ void carc_coerce_bignum(carc *c, value v, void *bptr)
 #endif
 }
 
-void carc_coerce_rational(carc *c, value v, void *bptr)
+void arc_coerce_rational(arc *c, value v, void *bptr)
 {
 #ifdef HAVE_GMP_H
   mpq_t *rat = (mpq_t *)bptr;
@@ -198,7 +198,7 @@ void carc_coerce_rational(carc *c, value v, void *bptr)
 
 /* Attempt to coerce the value to a fixnum.  If the number is too large
    in magnitude to be converted, return nil. */
-value carc_coerce_fixnum(carc *c, value v)
+value arc_coerce_fixnum(arc *c, value v)
 {
   long val;
 
@@ -217,7 +217,7 @@ value carc_coerce_fixnum(carc *c, value v)
       return(INT2FIX(mpz_get_si(REP(v)._bignum)));
     }
 #else
-    c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+    c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
 #endif
     break;
   case T_RATIONAL:
@@ -239,7 +239,7 @@ value carc_coerce_fixnum(carc *c, value v)
       }
     }
 #else
-    c->signal_error(c, "Overflow error (this version of CArc does not have bignum support)");
+    c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
 #endif
     break;
   }
@@ -248,7 +248,7 @@ value carc_coerce_fixnum(carc *c, value v)
 
 /* Coerce a rational back to an integral type where possible.  Otherwise
    return v.  Used by most rational arithmetic operators. */
-static value integer_coerce(carc *c, value v)
+static value integer_coerce(arc *c, value v)
 {
 #ifdef HAVE_GMP_H
   value val;
@@ -261,13 +261,13 @@ static value integer_coerce(carc *c, value v)
   }
 
   /* It is an integer--try to convert to fixnum or bignum */
-  val = carc_coerce_fixnum(c, v);
+  val = arc_coerce_fixnum(c, v);
   if (val != CNIL)
     return(val);
 
   /* Coerce to bignum */
-  val = carc_mkbignuml(c, 0);
-  carc_coerce_bignum(c, v, &REP(val)._bignum);
+  val = arc_mkbignuml(c, 0);
+  arc_coerce_bignum(c, v, &REP(val)._bignum);
   return(val);
 #endif
 }
@@ -304,27 +304,27 @@ static value integer_coerce(carc *c, value v)
    not, the quotient alone is returned.
  */
 
-static inline value add2_complex(carc *c, value arg1, double re, double im)
+static inline value add2_complex(arc *c, value arg1, double re, double im)
 {
   re += REP(arg1)._complex.re;
   im += REP(arg1)._complex.im;
-  return(carc_mkcomplex(c, re, im));
+  return(arc_mkcomplex(c, re, im));
 }
 
-static inline value add2_flonum(carc *c, value arg1, double arg2)
+static inline value add2_flonum(arc *c, value arg1, double arg2)
 {
   arg2 += REP(arg1)._flonum;
-  return(carc_mkflonum(c, arg2));
+  return(arc_mkflonum(c, arg2));
 }
 
 #ifdef HAVE_GMP_H
-static inline value add2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value add2_rational(arc *c, value arg1, mpq_t *arg2)
 {
   mpq_add(*arg2, REP(arg1)._rational, *arg2);
   return(CTRUE);
 }
 
-static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
+static inline void add2_bignum(arc *c, value arg1, mpz_t *arg2)
 {
   mpz_add(*arg2, REP(arg1)._bignum, *arg2);
 }
@@ -332,20 +332,20 @@ static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
 
 #define COERCE_OP_COMPLEX(func, arg1, arg2) {	\
     double re, im;				\
-    carc_coerce_complex(c, arg2, &re, &im);	\
+    arc_coerce_complex(c, arg2, &re, &im);	\
     return(func(c, arg1, re, im));		\
   }
 
 #define COERCE_OP_FLONUM(func, arg1, arg2) {	\
     double f;					\
-    f = carc_coerce_flonum(c, arg2);		\
+    f = arc_coerce_flonum(c, arg2);		\
     return(func(c, arg1, f));			\
   }
 
 #define COERCE_OP_RATIONAL(func, arg1, arg2) {		\
     value v;						\
-    v = carc_mkrationall(c, 0, 1);			\
-    carc_coerce_rational(c, arg2, &(REP(v)._rational)); \
+    v = arc_mkrationall(c, 0, 1);			\
+    arc_coerce_rational(c, arg2, &(REP(v)._rational)); \
     if (func(c, arg1, &(REP(v)._rational)) == CNIL)	\
       return(CNIL);					\
     return(integer_coerce(c, v));			\
@@ -353,10 +353,10 @@ static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
 
 #define COERCE_OP_BIGNUM(func, arg1, arg2) {			\
     value v, cf;						\
-    v = carc_mkbignuml(c, 0);					\
-    carc_coerce_bignum(c, arg2, &(REP(v)._bignum));		\
+    v = arc_mkbignuml(c, 0);					\
+    arc_coerce_bignum(c, arg2, &(REP(v)._bignum));		\
     func(c, arg1, &(REP(v)._bignum));				\
-    cf = carc_coerce_fixnum(c, v);				\
+    cf = arc_coerce_fixnum(c, v);				\
     return((cf == CNIL) ? v : cf);				\
   }
 
@@ -395,14 +395,14 @@ static inline void add2_bignum(carc *c, value arg1, mpz_t *arg2)
   }
 #endif
 
-value __carc_add2(carc *c, value arg1, value arg2)
+value __arc_add2(arc *c, value arg1, value arg2)
 {
   long fixnum_sum;
 
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
     fixnum_sum = FIX2INT(arg1) + FIX2INT(arg2);
     if (ABS(fixnum_sum) > FIXNUM_MAX)
-      return(carc_mkbignuml(c, fixnum_sum));
+      return(arc_mkbignuml(c, fixnum_sum));
     return(INT2FIX(fixnum_sum));
   } 
   TYPE_CASES(add, arg1, arg2);
@@ -411,20 +411,20 @@ value __carc_add2(carc *c, value arg1, value arg2)
   return(CNIL);
 }
 
-value __carc_neg(carc *c, value arg)
+value __arc_neg(arc *c, value arg)
 {
   switch (TYPE(arg)) {
   case T_FIXNUM:
     return(INT2FIX(-FIX2INT(arg)));
   case T_FLONUM:
-    return(carc_mkflonum(c, -REP(arg)._flonum));
+    return(arc_mkflonum(c, -REP(arg)._flonum));
   case T_COMPLEX:
-    return(carc_mkcomplex(c, -REP(arg)._complex.re, -REP(arg)._complex.im));
+    return(arc_mkcomplex(c, -REP(arg)._complex.re, -REP(arg)._complex.im));
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
     {
       value big;
-      big = carc_mkbignuml(c, 0);
+      big = arc_mkbignuml(c, 0);
       mpz_neg(REP(big)._bignum, REP(arg)._bignum);
       return(big);
     }
@@ -432,7 +432,7 @@ value __carc_neg(carc *c, value arg)
   case T_RATIONAL:
     {
       value rat;
-      rat = carc_mkrationall(c, 0, 1);
+      rat = arc_mkrationall(c, 0, 1);
       mpq_neg(REP(rat)._rational, REP(arg)._rational);
       return(rat);
     }
@@ -444,36 +444,36 @@ value __carc_neg(carc *c, value arg)
   return(CNIL);
 }
 
-static inline value mul2_complex(carc *c, value arg1, double re, double im)
+static inline value mul2_complex(arc *c, value arg1, double re, double im)
 {
   double r2, i2;
 
   r2 = REP(arg1)._complex.re * re - REP(arg1)._complex.im * im;
   i2 = REP(arg1)._complex.im * re + REP(arg1)._complex.re * im;
-  return(carc_mkcomplex(c, r2, i2));
+  return(arc_mkcomplex(c, r2, i2));
 }
 
 
-static inline value mul2_flonum(carc *c, value arg1, double arg2)
+static inline value mul2_flonum(arc *c, value arg1, double arg2)
 {
   arg2 *= REP(arg1)._flonum;
-  return(carc_mkflonum(c, arg2));
+  return(arc_mkflonum(c, arg2));
 }
 
 #ifdef HAVE_GMP_H
-static inline value mul2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value mul2_rational(arc *c, value arg1, mpq_t *arg2)
 {
   mpq_mul(*arg2, REP(arg1)._rational, *arg2);
   return(CTRUE);
 }
 
-static inline void mul2_bignum(carc *c, value arg1, mpz_t *arg2)
+static inline void mul2_bignum(arc *c, value arg1, mpz_t *arg2)
 {
   mpz_mul(*arg2, REP(arg1)._bignum, *arg2);
 }
 #endif
 
-value __carc_mul2(carc *c, value arg1, value arg2)
+value __arc_mul2(arc *c, value arg1, value arg2)
 {
   
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
@@ -501,7 +501,7 @@ value __carc_mul2(carc *c, value arg1, value arg2)
 #endif
     {
 #ifdef HAVE_GMP_H
-      value v1 = carc_mkbignuml(c, varg1);
+      value v1 = arc_mkbignuml(c, varg1);
       COERCE_OP_BIGNUM(mul2_bignum, v1, arg2);
 #else
       c->signal_error(c, "Overflow error in multiplication");
@@ -518,64 +518,64 @@ value __carc_mul2(carc *c, value arg1, value arg2)
 
 }
 
-static inline value sub2_complex(carc *c, value arg1, double re, double im)
+static inline value sub2_complex(arc *c, value arg1, double re, double im)
 {
   re = REP(arg1)._complex.re - re;
   im = REP(arg1)._complex.im - im;
-  return(carc_mkcomplex(c, re, im));
+  return(arc_mkcomplex(c, re, im));
 }
 
-static inline value sub2r_complex(carc *c, value arg1, double re, double im)
+static inline value sub2r_complex(arc *c, value arg1, double re, double im)
 {
   re -= REP(arg1)._complex.re;
   im -= REP(arg1)._complex.im;
-  return(carc_mkcomplex(c, re, im));
+  return(arc_mkcomplex(c, re, im));
 }
 
-static inline value sub2_flonum(carc *c, value arg1, double arg2)
+static inline value sub2_flonum(arc *c, value arg1, double arg2)
 {
   arg2 = REP(arg1)._flonum - arg2;
-  return(carc_mkflonum(c, arg2));
+  return(arc_mkflonum(c, arg2));
 }
 
-static inline value sub2r_flonum(carc *c, value arg1, double arg2)
+static inline value sub2r_flonum(arc *c, value arg1, double arg2)
 {
   arg2 -= REP(arg1)._flonum;
-  return(carc_mkflonum(c, arg2));
+  return(arc_mkflonum(c, arg2));
 }
 
 #ifdef HAVE_GMP_H
-static inline value sub2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value sub2_rational(arc *c, value arg1, mpq_t *arg2)
 {
   mpq_sub(*arg2, REP(arg1)._rational, *arg2);
   return(CTRUE);
 }
 
-static inline value sub2r_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value sub2r_rational(arc *c, value arg1, mpq_t *arg2)
 {
   mpq_sub(*arg2, *arg2, REP(arg1)._rational);
   return(CTRUE);
 }
 
-static inline void sub2_bignum(carc *c, value arg1, mpz_t *arg2)
+static inline void sub2_bignum(arc *c, value arg1, mpz_t *arg2)
 {
   mpz_sub(*arg2, REP(arg1)._bignum, *arg2);
 }
 
-static inline void sub2r_bignum(carc *c, value arg1, mpz_t *arg2)
+static inline void sub2r_bignum(arc *c, value arg1, mpz_t *arg2)
 {
   mpz_sub(*arg2, *arg2, REP(arg1)._bignum);
 }
 #endif
 
-value __carc_sub2(carc *c, value arg1, value arg2)
+value __arc_sub2(arc *c, value arg1, value arg2)
 {
   long fixnum_diff;
 
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
     fixnum_diff = FIX2INT(arg1) - FIX2INT(arg2);
     if (ABS(fixnum_diff) > FIXNUM_MAX)
-      return(carc_mkbignuml(c, fixnum_diff));
+      return(arc_mkbignuml(c, fixnum_diff));
     return(INT2FIX(fixnum_diff));
   } 
 
@@ -604,7 +604,7 @@ value __carc_sub2(carc *c, value arg1, value arg2)
   return(CNIL);
 }
 
-static inline value div2_complex(carc *c, value arg1, double re, double im)
+static inline value div2_complex(arc *c, value arg1, double re, double im)
 {
   double den = (re*re + im*im);
   double r2, i2;
@@ -616,10 +616,10 @@ static inline value div2_complex(carc *c, value arg1, double re, double im)
 
   r2 = (REP(arg1)._complex.re * re + REP(arg1)._complex.im * im)/den;
   i2 = (REP(arg1)._complex.im * re - REP(arg1)._complex.re * im)/den;
-  return(carc_mkcomplex(c, r2, i2));
+  return(arc_mkcomplex(c, r2, i2));
 }
 
-static inline value div2r_complex(carc *c, value arg1, double re, double im)
+static inline value div2r_complex(arc *c, value arg1, double re, double im)
 {
   double r1 = REP(arg1)._complex.re, i1 = REP(arg1)._complex.im, r2, i2;
   double den = r1*r1 + i1*i1;
@@ -631,20 +631,20 @@ static inline value div2r_complex(carc *c, value arg1, double re, double im)
 
   r2 = (REP(arg1)._complex.re * re + REP(arg1)._complex.im * im)/den;
   i2 = (im*REP(arg1)._complex.re - re*REP(arg1)._complex.im)/den;
-  return(carc_mkcomplex(c, r2, i2));
+  return(arc_mkcomplex(c, r2, i2));
 }
 
-static inline value div2_flonum(carc *c, value arg1, double arg2)
+static inline value div2_flonum(arc *c, value arg1, double arg2)
 {
   if (arg2 == 0.0) {
     c->signal_error(c, "Division by zero");
     return(CNIL);
   }
   arg2 = REP(arg1)._flonum / arg2;
-  return(carc_mkflonum(c, arg2));
+  return(arc_mkflonum(c, arg2));
 }
 
-static inline value div2r_flonum(carc *c, value arg1, double arg2)
+static inline value div2r_flonum(arc *c, value arg1, double arg2)
 {
   if (REP(arg1)._flonum == 0.0) {
     c->signal_error(c, "Division by zero");
@@ -652,11 +652,11 @@ static inline value div2r_flonum(carc *c, value arg1, double arg2)
   }
 
   arg2 /= REP(arg1)._flonum;
-  return(carc_mkflonum(c, arg2));
+  return(arc_mkflonum(c, arg2));
 }
 
 #ifdef HAVE_GMP_H
-static inline value div2_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value div2_rational(arc *c, value arg1, mpq_t *arg2)
 {
   if (mpq_cmp_si(*arg2, 0, 1) == 0) {
     c->signal_error(c, "Division by zero");
@@ -667,7 +667,7 @@ static inline value div2_rational(carc *c, value arg1, mpq_t *arg2)
   return(CTRUE);
 }
 
-static inline value div2r_rational(carc *c, value arg1, mpq_t *arg2)
+static inline value div2r_rational(arc *c, value arg1, mpq_t *arg2)
 {
   if (mpq_cmp_si(REP(arg1)._rational, 0, 1) == 0) {
     c->signal_error(c, "Division by zero");
@@ -681,7 +681,7 @@ static inline value div2r_rational(carc *c, value arg1, mpq_t *arg2)
 /* Division of two bignums may change the type of the value.  This
    assumes both arg1 and arg2 are bignums initially. This changes
    arg2. */
-static inline value div2_bignum(carc *c, value arg1, value arg2)
+static inline value div2_bignum(arc *c, value arg1, value arg2)
 {
   mpz_t t;
 
@@ -706,7 +706,7 @@ static inline value div2_bignum(carc *c, value arg1, value arg2)
 }
 
 /* This divides the two values in reverse, storing the result in arg2 */
-static inline value div2r_bignum(carc *c, value arg1, value arg2)
+static inline value div2r_bignum(arc *c, value arg1, value arg2)
 {
   mpz_t t;
 
@@ -732,7 +732,7 @@ static inline value div2r_bignum(carc *c, value arg1, value arg2)
 
 #endif
 
-value __carc_div2(carc *c, value arg1, value arg2)
+value __arc_div2(arc *c, value arg1, value arg2)
 {
   ldiv_t res;
 
@@ -750,10 +750,10 @@ value __carc_div2(carc *c, value arg1, value arg2)
     res = ldiv(varg1, varg2);
 #ifdef HAVE_GMP_H
     if (res.rem != 0) {
-      return(carc_mkrationall(c, varg1, varg2));
+      return(arc_mkrationall(c, varg1, varg2));
     } else {
       if (ABS(res.quot) > FIXNUM_MAX)
-	return(carc_mkbignuml(c, res.quot));
+	return(arc_mkbignuml(c, res.quot));
 #endif
       /* The conditional compilation produces only this if
 	 we don't have GMP */
@@ -782,24 +782,24 @@ value __carc_div2(carc *c, value arg1, value arg2)
     /* The old macros don't work here because bignum division
        can result in a rational result. */
 
-    v = carc_mkbignuml(c, 0);
-    carc_coerce_bignum(c, arg2, &REP(v)._bignum);
+    v = arc_mkbignuml(c, 0);
+    arc_coerce_bignum(c, arg2, &REP(v)._bignum);
     if (div2_bignum(c, arg1, v) == CNIL)
       return(CNIL);
     if (TYPE(v) == T_BIGNUM) {
-      cf = carc_coerce_fixnum(c, v);
+      cf = arc_coerce_fixnum(c, v);
       return((cf == CNIL) ? v : cf);
     }
     return(v);
   } else if (TYPE(arg2) == T_BIGNUM) {
     value cf, v;
 
-    v = carc_mkbignuml(c, 0);
-    carc_coerce_bignum(c, arg1, &REP(v)._bignum);
+    v = arc_mkbignuml(c, 0);
+    arc_coerce_bignum(c, arg1, &REP(v)._bignum);
     if (div2r_bignum(c, arg2, v) == CNIL)
       return(CNIL);
     if (TYPE(v) == T_BIGNUM) {
-      cf = carc_coerce_fixnum(c, v);
+      cf = arc_coerce_fixnum(c, v);
       return((cf == CNIL) ? v : cf);
     }
     return(v);
@@ -828,14 +828,14 @@ static value rune2dig(Rune r, int radix)
   return(INT2FIX(v));
 }
 
-static double str2flonum(carc *c, value str, int index, int imagflag)
+static double str2flonum(arc *c, value str, int index, int imagflag)
 {
   int state = 1, expn = 0, expnsign = 1;
   double sign = 1.0, mantissa=0.0, mult=0.1, fnum;
   value digitval, imag;
   Rune ch;
 
-  while ((ch = carc_strgetc(c, str, &index)) != Runeerror) {
+  while ((ch = arc_strgetc(c, str, &index)) != Runeerror) {
     switch (state) {
     case 1:
       /* sign */
@@ -851,7 +851,7 @@ static double str2flonum(carc *c, value str, int index, int imagflag)
       default:
 	if (!isdigit(ch))
 	  return(CNIL);
-	carc_strungetc(c, &index);
+	arc_strungetc(c, &index);
 	state = 2;
 	break;
       }
@@ -885,7 +885,7 @@ static double str2flonum(carc *c, value str, int index, int imagflag)
       case 'j':
       case 'J':
 	/* imaginary */
-	return(carc_mkcomplex(c, 0.0,
+	return(arc_mkcomplex(c, 0.0,
 			      sign * (mantissa
 				      * pow(10, expnsign * expn))));
       default:
@@ -921,7 +921,7 @@ static double str2flonum(carc *c, value str, int index, int imagflag)
       case 'j':
       case 'J':
 	/* imaginary */
-	return(carc_mkcomplex(c, 0.0,
+	return(arc_mkcomplex(c, 0.0,
 			      sign * (mantissa
 				      * pow(10, expnsign * expn))));
       default:
@@ -946,7 +946,7 @@ static double str2flonum(carc *c, value str, int index, int imagflag)
       default:
 	if (!isdigit(ch))
 	  return(CNIL);
-	carc_strungetc(c, &index);
+	arc_strungetc(c, &index);
 	state = 5;
 	break;
       }
@@ -972,7 +972,7 @@ static double str2flonum(carc *c, value str, int index, int imagflag)
       case 'j':
       case 'J':
 	/* imaginary */
-	return(carc_mkcomplex(c, 0.0,
+	return(arc_mkcomplex(c, 0.0,
 			      sign * (mantissa
 				      * pow(10, expnsign * expn))));
       default:
@@ -988,16 +988,16 @@ static double str2flonum(carc *c, value str, int index, int imagflag)
   }
   /* Combine */
   fnum = sign * (mantissa * pow(10, expnsign * expn));
-  return(carc_mkflonum(c, fnum));
+  return(arc_mkflonum(c, fnum));
 }
 
-static value string2numindex(carc *c, value str, int index, int rational)
+static value string2numindex(arc *c, value str, int index, int rational)
 {
   int state = 1, sign = 1, radsel = 0;
   Rune ch;
   value nval = INT2FIX(0), digitval, radix = INT2FIX(10), denom;
 
-  while ((ch = carc_strgetc(c, str, &index)) != Runeerror) {
+  while ((ch = arc_strgetc(c, str, &index)) != Runeerror) {
     switch (state) {
     case 1:
       /* sign */
@@ -1016,7 +1016,7 @@ static value string2numindex(carc *c, value str, int index, int rational)
       default:
 	if (!isdigit(ch))
 	  return(CNIL);
-	carc_strungetc(c, &index);
+	arc_strungetc(c, &index);
 	state = 2;
 	break;
       }
@@ -1035,7 +1035,7 @@ static value string2numindex(carc *c, value str, int index, int rational)
 	if (!isdigit(ch))
 	  return(CNIL);
 	/* more digits */
-	carc_strungetc(c, &index);
+	arc_strungetc(c, &index);
 	state = 4;
 	break;
       }
@@ -1058,7 +1058,7 @@ static value string2numindex(carc *c, value str, int index, int rational)
 	if (!isdigit(ch))
 	  return(CNIL);
 	/* more digits */
-	carc_strungetc(c, &index);
+	arc_strungetc(c, &index);
 	state = 4;
 	break;
       }
@@ -1088,7 +1088,7 @@ static value string2numindex(carc *c, value str, int index, int rational)
 	  return(CNIL);
 	denom = string2numindex(c, str, index, 1);
 	if (TYPE(denom) == T_FIXNUM || TYPE(denom) == T_FLONUM)
-	  return(__carc_div2(c, nval, denom));
+	  return(__arc_div2(c, nval, denom));
 	else
 	  return(CNIL);
 	break;
@@ -1105,7 +1105,7 @@ static value string2numindex(carc *c, value str, int index, int rational)
 	digitval = rune2dig(ch, radix);
 	if (digitval == CNIL)
 	  return(CNIL);
-	nval = __carc_add2(c, __carc_mul2(c, nval, radix), digitval);
+	nval = __arc_add2(c, __arc_mul2(c, nval, radix), digitval);
 	break;
       }
       break;
@@ -1114,7 +1114,7 @@ static value string2numindex(carc *c, value str, int index, int rational)
       digitval = rune2dig(ch, radix);
       if (digitval == CNIL)
 	return(CNIL);
-      nval = __carc_add2(c, __carc_mul2(c, nval, radix), digitval);
+      nval = __arc_add2(c, __arc_mul2(c, nval, radix), digitval);
       break;
     }
   }
@@ -1125,7 +1125,7 @@ static value string2numindex(carc *c, value str, int index, int rational)
   return(CNIL);
 }
 
-value carc_string2num(carc *c, value str)
+value arc_string2num(arc *c, value str)
 {
   return(string2numindex(c, str, 0, 0));
 }
@@ -1141,11 +1141,11 @@ value carc_string2num(carc *c, value str)
 
 /* May be faster if implemented by direct comparison, but subtraction
    is a lot easier! :p */
-value carc_numcmp(carc *c, value v1, value v2)
+value arc_numcmp(arc *c, value v1, value v2)
 {
   value diff;
 
-  diff = __carc_sub2(c, v1, v2);
+  diff = __arc_sub2(c, v1, v2);
   switch (TYPE(diff)) {
   case T_FIXNUM:
     COMPARE(FIX2INT(diff));

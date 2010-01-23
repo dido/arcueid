@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 3 of the
   License, or (at your option) any later version.
@@ -23,7 +23,7 @@
 #define _ALLOC_H_
 
 #include <inttypes.h>
-#include "carc.h"
+#include "arcueid.h"
 
 /* These magic numbers are essentially the same as that used by
    Inferno in its memory allocator. */
@@ -86,10 +86,10 @@ static inline void WB(value *loc, value nval)
   *loc = nval;
 }
 
-extern void *__carc_aligned_mmap(size_t osize, int modulo, void **block);
-extern void __carc_aligned_munmap(void *addr, size_t size);
-extern void *__carc_aligned_malloc(size_t osize, int modulo, void **block);
-extern void __carc_aligned_free(void *addr, size_t size);
+extern void *__arc_aligned_mmap(size_t osize, int modulo, void **block);
+extern void __arc_aligned_munmap(void *addr, size_t size);
+extern void *__arc_aligned_malloc(size_t osize, int modulo, void **block);
+extern void __arc_aligned_free(void *addr, size_t size);
 
 
 #endif

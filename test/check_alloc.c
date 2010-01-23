@@ -23,7 +23,7 @@
 #include <check.h>
 #include <math.h>
 #include <stdio.h>
-#include "../src/carc.h"
+#include "../src/arcueid.h"
 #include "../src/alloc.h"
 #include "../config.h"
 
@@ -43,9 +43,9 @@ START_TEST(test_size_rounding)
 }
 END_TEST
 
-extern Hhdr *__carc_get_heap_start(void);
+extern Hhdr *__arc_get_heap_start(void);
 
-carc c;
+arc c;
 
 START_TEST(test_alloc)
 {
@@ -111,7 +111,7 @@ START_TEST(test_alloc)
 
   /* At the end of this, we should be able to see all eight
      memory blocks in a single heap chunk. */
-  h = __carc_get_heap_start();
+  h = __arc_get_heap_start();
   b = (Bhdr *)((char *)h + sizeof(Hhdr));
   fail_unless(h->next == NULL);
   i=0;
@@ -137,7 +137,7 @@ START_TEST(test_alloc)
   /* This freeing should leave the heap with a single chunk
      of free memory which should be exactly 8192-32 = 8160 bytes
      in size */
-  h = __carc_get_heap_start();
+  h = __arc_get_heap_start();
   b = (Bhdr *)((char *)h + sizeof(Hhdr));
   fail_unless(h->next == NULL);
   fail_unless(b->magic == MAGIC_F);
@@ -165,7 +165,7 @@ START_TEST(test_alloc)
 
   /* At the end of this, we should again be able to see all eight
      memory blocks in a single heap chunk. */
-  h = __carc_get_heap_start();
+  h = __arc_get_heap_start();
   b = (Bhdr *)((char *)h + sizeof(Hhdr));
   fail_unless(h->next == NULL);
   i=0;
@@ -187,7 +187,7 @@ START_TEST(test_alloc)
   c.free_block(&c, ptr7);
   c.free_block(&c, ptr3);
 
-  h = __carc_get_heap_start();
+  h = __arc_get_heap_start();
   b = (Bhdr *)((char *)h + sizeof(Hhdr));
   fail_unless(h->next == NULL);
   fail_unless(b->magic == MAGIC_F);
@@ -214,7 +214,7 @@ START_TEST(test_gc)
   Bhdr *b;
   unsigned long long oldepoch;
 
-  carc_init_reader(&c);
+  arc_init_reader(&c);
 
   /* Create a two small lists */
   for (i=0; i<4; i++)
@@ -223,56 +223,56 @@ START_TEST(test_gc)
     list2=cons(&c, INT2FIX(i), list);
 
   /* Add a symbol at the end of each list */
-  lss1 = carc_mkstringc(&c, "list1");
-  lss2 = carc_mkstringc(&c, "list2");
-  listsym1 = carc_intern(&c, lss1);
-  listsym2 = carc_intern(&c, lss2);
+  lss1 = arc_mkstringc(&c, "list1");
+  lss2 = arc_mkstringc(&c, "list2");
+  listsym1 = arc_intern(&c, lss1);
+  listsym2 = arc_intern(&c, lss2);
   list = cons(&c, listsym1, list);
   list2 = cons(&c, listsym2, list2);
 
   /* Add a string to the end of each list */
-  list = cons(&c, carc_mkstringc(&c, "foo"), list);
-  list2 = cons(&c, carc_mkstringc(&c, "bar"), list);
+  list = cons(&c, arc_mkstringc(&c, "foo"), list);
+  list2 = cons(&c, arc_mkstringc(&c, "bar"), list);
 
   /* Add a flonum to the end of each list */
-  list = cons(&c, carc_mkflonum(&c, 1.234), list);
-  list2 = cons(&c, carc_mkflonum(&c, 5.678), list);
+  list = cons(&c, arc_mkflonum(&c, 1.234), list);
+  list2 = cons(&c, arc_mkflonum(&c, 5.678), list);
 
 #ifdef HAVE_GMP_H
   /* Add a bignum and a rational to the end of each list */
-  list = cons(&c, carc_mkbignuml(&c, FIXNUM_MAX + 1), list);
-  list2 = cons(&c, carc_mkbignuml(&c, FIXNUM_MAX + 2), list);
+  list = cons(&c, arc_mkbignuml(&c, FIXNUM_MAX + 1), list);
+  list2 = cons(&c, arc_mkbignuml(&c, FIXNUM_MAX + 2), list);
 
-  list = cons(&c, carc_mkrationall(&c, 1, 4), list);
-  list2 = cons(&c, carc_mkrationall(&c, 3, 4), list);
+  list = cons(&c, arc_mkrationall(&c, 1, 4), list);
+  list2 = cons(&c, arc_mkrationall(&c, 3, 4), list);
 #endif
 
   /* Add a character to the end of each list */
-  list = cons(&c, carc_mkchar(&c, 0x86df), list);
-  list2 = cons(&c, carc_mkchar(&c, 0x9f8d), list2);
+  list = cons(&c, arc_mkchar(&c, 0x86df), list);
+  list2 = cons(&c, arc_mkchar(&c, 0x9f8d), list2);
 
   /* Add a vector to each list, and populate it with fixnums and a string */
-  vec1 = carc_mkvector(&c, 10);
-  vec2 = carc_mkvector(&c, 10);
+  vec1 = arc_mkvector(&c, 10);
+  vec2 = arc_mkvector(&c, 10);
 
   for (i=0; i<9; i++) {
     VINDEX(vec1, i) = INT2FIX(i);
     VINDEX(vec2, i) = INT2FIX(i);
   }
 
-  VINDEX(vec1, 9) = carc_mkstringc(&c, "foo");
-  VINDEX(vec2, 9) = carc_mkstringc(&c, "bar");
+  VINDEX(vec1, 9) = arc_mkstringc(&c, "foo");
+  VINDEX(vec2, 9) = arc_mkstringc(&c, "bar");
   list = cons(&c, vec1, list);
   list2 = cons(&c, vec2, list2);
 
   /* Create two hash tables, put a fixnum and a string mapping in
      each, and add them to each list. */
-  hash1 = carc_mkhash(&c, 4);
-  hash2 = carc_mkhash(&c, 4);
-  carc_hash_insert(&c, hash1, INT2FIX(1), INT2FIX(2));
-  carc_hash_insert(&c, hash1, INT2FIX(3), carc_mkstringc(&c, "three"));
-  carc_hash_insert(&c, hash2, INT2FIX(5), INT2FIX(6));
-  carc_hash_insert(&c, hash2, INT2FIX(7), carc_mkstringc(&c, "seven"));
+  hash1 = arc_mkhash(&c, 4);
+  hash2 = arc_mkhash(&c, 4);
+  arc_hash_insert(&c, hash1, INT2FIX(1), INT2FIX(2));
+  arc_hash_insert(&c, hash1, INT2FIX(3), arc_mkstringc(&c, "three"));
+  arc_hash_insert(&c, hash2, INT2FIX(5), INT2FIX(6));
+  arc_hash_insert(&c, hash2, INT2FIX(7), arc_mkstringc(&c, "seven"));
   list = cons(&c, hash1, list);
   list2 = cons(&c, hash2, list2);
 
@@ -284,7 +284,7 @@ START_TEST(test_gc)
   }
 
   count = 0;
-  for (h = __carc_get_heap_start(); h; h = h->next) {
+  for (h = __arc_get_heap_start(); h; h = h->next) {
     for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
 	 b = B2NB(b)) {
       if (b->magic == MAGIC_A)
@@ -316,7 +316,7 @@ START_TEST(test_gc)
   /* After three epochs of the garbage collector, [list2], whose head was
      never marked as a propagator, should have been garbage collected. */
   count = 0;
-  for (h = __carc_get_heap_start(); h; h = h->next) {
+  for (h = __arc_get_heap_start(); h; h = h->next) {
     for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
 	 b = B2NB(b)) {
       if (b->magic == MAGIC_A)
@@ -334,7 +334,7 @@ START_TEST(test_gc)
   fail_unless(startcount - count == 150);
 #endif
   /* check if the symbol is still there */
-  fail_unless(carc_sym2name(&c, listsym2) == CUNBOUND);
+  fail_unless(arc_sym2name(&c, listsym2) == CUNBOUND);
 }
 END_TEST
 
@@ -346,7 +346,7 @@ int main(void)
   TCase *tc_gc = tcase_create("Garbage Collection");
   SRunner *sr;
 
-  carc_set_memmgr(&c);
+  arc_set_memmgr(&c);
 
   tcase_add_test(tc_alloc, test_size_rounding);
   tcase_add_test(tc_alloc, test_alloc);

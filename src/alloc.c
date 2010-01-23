@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 3 of the
   License, or (at your option) any later version.
@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <assert.h>
-#include "carc.h"
+#include "arcueid.h"
 #include "alloc.h"
 #include "../config.h"
 
@@ -53,9 +53,9 @@ static int sweeper = 2;
 #define MAX_MARK_RECURSION 64
 
 /* Allocate memory for the heap.  This uses the low level memory allocator
-   function specified in the carc structure.  Takes care of filling in the
+   function specified in the arc structure.  Takes care of filling in the
    heap header information and adding the heap to the list of heaps. */
-static void *alloc_for_heap(carc *c, size_t req)
+static void *alloc_for_heap(arc *c, size_t req)
 {
   char *mem;
   void *block;
@@ -129,7 +129,7 @@ static void fl_free_block(Bhdr *blk)
   *prevnext = blk;
 }
 
-static void free_block(struct carc *c, void *blk)
+static void free_block(struct arc *c, void *blk)
 {
   Bhdr *h;
 
@@ -206,7 +206,7 @@ static void *fl_alloc(size_t size)
    up the size of the chunk to the next larger multiple of the page
    size.
  */
-static Bhdr *expand_heap(carc *c, size_t request)
+static Bhdr *expand_heap(arc *c, size_t request)
 {
   Bhdr *mem, *tail;
   size_t over_request, rounded_request;
@@ -236,7 +236,7 @@ static Bhdr *expand_heap(carc *c, size_t request)
   return(mem);
 }
 
-static void *alloc(carc *c, size_t osize)
+static void *alloc(arc *c, size_t osize)
 {
   void *blk;
   size_t size;
@@ -258,7 +258,7 @@ static void *alloc(carc *c, size_t osize)
   return(blk);
 }
 
-static value get_cell(carc *c)
+static value get_cell(arc *c)
 {
   void *cellptr;
 
@@ -268,7 +268,7 @@ static value get_cell(carc *c)
   return((value)cellptr);
 }
 
-Hhdr *__carc_get_heap_start(void)
+Hhdr *__arc_get_heap_start(void)
 {
   return(heaps);
 }
@@ -276,7 +276,7 @@ Hhdr *__carc_get_heap_start(void)
 #define SETMARK(h) if ((h)->color != mutator) { (h)->color = propagator; nprop=1; }
 
 
-static void mark(carc *c, value v, int reclevel)
+static void mark(arc *c, value v, int reclevel)
 {
   Bhdr *b;
   void *ctx;
@@ -287,9 +287,9 @@ static void mark(carc *c, value v, int reclevel)
      tables and mark those.  This provides symbol garbage collection,
      leaving only symbols which are actually in active use. */
   if (TYPE(v) == T_SYMBOL) {
-    val = carc_hash_lookup2(c, c->rsymtable, v);
+    val = arc_hash_lookup2(c, c->rsymtable, v);
     mark(c, val, reclevel);
-    val = carc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
+    val = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
     mark(c, val, reclevel);
     return;
   }
@@ -312,7 +312,7 @@ static void mark(carc *c, value v, int reclevel)
       break;
     case T_TABLE:
       ctx = NULL;
-      while ((val = carc_hash_iter(c, v, &ctx)) != CUNBOUND)
+      while ((val = arc_hash_iter(c, v, &ctx)) != CUNBOUND)
 	mark(c, val, reclevel+1);
       break;
     case T_TBUCKET:
@@ -346,7 +346,7 @@ static void mark(carc *c, value v, int reclevel)
   }
 }
 
-static void sweep(carc *c, value v)
+static void sweep(arc *c, value v)
 {
   /* The only special cases here are for those data types which point to
      immutable memory blocks which are otherwise invisible to the sweeper
@@ -384,7 +384,7 @@ static void sweep(carc *c, value v)
   }
 }
 
-static void rootset(carc *c)
+static void rootset(arc *c)
 {
   mutator = gccolor % 3;
   marker = (gccolor-1)%3;
@@ -403,7 +403,7 @@ static void rootset(carc *c)
   MARKPROP(c->inlfuncs);
 }
 
-static void rungc(carc *c)
+static void rungc(arc *c)
 {
   value h;
 
@@ -461,17 +461,17 @@ static void rungc(carc *c)
   nprop = 0;
 }
 
-void carc_set_memmgr(carc *c)
+void arc_set_memmgr(arc *c)
 {
   c->get_cell = get_cell;
   c->get_block = alloc;
   c->free_block = free_block;
 #ifdef HAVE_MMAP
-  c->mem_alloc = __carc_aligned_mmap;
-  c->mem_free = __carc_aligned_munmap;
+  c->mem_alloc = __arc_aligned_mmap;
+  c->mem_free = __arc_aligned_munmap;
 #else
-  c->mem_alloc = __carc_aligned_malloc;
-  c->mem_free = __carc_aligned_free;
+  c->mem_alloc = __arc_aligned_malloc;
+  c->mem_free = __arc_aligned_free;
 #endif
   c->rungc = rungc;
 

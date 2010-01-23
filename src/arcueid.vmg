@@ -1,0 +1,221 @@
+\ Copyright (C) 2010 Rafael R. Sevilla
+\
+\ This file is part of Arcueid
+\
+\ Arcueid is free software; you can redistribute it and/or modify it
+\ under the terms of the GNU Lesser General Public License as
+\ published by the Free Software Foundation; either version 3 of the
+\ License, or (at your option) any later version.
+\
+\ This library is distributed in the hope that it will be useful,
+\ but WITHOUT ANY WARRANTY; without even the implied warranty of
+\ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+\ GNU Lesser General Public License for more details.
+\
+\ You should have received a copy of the GNU Lesser General Public
+\ License along with this library; if not, write to the Free Software
+\ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
+\ 02110-1301 USA.
+
+\E stack data-stack sp value
+
+\E inst-stream stack-prefix #
+
+\E s" value"   single data-stack type-prefix i
+
+\E s" Inst *"  single data-stack type-prefix target
+
+\ No operation
+nop ( -- )
+
+\ Push a value in the value register into the stack
+push ( -- i )
+i = TVALR(thr);
+
+\ Pop the stack, and place its topmost value into the value reg.
+pop ( i -- )
+TVALR(thr) = i;
+
+\ The ldl instruction loads a literal value from the literal values
+\ in the funr register into value register.
+ldl ( #i -- )
+TVALR(thr) = CODE_LITERAL(TFUNR(thr), i);
+
+\ Load an immediate value (usually a fixnum) into the value register
+ldi ( #i -- )
+TVALR(thr) = i;
+
+\ Load a global value.  The value in the instruction is generally a
+\ symbol, and indexes into the global symbol table.
+ldg ( #i -- )
+{
+  value tmp;
+
+  tmp = CODE_LITERAL(TFUNR(thr), i);
+  if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+    c->signal_error(c, "Unbound symbol %S\n", tmp);
+    TVALR(thr) = CNIL;
+  }
+}
+
+\ Set a global value with the value of the value register
+stg ( #i -- )
+arc_hash_insert(c, c->genv, CODE_LITERAL(TFUNR(thr), i), TVALR(thr));
+
+\ Load the value of a variable in the environment.  The first
+\ operand is the number of the environment, and the second is
+\ the index into that environment.
+lde ( #ienv #iindx -- )
+{
+  value tmp = TENVR(thr);
+  while (--ienv >= 0) tmp = cdr(tmp);
+  TVALR(thr) = ENV_VALUE(car(tmp), iindx);
+}
+
+\ Store to an environment variable
+ste ( #ienv #iindx -- )
+{
+  value tmp = TENVR(thr);
+  while (--ienv >= 0) tmp = cdr(tmp);
+  WB(&ENV_VALUE(car(tmp), iindx), TVALR(thr));
+}
+
+\ Move an argument from the stack to the environment slot.  If the
+\ stack is empty signal an error
+mvarg ( #iindx i -- )
+{
+  if (sp > TSTOP(thr))
+    c->signal_error(c, "too few arguments");
+  WB(&ENV_VALUE(car(TENVR(thr)), iindx), i);
+}
+
+\ Move an optional argument from the stack to the environment slot.
+\ If the argument is unavailable, store nil.
+mvoarg ( #iindx i -- )
+{
+  if (sp > TSTOP(thr)) {
+    sp = TSTOP(thr);
+    i = CNIL;
+  }
+  WB(&ENV_VALUE(car(TENVR(thr)), iindx), i);
+}
+
+\ Build the rest of the arguments on the stack into a list, and store
+\ the list into the environment slot indicated.
+mvrarg ( #iindx -- )
+{
+  value list = CNIL, i;
+
+  while (sp < TSTOP(thr)) {
+    vm_value2i(spTOS, i);
+    sp++;
+    list = cons(c, i, list);
+  }
+  WB(&ENV_VALUE(car(TENVR(thr)), iindx), i);
+}
+
+\ Make a continuation at offset icofs, placing it in the value register.
+cont ( #icofs -- )
+WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr), TCONR(thr)));
+
+\ Make an environment of a given size, with names from the function register
+env ( #ienvsize -- )
+WB(&TENVR(thr), arc_mkenv(c, TENVR(thr), ienvsize));
+ENV_NAMES(TENVR(thr)) = CODE_NAME(TFUNR(thr));
+WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
+
+\ apply a function
+apply ( #iargc -- )
+TARGC(thr) = iargc;
+arc_apply(c, thr, TVALR(thr));
+SET_IP(TIP(thr));
+
+
+ret ( -- )
+arc_return(c, thr);
+SET_IP(TIP(thr));
+
+\ Jump unconditional
+jmp ( #itarget -- )
+INC_IP(itarget - 2);
+
+\ Jump if valr is not nil
+jt ( #itarget -- )
+if (TVALR(thr) != CNIL) {
+  INC_IP(itarget - 2);
+  INST_TAIL;
+}
+
+\ Jump if valr is nil
+jf ( #itarget -- )
+if (TVALR(thr) == CNIL) {
+  INC_IP(itarget - 2);
+  INST_TAIL;
+}
+
+true ( -- )
+TVALR(thr) = CTRUE;
+
+nil ( -- )
+TVALR(thr) = CNIL;
+
+\ Halt execution of this virtual machine thread
+hlt ( -- )
+TSTATE(thr) = Trelease;
+goto endquantum;
+
+\ Maybe we can do without the instructions below this point, and
+\ make everything a function call, however that would probably be
+\ very slow until we can figure out how to do inline caching
+\ properly.
+add  ( i -- )
+TVALR(thr) = __arc_add2(c, TVALR(thr), i);
+
+sub ( i -- )
+TVALR(thr) = __arc_sub2(c, TVALR(thr), i);
+
+mul ( i -- )
+TVALR(thr) = __arc_mul2(c, TVALR(thr), i);
+
+div ( i -- )
+TVALR(thr) = __arc_div2(c, TVALR(thr), i);
+
+cons ( i -- )
+TVALR(thr) = cons(c, TVALR(thr), i);
+
+car ( -- )
+TVALR(thr) = car(TVALR(thr));
+
+cdr ( -- )
+TVALR(thr) = cdr(TVALR(thr));
+
+scar ( inc -- )
+scar(TVALR(thr), inc);
+
+scdr ( inc -- )
+scdr(TVALR(thr), inc);
+
+\ Splice two lists together.  The list at the top of the stack is
+\ considered the tail.
+spl ( i -- )
+{
+  value list = TVALR(thr), nlist = i;
+
+  while (list != CNIL) {
+    nlist = cons(c, car(list), nlist);
+    list = cdr(list);
+  }
+  TVALR(thr) = nlist;
+}
+
+is ( i -- )
+TVALR(thr) = arc_is(c, TVALR(thr), i);
+
+iso (i -- )
+TVALR(thr) = arc_iso(c, TVALR(thr), i);
+
+gt ( i -- )
+TVALR(thr) = (FIX2INT(arc_cmp(c, TVALR(thr), i)) > 0) ? CTRUE : CNIL;
+
+lt ( i -- )
+TVALR(thr) = (FIX2INT(arc_cmp(c, TVALR(thr), i)) < 0) ? CTRUE : CNIL;

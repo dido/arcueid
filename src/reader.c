@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 3 of the
   License, or (at your option) any later version.
@@ -18,70 +18,69 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
   02110-1301 USA.
 */
-/* XXX -- We should change this parser to being an incremental
-   continuation-based parser so that we can interrupt the parser
-   to run other threads and the garbage collector. */
+/* XXX -- We should probably rewrite this in Arc just as we wrote
+   the compiler in Arc. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
-#include "carc.h"
+#include "arcueid.h"
 #include "alloc.h"
 #include "utf.h"
 #include "arith.h"
 #include "symbols.h"
 #include "../config.h"
 
-static Rune scan(carc *c, value src, int *index);
-static value read_list(carc *c, value src, int *index);
-static value read_anonf(carc *c, value src, int *index);
-static value read_quote(carc *c, value src, int *index, value sym);
-static value read_comma(carc *c, value src, int *index);
-static value read_string(carc *c, value src, int *index);
-static value read_char(carc *c, value src, int *index);
-static void read_comment(carc *c, value src, int *index);
-static value read_symbol(carc *c, value src, int *index);
-static value expand_ssyntax(carc *c, value sym);
-static value expand_compose(carc *c, value sym);
-static value expand_sexpr(carc *c, value sym);
-static value expand_and(carc *c, value sym);
+static Rune scan(arc *c, value src, int *index);
+static value read_list(arc *c, value src, int *index);
+static value read_anonf(arc *c, value src, int *index);
+static value read_quote(arc *c, value src, int *index, value sym);
+static value read_comma(arc *c, value src, int *index);
+static value read_string(arc *c, value src, int *index);
+static value read_char(arc *c, value src, int *index);
+static void read_comment(arc *c, value src, int *index);
+static value read_symbol(arc *c, value src, int *index);
+static value expand_ssyntax(arc *c, value sym);
+static value expand_compose(arc *c, value sym);
+static value expand_sexpr(arc *c, value sym);
+static value expand_and(arc *c, value sym);
 
 #define ID2SYM(x) ((value)(((long)(x))<<8|SYMBOL_FLAG))
 
-value carc_intern(carc *c, value name)
+value arc_intern(arc *c, value name)
 {
   value symval;
 
-  if ((symval = carc_hash_lookup(c, c->symtable, name)) != CUNBOUND)
+  if ((symval = arc_hash_lookup(c, c->symtable, name)) != CUNBOUND)
     return(symval);
 
   symval = ID2SYM(++c->lastsym);
-  carc_hash_insert(c, c->symtable, name, symval);
-  carc_hash_insert(c, c->rsymtable, symval, name);
+  arc_hash_insert(c, c->symtable, name, symval);
+  arc_hash_insert(c, c->rsymtable, symval, name);
   return(symval);
 }
 
-value carc_intern_cstr(carc *c, const char *name)
+value arc_intern_cstr(arc *c, const char *name)
 {
   value symval, symstr;
 
-  if ((symval = carc_hash_lookup_cstr(c, c->symtable, name)) != CUNBOUND)
+  if ((symval = arc_hash_lookup_cstr(c, c->symtable, name)) != CUNBOUND)
     return(symval);
-  symstr = carc_mkstringc(c, name);
-  return(carc_intern(c, symstr));
+  symstr = arc_mkstringc(c, name);
+  return(arc_intern(c, symstr));
 }
 
-value carc_sym2name(carc *c, value sym)
+value arc_sym2name(arc *c, value sym)
 {
-  return(carc_hash_lookup(c, c->rsymtable, sym));
+  return(arc_hash_lookup(c, c->rsymtable, sym));
 }
 
 /* Reader */
-static Rune readchar(struct carc *c, value src, int *index)
+static Rune readchar(struct arc *c, value src, int *index)
 {
   switch (TYPE(src)) {
   case T_STRING:
-    return(carc_strgetc(c, src, index));
+    return(arc_strgetc(c, src, index));
     break;
   default:
     c->signal_error(c, "Attempt to read from an invalid source");
@@ -90,11 +89,11 @@ static Rune readchar(struct carc *c, value src, int *index)
   return(CNIL);
 }
 
-static void unreadchar(struct carc *c, value src, Rune ch, int *index)
+static void unreadchar(struct arc *c, value src, Rune ch, int *index)
 {
   switch (TYPE(src)) {
   case T_STRING:
-    return(carc_strungetc(c, index));
+    return(arc_strungetc(c, index));
     break;
   default:
     c->signal_error(c, "Attempt to unread from an invalid source");
@@ -102,7 +101,7 @@ static void unreadchar(struct carc *c, value src, Rune ch, int *index)
   }
 }
 
-value carc_read(carc *c, value src, int *index, value *pval)
+value arc_read(arc *c, value src, int *index, value *pval)
 {
   Rune ch;
 
@@ -121,10 +120,10 @@ value carc_read(carc *c, value src, int *index, value *pval)
       c->signal_error(c, "misplaced right bracket");
       return(CNIL);
     case '\'':
-      *pval = read_quote(c, src, index, CARC_BUILTIN(c, S_QUOTE));
+      *pval = read_quote(c, src, index, ARC_BUILTIN(c, S_QUOTE));
       return(CTRUE);
     case '`':
-      *pval = read_quote(c, src, index, CARC_BUILTIN(c, S_QQUOTE));
+      *pval = read_quote(c, src, index, ARC_BUILTIN(c, S_QQUOTE));
       return(CTRUE);
     case ',':
       *pval = read_comma(c, src, index);
@@ -147,7 +146,7 @@ value carc_read(carc *c, value src, int *index, value *pval)
   return(CNIL);
 }
 
-static value read_list(carc *c, value src, int *index)
+static value read_list(arc *c, value src, int *index)
 {
   value top, val, last;
   Rune ch;
@@ -162,7 +161,7 @@ static value read_list(carc *c, value src, int *index)
       return(top);
     default:
       unreadchar(c, src, ch, index);
-      if (!carc_read(c, src, index, &val))
+      if (!arc_read(c, src, index, &val))
 	c->signal_error(c, "unexpected end of source");
       val = cons(c, val, CNIL);
       if (last)
@@ -177,7 +176,7 @@ static value read_list(carc *c, value src, int *index)
   return(CNIL);
 }
 
-static void read_comment(carc *c, value src, int *index)
+static void read_comment(arc *c, value src, int *index)
 {
   Rune ch;
 
@@ -202,7 +201,7 @@ static int issym(Rune ch)
 
 #define STRMAX 256
 
-static value getsymbol(carc *c, value src, int *index)
+static value getsymbol(arc *c, value src, int *index)
 {
   Rune buf[STRMAX];
   Rune ch;
@@ -213,38 +212,38 @@ static value getsymbol(carc *c, value src, int *index)
   i=0;
   while ((ch = readchar(c, src, index)) != Runeerror && issym(ch)) {
     if (i >= STRMAX) {
-      nstr = carc_mkstring(c, buf, i);
-      sym = (sym == CNIL) ? nstr : carc_strcat(c, sym, nstr);
+      nstr = arc_mkstring(c, buf, i);
+      sym = (sym == CNIL) ? nstr : arc_strcat(c, sym, nstr);
       i = 0;
     }
     buf[i++] = ch;
   }
   if (i==0 && sym == CNIL)
     return(CNIL);
-  nstr = carc_mkstring(c, buf, i);
-  sym = (sym == CNIL) ? nstr : carc_strcat(c, sym, nstr);
+  nstr = arc_mkstring(c, buf, i);
+  sym = (sym == CNIL) ? nstr : arc_strcat(c, sym, nstr);
 
   unreadchar(c, src, ch, index);
   return(sym);
 }
 
 /* parse a symbol name or number */
-static value read_symbol(carc *c, value str, int *index)
+static value read_symbol(arc *c, value str, int *index)
 {
   value sym, num, ssx;
 
   if ((sym = getsymbol(c, str, index)) == CNIL)
     c->signal_error(c, "expecting symbol name");
-  num = carc_string2num(c, sym);
+  num = arc_string2num(c, sym);
   if (num == CNIL) {
     ssx = expand_ssyntax(c, sym);
-    return((ssx == CNIL) ? carc_intern(c, sym) : ssx);    
+    return((ssx == CNIL) ? arc_intern(c, sym) : ssx);    
   } else
     return(num);
 }
 
 /* scan for first non-blank character */
-static Rune scan(carc *c, value src, int *index)
+static Rune scan(arc *c, value src, int *index)
 {
   Rune ch;
 
@@ -255,7 +254,7 @@ static Rune scan(carc *c, value src, int *index)
 
 /* Read an Arc square bracketed anonymous function.  This expands to
    (fn (_) ...) */
-static value read_anonf(carc *c, value src, int *index)
+static value read_anonf(arc *c, value src, int *index)
 {
   value top, val, last, ret;
   Rune ch;
@@ -267,12 +266,12 @@ static value read_anonf(carc *c, value src, int *index)
       read_comment(c, src, index);
       break;
     case ']':
-      ret = cons(c, CARC_BUILTIN(c, S_FN), cons(c, cons(c, CARC_BUILTIN(c, S_US), CNIL), cons(c, top, CNIL)));
+      ret = cons(c, ARC_BUILTIN(c, S_FN), cons(c, cons(c, ARC_BUILTIN(c, S_US), CNIL), cons(c, top, CNIL)));
 
       return(ret);
     default:
       unreadchar(c, src, ch, index);
-      if (!carc_read(c, src, index, &val))
+      if (!arc_read(c, src, index, &val))
 	c->signal_error(c, "unexpected end of source");
       val = cons(c, val, CNIL);
       if (last)
@@ -288,27 +287,27 @@ static value read_anonf(carc *c, value src, int *index)
 
 }
 
-static value read_quote(carc *c, value src, int *index, value sym)
+static value read_quote(arc *c, value src, int *index, value sym)
 {
   value val;
 
-  if (carc_read(c, src, index, &val) == CNIL)
+  if (arc_read(c, src, index, &val) == CNIL)
     c->signal_error(c, "unexpected end of source");
   return(cons(c, sym, cons(c, val, CNIL)));
 }
 
-static value read_comma(carc *c, value src, int *index)
+static value read_comma(arc *c, value src, int *index)
 {
   Rune ch;
 
   if ((ch = readchar(c, src, index)) == '@')
-    return(read_quote(c, src, index, CARC_BUILTIN(c, S_UNQUOTESP)));
+    return(read_quote(c, src, index, ARC_BUILTIN(c, S_UNQUOTESP)));
   unreadchar(c, src, ch, index);
-  return(read_quote(c, src, index, CARC_BUILTIN(c, S_UNQUOTE)));
+  return(read_quote(c, src, index, ARC_BUILTIN(c, S_UNQUOTE)));
 }
 
 /* XXX - we need to add support for octal and hexadecimal escapes as well */
-static value read_string(carc *c, value src, int *index)
+static value read_string(arc *c, value src, int *index)
 {
   Rune buf[STRMAX], ch, escrune;
   int i=0, state=1, digval, digcount;
@@ -320,8 +319,8 @@ static value read_string(carc *c, value src, int *index)
       switch (ch) {
       case '\"':
 	/* end of string */
-	nstr = carc_mkstring(c, buf, i);
-	str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	nstr = arc_mkstring(c, buf, i);
+	str = (str == CNIL) ? nstr : arc_strcat(c, str, nstr);
 	return(str);		/* proper termination */
 	break;
       case '\\':
@@ -330,8 +329,8 @@ static value read_string(carc *c, value src, int *index)
 	break;
       default:
 	if (i >= STRMAX) {
-	  nstr = carc_mkstring(c, buf, i);
-	  str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	  nstr = arc_mkstring(c, buf, i);
+	  str = (str == CNIL) ? nstr : arc_strcat(c, str, nstr);
 	  i = 0;
 	}
 	buf[i++] = ch;
@@ -381,8 +380,8 @@ static value read_string(carc *c, value src, int *index)
 	break;
       }
       if (i >= STRMAX) {
-	nstr = carc_mkstring(c, buf, i);
-	str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	nstr = arc_mkstring(c, buf, i);
+	str = (str == CNIL) ? nstr : arc_strcat(c, str, nstr);
 	i = 0;
       }
       buf[i++] = ch;
@@ -393,8 +392,8 @@ static value read_string(carc *c, value src, int *index)
       if (digcount >= 5) {
 	unreadchar(c, src, ch, index);
 	if (i >= STRMAX) {
-	  nstr = carc_mkstring(c, buf, i);
-	  str = (str == CNIL) ? nstr : carc_strcat(c, str, nstr);
+	  nstr = arc_mkstring(c, buf, i);
+	  str = (str == CNIL) ? nstr : arc_strcat(c, str, nstr);
 	  i = 0;
 	}
 	buf[i++] = escrune;
@@ -426,7 +425,7 @@ static value read_string(carc *c, value src, int *index)
    this reader behavior to something more rational (such as sharp
    followed by the actual character, with slash for escapes).  Arc
    does not otherwise use the #-sign for anything else. */
-static value read_char(carc *c, value src, int *index)
+static value read_char(arc *c, value src, int *index)
 {
   value tok, symch;
   int alldigits, i;
@@ -438,14 +437,14 @@ static value read_char(carc *c, value src, int *index)
   }
 
   tok = getsymbol(c, src, index);
-  if (carc_strlen(c, tok) == 1)	/* single character */
-    return(carc_mkchar(c, carc_strindex(c, tok, 0)));
-  if (carc_strlen(c, tok) == 3) {
+  if (arc_strlen(c, tok) == 1)	/* single character */
+    return(arc_mkchar(c, arc_strindex(c, tok, 0)));
+  if (arc_strlen(c, tok) == 3) {
     /* Possible octal escape */
     alldigits = 1;
     val = 0;
     for (i=0; i<3; i++) {
-      digit = carc_strindex(c, tok, i);
+      digit = arc_strindex(c, tok, i);
       if (!isdigit(digit)) {
 	alldigits = 0;
 	break;
@@ -453,14 +452,14 @@ static value read_char(carc *c, value src, int *index)
       val = val * 8 + (digit - '0');
     }
     if (alldigits)
-      return(carc_mkchar(c, val));
+      return(arc_mkchar(c, val));
 
     /* Possible hexadecimal escape */
-    if (carc_strindex(c, tok, 0) == 'x') {
+    if (arc_strindex(c, tok, 0) == 'x') {
       alldigits = 1;
       val = 0;
       for (i=1; i<3; i++) {
-	digit = carc_strindex(c, tok, i);
+	digit = arc_strindex(c, tok, i);
 	if (!isxdigit(digit)) {
 	  alldigits = 0;
 	  break;
@@ -470,17 +469,17 @@ static value read_char(carc *c, value src, int *index)
 	val = val * 16 + digit;
       }
       if (alldigits)
-	return(carc_mkchar(c, val));
+	return(arc_mkchar(c, val));
     }
     /* Not an octal or hexadecimal escape */
   }
 
   /* Possible Unicode escape? */
-  if (tolower(carc_strindex(c, tok, 0)) == 'u') {
+  if (tolower(arc_strindex(c, tok, 0)) == 'u') {
     alldigits = 1;
     val = 0;
-    for (i=1; i<carc_strlen(c, tok); i++) {
-      digit = carc_strindex(c, tok, i);
+    for (i=1; i<arc_strlen(c, tok); i++) {
+      digit = arc_strindex(c, tok, i);
       if (!isxdigit(digit)) {
 	alldigits = 0;
 	break;
@@ -490,19 +489,19 @@ static value read_char(carc *c, value src, int *index)
       val = val * 16 + digit;
     }
     if (alldigits)
-      return(carc_mkchar(c, val));
+      return(arc_mkchar(c, val));
     c->signal_error(c, "invalid Unicode escape");
   }
 
   /* Symbolic character escape */
-  symch = carc_hash_lookup(c, c->charesctbl, tok);
+  symch = arc_hash_lookup(c, c->charesctbl, tok);
   if (symch == CUNBOUND)
     c->signal_error(c, "invalid character constant");
   return(symch);
 }
 
 /* I imagine this can be done a lot more cleanly! */
-static value expand_compose(carc *c, value sym)
+static value expand_compose(arc *c, value sym)
 {
   value top, last, nelt, elt;
   Rune ch, buf[STRMAX];
@@ -514,14 +513,14 @@ static value expand_compose(carc *c, value sym)
     switch (ch) {
     case ':':
     case Runeerror:
-      nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
-      elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+      nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
+      elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
       if (elt != CNIL)
-	elt = carc_intern(c, elt);
+	elt = arc_intern(c, elt);
       i=0;
       if (negate) {
-	elt = (elt == CNIL) ? CARC_BUILTIN(c, S_NO) 
-	  : cons(c, CARC_BUILTIN(c, S_COMPLEMENT), cons(c, elt, CNIL));
+	elt = (elt == CNIL) ? ARC_BUILTIN(c, S_NO) 
+	  : cons(c, ARC_BUILTIN(c, S_COMPLEMENT), cons(c, elt, CNIL));
 	if (ch == Runeerror && top == CNIL)
 	  return(elt);
 	negate = 0;
@@ -546,8 +545,8 @@ static value expand_compose(carc *c, value sym)
       break;
     default:
       if (i >= STRMAX) {
-	nelt = carc_mkstring(c, buf, i);
-	elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+	nelt = arc_mkstring(c, buf, i);
+	elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
 	i=0;
       }
       buf[i++] = ch;
@@ -556,10 +555,10 @@ static value expand_compose(carc *c, value sym)
   }
   if (cdr(top) == CNIL)
     return(car(top));
-  return(cons(c, CARC_BUILTIN(c, S_COMPOSE), top));
+  return(cons(c, ARC_BUILTIN(c, S_COMPOSE), top));
 }
 
-static value expand_sexpr(carc *c, value sym)
+static value expand_sexpr(arc *c, value sym)
 {
   Rune ch, buf[STRMAX], prevchar;
   value last, cur, nelt, elt;
@@ -571,24 +570,24 @@ static value expand_sexpr(carc *c, value sym)
     case '.':
     case '!':
       prevchar = ch;
-      nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
-      elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+      nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
+      elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
       i=0;
       if (elt == CNIL)
 	continue;
-      elt = carc_intern(c, elt);
+      elt = arc_intern(c, elt);
       if (last == CNIL)
 	last = elt;
       else if (prevchar == '!')
-	last = cons(c, last, cons(c, CARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL)));
+	last = cons(c, last, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL)));
       else
 	last = cons(c, last, cons(c, elt, CNIL));
       elt = CNIL;
       break;
     default:
       if (i >= STRMAX) {
-	nelt = carc_mkstring(c, buf, i);
-	elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+	nelt = arc_mkstring(c, buf, i);
+	elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
 	i=0;
       }
       buf[i++] = ch;
@@ -596,24 +595,24 @@ static value expand_sexpr(carc *c, value sym)
     }
   }
 
-  nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
-  elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
-  elt = carc_intern(c, elt);
+  nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
+  elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
+  elt = arc_intern(c, elt);
   if (elt == CNIL) {
     c->signal_error(c, "Bad ssyntax %s", sym);
     return(CNIL);
   }
   if (last == CNIL) {
     if (prevchar == '!')
-      return(cons(c, CARC_BUILTIN(c, S_GET), cons(c, CARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL))));
-    return(cons(c, CARC_BUILTIN(c, S_GET), cons(c, elt, CNIL)));
+      return(cons(c, ARC_BUILTIN(c, S_GET), cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL))));
+    return(cons(c, ARC_BUILTIN(c, S_GET), cons(c, elt, CNIL)));
   }
   if (prevchar == '!')
-    return(cons(c, last, cons(c, CARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL))));
+    return(cons(c, last, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL))));
   return(cons(c, last, cons(c, elt, CNIL)));
 }
 
-static value expand_and(carc *c, value sym)
+static value expand_and(arc *c, value sym)
 {
   value top, last, nelt, elt;
   Rune ch, buf[STRMAX];
@@ -625,10 +624,10 @@ static value expand_and(carc *c, value sym)
     switch (ch) {
     case '&':
     case Runeerror:
-      nelt = (i > 0) ? carc_mkstring(c, buf, i) : CNIL;
-      elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+      nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
+      elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
       if (elt != CNIL)
-	elt = carc_intern(c, elt);
+	elt = arc_intern(c, elt);
       i=0;
       if (elt == CNIL) {
 	if (ch == Runeerror)
@@ -647,8 +646,8 @@ static value expand_and(carc *c, value sym)
       break;
     default:
       if (i >= STRMAX) {
-	nelt = carc_mkstring(c, buf, i);
-	elt = (elt == CNIL) ? nelt : carc_strcat(c, elt, nelt);
+	nelt = arc_mkstring(c, buf, i);
+	elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
 	i=0;
       }
       buf[i++] = ch;
@@ -657,27 +656,27 @@ static value expand_and(carc *c, value sym)
   }
   if (cdr(top) == CNIL)
     return(car(top));
-  return(cons(c, CARC_BUILTIN(c, S_ANDF), top));
+  return(cons(c, ARC_BUILTIN(c, S_ANDF), top));
 }
 
-static value expand_ssyntax(carc *c, value sym)
+static value expand_ssyntax(arc *c, value sym)
 {
-  if (carc_strchr(c, sym, ':') != CNIL || carc_strchr(c, sym, '~') != CNIL)
+  if (arc_strchr(c, sym, ':') != CNIL || arc_strchr(c, sym, '~') != CNIL)
     return(expand_compose(c, sym));
-  if (carc_strchr(c, sym, '.') != CNIL || carc_strchr(c, sym, '!') != CNIL)
+  if (arc_strchr(c, sym, '.') != CNIL || arc_strchr(c, sym, '!') != CNIL)
     return(expand_sexpr(c, sym));
-  if (carc_strchr(c, sym, '&') != CNIL)
+  if (arc_strchr(c, sym, '&') != CNIL)
     return(expand_and(c, sym));
   return(CNIL);
 } 
 
-value carc_ssexpand(carc *c, value sym)
+value arc_ssexpand(arc *c, value sym)
 {
   value x;
 
   if (TYPE(sym) != T_SYMBOL)
     return(sym);
-  x = carc_sym2name(c, sym);
+  x = arc_sym2name(c, sym);
   return(expand_ssyntax(c, x));
 }
 
@@ -695,35 +694,35 @@ static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
 			"unquote-splicing", "compose", "complement",
 			"t", "nil", "no", "andf", "get" };
 
-void carc_init_reader(carc *c)
+void arc_init_reader(arc *c)
 {
   int i;
 
   /* So that we don't have to add them to the rootset, we mark the
      symbol table, the builtin table, and the character escape table
      and its entries as immutable and immune from garbage collection. */
-  c->symtable = carc_mkhash(c, 10);
+  c->symtable = arc_mkhash(c, 10);
   BLOCK_IMM(c->symtable);
-  c->rsymtable = carc_mkhash(c, 10);
+  c->rsymtable = arc_mkhash(c, 10);
   BLOCK_IMM(c->rsymtable);
-  c->builtin = carc_mkvector(c, S_THE_END);
+  c->builtin = arc_mkvector(c, S_THE_END);
   for (i=0; i<S_THE_END; i++)
-    CARC_BUILTIN(c, i) = carc_intern(c, carc_mkstringc(c, syms[i]));
+    ARC_BUILTIN(c, i) = arc_intern(c, arc_mkstringc(c, syms[i]));
 
-  c->charesctbl = carc_mkhash(c, 5);
+  c->charesctbl = arc_mkhash(c, 5);
   BLOCK_IMM(c->charesctbl);
   for (i=0; chartbl[i].str; i++) {
-    value str = carc_mkstringc(c, chartbl[i].str);
-    value chr = carc_mkchar(c, chartbl[i].val);
+    value str = arc_mkstringc(c, chartbl[i].str);
+    value chr = arc_mkchar(c, chartbl[i].val);
     value cell;
 
     BLOCK_IMM(str);
     BLOCK_IMM(chr);
-    carc_hash_insert(c, c->charesctbl, str, chr);
-    cell = carc_hash_lookup2(c, c->charesctbl, str);
+    arc_hash_insert(c, c->charesctbl, str, chr);
+    cell = arc_hash_lookup2(c, c->charesctbl, str);
     BLOCK_IMM(cell);
-    carc_hash_insert(c, c->charesctbl, chr, str);
-    cell = carc_hash_lookup2(c, c->charesctbl, chr);
+    arc_hash_insert(c, c->charesctbl, chr, str);
+    cell = arc_hash_lookup2(c, c->charesctbl, chr);
     BLOCK_IMM(cell);
   }
 }

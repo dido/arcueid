@@ -1,9 +1,9 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2010 Rafael R. Sevilla
 
-  This file is part of CArc
+  This file is part of Arcueid
 
-  CArc is free software; you can redistribute it and/or modify it
+  Arcueid is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 3 of the
   License, or (at your option) any later version.
@@ -40,6 +40,6 @@ enum builtin_syms {
   S_THE_END			/* end of the line */
 };
 
-#define CARC_BUILTIN(c, sym) (VINDEX((c)->builtin, sym))
+#define ARC_BUILTIN(c, sym) (VINDEX((c)->builtin, sym))
 
 #endif
