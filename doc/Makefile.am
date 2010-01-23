@@ -1,8 +1,8 @@
-# Copyright (C) 2009 Rafael R. Sevilla
+# Copyright (C) 2010 Rafael R. Sevilla
 #
-# This file is part of CArc
+# This file is part of Arcueid
 #
-# CArc is free software; you can redistribute it and/or modify it
+# Arcueid is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 3 of the
 # License, or (at your option) any later version.
@@ -17,4 +17,4 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
 # 02110-1301 USA.
 #
-info_TEXINFOS = carc.texi
+info_TEXINFOS = arcueid.texi
