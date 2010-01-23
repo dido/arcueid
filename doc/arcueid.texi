@@ -1,0 +1,148 @@
+\input texinfo
+@setfilename arcueid.info
+@include version.texi
+@settitle Arcueid @value{VERSION}
+
+@paragraphindent 0
+
+@c don't indent the paragraphs.
+@paragraphindent 0
+
+@c Unify some of the indices.
+@syncodeindex tp fn
+@syncodeindex pg cp
+
+@comment %**end of header
+@finalout
+@copying
+This manual is last updated @value{UPDATED} for version
+@value{VERSION} of Arcueid.
+
+Copyright (C) 2010 Rafael R. Sevilla
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.  A
+copy of the license is included in the section entitled ``GNU Free
+Documentation License''.
+@end quotation
+@end copying
+
+@dircategory Software development
+@direntry
+* Arcueid: (arcueid).                 C-based interpreter for Paul Graham's Arc Lisp
+@end direntry
+
+@titlepage
+@title Arcueid
+@subtitle C-based Interpreter for Paul Graham's Arc Dialect of Lisp
+@subtitle for version @value{VERSION}, @value{UPDATED}
+@sp 7
+@author Rafael R. Sevilla (@email{dido@@imperium.ph})
+@page
+@vskip 0pt plus 1fill
+@insertcopying
+@end titlepage
+
+@macro xcite{ref}
+[\ref\] (@pxref{Bibliography})
+@end macro
+
+@contents
+
+@ifnottex
+@node Top
+@top CArc
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Preface::
+* Virtual Machine Design
+@end menu
+
+@node Preface
+@chapter Preface
+
+This document describes Arcueid, a C-based interpreter for Paul Graham's
+Arc dialect of Lisp.  It describes both the Arc language, extensions
+that Arcueid provides over the standard reference Scheme-based
+interpreter, and how to embed the interpreter in your own programs and
+extend its functionality.
+
+Arcueid is named for Arcueid Brunestud, a character in the TYPE MOON
+visual novel and anime Shingetsutan Tsukihime (Tsukihime Lunar
+Legend).  The name was just too good to pass up for this project.
+
+@node Virtual Machine Design
+@chapter Virtual Machine Design
+
+This chapter, such as it is,  contains my design notes on the Arcueid
+virtual machine.  The design of the virtual machine and interpreter
+system is inspired in large part from the study of several other
+interpreter-based systems, such as the OCaml virtual machine (memory
+management and instruction set), Inferno's Dis interpreter (garbage
+collector and threading model), XScheme by Dave Betz (parser and
+instruction set), TinyScheme by Dimitrios Souflis (miscellaneous
+structural design), and Scheme48 by Richard Kelsey and Jonathan Rees
+(miscellaneous ideas mostly from their papers).  These interpreters
+are either very well documented or are small enough to be easily
+understood, so anyone looking at my code here should not be surprised
+to see some similarities in structure.
+
+@section Object Representations
+
+The following object representations are used:
+
+Closures are represented as conses.  The car of the cons is the compiled
+function and its cdr is the saved environment.
+
+Compiled functions are represented as vectors.  The element at offset 0
+is the bytecode itself, as required by the interpreter.  The element at
+offset 1 is the function name.  The element at offset 2 is a list of
+symbols giving the names of the function arguments.  The elements at
+offsets above 2 are the literals referred to by the compiled bytecodes.
+
+Environments are represented as lists of vectors.  Each vector is an
+environment frame.  The element at offset 0 is a list of the symbols
+which are bound in that frame, and the remaining elements in the
+environment are the values of the symbols.
+
+Fixnums are tagged, so that bit 1 is always 1.  To convert a fixnum into
+a normal C integer, one takes a right shift.  To convert a normal C
+integer into a fixnum, one shifts to the left once and sets the low bit
+of the number to 1.
+
+Symbols are small integers whose low 8 bits are 0x0e.  There is a symbol
+table and reverse symbol table hash that are used to transform the
+symbol back and forth to strings.
+
+@section Registers
+
+The virtual machine is, like many of its kind, a stack-based virtual
+machine.  It possesses four registers:
+
+@itemize @bullet
+@item
+An expression stack, called expr, which is a stack of values of
+expressions that are being evaluated.  This is internally represented
+as a vector, which is grown dynamically as necessary.
+
+@item
+o A continuation register, which is a linked list of all the
+me continuations in use within the interpreter.
+@end itemize
+
+@section Applying a function
+
+When a function is applied, the value register contains the function
+that is being applied, and the stack contains the values of the
+parameters, and the argc register contains the number of these
+parameters.  The continuation register also contains the continuation
+that was saved by the caller (or by its caller, in the case of a tail
+call).  When a function finishes, it should leave the value it wishes to
+return in the value register.
+
