@@ -67,14 +67,14 @@ static value expand_vmcode(arc *c, value cctx)
   return(__resize_vmcode(c, cctx, 0));
 }
 
-static value fit_vmcode(arc *c, value cctx)
+value fit_vmcode(arc *c, value cctx)
 {
   return(__resize_vmcode(c, cctx, 1));
 }
 
 #define VMCODEP(cctx) ((Inst *)(&VINDEX(VINDEX(cctx, 1), FIX2INT(VINDEX(cctx, 0)))))
 
-static void gcode(arc *c, value cctx, void (*igen)(Inst **))
+void gcode(arc *c, value cctx, void (*igen)(Inst **))
 {
   value vcode;
   int vptr;
@@ -90,8 +90,8 @@ static void gcode(arc *c, value cctx, void (*igen)(Inst **))
   VINDEX(cctx, 0) = INT2FIX(vptr);
 }
 
-static void gcode1(arc *c, value cctx, void (*igen)(Inst **, value),
-		   value arg)
+void gcode1(arc *c, value cctx, void (*igen)(Inst **, value),
+	    value arg)
 {
   value vcode;
   int vptr;
@@ -107,9 +107,9 @@ static void gcode1(arc *c, value cctx, void (*igen)(Inst **, value),
   VINDEX(cctx, 0) = INT2FIX(vptr);
 }
 
-static void gcode2(arc *c, value cctx,
-			  void (*igen)(Inst **, value, value),
-			  value arg1, value arg2)
+void gcode2(arc *c, value cctx,
+	    void (*igen)(Inst **, value, value),
+	    value arg1, value arg2)
 {
   value vcode;
   int vptr;
@@ -125,13 +125,13 @@ static void gcode2(arc *c, value cctx,
   VINDEX(cctx, 0) = INT2FIX(vptr);
 }
 
-static void gen_inst(Inst **vmcodepp, Inst i)
+void gen_inst(Inst **vmcodepp, Inst i)
 {
   **vmcodepp = i;
   (*vmcodepp)++;
 }
 
-static void genarg_i(Inst **vmcodepp, value i)
+void genarg_i(Inst **vmcodepp, value i)
 {
   *((value *) *vmcodepp) = i;
   (*vmcodepp)++;
