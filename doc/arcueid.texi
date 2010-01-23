@@ -54,7 +54,7 @@ Documentation License''.
 
 @ifnottex
 @node Top
-@top CArc
+@top Arcueid
 
 @insertcopying
 @end ifnottex
