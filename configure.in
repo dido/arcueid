@@ -1,8 +1,8 @@
 # Copyright (C) 2009 Rafael R. Sevilla
 #
-# This file is part of CArc
+# This file is part of Arcueid
 #
-# CArc is free software; you can redistribute it and/or modify it
+# Arcueid is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 3 of the
 # License, or (at your option) any later version.
@@ -18,7 +18,7 @@
 # 02110-1301 USA.
 #
 AC_PREREQ(2.61)
-AC_INIT([CArc], [0.1.0], [dido@imperium.ph])
+AC_INIT([Arcueid], [0.1.0], [dido@imperium.ph])
 AC_CONFIG_SRCDIR([src/alloc.c])
 
 AM_INIT_AUTOMAKE([-Wall -Werror])
@@ -54,7 +54,7 @@ then
    AC_MSG_RESULT(yes)
 else
    AC_MSG_RESULT(no)
-   AC_MSG_FAILURE([CArc requires that sizeof(long) be the same as sizeof(void) to compile])
+   AC_MSG_FAILURE([Arcueid requires that sizeof(long) be the same as sizeof(void) to compile])
 fi
 VALUE_SIZE=$ac_cv_sizeof_void_p
 AC_SUBST(VALUE_SIZE)
@@ -95,8 +95,8 @@ if test "x$enable_mmap" != xno; then
    AC_CHECK_HEADERS(sys/mman.h)
    AC_FUNC_MMAP
 fi
-LIBCARC_LIBS="-L${libdir} -lcarc $GMP_LIBS $MATH_LIBS"
-AC_SUBST(LIBCARC_LIBS)
+LIBARCUEID_LIBS="-L${libdir} -larcueid $GMP_LIBS $MATH_LIBS"
+AC_SUBST(LIBARCUEID_LIBS)
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([carc.pc Makefile src/Makefile test/Makefile doc/Makefile src/carc.h])
+AC_CONFIG_FILES([arcueid.pc Makefile src/Makefile test/Makefile doc/Makefile src/arcueid.h])
 AC_OUTPUT

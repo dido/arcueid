@@ -1,8 +1,8 @@
 ;; Copyright (C) 2009,2010 Rafael R. Sevilla
 ;;
-;; This file is part of CArc
+;; This file is part of Arcueid
 ;;
-;; CArc is free software; you can redistribute it and/or modify it
+;; Arcueid is free software; you can redistribute it and/or modify it
 ;; under the terms of the GNU Lesser General Public License as
 ;; published by the Free Software Foundation; either version 3 of the
 ;; License, or (at your option) any later version.
@@ -19,11 +19,11 @@
 ;;
 
 ;; This file contains definitions of functions that should properly be
-;; defined within the CArc runtime core.  The definitions provided
+;; defined within the Arcueid runtime core.  The definitions provided
 ;; here are intended for use when bootstrapping the compiler as well
 ;; as for use by the unit tests.  They are intended to be used only
 ;; when the compiler is run from within mzscheme-based versions of
-;; Arc, and should never be loaded from within CArc itself.
+;; Arc, and should never be loaded from within Arcueid itself.
 
 ;; This should be a C function (not standard Arc), but is defined here
 ;; for testing.
@@ -33,7 +33,7 @@
        (<= val 9223372036854775807)))
 
 ;; This should be a C function as well.  The context argument is a
-;; compiler context, which is in the CArc runtime an opaque type
+;; compiler context, which is in the Arcueid runtime an opaque type
 ;; which can only be manipulated from within an Arc function in
 ;; limited ways.  For development purposes, we let it be a cons
 ;; cell whose car is a list of instructions and whose cdr is a list

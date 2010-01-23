@@ -1,8 +1,8 @@
 # Copyright (C) 2009 Rafael R. Sevilla
 #
-# This file is part of CArc
+# This file is part of Arcueid
 #
-# CArc is free software; you can redistribute it and/or modify it
+# Arcueid is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 3 of the
 # License, or (at your option) any later version.
@@ -20,6 +20,6 @@
 SUBDIRS = @SRC_SUBDIRS@
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = carc.pc.in
+EXTRA_DIST = arcueid.pc.in
 pcdatadir = $(libdir)/pkgconfig
-pcdata_DATA = carc.pc
+pcdata_DATA = arcueid.pc

@@ -25,7 +25,7 @@
 ;  not sure this is a mistake; strings may be subtly different from 
 ;  lists of chars
 
-; Changes made for CArc:
+; Changes made for Arcueid:
 ;
 ; Uncommented macex definition.  Doing otherwise would require macex
 ; to be defined in C.
