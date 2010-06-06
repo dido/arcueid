@@ -45,5 +45,9 @@ src/arcueid.h
 *.toc
 *.tp
 *.vr
+*.info
+*.pdf
+\#*
+.\#*
 mdate-sh
 texinfo.tex
