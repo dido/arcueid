@@ -39,7 +39,7 @@
 ;; cell whose car is a list of instructions and whose cdr is a list
 ;; of literals used in the code being generated.
 (def generate (ctx opcode . args)
-  (do (= (car ctx) (join (car ctx) (cons opcode args)))
+  (do (= (car ctx) (join (car ctx) (cons opcode args) nil))
       ctx))
 
 ;; This should also be a C function.  Returns the current offset
@@ -126,3 +126,77 @@
     igt 34
     ilt 35
     code))
+
+;; Number of instructions to the arg
+(def instnargs (code)
+  (case code
+    ildl 1
+    ildi 1
+    ildg 1
+    istg 1
+    ilde 2
+    iste 2
+    imvarg 1
+    imvoarg 1
+    imvrarg 1
+    icont 1
+    ienv 1
+    iapply 1
+    ijmp 1
+    ijt 1
+    ijf 1
+    0))
+
+(def literal->c (lit name count)
+  (case (type lit)
+    char (+ "arc_mkchar(c, " (coerce lit 'int) ")")
+    ;; XXX: This is broken for some escape sequences!
+    string (+ "arc_mkstringc(c, \"" lit "\")")
+    ;; Only bignums will generate int values
+    int (+ "arc_mkbignumstr(c, \"" lit "\")")
+    ;; XXX: Will only work for flonum values.  The sad fact is that
+    ;; the type function does not discriminate between flonums and
+    ;; complex numbers.
+    num (+ "arc_mkflonum(c, " lit ")")
+    code (+ "gencode_" name count "(c)")
+    (err "Unrecognized type of literal " lit " with type " (type lit))))
+
+(def code->ccode (port name code)
+  ;; Look for literals in the code which represent code objects.  Call
+  ;; ourselves recursively on those so that the code for them gets
+  ;; generated.
+  ((afn (code count)
+     (if (no code) nil
+  	 (is (type (car code)) 'code) (do (code->ccode port (+ name count)
+   						       (car code))
+  					  (self (cdr code) (+ 1 count)))
+   	 (self (cdr code) (+ 1 count)))) (cdr (rep code)) 0)
+  ;; Generate a gencode function, and produce calls that generate the
+  ;; associated code.
+  (disp (+ "value gencode_" name "(arc *c)\n{\n") port)
+  (disp "  value insts, vcode;\n  Inst **ctp, *code;\n\n" port)
+  (disp (+ "  insts = arc_mkvmcode(c, "
+ 	    (len (car (rep code))) ");\n") port)
+  (disp "  code = (Inst*)&VINDEX(insts, 0);\n  ctp = &code;\n" port)
+  (= close nil)
+  ((afn (code index)
+     (if (>= index (len code)) nil
+	 (with (name (+ "gen_" (cut (coerce (code index) 'string) 1))
+		     nargs (instnargs (code index)))
+	   (disp (+ "  " name "(ctp") port)
+	   (for i (+ 1 index) (+ index nargs)
+		(disp (+ ", " (code i)) port))
+	   (disp ");\n" port)
+	   (self code (+ index nargs 1)))))
+   (car (rep code)) 0)
+
+  ;; Generate the whole code object and fill in the literals
+  (disp (+ "  vcode = arc_mkcode(c, insts, arc_mkstringc(c, \"" name
+	   "\", CNIL," (len (cdr (rep code))) ");\n") port)
+  ((afn (code count)
+     (if (no code) nil
+	 (do (disp (+ "  CODE_LITERAL(vcode, " count ") = "
+		      (literal->c (car code) name count) ";\n") port)
+	     (self (cdr code) (+ 1 count))))) (cdr (rep code)) 0)
+  (disp "  return(vcode);\n" port)
+  (disp "}\n\b" port))
