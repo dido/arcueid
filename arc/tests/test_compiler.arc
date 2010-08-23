@@ -287,8 +287,10 @@
 	     (prolog (= ctx (cons nil nil)))
 	     (it "should generate code for quoted expressions correctly"
 		 (compile '(quote (a b c)) ctx nil nil)
-		 (and (iso (car ctx) '(ildl 0))
-		      (iso (cadr ctx) '(a b c))))))
+		 (and (iso (car ctx) '(inil ipush ildl 0 icons
+					    ipush ildl 1 icons
+					    ipush ildl 2 icons))
+		      (iso (cdr ctx) '(c b a))))))
 
 (= test-compile-quasiquote
    (describe "The compilation of the quasiquote special form, with unquote and unquote-splicing"
@@ -315,11 +317,13 @@
 						(quote (d e)))))
 			      ctx nil nil)
 		     (and (iso (car ctx) '(inil ipush
-						ildl 0 ispl ipush
-						ildl 1 icons ipush
-						ildl 2 icons ipush
-						ildl 3 icons))
-			  (iso (cdr ctx) '((d e) c b a)))))
+			  			 inil ipush
+			  			 ildl 0 icons ipush
+			  			 ildl 1 icons ispl
+			  			 ipush ildl 2 icons
+			  			 ipush ildl 3 icons
+			  			 ipush ildl 4 icons))
+		       (iso (cdr ctx) '(e d c b a)))))
 	     (it "should generate code for a quasiquoted expression incorporating non-stored literals"
 		 (do (= ctx (cons nil nil))
 		     (compile '(quasiquote (1 nil))
@@ -354,19 +358,29 @@
 	     (it "should generate the code for the car function properly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(car (quote (1 2))) ctx nil nil)
-		     (iso (car ctx) '(ildl 0 icar))))
+		     (iso (car ctx) '(inil ipush
+					   ildi 5 icons ipush
+					   ildi 3 icons icar))))
 	     (it "should generate the code for the cdr function properly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(cdr (quote (1 2))) ctx nil nil)
-		     (iso (car ctx) '(ildl 0 icdr))))
+		     (iso (car ctx) '(inil ipush
+					   ildi 5 icons ipush
+					   ildi 3 icons icdr))))
 	     (it "should generate the code for the scar function properly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(scar (quote (1 2)) 3) ctx nil nil)
-		     (iso (car ctx) '(ildl 0 ipush ildi 7 iscar))))
+		     (iso (car ctx) '(inil ipush
+					   ildi 5 icons ipush
+					   ildi 3 icons ipush
+					   ildi 7 iscar))))
 	     (it "should generate the code for the scdr function properly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(scdr (quote (1 2)) 3) ctx nil nil)
-		     (iso (car ctx) '(ildl 0 ipush ildi 7 iscdr))))
+		     (iso (car ctx) '(inil ipush
+					   ildi 5 icons ipush
+					   ildi 3 icons ipush
+					   ildi 7 iscdr))))
 	     (it "should generate the code for the is function properly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(is a b) ctx nil nil)
