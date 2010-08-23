@@ -214,12 +214,17 @@
 	     (cons (cons list (cons 'idup (rev instr))) ret))) list nil nil)
     dsbinst))
 
-;; Compile a quoted expression.  This is fairly trivial: all that it
-;; actually does is convert the expression passed as argument into
-;; a literal which then gets folded into the literal list, and an
-;; instruction is added to load ito onto the stack.
+;; Compile a quoted expression.  This is basically a limited version of
+;; the quasiquote algorithm where unquote and unquote-splicing are not
+;; treated specially.
 (def compile-quote (expr ctx env cont)
-  (generate ctx 'ildl (find-literal (cadr expr) ctx))
+  (generate ctx 'inil)
+  ((afn (rexpr)
+     (if (no rexpr) nil
+	 (do (generate ctx 'ipush)
+	     (compile-literal (car rexpr) ctx cont)
+	     (generate ctx 'icons)
+	     (self (cdr rexpr))))) (rev (cadr expr)))
   (compile-continuation ctx cont))
 
 ;; Compile a quasiquoted expression.  This is not so trivial.
@@ -251,7 +256,6 @@
 	 (self (car rexpr))
 	 (do (generate ctx 'ipush)
 	     (compile-literal (car rexpr) ctx cont)
-;;	     (generate ctx 'ildl (find-literal (car rexpr) ctx))
 	     (generate ctx 'icons)
 	     (self (cdr rexpr)))))
    (rev (cadr expr)))
