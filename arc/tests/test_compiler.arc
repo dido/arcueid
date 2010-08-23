@@ -295,18 +295,18 @@
  	     (it "should generate code for a trivial quasiquoted expression correctly"
 		 (do (= ctx (cons nil nil))
 		     (compile '(quasiquote (a b c)) ctx nil nil)
-		     (and (iso (car ctx) '(inil ipush ildl 0 cons
-						ipush ildl 1 cons
-						ipush ildl 2 cons))
+		     (and (iso (car ctx) '(inil ipush ildl 0 icons
+						ipush ildl 1 icons
+						ipush ildl 2 icons))
 			  (iso (cdr ctx) '(c b a)))))
 	     (it "should generate code for a quasiquoted expression with an unquote"
 		 (do (= ctx (cons nil nil))
 		     (compile '(quasiquote (a b c (unquote d))) ctx nil nil)
 		     (and (iso (car ctx) '(inil ipush
-						ildg 0 cons ipush
-						ildl 1 cons ipush
-						ildl 2 cons ipush
-						ildl 3 cons))
+						ildg 0 icons ipush
+						ildl 1 icons ipush
+						ildl 2 icons ipush
+						ildl 3 icons))
 			  (iso (cdr ctx) '(d c b a)))))
 	     (it "should generate code for a quasiquoted expression with an unquote-splicing"
 		 (do (= ctx (cons nil nil))
@@ -316,10 +316,18 @@
 			      ctx nil nil)
 		     (and (iso (car ctx) '(inil ipush
 						ildl 0 ispl ipush
-						ildl 1 cons ipush
-						ildl 2 cons ipush
-						ildl 3 cons))
-			  (iso (cdr ctx) '((d e) c b a)))))))
+						ildl 1 icons ipush
+						ildl 2 icons ipush
+						ildl 3 icons))
+			  (iso (cdr ctx) '((d e) c b a)))))
+	     (it "should generate code for a quasiquoted expression with an unquote-splicing"
+		 (do (= ctx (cons nil nil))
+		     (compile '(quasiquote (1 nil))
+			      ctx nil nil)
+		     (and (iso (car ctx) '(inil ipush
+						inil icons ipush
+						ildi 3 icons))
+			  (iso (cdr ctx) nil))))))
 
 (= test-compile-assign
    (describe "The compilation of the assign special form"
