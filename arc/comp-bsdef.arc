@@ -159,6 +159,7 @@
     ;; complex numbers.
     num (+ "arc_mkflonum(c, " lit ")")
     code (+ "gencode_" name count "(c)")
+    sym (+ "arc_intern_cstr(c, \"" (coerce lit 'string) "\")")
     (err "Unrecognized type of literal " lit " with type " (type lit))))
 
 (def code->ccode (port name code)
@@ -199,4 +200,4 @@
 		      (literal->c (car code) name count) ";\n") port)
 	     (self (cdr code) (+ 1 count))))) (cdr (rep code)) 0)
   (disp "  return(vcode);\n" port)
-  (disp "}\n\b" port))
+  (disp "}\n\n" port))
