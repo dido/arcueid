@@ -1,7 +1,11 @@
 \input texinfo
+@c -*-texinfo-*-
+@c -*-Encoding: utf-8-*-
+
 @setfilename arcueid.info
 @include version.texi
 @settitle Arcueid @value{VERSION}
+@documentencoding UTF-8
 
 @paragraphindent 0
 
@@ -18,7 +22,7 @@
 This manual is last updated @value{UPDATED} for version
 @value{VERSION} of Arcueid.
 
-Copyright (C) 2010 Rafael R. Sevilla
+Copyright @copyright{} 2010 Rafael R. Sevilla
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -30,41 +34,54 @@ Documentation License''.
 @end quotation
 @end copying
 
-@dircategory Software development
-@direntry
-* Arcueid: (arcueid).                 C-based interpreter for Paul Graham's Arc Lisp
-@end direntry
-
 @titlepage
 @title Arcueid
 @subtitle C-based Interpreter for Paul Graham's Arc Dialect of Lisp
 @subtitle for version @value{VERSION}, @value{UPDATED}
 @sp 7
 @author Rafael R. Sevilla (@email{dido@@imperium.ph})
-@page
-@vskip 0pt plus 1fill
-@insertcopying
-@end titlepage
 
-@macro xcite{ref}
-[\ref\] (@pxref{Bibliography})
-@end macro
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+
+@end titlepage
 
 @contents
 
 @ifnottex
-@node Top
+@node Top, Preface, (dir), (dir)
 @top Arcueid
 
-@insertcopying
+This manual is for Arcueid, version @value{VERSION}
 @end ifnottex
 
 @menu
-* Preface::
-* Virtual Machine Design
+* Preface::                     What is Arcueid
+* Virtual Machine Design::      The design of the virtual machine
+* Compact Information Expression Layer (CIEL)::  Serialization format
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Virtual Machine Design
+
+* Object Representations::      
+* Registers::                   
+* Applying a function::         
+
+Compact Information Expression Layer (CIEL)
+
+* CIEL Instruction Set::        
+
+CIEL Instruction Set
+
+* Integer representation::      
+
+@end detailmenu
 @end menu
 
-@node Preface
+@node Preface, Virtual Machine Design, Top, Top
 @chapter Preface
 
 This document describes Arcueid, a C-based interpreter for Paul Graham's
@@ -74,10 +91,10 @@ interpreter, and how to embed the interpreter in your own programs and
 extend its functionality.
 
 Arcueid is named for Arcueid Brunestud, a character in the TYPE MOON
-visual novel and anime Shingetsutan Tsukihime (Tsukihime Lunar
-Legend).  The name was just too good to pass up for this project.
+visual novel and anime Shingetsutan Tsukihime (also known as Tsukihime,
+Lunar Legend).  The name was just too good to pass up for this project.
 
-@node Virtual Machine Design
+@node Virtual Machine Design, Compact Information Expression Layer (CIEL), Preface, Top
 @chapter Virtual Machine Design
 
 This chapter, such as it is,  contains my design notes on the Arcueid
@@ -93,6 +110,13 @@ are either very well documented or are small enough to be easily
 understood, so anyone looking at my code here should not be surprised
 to see some similarities in structure.
 
+@menu
+* Object Representations::      
+* Registers::                   
+* Applying a function::         
+@end menu
+
+@node Object Representations, Registers, Virtual Machine Design, Virtual Machine Design
 @section Object Representations
 
 The following object representations are used:
@@ -117,9 +141,10 @@ integer into a fixnum, one shifts to the left once and sets the low bit
 of the number to 1.
 
 Symbols are small integers whose low 8 bits are 0x0e.  There is a symbol
-table and reverse symbol table hash that are used to transform the
-symbol back and forth to strings.
+table and reverse symbol table hash that are used to transform symbols
+back and forth to strings.
 
+@node Registers, Applying a function, Object Representations, Virtual Machine Design
 @section Registers
 
 The virtual machine is, like many of its kind, a stack-based virtual
@@ -132,10 +157,11 @@ expressions that are being evaluated.  This is internally represented
 as a vector, which is grown dynamically as necessary.
 
 @item
-o A continuation register, which is a linked list of all the
+A continuation register, which is a linked list of all the
 me continuations in use within the interpreter.
 @end itemize
 
+@node Applying a function,  , Registers, Virtual Machine Design
 @section Applying a function
 
 When a function is applied, the value register contains the function
@@ -146,3 +172,119 @@ that was saved by the caller (or by its caller, in the case of a tail
 call).  When a function finishes, it should leave the value it wishes to
 return in the value register.
 
+@node Compact Information Expression Layer (CIEL),  , Virtual Machine Design, Top
+@chapter Compact Information Expression Layer (CIEL)
+
+The Compact Information Expression Layer (CIEL)@footnote{Sorry, a
+backronym from another Tsukihime character} is the serialization
+format used by Arcueid, and is designed to be able to serialize any
+arbitrarily complex Arcueid object.  Many of the ideas behind this
+serialization format are derived from Python's serialization.
+
+For the most part, the Compact Information Expression Language is a
+simple creature, with no loops, tests, conditionals, arithmetic, or
+function calls.  Opcodes are executed once each, from first to last,
+until a HLT opcode is seen.
+
+Like many virtual machines, CIEL is stack-based, and many instructions
+will push Arcueid objects on the stack.  Other opcodes take objects
+off the stack, possibly pushing new ones.  The final result of
+deserialization is whatever object is left at the top of the stack
+when the final HLT opcode is executed.
+
+@menu
+* CIEL Instruction Set::        
+@end menu
+
+@node CIEL Instruction Set,  , Compact Information Expression Layer (CIEL), Compact Information Expression Layer (CIEL)
+@section CIEL Instruction Set
+
+The CIEL instruction set is as follows.  This describes version 1 of
+CIEL.
+
+@table @code
+@item ver
+This instruction declares to the CIEL interpreter what version of the
+CIEL instruction set the code is supposed to represent.  It is
+followed by a 64-bit little endian number which gives the declared
+version.  This should be the first instruction of any valid CIEL
+program.
+
+@item gnil
+Push a nil on the stack
+
+@item gtrue
+Push a true on the stack
+
+@item gint
+Push an integer, which may become a fixnum or a bignum, depending
+on the system interpreting the instruction, represented by the
+following bytes, which are encoded in a self-delimiting form described
+below @pxref{Integer representation}.
+
+@item gflo
+Push a floating point number, which is represented by the eight bytes
+following, in IEEE-754 double precision binary form.
+
+@item gchar
+Push the Unicode character, represented by the four bytes following,
+in UCS-4, little endian form.
+
+@item gstr
+Push a string.  The string is represented as an integer length
+(magnitude only) which gives the number of following bytes in the
+string, followed by the UTF-8 representation of the string.  Since
+integers are of arbitrary size, this suffices to encode a string of
+arbitrary length.
+
+@item gsym
+Push a symbol.  The representation of the following data is the same
+as for a string.
+
+@item crat
+Pop two integers off the stack, numerator followed by denominator, and
+push the rational number they represent.  It is an error if the two
+values at the top of the stack are not integers.
+
+@item ccomplex
+Pop two floating point numbers off the stack, real followed by
+complex, and push the complex number they represent.  It is an error
+if the two values at the top of the stack are not floating point
+numbers.
+
+@item gtab
+Push a reference to an empty table onto the stack.
+
+@item ctadd
+With a key, value, and a table on the stack in that order, add the key
+and value mapping to the table.
+
+@item dup
+Duplicate the object at the top of the stack.  This will create a
+duplicate of an atomic object, but will push a reference to a compound
+object like a cons cell or 
+
+@end table
+
+@menu
+* Integer representation::      
+@end menu
+
+@node Integer representation,  , CIEL Instruction Set, CIEL Instruction Set
+@subsection Integer representation
+
+Integers are represented in a self-delimiting form.  An integer is
+stored in signed-magnitude little-endian form, with the low-order
+portions appearing before the high-order portions.  The sign appears
+as a single byte whose value should be either ASCII '+' (0x2b) or '-'
+(0x2d).  Any other value is considered invalid.
+
+The integer is divided into 63-bit portions, and each 63-bit portion
+is stored in 64 bits (little endian), with the highest bit being 0 for
+all but the the last such part, which is set to 1, so that the decoder
+knows where to stop.  In the terminology used by GNU MP's
+@code{mpz_export} and @code{mpz_import} functions, a 64-bit word size
+is used, using little endian words, with least significant first, with
+1 bit nails.
+
+@bye
