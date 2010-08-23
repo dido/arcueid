@@ -51,3 +51,4 @@ src/arcueid.h
 .\#*
 mdate-sh
 texinfo.tex
+basecomp.*
