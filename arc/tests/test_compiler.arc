@@ -320,7 +320,7 @@
 						ildl 2 icons ipush
 						ildl 3 icons))
 			  (iso (cdr ctx) '((d e) c b a)))))
-	     (it "should generate code for a quasiquoted expression with an unquote-splicing"
+	     (it "should generate code for a quasiquoted expression incorporating non-stored literals"
 		 (do (= ctx (cons nil nil))
 		     (compile '(quasiquote (1 nil))
 			      ctx nil nil)
