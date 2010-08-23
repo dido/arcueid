@@ -25,10 +25,11 @@
 ;  not sure this is a mistake; strings may be subtly different from 
 ;  lists of chars
 
-; Changes made for Arcueid:
+; Changes made for Arcueid from baseline Graham/Morris arc3:
 ;
 ; Uncommented macex definition.  Doing otherwise would require macex
-; to be defined in C.
+; to be defined in C (debating on whether this should actually be
+; done anyway).
 ;
 
 (assign current-load-file* "arc.arc")
