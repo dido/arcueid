@@ -214,18 +214,16 @@
 	     (cons (cons list (cons 'idup (rev instr))) ret))) list nil nil)
     dsbinst))
 
-;; Compile a quoted expression.  This is basically a limited version of
-;; the quasiquote algorithm where unquote and unquote-splicing are not
-;; treated specially.
-(def compile-quote (expr ctx env cont)
-  (generate ctx 'inil)
-  ((afn (rexpr)
-     (if (no rexpr) nil
-	 (do (generate ctx 'ipush)
-	     (compile-literal (car rexpr) ctx cont)
-	     (generate ctx 'icons)
-	     (self (cdr rexpr))))) (rev (cadr expr)))
-  (compile-continuation ctx cont))
+;; This function works for compiling quoted as well as quasiquoted
+;; expressions.  If the qq parameter is true, it will recognize
+;; unquote and unquote-splicing expressions and treat them as appropriate.
+(def compile-quote (expr ctx env cont (o qq))
+  ((rfn cq-main (arg)
+     (if (isa arg 'cons) (do (cq-main (cdr arg))
+			     (generate ctx 'ipush)
+			     (cq-main (car arg))
+			     (generate ctx 'icons))
+	 (compile-literal arg ctx cont))) (cadr expr)))
 
 ;; Compile a quasiquoted expression.  This is not so trivial.
 ;; Basically, it requires us to reverse the list that is to be
