@@ -218,12 +218,30 @@
 ;; expressions.  If the qq parameter is true, it will recognize
 ;; unquote and unquote-splicing expressions and treat them as appropriate.
 (def compile-quote (expr ctx env cont (o qq))
-  ((rfn cq-main (arg)
-     (if (isa arg 'cons) (do (cq-main (cdr arg))
-			     (generate ctx 'ipush)
-			     (cq-main (car arg))
-			     (generate ctx 'icons))
-	 (compile-literal arg ctx cont))) (cadr expr)))
+  ((afn (arg)
+     (if (and qq (isa arg 'cons) (is (car arg) 'unquote))
+	 ;; To unquote something, all we need to do is evaluate it.  This
+	 ;; generates a value becomes part of the result when recombined.
+	 (do (compile (cadr arg) ctx env cont)
+	     nil)
+	 (and qq (isa arg 'cons) (is (car arg) 'unquote-splicing))
+	 (do (compile (cadr arg) ctx env cont)
+	     t)
+	 (isa arg 'cons)
+	 ;; If we see a cons, we need to recurse into the cdr of the
+	 ;; argument first, generating the code for that, then push
+	 ;; the result, then generate the code for the car of the
+	 ;; argument, and then generate code to cons them together,
+	 ;; or splice them together if the return so indicates.
+	 (do (self (cdr arg))
+	     (generate ctx 'ipush)
+	     (if (self (car arg))
+		 (generate ctx 'ispl)
+		 (generate ctx 'icons))
+	     nil)
+	 ;; All other elements are treated as literals
+	 (do (compile-literal arg ctx cont)
+	      nil))) (cadr expr)))
 
 ;; Compile a quasiquoted expression.  This is not so trivial.
 ;; Basically, it requires us to reverse the list that is to be
@@ -236,28 +254,7 @@
 ;; reversing is necessary so that when the lists are consed together
 ;; they appear in the correct order.
 (def compile-quasiquote (expr ctx env cont)
-  (generate ctx 'inil)
-  ((afn (rexpr)
-     (if (no rexpr) nil
-	 (and (isa (car rexpr) 'cons) (is (caar rexpr) 'unquote))
-	 (do (generate ctx 'ipush)
-	     (compile (car:cdr:car rexpr) ctx env cont)
-	     (generate ctx 'icons)
-	     (self (cdr rexpr)))
-	 (and (isa (car rexpr) 'cons) (is (caar rexpr)
-					  'unquote-splicing))
-	 (do (generate ctx 'ipush)
-	     (compile (car:cdr:car rexpr) ctx env cont)
-	     (generate ctx 'ispl)
-	     (self (cdr rexpr)))
-	 (isa (car rexpr) 'cons)
-	 (self (car rexpr))
-	 (do (generate ctx 'ipush)
-	     (compile-literal (car rexpr) ctx cont)
-	     (generate ctx 'icons)
-	     (self (cdr rexpr)))))
-   (rev (cadr expr)))
-  (compile-continuation ctx cont))
+  (compile-quote expr ctx env cont t))
 
 (def compile-apply (expr ctx env cont)
   (with (fname (car expr) args (cdr expr) contaddr (code-ptr ctx))
