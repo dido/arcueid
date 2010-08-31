@@ -158,17 +158,17 @@
     ;; the type function does not discriminate between flonums and
     ;; complex numbers.
     num (+ "arc_mkflonum(c, " lit ")")
-    code (+ "gencode_" name count "(c)")
+    code (+ "gencode_" name "_" count "(c)")
     sym (+ "arc_intern_cstr(c, \"" (coerce lit 'string) "\")")
     (err "Unrecognized type of literal " lit " with type " (type lit))))
 
-(def code->ccode (port name code)
+(def code->bincode (port name code)
   ;; Look for literals in the code which represent code objects.  Call
   ;; ourselves recursively on those so that the code for them gets
   ;; generated.
   ((afn (code count)
      (if (no code) nil
-  	 (is (type (car code)) 'code) (do (code->ccode port (+ name count)
+  	 (is (type (car code)) 'code) (do (code->ccode port (+ name "_" count)
    						       (car code))
   					  (self (cdr code) (+ 1 count)))
    	 (self (cdr code) (+ 1 count)))) (cdr (rep code)) 0)
@@ -200,4 +200,114 @@
 		      (literal->c (car code) name count) ";\n") port)
 	     (self (cdr code) (+ 1 count))))) (cdr (rep code)) 0)
   (disp "  return(vcode);\n" port)
-  (disp "}\n\n" port))
+  (disp "}\n\n" port)
+  nil)
+
+;; We will use, for the moment, a very simple serialization scheme for
+;; values herein.  We'll later develop a much more sophisticated
+;; serialization mechanism in the future, but this will do as a version
+;; 0.0.0 for the Compact Information Expression Layer (CIEL). (sorry,
+;; yet another Tsukihime reference)
+;;
+;; The serialized file starts with the following two bytes:
+;; 0xC1 0xE1 -- Every CIEL file begins with this.  This is followed by
+;; the version number of the CIEL file with the major, minor, and
+;; sub-version number as 16-bit little-endian numbers each.  The code
+;; herein is only capable of generating version 0.0.0 CIEL data, so
+;; the magic numbers at the start of the file should be C1 E1 00 00 00
+;; 00 00 00.
+;;
+
+;; Encode an unsigned value from 0 to 9223372036854775807 into an
+;; 8-byte 64-bit little-endian representation.  Set the high bit
+;; to 1 if last is true.  This will not perform range checks on the
+;; argument.
+(def int-frag (last val)
+  (+ (coerce (mod val 256) 'char)			      ;256^0
+     (coerce (mod (trunc (/ val 256)) 256) 'char)	      ;256^1
+     (coerce (mod (trunc (/ val 65536)) 256) 'char)	      ;256^2
+     (coerce (mod (trunc (/ val 16777216)) 256) 'char)	      ;256^3
+     (coerce (mod (trunc (/ val 4294967296)) 256) 'char)      ;256^4
+     (coerce (mod (trunc (/ val 1099511627776)) 256) 'char)   ;256^5
+     (coerce (mod (trunc (/ val 281474976710656)) 256) 'char) ;256^6
+     (coerce (+ (if last 128 0)
+		(mod (trunc (/ val 72057594037927936)) 256)) 'char))) ;256^7
+
+;; encode an unsigned integer value x
+(def euint (x (o acc ""))
+  (if (<= x 0) acc
+      (let quot (trunc (/ x 9223372036854775808))
+	(euint quot
+	       (+ acc (int-frag (<= quot 0)
+				(mod x 9223372036854775808)))))))
+
+;; Encode a signed integer value x
+(def eint (x)
+   (euint (abs x) (if (>= x 0) "+" "-")))
+
+;; Encode a string x.  Encoding may not be perfect for general UTF-8
+;; strings.
+(def estr (x)
+  (+ (euint (len x)) x))
+
+;; Encode a flonum into an IEEE-754 double precision binary representation.
+;; This will return a 64-bit integer.  There are some contortions it has
+;; to go through to do this since Arc3 doesn't have any operators for
+;; extracting the mantissa and exponent directly, and as such there are
+;; some risks with regard to precision loss.  The same issues should not
+;; trouble the C equivalent to this code.
+(def eflonum (x)
+  (if (is x 0.0) 0
+      (withs (rexp (/ (log (abs x)) (log 2))
+		   ;; We need to be able to round towards negative
+		   ;; infinity here.  This means that we drop all
+		   ;; fractions for positive numbers, and round up
+		   ;; for negative numbers.  Arc doesn't provide
+		   ;; this kind of function out of the box.
+		   exponent (if (and (< rexp 0.0)
+				     (> (abs (- rexp (trunc rexp))) 1e-6))
+				(- (trunc rexp) 1)
+				(trunc rexp))
+		   sign (if (>= x 0.0) 0 1)
+		   val (+ (* sign 2048) (+ (trunc exponent) 1023))
+		   ;; We subtract one and multiply by two to
+		   ;; remove the leading 1 which is implicit
+		   mantissa (* (- (/ (abs x) (expt 2.0 exponent)) 1) 2))
+	;; Extract the bits of the mantissa by repeatedly multiplying it
+	;; by 2.  If we ever get a result greater than 1, we have a one
+	;; bit, otherwise the bit is zero.  Accumulate the bits in val.
+	((afn (x val num)
+	   (if (is num 0) val
+	       (> x 1.0) (self (* (- x 1) 2) (+ (* val 2) 1) (- num 1))
+	       (self (* x 2) (* val 2) (- num 1)))) mantissa val 52))))
+
+
+;; Symbol to Ciel bytecode
+(def cbytecode (code)
+  (case code
+    gnil 0				;load nil
+    gtrue 1				;load true
+    gint 2				;load integer
+    gflo 3				;load float
+    gchar 4				;load character
+    gstr 5				;load string
+    gsym 6				;load symbol
+    gtab 7				;load empty table (not used)
+    crat 8				;load rational
+    ccomplex 9				;load complex
+    ctadd 10				;add value to table
+    ccons 11				;cons two arguments
+    ctag 12				;tag a value with a symbol
+    xdup 13				;duplicate top of stack
+    xmst 14 				;memo store
+    xmld 15))				;memo load
+
+(def code-marshal (port name code (o midx 0))
+  ;; Look for literals in the code which represent code objects.  Call
+  ;; ourselves recursively on those so that the code for them gets
+  ;; generated.
+  ((afn (lits)
+     (if (no lits) nil
+	(is (type (car lits)) 'code)
+	(let nmidx (+ midx 1)
+	  (do (code-marshal port (+ name "_" midx)
