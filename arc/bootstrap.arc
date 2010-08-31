@@ -28,4 +28,7 @@
 (prn "Outputting generated code to basecomp.arc")
 (w/outfile fp "basecomp.arc" (write ctx fp))
 (prn "Outputting generated C code to basecomp.c")
-(w/outfile fp "basecomp.c" (code->ccode fp "basecomp" (context->code ctx)))
+(= fp (outfile "basecomp.c"))
+(code->ccode fp "basecomp" (context->code ctx))
+(close fp)
+(prn "Finished bootstrap compile")
