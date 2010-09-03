@@ -125,7 +125,9 @@
     iiso 33
     igt 34
     ilt 35
-    code))
+    idup 36
+    icls 37
+    (err "Unrecognized opcode" code)))
 
 ;; Number of instructions to the arg
 (def instnargs (code)
@@ -162,7 +164,7 @@
     sym (+ "arc_intern_cstr(c, \"" (coerce lit 'string) "\")")
     (err "Unrecognized type of literal " lit " with type " (type lit))))
 
-(def code->bincode (port name code)
+(def code->ccode (port name code)
   ;; Look for literals in the code which represent code objects.  Call
   ;; ourselves recursively on those so that the code for them gets
   ;; generated.
@@ -257,30 +259,37 @@
 ;; some risks with regard to precision loss.  The same issues should not
 ;; trouble the C equivalent to this code.
 (def eflonum (x)
-  (if (is x 0.0) 0
-      (withs (rexp (/ (log (abs x)) (log 2))
-		   ;; We need to be able to round towards negative
-		   ;; infinity here.  This means that we drop all
-		   ;; fractions for positive numbers, and round up
-		   ;; for negative numbers.  Arc doesn't provide
-		   ;; this kind of function out of the box.
-		   exponent (if (and (< rexp 0.0)
-				     (> (abs (- rexp (trunc rexp))) 1e-6))
-				(- (trunc rexp) 1)
-				(trunc rexp))
-		   sign (if (>= x 0.0) 0 1)
-		   val (+ (* sign 2048) (+ (trunc exponent) 1023))
-		   ;; We subtract one and multiply by two to
-		   ;; remove the leading 1 which is implicit
-		   mantissa (* (- (/ (abs x) (expt 2.0 exponent)) 1) 2))
-	;; Extract the bits of the mantissa by repeatedly multiplying it
-	;; by 2.  If we ever get a result greater than 1, we have a one
-	;; bit, otherwise the bit is zero.  Accumulate the bits in val.
-	((afn (x val num)
-	   (if (is num 0) val
-	       (> x 1.0) (self (* (- x 1) 2) (+ (* val 2) 1) (- num 1))
-	       (self (* x 2) (* val 2) (- num 1)))) mantissa val 52))))
-
+  (int-frag
+    nil
+    (if (is x 0.0) 0
+	(withs (rexp (/ (log (abs x)) (log 2))
+		     ;; We need to be able to round towards negative
+		     ;; infinity here.  This means that we drop all
+		     ;; fractions for positive numbers, and round up
+		     ;; for negative numbers.  Arc doesn't provide
+		     ;; this kind of function out of the box.
+		     exponent (if (and (< rexp 0.0)
+				       (> (abs (- rexp
+						  (trunc rexp)))
+					  1e-6))
+				  (- (trunc rexp) 1)
+				  (trunc rexp))
+		     sign (if (>= x 0.0) 0 1)
+		     val (+ (* sign 2048) (+ (trunc exponent) 1023))
+		     ;; We subtract one and multiply by two to
+		     ;; remove the leading 1 which is implicit
+		     mantissa (* (- (/ (abs x)
+				       (expt 2.0 exponent)) 1) 2))
+	  ;; Extract the bits of the mantissa by repeatedly
+	  ;; multiplying it by 2.  If we ever get a result greater
+	  ;; than 1, we have a one bit, otherwise the bit is zero.
+	  ;; Accumulate the bits in val.
+	  ((afn (x val num)
+	     (if (is num 0) val
+		 (> x 1.0) (self (* (- x 1) 2)
+				 (+ (* val 2) 1) (- num 1))
+		 (self (* x 2) (* val 2)
+		       (- num 1)))) mantissa val 52)))))
 
 ;; Symbol to Ciel bytecode
 (def cbytecode (code)
@@ -297,17 +306,80 @@
     ccomplex 9				;load complex
     ctadd 10				;add value to table
     ccons 11				;cons two arguments
-    ctag 12				;tag a value with a symbol
+    cannotate 12			;annotate a value with a symbol
     xdup 13				;duplicate top of stack
     xmst 14 				;memo store
     xmld 15))				;memo load
 
-(def code-marshal (port name code (o midx 0))
-  ;; Look for literals in the code which represent code objects.  Call
-  ;; ourselves recursively on those so that the code for them gets
-  ;; generated.
-  ((afn (lits)
-     (if (no lits) nil
-	(is (type (car lits)) 'code)
-	(let nmidx (+ midx 1)
-	  (do (code-marshal port (+ name "_" midx)
+(def writebc (port op . rest)
+  (writeb (cbytecode op) port)
+  (each x rest
+    (disp x port)))
+
+(def lit-marshal (port lit count lit->memo)
+  (case (type lit)
+    char (writebc port 'gchar (int-frag nil (coerce lit 'int)))
+    string (writebc port 'gstr (estr lit))
+    sym  (writebc port 'gsym (estr (coerce lit 'string)))
+    int (writebc port 'gint (eint lit))
+    num (writebc port 'gflo (eflonum lit))
+    ;; load the code object from memo
+    code (writebc port 'xmld (euint (lit->memo count)))
+    (err "Unrecognized type of literal " lit " with type " (type lit))))
+
+(def code-marshal (port name code (o memoidx 0))
+  (with (lit->memo (table))
+    ;; Write the header
+    (writeb #xc1 port)
+    (writeb #xe1 port)
+    ;; Major 0
+    (writeb #x00 port)
+    (writeb #x00 port)
+    ;; Minor 0
+    (writeb #x00 port)
+    (writeb #x00 port)
+    ;; Sub 0
+    (writeb #x00 port)
+    (writeb #x00 port)
+    ;; Look for literals in the code which represent code objects.  Call
+    ;; ourselves recursively on those so that the code for them gets
+    ;; generated.  Store each inside the memo, and write the mapping
+    ;; between literal index and memo index to lit->memo.
+    (withs (lits (cdr (rep code)) count 0)
+      (each x lits
+	(if (is (type x) 'code)
+	    (do (= memoidx (code-marshal port (+ name "_" count) x memoidx))
+		;; Generate code to store the generated code object at the top
+		;; of the CIEL stack into the memo.
+		(writebc port 'xmst (euint memoidx))
+		;; Save the index into the literal-memo table
+		(= (lit->memo count) memoidx)
+		;; Next memo index value
+		(++ memoidx)))
+	(++ count)))
+    ;; Now, generate a string with the bytecode
+    (let codestr
+	((afn (code index str)
+	   (if (>= index (len code)) str
+	       (do (= extargs "")
+		   (for i (+ 1 index) (+ index (instnargs (code index)))
+			(= extargs (+ extargs (euint (code i)))))
+		   (self code (+ index (instnargs (code index)) 1)
+			 (+ str (coerce (bytecode (code index)) 'char)
+			    extargs))))) (car (rep code)) 0 "")
+      (writebc port 'gstr (estr codestr)))
+    ;; And then generate an array of literals
+    ((afn (lits count)
+       (if (no lits) (writebc port 'gnil)
+	   (do (self (cdr lits) (+ count 1))
+	       (lit-marshal port (car lits) count lit->memo)
+	       (writebc port 'ccons)))) (cdr (rep code)) 0)
+    ;; cons the bytecode string and the literals together
+    (writebc port 'ccons)
+    ;; load a symbol with the code tag
+    (writebc port 'gsym (estr "code"))
+    ;; and annotate the consed bytecode and literals
+    (writebc port 'cannotate)
+    ;; return the value of memoidx
+    memoidx))
+
