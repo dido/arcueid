@@ -225,18 +225,18 @@
 ;; to 1 if last is true.  This will not perform range checks on the
 ;; argument.
 (def int-frag (last val)
-  (+ (coerce (mod val 256) 'char)			      ;256^0
-     (coerce (mod (trunc (/ val 256)) 256) 'char)	      ;256^1
-     (coerce (mod (trunc (/ val 65536)) 256) 'char)	      ;256^2
-     (coerce (mod (trunc (/ val 16777216)) 256) 'char)	      ;256^3
-     (coerce (mod (trunc (/ val 4294967296)) 256) 'char)      ;256^4
-     (coerce (mod (trunc (/ val 1099511627776)) 256) 'char)   ;256^5
-     (coerce (mod (trunc (/ val 281474976710656)) 256) 'char) ;256^6
-     (coerce (+ (if last 128 0)
-		(mod (trunc (/ val 72057594037927936)) 256)) 'char))) ;256^7
+  (list (mod val 256)					      ;256^0
+	(mod (trunc (/ val 256)) 256)			      ;256^1
+	(mod (trunc (/ val 65536)) 256)			      ;256^2
+	(mod (trunc (/ val 16777216)) 256)		      ;256^3
+	(mod (trunc (/ val 4294967296)) 256)		      ;256^4
+	(mod (trunc (/ val 1099511627776)) 256)		      ;256^5
+	(mod (trunc (/ val 281474976710656)) 256)	      ;256^6
+	(+ (if last 128 0)
+	   (mod (trunc (/ val 72057594037927936)) 256))))     ;256^7
 
 ;; encode an unsigned integer value x
-(def euint (x (o acc ""))
+(def euint (x (o acc '()))
   (if (<= x 0) acc
       (let quot (trunc (/ x 9223372036854775808))
 	(euint quot
@@ -245,12 +245,12 @@
 
 ;; Encode a signed integer value x
 (def eint (x)
-   (euint (abs x) (if (>= x 0) "+" "-")))
+   (euint (abs x) (if (>= x 0) '(#x2b) '(#x2d))))
 
 ;; Encode a string x.  Encoding may not be perfect for general UTF-8
 ;; strings.
 (def estr (x)
-  (+ (euint (len x)) x))
+  (+ (euint (len x)) (list x)))
 
 ;; Encode a flonum into an IEEE-754 double precision binary representation.
 ;; This will return a 64-bit integer.  There are some contortions it has
@@ -311,10 +311,17 @@
     xmst 14 				;memo store
     xmld 15))				;memo load
 
+(def writelist (port arg)
+  (each x arg
+    (case (type x)
+      int (writeb x port)
+      string (disp x port)
+      (err "invalid type for writelist: " (type x) " " x))))
+
 (def writebc (port op . rest)
   (writeb (cbytecode op) port)
   (each x rest
-    (disp x port)))
+    (writelist port x)))
 
 (def lit-marshal (port lit count lit->memo)
   (case (type lit)
@@ -327,28 +334,29 @@
     code (writebc port 'xmld (euint (lit->memo count)))
     (err "Unrecognized type of literal " lit " with type " (type lit))))
 
-(def code-marshal (port name code (o memoidx 0))
+(def code-marshal (port name code (o memoidx 0) (o header t))
   (with (lit->memo (table))
-    ;; Write the header
-    (writeb #xc1 port)
-    (writeb #xe1 port)
-    ;; Major 0
-    (writeb #x00 port)
-    (writeb #x00 port)
-    ;; Minor 0
-    (writeb #x00 port)
-    (writeb #x00 port)
-    ;; Sub 0
-    (writeb #x00 port)
-    (writeb #x00 port)
+    (if header
+	;; Write the header
+	(do (writeb #xc1 port)
+	    (writeb #xe1 port)
+	    ;; Major 0
+	    (writeb #x00 port)
+	    (writeb #x00 port)
+	    ;; Minor 0
+	    (writeb #x00 port)
+	    (writeb #x00 port)
+	    ;; Sub 0
+	    (writeb #x00 port)
+	    (writeb #x00 port)))
     ;; Look for literals in the code which represent code objects.  Call
     ;; ourselves recursively on those so that the code for them gets
     ;; generated.  Store each inside the memo, and write the mapping
     ;; between literal index and memo index to lit->memo.
-    (withs (lits (cdr (rep code)) count 0)
+    (with (lits (cdr (rep code)) count 0)
       (each x lits
 	(if (is (type x) 'code)
-	    (do (= memoidx (code-marshal port (+ name "_" count) x memoidx))
+	    (do (= memoidx (code-marshal port (+ name "_" count) x memoidx nil))
 		;; Generate code to store the generated code object at the top
 		;; of the CIEL stack into the memo.
 		(writebc port 'xmst (euint memoidx))
@@ -357,17 +365,19 @@
 		;; Next memo index value
 		(++ memoidx)))
 	(++ count)))
-    ;; Now, generate a string with the bytecode
-    (let codestr
-	((afn (code index str)
-	   (if (>= index (len code)) str
-	       (do (= extargs "")
-		   (for i (+ 1 index) (+ index (instnargs (code index)))
-			(= extargs (+ extargs (euint (code i)))))
-		   (self code (+ index (instnargs (code index)) 1)
-			 (+ str (coerce (bytecode (code index)) 'char)
-			    extargs))))) (car (rep code)) 0 "")
-      (writebc port 'gstr (estr codestr)))
+    (writebc port 'gstr)
+    (map [writeb _ port]
+	 ;; Now, generate a list with the bytecode, as bytes
+	 ((afn (code paramf nparam clist)
+	    (if (no code)
+		clist
+		paramf
+		(let np (- nparam 1)
+		  (self (cdr code) (> np 0) np (+ clist (eint (car code)))))
+		(let na (instnargs (car code))
+		  (self (cdr code) (> na 0) na
+			(+ clist (list (bytecode (car code))))))))
+	  (car (rep code)) nil 0 '()))
     ;; And then generate an array of literals
     ((afn (lits count)
        (if (no lits) (writebc port 'gnil)
