@@ -44,11 +44,15 @@ struct arc_port {
   } u;
 };
 
+#define PORT(v) ((struct arc_port *)REP(v)._custom.data)
+#define PORTF(v) (PORT(v)->u.file)
+#define PORTS(v) (PORT(v)->u.strfile)
+
 static value file_pp(arc *c, value v)
 {
   value nstr = arc_mkstringc(c, "#<port:");
 
-  nstr = arc_strcat(c, nstr, ((struct arc_port *)REP(v)._custom.data)->u.file.name);
+  nstr = arc_strcat(c, nstr, PORTF(v).name);
   nstr = arc_strcat(c, nstr, arc_mkstringc(c, ">"));
   return(nstr);
 }
@@ -61,46 +65,53 @@ static void file_marker(arc *c, value v, int level,
 
 static void file_sweeper(arc *c, value v)
 {
-  struct arc_port *p;
-
-  p = (struct arc_port *)(REP(v)._custom.data);
-
-  if (p->u.file.open) {
-    fclose(p->u.file.fp);
+  if (PORTF(v).open) {
+    fclose(PORTF(v).fp);
     /* XXX: error handling here? */
+    PORTF(v).open = 0;
   }
   /* release memory */
   c->free_block(c, (void *)v);
 }
 
-value arc_infile(arc *c, value filename)
+static value openfile(arc *c, value filename, const char mode)
 {
   void *cellptr;
   value fd;
-  struct arc_port *p;
   char *utf_filename;
   FILE *fp;
   int en;
 
   cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
   if (cellptr == NULL)
-    return(CNIL);
+    c->signal_error(c, "openfile: cannot allocate memory");
   fd = (value)cellptr;
   BTYPE(fd) = T_PORT;
   REP(fd)._custom.pprint = file_pp;
   REP(fd)._custom.marker = file_marker;
   REP(fd)._custom.sweeper = file_sweeper;
-  p = (struct arc_port *)(REP(fd)._custom.data);
   /* XXX make this file name a fully qualified pathname */
-  p->u.file.name = filename;
+  PORTF(fd).name = filename;
   utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
   arc_str2cstr(c, filename, utf_filename);
-  fp = fopen(utf_filename, "r");
+  fp = fopen(utf_filename, (for_reading) ? mode);
   if (fp == NULL) {
     en = errno;
     c->signal_error(c, "open-input-file: cannot open input file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
   }
-  p->u.file.fp = fp;
-  p->u.file.open = 1;
+  PORTF(fd).fp = fp;
+  PORTF(fd).open = 1;
   return(fd);
+}
+
+value arc_infile(arc *c, value filename)
+{
+  return(openfile(c, filename, "r"));
+}
+
+value arc_outfile(arc *c, value filename, value xmode)
+{
+  if (xmode == arc_intern_cstr(c, "append"))
+    return(openfile(c, filename, "a"));
+  return(openfile(c, filename, "w"));
 }
