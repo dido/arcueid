@@ -243,6 +243,14 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
       append_cstring(c, ")", ppstr);
     }
     break;
+  case T_PORT:
+  case T_CUSTOM:
+    {
+      value nstr = REP(sexpr)._custom.pprint(c, sexpr);
+
+      *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
+    }
+    break;
 #endif
   }
   return(*ppstr);
