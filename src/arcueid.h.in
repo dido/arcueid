@@ -349,6 +349,8 @@ extern Rune arc_strgetc(arc *c, value src, int *index);
 extern void arc_strungetc(arc *c, int *index);
 extern value arc_strchr(arc *c, value str, Rune ch);
 extern value arc_strcmp(arc *c, value vs1, value vs2);
+extern value arc_strutflen(arc *c, value str);
+extern void arc_str2cstr(arc *c, value s, char *ptr);
 
 extern void arc_hash_init(arc_hs *s, unsigned long level);
 extern void arc_hash_update(arc_hs *s, unsigned long val);
