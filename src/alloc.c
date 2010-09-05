@@ -387,6 +387,7 @@ static void sweep(arc *c, value v)
   case T_PORT:
   case T_CUSTOM:
     REP(v)._custom.sweeper(c, v);
+    break;
   default:
     /* this should do for almost everything else */
     c->free_block(c, (void *)v);
