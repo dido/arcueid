@@ -94,7 +94,7 @@ enum arc_types {
   T_INPUT=0x0e,
   T_OUTPUT=0x0f,
   T_EXCEPTION=0x10,
-  T_SOCKET=0x11,
+  T_PORT=0x11,
   T_THREAD=0x12,
   T_VECTOR=0x13,
 
@@ -104,6 +104,7 @@ enum arc_types {
   T_ENV = 0x17,			/* environment */
   T_VMCODE = 0x18,		/* a VM code block */
   T_CCODE = 0x19,		/* a C function */
+  T_CUSTOM = 0x1a,		/* custom type */
 
   T_NONE=0xff
 };
@@ -217,6 +218,19 @@ struct cell {
       value (*fnptr)();
       int argc;
     } _cfunc;
+    /* Custom objects are defined here. A custom object is defined by
+       a pretty printer (which converts the object into a string,
+       and marker, which is called whenever the custom object is
+       marked by the garbage collector, and a sweeper, which is called
+       when the object is up for sweeping.  The marker should use the
+       provided mark function to mark any successive Arcueid values
+       inside itself.  */
+    struct {
+      value (*pprint)(arc *, value);
+      void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
+      void (*sweeper)(arc *, value);
+      value data[1];
+    } _custom;
   } obj;
 };
 
