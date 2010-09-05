@@ -337,6 +337,13 @@ static void mark(arc *c, value v, int reclevel)
       for (i=0; i<REP(v)._vector.length; i++)
 	mark(c, REP(v)._vector.data[i], reclevel+1);
       break;
+    case T_PORT:
+    case T_CUSTOM:
+      /* for custom data types (including ports), call the marker
+	 function defined for it, and pass ourselves as the next
+	 level mark. */
+      REP(v)._custom.marker(c, v, reclevel+1, mark);
+      break;
       /* XXX fill in with other composite types as they are defined */
     default:
       /* The other types do not contain further pointers inside them
@@ -377,6 +384,9 @@ static void sweep(arc *c, value v)
     REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index] = CUNBOUND;
     c->free_block(c, (void *)v);
     break;
+  case T_PORT:
+  case T_CUSTOM:
+    REP(v)._custom.sweeper(c, v);
   default:
     /* this should do for almost everything else */
     c->free_block(c, (void *)v);
