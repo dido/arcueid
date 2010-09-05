@@ -166,3 +166,35 @@ value arc_strcmp(arc *c, value vs1, value vs2)
   }
   return(INT2FIX(0));
 }
+
+value arc_strutflen(arc *c, value str)
+{
+  int i, count;
+  char buf[UTFmax];
+  Rune r;
+
+  count = 0;
+  for (i=0; i<arc_strlen(c, str); i++) {
+    r = arc_strindex(c, str, i);
+    count += runetochar(buf, &r);
+  }
+  return(INT2FIX(count));
+}
+
+/* Convert a string into a C string.  The pointer ptr must be big
+   enough to store all the data. BE SURE OF THIS BEFORE USING THIS
+   FUNCTION! */
+void arc_str2cstr(arc *c, value str, char *ptr)
+{
+  int i, nc;
+  char *p;
+  Rune r;
+
+  p = ptr;
+  for (i=0; i<arc_strlen(c, str); i++) {
+    r = arc_strindex(c, str, i);
+    nc = runetochar(p, &r);
+    p += nc;
+  }
+  *p = 0;			/* null terminator */
+}
