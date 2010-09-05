@@ -21,7 +21,7 @@ lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -version-info 0:0:0
 libarcueid_la_SOURCES = arcueid.c arith.c alloc.c codegen.c hash.c \
-	osdep.c pprint.c reader.c string.c utf.c vmengine.c
+	io.c osdep.c pprint.c reader.c string.c utf.c vmengine.c
 
 include_HEADERS = arcueid.h
 noinst_HEADERS = arith.h alloc.h utf.h symbols.h vmengine.h
