@@ -247,3 +247,23 @@ int runetochar(char *str, Rune *rune)
   /* invalid rune */
   return(0);
 }
+
+int fullrune(char *str, int n)
+{
+  int c;
+
+  if (n > 0) {
+    c = *(unsigned char *)str;
+    if (c < Tx)
+      return(1);
+    if ((c > T5 && n > 5)
+	|| (c > T4 && n > 4)
+	|| (c > T3 && n > 3))
+      return(1);
+    if (n > 1) {
+      if (c < T3 || n > 2)
+	return(1);
+    }
+  }
+  return(0);
+}
