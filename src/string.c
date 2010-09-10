@@ -14,9 +14,7 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #include <inttypes.h>
 #include <string.h>
@@ -89,6 +87,26 @@ int arc_strlen(arc *c, value v)
 Rune arc_strindex(arc *c, value v, int index)
 {
   return(REP(v)._str.str[index]);
+}
+
+Rune arc_strsetindex(arc *c, value v, int index, Rune ch)
+{
+  REP(v)._str.str[index] = ch;
+  return(ch);
+}
+
+/* XXX - this is extremelly inefficient! */
+value arc_strcatc(arc *c, value v1, Rune ch)
+{
+  Rune *runeptr;
+  value newstr;
+
+  newstr = arc_mkstringlen(c, REP(v1)._str.length + 1);
+  runeptr = REP(newstr)._str.str;
+  memcpy(runeptr, REP(v1)._str.str, REP(v1)._str.length*sizeof(Rune));
+  runeptr += REP(v1)._str.length;
+  *runeptr = ch;
+  return(newstr);
 }
 
 value arc_strcat(arc *c, value v1, value v2)
