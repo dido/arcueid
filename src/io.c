@@ -136,6 +136,7 @@ static value openfile(arc *c, value filename, const char *mode)
   REP(fd)._custom.pprint = file_pp;
   REP(fd)._custom.marker = file_marker;
   REP(fd)._custom.sweeper = file_sweeper;
+  PORT(fd)->type = FT_FILE;
   /* XXX make this file name a fully qualified pathname */
   PORTF(fd).name = filename;
   utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
@@ -167,6 +168,122 @@ value arc_outfile(arc *c, value filename, value xmode)
   return(openfile(c, filename, "w"));
 }
 
+static value fstr_pp(arc *c, value v)
+{
+  return(arc_mkstringc(c, "#<port:string>"));
+}
+
+static void fstr_marker(arc *c, value v, int level,
+			void (*mark)(arc *, value, int))
+{
+  mark(c, PORTS(v).str, level+1);
+}
+
+static void fstr_sweeper(arc *c, value v)
+{
+  /* release memory */
+  c->free_block(c, (void *)v);
+}
+
+/* NOTE: this will actually return a RUNE, not a byte! */
+static int fstr_getb(arc *c, struct arc_port *p)
+{
+  int len;
+
+  len = arc_strlen(c, p->u.strfile.str);
+  if (p->u.strfile.idx >= len)
+    return(EOF);
+  return(arc_strindex(c, p->u.strfile.str, p->u.strfile.idx++));
+}
+
+/* NOTE: this will actually return a RUNE, not a byte! */
+static int fstr_peekb(arc *c, struct arc_port *p)
+{
+  int len;
+
+  len = arc_strlen(c, p->u.strfile.str);
+  if (p->u.strfile.idx >= len)
+    return(EOF);
+  return(arc_strindex(c, p->u.strfile.str, p->u.strfile.idx));
+}
+
+/* NOTE: this will actually write a RUNE, not a byte! */
+static int fstr_putb(arc *c, struct arc_port *p, int byte)
+{
+  int len;
+
+  len = arc_strlen(c, p->u.strfile.str);
+  if (p->u.strfile.idx >= len) {
+    p->u.strfile.idx = len+1;
+    p->u.strfile.str = arc_strcatc(c, p->u.strfile.str, (Rune)byte);
+  } else {
+    arc_strsetindex(c, p->u.strfile.str, p->u.strfile.idx, (Rune)byte);
+  }
+  return(byte);
+}
+
+static int fstr_seek(arc *c, struct arc_port *p, int64_t offset, int whence)
+{
+  int64_t len;
+
+  len = (int64_t)arc_strlen(c, p->u.strfile.str);
+  switch (whence) {
+  case SEEK_SET:
+    break;
+  case SEEK_CUR:
+    offset += p->u.strfile.idx;
+    break;
+  case SEEK_END:
+    offset = len - offset;
+    break;
+  default:
+    return(-1);
+  }
+  if (offset >= len || offset < 0)
+    return(-1);
+  p->u.strfile.idx = offset;
+  return(0);
+}
+
+static int64_t fstr_tell(arc *c, struct arc_port *p)
+{
+  return(p->u.strfile.idx);
+}
+
+value arc_instring(arc *c, value str)
+{
+  void *cellptr;
+  value fd;
+
+  cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
+  if (cellptr == NULL)
+    c->signal_error(c, "openstring: cannot allocate memory");
+  fd = (value)cellptr;
+  BTYPE(fd) = T_PORT;
+  REP(fd)._custom.pprint = fstr_pp;
+  REP(fd)._custom.marker = fstr_marker;
+  REP(fd)._custom.sweeper = fstr_sweeper;
+  PORT(fd)->type = FT_STRING;
+  PORTS(fd).idx = 0;
+  PORTS(fd).str = str;
+  PORT(fd)->getb = fstr_getb;
+  PORT(fd)->peekb = fstr_peekb;
+  PORT(fd)->putb = fstr_putb;
+  PORT(fd)->seek = fstr_seek;
+  PORT(fd)->tell = fstr_tell;
+  return(fd);
+}
+
+value arc_outstring(arc *c, value str)
+{
+  return(arc_instring(c, arc_mkstringc(c, "")));
+}
+
+value arc_fstr_inside(arc *c, value fstr)
+{
+  return(PORTS(fstr).str);
+}
+
 value arc_readb(arc *c, value fd)
 {
   int ch;
@@ -187,12 +304,15 @@ value arc_writeb(arc *c, value byte, value fd)
   return(INT2FIX(ch));
 }
 
-value arc_readc(arc *c, value fd)
+Rune arc_readc_rune(arc *c, value fd)
 {
   int ch;
   char buf[UTFmax];
   int i;
   Rune r;
+
+  if (PORT(fd)->type == FT_STRING)
+    return(FIX2INT(arc_readb(c, fd)));
 
   for (i=0; i<UTFmax; i++) {
     ch = PORT(fd)->getb(c, PORT(fd));
@@ -200,7 +320,34 @@ value arc_readc(arc *c, value fd)
       return(CNIL);
     buf[i] = ch;
     if (fullrune(buf, i+1))
-      return(arc_mkchar(c, chartorune(&r, buf)));
+      return(chartorune(&r, buf));
   }
-  return(arc_mkchar(c, Runeerror));
+  return(Runeerror);
+}
+
+value arc_readc(arc *c, value fd)
+{
+  return(arc_mkchar(c, arc_readc_rune(c, fd)));
+}
+
+Rune arc_writec_rune(arc *c, Rune r, value fd)
+{
+  char buf[UTFmax];
+  int nbytes, i;
+
+  if (PORT(fd)->type == FT_STRING) {
+    PORT(fd)->putb(c, PORT(fd), r);
+    return(r);
+  }
+
+  nbytes = runetochar(buf, &r);
+  for (i=0; i<nbytes; i++)
+    PORT(fd)->putb(c, PORT(fd), buf[i]);
+  return(r);
+}
+
+value arc_writec(arc *c, value r, value fd)
+{
+  arc_writec_rune(c, REP(r)._char, fd);
+  return(r);
 }
