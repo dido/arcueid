@@ -1,27 +1,24 @@
-# 
 # Copyright (C) 2010 Rafael R. Sevilla
 #
 # This file is part of Arcueid
 #
 # Arcueid is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-#  (at your option) any later version.
+# under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation; either version 3 of the
+# License, or (at your option) any later version.
 #
-# This program is distributed in the hope that it will be useful,
+# This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+# GNU Lesser General Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-#  02110-1301 USA.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
-TESTS = check_arith check_alloc check_hash check_pp check_reader \
-	check_unicode check_vm
-check_PROGRAMS = check_arith check_alloc check_hash check_pp \
+TESTS = check_arith check_alloc check_hash check_io check_pp \
 	check_reader check_unicode check_vm
+check_PROGRAMS = check_arith check_alloc check_hash check_io \
+	check_pp check_reader check_unicode check_vm
 
 
 check_arith_SOURCES = check_arith.c $(top_builddir)/src/arcueid.h
@@ -51,3 +48,7 @@ check_unicode_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 check_vm_SOURCES = check_vm.c $(top_builddir)/src/vmengine.h
 check_vm_CFLAGS = @CHECK_CFLAGS@
 check_vm_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+check_io_SOURCES = check_io.c $(top_builddir)/src/arcueid.h
+check_io_CFLAGS = @CHECK_CFLAGS@
+check_io_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
