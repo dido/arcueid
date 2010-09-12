@@ -284,26 +284,30 @@ value arc_fstr_inside(arc *c, value fstr)
   return(PORTS(fstr).str);
 }
 
+/* Read a byte.  Returns -1 on failure. */
 value arc_readb(arc *c, value fd)
 {
   int ch;
 
   ch = PORT(fd)->getb(c, PORT(fd));
   if (ch == EOF)
-    return(CNIL);
+    ch = -1;
   return(INT2FIX(ch));
 }
 
+/* Write a byte.  Returns -1 on failure. */
 value arc_writeb(arc *c, value byte, value fd)
 {
   int ch = FIX2INT(byte);
 
   PORT(fd)->putb(c, PORT(fd), ch);
   if (ch == EOF)
-    return(CNIL);
+    ch = -1;
   return(INT2FIX(ch));
 }
 
+/* Read a rune from fd.  On end of file returns -1.  If UTF-8
+   cannot be decoded properly, returns Runeerror. */
 Rune arc_readc_rune(arc *c, value fd)
 {
   int ch;
@@ -317,7 +321,7 @@ Rune arc_readc_rune(arc *c, value fd)
   for (i=0; i<UTFmax; i++) {
     ch = PORT(fd)->getb(c, PORT(fd));
     if (ch == EOF)
-      return(CNIL);
+      return(-1);
     buf[i] = ch;
     if (fullrune(buf, i+1)) {
       chartorune(&r, buf);
@@ -327,9 +331,16 @@ Rune arc_readc_rune(arc *c, value fd)
   return(Runeerror);
 }
 
+/* Read a character from fd.  Returns CNIL on end of file, or the
+   character. */
 value arc_readc(arc *c, value fd)
 {
-  return(arc_mkchar(c, arc_readc_rune(c, fd)));
+  Rune r;
+
+  r = arc_readc_rune(c, fd);
+  if (r < 0)
+    return(CNIL);
+  return(arc_mkchar(c, r));
 }
 
 Rune arc_writec_rune(arc *c, Rune r, value fd)
