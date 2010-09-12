@@ -32,7 +32,7 @@ START_TEST(test_str_read)
   strio = arc_instring(&c, str);
   for (i=0; i<10; i++)
     fail_unless(arc_readb(&c, strio) == INT2FIX(0x30 + i));
-  fail_unless(arc_readb(&c, strio) == CNIL);
+  fail_unless(FIX2INT(arc_readb(&c, strio)) < 0);
 }
 END_TEST
 
@@ -67,7 +67,7 @@ START_TEST(test_file_read)
   fp = arc_infile(&c, fname);
   fail_if(fp == CNIL);
   i=0;
-  while ((rune = arc_readc_rune(&c, fp)) != CNIL) {
+  while ((rune = arc_readc_rune(&c, fp)) >= 0) {
     fail_unless(rune == codes[i]);
     i++;
   }
@@ -75,7 +75,7 @@ START_TEST(test_file_read)
   arc_seek(&c, fp, INT2FIX(0), INT2FIX(SEEK_SET));
   fail_unless(arc_tell(&c, fp) == INT2FIX(0));
   i=0;
-  while ((byte = arc_readb(&c, fp)) != CNIL) {
+  while (FIX2INT(byte = arc_readb(&c, fp)) >= 0) {
     fail_unless(FIX2INT(byte) == bytevals[i]);
     i++;
   }
