@@ -33,7 +33,7 @@ typedef unsigned long value;
 @MPQ_TYPE@;
 
 /* Characters are internally stored as UCS-4 */
-typedef uint32_t Rune;
+typedef int32_t Rune;
 
 typedef struct arc {
   /* High-level allocation functions (allocate a cell, allocate a block) */
