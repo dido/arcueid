@@ -418,5 +418,7 @@ extern Rune arc_readc_rune(arc *c, value fd);
 extern value arc_readc(arc *c, value fd);
 extern Rune arc_writec_rune(arc *c, Rune r, value fd);
 extern value arc_writec(arc *c, value r, value fd);
+extern value arc_seek(arc *c, value fd, value ofs, value whence);
+extern value arc_tell(arc *c, value fd);
 
 #endif
