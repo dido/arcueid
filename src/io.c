@@ -319,8 +319,10 @@ Rune arc_readc_rune(arc *c, value fd)
     if (ch == EOF)
       return(CNIL);
     buf[i] = ch;
-    if (fullrune(buf, i+1))
-      return(chartorune(&r, buf));
+    if (fullrune(buf, i+1)) {
+      chartorune(&r, buf);
+      return(r);
+    }
   }
   return(Runeerror);
 }
@@ -351,3 +353,25 @@ value arc_writec(arc *c, value r, value fd)
   arc_writec_rune(c, REP(r)._char, fd);
   return(r);
 }
+
+/* XXX - probably need to define some constants for whence
+   XXX - probably need to check FIX2INT values as well.  Some 32/64-bit
+   compatibility issues may arise (e.g. no large files on 32-bit
+   systems) */
+value arc_seek(arc *c, value fd, value ofs, value whence)
+{
+  if (PORT(fd)->seek(c, PORT(fd), FIX2INT(ofs), FIX2INT(whence)) < 0)
+    return(CNIL);
+  return(CTRUE);
+}
+
+value arc_tell(arc *c, value fd)
+{
+  int64_t pos;
+
+  pos = PORT(fd)->tell(c, PORT(fd));
+  if (pos < 0)
+    return(CNIL);
+  return(INT2FIX(pos));
+}
+
