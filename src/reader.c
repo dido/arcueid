@@ -31,20 +31,6 @@
 #include "symbols.h"
 #include "../config.h"
 
-static Rune scan(arc *c, value src, int *index);
-static value read_list(arc *c, value src, int *index);
-static value read_anonf(arc *c, value src, int *index);
-static value read_quote(arc *c, value src, int *index, value sym);
-static value read_comma(arc *c, value src, int *index);
-static value read_string(arc *c, value src, int *index);
-static value read_char(arc *c, value src, int *index);
-static void read_comment(arc *c, value src, int *index);
-static value read_symbol(arc *c, value src, int *index);
-static value expand_ssyntax(arc *c, value sym);
-static value expand_compose(arc *c, value sym);
-static value expand_sexpr(arc *c, value sym);
-static value expand_and(arc *c, value sym);
-
 #define ID2SYM(x) ((value)(((long)(x))<<8|SYMBOL_FLAG))
 
 value arc_intern(arc *c, value name)
@@ -75,92 +61,74 @@ value arc_sym2name(arc *c, value sym)
   return(arc_hash_lookup(c, c->rsymtable, sym));
 }
 
-/* Reader */
-static Rune readchar(struct arc *c, value src, int *index)
-{
-  switch (TYPE(src)) {
-  case T_STRING:
-    return(arc_strgetc(c, src, index));
-    break;
-  default:
-    c->signal_error(c, "Attempt to read from an invalid source");
-    break;
-  }
-  return(CNIL);
-}
+#if 0
 
-static void unreadchar(struct arc *c, value src, Rune ch, int *index)
-{
-  switch (TYPE(src)) {
-  case T_STRING:
-    return(arc_strungetc(c, index));
-    break;
-  default:
-    c->signal_error(c, "Attempt to unread from an invalid source");
-    break;
-  }
-}
+static Rune scan(arc *c, value src);
+static value read_list(arc *c, value src);
+static value read_anonf(arc *c, value src);
+static value read_quote(arc *c, value src, value sym);
+static value read_comma(arc *c, value src);
+static value read_string(arc *c, value src);
+static value read_char(arc *c, value src);
+static void read_comment(arc *c, value src);
+static value read_symbol(arc *c, value src);
+static value expand_ssyntax(arc *c, value sym);
+static value expand_compose(arc *c, value sym);
+static value expand_sexpr(arc *c, value sym);
+static value expand_and(arc *c, value sym);
 
-value arc_read(arc *c, value src, int *index, value *pval)
+value arc_read(arc *c, value src)
 {
   Rune ch;
 
-  while ((ch = scan(c, src, index)) != Runeerror) {
+  while ((ch = scan(c, src)) >= 0) {
     switch (ch) {
     case '(':
-      *pval = read_list(c, src, index);
-      return(CTRUE);
+      return(read_list(c, src));
     case ')':
       c->signal_error(c, "misplaced right paren");
       return(CNIL);
     case '[':
-      *pval = read_anonf(c, src, index);
-      return(CTRUE);
+      return(read_anonf(c, src));
     case ']':
       c->signal_error(c, "misplaced right bracket");
       return(CNIL);
     case '\'':
-      *pval = read_quote(c, src, index, ARC_BUILTIN(c, S_QUOTE));
-      return(CTRUE);
+      return(read_quote(c, src, ARC_BUILTIN(c, S_QUOTE)));
     case '`':
-      *pval = read_quote(c, src, index, ARC_BUILTIN(c, S_QQUOTE));
-      return(CTRUE);
+      return(read_quote(c, src, ARC_BUILTIN(c, S_QQUOTE)));
     case ',':
-      *pval = read_comma(c, src, index);
-      return(CTRUE);
+      return(read_comma(c, src));
     case '"':
-      *pval = read_string(c, src, index);
-      return(CTRUE);
+      return(read_string(c, src));
     case '#':
-      *pval = read_char(c, src, index);
-      return(CTRUE);
+      return(read_char(c, src));
     case ';':
-      read_comment(c, src, index);
-      return(CTRUE);
+      read_comment(c, src);
     default:
-      unreadchar(c, src, ch, index);
-      *pval = read_symbol(c, src, index);
+      arc_unreadchar_rune(c, src, ch);
+      return(read_symbol(c, src));
       return(CTRUE);
     }
   }
   return(CNIL);
 }
 
-static value read_list(arc *c, value src, int *index)
+static value read_list(arc *c, value src)
 {
   value top, val, last;
   Rune ch;
 
   top = val = last = CNIL;
-  while ((ch = scan(c, src, index)) != Runeerror) {
+  while ((ch = scan(c, src)) >= 0) {
     switch (ch) {
     case ';':
-      read_comment(c, src, index);
+      read_comment(c, src);
       break;
     case ')':
       return(top);
     default:
-      unreadchar(c, src, ch, index);
+      arc_unreadchar_rune(c, src, ch);
       if (!arc_read(c, src, index, &val))
 	c->signal_error(c, "unexpected end of source");
       val = cons(c, val, CNIL);
@@ -183,7 +151,7 @@ static void read_comment(arc *c, value src, int *index)
   while ((ch = readchar(c, src, index)) != Runeerror && !ucisnl(ch))
     ;
   if (ch != Runeerror)
-    unreadchar(c, src, ch, index);
+    arc_unreadchar_rune(c, src, ch);
 }
 
 static int issym(Rune ch)
@@ -243,11 +211,11 @@ static value read_symbol(arc *c, value str, int *index)
 }
 
 /* scan for first non-blank character */
-static Rune scan(arc *c, value src, int *index)
+static Rune scan(arc *c, value src)
 {
   Rune ch;
 
-  while ((ch = readchar(c, src, index)) != Runeerror && ucisspace(ch))
+  while ((ch = arc_readc_rune(c, src)) >= 0 && ucisspace(ch))
     ;
   return(ch);
 }
@@ -679,6 +647,8 @@ value arc_ssexpand(arc *c, value sym)
   x = arc_sym2name(c, sym);
   return(expand_ssyntax(c, x));
 }
+
+#endif
 
 static struct {
   char *str;
