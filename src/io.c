@@ -15,6 +15,16 @@
 
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+
+  Note: It is generally unsafe to mix the arc_readb/arc_writeb functions
+  (which read and write individual bytes) with the arc_readc/arc_writec
+  functions (which return Unicode runes).
+
+  There are some idiosyncrasies in the behavior of string streams:
+  the byte functions (readb and writeb) behave in exactly the same
+  way as the character functions (readc and writec).  This is by
+  design, although it might not be the way the PG-Arc reference
+  implementation behaves.
 */
 #include <stdio.h>
 #include <alloca.h>
@@ -42,15 +52,16 @@ struct arc_port {
       value name;
       FILE *fp;
       int open;
+      char unread_buf[UTFmax];
+      int unread_offset;
     } file;
     int sock;
   } u;
   int (*getb)(arc *, struct arc_port *);
-  int (*peekb)(arc *, struct arc_port *);
   int (*putb)(arc *, struct arc_port *, int);
   int (*seek)(arc *, struct arc_port *, int64_t, int);
   int64_t (*tell)(arc *, struct arc_port *);
-  char uc_buf[UTFmax];
+  Rune ungetrune;		/* unget rune */
 };
 
 #define PORT(v) ((struct arc_port *)REP(v)._custom.data)
@@ -85,16 +96,10 @@ static void file_sweeper(arc *c, value v)
 
 static int file_getb(arc *c, struct arc_port *p)
 {
+  if (p->u.file.unread_offset > 0)
+    return((int)p->u.file.unread_buf[p->u.file.unread_offset--]);
+
   return(fgetc(p->u.file.fp));
-}
-
-static int file_peekb(arc *c, struct arc_port *p)
-{
-  int ch;
-
-  ch = fgetc(p->u.file.fp);
-  ungetc(ch, p->u.file.fp);
-  return(ch);
 }
 
 static int file_putb(arc *c, struct arc_port *p, int byte)
@@ -149,10 +154,10 @@ static value openfile(arc *c, value filename, const char *mode)
   PORTF(fd).fp = fp;
   PORTF(fd).open = 1;
   PORT(fd)->getb = file_getb;
-  PORT(fd)->peekb = file_peekb;
   PORT(fd)->putb = file_putb;
   PORT(fd)->seek = file_seek;
   PORT(fd)->tell = file_tell;
+  PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
 }
 
@@ -194,17 +199,6 @@ static int fstr_getb(arc *c, struct arc_port *p)
   if (p->u.strfile.idx >= len)
     return(EOF);
   return(arc_strindex(c, p->u.strfile.str, p->u.strfile.idx++));
-}
-
-/* NOTE: this will actually return a RUNE, not a byte! */
-static int fstr_peekb(arc *c, struct arc_port *p)
-{
-  int len;
-
-  len = arc_strlen(c, p->u.strfile.str);
-  if (p->u.strfile.idx >= len)
-    return(EOF);
-  return(arc_strindex(c, p->u.strfile.str, p->u.strfile.idx));
 }
 
 /* NOTE: this will actually write a RUNE, not a byte! */
@@ -267,10 +261,10 @@ value arc_instring(arc *c, value str)
   PORTS(fd).idx = 0;
   PORTS(fd).str = str;
   PORT(fd)->getb = fstr_getb;
-  PORT(fd)->peekb = fstr_peekb;
   PORT(fd)->putb = fstr_putb;
   PORT(fd)->seek = fstr_seek;
   PORT(fd)->tell = fstr_tell;
+  PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
 }
 
@@ -288,6 +282,16 @@ value arc_fstr_inside(arc *c, value fstr)
 value arc_readb(arc *c, value fd)
 {
   int ch;
+
+  /* Note that if there is an unget value available, it will return
+     the whole *CHARACTER*, not a possible byte within the character!
+     As before, one isn't really supposed to mix the 'c' functions
+     with the 'b' functions.  Do so at your own risk! */
+  if (PORT(fd)->ungetrune >= 0) {
+    ch = PORT(fd)->ungetrune;
+    PORT(fd)->ungetrune = -1;
+    return(INT2FIX(ch));
+  }
 
   ch = PORT(fd)->getb(c, PORT(fd));
   if (ch == EOF)
@@ -314,6 +318,12 @@ Rune arc_readc_rune(arc *c, value fd)
   char buf[UTFmax];
   int i;
   Rune r;
+
+  if (PORT(fd)->ungetrune >= 0) {
+    r = PORT(fd)->ungetrune;
+    PORT(fd)->ungetrune = -1;
+    return(r);
+  }
 
   if (PORT(fd)->type == FT_STRING)
     return(FIX2INT(arc_readb(c, fd)));
@@ -365,6 +375,19 @@ value arc_writec(arc *c, value r, value fd)
   return(r);
 }
 
+Rune arc_ungetc_rune(arc *c, Rune r, value fd)
+{
+  PORT(fd)->ungetrune = r;
+  return(r);
+}
+
+/* Note that ungetc is a rather simplistic function. */
+value arc_ungetc(arc *c, value r, value fd)
+{
+  arc_ungetc_rune(c, REP(r)._char, fd);
+  return(r);
+}
+
 /* XXX - probably need to define some constants for whence
    XXX - probably need to check FIX2INT values as well.  Some 32/64-bit
    compatibility issues may arise (e.g. no large files on 32-bit
@@ -385,4 +408,3 @@ value arc_tell(arc *c, value fd)
     return(CNIL);
   return(INT2FIX(pos));
 }
-
