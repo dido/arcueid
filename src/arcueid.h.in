@@ -372,7 +372,7 @@ extern value arc_sym2name(arc *c, value sym);
 
 extern value arc_mkvector(arc *c, int length);
 
-extern value arc_read(arc *c, value src, int *index, value *pval);
+extern value arc_read(arc *c, value src);
 extern value arc_ssexpand(arc *c, value sym);
 
 extern void arc_vmengine(arc *c, value thr, int quanta);
@@ -416,6 +416,8 @@ extern value arc_readb(arc *c, value fd);
 extern value arc_writeb(arc *c, value byte, value fd);
 extern Rune arc_readc_rune(arc *c, value fd);
 extern value arc_readc(arc *c, value fd);
+extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
+extern value arc_ungetc(arc *c, value r, value fd);
 extern Rune arc_writec_rune(arc *c, Rune r, value fd);
 extern value arc_writec(arc *c, value r, value fd);
 extern value arc_seek(arc *c, value fd, value ofs, value whence);
