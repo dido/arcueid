@@ -18,7 +18,9 @@
     We use the Huelsbergen-Winterbottom VCGC algorithm.  We use it
     single-threaded exactly the way Inferno uses it, with
     interpretation interleaved with garbage collection.  Later on when
-    we have real threads in the language we'll make it into a real 
+    we have real threads in the language we'll make it into a real
+    threaded implementation with a real OS-level thread to do the
+    marking and sweeping.
 ** DONE compiler in Arc
     Debugging and feature-completeness are all on the agenda of course.
 ** TODO basic data types [8/14]
@@ -42,11 +44,20 @@
     - [ ] Vectors
     - [ ] Functions
 ** TODO I/O primitives (src/io.c) [3/6]
-    - [-] Input [2/4]
+    - [-] Input [3/4]
        - [X] readb
        - [X] readc
        - [ ] peekc
-       - [ ] ungetc - this is not part of standard Arc
+	     May be implemented in terms of ungetc
+       - [X] ungetc - this is not part of standard Arc
+	     Note that there is no ungetb function.  This is proving a
+	     little tricky to implement.  Maybe what we should do is
+	     simplify the semantics of ungetc so that it requires a
+	     character to be unget'd, and the next call to readc OR
+	     readb (yes, readb with a 'b'!) will return this
+	     CHARACTER.  This saves us the trouble of decoding Unicode
+	     all over again, and reinforces the maxim of never mixing
+	     the b functions with the c functions.
     - [X] Output [2/2]
        - [X] writeb
        - [X] writec
@@ -62,6 +73,10 @@
        - [ ] call-w/stdin
        - [ ] call-w/stdout
     - [X] String port I/O [3/3]
+	  Note that doing readb/writeb or readc/writec on a string
+	  port have the same effect.  Strings are made up of Unicode
+	  characters so it would be quite messy to implement a
+	  separate 'byte index' into what is made up of characters.
        - [X] instring
        - [X] outstring
        - [X] inside
@@ -76,7 +91,6 @@
    - sread: The arc reader, which is in Arc for Arcueid
    - disp: The arc pretty printer, which is in Arc for Arcueid
    - write: Also the arc pretty printer
-   The main core is
 ** TODO write a reader for basic CIEL files (bytecode only)
 ** TODO rewrite reader in Arc
 ** TODO write pretty printer in Arc
