@@ -82,6 +82,24 @@ START_TEST(test_file_read)
 }
 END_TEST
 
+START_TEST(test_file_ungetc)
+{
+  value fname, fp;
+  Rune rune;
+
+  fname = arc_mkstringc(&c, "./rfile.txt");
+  fp = arc_infile(&c, fname);
+  fail_if(fp == CNIL);
+  rune = arc_readc_rune(&c, fp);
+  fail_unless(rune == codes[0]);
+  arc_ungetc_rune(&c, rune, fp);
+  rune = arc_readc_rune(&c, fp);
+  fail_unless(rune == codes[0]);
+  rune = arc_readc_rune(&c, fp);
+  fail_unless(rune == codes[1]);
+}
+END_TEST
+
 extern unsigned long long gcepochs;
 
 int main(void)
@@ -116,6 +134,7 @@ int main(void)
 
   tcase_add_test(tc_strio, test_str_read);
   tcase_add_test(tc_fileio, test_file_read);
+  tcase_add_test(tc_fileio, test_file_ungetc);
   suite_add_tcase(s, tc_strio);
   suite_add_tcase(s, tc_fileio);
 
