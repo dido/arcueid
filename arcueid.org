@@ -1,0 +1,106 @@
+* The Arc Runtime
+   We want to be able to write as little of the runtime in C as
+   possible.  Of course, unless we have an Arc to native compiler, or
+   even a limited one analogous to Richard Kelsey's PreScheme, we have
+   no choice but to write a few portions in C.  I don't yet have the
+   chops or the time to make one like that now, but that would
+   certainly be ideal, and then we'd have an Arc just like Scheme48.
+** DONE base virtual machine
+    We've used vmgen to do this, but I'm not particularly happy with
+    its design.  We have here an instruction set somewhat inspired by
+    Dave Betz's XScheme and the OCaml bytecode.
+** DONE memory allocator
+    A very simple free-list based memory allocator.  There might be
+    better algorithms out there but let's get a simple one out
+    the door first and then worry about making it more efficient
+    later.
+** DONE garbage collector
+    We use the Huelsbergen-Winterbottom VCGC algorithm.  We use it
+    single-threaded exactly the way Inferno uses it, with
+    interpretation interleaved with garbage collection.  Later on when
+    we have real threads in the language we'll make it into a real 
+** DONE compiler in Arc
+    Debugging and feature-completeness are all on the agenda of course.
+** TODO basic data types [8/14]
+    - [X] Nil
+    - [X] True
+    - [X] Numeric Types [5/5]
+       - [X] fixnum
+       - [X] bignum
+       - [X] flonum
+       - [X] complex
+       - [X] rational
+    - [X] Characters
+    - [X] Strings
+    - [X] Symbols
+    - [X] Conses
+    - [X] Tables
+    - [ ] Tagged
+    - [ ] Input Ports
+    - [ ] Output Ports
+    - [ ] Threads
+    - [ ] Vectors
+    - [ ] Functions
+** TODO I/O primitives (src/io.c) [3/6]
+    - [-] Input [2/4]
+       - [X] readb
+       - [X] readc
+       - [ ] peekc
+       - [ ] ungetc - this is not part of standard Arc
+    - [X] Output [2/2]
+       - [X] writeb
+       - [X] writec
+    - [-] File I/O [2/4]
+       - [X] infile
+       - [X] outfile
+       - [ ] close
+       - [ ] pipe-from
+    - [ ] stdin, stdout, stderr [0/5]
+       - [ ] stdin
+       - [ ] stdout
+       - [ ] stderr
+       - [ ] call-w/stdin
+       - [ ] call-w/stdout
+    - [X] String port I/O [3/3]
+       - [X] instring
+       - [X] outstring
+       - [X] inside
+    - [X] Seeking / telling [2/2]
+	 Note that these essential functions are not available in
+	 PG-Arc for some reason...
+      - [X] seek
+      - [X] tell
+   These are the base I/O functions provided by the Arcueid C
+   runtime.  PG-Arc provides a few more functions in Scheme that we
+   write in Arc instead:
+   - sread: The arc reader, which is in Arc for Arcueid
+   - disp: The arc pretty printer, which is in Arc for Arcueid
+   - write: Also the arc pretty printer
+   The main core is
+** TODO write a reader for basic CIEL files (bytecode only)
+** TODO rewrite reader in Arc
+** TODO write pretty printer in Arc
+* Enhancements
+** TODO use ropes as strings
+   This is a valuable enhancement as efficent string handling for very
+   long strings will be very useful.
+** TODO true OS-level threading
+   The current interpreter is designed with green threads, scheduled
+   by the virtual machine rather than native threads.
+** TODO more advanced memory allocator
+** TODO just in time compilation
+** TODO PreArc?
+   We do want to someday make a statically-typed, non-garbage
+   collected dialect of Arc similar to Richard Kelsey's PreScheme, so
+   we can write the entire runtime in Arc.
+
+* Known issues
+** TODO seek/tell may have 32/64 bit compatibility issues
+   We might not have large file support on 32-bit builds.  This needs
+   to be fixed, and we may need bignum support for arc_seek/arc_tell.
+
+
+----------------------------------------------------------------------
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
