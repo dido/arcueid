@@ -388,6 +388,23 @@ value arc_ungetc(arc *c, value r, value fd)
   return(r);
 }
 
+Rune arc_peekc_rune(arc *c, value fd)
+{
+  Rune r;
+
+  r = arc_readc_rune(c, fd);
+  arc_ungetc_rune(c, r, fd);
+  return(r);
+}
+
+value arc_peekc(arc *c, value fd)
+{
+  Rune r;
+
+  r = arc_peekc_rune(c, fd);
+  return(arc_mkchar(c, r));
+}
+
 /* XXX - probably need to define some constants for whence
    XXX - probably need to check FIX2INT values as well.  Some 32/64-bit
    compatibility issues may arise (e.g. no large files on 32-bit
