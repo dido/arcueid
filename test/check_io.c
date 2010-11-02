@@ -79,6 +79,7 @@ START_TEST(test_file_read)
     fail_unless(FIX2INT(byte) == bytevals[i]);
     i++;
   }
+  fail_unless(arc_close(&c, fp) == 0);
 }
 END_TEST
 
@@ -101,6 +102,7 @@ START_TEST(test_file_ungetc)
   fail_unless(rune == codes[2]);
   rune = arc_readc_rune(&c, fp);
   fail_unless(rune == codes[2]);
+  fail_unless(arc_close(&c, fp) == 0);
 }
 END_TEST
 
