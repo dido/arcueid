@@ -23,7 +23,7 @@
     marking and sweeping.
 ** DONE compiler in Arc
     Debugging and feature-completeness are all on the agenda of course.
-** TODO basic data types [8/14]
+** TODO basic data types [11/14]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -37,12 +37,12 @@
     - [X] Symbols
     - [X] Conses
     - [X] Tables
+    - [X] Vectors
     - [ ] Tagged
-    - [ ] Input Ports
-    - [ ] Output Ports
-    - [ ] Threads
-    - [ ] Vectors
     - [ ] Functions
+    - [X] Input Ports
+    - [X] Output Ports
+    - [ ] Threads
 ** DONE Basic I/O primitives (src/io.c) [5/5]
     - [X] Input [4/4]
        - [X] readb
