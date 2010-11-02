@@ -371,6 +371,7 @@ extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
 
 extern value arc_mkvector(arc *c, int length);
+extern value arc_growvector(arc *c, value vect, int newlength);
 
 extern value arc_read(arc *c, value src);
 extern value arc_ssexpand(arc *c, value sym);
