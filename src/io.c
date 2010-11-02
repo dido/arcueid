@@ -52,8 +52,6 @@ struct arc_port {
       value name;
       FILE *fp;
       int open;
-      char unread_buf[UTFmax];
-      int unread_offset;
     } file;
     int sock;
   } u;
@@ -61,6 +59,7 @@ struct arc_port {
   int (*putb)(arc *, struct arc_port *, int);
   int (*seek)(arc *, struct arc_port *, int64_t, int);
   int64_t (*tell)(arc *, struct arc_port *);
+  int (*close)(arc *, struct arc_port *);
   Rune ungetrune;		/* unget rune */
 };
 
@@ -96,9 +95,6 @@ static void file_sweeper(arc *c, value v)
 
 static int file_getb(arc *c, struct arc_port *p)
 {
-  if (p->u.file.unread_offset > 0)
-    return((int)p->u.file.unread_buf[p->u.file.unread_offset--]);
-
   return(fgetc(p->u.file.fp));
 }
 
@@ -123,6 +119,17 @@ static int64_t file_tell(arc *c, struct arc_port *p)
 #else
   return((int64_t)ftell(p->u.file.fp));
 #endif
+}
+
+static int file_close(arc *c, struct arc_port *p)
+{
+  int ret = 0;
+
+  if (p->u.file.open) {
+    ret = fclose(p->u.file.fp);
+    p->u.file.open = 0;
+  }
+  return(ret);
 }
 
 static value openfile(arc *c, value filename, const char *mode)
@@ -157,6 +164,7 @@ static value openfile(arc *c, value filename, const char *mode)
   PORT(fd)->putb = file_putb;
   PORT(fd)->seek = file_seek;
   PORT(fd)->tell = file_tell;
+  PORT(fd)->close = file_close;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
 }
@@ -244,6 +252,12 @@ static int64_t fstr_tell(arc *c, struct arc_port *p)
   return(p->u.strfile.idx);
 }
 
+static int fstr_close(arc *c, struct arc_port *p)
+{
+  /* essentially a no-op */
+  return(0);
+}
+
 value arc_instring(arc *c, value str)
 {
   void *cellptr;
@@ -264,6 +278,7 @@ value arc_instring(arc *c, value str)
   PORT(fd)->putb = fstr_putb;
   PORT(fd)->seek = fstr_seek;
   PORT(fd)->tell = fstr_tell;
+  PORT(fd)->close = fstr_close;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
 }
@@ -424,4 +439,14 @@ value arc_tell(arc *c, value fd)
   if (pos < 0)
     return(CNIL);
   return(INT2FIX(pos));
+}
+
+value arc_close(arc *c, value fd)
+{
+  if (PORT(fd)->close(c, PORT(fd)) != 0) {
+    int en = errno;
+
+    c->signal_error(c, "close: cannot close %v \"%s\", (%s; errno=%d)", fd, strerror(en), en);
+  }
+  return(CNIL);
 }
