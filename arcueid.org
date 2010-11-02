@@ -43,12 +43,12 @@
     - [ ] Threads
     - [ ] Vectors
     - [ ] Functions
-** TODO I/O primitives (src/io.c) [3/6]
-    - [-] Input [3/4]
+** TODO I/O primitives (src/io.c) [4/6]
+    - [X] Input [4/4]
        - [X] readb
        - [X] readc
-       - [ ] peekc
-	     May be implemented in terms of ungetc
+       - [X] peekc
+	     Implemented in terms of ungetc
        - [X] ungetc - this is not part of standard Arc
 	     Note that there is no ungetb function.  This is proving a
 	     little tricky to implement.  Maybe what we should do is
