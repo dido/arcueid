@@ -43,7 +43,7 @@
     - [ ] Threads
     - [ ] Vectors
     - [ ] Functions
-** TODO I/O primitives (src/io.c) [4/6]
+** DONE Basic I/O primitives (src/io.c) [5/5]
     - [X] Input [4/4]
        - [X] readb
        - [X] readc
@@ -61,17 +61,10 @@
     - [X] Output [2/2]
        - [X] writeb
        - [X] writec
-    - [-] File I/O [2/4]
+    - [X] File I/O [3/3]
        - [X] infile
        - [X] outfile
-       - [ ] close
-       - [ ] pipe-from
-    - [ ] stdin, stdout, stderr [0/5]
-       - [ ] stdin
-       - [ ] stdout
-       - [ ] stderr
-       - [ ] call-w/stdin
-       - [ ] call-w/stdout
+       - [X] close
     - [X] String port I/O [3/3]
 	  Note that doing readb/writeb or readc/writec on a string
 	  port have the same effect.  Strings are made up of Unicode
@@ -82,7 +75,8 @@
        - [X] inside
     - [X] Seeking / telling [2/2]
 	 Note that these essential functions are not available in
-	 PG-Arc for some reason...
+	 PG-Arc for some reason but will probably be necessary to
+	 implement CIEL.
       - [X] seek
       - [X] tell
    These are the base I/O functions provided by the Arcueid C
@@ -93,7 +87,31 @@
    - write: Also the arc pretty printer
 ** TODO write a reader for basic CIEL files (bytecode only)
 ** TODO rewrite reader in Arc
+
 ** TODO write pretty printer in Arc
+** TODO Additional I/O functions (src/io.c) [0/2]
+   These other I/O functions are defined in standard Arc but are not
+   necessary for CIEL or the reader, so we do them later.
+    - [ ] File I/O [0/1]
+       - [ ] pipe-from
+    - [ ] stdin, stdout, stderr [0/5]
+       - [ ] stdin
+       - [ ] stdout
+       - [ ] stderr
+       - [ ] call-w/stdin
+       - [ ] call-w/stdout
+** TODO Formatted output
+   In addition to Arc standard prf, there will also be a printf
+   function which can be used to output strings according to a format
+   string specified.  The usual conversion specifiers for standard C
+   printf are available, with some additional non-standard ones:
+   - r or m : no argument required - print the output of
+     strerror(errno).
+   - v : replace by the pretty-printed form of the argument.
+
+   This is also the same format specification used by the error
+   handler function signal_error.
+
 * Enhancements
 ** TODO use ropes as strings
    This is a valuable enhancement as efficent string handling for very
