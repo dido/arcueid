@@ -97,6 +97,10 @@ START_TEST(test_file_ungetc)
   fail_unless(rune == codes[0]);
   rune = arc_readc_rune(&c, fp);
   fail_unless(rune == codes[1]);
+  rune = arc_peekc_rune(&c, fp);
+  fail_unless(rune == codes[2]);
+  rune = arc_readc_rune(&c, fp);
+  fail_unless(rune == codes[2]);
 }
 END_TEST
 
