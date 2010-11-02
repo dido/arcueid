@@ -141,6 +141,23 @@ value arc_mkvector(arc *c, int length)
   return(vect);
 }
 
+/* Grow a vector, leaving nils where no objects are.  This will automatically
+   release the space of the old vector.  If the vector is smaller than the
+   original */
+value arc_growvector(arc *c, value vect, int newlength)
+{
+  value newvect;
+  int len;
+
+  newvect = arc_mkvector(c, newlength);
+  len = REP(vect)._vector.length;
+  if (len > newlength)
+    len = newlength;
+  memcpy(REP(vect)._vector.data, REP(newvect)._vector.data, len);
+  c->free_block(vect);
+  return(newvect);
+}
+
 value arc_list_append(value list1, value val)
 {
   value list;
