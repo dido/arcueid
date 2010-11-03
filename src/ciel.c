@@ -100,9 +100,9 @@ static value getint(arc *c, int sign, value fd)
 }
 
 /* Read a CIEL 0.0.0 file */
-value arc_ciel_unmarshal_v000(arc *c, value fd)
+value arc_ciel_unmarshal(arc *c, value fd)
 {
-  static char header[] = { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  static int header[] = { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   int i, flag, bc;
   value stack, memo;
   int memosize, stacksize, stackptr;
@@ -110,14 +110,13 @@ value arc_ciel_unmarshal_v000(arc *c, value fd)
   /* Verify the header */
   flag = 1;
   for (i=0; i<8; i++) {
-    if (FIX2INT(arc_readb(c, fd) != header[i])) {
+    if (FIX2INT(arc_readb(c, fd)) != header[i]) {
       flag = 0;
       break;
     }
   }
   if (!flag)
     c->signal_error(c, "ciel-unmarshal-v000: invalid header found in file %v", fd);
-  return(CNIL);
   /* Initialize stack and memo */
   stacksize = INIT_STACK_SIZE;
   memosize = INIT_MEMO_SIZE;
@@ -140,4 +139,8 @@ value arc_ciel_unmarshal_v000(arc *c, value fd)
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
     }
   }
+  stackptr--;
+  if (stackptr < 0)
+    c->signal_error(c, "Empty CIEL stack at end of decode");
+  return(VINDEX(stack, stackptr));
 }
