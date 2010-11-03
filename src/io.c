@@ -310,7 +310,7 @@ value arc_readb(arc *c, value fd)
 
   ch = PORT(fd)->getb(c, PORT(fd));
   if (ch == EOF)
-    return(CNIL);
+    ch = -1;
   return(INT2FIX(ch));
 }
 
