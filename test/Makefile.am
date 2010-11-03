@@ -16,9 +16,9 @@
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
 TESTS = check_arith check_alloc check_hash check_io check_pp \
-	check_unicode check_vm
+	check_unicode check_vm check_ciel
 check_PROGRAMS = check_arith check_alloc check_hash check_io \
-	check_pp check_unicode check_vm
+	check_pp check_unicode check_vm check_ciel
 
 
 check_arith_SOURCES = check_arith.c $(top_builddir)/src/arcueid.h
@@ -52,3 +52,7 @@ check_vm_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 check_io_SOURCES = check_io.c $(top_builddir)/src/arcueid.h
 check_io_CFLAGS = @CHECK_CFLAGS@
 check_io_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+check_ciel_SOURCES = check_ciel.c $(top_builddir)/src/arcueid.h
+check_ciel_CFLAGS = @CHECK_CFLAGS@
+check_ciel_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
