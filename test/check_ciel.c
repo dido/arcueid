@@ -114,30 +114,35 @@ START_TEST(test_ciel_flonum)
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
       0x03, 118, 120, 23, 38, 134, 225, 223, 68 };     /* GFLO */
   value cieldata, cielfd, result;
+  double expected;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
   cielfd = arc_instring(cc, cieldata);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
-  fail_unless(fabs(REP(result)._flonum - 1.0) < 1e-6);
+  expected = 1.0;
+  fail_unless(fabs(REP(result)._flonum - expected)/expected < 1e-6);
 
   cieldata = arc_mkstring(cc, data2, sizeof(data2) / sizeof(Rune));
   cielfd = arc_instring(cc, cieldata);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
-  fail_unless(fabs(REP(result)._flonum - 3.14159265358979323846) < 1e-6);
+  expected = 3.14159265358979323846;
+  fail_unless(fabs(REP(result)._flonum - expected)/expected < 1e-6);
 
   cieldata = arc_mkstring(cc, data3, sizeof(data3) / sizeof(Rune));
   cielfd = arc_instring(cc, cieldata);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
-  fail_unless(fabs(REP(result)._flonum - 6.6260689633e-34) < 1e-6);
+  expected = 6.6260689633e-34;
+  fail_unless(fabs(REP(result)._flonum - expected)/expected < 1e-6);
 
   cieldata = arc_mkstring(cc, data4, sizeof(data4) / sizeof(Rune));
   cielfd = arc_instring(cc, cieldata);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
-  fail_unless(fabs(REP(result)._flonum/1e23 - 6.0221417930e23/1e23) < 1e-6);
+  expected = 6.0221417930e23;
+  fail_unless(fabs(REP(result)._flonum - expected)/expected < 1e-6);
 }
 END_TEST
 
