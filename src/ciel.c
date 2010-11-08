@@ -68,7 +68,7 @@ static int getsign(arc *c, value fd)
 static value getint(arc *c, int sign, value fd)
 {
   value acc = INT2FIX(0), parts[8];
-  int i, last;
+  int i, last, pos = 0;
 
   /* CIEL stores integers in 64 bit chunks, little endian.  We rearrange
      the calculations here such that the only value that can possibly be
@@ -76,20 +76,22 @@ static value getint(arc *c, int sign, value fd)
      XXX - we should probably make a smarter algorithm that takes
      advantage of 64-bit architectures. */
   for (;;) {
-    for (i=0; i<8; i++)
+    for (i=0; i<8; i++) {
       parts[i] = arc_readb(c, fd);
+      if (FIX2INT(parts[i]) < 0) {
+	c->signal_error(c, "ciel-unmarshal/getint: invalid integer found in %v", fd);
+      }
+    }
+    for (i=0; i<7; i++) {
+      acc = __arc_amul_2exp(c, acc, parts[i], pos);
+      pos += 8;
+    }
     /* check if this is the last one */
     last = (FIX2INT(parts[7]) & 0x80) != 0;
     /* mask out the high bit if needed */
     parts[7] = INT2FIX(FIX2INT(parts[7]) & 0x7f);
-    /* add in the highest portion first, this is 63 bits so
-       we multiply by 2^7 only. */
-    acc = __arc_mul2(c, acc, INT2FIX(128));
-    acc = __arc_add2(c, acc, parts[7]);
-    for (i=6; i>=0; i--) {
-      acc = __arc_mul2(c, acc, INT2FIX(256));
-      acc = __arc_add2(c, acc, parts[i]);
-    }
+    acc = __arc_amul_2exp(c, acc, parts[7], pos);
+    pos += 7;
     /* stop if this is the end */
     if (last)
       break;
@@ -116,7 +118,7 @@ value arc_ciel_unmarshal(arc *c, value fd)
     }
   }
   if (!flag)
-    c->signal_error(c, "ciel-unmarshal-v000: invalid header found in file %v", fd);
+    c->signal_error(c, "ciel-unmarshal: invalid header found in file %v", fd);
   /* Initialize stack and memo */
   stacksize = INIT_STACK_SIZE;
   memosize = INIT_MEMO_SIZE;
