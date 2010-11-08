@@ -85,11 +85,26 @@
    - sread: The arc reader, which is in Arc for Arcueid
    - disp: The arc pretty printer, which is in Arc for Arcueid
    - write: Also the arc pretty printer
-** TODO write a reader for CIEL files (src/ciel.c)
+** DONE write a reader for CIEL files (src/ciel.c) [3/14]
    Our CIEL bytecode interpreter must at the very least support the
    instructions given in comp-bsdef.arc and be able to decode CIEL
    files generated therein.  This should produce code objects suitable
-   for use by the interpreter.
+   for use by the interpreter.  The following instructions should be
+   implemented:
+   - [X] gnil
+   - [X] gtrue
+   - [X] gint
+   - [ ] gflo
+   - [ ] gchar
+   - [ ] gstr
+   - [ ] gsym
+   - [ ] crat
+   - [ ] ccomplex
+   - [ ] ccons
+   - [ ] cannotate
+   - [ ] xdup
+   - [ ] xmst
+   - [ ] xmld
 ** TODO rewrite reader in Arc
 
 ** TODO write pretty printer in Arc
@@ -116,6 +131,10 @@
    This is also the same format specification used by the error
    handler function signal_error.
 
+** TODO Additional CIEL instructions [0/2]
+   The following additional instructions are required by the final version:
+   - [ ] gtab
+   - [ ] ctadd
 * Enhancements
 ** TODO use ropes as strings
    This is a valuable enhancement as efficent string handling for very
