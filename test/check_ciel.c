@@ -99,10 +99,52 @@ START_TEST(test_ciel_int)
 }
 END_TEST
 
+START_TEST(test_ciel_flonum)
+{
+  Rune data1[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x03, 0, 0, 0, 0, 0, 0, 240, 63 };	      /* GFLO */
+  Rune data2[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x03, 23, 45, 68, 84, 251, 33, 9, 64 };	      /* GFLO */
+  Rune data3[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x03, 150, 193, 78, 139, 11, 134, 11, 57 };     /* GFLO */
+  Rune data4[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x03, 118, 120, 23, 38, 134, 225, 223, 68 };     /* GFLO */
+  value cieldata, cielfd, result;
+
+  cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(TYPE(result) == T_FLONUM);
+  fail_unless(fabs(REP(result)._flonum - 1.0) < 1e-6);
+
+  cieldata = arc_mkstring(cc, data2, sizeof(data2) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(TYPE(result) == T_FLONUM);
+  fail_unless(fabs(REP(result)._flonum - 3.14159265358979323846) < 1e-6);
+
+  cieldata = arc_mkstring(cc, data3, sizeof(data3) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(TYPE(result) == T_FLONUM);
+  fail_unless(fabs(REP(result)._flonum - 6.6260689633e-34) < 1e-6);
+
+  cieldata = arc_mkstring(cc, data4, sizeof(data4) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(TYPE(result) == T_FLONUM);
+  fail_unless(fabs(REP(result)._flonum/1e23 - 6.0221417930e23/1e23) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
-  Suite *s = suite_create("I/O");
+  Suite *s = suite_create("CIEL");
   TCase *tc_ciel = tcase_create("CIEL");
   SRunner *sr;
   unsigned long long oldepoch;
@@ -130,6 +172,7 @@ int main(void)
   tcase_add_test(tc_ciel, test_ciel_nil);
   tcase_add_test(tc_ciel, test_ciel_true);
   tcase_add_test(tc_ciel, test_ciel_int);
+  tcase_add_test(tc_ciel, test_ciel_flonum);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
