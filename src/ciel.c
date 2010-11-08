@@ -101,6 +101,36 @@ static value getint(arc *c, int sign, value fd)
   return(acc);
 }
 
+/* Note: this assumes that doubles are IEEE-754.  This is true for nearly
+   all modern architectures.  If you're trying to compile this code on
+   a system where the C floating point types are not IEEE-754, it's your
+   responsibility to port it! */
+static value getflo(arc *c, value fd)
+{
+#if SIZEOF_DOUBLE != 8
+#error "doubles are not 8 bytes in size, you probably need to do a port!"
+#endif
+  union { double d; char bytes[8]; } u;
+  value ch;
+  int i;
+
+  for (i=0; i<8; i++) {
+    ch = arc_readb(c, fd);
+    if (FIX2INT(c) < 0) {
+      c->signal_error(c, "ciel-unmarshal/getflo: invalid integer found in %v", fd);
+    }
+#ifdef WORDS_BIGENDIAN
+    /* Don't know if this will work; I don't have access to a big-endian
+       machine.  If you have one, confirm that this works or fix it and
+       get a patch back to me. */
+    u.bytes[7-i] = FIX2INT(ch);
+#else
+    u.bytes[i] = FIX2INT(ch);
+#endif
+  }
+  return(arc_mkflonum(c, u.d));
+}
+
 /* Read a CIEL 0.0.0 file */
 value arc_ciel_unmarshal(arc *c, value fd)
 {
@@ -136,6 +166,9 @@ value arc_ciel_unmarshal(arc *c, value fd)
       break;
     case GINT:
       PUSH(getint(c, getsign(c, fd), fd));
+      break;
+    case GFLO:
+      PUSH(getflo(c, fd));
       break;
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
