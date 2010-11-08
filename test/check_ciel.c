@@ -24,6 +24,7 @@
 #include <math.h>
 #include <stdio.h>
 #include "../src/arcueid.h"
+#include "../config.h"
 
 arc c, *cc;
 extern unsigned long long gcepochs;
@@ -42,9 +43,64 @@ START_TEST(test_ciel_nil)
 }
 END_TEST
 
+START_TEST(test_ciel_true)
+{
+  Rune data[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x01 };					      /* GTRUE */
+  value cieldata, cielfd, result;
+
+  cieldata = arc_mkstring(cc, data, 9);
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(result == CTRUE);
+}
+END_TEST
+
+START_TEST(test_ciel_int)
+{
+  Rune data1[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x02, 43, 210, 4, 0, 0, 0, 0, 0, 128 };	      /* GINT */
+  Rune data2[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x02, 45, 210, 4, 0, 0, 0, 0, 0, 128 };	      /* GINT */
+#ifdef HAVE_GMP_H
+  Rune data3[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x02, 43, 192, 136, 86, 99, 197, 86, 65, 88,
+      183, 198, 233, 58, 5, 34, 242, 147 }; /* GINT */
+  mpz_t expected;
+#endif
+  value cieldata, cielfd, result;
+
+  cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(FIXNUM_P(result));
+  fail_unless(FIX2INT(result) == 1234);
+
+  cieldata = arc_mkstring(cc, data2, sizeof(data2) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(FIXNUM_P(result));
+  fail_unless(FIX2INT(result) == -1234);
+
+#ifdef HAVE_GMP_H
+  cieldata = arc_mkstring(cc, data3, sizeof(data3) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(TYPE(result) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "13256278887989457651018865901401704640", 10);
+  fail_unless(mpz_cmp(expected, REP(result)._bignum) == 0);
+  mpz_clear(expected);
+#endif
+}
+END_TEST
+
 int main(void)
 {
-
   int number_failed;
   Suite *s = suite_create("I/O");
   TCase *tc_ciel = tcase_create("CIEL");
@@ -72,6 +128,8 @@ int main(void)
   cc = &c;
 
   tcase_add_test(tc_ciel, test_ciel_nil);
+  tcase_add_test(tc_ciel, test_ciel_true);
+  tcase_add_test(tc_ciel, test_ciel_int);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
