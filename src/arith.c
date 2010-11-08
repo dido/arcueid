@@ -808,6 +808,52 @@ value __arc_div2(arc *c, value arg1, value arg2)
   return(CNIL);
 }
 
+/* Multiplies arg1 by 2^n and adds it to acc.  This is generally used
+   for CIEL.  Note that acc is modified if it is a bignum! */
+value __arc_amul_2exp(arc *c, value acc, value arg1, int n)
+{
+#ifdef HAVE_GMP_H
+  mpz_t val;
+#endif
+
+  if (TYPE(arg1) == T_FIXNUM) {
+    /* First, try to use an ordinary bit shift on the fixnum. */
+    if (n < (sizeof(long) - 1) * 8) {
+      long res = FIX2INT(arg1) << n;
+
+      if (res >= FIX2INT(arg1))
+	return(__arc_add2(c, acc, INT2FIX(res)));
+    }
+    /* Otherwise, promote arg1 to bignum */
+#ifdef HAVE_GMP_H
+    mpz_init_set_si(val, FIX2INT(arg1));
+  } else if (TYPE(arg1) == T_BIGNUM) {
+    mpz_init_set(val, REP(arg1)._bignum);
+#endif
+  } else {
+    c->signal_error(c, "Invalid types for amul2exp");
+  }
+#ifdef HAVE_GMP_H
+  if (TYPE(acc) == T_FIXNUM) {
+    value v;
+
+    /* force acc to bignum if it isn't already */
+    v = arc_mkbignuml(c, 0);
+    arc_coerce_bignum(c, acc, &(REP(v)._bignum));
+    acc = v;
+  }
+  /* Bignum case -- val contains the value */
+  mpz_mul_2exp(val, val, n);
+  mpz_add(REP(acc)._bignum, REP(acc)._bignum, val);
+  mpz_clear(val);
+  return(acc);
+#else
+  c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
+  return(CNIL);
+#endif
+
+}
+
 
 static value rune2dig(Rune r, int radix)
 {
