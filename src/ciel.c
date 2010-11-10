@@ -131,6 +131,22 @@ static value getflo(arc *c, value fd)
   return(arc_mkflonum(c, u.d));
 }
 
+static value getchar(arc *c, value fd)
+{
+  Rune r;
+  value v;
+  int i;
+
+  r = 0;
+  for (i=0; i<4; i++) {
+    v = arc_readb(c, fd);
+    if (FIX2INT(v) < 0)
+      c->signal_error(c, "ciel-unmarshal/getchar: unexpected end of file from %v", fd);
+    r |= (FIX2INT(v) & 0xff) << (i*8);
+  }
+  return(arc_mkchar(c, r));
+}
+
 /* Read a CIEL 0.0.0 file */
 value arc_ciel_unmarshal(arc *c, value fd)
 {
@@ -169,6 +185,9 @@ value arc_ciel_unmarshal(arc *c, value fd)
       break;
     case GFLO:
       PUSH(getflo(c, fd));
+      break;
+    case GCHAR:
+      PUSH(getchar(c, fd));
       break;
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
