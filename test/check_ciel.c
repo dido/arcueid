@@ -146,6 +146,21 @@ START_TEST(test_ciel_flonum)
 }
 END_TEST
 
+START_TEST(test_ciel_char)
+{
+  Rune data[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x04, 0xdf, 0x86, 0x00, 0x00 };     /* GCHAR */
+  value cieldata, cielfd, result;
+
+  cieldata = arc_mkstring(cc, data, sizeof(data) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(TYPE(result) == T_CHAR);
+  fail_unless(REP(result)._char == 0x86df);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -178,6 +193,7 @@ int main(void)
   tcase_add_test(tc_ciel, test_ciel_true);
   tcase_add_test(tc_ciel, test_ciel_int);
   tcase_add_test(tc_ciel, test_ciel_flonum);
+  tcase_add_test(tc_ciel, test_ciel_char);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
