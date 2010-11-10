@@ -232,10 +232,10 @@ in UCS-4, little endian form.
 
 @item gstr
 Push a string.  The string is represented as an integer length
-(magnitude only) which gives the number of following bytes in the
-string, followed by the UTF-8 representation of the string.  Since
-integers are of arbitrary size, this suffices to encode a string of
-arbitrary length.
+(magnitude only) which gives the number of characters in the string,
+followed by the UTF-8 representation of the string.  Since integers
+are of arbitrary size, this suffices to encode a string of arbitrary
+length.
 
 @item gsym
 Push a symbol.  The representation of the following data is the same
