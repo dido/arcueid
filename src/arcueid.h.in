@@ -339,6 +339,7 @@ extern value arc_list_append(value list, value val);
 extern value arc_list_assoc(arc *c, value key, value a_list);
 extern value arc_list_length(arc *c, value list);
 
+extern value arc_mkstringlen(arc *c, int length);
 extern value arc_mkstring(arc *c, const Rune *data, int length);
 extern value arc_mkstringc(arc *c, const char *s);
 extern value arc_mkchar(arc *c, Rune r);
