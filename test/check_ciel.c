@@ -18,6 +18,7 @@
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
   02110-1301 USA.
 */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
@@ -161,6 +162,33 @@ START_TEST(test_ciel_char)
 }
 END_TEST
 
+START_TEST(test_ciel_string)
+{
+  Rune codes[] = {
+    /* Hello, world */
+    0x0048, 0x0065, 0x006c, 0x006c, 0x006f, 0x002c, 0x0020,
+    0x0077, 0x006f, 0x0072, 0x006c, 0x0064, 0x000a,
+    /* Καλημέρα κόσμε */
+    0x039a, 0x03b1, 0x03bb, 0x03b7, 0x03bc, 0x03ad, 0x3c1, 0x03b1, 0x0020,
+    0x03ba, 0x03cc, 0x03c3, 0x03bc, 0x03b5, 0x000a,
+    /* こんにちは 世界 */
+    0x3053, 0x3093, 0x306b, 0x3061, 0x306f, 0x20,
+    0x4e16, 0x754c, 0x0a
+  };
+  value cielfd, result, fname;
+  int i;
+
+  fname = arc_mkstringc(cc, "./string.ciel");
+  cielfd = arc_infile(cc, fname);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  arc_close(cc, cielfd);
+  fail_unless(TYPE(result) == T_STRING);
+  fail_unless(arc_strlen(cc, result) == sizeof(codes)/sizeof(Rune));
+  for (i=0; i<sizeof(codes)/sizeof(Rune); i++)
+    fail_unless(arc_strindex(cc, result, i) == codes[i]);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -194,6 +222,7 @@ int main(void)
   tcase_add_test(tc_ciel, test_ciel_int);
   tcase_add_test(tc_ciel, test_ciel_flonum);
   tcase_add_test(tc_ciel, test_ciel_char);
+  tcase_add_test(tc_ciel, test_ciel_string);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
