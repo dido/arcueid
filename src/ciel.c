@@ -18,6 +18,7 @@
 */
 #include "arcueid.h"
 #include "arith.h"
+#include "utf.h"
 #include "../config.h"
 
 #define INIT_STACK_SIZE 1024
@@ -147,6 +148,32 @@ static value getchar(arc *c, value fd)
   return(arc_mkchar(c, r));
 }
 
+static value getstr(arc *c, value fd)
+{
+  Rune r;
+  value str, length;
+  int i;
+
+  length = getint(c, 1, fd);
+  if (!FIXNUM_P(length)) {
+    /* XXX - once we have neat things like ropes as strings we'll be
+       able to support strings of arbitrary length limited only by
+       how much memory one has. */
+    c->signal_error(c, "ciel-unmarshal/getstr: only fixnum lengths are presently allowed for strings", fd);
+    return(CNIL);
+  }
+  str = arc_mkstringlen(c, FIX2INT(length));
+  for (i=0; i<FIX2INT(length); i++) {
+    r = arc_readc_rune(c, fd);
+    if (r == Runeerror) {
+      c->signal_error(c, "ciel-unmarshal/getstr: error decoding UTF-8 characters", fd);
+      return(CNIL);
+    }
+    arc_strsetindex(c, str, i, r);
+  }
+  return(str);
+}
+
 /* Read a CIEL 0.0.0 file */
 value arc_ciel_unmarshal(arc *c, value fd)
 {
@@ -188,6 +215,9 @@ value arc_ciel_unmarshal(arc *c, value fd)
       break;
     case GCHAR:
       PUSH(getchar(c, fd));
+      break;
+    case GSTR:
+      PUSH(getstr(c, fd));
       break;
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
