@@ -189,6 +189,20 @@ START_TEST(test_ciel_string)
 }
 END_TEST
 
+START_TEST(test_ciel_sym)
+{
+  value cielfd, result, fname;
+  int i;
+
+  fname = arc_mkstringc(cc, "./sym.ciel");
+  cielfd = arc_infile(cc, fname);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  arc_close(cc, cielfd);
+  fail_unless(SYMBOL_P(result));
+  fail_unless(arc_intern(cc, arc_mkstringc(cc, "hello")) == result);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -223,6 +237,7 @@ int main(void)
   tcase_add_test(tc_ciel, test_ciel_flonum);
   tcase_add_test(tc_ciel, test_ciel_char);
   tcase_add_test(tc_ciel, test_ciel_string);
+  tcase_add_test(tc_ciel, test_ciel_sym);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
