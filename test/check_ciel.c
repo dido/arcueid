@@ -203,6 +203,29 @@ START_TEST(test_ciel_sym)
 }
 END_TEST
 
+START_TEST(test_ciel_rat)
+{
+#ifdef HAVE_GMP_H
+  Rune data1[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x02, 43, 1, 0, 0, 0, 0, 0, 0, 128,	      /* GINT */
+      0x02, 43, 2, 0, 0, 0, 0, 0, 0, 128,	      /* GINT */
+      0x08					      /* CRAT */
+    };
+  value cieldata, cielfd, result;
+  double d, expected;
+
+  cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  fail_unless(TYPE(result) == T_RATIONAL);
+  d = mpq_get_d(REP(result)._rational);
+  expected = 0.5;
+  fabs((d - expected)/expected < 1e-6);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -238,6 +261,7 @@ int main(void)
   tcase_add_test(tc_ciel, test_ciel_char);
   tcase_add_test(tc_ciel, test_ciel_string);
   tcase_add_test(tc_ciel, test_ciel_sym);
+  tcase_add_test(tc_ciel, test_ciel_rat);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
