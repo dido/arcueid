@@ -59,7 +59,20 @@ static inline value stackpush(arc *c, value *stack, value val,
   return(val);
 }
 
+static inline value stackpop(arc *c, value *stack, int *stackptr,
+			     int *stacksize)
+{
+  value val;
+
+  (*stackptr)--;
+  if ((*stackptr) < 0)
+    c->signal_error(c, "CIEL stack underflow during decode");
+  val = VINDEX(*stack, *stackptr);
+  return(val);
+}
+
 #define PUSH(val) (stackpush(c, &stack, (val), &stackptr, &stacksize))
+#define POP() (stackpop(c, &stack, &stackptr, &stacksize))
 
 static int getsign(arc *c, value fd)
 {
@@ -179,7 +192,7 @@ value arc_ciel_unmarshal(arc *c, value fd)
 {
   static int header[] = { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   int i, flag, bc;
-  value stack, memo, t;
+  value stack, memo;
   int memosize, stacksize, stackptr;
 
   /* Verify the header */
@@ -219,16 +232,18 @@ value arc_ciel_unmarshal(arc *c, value fd)
     case GSTR:
       PUSH(getstr(c, fd));
       break;
-    case GSYM:
-      t = getstr(c, fd);
+    case GSYM: {
+      value t = getstr(c, fd);
+
       PUSH(arc_intern(c, t));
+      break;
+    }
+    case CRAT:
+      PUSH(__arc_div2(c, POP(), POP()));
       break;
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
     }
   }
-  stackptr--;
-  if (stackptr < 0)
-    c->signal_error(c, "Empty CIEL stack at end of decode");
-  return(VINDEX(stack, stackptr));
+  return(POP());
 }
