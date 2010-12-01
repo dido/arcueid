@@ -123,7 +123,7 @@ static value getflo(arc *c, value fd)
 #ifdef WORDS_BIGENDIAN
     /* Don't know if this will work; I don't have access to a big-endian
        machine.  If you have one, confirm that this works or fix it and
-       get a patch back to me. */
+       get a patch back to me. -- dido */
     u.bytes[7-i] = FIX2INT(ch);
 #else
     u.bytes[i] = FIX2INT(ch);
@@ -179,7 +179,7 @@ value arc_ciel_unmarshal(arc *c, value fd)
 {
   static int header[] = { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   int i, flag, bc;
-  value stack, memo;
+  value stack, memo, t;
   int memosize, stacksize, stackptr;
 
   /* Verify the header */
@@ -218,6 +218,10 @@ value arc_ciel_unmarshal(arc *c, value fd)
       break;
     case GSTR:
       PUSH(getstr(c, fd));
+      break;
+    case GSYM:
+      t = getstr(c, fd);
+      PUSH(arc_intern(c, t));
       break;
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
