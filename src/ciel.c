@@ -245,6 +245,9 @@ value arc_ciel_unmarshal(arc *c, value fd)
       PUSH(arc_mkcomplex(c, arc_coerce_flonum(c, POP()),
 			 arc_coerce_flonum(c, POP())));
       break;
+    case CCONS:
+      PUSH(cons(c, POP(), POP()));
+      break;
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
     }
