@@ -253,6 +253,36 @@ START_TEST(test_ciel_complex)
 }
 END_TEST
 
+START_TEST(test_ciel_cons)
+{
+  Rune data1[] =
+    { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
+      0x03, 0, 0, 0, 0, 0, 0, 240, 63,		      /* GFLO */
+      0x03, 23, 45, 68, 84, 251, 33, 9, 64,	      /* GFLO */
+      0x0b };					      /* CCONS */
+  value cieldata, cielfd, result, v;
+  double d, expected;
+
+  cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
+  cielfd = arc_instring(cc, cieldata);
+  result = arc_ciel_unmarshal(cc, cielfd);
+
+  fail_unless(CONS_P(result));
+
+  v = car(result);
+  fail_unless(TYPE(v) == T_FLONUM);
+  d = REP(result)._flonum;
+  expected = 1.0;
+  fail_unless(fabs((d - expected)/expected < 1e-6));
+
+  v = cdr(result);
+  fail_unless(TYPE(v) == T_FLONUM);
+  d = REP(result)._flonum;
+  expected = 3.14159265358979323846;
+  fail_unless(fabs((d - expected)/expected < 1e-6));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -289,6 +319,8 @@ int main(void)
   tcase_add_test(tc_ciel, test_ciel_string);
   tcase_add_test(tc_ciel, test_ciel_sym);
   tcase_add_test(tc_ciel, test_ciel_rat);
+  tcase_add_test(tc_ciel, test_ciel_complex);
+  tcase_add_test(tc_ciel, test_ciel_cons);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
