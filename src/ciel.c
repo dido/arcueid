@@ -33,11 +33,11 @@
 #define GCHAR 4
 #define GSTR  5
 #define GSYM  6
-#define GTAB  7			/* not supported */
+#define GTAB  7			/* not yet supported */
 
 #define CRAT      8
 #define CCOMPLEX  9
-#define CTADD     10
+#define CTADD     10		/* not yet supported */
 #define CCONS     11
 #define CANNOTATE 12
 
@@ -240,6 +240,10 @@ value arc_ciel_unmarshal(arc *c, value fd)
     }
     case CRAT:
       PUSH(__arc_div2(c, POP(), POP()));
+      break;
+    case CCOMPLEX:
+      PUSH(arc_mkcomplex(c, arc_coerce_flonum(c, POP()),
+			 arc_coerce_flonum(c, POP())));
       break;
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
