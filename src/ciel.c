@@ -192,7 +192,7 @@ value arc_ciel_unmarshal(arc *c, value fd)
 {
   static int header[] = { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
   int i, flag, bc;
-  value stack, memo;
+  value stack, memo, t;
   int memosize, stacksize, stackptr;
 
   /* Verify the header */
@@ -238,19 +238,35 @@ value arc_ciel_unmarshal(arc *c, value fd)
       PUSH(arc_intern(c, t));
       break;
     }
-    case CRAT:
-      PUSH(__arc_div2(c, POP(), POP()));
+    case CRAT: {
+      value x, y;
+
+      x = POP();
+      y = POP();
+      PUSH(__arc_div2(c, x, y));
       break;
-    case CCOMPLEX:
-      PUSH(arc_mkcomplex(c, arc_coerce_flonum(c, POP()),
-			 arc_coerce_flonum(c, POP())));
+    }
+    case CCOMPLEX: {
+      value x, y;
+
+      x = POP();
+      y = POP();
+      PUSH(arc_mkcomplex(c, arc_coerce_flonum(c, x),
+			 arc_coerce_flonum(c, y)));
       break;
-    case CCONS:
-      PUSH(cons(c, POP(), POP()));
+    }
+    case CCONS: {
+      value x, y;
+
+      x = POP();
+      y = POP();
+      PUSH(cons(c, x, y));
       break;
+    }
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
     }
   }
-  return(POP());
+  t = POP();
+  return(t);
 }
