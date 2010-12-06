@@ -101,7 +101,8 @@
    - [X] crat
    - [X] ccomplex
    - [X] ccons
-   - [ ] cannotate
+   - [ ] cannotate - this is limited to creating T_CODE objects from a
+     cons consisting of the bytecode string and literals
    - [ ] xdup
    - [ ] xmst
    - [ ] xmld
@@ -131,10 +132,12 @@
    This is also the same format specification used by the error
    handler function signal_error.
 
-** TODO Additional CIEL instructions [0/2]
+** TODO Additional CIEL instructions [0/3]
    The following additional instructions are required by the final version:
    - [ ] gtab
    - [ ] ctadd
+   - [ ] additional functionality for cannotate, so that it can, you
+     know, actually perform annotations...
 * Enhancements
 ** TODO use ropes as strings
    This is a valuable enhancement as efficent string handling for very
