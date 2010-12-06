@@ -208,8 +208,8 @@ START_TEST(test_ciel_rat)
 #ifdef HAVE_GMP_H
   Rune data1[] =
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
-      0x02, 43, 1, 0, 0, 0, 0, 0, 0, 128,	      /* GINT */
       0x02, 43, 2, 0, 0, 0, 0, 0, 0, 128,	      /* GINT */
+      0x02, 43, 1, 0, 0, 0, 0, 0, 0, 128,	      /* GINT */
       0x08					      /* CRAT */
     };
   value cieldata, cielfd, result;
@@ -221,7 +221,7 @@ START_TEST(test_ciel_rat)
   fail_unless(TYPE(result) == T_RATIONAL);
   d = mpq_get_d(REP(result)._rational);
   expected = 0.5;
-  fail_unless(fabs((d - expected)/expected < 1e-6));
+  fail_unless(fabs((d - expected)/expected) < 1e-6);
 #endif
 }
 END_TEST
@@ -230,8 +230,8 @@ START_TEST(test_ciel_complex)
 {
   Rune data1[] =
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
-      0x03, 0, 0, 0, 0, 0, 0, 240, 63,		      /* GFLO */
       0x03, 23, 45, 68, 84, 251, 33, 9, 64,	      /* GFLO */
+      0x03, 0, 0, 0, 0, 0, 0, 240, 63,		      /* GFLO */
       0x09 };					      /* CCOMPLEX */
   value cieldata, cielfd, result;
   double d, expected;
@@ -244,11 +244,11 @@ START_TEST(test_ciel_complex)
 
   d = REP(result)._complex.re;
   expected = 1.0;
-  fail_unless(fabs((d - expected)/expected < 1e-6));
+  fail_unless(fabs((d - expected)/expected) < 1e-6);
 
   d = REP(result)._complex.im;
   expected = 3.14159265358979323846;
-  fail_unless(fabs((d - expected)/expected < 1e-6));
+  fail_unless(fabs((d - expected)/expected) < 1e-6);
 
 }
 END_TEST
@@ -257,8 +257,8 @@ START_TEST(test_ciel_cons)
 {
   Rune data1[] =
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
-      0x03, 0, 0, 0, 0, 0, 0, 240, 63,		      /* GFLO */
       0x03, 23, 45, 68, 84, 251, 33, 9, 64,	      /* GFLO */
+      0x03, 0, 0, 0, 0, 0, 0, 240, 63,		      /* GFLO */
       0x0b };					      /* CCONS */
   value cieldata, cielfd, result, v;
   double d, expected;
@@ -271,15 +271,15 @@ START_TEST(test_ciel_cons)
 
   v = car(result);
   fail_unless(TYPE(v) == T_FLONUM);
-  d = REP(result)._flonum;
+  d = REP(v)._flonum;
   expected = 1.0;
-  fail_unless(fabs((d - expected)/expected < 1e-6));
+  fail_unless(fabs((d - expected)/expected) < 1e-6);
 
   v = cdr(result);
   fail_unless(TYPE(v) == T_FLONUM);
-  d = REP(result)._flonum;
+  d = REP(v)._flonum;
   expected = 3.14159265358979323846;
-  fail_unless(fabs((d - expected)/expected < 1e-6));
+  fail_unless(fabs((d - expected)/expected) < 1e-6);
 }
 END_TEST
 
