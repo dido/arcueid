@@ -34,16 +34,17 @@
 #define GSTR  5
 #define GSYM  6
 #define GTAB  7			/* not yet supported */
+#define GBSTR 8
 
-#define CRAT      8
-#define CCOMPLEX  9
-#define CTADD     10		/* not yet supported */
-#define CCONS     11
-#define CANNOTATE 12
+#define CRAT      9
+#define CCOMPLEX  10
+#define CTADD     11		/* not yet supported */
+#define CCONS     12
+#define CANNOTATE 13
 
-#define XDUP 13
-#define XMST 14
-#define XMLD 15
+#define XDUP 14
+#define XMST 15
+#define XMLD 16
 
 static inline value stackpush(arc *c, value *stack, value val,
 			      int *stackptr, int *stacksize)
@@ -187,6 +188,32 @@ static value getstr(arc *c, value fd)
   return(str);
 }
 
+static value getbstr(arc *c, value fd)
+{
+  Rune r;
+  value str, length;
+  int i;
+
+  length = getint(c, 1, fd);
+  if (!FIXNUM_P(length)) {
+    /* XXX - once we have neat things like ropes as strings we'll be
+       able to support strings of arbitrary length limited only by
+       how much memory one has. */
+    c->signal_error(c, "ciel-unmarshal/getbstr: only fixnum lengths are presently allowed for binary strings", fd);
+    return(CNIL);
+  }
+  str = arc_mkstringlen(c, FIX2INT(length));
+  for (i=0; i<FIX2INT(length); i++) {
+    r = arc_readb(c, fd);
+    if (r < 0) {
+      c->signal_error(c, "ciel-unmarshal/getbstr: unexpected end of file encountered", fd);
+      return(CNIL);
+    }
+    arc_strsetindex(c, str, i, r);
+  }
+  return(str);
+}
+
 /* Read a CIEL 0.0.0 file */
 value arc_ciel_unmarshal(arc *c, value fd)
 {
@@ -238,6 +265,9 @@ value arc_ciel_unmarshal(arc *c, value fd)
       PUSH(arc_intern(c, t));
       break;
     }
+    case GBSTR:
+      PUSH(getbstr(c, fd));
+      break;
     case CRAT: {
       value x, y;
 
@@ -261,6 +291,10 @@ value arc_ciel_unmarshal(arc *c, value fd)
       x = POP();
       y = POP();
       PUSH(cons(c, x, y));
+      break;
+    }
+    case CANNOTATE: {
+      /* This should have more */
       break;
     }
     default:
