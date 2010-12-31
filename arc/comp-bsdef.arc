@@ -302,14 +302,15 @@
     gstr 5				;load string
     gsym 6				;load symbol
     gtab 7				;load empty table (not used)
-    crat 8				;load rational
-    ccomplex 9				;load complex
-    ctadd 10				;add value to table
-    ccons 11				;cons two arguments
-    cannotate 12			;annotate a value with a symbol
-    xdup 13				;duplicate top of stack
-    xmst 14 				;memo store
-    xmld 15))				;memo load
+    gbstr 8				;load byte string
+    crat 9				;load rational
+    ccomplex 10				;load complex
+    ctadd 11				;add value to table
+    ccons 12				;cons two arguments
+    cannotate 13			;annotate a value with a symbol
+    xdup 14				;duplicate top of stack
+    xmst 15 				;memo store
+    xmld 16))				;memo load
 
 (def writelist (port arg)
   (each x arg
@@ -365,7 +366,7 @@
 		;; Next memo index value
 		(++ memoidx)))
 	(++ count)))
-    (writebc port 'gstr)
+    (writebc port 'gbstr)
     (map [writeb _ port]
 	 ;; Now, generate a list with the bytecode, as bytes
 	 ((afn (code paramf nparam clist)
