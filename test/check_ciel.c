@@ -192,7 +192,6 @@ END_TEST
 START_TEST(test_ciel_sym)
 {
   value cielfd, result, fname;
-  int i;
 
   fname = arc_mkstringc(cc, "./sym.ciel");
   cielfd = arc_infile(cc, fname);
@@ -210,7 +209,7 @@ START_TEST(test_ciel_rat)
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
       0x02, 43, 2, 0, 0, 0, 0, 0, 0, 128,	      /* GINT */
       0x02, 43, 1, 0, 0, 0, 0, 0, 0, 128,	      /* GINT */
-      0x08					      /* CRAT */
+      0x09					      /* CRAT */
     };
   value cieldata, cielfd, result;
   double d, expected;
@@ -232,7 +231,7 @@ START_TEST(test_ciel_complex)
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
       0x03, 23, 45, 68, 84, 251, 33, 9, 64,	      /* GFLO */
       0x03, 0, 0, 0, 0, 0, 0, 240, 63,		      /* GFLO */
-      0x09 };					      /* CCOMPLEX */
+      0x0a };					      /* CCOMPLEX */
   value cieldata, cielfd, result;
   double d, expected;
 
@@ -259,7 +258,7 @@ START_TEST(test_ciel_cons)
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
       0x03, 23, 45, 68, 84, 251, 33, 9, 64,	      /* GFLO */
       0x03, 0, 0, 0, 0, 0, 0, 240, 63,		      /* GFLO */
-      0x0b };					      /* CCONS */
+      0x0c };					      /* CCONS */
   value cieldata, cielfd, result, v;
   double d, expected;
 
