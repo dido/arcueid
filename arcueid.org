@@ -85,7 +85,7 @@
    - sread: The arc reader, which is in Arc for Arcueid
    - disp: The arc pretty printer, which is in Arc for Arcueid
    - write: Also the arc pretty printer
-** TODO write a reader for CIEL files (src/ciel.c) [10/14]
+** TODO write a reader for CIEL files (src/ciel.c) [11/15]
    Our CIEL bytecode interpreter must at the very least support the
    instructions given in comp-bsdef.arc and be able to decode CIEL
    files generated therein.  This should produce code objects suitable
@@ -98,11 +98,12 @@
    - [X] gchar
    - [X] gstr
    - [X] gsym
+   - [X] gbstr - binary strings
    - [X] crat
    - [X] ccomplex
    - [X] ccons
    - [ ] cannotate - this is limited to creating T_CODE objects from a
-     cons consisting of the bytecode string and literals
+     cons consisting of the binary bytecode string and literals
    - [ ] xdup
    - [ ] xmst
    - [ ] xmld
@@ -137,7 +138,7 @@
    - [ ] gtab
    - [ ] ctadd
    - [ ] additional functionality for cannotate, so that it can, you
-     know, actually perform annotations...
+     know, actually perform type annotations...
 * Enhancements
 ** TODO use ropes as strings
    This is a valuable enhancement as efficent string handling for very
