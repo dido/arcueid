@@ -20,6 +20,7 @@
 #include "arith.h"
 #include "utf.h"
 #include "../config.h"
+#include "vmengine.h"
 
 #define INIT_STACK_SIZE 1024
 #define STACK_OVER_PERCENT 30
@@ -202,16 +203,22 @@ static value getbstr(arc *c, value fd)
     c->signal_error(c, "ciel-unmarshal/getbstr: only fixnum lengths are presently allowed for binary strings", fd);
     return(CNIL);
   }
-  str = arc_mkstringlen(c, FIX2INT(length));
+  str = arc_mkvmcode(c, FIX2INT(length));
   for (i=0; i<FIX2INT(length); i++) {
     r = arc_readb(c, fd);
     if (r < 0) {
       c->signal_error(c, "ciel-unmarshal/getbstr: unexpected end of file encountered", fd);
       return(CNIL);
     }
-    arc_strsetindex(c, str, i, r);
+    VINDEX(str, i) = r;
   }
   return(str);
+}
+
+
+static value fill_code(arc *c, value cstr, value code)
+{
+  return(CNIL);
 }
 
 /* Read a CIEL 0.0.0 file */
@@ -294,7 +301,24 @@ value arc_ciel_unmarshal(arc *c, value fd)
       break;
     }
     case CANNOTATE: {
-      /* This should have more */
+      /* This should have more functionality later, but for now we will
+	 limit it to creating a code object from a binary string.  It
+	 will expect at top of stack a symbol 'code and below it the
+	 binary string to annotate.  Later on we will provide other
+	 types of annotations. */
+      value x, y, code;
+
+      x = POP();		/* should be 'code */
+      y = POP();		/* should be a binary string */
+      if (x != arc_intern_cstr(c, "code")) {
+	c->signal_error(c, "CANNOTATE only supports code annotations");
+      }
+
+      if (TYPE(y) != T_STRING) {
+	c->signal_error(c, "CANNOTATE can only annotate strings");
+      }
+      code = arc_mkvmcode(c, arc_strlen(c, code));
+      PUSH(fill_code(c, y, code));
       break;
     }
     default:
