@@ -5,10 +5,54 @@
    no choice but to write a few portions in C.  I don't yet have the
    chops or the time to make one like that now, but that would
    certainly be ideal, and then we'd have an Arc just like Scheme48.
-** DONE base virtual machine
-    We've used vmgen to do this, but I'm not particularly happy with
-    its design.  We have here an instruction set somewhat inspired by
-    Dave Betz's XScheme and the OCaml bytecode.
+** TODO base virtual machine [3/4]
+   We need to rethink the structure of the virtual machine.  It now
+   seems that vmgen might not have been such a good idea, and we
+   should probably write our own interpreter core directly.
+    - [X] Define virtual machine architecture
+    - [X] Design interpreter core
+	  The interpreter core should be flexible enough that we can
+	  easily use switch threading, call threading, GCC labels as
+	  values, or even assembly language.  Each instruction should
+	  be separately implementable.  We should take a cue from how
+	  Dalvik does it.
+    - [X] Build code generation infrastructure
+    - [-] Implement simple virtual machine [3/35]
+      - [X] nop
+      - [ ] push
+      - [ ] pop
+      - [ ] ldl
+      - [X] ldi
+      - [ ] ldg
+      - [ ] stg
+      - [ ] lde
+      - [ ] ste
+      - [ ] mvoarg
+      - [ ] mvrarg
+      - [ ] cont
+      - [ ] env
+      - [ ] apply
+      - [ ] ret
+      - [ ] jmp
+      - [ ] jt
+      - [ ] jf
+      - [ ] true
+      - [ ] nil
+      - [X] hlt
+      - [ ] add
+      - [ ] sub
+      - [ ] mul
+      - [ ] div
+      - [ ] cons
+      - [ ] car
+      - [ ] cdr
+      - [ ] scar
+      - [ ] scdr
+      - [ ] spl
+      - [ ] is
+      - [ ] iso
+      - [ ] gt
+      - [ ] lt
 ** DONE memory allocator
     A very simple free-list based memory allocator.  There might be
     better algorithms out there but let's get a simple one out
