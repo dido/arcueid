@@ -26,8 +26,3 @@ libarcueid_la_SOURCES = arcueid.c ciel.c arith.c alloc.c codegen.c \
 include_HEADERS = arcueid.h
 noinst_HEADERS = arith.h alloc.h utf.h symbols.h vmengine.h
 
-VMGEN=/usr/bin/vmgen
-
-arcueid-vm.i arcueid-disasm.i arcueid-gen.i arcueid-labels.i arcueid-profile.i arcueidvm-peephole.i: arcueid.vmg
-	$(VMGEN) arcueid.vmg
-
