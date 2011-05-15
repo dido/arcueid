@@ -67,6 +67,30 @@ START_TEST(test_vm_ldl)
 }
 END_TEST
 
+START_TEST(test_vm_true)
+{
+  ITEST_HEADER(0);
+  arc_gcode(&c, cctx, itrue);
+  arc_gcode(&c, cctx, inop);
+  arc_gcode(&c, cctx, ihlt);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == CTRUE);
+}
+END_TEST
+
+START_TEST(test_vm_nil)
+{
+  ITEST_HEADER(0);
+  arc_gcode(&c, cctx, inil);
+  arc_gcode(&c, cctx, inop);
+  arc_gcode(&c, cctx, ihlt);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -80,6 +104,8 @@ int main(void)
 
   tcase_add_test(tc_vm, test_vm_ldi);
   tcase_add_test(tc_vm, test_vm_ldl);
+  tcase_add_test(tc_vm, test_vm_true);
+  tcase_add_test(tc_vm, test_vm_nil);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
