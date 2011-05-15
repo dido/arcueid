@@ -22,17 +22,67 @@
 
 #define _VMENGINE_H_
 
-#ifdef __GNUC__
-typedef void *Label;
-typedef Label Inst;
+enum vminst {
+  inop=0,
+  ipush=1,
+  ipop=2,
+  ildl=3,
+  ildi=4,
+  ildg=5,
+  istg=6,
+  ilde=7,
+  iste=8,
+  imvarg=9,
+  imvoarg=10,
+  imvrarg=11,
+  icont=12,
+  ienv=13,
+  iapply=14,
+  iret=15,
+  ijmp=16,
+  ijt=17,
+  ijf=18,
+  itrue=19,
+  inil=20,
+  ihlt=21,
+  iadd=22,
+  isub=23,
+  imul=24,
+  idiv=25,
+  icons=26,
+  icar=27,
+  icdr=28,
+  iscar=29,
+  iscdr=30,
+  ispl=31,
+  iis=32,
+  iiso=33,
+  igt=34,
+  ilt=35,
+  idup=36,
+  icls=37
+};
 
-#else
+extern void arc_gcode(arc *c, value cctx, enum vminst inst);
+extern void arc_gcode1(arc *c, value cctx, enum vminst inst, value arg);
+extern void arc_gcode2(arc *c, value cctx, enum vminst inst, value arg1, value arg2);
 
-typedef long Label;
-typedef long Inst;
+/* A code generation context (cctx) is a vector with the following
+   items as indexes:
 
-#endif
+   0. A code pointer into the vmcode object (usually a fixnum)
+   1. A vmcode object.
+   2. A pointer into the literal vector (usually a fixnum)
+   3. A vector of literals
 
-extern Inst *vm_prim;
+   The following functions are intended to manage the data
+   structure, and to generate code and literals for the system.
+ */
+
+#define CCTX_VCPTR(cctx) (VINDEX(cctx, 0))
+#define CCTX_VCODE(cctx) (VINDEX(cctx, 1))
+#define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
+#define CCTX_LITS(cctx) (VINDEX(cctx, 3))
+
 
 #endif
