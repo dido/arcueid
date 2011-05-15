@@ -26,23 +26,6 @@
 #include "alloc.h"
 #include "arith.h"
 
-/* A code generation context (cctx) is a vector with the following
-   items as indexes:
-
-   0. A code pointer into the vmcode object (usually a fixnum)
-   1. A vmcode object.
-   2. A pointer into the literal vector (usually a fixnum)
-   3. A vector of literals
-
-   The following functions are intended to manage the data
-   structure, and to generate code and literals for the system.
- */
-
-#define CCTX_VCPTR(cctx) (VINDEX(cctx, 0))
-#define CCTX_VCODE(cctx) (VINDEX(cctx, 1))
-#define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
-#define CCTX_LITS(cctx) (VINDEX(cctx, 3))
-
 /* Expand the vmcode object of a cctx, doubling it in size.  All entries
    are copied, and the old vmcode object is freed manually.  The fit
    parameter, if true, will instead resize the cctx to exactly the number
@@ -74,78 +57,47 @@ value fit_vmcode(arc *c, value cctx)
 
 #define VMCODEP(cctx) ((Inst *)(&VINDEX(VINDEX(cctx, 1), FIX2INT(VINDEX(cctx, 0)))))
 
-void gcode(arc *c, value cctx, void (*igen)(Inst **))
+void arc_gcode(arc *c, value cctx, enum vminst inst)
 {
   value vcode;
   int vptr;
-  Inst *vmcodep;
 
   vptr = FIX2INT(VINDEX(cctx, 0));
   vcode = VINDEX(cctx, 1);
   if (vptr >= VECLEN(vcode))
     vcode = expand_vmcode(c, cctx);
-  vmcodep = (Inst *)(&VINDEX(vcode, vptr));
-  igen(&vmcodep);
-  vptr++;
+  VINDEX(vcode, vptr++) = (value)inst;
   VINDEX(cctx, 0) = INT2FIX(vptr);
 }
 
-void gcode1(arc *c, value cctx, void (*igen)(Inst **, value),
-	    value arg)
+void arc_gcode1(arc *c, value cctx, enum vminst inst, value arg)
 {
   value vcode;
   int vptr;
-  Inst *vmcodep;
 
   vptr = FIX2INT(VINDEX(cctx, 0));
   vcode = VINDEX(cctx, 1);
   if (vptr+1 >= VECLEN(vcode))
     vcode = expand_vmcode(c, cctx);
-  vmcodep = (Inst *)(&VINDEX(vcode, vptr));
-  igen(&vmcodep, arg);
-  vptr += 2;
+  VINDEX(vcode, vptr++) = (value)inst;
+  VINDEX(vcode, vptr++) = arg;
   VINDEX(cctx, 0) = INT2FIX(vptr);
 }
 
-void gcode2(arc *c, value cctx,
-	    void (*igen)(Inst **, value, value),
-	    value arg1, value arg2)
+void arc_gcode2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
 {
   value vcode;
   int vptr;
-  Inst *vmcodep;
 
   vptr = FIX2INT(VINDEX(cctx, 0));
   vcode = VINDEX(cctx, 1);
   if (vptr+2 >= VECLEN(vcode))
     vcode = expand_vmcode(c, cctx);
-  vmcodep = (Inst *)(&VINDEX(vcode, vptr));
-  igen(&vmcodep, arg1, arg2);
-  vptr += 2;
+  VINDEX(vcode, vptr++) = (value)inst;
+  VINDEX(vcode, vptr++) = arg1;
+  VINDEX(vcode, vptr++) = arg2;
   VINDEX(cctx, 0) = INT2FIX(vptr);
 }
-
-void gen_inst(Inst **vmcodepp, Inst i)
-{
-  **vmcodepp = i;
-  (*vmcodepp)++;
-}
-
-void genarg_i(Inst **vmcodepp, value i)
-{
-  *((value *) *vmcodepp) = i;
-  (*vmcodepp)++;
-}
-
-/*
-static void genarg_target(Inst **vmcodepp, Inst *target)
-{
-  *((Inst **) *vmcodepp) = target;
-  (*vmcodepp)++;
-}
-*/
-
-#include "arcueid-gen.i"
 
 value arc_mkvmcode(arc *c, int length)
 {
@@ -177,3 +129,16 @@ value arc_mkccode(arc *c, int argc, value (*cfunc)())
   return(code);
 }
 
+value arc_mkcctx(arc *c, int codesize, int litsize)
+{
+  value cctx;
+
+  cctx = arc_mkvector(c, 4);
+  CCTX_LPTR(cctx) = CCTX_VCPTR(cctx) = INT2FIX(0);
+  CCTX_VCODE(cctx) = arc_mkvmcode(c, codesize);
+  if (litsize == 0)
+    CCTX_LITS(cctx) = CNIL;
+  else
+    CCTX_LITS(cctx) = arc_mkvector(c, litsize);
+  return(cctx);
+}
