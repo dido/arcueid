@@ -30,34 +30,38 @@
 
 arc c;
 
+#define ITEST_HEADER(nlits) \
+  value cctx, thr, func; \
+  int i; \
+  cctx = arc_mkcctx(&c, 1, nlits)
+
+#define ITEST_FOOTER(nlits) \
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, nlits); \
+  for (i=0; i<nlits; i++) \
+    CODE_LITERAL(func, i) = VINDEX(CCTX_LITS(cctx), i); \
+  thr = arc_mkthread(&c, func, 2048, 0); \
+  arc_vmengine(&c, thr, 1000)
+
+
 START_TEST(test_vm_ldi)
 {
-  value cctx, thr, func;
-
-  cctx = arc_mkcctx(&c, 1, 0);
+  ITEST_HEADER(0);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, inop);
   arc_gcode(&c, cctx, ihlt);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
-  thr = arc_mkthread(&c, func, 2048, 0);
-  arc_vmengine(&c, thr, 1000);
+  ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
 END_TEST
 
 START_TEST(test_vm_ldl)
 {
-  value cctx, thr, func;
-
-  cctx = arc_mkcctx(&c, 1, 1);
+  ITEST_HEADER(1);
   VINDEX(CCTX_LITS(cctx), 0) = arc_mkflonum(&c, 3.1415926535);
   arc_gcode1(&c, cctx, ildl, INT2FIX(0));
-  arc_gcode(&c, cctx, inop);
   arc_gcode(&c, cctx, ihlt);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 1);
-  CODE_LITERAL(func, 0) = VINDEX(CCTX_LITS(cctx), 0);
-  thr = arc_mkthread(&c, func, 2048, 0);
-  arc_vmengine(&c, thr, 1000);
+  ITEST_FOOTER(1);
   fail_unless(TYPE(TVALR(thr)) == T_FLONUM);
   fail_unless(fabs(REP(TVALR(thr))._flonum - 3.1415926535) < 1e-6);
 }
