@@ -50,8 +50,8 @@ void *alloca (size_t);
 #define NEXT break
 #endif
 
-#define CPUSH(thr, val) (*TSP(thr)++ = (val))
-#define CPOP(thr) (*TSP(thr)--)
+#define CPUSH(thr, val) (*(TSP(thr)--) = (val))
+#define CPOP(thr) (*(++TSP(thr)))
 
 void arc_vmengine(arc *c, value thr, int quanta)
 {
