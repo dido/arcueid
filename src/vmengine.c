@@ -79,7 +79,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TVALR(thr) = *TIP(thr)++;
       NEXT;
     INST(ildl):
-      TVALR(thr) = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
+      TVALR(thr) = CODE_LITERAL(TFUNR(thr), FIX2INT(*TIP(thr)++));
       NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
