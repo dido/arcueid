@@ -76,6 +76,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(ildi):
       TVALR(thr) = *TIP(thr)++;
       NEXT;
+    INST(ildl):
+      TVALR(thr) = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
+      NEXT;
     INST(ildg):
       {
 	value tmp;
@@ -86,8 +89,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	}
       }
       NEXT;
-    INST(ildl):
-      TVALR(thr) = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
+    INST(istg):
+      arc_hash_insert(c, c->genv, CODE_LITERAL(TFUNR(thr), *TIP(thr)++),
+		      TVALR(thr));
       NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
