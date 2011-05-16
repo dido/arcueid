@@ -93,11 +93,26 @@ START_TEST(test_vm_ldl)
 {
   ITEST_HEADER(1);
   VINDEX(CCTX_LITS(cctx), 0) = arc_mkflonum(&c, 3.1415926535);
-  arc_gcode1(&c, cctx, ildl, INT2FIX(0));
+  arc_gcode1(&c, cctx, ildl, 0);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(1);
   fail_unless(TYPE(TVALR(thr)) == T_FLONUM);
   fail_unless(fabs(REP(TVALR(thr))._flonum - 3.1415926535) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_vm_ldg)
+{
+  value sym;
+  ITEST_HEADER(1);
+  sym = arc_intern_cstr(&c, "foo");
+  VINDEX(CCTX_LITS(cctx), 0) = sym;
+  arc_hash_insert(&c, c.genv, sym, INT2FIX(31337));
+  arc_gcode1(&c, cctx, ildg, 0);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(1);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
 }
 END_TEST
 
@@ -115,12 +130,12 @@ END_TEST
 
 START_TEST(test_vm_nil)
 {
-  ITEST_HEADER(0);
+  ITEST_HEADER(1);
   arc_gcode(&c, cctx, inil);
   arc_gcode(&c, cctx, inop);
   arc_gcode(&c, cctx, ihlt);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
-  ITEST_FOOTER(0);
+  ITEST_FOOTER(1);
   fail_unless(TVALR(thr) == CNIL);
 }
 END_TEST
@@ -140,6 +155,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_pop);
   tcase_add_test(tc_vm, test_vm_ldi);
   tcase_add_test(tc_vm, test_vm_ldl);
+  tcase_add_test(tc_vm, test_vm_ldg);
   tcase_add_test(tc_vm, test_vm_true);
   tcase_add_test(tc_vm, test_vm_nil);
 
