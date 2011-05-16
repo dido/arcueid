@@ -17,14 +17,14 @@
 	  be separately implementable.  We should take a cue from how
 	  Dalvik does it.
     - [X] Build code generation infrastructure
-    - [-] Implement simple virtual machine [9/35]
+    - [-] Implement simple virtual machine [10/35]
       - [X] nop
       - [X] push
       - [X] pop
       - [X] ldl
       - [X] ldi
       - [X] ldg
-      - [ ] stg
+      - [X] stg
       - [ ] lde
       - [ ] ste
       - [ ] mvoarg
