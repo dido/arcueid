@@ -76,8 +76,18 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(ildi):
       TVALR(thr) = *TIP(thr)++;
       NEXT;
+    INST(ildg):
+      {
+	value tmp;
+	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
+	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+	  c->signal_error(c, "Unbound symbol %S\n", tmp);
+	  TVALR(thr) = CNIL;
+	}
+      }
+      NEXT;
     INST(ildl):
-      TVALR(thr) = CODE_LITERAL(TFUNR(thr), FIX2INT(*TIP(thr)++));
+      TVALR(thr) = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
       NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
