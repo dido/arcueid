@@ -93,6 +93,41 @@ void arc_vmengine(arc *c, value thr, int quanta)
       arc_hash_insert(c, c->genv, CODE_LITERAL(TFUNR(thr), *TIP(thr)++),
 		      TVALR(thr));
       NEXT;
+    INST(ilde):
+      {
+	value iindx, tmp;
+	int ienv;
+
+	ienv = (int)*TIP(thr)++;
+	iindx = *TIP(thr)++;
+	tmp = TENVR(thr);
+	while (--ienv >= 0)
+	  tmp = cdr(tmp);
+	TVALR(thr) = ENV_VALUE(car(tmp), iindx);
+      }
+      NEXT;
+    INST(iste):
+      {
+	value iindx, tmp;
+	int ienv;
+
+	ienv = (int)*TIP(thr)++;
+	iindx = *TIP(thr)++;
+	tmp = TENVR(thr);
+	while (--ienv >= 0)
+	  tmp = cdr(tmp);
+	WB(&ENV_VALUE(car(tmp), iindx), TVALR(thr));
+      }
+      NEXT;
+    INST(ienv):
+      {
+	value ienvsize = *TIP(thr)++;
+
+	WB(&TENVR(thr), arc_mkenv(c, TENVR(thr), ienvsize));
+	ENV_NAMES(car(TENVR(thr))) = CODE_NAME(TFUNR(thr));
+	WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
+      }
+      NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
       NEXT;
@@ -253,7 +288,7 @@ value arc_mkenv(arc *c, value parent, int size)
 {
   value env;
 
-  env = cons(c, arc_mkvector(c, size), parent+1);
+  env = cons(c, arc_mkvector(c, size+1), parent);
   BTYPE(env) = T_ENV;
   return(env);
 }
