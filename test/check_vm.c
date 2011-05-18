@@ -14,9 +14,7 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  along with this program. If not, see <http://www.gnu.org/licenses/>
 */
 #include <stdlib.h>
 #include <string.h>
@@ -131,6 +129,29 @@ START_TEST(test_vm_stg)
 }
 END_TEST
 
+/* environment instructions */
+START_TEST(test_vm_envs)
+{
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode(&c, cctx, itrue);
+  arc_gcode2(&c, cctx, iste, 0, 0);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1234));
+  arc_gcode2(&c, cctx, iste, 0, 1);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode2(&c, cctx, iste, 0, 0);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(73313));
+  arc_gcode2(&c, cctx, iste, 0, 1);
+  arc_gcode2(&c, cctx, ilde, 1, 1);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == INT2FIX(1234));
+  fail_unless(ENV_VALUE(car(TENVR(thr)), 0) == INT2FIX(31337));
+  fail_unless(ENV_VALUE(car(TENVR(thr)), 1) == INT2FIX(73313));
+}
+END_TEST
+
 START_TEST(test_vm_true)
 {
   ITEST_HEADER(0);
@@ -172,6 +193,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_ldl);
   tcase_add_test(tc_vm, test_vm_ldg);
   tcase_add_test(tc_vm, test_vm_stg);
+  tcase_add_test(tc_vm, test_vm_envs);
   tcase_add_test(tc_vm, test_vm_true);
   tcase_add_test(tc_vm, test_vm_nil);
 
