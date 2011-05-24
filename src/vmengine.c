@@ -119,6 +119,14 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	WB(&ENV_VALUE(car(tmp), iindx), TVALR(thr));
       }
       NEXT;
+    INST(imvarg):
+      {
+	int iindx = (int)*TIP(thr)++;
+	if (TSP(thr) == TSTOP(thr))
+	  c->signal_error(c, "too few arguments");
+	WB(&ENV_VALUE(car(TENVR(thr)), iindx), CPOP(thr));
+      }
+      break;
     INST(ienv):
       {
 	value ienvsize = *TIP(thr)++;
