@@ -17,7 +17,7 @@
 	  be separately implementable.  We should take a cue from how
 	  Dalvik does it.
     - [X] Build code generation infrastructure
-    - [-] Implement simple virtual machine [14/36]
+    - [-] Implement simple virtual machine [15/36]
       - [X] nop
       - [X] push
       - [X] pop
@@ -28,7 +28,7 @@
       - [X] lde
       - [X] ste
       - [X] mvarg
-      - [ ] mvoarg
+      - [X] mvoarg
       - [ ] mvrarg
       - [ ] cont
       - [X] env
