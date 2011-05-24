@@ -152,6 +152,47 @@ START_TEST(test_vm_envs)
 }
 END_TEST
 
+static int error = 0;
+
+static void signal_error_test(struct arc *c, const char *fmt, ...)
+{
+  error = 1;
+}
+
+START_TEST(test_vm_mvarg)
+{
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31338));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, imvarg, 0);
+  arc_gcode1(&c, cctx, imvarg, 1);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(ENV_VALUE(car(TENVR(thr)), 0) == INT2FIX(31338));
+  fail_unless(ENV_VALUE(car(TENVR(thr)), 1) == INT2FIX(31337));
+}
+END_TEST
+
+START_TEST(test_vm_mvarg_fail)
+{
+  /* test failure */
+  c.signal_error = signal_error_test;
+  error = 0;
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, imvarg, 0);
+  arc_gcode1(&c, cctx, imvarg, 1);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(error == 1);
+}
+END_TEST
+
 START_TEST(test_vm_true)
 {
   ITEST_HEADER(0);
@@ -194,6 +235,8 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_ldg);
   tcase_add_test(tc_vm, test_vm_stg);
   tcase_add_test(tc_vm, test_vm_envs);
+  tcase_add_test(tc_vm, test_vm_mvarg);
+  tcase_add_test(tc_vm, test_vm_mvarg_fail);
   tcase_add_test(tc_vm, test_vm_true);
   tcase_add_test(tc_vm, test_vm_nil);
 
