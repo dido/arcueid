@@ -193,6 +193,21 @@ START_TEST(test_vm_mvarg_fail)
 }
 END_TEST
 
+START_TEST(test_vm_mvoarg)
+{
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, imvoarg, 0);
+  arc_gcode1(&c, cctx, imvoarg, 1);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(ENV_VALUE(car(TENVR(thr)), 0) == INT2FIX(31337));
+  fail_unless(ENV_VALUE(car(TENVR(thr)), 1) == CNIL);
+}
+END_TEST
+
 START_TEST(test_vm_true)
 {
   ITEST_HEADER(0);
@@ -237,6 +252,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_envs);
   tcase_add_test(tc_vm, test_vm_mvarg);
   tcase_add_test(tc_vm, test_vm_mvarg_fail);
+  tcase_add_test(tc_vm, test_vm_mvoarg);
   tcase_add_test(tc_vm, test_vm_true);
   tcase_add_test(tc_vm, test_vm_nil);
 
