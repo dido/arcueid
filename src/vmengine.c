@@ -135,6 +135,18 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	WB(&ENV_VALUE(car(TENVR(thr)), iindx), arg);
       }
       break;
+    INST(imvrarg):
+      {
+	int iindx = (int)*TIP(thr)++;
+	value list = CNIL, i;
+
+	while (TSP(thr) != TSTOP(thr)) {
+	  i = CPOP(thr);
+	  list = cons(c, i, list);
+	}
+	WB(&ENV_VALUE(car(TENVR(thr)), iindx), list);
+      }
+      break;
     INST(ienv):
       {
 	value ienvsize = *TIP(thr)++;
