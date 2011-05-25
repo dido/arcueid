@@ -280,7 +280,7 @@ START_TEST(test_vm_apply)
   thr = arc_mkthread(&c, func2, 2048, 0);
   arc_vmengine(&c, thr, 1000);
   fail_unless(TVALR(thr) == INT2FIX(31337));
-  fail_unless(*TSP(thr) == INT2FIX(0xf1e));
+  fail_unless(*(TSP(thr)+1) == INT2FIX(0xf1e));
 }
 END_TEST
 
