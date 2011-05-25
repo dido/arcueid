@@ -179,6 +179,13 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	TIP(thr) += itarget-2;
       }
       NEXT;
+    INST(ijt):
+      {
+	int itarget = *TIP(thr)++;
+	if (TVALR(thr) != CNIL)
+	  TIP(thr) += itarget-2;
+      }
+      NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
       NEXT;
