@@ -17,7 +17,7 @@
 	  be separately implementable.  We should take a cue from how
 	  Dalvik does it.
     - [X] Build code generation infrastructure
-    - [-] Implement simple virtual machine [23/36]
+    - [-] Implement simple virtual machine [24/36]
       - [X] nop
       - [X] push
       - [X] pop
@@ -41,7 +41,7 @@
       - [X] nil
       - [X] hlt
       - [X] add
-      - [ ] sub
+      - [X] sub
       - [ ] mul
       - [ ] div
       - [ ] cons
