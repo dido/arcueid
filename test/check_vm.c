@@ -297,7 +297,6 @@ START_TEST(test_vm_jmp)
   VINDEX(CCTX_VCODE(cctx), jmpofs) = FIX2INT(CCTX_VCPTR(cctx)) - (jmpofs-1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, ihlt);  
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
@@ -316,7 +315,6 @@ START_TEST(test_vm_jt_true)
   VINDEX(CCTX_VCODE(cctx), jmpofs) = FIX2INT(CCTX_VCPTR(cctx)) - (jmpofs-1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, ihlt);  
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
@@ -335,7 +333,6 @@ START_TEST(test_vm_jt_false)
   VINDEX(CCTX_VCODE(cctx), jmpofs) = FIX2INT(CCTX_VCPTR(cctx)) - (jmpofs-1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(0));
   arc_gcode(&c, cctx, ihlt);  
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
@@ -354,7 +351,6 @@ START_TEST(test_vm_jf_true)
   VINDEX(CCTX_VCODE(cctx), jmpofs) = FIX2INT(CCTX_VCPTR(cctx)) - (jmpofs-1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, ihlt);  
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
@@ -373,7 +369,19 @@ START_TEST(test_vm_jf_false)
   VINDEX(CCTX_VCODE(cctx), jmpofs) = FIX2INT(CCTX_VCPTR(cctx)) - (jmpofs-1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(0));
   arc_gcode(&c, cctx, ihlt);  
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+}
+END_TEST
+
+START_TEST(test_vm_add)
+{
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31330));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(7));
+  arc_gcode(&c, cctx, iadd);
+  arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
@@ -409,6 +417,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_jf_false);
   tcase_add_test(tc_vm, test_vm_true);
   tcase_add_test(tc_vm, test_vm_nil);
+  tcase_add_test(tc_vm, test_vm_add);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
