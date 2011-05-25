@@ -203,6 +203,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TSTATE(thr) = Trelease;
       goto endquantum;
       NEXT;
+    INST(iadd):
+      TVALR(thr) = __arc_add2(c, TVALR(thr), CPOP(thr));
+      NEXT;
 #ifdef THREADED_CODE
 #else
     }
