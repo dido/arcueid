@@ -206,6 +206,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(iadd):
       TVALR(thr) = __arc_add2(c, TVALR(thr), CPOP(thr));
       NEXT;
+    INST(isub):
+      TVALR(thr) = __arc_sub2(c, TVALR(thr), CPOP(thr));
+      NEXT;
 #ifdef THREADED_CODE
 #else
     }
