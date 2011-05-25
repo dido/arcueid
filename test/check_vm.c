@@ -284,6 +284,25 @@ START_TEST(test_vm_apply)
 }
 END_TEST
 
+START_TEST(test_vm_jmp)
+{
+  int jmpofs;
+
+  ITEST_HEADER(0);
+  arc_gcode(&c, cctx, inil);
+  arc_gcode1(&c, cctx, ijmp, 0);
+  jmpofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode(&c, cctx, itrue);
+  arc_gcode(&c, cctx, ihlt);
+  VINDEX(CCTX_VCODE(cctx), jmpofs) = FIX2INT(CCTX_VCPTR(cctx)) - (jmpofs-1);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode(&c, cctx, ihlt);  
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -307,6 +326,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_mvoarg);
   tcase_add_test(tc_vm, test_vm_mvrarg);
   tcase_add_test(tc_vm, test_vm_apply);
+  tcase_add_test(tc_vm, test_vm_jmp);
   tcase_add_test(tc_vm, test_vm_true);
   tcase_add_test(tc_vm, test_vm_nil);
 
