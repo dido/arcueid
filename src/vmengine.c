@@ -126,7 +126,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	  c->signal_error(c, "too few arguments");
 	WB(&ENV_VALUE(car(TENVR(thr)), iindx), CPOP(thr));
       }
-      break;
+      NEXT;
     INST(imvoarg):
       {
 	int iindx = (int)*TIP(thr)++;
@@ -134,7 +134,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 
 	WB(&ENV_VALUE(car(TENVR(thr)), iindx), arg);
       }
-      break;
+      NEXT;
     INST(imvrarg):
       {
 	int iindx = (int)*TIP(thr)++;
@@ -146,7 +146,14 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	}
 	WB(&ENV_VALUE(car(TENVR(thr)), iindx), list);
       }
-      break;
+      NEXT;
+    INST(icont):
+      {
+	int icofs = (int)*TIP(thr)++;
+	WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
+			     TCONR(thr)));
+      }
+      NEXT;
     INST(ienv):
       {
 	value ienvsize = *TIP(thr)++;
@@ -155,6 +162,16 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	ENV_NAMES(car(TENVR(thr))) = CODE_NAME(TFUNR(thr));
 	WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
       }
+      NEXT;
+    INST(iapply):
+      {
+	int argc = *TIP(thr)++;
+	TARGC(thr) = argc;
+	arc_apply(c, thr, TVALR(thr));
+      }
+      NEXT;
+    INST(iret):
+      arc_return(c, thr);
       NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
@@ -280,7 +297,7 @@ void arc_restorecont(arc *c, value thr, value cont)
   TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
   WB(&TENVR(thr), VINDEX(cont, 2));
   stklen = VECLEN(VINDEX(cont, 3));
-  TSP(thr) = TSTOP(thr) + stklen;
+  TSP(thr) = TSTOP(thr) - stklen;
   memcpy(TSP(thr), &VINDEX(VINDEX(cont, 3), 0), stklen*sizeof(value));
 }
 
@@ -305,7 +322,7 @@ value arc_mkcont(arc *c, value offset, value thr)
   WB(&VINDEX(cont, 1), TFUNR(thr));
   WB(&VINDEX(cont, 2), TENVR(thr));
   /* Save the used portion of the stack */
-  stklen = TSTOP(thr) - TSP(thr);
+  stklen = TSTOP(thr) - (TSP(thr));
   savedstk = arc_mkvector(c, stklen);
   memcpy(&VINDEX(savedstk, 0), TSP(thr), stklen*sizeof(value));
   WB(&VINDEX(cont, 3), savedstk);
