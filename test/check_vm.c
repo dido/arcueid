@@ -91,6 +91,7 @@ START_TEST(test_vm_ldl)
 {
   ITEST_HEADER(1);
   VINDEX(CCTX_LITS(cctx), 0) = arc_mkflonum(&c, 3.1415926535);
+
   arc_gcode1(&c, cctx, ildl, 0);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(1);
@@ -242,13 +243,44 @@ END_TEST
 
 START_TEST(test_vm_nil)
 {
-  ITEST_HEADER(1);
+  ITEST_HEADER(0);
   arc_gcode(&c, cctx, inil);
   arc_gcode(&c, cctx, inop);
   arc_gcode(&c, cctx, ihlt);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
-  ITEST_FOOTER(1);
+  ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == CNIL);
+}
+END_TEST
+
+START_TEST(test_vm_apply)
+{
+  value cctx, cctx2, func, func2, clos, thr;
+  int contofs, base;
+
+  cctx = arc_mkcctx(&c, 1, 0);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode(&c, cctx, iret);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  clos = arc_mkclosure(&c, func, CNIL);
+
+  cctx2 = arc_mkcctx(&c, 1, 1);
+  VINDEX(CCTX_LITS(cctx2), 0) = clos;
+  base = FIX2INT(CCTX_VCPTR(cctx2));
+  arc_gcode1(&c, cctx2, ildi, INT2FIX(0xf1e));
+  arc_gcode(&c, cctx2, ipush);
+  arc_gcode1(&c, cctx2, icont, 0);
+  contofs = FIX2INT(CCTX_VCPTR(cctx2)) - 1;
+  arc_gcode1(&c, cctx2, ildl, 0);
+  arc_gcode1(&c, cctx2, iapply, 0);
+  VINDEX(CCTX_VCODE(cctx2), contofs) = FIX2INT(CCTX_VCPTR(cctx2)) - base;
+  arc_gcode(&c, cctx2, ihlt);
+  func2 = arc_mkcode(&c, CCTX_VCODE(cctx2), arc_mkstringc(&c, "test2"), CNIL, 0);
+  CODE_LITERAL(func2, 0) = VINDEX(CCTX_LITS(cctx2), 0);
+  thr = arc_mkthread(&c, func2, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+  fail_unless(*TSP(thr) == INT2FIX(0xf1e));
 }
 END_TEST
 
@@ -274,6 +306,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_mvarg_fail);
   tcase_add_test(tc_vm, test_vm_mvoarg);
   tcase_add_test(tc_vm, test_vm_mvrarg);
+  tcase_add_test(tc_vm, test_vm_apply);
   tcase_add_test(tc_vm, test_vm_true);
   tcase_add_test(tc_vm, test_vm_nil);
 
