@@ -173,6 +173,12 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(iret):
       arc_return(c, thr);
       NEXT;
+    INST(ijmp):
+      {
+	int itarget = *TIP(thr)++;
+	TIP(thr) += itarget-2;
+      }
+      NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
       NEXT;
