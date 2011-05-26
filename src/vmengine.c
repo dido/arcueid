@@ -257,6 +257,10 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TVALR(thr) = (FIX2INT(arc_cmp(c, TVALR(thr), CPOP(thr))) > 0) ?
 	CTRUE : CNIL;
       NEXT;
+    INST(ilt):
+      TVALR(thr) = (FIX2INT(arc_cmp(c, TVALR(thr), CPOP(thr))) < 0) ?
+	CTRUE : CNIL;
+      NEXT;
 #ifndef THREADED_CODE
     default:
       c->signal_error(c, "invalid opcode %02x", curr_instr);
