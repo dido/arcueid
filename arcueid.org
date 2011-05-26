@@ -17,7 +17,7 @@
 	  be separately implementable.  We should take a cue from how
 	  Dalvik does it.
     - [X] Build code generation infrastructure
-    - [-] Implement simple virtual machine [35/38]
+    - [-] Implement simple virtual machine [36/38]
       - [X] nop
       - [X] push
       - [X] pop
@@ -53,7 +53,7 @@
       - [X] is
       - [X] iso
       - [X] gt
-      - [ ] lt
+      - [X] lt
       - [ ] dup
       - [ ] cls
 ** DONE memory allocator
