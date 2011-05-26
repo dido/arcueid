@@ -426,6 +426,21 @@ START_TEST(test_vm_div)
 }
 END_TEST
 
+START_TEST(test_vm_cons)
+{
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(62674));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(CONS_P(TVALR(thr)));
+  fail_unless(car(TVALR(thr)) == INT2FIX(31337));
+  fail_unless(cdr(TVALR(thr)) == INT2FIX(62674));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -460,6 +475,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_sub);
   tcase_add_test(tc_vm, test_vm_mul);
   tcase_add_test(tc_vm, test_vm_div);
+  tcase_add_test(tc_vm, test_vm_cons);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
