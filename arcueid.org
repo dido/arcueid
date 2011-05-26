@@ -17,7 +17,7 @@
 	  be separately implementable.  We should take a cue from how
 	  Dalvik does it.
     - [X] Build code generation infrastructure
-    - [-] Implement simple virtual machine [34/36]
+    - [-] Implement simple virtual machine [34/38]
       - [X] nop
       - [X] push
       - [X] pop
@@ -54,6 +54,8 @@
       - [X] iso
       - [ ] gt
       - [ ] lt
+      - [ ] dup
+      - [ ] cls
 ** DONE memory allocator
     A very simple free-list based memory allocator.  There might be
     better algorithms out there but let's get a simple one out
@@ -208,3 +210,6 @@
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
+** TODO compiler seems to find patch offsets erroneously. [0/2]
+   - [ ] Check instances of patch-code
+   - [ ] Check definition of patch-code to see if it's doing things right
