@@ -221,6 +221,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(icar):
       TVALR(thr) = car(TVALR(thr));
       NEXT;
+    INST(icdr):
+      TVALR(thr) = cdr(TVALR(thr));
+      NEXT;
 #ifdef THREADED_CODE
 #else
     }
