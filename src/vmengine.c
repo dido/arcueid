@@ -218,6 +218,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(icons):
       TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
       NEXT;
+    INST(icar):
+      TVALR(thr) = car(TVALR(thr));
+      NEXT;
 #ifdef THREADED_CODE
 #else
     }
