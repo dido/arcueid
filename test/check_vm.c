@@ -612,9 +612,9 @@ END_TEST
 START_TEST(test_vm_lt_t)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
-  arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(2));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
   arc_gcode(&c, cctx, ilt);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
@@ -625,9 +625,9 @@ END_TEST
 START_TEST(test_vm_lt_nil)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
-  arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
   arc_gcode(&c, cctx, ilt);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
