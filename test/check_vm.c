@@ -406,7 +406,7 @@ START_TEST(test_vm_mul)
   arc_gcode1(&c, cctx, ildi, INT2FIX(2));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
-  arc_gcode(&c, cctx, isub);
+  arc_gcode(&c, cctx, imul);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(62674));
