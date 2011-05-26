@@ -230,6 +230,23 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(iscdr):
       scdr(TVALR(thr), CPOP(thr));
       NEXT;
+    INST(ispl):
+      {
+	value list = TVALR(thr), nlist = CPOP(thr);
+	/* Find the first cons in list whose cdr is not itself a cons.
+	   Join the list from the stack to it. */
+	for (;;) {
+	  if (!CONS_P(cdr(list))) {
+	    if (cdr(list) == CNIL)
+	      scdr(list, nlist);
+	    else
+	      c->signal_error(c, "splicing improper list");
+	    break;
+	  }
+	  list = cdr(list);
+	}
+      }
+      NEXT;
 #ifdef THREADED_CODE
 #else
     }
