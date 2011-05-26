@@ -250,6 +250,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(iis):
       TVALR(thr) = arc_is(c, TVALR(thr), CPOP(thr));
       NEXT;
+    INST(iiso):
+      TVALR(thr) = arc_iso(c, TVALR(thr), CPOP(thr));
+      NEXT;
 #ifndef THREADED_CODE
     default:
       c->signal_error(c, "invalid opcode %02x", curr_instr);
