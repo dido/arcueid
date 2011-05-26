@@ -583,6 +583,32 @@ START_TEST(test_vm_iso_nil)
 }
 END_TEST
 
+START_TEST(test_vm_gt_t)
+{
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
+  arc_gcode(&c, cctx, igt);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == CTRUE);
+}
+END_TEST
+
+START_TEST(test_vm_gt_nil)
+{
+  ITEST_HEADER(0);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, igt);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -627,6 +653,8 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_is_nil);
   tcase_add_test(tc_vm, test_vm_iso_t);
   tcase_add_test(tc_vm, test_vm_iso_nil);
+  tcase_add_test(tc_vm, test_vm_gt_t);
+  tcase_add_test(tc_vm, test_vm_gt_nil);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
