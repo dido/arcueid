@@ -56,7 +56,7 @@
 
 (def inline-func (ident)
   (case ident
-    cons (fn (expr ctx env cont) (compile-inline 'icons 2 expr ctx env cont))
+    cons (fn (expr ctx env cont) (compile-inline 'iconsr 2 expr ctx env cont))
     car (fn (expr ctx env cont) (compile-inline 'icar 1 expr ctx env cont))
     cdr (fn (expr ctx env cont) (compile-inline 'icdr 1 expr ctx env cont))
     scar (fn (expr ctx env cont) (compile-inline 'iscar 2 expr ctx env cont))
