@@ -263,7 +263,7 @@
 			 (generate ctx 'ipush)])
     (compile fname ctx env cont)
     (generate ctx 'iapply (len args))
-    (code-patch ctx (+ contaddr 1) (- (code-ptr ctx) contaddr))
+    (code-patch ctx contaddr (+ (- (code-ptr ctx) contaddr) 1))
     (compile-continuation ctx cont)))
 
 ;; Compile an assign special form.  Called in previous versions of Arc
