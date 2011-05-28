@@ -215,3 +215,4 @@ notice and this notice are preserved.
    - [ ] check uses of code-patch in compiling if expressions
    - [ ] check uses of code-patch in compiling arguments
 ** TODO destructuring bind arguments aren't compiled correctly
+** TODO try to remove the consr instruction somehow
