@@ -261,8 +261,14 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TVALR(thr) = (FIX2INT(arc_cmp(c, TVALR(thr), CPOP(thr))) < 0) ?
 	CTRUE : CNIL;
       NEXT;
+    INST(idup):
+      TVALR(thr) = *(TSP(thr)+1);
+      NEXT;
     INST(icls):
       TVALR(thr) = arc_mkclosure(c, TVALR(thr), TENVR(thr));
+      NEXT;
+    INST(iconsr):
+      TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
       NEXT;
 #ifndef THREADED_CODE
     default:
