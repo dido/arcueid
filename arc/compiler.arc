@@ -130,16 +130,47 @@
 	(compile-continuation ctx cont)))))
 
 ;; This generates code to set up the new environment given the arguments.
+;; After producing the code to generate the new environment, which
+;; generally consists of an env instruction to create an environment
+;; of the appropriate size and mvargs/mvoargs/mvrargs to move data from
+;; the stack into the appropriate environment slot as well as including
+;; instructions to perform any destructuring binds, return the new
+;; environment which includes all the names specified properly ordered.
+;; so that a call to find-var with the new environment can find the
+;; names.
 (def compile-args (args ctx env)
-  (if (no args) env
-      (atom args)			; if args is a single name...
+  (if (no args) env   ; just return the current environment if no args
+      ;; If args is a single name, make an environment with a single
+      ;; name and a list containing the name of the sole argument.
+      (atom args)
       (do (generate ctx 'ienv 1)
 	  (generate ctx 'imvrarg 0)
-	  (cons (cons '(args) nil) env))
+	  (add-env-frame (cons args nil) env))
+      ;; If args is a list, we have to recurse into the list to
+      ;; obtain the number of arguments specified, the names
+      ;; of the arguments to bind, and the name to which the rest
+      ;; arguments are bound, if any.
+      ;; 
+      ;; The names here may be either symbols which denote the
+      ;; names of the actual arguments, or pairs whose car is the
+      ;; name followed by the instructions needed to get at the
+      ;; named value given the list argument.  An optional argument
+      ;; is also represented as a pair, however it has the symbol o
+      ;; followed by the argument name.
       (let (nargs names rest)
 	  ((afn (args count names)
 	     (if (no args) (list count (rev names) nil)
+		 ;; If we see an atom, then we return the current count,
+		 ;; the reversed list of the names, and the name of the
+		 ;; argument which is to be where the rest argument is
+		 ;; bound.
 		 (atom args) (list (+ 1 count) (rev (cons args names)) t)
+		 ;; If the argument specified is a cons cell, there
+		 ;; are two possibilities, either it is an optional
+		 ;; argument, or a destructuring bind.  In the latter
+		 ;; case, we generate instructions that will extract
+		 ;; the value of each element in the destructuring
+		 ;; bind and use those.
 		 (and (isa (car args) 'cons) (isnt (caar args) 'o))
 		 (let dsb (dsb-list (car args))
 		   (self (cdr args) (+ (len dsb) count)
@@ -153,15 +184,17 @@
 	;; of the arguments to the environment.
 	(let realnames
 	    ((afn (arg count rest rnames)
+	       ;; Generate a rest argument and bind
 	       (if (and (no (cdr arg)) rest)
 		   (do (generate ctx 'imvrarg count)
 		       (rev (cons (car arg) rnames)))
 		   (no arg) (rev rnames) ; done
-		   ;; some optional argument
+		   ;; An optional argument.
 		   (and (isa (car arg) 'cons) (is (caar arg) 'o))
 		   (let oarg (car arg)
 		     (generate ctx 'imvoarg count)
 		     ;; To handle default parameters
+		     ;; XXX - this needs reexamination!
 		     (if (cddr oarg)
 			 (do (generate ctx 'ilde 0 count)
 			     ;; If we have a default value, fill it in
@@ -170,7 +203,7 @@
 			       (generate ctx 'ijt 0)
 			       (compile (car:cddr oarg) ctx env nil)
 			       (generate ctx 'imvoarg count)
-			       (code-patch ctx (+ jumpaddr 1)
+			       (code-patch ctx jumpaddr
 					   (- (code-ptr ctx)
 					      jumpaddr)))))
 		     (self (cdr arg) (+ 1 count) rest
@@ -178,6 +211,7 @@
 		   ;; Destructuring bind argument.
 		   (and (isa (car arg) 'cons) (isnt (caar arg) 'o))
 		   (do (map [generate ctx _] (cdr:car arg))
+		       (generate ctx 'ipush)
 		       (generate ctx 'imvarg count)
 		       ;; Check if this is the last destructuring bind
 		       ;; in the group.  If so, generate a pop instruction
