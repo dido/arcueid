@@ -60,7 +60,8 @@ enum vminst {
   igt=34,
   ilt=35,
   idup=36,
-  icls=37
+  icls=37,
+  iconsr=38
 };
 
 extern void arc_gcode(arc *c, value cctx, enum vminst inst);
