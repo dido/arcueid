@@ -65,18 +65,24 @@
 	 (do1 (len literals)
 	      (= (cdr ctx) (join literals (cons lit nil)))))))
 
-;; These should be parts of a C function as well.  Environments are
-;; defined as lists of vectors (they appear here as lists as well because
-;; standard Arc doesn't have vectors).  The first element of the
-;; environment is all we really care about.
+;; Add an environment frame given a list of names.  This should
+;; be a C function.
+(def add-env-frame (names env)
+  (cons names env))
+
+;; Find the provided name in the provided environment frame.
 (def find-in-frame (var frame idx)
   (if (no frame) nil
       (is (car frame) var) idx
       (find-in-frame var (cdr frame) (+ idx 1))))
 
+;; Find the provided name in the environment.  Returns true, the
+;; environment number, and environment slot number if found, or
+;; (nil 0 0) if the name refers to a name unbound in the current
+;; environment.
 (def find-var (var env (o idx 0))
   (if (no env) '(nil 0 0)
-      (aif (find-in-frame var (car (car env)) 0) `(t ,idx ,it)
+      (aif (find-in-frame var (car env) 0) `(t ,idx ,it)
 	   (find-var var (cdr env) (+ idx 1)))))
 
 ;; This C function creates a new empty compilation context
@@ -127,6 +133,7 @@
     ilt 35
     idup 36
     icls 37
+    iconsr 38
     (err "Unrecognized opcode" code)))
 
 ;; Number of instructions to the arg
