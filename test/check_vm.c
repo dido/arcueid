@@ -712,6 +712,34 @@ START_TEST(test_vm_dsb)
 }
 END_TEST
 
+START_TEST(test_vm_if_compile1)
+{
+  ITEST_HEADER(0);
+  arc_gcode(&c, cctx, inil);
+  arc_gcode1(&c, cctx, ijf, 6);
+  arc_gcode1(&c, cctx, ildi, 3);
+  arc_gcode1(&c, cctx, ijmp, 4);
+  arc_gcode1(&c, cctx, ildi, 5);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
+START_TEST(test_vm_if_compile2)
+{
+  ITEST_HEADER(0);
+  arc_gcode(&c, cctx, itrue);
+  arc_gcode1(&c, cctx, ijf, 6);
+  arc_gcode1(&c, cctx, ildi, 3);
+  arc_gcode1(&c, cctx, ijmp, 4);
+  arc_gcode1(&c, cctx, ildi, 5);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -761,6 +789,8 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_lt_t);
   tcase_add_test(tc_vm, test_vm_lt_nil);
   tcase_add_test(tc_vm, test_vm_dsb);
+  tcase_add_test(tc_vm, test_vm_if_compile1);
+  tcase_add_test(tc_vm, test_vm_if_compile2);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
