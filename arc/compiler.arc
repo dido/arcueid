@@ -194,7 +194,6 @@
 		   (let oarg (car arg)
 		     (generate ctx 'imvoarg count)
 		     ;; To handle default parameters
-		     ;; XXX - this needs reexamination!
 		     (if (cddr oarg)
 			 (do (generate ctx 'ilde 0 count)
 			     ;; If we have a default value, fill it in
@@ -202,8 +201,9 @@
 			     (let jumpaddr (code-ptr ctx)
 			       (generate ctx 'ijt 0)
 			       (compile (car:cddr oarg) ctx env nil)
+			       (generate ctx 'ipush)
 			       (generate ctx 'imvoarg count)
-			       (code-patch ctx jumpaddr
+			       (code-patch ctx (+ jumpaddr 1)
 					   (- (code-ptr ctx)
 					      jumpaddr)))))
 		     (self (cdr arg) (+ 1 count) rest
@@ -226,7 +226,7 @@
 			     (cons (car arg) rnames)))))
 	     names 0 rest nil)
 	;; Create a new environment frame
-	(cons (cons realnames nil) env)))))
+	(add-env-frame realnames env)))))
 
 ;; Unroll and generate instructions for a destructuring bind of a list.
 ;; This function will return an assoc list of each element in the
