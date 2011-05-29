@@ -5,7 +5,7 @@
    no choice but to write a few portions in C.  I don't yet have the
    chops or the time to make one like that now, but that would
    certainly be ideal, and then we'd have an Arc just like Scheme48.
-** TODO base virtual machine [4/5]
+** TODO base virtual machine [4/6]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
    should probably write our own interpreter core directly.
@@ -56,6 +56,10 @@
       - [X] dup
       - [X] cls
       - [X] consr
+    - [-] Build a foreign function interface [1/3]
+      - [X] Calling convention 1 (straight args)
+      - [ ] Calling convention 2 (args as a C array)
+      - [ ] Calling convention 3 (args as an Arcueid vector)
     - [ ] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
