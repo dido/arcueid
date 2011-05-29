@@ -795,6 +795,31 @@ START_TEST(test_vm_oarg)
 }
 END_TEST
 
+static value test_cfunc(arc *c, value arg)
+{
+  return(INT2FIX(FIX2INT(arg) + 2));
+}
+
+START_TEST(test_vm_ffi)
+{
+  int base, contofs;
+  /* Attempt to apply the argument 3 to the above function. Should result in 5 */
+  ITEST_HEADER(1);
+  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, 1, test_cfunc);
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 9); /* computed offset by compiler */
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, 7);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildl, 0);
+  arc_gcode1(&c, cctx, iapply, 1);
+  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(1);
+  fail_unless(TVALR(thr) == INT2FIX(5));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -847,6 +872,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_if_compile1);
   tcase_add_test(tc_vm, test_vm_if_compile2);
   tcase_add_test(tc_vm, test_vm_oarg);
+  tcase_add_test(tc_vm, test_vm_ffi);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
