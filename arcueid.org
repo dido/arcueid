@@ -5,7 +5,7 @@
    no choice but to write a few portions in C.  I don't yet have the
    chops or the time to make one like that now, but that would
    certainly be ideal, and then we'd have an Arc just like Scheme48.
-** DONE base virtual machine [4/4]
+** TODO base virtual machine [4/5]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
    should probably write our own interpreter core directly.
@@ -56,6 +56,9 @@
       - [X] dup
       - [X] cls
       - [X] consr
+    - [ ] Enable GCC's labels as values for doing interpreter threading
+	  The macro structure is already in place.  We only need to fill
+	  in some of the conditional compilation stuff and defines.
 ** DONE memory allocator
     A very simple free-list based memory allocator.  There might be
     better algorithms out there but let's get a simple one out
