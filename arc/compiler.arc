@@ -126,7 +126,7 @@
       ;; and the current environment.
       (let newcode (context->code nctx)
 	(generate ctx 'ildl (find-literal newcode ctx))
-	(generate ctx 'icls)
+        (generate ctx 'icls)
 	(compile-continuation ctx cont)))))
 
 ;; This generates code to set up the new environment given the arguments.
