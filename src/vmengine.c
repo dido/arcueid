@@ -323,7 +323,7 @@ void arc_apply(arc *c, value thr, value fun)
     }
     argv = alloca(sizeof(value)*argc);
     for (i=0; i<argc; i++)
-      argv[i] = *TSP(thr)--;
+      argv[i] = CPOP(thr);
     switch (REP(cfn)._cfunc.argc) {
     case -2:
       avec = arc_mkvector(c, argc);
