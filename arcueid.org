@@ -210,9 +210,9 @@
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
-** TODO compiler seems to find patch offsets erroneously. [2/3]
+** DONE compiler seems to find patch offsets erroneously. [3/3]
    - [X] check uses of code-patch in generating continuation offsets for apply
    - [X] check uses of code-patch in compiling if expressions
-   - [ ] check uses of code-patch in compiling arguments
+   - [X] check uses of code-patch in compiling optional arguments
 ** TODO destructuring bind arguments aren't compiled correctly
 ** TODO try to remove the consr instruction somehow
