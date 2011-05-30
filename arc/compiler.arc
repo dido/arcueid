@@ -120,9 +120,7 @@
   (withs (args (cadr expr) body (cddr expr) nctx (compiler-new-context)
 	       nenv (compile-args args nctx env))
     ;; The body of a fn works as an implicit do/progn
-    (prn (code-ptr  nctx))
     (map [compile _ nctx nenv nil] body)
-    (prn (code-ptr  nctx))
     (compile-continuation nctx t)
     ;; Convert the new context into a code object and generate
     ;; an instruction in the present context to load it as a
