@@ -35,13 +35,12 @@
       (compile-continuation ctx cont)))
 
 (def compile-ident (expr ctx env cont)
-  (let ssx (ssexpand expr)
-    (if (isa ssx 'sym)
+    (if (ssyntax expr)
+	(compile (ssexpand expr) ctx env cont)
 	(do (let (found level offset) (find-var expr env)
 	      (if found (generate ctx 'ilde level offset)
 		  (generate ctx 'ildg (find-literal expr ctx))))
-	    (compile-continuation ctx cont))
-	(compile ssx ctx env cont))))
+	    (compile-continuation ctx cont))))
   
 (def compile-list (expr ctx env cont)
   (do (aif (spform (car expr)) (it expr ctx env cont)
