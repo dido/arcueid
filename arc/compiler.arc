@@ -115,19 +115,21 @@
     (compile-continuation ctx cont)))
 
 (def compile-fn (expr ctx env cont)
-  (with (args (cadr expr) body (cddr expr) nctx (compiler-new-context))
-    (let nenv (compile-args args nctx env)
-      ;; The body of a fn works as an implicit do/progn
-      (map [compile _ nctx nenv nil] body)
-      (compile-continuation nctx t)
-      ;; Convert the new context into a code object and generate
-      ;; an instruction in the present context to load it as a
-      ;; literal, and then create a closure using the code object
-      ;; and the current environment.
-      (let newcode (context->code nctx)
-	(generate ctx 'ildl (find-literal newcode ctx))
-        (generate ctx 'icls)
-	(compile-continuation ctx cont)))))
+  (withs (args (cadr expr) body (cddr expr) nctx (compiler-new-context)
+	       nenv (compile-args args nctx env))
+    ;; The body of a fn works as an implicit do/progn
+    (prn (code-ptr  nctx))
+    (map [compile _ nctx nenv nil] body)
+    (prn (code-ptr  nctx))
+    (compile-continuation nctx t)
+    ;; Convert the new context into a code object and generate
+    ;; an instruction in the present context to load it as a
+    ;; literal, and then create a closure using the code object
+    ;; and the current environment.
+    (let newcode (context->code nctx)
+      (generate ctx 'ildl (find-literal newcode ctx))
+      (generate ctx 'icls)
+      (compile-continuation ctx cont))))
 
 ;; This generates code to set up the new environment given the arguments.
 ;; After producing the code to generate the new environment, which
@@ -291,14 +293,15 @@
   (compile-quote expr ctx env cont t))
 
 (def compile-apply (expr ctx env cont)
-  (with (fname (car expr) args (cdr expr) contaddr (code-ptr ctx))
+  (with (fname (car expr) args (cdr expr))
     (generate ctx 'icont 0)
-    (walk (rev args) [do (compile _ ctx env cont)
-			 (generate ctx 'ipush)])
-    (compile fname ctx env cont)
-    (generate ctx 'iapply (len args))
-    (code-patch ctx contaddr (+ (- (code-ptr ctx) contaddr) 1))
-    (compile-continuation ctx cont)))
+    (let contaddr (- (code-ptr ctx) 1)
+      (walk (rev args) [do (compile _ ctx env cont)
+			   (generate ctx 'ipush)])
+      (compile fname ctx env cont)
+      (generate ctx 'iapply (len args))
+      (code-patch ctx contaddr (+ (- (code-ptr ctx) contaddr) 1))
+      (compile-continuation ctx cont))))
 
 ;; Compile an assign special form.  Called in previous versions of Arc
 ;; set, the assign form takes symbol-value pairs in its argument and
