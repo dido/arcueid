@@ -282,6 +282,21 @@ START_TEST(test_ciel_cons)
 }
 END_TEST
 
+START_TEST(test_ciel_code)
+{
+  value cielfd, result, fname, thr;
+
+  fname = arc_mkstringc(cc, "./code.ciel");
+  cielfd = arc_infile(cc, fname);
+  result = arc_ciel_unmarshal(cc, cielfd);
+  arc_close(cc, cielfd);
+  fail_unless(TYPE(result) == T_CODE);
+  thr = arc_mkthread(&c, result, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -320,6 +335,7 @@ int main(void)
   tcase_add_test(tc_ciel, test_ciel_rat);
   tcase_add_test(tc_ciel, test_ciel_complex);
   tcase_add_test(tc_ciel, test_ciel_cons);
+  tcase_add_test(tc_ciel, test_ciel_code);
   suite_add_tcase(s, tc_ciel);
 
   sr = srunner_create(s);
