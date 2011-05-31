@@ -386,7 +386,6 @@
 		  (self (cdr code) (> na 0) na
 			(+ clist (list (bytecode (car code))))))))
 	  (car (rep code)) nil 0 '())
-      (prn "len " (len bytecode))
       (writelist port (euint (len bytecode)))
       (map [writeb _ port] bytecode))
     ;; And then generate an array of literals
