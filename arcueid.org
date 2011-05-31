@@ -16,7 +16,7 @@
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [X] Implement simple virtual machine [39/39]
+    - [X] Implement virtual machine instructions [39/39]
       - [X] nop
       - [X] push
       - [X] pop
@@ -139,7 +139,7 @@
    - sread: The arc reader, which is in Arc for Arcueid
    - disp: The arc pretty printer, which is in Arc for Arcueid
    - write: Also the arc pretty printer
-** TODO write a reader for CIEL files (src/ciel.c) [11/15]
+** TODO write a base reader for CIEL files (src/ciel.c) [12/15]
    Our CIEL bytecode interpreter must at the very least support the
    instructions given in comp-bsdef.arc and be able to decode CIEL
    files generated therein.  This should produce code objects suitable
@@ -156,8 +156,9 @@
    - [X] crat
    - [X] ccomplex
    - [X] ccons
-   - [ ] cannotate - this is limited to creating T_CODE objects from a
-     cons consisting of the binary bytecode string and literals
+   - [X] cannotate - this is for the moment limited to creating T_CODE
+	 objects from a cons consisting of the binary bytecode string
+	 and literals
    - [ ] xdup
    - [ ] xmst
    - [ ] xmld
@@ -192,7 +193,7 @@
    - [ ] gtab
    - [ ] ctadd
    - [ ] additional functionality for cannotate, so that it can, you
-     know, actually perform type annotations...
+	 know, actually perform type annotations...
 * Enhancements
 ** TODO use ropes as strings
    This is a valuable enhancement as efficent string handling for very
