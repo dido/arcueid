@@ -210,15 +210,62 @@ static value getbstr(arc *c, value fd)
       c->signal_error(c, "ciel-unmarshal/getbstr: unexpected end of file encountered", fd);
       return(CNIL);
     }
-    VINDEX(str, i) = r;
+    VINDEX(str, i) = FIX2INT(r);
   }
   return(str);
 }
 
 
-static value fill_code(arc *c, value cstr, value code)
+static value fill_code(arc *c, value cctx, value bytecode, value lits)
 {
-  return(CNIL);
+  int i, j, k;
+  value list, code;
+
+  /* Read the bytecode string and generate code based on it */
+  for (i=0; i<VECLEN(bytecode);) {
+    int bc, nargs;
+    value args[3];
+
+    bc = VINDEX(bytecode, i++);
+    nargs = (bc & 0xc0) >> 6;
+    for (j=0; j<nargs; j++) {
+      int sign = (VINDEX(bytecode, i++) == '-') ? -1 : 1, pos = 0;
+      value acc = INT2FIX(0);
+
+      for (k=0; k<7; k++) {
+	acc = __arc_amul_2exp(c, acc, INT2FIX(VINDEX(bytecode, i++)), pos);
+	pos += 8;
+      }
+      acc = __arc_amul_2exp(c, acc, INT2FIX(VINDEX(bytecode, i++) & 0x7f),
+			    pos);
+      args[j] = __arc_mul2(c, acc, INT2FIX(sign));
+    }
+    switch (nargs) {
+    case 0:
+      arc_gcode(c, cctx, bc);
+      break;
+    case 1:
+      arc_gcode1(c, cctx, bc, args[0]);
+      break;
+    case 2:
+      arc_gcode2(c, cctx, bc, args[0], args[1]);
+      break;
+    default:
+      c->signal_error(c, "invalid number of arguments for bytecode %d", bc);
+      break;
+    }
+  }
+  /* Traverse the literal list and use it to fill the literals
+     list in the cctx */
+  for (list = lits, i=0; !NIL_P(list); list = cdr(list))
+    VINDEX(CCTX_LITS(cctx), i++) = car(list);
+  /* XXX - we need to find a way to fill the function name and arguments
+     here, either that or dispense with them entirely */
+  code = arc_mkcode(c, CCTX_VCODE(cctx), arc_mkstringc(c, ""), CNIL,
+		    VECLEN(CCTX_LITS(cctx)));
+  for (i=0; i<VECLEN(CCTX_LITS(cctx)); i++)
+    CODE_LITERAL(code, i) = VINDEX(CCTX_LITS(cctx), i);
+  return(code);
 }
 
 /* Read a CIEL 0.0.0 file */
@@ -302,23 +349,36 @@ value arc_ciel_unmarshal(arc *c, value fd)
     }
     case CANNOTATE: {
       /* This should have more functionality later, but for now we will
-	 limit it to creating a code object from a binary string.  It
-	 will expect at top of stack a symbol 'code and below it the
-	 binary string to annotate.  Later on we will provide other
-	 types of annotations. */
-      value x, y, code;
+	 limit it to creating a code object from a cons of a binary string
+	 (of bytecode) and a list (of literals).  It will expect at top of
+	 stack a symbol 'code and below it the cons to be annotated.  Later on
+	 we will provide other types of annotations. */
+      value x, cc, code, lits, cctx;
 
       x = POP();		/* should be 'code */
-      y = POP();		/* should be a binary string */
+      cc = POP();		/* should be a cons cell */
       if (x != arc_intern_cstr(c, "code")) {
 	c->signal_error(c, "CANNOTATE only supports code annotations");
+	return(CNIL);
       }
 
-      if (TYPE(y) != T_STRING) {
-	c->signal_error(c, "CANNOTATE can only annotate strings");
+      if (!CONS_P(cc)) {
+	c->signal_error(c, "Malformed code annotation, cons expected, type %d object found", TYPE(cc));
+	return(CNIL);
       }
-      code = arc_mkvmcode(c, arc_strlen(c, code));
-      PUSH(fill_code(c, y, code));
+
+      code = cdr(cc);
+      if (TYPE(code) != T_VMCODE) {
+	c->signal_error(c, "Malformed code annotation, non-string (type %d) found for bytecode", TYPE(code));
+	return(CNIL);
+      }
+      lits = car(cc);
+      if (!(CONS_P(lits) || NIL_P(lits))) {
+	c->signal_error(c, "Malformed code annotation, non-list (type %d) found for literals", TYPE(lits));
+	return(CNIL);
+      }
+      cctx = arc_mkcctx(c, arc_strlen(c, code), arc_list_length(c, lits));
+      PUSH(fill_code(c, cctx, code, lits));
       break;
     }
     default:
