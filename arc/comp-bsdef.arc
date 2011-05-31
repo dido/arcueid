@@ -374,7 +374,7 @@
 		(++ memoidx)))
 	(++ count)))
     (writebc port 'gbstr)
-    (map [writeb _ port]
+    (let bytecode
 	 ;; Now, generate a list with the bytecode, as bytes
 	 ((afn (code paramf nparam clist)
 	    (if (no code)
@@ -385,7 +385,10 @@
 		(let na (instnargs (car code))
 		  (self (cdr code) (> na 0) na
 			(+ clist (list (bytecode (car code))))))))
-	  (car (rep code)) nil 0 '()))
+	  (car (rep code)) nil 0 '())
+      (prn "len " (len bytecode))
+      (writelist port (euint (len bytecode)))
+      (map [writeb _ port] bytecode))
     ;; And then generate an array of literals
     ((afn (lits count)
        (if (no lits) (writebc port 'gnil)
