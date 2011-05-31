@@ -233,12 +233,12 @@ static value fill_code(arc *c, value cctx, value bytecode, value lits)
       value acc = INT2FIX(0);
 
       for (k=0; k<7; k++) {
-	acc = __arc_amul_2exp(c, acc, INT2FIX(VINDEX(bytecode, i++)), pos);
+	acc |= (VINDEX(bytecode, i++) & 0xff) << pos;
 	pos += 8;
       }
-      acc = __arc_amul_2exp(c, acc, INT2FIX(VINDEX(bytecode, i++) & 0x7f),
-			    pos);
-      args[j] = __arc_mul2(c, acc, INT2FIX(sign));
+      acc |= VINDEX(bytecode, i++) & 0x7f << pos;
+      acc *= sign;
+      args[j] = acc;
     }
     switch (nargs) {
     case 0:
