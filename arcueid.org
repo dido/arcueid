@@ -139,7 +139,7 @@
    - sread: The arc reader, which is in Arc for Arcueid
    - disp: The arc pretty printer, which is in Arc for Arcueid
    - write: Also the arc pretty printer
-** TODO write a base reader for CIEL files (src/ciel.c) [12/15]
+** TODO write a base reader for CIEL files (src/ciel.c) [13/15]
    Our CIEL bytecode interpreter must at the very least support the
    instructions given in comp-bsdef.arc and be able to decode CIEL
    files generated therein.  This should produce code objects suitable
@@ -159,7 +159,7 @@
    - [X] cannotate - this is for the moment limited to creating T_CODE
 	 objects from a cons consisting of the binary bytecode string
 	 and literals
-   - [ ] xdup
+   - [X] xdup
    - [ ] xmst
    - [ ] xmld
 ** TODO rewrite reader in Arc
