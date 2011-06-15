@@ -381,6 +381,11 @@ value arc_ciel_unmarshal(arc *c, value fd)
       PUSH(fill_code(c, cctx, code, lits));
       break;
     }
+    case XDUP: {
+      value val = VINDEX(stack, stackptr-1);
+      PUSH(val);
+      break;
+    }
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
     }
