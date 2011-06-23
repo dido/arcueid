@@ -386,6 +386,18 @@ value arc_ciel_unmarshal(arc *c, value fd)
       PUSH(val);
       break;
     }
+    case XMST: {
+      value index = getint(c, 1, fd);
+
+      VINDEX(memo, FIX2INT(index)) = POP();
+      break;
+    }
+    case XMLD: {
+      value index = getint(c, 1, fd);
+
+      PUSH(VINDEX(memo, FIX2INT(index)));
+      break;
+    }
     default:
       c->signal_error(c, "Invalid CIEL opcode: %d", bc);
     }
