@@ -5,7 +5,7 @@
    no choice but to write a few portions in C.  I don't yet have the
    chops or the time to make one like that now, but that would
    certainly be ideal, and then we'd have an Arc just like Scheme48.
-** TODO base virtual machine [4/6]
+** TODO base virtual machine [4/7]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
    should probably write our own interpreter core directly.
@@ -63,18 +63,26 @@
     - [ ] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
-** DONE memory allocator
-    A very simple free-list based memory allocator.  There might be
-    better algorithms out there but let's get a simple one out
-    the door first and then worry about making it more efficient
-    later.
-** DONE garbage collector
-    We use the Huelsbergen-Winterbottom VCGC algorithm.  We use it
-    single-threaded exactly the way Inferno uses it, with
-    interpretation interleaved with garbage collection.  Later on when
-    we have real threads in the language we'll make it into a real
-    threaded implementation with a real OS-level thread to do the
-    marking and sweeping.
+    - [-] Type invocations [1/4]
+	 We need to modify the arc_apply function so that it becomes
+	 possible to apply objects of these various types
+      - [X] procedure
+      - [ ] list
+      - [ ] table
+      - [ ] string
+** DONE memory management [2/2]
+   - [X] memory allocator
+	 A very simple free-list based memory allocator.  There might be
+	 better algorithms out there but let's get a simple one out
+	 the door first and then worry about making it more efficient
+	 later.
+   - [X] garbage collector
+	 We use the Huelsbergen-Winterbottom VCGC algorithm.  We use
+	 it single-threaded exactly the way Inferno uses it, with
+	 interpretation interleaved with garbage collection.  Later on
+	 when we have real threads in the language we'll make it into
+	 a real threaded implementation with a real OS-level thread to
+	 do the marking and sweeping.
 ** DONE compiler in Arc
     Debugging and feature-completeness are all on the agenda of course.
 ** TODO basic data types [11/14]
@@ -97,48 +105,191 @@
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** DONE Basic I/O primitives (src/io.c) [5/5]
-    - [X] Input [4/4]
+** TODO Runtime Primitives [2/17]
+   - [ ] Initialization for binding runtime primitives to global symbols
+   - [ ] Type handling [0/2]
+     - [ ] coerce
+     - [ ] type
+   - [ ] Predicates [0/6]
+     - [ ] Less-than (<)
+     - [ ] Greater-than (>)
+     - [ ] bound
+     - [ ] exact
+     - [ ] is
+     - [ ] iso
+   - [X] List operations [5/5]
+     - [X] car (implemented as a virtual machine instruction)
+     - [X] cdr (implemented as a virtual machine instruction)
+     - [X] cons (implemented as a virtual machine instruction)
+     - [X] scar (implemented as a virtual machine instruction)
+     - [X] scdr (implemented as a virtual machine instruction)
+   - [-] Math operations [4/6]
+     - [X] * Multiplication (virtual machine instruction)
+     - [X] + Addition (virtual machine instruction)
+     - [X] - Subtraction (virtual machine instruction)
+     - [X] / Division (virtual machine instruction)
+     - [ ] Arc3-current functions [0/5]
+       - [ ] expt
+       - [ ] mod
+       - [ ] rand
+       - [ ] sqrt
+       - [ ] trunc
+     - [ ] C99 math.h functions (Arcueid only) [0/37]
+       - [ ] acos
+       - [ ] acosh
+       - [ ] asin
+       - [ ] asinh
+       - [ ] atan
+       - [ ] atan2
+       - [ ] atanh
+       - [ ] cbrt
+       - [ ] ceil
+       - [ ] cos
+       - [ ] cosh
+       - [ ] erf
+       - [ ] erfc
+       - [ ] exp
+       - [ ] expm1
+       - [ ] abs (fabs)
+       - [ ] fmod
+       - [ ] frexp
+       - [ ] hypot
+       - [ ] ldexp
+       - [ ] lgamma
+       - [ ] log
+       - [ ] log10
+       - [ ] log2
+       - [ ] logb
+       - [ ] modf
+       - [ ] nan
+       - [ ] nearbyint
+       - [ ] pow (alias for expt)
+       - [ ] modf
+       - [ ] sin
+       - [ ] sinh
+       - [ ] sqrt (also in arc3)
+       - [ ] tan
+       - [ ] tanh
+       - [ ] tgamma
+       - [ ] trunc (also in arc3)
+   - [ ] Table operations [0/2]
+     - [ ] maptable
+     - [ ] table
+   - [ ] Evaluation [0/4]
+     - [ ] eval
+     - [ ] apply
+     - [ ] ssexpand
+     - [ ] ssyntax
+   - [-] Macros [2/4]
+     - [X] macex (implemented in Arc)
+     - [X] macex1 (implemented in Arc)
+     - [ ] sig
+     - [ ] uniq
+   - [X] Basic I/O primitives (src/io.c) [3/3]
+         These are the base I/O functions provided by the Arcueid C
+         runtime.
+     - [X] Input [4/4]
        - [X] readb
        - [X] readc
        - [X] peekc
 	     Implemented in terms of ungetc
        - [X] ungetc - this is not part of standard Arc
-	     Note that there is no ungetb function.  This is proving a
-	     little tricky to implement.  Maybe what we should do is
-	     simplify the semantics of ungetc so that it requires a
-	     character to be unget'd, and the next call to readc OR
-	     readb (yes, readb with a 'b'!) will return this
-	     CHARACTER.  This saves us the trouble of decoding Unicode
-	     all over again, and reinforces the maxim of never mixing
-	     the b functions with the c functions.
-    - [X] Output [2/2]
+	   Note that there is no ungetb function.  This is proving a
+	   little tricky to implement.  Maybe what we should do is
+	   simplify the semantics of ungetc so that it requires a
+	   character to be unget'd, and the next call to readc OR
+	   readb (yes, readb with a 'b'!) will return this
+	   CHARACTER.  This saves us the trouble of decoding Unicode
+	   all over again, and reinforces the maxim of never mixing
+	       the b functions with the c functions.
+     - [X] Output [2/2]
        - [X] writeb
        - [X] writec
-    - [X] File I/O [3/3]
+     - [X] File I/O [5/5]
        - [X] infile
        - [X] outfile
        - [X] close
-    - [X] String port I/O [3/3]
-	  Note that doing readb/writeb or readc/writec on a string
-	  port have the same effect.  Strings are made up of Unicode
-	  characters so it would be quite messy to implement a
-	  separate 'byte index' into what is made up of characters.
-       - [X] instring
-       - [X] outstring
-       - [X] inside
-    - [X] Seeking / telling [2/2]
-	 Note that these essential functions are not available in
-	 PG-Arc for some reason but will probably be necessary to
-	 implement CIEL.
-      - [X] seek
-      - [X] tell
-   These are the base I/O functions provided by the Arcueid C
-   runtime.  PG-Arc provides a few more functions in Scheme that we
-   write in Arc instead:
-   - sread: The arc reader, which is in Arc for Arcueid
-   - disp: The arc pretty printer, which is in Arc for Arcueid
-   - write: Also the arc pretty printer
+       - [X] String port I/O [3/3]
+	     Note that doing readb/writeb or readc/writec on a string
+	     port have the same effect.  Strings are made up of Unicode
+	     characters so it would be quite messy to implement a
+	     separate 'byte index' into what is made up of characters.
+	 - [X] instring
+	 - [X] outstring
+	 - [X] inside
+       - [X] Seeking / telling [2/2]
+             Note that these essential functions are not available in
+             PG-Arc for some reason but will probably be necessary to
+             implement CIEL.
+         - [X] seek
+         - [X] tell
+   - [ ] Additional I/O functions (src/io.c) [0/3]
+         These other I/O functions are defined in standard Arc but are not
+         necessary for CIEL or the reader, so we do them later.
+     - [ ] File I/O [0/1]
+       - [ ] pipe-from
+     - [ ] stdin, stdout, stderr [0/5]
+       - [ ] stdin
+       - [ ] stdout
+       - [ ] stderr
+       - [ ] call-w/stdin
+       - [ ] call-w/stdout
+     - [ ] Threads [0/3]
+       - [ ] Creating and managing threads [0/3]
+         - [ ] new-thread
+         - [ ] break-thread
+         - [ ] kill-thread
+       - [ ] Synchronization (basic) [0/1]
+	 - [ ] atomic-invoke
+       - [ ] Channels (cf. Limbo and CSP) [0/4]
+	 - [ ] chan
+         - [ ] <-
+         - [ ] ->
+         - [ ] alt
+   - [ ] Networking [0/10]
+     - [ ] open-socket
+     - [ ] open-socket-dgram (Arcueid only)
+     - [ ] client-ip
+     - [ ] socket-accept
+     - [ ] socket-bind (Arcueid only)
+     - [ ] socket-listen (Arcueid only)
+     - [ ] socket-connect (Arcueid only)
+     - [ ] socket-sendto (Arcueid only)
+     - [ ] socket-recvfrom (Arcueid only)
+     - [ ] select (Arcueid only)
+	   This should use epoll(7) on Linux or similar functions
+	   on systems that support them.  Only fall back to standard
+	   POSIX.1-2001 select(2) only if no alternatives are
+	   available.
+   - [ ] File system operations [0/4]
+     - [ ] dir
+     - [ ] dir-exists
+     - [ ] file-exists
+     - [ ] rmfile
+   - [ ] Threading [0/6]
+     - [ ] atomic-invoke
+     - [ ] break-thread
+     - [ ] dead
+     - [ ] kill-thread
+     - [ ] new-thread (spawn)
+     - [ ] sleep
+   - [ ] Error handling and continuations [0/5]
+     - [ ] details
+     - [ ] err
+     - [ ] on-err
+     - [ ] ccc
+     - [ ] protect
+   - [ ] Time [0/4]
+     - [ ] current-gc-milliseconds
+     - [ ] current-process-milliseconds
+     - [ ] msec
+     - [ ] seconds
+   - [ ] Miscellaneous OS operations
+     - [ ] system
+     - [ ] quit
+   - [ ] Miscellaneous [0/2]
+     - [ ] sref
+     - [ ] len
 ** TODO write a base reader for CIEL files (src/ciel.c) [1/2]
    Our CIEL bytecode interpreter must at the very least support the
    instructions given in comp-bsdef.arc and be able to decode CIEL
@@ -167,17 +318,6 @@
 ** TODO rewrite reader in Arc
 
 ** TODO write pretty printer in Arc
-** TODO Additional I/O functions (src/io.c) [0/2]
-   These other I/O functions are defined in standard Arc but are not
-   necessary for CIEL or the reader, so we do them later.
-    - [ ] File I/O [0/1]
-       - [ ] pipe-from
-    - [ ] stdin, stdout, stderr [0/5]
-       - [ ] stdin
-       - [ ] stdout
-       - [ ] stderr
-       - [ ] call-w/stdin
-       - [ ] call-w/stdout
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
    function which can be used to output strings according to a format
