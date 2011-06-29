@@ -1199,10 +1199,10 @@ value arc_numcmp(arc *c, value v1, value v2)
     break;
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
-    return(mpz_sgn(REP(diff)._bignum));
+    return(INT2FIX(mpz_sgn(REP(diff)._bignum)));
     break;
   case T_RATIONAL:
-    return(mpq_sgn(REP(diff)._rational));
+    return(INT2FIX(mpq_sgn(REP(diff)._rational)));
     break;
 #endif
   default:
