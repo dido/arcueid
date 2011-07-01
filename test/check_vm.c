@@ -21,6 +21,7 @@
 #include <check.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "../src/arcueid.h"
 #include "../src/alloc.h"
 #include "../config.h"
@@ -822,6 +823,7 @@ END_TEST
 
 static value test_cfunc2(arc *c, int argc, value *argv)
 {
+  fail_unless(argc == 2);
   return(INT2FIX(FIX2INT(argv[0]) + FIX2INT(argv[1])));
 }
 
@@ -850,6 +852,7 @@ END_TEST
 
 static value test_cfunc3(arc *c, value argv)
 {
+  fail_unless(VECLEN(argv) == 2);
   return(INT2FIX(FIX2INT(VINDEX(argv, 0)) + FIX2INT(VINDEX(argv, 1))));
 }
 
@@ -879,9 +882,7 @@ END_TEST
 START_TEST(test_vm_apply_list)
 {
   int base, contofs;
-  /* Attempt to apply the argument 3 to the above function. Should result in 5 */
-  ITEST_HEADER(1);
-  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, 1, test_cfunc);
+  ITEST_HEADER(0);
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 20); /* computed offset by compiler */
   contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
@@ -900,8 +901,129 @@ START_TEST(test_vm_apply_list)
   arc_gcode1(&c, cctx, iapply, 1);
   fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
   arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
+  ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
+static void signal_error_multiargs(struct arc *c, const char *fmt, ...)
+{
+  va_list ap;
+
+  fail_unless(strcmp(fmt, "list application expects 1 argument, given %d") == 0);
+  va_start(ap, fmt);
+  fail_unless(va_arg(ap, value) == INT2FIX(2));
+  va_end(ap);
+}
+
+START_TEST(test_vm_apply_list_err1)
+{
+  int base, contofs;
+
+  c.signal_error = signal_error_multiargs;
+  ITEST_HEADER(0);
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 23); /* computed offset by compiler */
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, 7);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 5);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode(&c, cctx, inil);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 7);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 5);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 3);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode1(&c, cctx, iapply, 2);
+  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == CNIL);
+}
+END_TEST
+
+static void signal_error_negative(struct arc *c, const char *fmt, ...)
+{
+  va_list ap;
+
+  fail_unless(strcmp(fmt, "list application expects non-negative exact integer argument, given object of type %d") == 0);
+  va_start(ap, fmt);
+  fail_unless(va_arg(ap, value) == INT2FIX(2));
+  va_end(ap);
+}
+
+START_TEST(test_vm_apply_list_err2)
+{
+
+  int base, contofs;
+
+  c.signal_error = signal_error_negative;
+  ITEST_HEADER(0);
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 20); /* computed offset by compiler */
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, INT2FIX(-1));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode(&c, cctx, inil);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 7);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 5);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 3);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode1(&c, cctx, iapply, 1);
+  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == CNIL);
+}
+END_TEST
+
+static void signal_error_oob(struct arc *c, const char *fmt, ...)
+{
+  va_list ap;
+
+  fail_unless(strcmp(fmt, "index %d too large for list") == 0);
+  va_start(ap, fmt);
+  fail_unless(va_arg(ap, value) == INT2FIX(100));
+  va_end(ap);
+}
+
+START_TEST(test_vm_apply_list_err3)
+{
+
+  int base, contofs;
+
+  c.signal_error = signal_error_oob;
+  ITEST_HEADER(0);
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 20); /* computed offset by compiler */
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, INT2FIX(100));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode(&c, cctx, inil);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 7);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 5);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, 3);
+  arc_gcode(&c, cctx, icons);
+  arc_gcode1(&c, cctx, iapply, 1);
+  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(0);
+  fail_unless(TVALR(thr) == CNIL);
 }
 END_TEST
 
@@ -961,6 +1083,9 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_ffi_cc2);
   tcase_add_test(tc_vm, test_vm_ffi_cc3);
   tcase_add_test(tc_vm, test_vm_apply_list);
+  tcase_add_test(tc_vm, test_vm_apply_list_err1);
+  tcase_add_test(tc_vm, test_vm_apply_list_err2);
+  tcase_add_test(tc_vm, test_vm_apply_list_err3);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
