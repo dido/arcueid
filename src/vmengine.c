@@ -373,6 +373,38 @@ void arc_apply(arc *c, value thr, value fun)
     }
     arc_return(c, thr);
     break;
+  case T_CONS:
+    if (TARGC(thr) != 1) {
+      c->signal_error(c, "list application expects 1 argument, given %d",
+		      INT2FIX(TARGC(thr)));
+      TVALR(thr) = CNIL;
+    } else {
+      value count = CPOP(thr), ocount, cval;
+
+      ocount = count;
+      if ((FIXNUM_P(count) || TYPE(count) == T_BIGNUM) &&
+	  (cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(-1)) {
+	value list=TVALR(thr), res;
+	/* We now have a non-negative exact integer for the count */
+	do {
+	  if (NIL_P(list)) {
+	    c->signal_error(c, "index %d too large for list", ocount);
+	    res = CNIL;
+	    break;
+	  }
+	  res = car(list);
+	  list = cdr(list);
+	  count = __arc_sub2(c, count, INT2FIX(1));
+	} while ((cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(0)
+		 && cval != INT2FIX(-1));
+	TVALR(thr) = res;
+      } else {
+	c->signal_error(c, "list application expects non-negative exact integer argument, given object of type %d", INT2FIX(TYPE(count)));
+	TVALR(thr) = CNIL;
+      }
+    }
+    arc_return(c, thr);
+    break;
   default:
     c->signal_error(c, "invalid function application");
   }
