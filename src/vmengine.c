@@ -387,7 +387,7 @@ void arc_apply(arc *c, value thr, value fun)
 	value list=TVALR(thr), res;
 	/* We now have a non-negative exact integer for the count */
 	do {
-	  if (NIL_P(list)) {
+	  if (!CONS_P(list)) {
 	    c->signal_error(c, "index %d too large for list", ocount);
 	    res = CNIL;
 	    break;
