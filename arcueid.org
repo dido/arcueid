@@ -67,12 +67,12 @@ See the end for copying conditions.
     - [ ] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
-    - [-] Type invocations [2/5]
+    - [-] Type invocations [3/5]
 	 We need to modify the arc_apply function so that it becomes
 	 possible to apply objects of these various types
       - [X] procedure
       - [X] list
-      - [ ] vector
+      - [X] vector
       - [ ] table
       - [ ] string
 ** DONE memory management [2/2]
