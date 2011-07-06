@@ -190,6 +190,7 @@ static void *fl_alloc(size_t size)
       ALLOC_BLOCK(cur);
       return(B2D(cur));
     }
+    cur = FBNEXT(prev);
   }
   return(NULL);
 }
