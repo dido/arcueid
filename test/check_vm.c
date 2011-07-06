@@ -1162,6 +1162,125 @@ START_TEST(test_vm_apply_vec_err3)
 }
 END_TEST
 
+START_TEST(test_vm_apply_tbl)
+{
+  int base, contofs;
+  value tbl;
+
+  ITEST_HEADER(1);
+  tbl = arc_mkhash(&c, 6);
+  arc_hash_insert(&c, tbl, INT2FIX(0), INT2FIX(1));
+  arc_hash_insert(&c, tbl, INT2FIX(1), INT2FIX(2));
+  arc_hash_insert(&c, tbl, INT2FIX(2), INT2FIX(3));
+  VINDEX(CCTX_LITS(cctx), 0) = tbl;
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 0);
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildl, 0);
+  arc_gcode1(&c, cctx, iapply, 1);
+  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(1);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
+START_TEST(test_vm_apply_tbl2)
+{
+  int base, contofs;
+  value tbl;
+
+  ITEST_HEADER(1);
+  tbl = arc_mkhash(&c, 6);
+  arc_hash_insert(&c, tbl, INT2FIX(0), INT2FIX(1));
+  arc_hash_insert(&c, tbl, INT2FIX(1), INT2FIX(2));
+  arc_hash_insert(&c, tbl, INT2FIX(2), INT2FIX(3));
+  VINDEX(CCTX_LITS(cctx), 0) = tbl;
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 0);
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, INT2FIX(8));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(4));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildl, 0);
+  arc_gcode1(&c, cctx, iapply, 2);
+  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(1);
+  fail_unless(TVALR(thr) == INT2FIX(8));
+}
+END_TEST
+
+START_TEST(test_vm_apply_tbl3)
+{
+  int base, contofs;
+  value tbl;
+
+  ITEST_HEADER(1);
+  tbl = arc_mkhash(&c, 6);
+  arc_hash_insert(&c, tbl, INT2FIX(0), INT2FIX(1));
+  arc_hash_insert(&c, tbl, INT2FIX(1), INT2FIX(2));
+  arc_hash_insert(&c, tbl, INT2FIX(2), INT2FIX(3));
+  VINDEX(CCTX_LITS(cctx), 0) = tbl;
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 0);
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, INT2FIX(8));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildl, 0);
+  arc_gcode1(&c, cctx, iapply, 2);
+  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(1);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
+static void signal_error_multiargs_tbl(struct arc *c, const char *fmt, ...)
+{
+  va_list ap;
+
+  fail_unless(strcmp(fmt, "table application expects 1 or 2 arguments, given %d") == 0);
+  va_start(ap, fmt);
+  fail_unless(va_arg(ap, value) == INT2FIX(3));
+  va_end(ap);
+}
+
+START_TEST(test_vm_apply_tbl_err)
+{
+  int base, contofs;
+  value tbl;
+
+  c.signal_error = signal_error_multiargs_tbl;
+  ITEST_HEADER(1);
+  tbl = arc_mkhash(&c, 6);
+  arc_hash_insert(&c, tbl, INT2FIX(0), INT2FIX(1));
+  arc_hash_insert(&c, tbl, INT2FIX(1), INT2FIX(2));
+  arc_hash_insert(&c, tbl, INT2FIX(2), INT2FIX(3));
+  VINDEX(CCTX_LITS(cctx), 0) = tbl;
+  base = FIX2INT(CCTX_VCPTR(cctx));
+  arc_gcode1(&c, cctx, icont, 0);
+  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
+  arc_gcode1(&c, cctx, ildi, INT2FIX(8));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildl, 0);
+  arc_gcode1(&c, cctx, iapply, 3);
+  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
+  arc_gcode(&c, cctx, ihlt);
+  ITEST_FOOTER(1);
+  fail_unless(TVALR(thr) == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1225,6 +1344,10 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_apply_vec_err1);
   tcase_add_test(tc_vm, test_vm_apply_vec_err2);
   tcase_add_test(tc_vm, test_vm_apply_vec_err3);
+  tcase_add_test(tc_vm, test_vm_apply_tbl);
+  tcase_add_test(tc_vm, test_vm_apply_tbl2);
+  tcase_add_test(tc_vm, test_vm_apply_tbl3);
+  tcase_add_test(tc_vm, test_vm_apply_tbl_err);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
