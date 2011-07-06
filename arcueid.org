@@ -67,13 +67,13 @@ See the end for copying conditions.
     - [ ] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
-    - [-] Type invocations [3/5]
+    - [-] Type invocations [4/5]
 	 We need to modify the arc_apply function so that it becomes
 	 possible to apply objects of these various types
       - [X] procedure
       - [X] list
       - [X] vector
-      - [ ] table
+      - [X] table
       - [ ] string
 ** DONE memory management [2/2]
    - [X] memory allocator
@@ -368,6 +368,11 @@ See the end for copying conditions.
    This is just an ugly bit of work and it's probably slow, but I
    can't be bothered to fix it
 ** TODO negative immediate values don't compile correctly [BLOCKER]
+
+----------------------------------------------------------------------
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
 
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
