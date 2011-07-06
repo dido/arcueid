@@ -431,6 +431,22 @@ void arc_apply(arc *c, value thr, value fun)
     }
     arc_return(c, thr);
     break;
+  case T_TABLE:
+    if (TARGC(thr) != 1 && TARGC(thr) != 2) {
+      c->signal_error(c, "table application expects 1 or 2 arguments, given %d",
+		      INT2FIX(TARGC(thr)));
+      TVALR(thr) = CNIL;
+    } else {
+      value tbl, key, dflt, bind;
+
+      tbl = TVALR(thr);
+      key = CPOP(thr);
+      dflt = (TARGC(thr) == 1) ? CNIL : CPOP(thr);
+      bind = arc_hash_lookup(c, tbl, key);
+      TVALR(thr) = (bind == CUNBOUND) ? dflt : bind;
+    }
+    arc_return(c, thr);
+    break;
   default:
     c->signal_error(c, "invalid function application");
   }
