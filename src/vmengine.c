@@ -425,6 +425,7 @@ void arc_apply(arc *c, value thr, value fun)
 	}
 	TVALR(thr) = res;
       } else {
+	/* XXX - Permit negative indices?  Could be useful. */
 	c->signal_error(c, "vector application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
 	TVALR(thr) = CNIL;
       }
@@ -444,6 +445,35 @@ void arc_apply(arc *c, value thr, value fun)
       dflt = (TARGC(thr) == 1) ? CNIL : CPOP(thr);
       bind = arc_hash_lookup(c, tbl, key);
       TVALR(thr) = (bind == CUNBOUND) ? dflt : bind;
+    }
+    arc_return(c, thr);
+    break;
+  case T_STRING:
+    if (TARGC(thr) != 1) {
+      c->signal_error(c, "string application expects 1 argument, given %d",
+		      INT2FIX(TARGC(thr)));
+      TVALR(thr) = CNIL;
+    } else {
+      value count = CPOP(thr), ocount, cval;
+
+      ocount = count;
+      if (FIXNUM_P(count) &&
+	  (cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(-1)) {
+	value str=TVALR(thr), res;
+	/* We now have a non-negative exact integer for the count/index.
+	   XXX - string length is always a fixnum? */
+	if (FIX2INT(count) >= arc_strlen(c, str)) {
+	  c->signal_error(c, "index %d too large for string", ocount);
+	  res = CNIL;
+	} else {
+	  res = arc_mkchar(c, arc_strindex(c, str, FIX2INT(count)));
+	}
+	TVALR(thr) = res;
+      } else {
+	/* XXX - permit negative indices? Not allowed by reference Arc. */
+	c->signal_error(c, "string application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
+	TVALR(thr) = CNIL;
+      }
     }
     arc_return(c, thr);
     break;
