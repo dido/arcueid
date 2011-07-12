@@ -13,7 +13,7 @@ notice and this notice are preserved.
    no choice but to write a few portions in C.  I don't yet have the
    chops or the time to make one like that now, but that would
    certainly be ideal, and then we'd have an Arc just like Scheme48.
-** TODO base virtual machine [5/7]
+** TODO base virtual machine [6/7]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
    should probably write our own interpreter core directly.
@@ -71,14 +71,14 @@ notice and this notice are preserved.
     - [ ] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
-    - [-] Type invocations [4/5]
+    - [X] Type invocations [5/5]
 	 We need to modify the arc_apply function so that it becomes
 	 possible to apply objects of these various types
       - [X] procedure
       - [X] list
       - [X] vector
       - [X] table
-      - [ ] string
+      - [X] string
 ** DONE memory management [2/2]
    - [X] memory allocator
 	 A very simple free-list based memory allocator.  There might be
