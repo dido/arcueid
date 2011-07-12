@@ -1902,6 +1902,15 @@ START_TEST(test_string2num)
 }
 END_TEST
 
+START_TEST(test_intfix_conv)
+{
+  int i;
+
+  for (i=1; i<100; i++)
+    fail_unless(FIX2INT(INT2FIX(-i)) == -i);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2003,6 +2012,7 @@ int main(void)
   tcase_add_test(tc_conv, test_coerce_rational);
   tcase_add_test(tc_conv, test_coerce_complex);
   tcase_add_test(tc_conv, test_string2num);
+  tcase_add_test(tc_conv, test_intfix_conv);
 
   arc_set_memmgr(&c);
   c.signal_error = signal_error_test;
