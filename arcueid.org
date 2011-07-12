@@ -1,6 +1,10 @@
 ARCUEID ROADMAP
 Copyright (C) 2010,2011 Rafael R. Sevilla
-See the end for copying conditions.
+----------------------------------------------------------------------
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+----------------------------------------------------------------------
 
 * The Arc Runtime
    We want to be able to write as little of the runtime in C as
@@ -354,27 +358,3 @@ See the end for copying conditions.
    We do want to someday make a statically-typed, non-garbage
    collected dialect of Arc similar to Richard Kelsey's PreScheme, so
    we can write the entire runtime in Arc.
-
-* Bugs
-** TODO seek/tell may have 32/64 bit compatibility issues [MEDIUM]
-   We might not have large file support on 32-bit builds.  This needs
-   to be fixed, and we may need bignum support for arc_seek/arc_tell.
-** DONE compiler seems to find patch offsets erroneously. [3/3] [BLOCKER]
-   - [X] check uses of code-patch in generating continuation offsets for apply
-   - [X] check uses of code-patch in compiling if expressions
-   - [X] check uses of code-patch in compiling optional arguments
-** DONE destructuring bind arguments aren't compiled correctly [BLOCKER]
-** TODO try to remove the consr instruction somehow [MINOR]
-   This is just an ugly bit of work and it's probably slow, but I
-   can't be bothered to fix it
-** TODO negative immediate values don't compile correctly [BLOCKER]
-
-----------------------------------------------------------------------
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.
-
-----------------------------------------------------------------------
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.
