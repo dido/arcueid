@@ -1,6 +1,6 @@
 dnl check for gcc's "labels as values" feature
 AC_DEFUN([AC_C_LABELS_AS_VALUES],
-[AC_CACHE_CHECK([if C compiler has labels as values support], ac_cv_labels_as_values,
+[AC_CACHE_CHECK([for C compiler labels as values support], ac_cv_labels_as_values,
 [AC_TRY_COMPILE([
 int foo(int);
 int foo(i)
