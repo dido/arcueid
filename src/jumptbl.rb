@@ -18,7 +18,7 @@ end
 instrlist = []
 0.upto(255) do |index|
   instrlist <<
-    ((instructions.has_key?(index)) ? "&&lbl_#{instructions[index]}" :
-     "&&lbl_invalid")
+    ((instructions.has_key?(index)) ? "&&lbl_#{instructions[index]} - &&lbl_inop" :
+     "&&lbl_invalid - &&lbl_inop")
 end
 puts instrlist.join(", ")
