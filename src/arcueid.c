@@ -250,7 +250,7 @@ value arc_init_builtins(arc *c)
   int i;
   value cfunc, sym;
 
-  for (i=0; fntable[i].fname == NULL; i++) {
+  for (i=0; fntable[i].fname != NULL; i++) {
     sym = arc_intern_cstr(c, fntable[i].fname);
     cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr);
     arc_hash_insert(c, c->genv, sym, cfunc);
