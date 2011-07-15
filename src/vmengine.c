@@ -19,11 +19,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../config.h"
 #include "arcueid.h"
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
-#include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -42,8 +42,16 @@ void *alloca (size_t);
 #endif
 
 /* instruction decoding macros */
-#ifdef THREADED_CODE
+#ifdef HAVE_THREADED_INTERPRETER
+/* threaded interpreter */
+#define INST(name) lbl_##name
+#define JTBASE ((void *)&&lbl_inop)
+#define NEXT {							\
+    if (--quanta <= 0 || TSTATE(thr) != Tready)			\
+      goto endquantum;						\
+    goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #else
+/* switch interpreter */
 #define INST(name) case name
 #define NEXT break
 #endif
@@ -53,11 +61,18 @@ void *alloca (size_t);
 
 void arc_vmengine(arc *c, value thr, int quanta)
 {
+#ifdef HAVE_THREADED_INTERPRETER
+  static const int jumptbl[] = {
+#include "jumptbl.h"
+  };
+#else
   value curr_instr;
+#endif
 
   if (TSTATE(thr) != Tready)
     return;
-#ifdef THREADED_CODE
+#ifdef HAVE_THREADED_INTERPRETER
+  goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
   for (;;) {
     if (--quanta <= 0 || TSTATE(thr) != Tready)
@@ -270,15 +285,17 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(iconsr):
       TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
       NEXT;
-#ifndef THREADED_CODE
+#ifndef HAVE_THREADED_INTERPRETER
     default:
-      c->signal_error(c, "invalid opcode %02x", curr_instr);
+#else
+    INST(invalid):
 #endif
-#ifdef THREADED_CODE
+      c->signal_error(c, "invalid opcode %02x", *TIP(thr));
+#ifdef HAVE_THREADED_INTERPRETER
 #else
     }
-#endif
   }
+#endif
  endquantum:
   return;
 }
