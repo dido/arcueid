@@ -114,18 +114,18 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [2/17]
-   - [ ] Initialization for binding runtime primitives to global symbols
+** TODO Runtime Built-In Functions [3/17]
+   - [X] Initialization for binding runtime primitives to global symbols
    - [ ] Type handling [0/2]
      - [ ] coerce
      - [ ] type
-   - [ ] Predicates [0/6]
+   - [-] Predicates [2/6]
      - [ ] Less-than (<)
      - [ ] Greater-than (>)
      - [ ] bound
      - [ ] exact
-     - [ ] is
-     - [ ] iso
+     - [X] is
+     - [X] iso
    - [X] List operations [5/5]
      - [X] car (implemented as a virtual machine instruction)
      - [X] cdr (implemented as a virtual machine instruction)
