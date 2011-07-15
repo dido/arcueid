@@ -94,6 +94,17 @@ if test "x$enable_bignum" != xno; then
   fi
 fi
 
+AC_ARG_ENABLE([threaded-interpreter], [AS_HELP_STRING([--disable-threaded-interpreter], [disable threaded interpreter (threaded interpreter requires GCC extensions)])], [], [enable_threaded_interpreter=yes])
+if test "x$enable_threaded_interpreter" != xno; then
+   AC_C_LABELS_AS_VALUES
+   if test "$ac_cv_labels_as_values" = yes; then
+     AC_DEFINE(HAVE_THREADED_INTERPRETER, [1],
+       [Define to 1 if threaded interpreter is to be used.])
+   else
+     AC_MSG_FAILURE([compiler does not support threaded interpreter (--disable-threaded-interpreter to disable)])
+   fi
+fi
+
 AC_ARG_ENABLE([mmap], [AS_HELP_STRING([--disable-mmap], [disable usage of mmap for memory allocation (fallback to malloc)])], [], [enable_mmap=yes])
 if test "x$enable_mmap" != xno; then
    AC_CHECK_HEADERS(sys/mman.h)
