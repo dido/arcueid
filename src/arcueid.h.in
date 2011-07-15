@@ -405,6 +405,7 @@ extern value arc_compile(arc *c, value expr, value env, value fname);
 extern void arc_set_memmgr(arc *c);
 extern void arc_init_reader(arc *c);
 extern void arc_init_compiler(arc *c);
+extern value arc_init_builtins(arc *c);
 
 extern value arc_prettyprint(arc *c, value v);
 extern void arc_print_string(arc *c, value str);
