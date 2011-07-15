@@ -115,13 +115,15 @@ notice and this notice are preserved.
     - [X] Output Ports
     - [ ] Threads
 ** TODO Runtime Built-In Functions [3/17]
+   Consider whether or not to provide instructions for the starred functions,
+   so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [ ] Type handling [0/2]
      - [ ] coerce
      - [ ] type
    - [-] Predicates [2/6]
-     - [ ] Less-than (<)
-     - [ ] Greater-than (>)
+     - [ ] Less-than (<) *
+     - [ ] Greater-than (>) *
      - [ ] bound
      - [ ] exact
      - [X] is
@@ -297,7 +299,7 @@ notice and this notice are preserved.
      - [ ] system
      - [ ] quit
    - [ ] Miscellaneous [0/2]
-     - [ ] sref
+     - [ ] sref *
      - [ ] len
 ** TODO write a base reader for CIEL files (src/ciel.c) [1/2]
    Our CIEL bytecode interpreter must at the very least support the
