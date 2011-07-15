@@ -233,3 +233,27 @@ value arc_cmp(arc *c, value v1, value v2)
   c->signal_error(c, "Invalid types for comparison");
   return(CNIL);
 }
+
+static struct {
+  char *fname;
+  int argc;
+  value (*fnptr)();
+} fntable[] = {
+  { "is", 2, arc_is },
+  { "iso", 2, arc_iso },
+  { NULL, 0, NULL }
+};
+    
+
+value arc_init_builtins(arc *c)
+{
+  int i;
+  value cfunc, sym;
+
+  for (i=0; fntable[i].fname == NULL; i++) {
+    sym = arc_intern_cstr(c, fntable[i].fname);
+    cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr);
+    arc_hash_insert(c, c->genv, sym, cfunc);
+  }
+  return(CNIL);
+}
