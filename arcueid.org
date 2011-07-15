@@ -13,7 +13,7 @@ notice and this notice are preserved.
    no choice but to write a few portions in C.  I don't yet have the
    chops or the time to make one like that now, but that would
    certainly be ideal, and then we'd have an Arc just like Scheme48.
-** TODO base virtual machine [6/7]
+** DONE base virtual machine [7/7]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
    should probably write our own interpreter core directly.
@@ -68,7 +68,7 @@ notice and this notice are preserved.
       - [X] Calling convention 1 (straight args)
       - [X] Calling convention 2 (args as a C array)
       - [X] Calling convention 3 (args as an Arcueid vector)
-    - [ ] Enable GCC's labels as values for doing interpreter threading
+    - [X] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
     - [X] Type invocations [5/5]
