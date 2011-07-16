@@ -312,7 +312,10 @@ static inline int TYPE(value v)
 
 #define CONS_P(x) ((TYPE(x)) == (T_CONS))
 
-extern value arc_genv;		/* global environment */
+/* Global environment */
+extern value arc_bindsym(arc *c, value sym, value binding);
+extern value arc_bindcstr(arc *c, const char *csym, value binding);
+extern value arc_bound(arc *c, value sym);
 
 extern value arc_mkflonum(arc *c, double val);
 extern value arc_mkcomplex(arc *c, double re, double im);
