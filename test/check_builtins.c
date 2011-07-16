@@ -119,6 +119,14 @@ START_TEST(test_builtin_exact)
 }
 END_TEST
 
+START_TEST(test_builtin_spaceship)
+{
+  fail_unless(test_builtin("<=>", 2, INT2FIX(31338), INT2FIX(31337)) == INT2FIX(-1));
+  fail_unless(test_builtin("<=>", 2, INT2FIX(31337), INT2FIX(31338)) == INT2FIX(1));
+  fail_unless(test_builtin("<=>", 2, INT2FIX(31337), INT2FIX(31337)) == INT2FIX(0));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -139,6 +147,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_lte);
   tcase_add_test(tc_bif, test_builtin_bound);
   tcase_add_test(tc_bif, test_builtin_exact);
+  tcase_add_test(tc_bif, test_builtin_spaceship);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
