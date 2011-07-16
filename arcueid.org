@@ -121,12 +121,12 @@ notice and this notice are preserved.
    - [ ] Type handling [0/2]
      - [ ] coerce
      - [ ] type
-   - [-] Predicates [6/8]
+   - [-] Predicates [7/8]
      - [X] Less-than (<) *
      - [X] Greater-than (>) *
      - [X] Less-than or equal (<=) *
      - [X] Greater-than or equal (>=) *
-     - [ ] bound
+     - [X] bound
      - [ ] exact
      - [X] is
      - [X] iso
