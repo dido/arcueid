@@ -105,6 +105,13 @@ START_TEST(test_builtin_lte)
 }
 END_TEST
 
+START_TEST(test_builtin_bound)
+{
+  fail_unless(test_builtin("bound", 1, arc_intern_cstr(&c, "bound")) == CTRUE);
+  fail_unless(test_builtin("bound", 1, arc_intern_cstr(&c, "foo")) == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -123,6 +130,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_lt);
   tcase_add_test(tc_bif, test_builtin_gte);
   tcase_add_test(tc_bif, test_builtin_lte);
+  tcase_add_test(tc_bif, test_builtin_bound);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
