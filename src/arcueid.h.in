@@ -331,6 +331,7 @@ extern value arc_coerce_fixnum(arc *c, value v);
 extern value arc_arith_op(arc *c, int opval, value args);
 extern value arc_string2num(arc *c, value v);
 extern value arc_numcmp(arc *c, value v1, value v2);
+extern value arc_exact(arc *c, value v);
 
 extern value arc_is(arc *c, value v1, value v2);
 extern value arc_iso(arc *c, value v1, value v2);
