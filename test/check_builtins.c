@@ -112,6 +112,13 @@ START_TEST(test_builtin_bound)
 }
 END_TEST
 
+START_TEST(test_builtin_exact)
+{
+  fail_unless(test_builtin("exact", 1, INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin("exact", 1, arc_mkflonum(&c, 3.14159)) == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -131,6 +138,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_gte);
   tcase_add_test(tc_bif, test_builtin_lte);
   tcase_add_test(tc_bif, test_builtin_bound);
+  tcase_add_test(tc_bif, test_builtin_exact);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
