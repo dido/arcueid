@@ -1210,3 +1210,8 @@ value arc_numcmp(arc *c, value v1, value v2)
     return(CNIL);
   }
 }
+
+value arc_exact(arc *c, value v)
+{
+  return((FIXNUM_P(v) || TYPE(v) == T_BIGNUM) ? CTRUE : CNIL);
+}
