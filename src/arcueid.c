@@ -234,11 +234,35 @@ value arc_cmp(arc *c, value v1, value v2)
   return(CNIL);
 }
 
+value arc_gt(arc *c, value v1, value v2)
+{
+  return((FIX2INT(arc_cmp(c, v1, v2)) > 0) ? CTRUE : CNIL);
+}
+
+value arc_lt(arc *c, value v1, value v2)
+{
+  return((FIX2INT(arc_cmp(c, v1, v2)) < 0) ? CTRUE : CNIL);
+}
+
+value arc_gte(arc *c, value v1, value v2)
+{
+  return((FIX2INT(arc_cmp(c, v1, v2)) >= 0) ? CTRUE : CNIL);
+}
+
+value arc_lte(arc *c, value v1, value v2)
+{
+  return((FIX2INT(arc_cmp(c, v1, v2)) <= 0) ? CTRUE : CNIL);
+}
+
 static struct {
   char *fname;
   int argc;
   value (*fnptr)();
 } fntable[] = {
+  { ">", 2, arc_gt },
+  { "<", 2, arc_lt },
+  { ">=", 2, arc_gte },
+  { "<=", 2, arc_lte },
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
   { NULL, 0, NULL }
