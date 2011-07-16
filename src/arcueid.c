@@ -254,6 +254,11 @@ value arc_lte(arc *c, value v1, value v2)
   return((FIX2INT(arc_cmp(c, v1, v2)) <= 0) ? CTRUE : CNIL);
 }
 
+value arc_bound(arc *c, value sym)
+{
+  return((arc_hash_lookup(c, c->genv, sym) == CUNBOUND) ? CNIL: CTRUE);
+}
+
 static struct {
   char *fname;
   int argc;
@@ -263,21 +268,31 @@ static struct {
   { "<", 2, arc_lt },
   { ">=", 2, arc_gte },
   { "<=", 2, arc_lte },
+  { "bound", 1, arc_bound },
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
   { NULL, 0, NULL }
 };
-    
+
+value arc_bindsym(arc *c, value sym, value binding)
+{
+  return(arc_hash_insert(c, c->genv, sym, binding));
+}
+
+value arc_bindcstr(arc *c, const char *csym, value binding)
+{
+  value sym = arc_intern_cstr(c, csym);
+  return(arc_bindsym(c, sym, binding));
+}
 
 value arc_init_builtins(arc *c)
 {
   int i;
-  value cfunc, sym;
+  value cfunc;
 
   for (i=0; fntable[i].fname != NULL; i++) {
-    sym = arc_intern_cstr(c, fntable[i].fname);
     cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr);
-    arc_hash_insert(c, c->genv, sym, cfunc);
+    arc_bindcstr(c, fntable[i].fname, cfunc);
   }
   return(CNIL);
 }
