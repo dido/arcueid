@@ -114,20 +114,21 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [3/17]
+** TODO Runtime Built-In Functions [4/17]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [ ] Type handling [0/2]
      - [ ] coerce
      - [ ] type
-   - [-] Predicates [7/8]
+   - [X] Predicates [9/9]
      - [X] Less-than (<) *
      - [X] Greater-than (>) *
      - [X] Less-than or equal (<=) *
      - [X] Greater-than or equal (>=) *
+     - [X] spaceship operator (<=>) * (Arcueid extension)
      - [X] bound
-     - [ ] exact
+     - [X] exact
      - [X] is
      - [X] iso
    - [X] List operations [5/5]
