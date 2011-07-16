@@ -268,7 +268,9 @@ static struct {
   { "<", 2, arc_lt },
   { ">=", 2, arc_gte },
   { "<=", 2, arc_lte },
+  { "<=>", 2, arc_cmp },
   { "bound", 1, arc_bound },
+  { "exact", 1, arc_exact },
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
   { NULL, 0, NULL }
