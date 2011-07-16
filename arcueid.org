@@ -115,15 +115,17 @@ notice and this notice are preserved.
     - [X] Output Ports
     - [ ] Threads
 ** TODO Runtime Built-In Functions [3/17]
-   Consider whether or not to provide instructions for the starred functions,
-   so as to make their use cheaper.
+   Consider whether or not to provide instructions for the asterisked
+   functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [ ] Type handling [0/2]
      - [ ] coerce
      - [ ] type
-   - [-] Predicates [2/6]
-     - [ ] Less-than (<) *
-     - [ ] Greater-than (>) *
+   - [-] Predicates [6/8]
+     - [X] Less-than (<) *
+     - [X] Greater-than (>) *
+     - [X] Less-than or equal (<=) *
+     - [X] Greater-than or equal (>=) *
      - [ ] bound
      - [ ] exact
      - [X] is
