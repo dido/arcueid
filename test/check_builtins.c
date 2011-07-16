@@ -29,63 +29,79 @@
 
 arc c;
 
-#define ITEST_HEADER(nlits) \
-  value cctx, thr, func; \
-  int i; \
-  cctx = arc_mkcctx(&c, 1, nlits)
-
-#define ITEST_FOOTER(nlits) \
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, nlits); \
-  for (i=0; i<nlits; i++) \
-    CODE_LITERAL(func, i) = VINDEX(CCTX_LITS(cctx), i); \
-  thr = arc_mkthread(&c, func, 2048, 0); \
-  arc_vmengine(&c, thr, 1000)
-
-START_TEST(test_builtin_is)
+static value test_builtin(const char *symname, int argc, ...)
 {
-  value sym;
-  int contofs, base;
+  value sym, cctx, thr, func;;
+  int contofs, base, i;
+  va_list ap;
 
-  ITEST_HEADER(1);
-  sym = arc_intern_cstr(&c, "is");
+  cctx = arc_mkcctx(&c, 1, 1);
+  sym = arc_intern_cstr(&c, symname);
   VINDEX(CCTX_LITS(cctx), 0) = sym;
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 0);
   contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
-  arc_gcode(&c, cctx, ipush);
+  va_start(ap, argc);
+  for (i=0; i<argc; i++) {
+    arc_gcode1(&c, cctx, ildi, va_arg(ap, value));
+    arc_gcode(&c, cctx, ipush);
+  }
+  va_end(ap);
   arc_gcode1(&c, cctx, ildg, 0);
-  arc_gcode1(&c, cctx, iapply, 2);
+  arc_gcode1(&c, cctx, iapply, argc);
   VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
   arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CTRUE);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL,
+		    1);
+  CODE_LITERAL(func, 0) = VINDEX(CCTX_LITS(cctx), 0);
+  thr = arc_mkthread(&c, func, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
+  return(TVALR(thr));
+}
+
+START_TEST(test_builtin_is)
+{
+  fail_unless(test_builtin("is", 2, INT2FIX(31337), INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin("is", 2, INT2FIX(31338), INT2FIX(31337)) == CNIL);
 }
 END_TEST
 
 START_TEST(test_builtin_iso)
 {
-  value sym;
-  int contofs, base;
+  fail_unless(test_builtin("iso", 2, INT2FIX(31337), INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin("iso", 2, INT2FIX(31338), INT2FIX(31337)) == CNIL);
+}
+END_TEST
 
-  ITEST_HEADER(1);
-  sym = arc_intern_cstr(&c, "iso");
-  VINDEX(CCTX_LITS(cctx), 0) = sym;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildg, 0);
-  arc_gcode1(&c, cctx, iapply, 2);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CTRUE);
+START_TEST(test_builtin_gt)
+{
+  fail_unless(test_builtin(">", 2, INT2FIX(31337), INT2FIX(31338)) == CTRUE);
+  fail_unless(test_builtin(">", 2, INT2FIX(31337), INT2FIX(31337)) == CNIL);
+  fail_unless(test_builtin(">", 2, INT2FIX(31338), INT2FIX(31337)) == CNIL);
+}
+END_TEST
+
+START_TEST(test_builtin_lt)
+{
+  fail_unless(test_builtin("<", 2, INT2FIX(31338), INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin("<", 2, INT2FIX(31337), INT2FIX(31338)) == CNIL);
+  fail_unless(test_builtin("<", 2, INT2FIX(31337), INT2FIX(31337)) == CNIL);
+}
+END_TEST
+
+START_TEST(test_builtin_gte)
+{
+  fail_unless(test_builtin(">=", 2, INT2FIX(31337), INT2FIX(31338)) == CTRUE);
+  fail_unless(test_builtin(">=", 2, INT2FIX(31337), INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin(">=", 2, INT2FIX(31338), INT2FIX(31337)) == CNIL);
+}
+END_TEST
+
+START_TEST(test_builtin_lte)
+{
+  fail_unless(test_builtin("<=", 2, INT2FIX(31338), INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin("<=", 2, INT2FIX(31337), INT2FIX(31338)) == CNIL);
+  fail_unless(test_builtin("<=", 2, INT2FIX(31337), INT2FIX(31337)) == CTRUE);
 }
 END_TEST
 
@@ -103,6 +119,10 @@ int main(void)
 
   tcase_add_test(tc_bif, test_builtin_is);
   tcase_add_test(tc_bif, test_builtin_iso);
+  tcase_add_test(tc_bif, test_builtin_gt);
+  tcase_add_test(tc_bif, test_builtin_lt);
+  tcase_add_test(tc_bif, test_builtin_gte);
+  tcase_add_test(tc_bif, test_builtin_lte);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
