@@ -332,6 +332,10 @@ extern value arc_numcmp(arc *c, value v1, value v2);
 extern value arc_is(arc *c, value v1, value v2);
 extern value arc_iso(arc *c, value v1, value v2);
 extern value arc_cmp(arc *c, value v1, value v2);
+extern value arc_gt(arc *c, value v1, value v2);
+extern value arc_lt(arc *c, value v1, value v2);
+extern value arc_gte(arc *c, value v1, value v2);
+extern value arc_lte(arc *c, value v1, value v2);
 
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
