@@ -142,8 +142,8 @@ notice and this notice are preserved.
      - [X] + Addition (virtual machine instruction)
      - [X] - Subtraction (virtual machine instruction)
      - [X] / Division (virtual machine instruction)
-     - [ ] Arc3-current functions [0/5]
-       - [ ] expt
+     - [-] Arc3-current functions [1/5]
+       - [X] expt
        - [ ] mod
        - [ ] rand
        - [ ] sqrt
