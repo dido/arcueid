@@ -114,8 +114,14 @@ END_TEST
 
 START_TEST(test_builtin_exact)
 {
+  value val;
+
   fail_unless(test_builtin("exact", 1, INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin("exact", 1, arc_mkrationall(&c, 1, 2)) == CTRUE);
   fail_unless(test_builtin("exact", 1, arc_mkflonum(&c, 3.14159)) == CNIL);
+  val = test_builtin("expt", 2, INT2FIX(1024), INT2FIX(2));
+  fail_unless(test_builtin("exact", 1, val) == CTRUE);
+
 }
 END_TEST
 
