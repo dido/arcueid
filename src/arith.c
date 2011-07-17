@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
+#include <complex.h>
 #include "arcueid.h"
 #include "arith.h"
 #include "../config.h"
@@ -245,10 +246,11 @@ value arc_coerce_fixnum(arc *c, value v)
 }
 
 /* Coerce a rational back to an integral type where possible.  Otherwise
-   return v.  Used by most rational arithmetic operators. */
+   return v.  Used by most rational arithmetic operators.  Not needed if
+   gmp is disabled. */
+#ifdef HAVE_GMP_H
 static value integer_coerce(arc *c, value v)
 {
-#ifdef HAVE_GMP_H
   value val;
 
   /* Attempt to coerce back to a fixnum if possible.  If the denominator
@@ -267,8 +269,8 @@ static value integer_coerce(arc *c, value v)
   val = arc_mkbignuml(c, 0);
   arc_coerce_bignum(c, v, &REP(val)._bignum);
   return(val);
-#endif
 }
+#endif
 
 /*================================= Basic arithmetic functions */
 
@@ -1214,4 +1216,120 @@ value arc_numcmp(arc *c, value v1, value v2)
 value arc_exact(arc *c, value v)
 {
   return((FIXNUM_P(v) || TYPE(v) == T_BIGNUM) ? CTRUE : CNIL);
+}
+
+#if 0
+value arc_abs(arc *c, value v)
+{
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_FLONUM:
+  case T_COMPLEX:
+  case T_RATIONAL:
+  }
+}
+#endif
+
+value arc_expt(arc *c, value a, value b)
+{
+  double complex ac, bc, p;
+  double re, im;
+#ifdef HAVE_GMP_H
+  mpz_t anumer, adenom;
+  unsigned long int babs;
+  value result, cresult;
+#endif
+
+  if (!((TYPE(a) == T_FIXNUM || TYPE(a) == T_FLONUM
+	 || TYPE(a) == T_BIGNUM || TYPE(a) == T_RATIONAL
+	 || TYPE(a) == T_COMPLEX)
+	&& (TYPE(b) == T_FIXNUM || TYPE(b) == T_FLONUM
+	    || TYPE(b) == T_BIGNUM || TYPE(a) == T_RATIONAL
+	    || TYPE(a) == T_COMPLEX))) {
+    c->signal_error(c, "Invalid types for exponentiation");
+    return(CNIL);
+  }
+  /* We coerce everything to complex and use cpow if any argument
+     is a flonum or a complex, or if the exponent is rational.
+     Note that if bignum support is unavailable, this
+     method is still used even for fixnum arguments. */
+#ifdef HAVE_GMP_H
+  if (TYPE(a) == T_FLONUM || TYPE(b) == T_FLONUM
+      || TYPE(a) == T_COMPLEX || TYPE(b) == T_COMPLEX
+      || TYPE(b) == T_RATIONAL) {
+#endif
+    /* Use complex arithmetic here, convert back to real if
+       Im(p) == 0.0.  Note that complex exponents are NOT
+       supported by PG-ARC! */
+    arc_coerce_complex(c, a, &re, &im);
+    ac = re + I*im;
+    arc_coerce_complex(c, b, &re, &im);
+    bc = re + I*im;
+    p = cpow(ac, bc);
+    if (cimag(p) < DBL_EPSILON)
+      return(arc_mkflonum(c, creal(p)));
+    return(arc_mkcomplex(c, creal(p), cimag(p)));
+#ifdef HAVE_GMP_H
+  }
+#endif
+#ifdef HAVE_GMP_H
+  /* We can't handle a bignum exponent... */
+  if (TYPE(b) == T_BIGNUM) {
+    c->signal_error(c, "Exponent too large");
+    return(arc_mkflonum(c, INFINITY));
+  }
+  /* Special case, zero base */
+  if (a == INT2FIX(0))
+    return(INT2FIX(0));
+
+  /* Special case, zero exponent */
+  if (b == INT2FIX(0))
+    return(INT2FIX(1));
+  /* The only unhandled case is a fixnum, bignum, or rational base with
+     a fixnum exponent.  */
+  mpz_init(anumer);
+  mpz_init(adenom);
+  switch (TYPE(a)) {
+  case T_FIXNUM:
+    mpz_set_si(anumer, FIX2INT(a));
+    mpz_set_si(adenom, 1);
+    break;
+  case T_BIGNUM:
+    mpz_set(anumer, REP(a)._bignum);
+    mpz_set_si(adenom, 1);
+    break;
+  case T_RATIONAL:
+    mpq_get_num(anumer, REP(a)._rational);
+    mpq_get_den(adenom, REP(a)._rational);
+    break;
+  default:
+    mpz_clear(anumer);
+    mpz_clear(adenom);
+    c->signal_error(c, "Invalid types for exponentiation");
+    return(CNIL);
+    break;
+  }
+  babs = abs(FIX2INT(b));
+  mpz_pow_ui(anumer, anumer, babs);
+  mpz_pow_ui(adenom, adenom, babs);
+  /* if the original value was negative, take the reciprocal */
+  if (FIX2INT(b) < 0)
+    mpz_swap(anumer, adenom);
+  if (mpz_cmp_si(adenom, 1) == 0) {
+    result = arc_mkbignuml(c, 0);
+    mpz_set(REP(result)._bignum, anumer);
+    cresult = arc_coerce_fixnum(c, result);
+    if (cresult != CNIL)
+      result = cresult;
+  } else {
+    result = arc_mkrationall(c, 0, 1);
+    mpq_set_num(REP(result)._rational, anumer);
+    mpq_set_den(REP(result)._rational, adenom);
+    mpq_canonicalize(REP(result)._rational);
+  }
+  mpz_clear(anumer);
+  mpz_clear(adenom);
+  return(result);
+#endif
 }
