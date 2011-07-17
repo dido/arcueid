@@ -141,6 +141,7 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
       append_cstring(c, outstr, ppstr);
     }
     break;
+#endif
   case T_CHAR:
     {
       Rune outstr[3];
@@ -251,7 +252,6 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
       *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
     }
     break;
-#endif
   }
   return(*ppstr);
 }
