@@ -439,6 +439,9 @@ extern value arc_seek(arc *c, value fd, value ofs, value whence);
 extern value arc_tell(arc *c, value fd);
 extern value arc_close(arc *c, value fd);
 
+/* Mathematical functions */
+extern value arc_expt(arc *c, value a, value b);
+
 /* Ciel */
 extern value arc_ciel_unmarshal(arc *c, value fd);
 
