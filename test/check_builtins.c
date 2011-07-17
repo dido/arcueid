@@ -171,7 +171,52 @@ START_TEST(test_builtin_expt)
   mpz_clear(expected);
 #endif
 }
+END_TEST
 
+START_TEST(test_builtin_pow)
+{
+  value val;
+  mpz_t expected;
+
+  fail_unless(test_builtin("pow", 2, INT2FIX(24), INT2FIX(2)) == INT2FIX(16777216));
+  val = test_builtin("pow", 2, INT2FIX(24), arc_mkflonum(&c, 2));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(16777216.0 - REP(val)._flonum) < 1e6);
+
+  val = test_builtin("pow", 2, arc_mkflonum(&c, 24.0), INT2FIX(2));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(16777216.0 - REP(val)._flonum) < 1e6);
+
+  val = test_builtin("pow", 2, arc_mkflonum(&c, 24.0), arc_mkflonum(&c, 2.0));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(16777216.0 - REP(val)._flonum) < 1e6);
+
+  val = test_builtin("pow", 2, arc_mkflonum(&c, 0.5), arc_mkflonum(&c, -1));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(REP(val)._complex.re) < 1e6);
+  fail_unless(fabs(1.0 - REP(val)._complex.im) < 1e6);
+
+  val = test_builtin("pow", 2, arc_mkcomplex(&c, 2.0, 2.0),
+		     arc_mkcomplex(&c, 1.0, 1.0));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(-0.26565399849241 - REP(val)._complex.re) < 1e6);
+  fail_unless(fabs(0.319818113856136 - REP(val)._complex.im) < 1e6);
+
+#ifdef HAVE_GMP_H
+  val = test_builtin("pow", 2, INT2FIX(1024), INT2FIX(2));
+  fail_unless(TYPE(val) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "179769313486231590772930519078902473361797697894230657273430081157732675805500963132708477322407536021120113879871393357658789768814416622492847430639474124377767893424865485276302219601246094119453082952085005768838150682342462881473913110540827237163350510684586298239947245938479716304835356329624224137216", 10);
+  fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
+
+  val = test_builtin("pow", 2, INT2FIX(2), val);
+  fail_unless(TYPE(val) == T_BIGNUM);
+  mpz_set_str(expected, "32317006071311007300714876688669951960444102669715484032130345427524655138867890893197201411522913463688717960921898019494119559150490921095088152386448283120630877367300996091750197750389652106796057638384067568276792218642619756161838094338476170470581645852036305042887575891541065808607552399123930385521914333389668342420684974786564569494856176035326322058077805659331026192708460314150258592864177116725943603718461857357598351152301645904403697613233287231227125684710820209725157101726931323469678542580656697935045997268352998638215525166389437335543602135433229604645318478604952148193555853611059596230656", 10);
+  fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
+
+  mpz_clear(expected);
+#endif
+}
 END_TEST
 
 int main(void)
@@ -197,6 +242,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_spaceship);
 
   tcase_add_test(tc_bif, test_builtin_expt);
+  tcase_add_test(tc_bif, test_builtin_pow);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
