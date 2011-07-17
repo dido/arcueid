@@ -80,10 +80,10 @@ if test "x$enable_bignum" != xno; then
   AC_CHECK_LIB(gmp, __gmpz_init, GMP_LIBS=-lgmp)
   if test "$GMP_LIBS" != ""; then
     MP_HEADER="#include <gmp.h>"
-    MP_TYPE="typedef mpz_t bignum_t"
-    MP_BVALUE="bignum_t _bignum"
-    MPQ_TYPE="typedef mpq_t rational_t"
-    MPQ_BVALUE="rational_t _rational"
+    MP_TYPE="typedef mpz_t bignum_t;"
+    MP_BVALUE="bignum_t _bignum;"
+    MPQ_TYPE="typedef mpq_t rational_t;"
+    MPQ_BVALUE="rational_t _rational;"
     AC_SUBST(MP_HEADER)
     AC_SUBST(MP_TYPE)
     AC_SUBST(MP_BVALUE)
