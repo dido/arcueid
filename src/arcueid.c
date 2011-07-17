@@ -273,6 +273,9 @@ static struct {
   { "exact", 1, arc_exact },
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
+
+  { "expt", 2, arc_expt },
+  { "pow", 2, arc_expt },
   { NULL, 0, NULL }
 };
 
