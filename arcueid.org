@@ -148,7 +148,7 @@ notice and this notice are preserved.
        - [ ] rand
        - [ ] sqrt
        - [ ] trunc
-     - [ ] C99 math.h functions (Arcueid only) [0/37]
+     - [-] C99 math.h functions (Arcueid only) [1/37]
        - [ ] acos
        - [ ] acosh
        - [ ] asin
@@ -177,7 +177,7 @@ notice and this notice are preserved.
        - [ ] modf
        - [ ] nan
        - [ ] nearbyint
-       - [ ] pow (alias for expt)
+       - [X] pow (alias for expt)
        - [ ] modf
        - [ ] sin
        - [ ] sinh
