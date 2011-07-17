@@ -23,14 +23,15 @@
 
 #define _ARCUEID_H_
 
+#include <stdlib.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdarg.h>
 @MP_HEADER@
 
 typedef unsigned long value;
-@MP_TYPE@;
-@MPQ_TYPE@;
+@MP_TYPE@
+@MPQ_TYPE@
 
 /* Characters are internally stored as UCS-4 */
 typedef int32_t Rune;
@@ -170,8 +171,8 @@ struct cell {
       int maxlength;
     } _str;
     Rune _char;
-    @MP_BVALUE@;
-    @MPQ_BVALUE@;
+    @MP_BVALUE@
+    @MPQ_BVALUE@
     double _flonum;
     struct {
       double re;
