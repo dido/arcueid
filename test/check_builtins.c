@@ -179,6 +179,25 @@ START_TEST(test_builtin_expt)
 }
 END_TEST
 
+START_TEST(test_builtin_type)
+{
+  fail_unless(test_builtin("type", 1,
+			   INT2FIX(100)) == arc_intern_cstr(&c, "fixnum"));
+  fail_unless(test_builtin("type", 1, arc_mkflonum(&c, 3.1416))
+	      == arc_intern_cstr(&c, "flonum"));
+  fail_unless(test_builtin("type", 1, arc_mkcomplex(&c, 3.1416, 2.718))
+	      == arc_intern_cstr(&c, "complex"));
+  fail_unless(test_builtin("type", 1, arc_mkstringc(&c, "foo"))
+	      == arc_intern_cstr(&c, "string"));
+  fail_unless(test_builtin("type", 1, arc_intern_cstr(&c, "foo"))
+	      == arc_intern_cstr(&c, "sym"));
+  fail_unless(test_builtin("type", 1, cons(&c, INT2FIX(1), CNIL))
+	      == arc_intern_cstr(&c, "cons"));
+  fail_unless(test_builtin("type", 1, arc_mkvector(&c, 1))
+	      == arc_intern_cstr(&c, "vector"));
+}
+END_TEST
+
 START_TEST(test_builtin_pow)
 {
   value val;
@@ -246,6 +265,8 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_bound);
   tcase_add_test(tc_bif, test_builtin_exact);
   tcase_add_test(tc_bif, test_builtin_spaceship);
+
+  tcase_add_test(tc_bif, test_builtin_type);
 
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
