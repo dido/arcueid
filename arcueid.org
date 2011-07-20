@@ -118,7 +118,7 @@ notice and this notice are preserved.
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
-   - [ ] Type handling [0/2]
+   - [-] Type handling [1/2]
      - [ ] coerce [0/45]
        - [ ] char -> fixnum
        - [ ] char -> string
@@ -196,7 +196,7 @@ notice and this notice are preserved.
        - [ ] vector -> cons
        - [ ] vector -> string (only for a character vector)
        - [ ] symbol -> string
-     - [ ] type
+     - [X] type
    - [X] Predicates [9/9]
      - [X] Less-than (<) *
      - [X] Greater-than (>) *
