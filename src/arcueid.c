@@ -288,6 +288,8 @@ static struct {
   { "custom", CNIL },
   { "int", CNIL },
   { "unknown", CNIL },
+  { "re", CNIL },
+  { "im", CNIL },
   { NULL, CNIL }
 };
 
@@ -316,7 +318,9 @@ enum {
   IDX_ccode,
   IDX_custom,
   IDX_int,
-  IDX_unknown
+  IDX_unknown,
+  IDX_re,
+  IDX_im
 };
 
 value arc_type(arc *c, value obj)
@@ -412,6 +416,11 @@ static value coerce_integer(arc *c, value obj, value argv)
     return(obj);
   case T_CHAR:
     return(INT2FIX(REP(obj)._char));
+  case T_COMPLEX:
+    obj = (VECLEN(argv) >= 3 && VINDEX(argv, 2) == typesyms[IDX_im].sym) ?
+      arc_mkflonum(c, REP(obj)._complex.im)
+      : arc_mkflonum(c, REP(obj)._complex.re);
+    /* fall through */
   case T_FLONUM:
 #ifdef HAVE_GMP_H
     {
@@ -431,7 +440,6 @@ static value coerce_integer(arc *c, value obj, value argv)
 #ifdef HAVE_GMP_H
   case T_RATIONAL:
 #endif
-  case T_COMPLEX:
   case T_STRING:
   default:
     c->signal_error(c, "cannot coerce %O to integer type", obj);
