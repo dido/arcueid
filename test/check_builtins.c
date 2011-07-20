@@ -198,6 +198,17 @@ START_TEST(test_builtin_type)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_int)
+{
+  value val;
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		     arc_mkchar(&c, 0x86df));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(0x86df));
+}
+END_TEST
+
 START_TEST(test_builtin_pow)
 {
   value val;
@@ -267,6 +278,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_spaceship);
 
   tcase_add_test(tc_bif, test_builtin_type);
+  tcase_add_test(tc_bif, test_builtin_coerce_int);
 
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
