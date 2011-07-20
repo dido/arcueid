@@ -119,83 +119,74 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [1/2]
-     - [ ] coerce [0/45]
-       - [ ] char -> fixnum
-       - [ ] char -> string
-       - [ ] char -> sym
+     - [ ] coerce [0/9]
+       - [-] Integer conversions [1/5]
+         - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
+         - [ ] flonum -> int
+	       Either fixnum or bignum as needed.
+         - [ ] complex -> int
+	       optional argument for 
+	     Note that fixnum and bignum may be used as aliases for int
+         - [ ] rational -> int
+	       May return fixnum or bignum as needed
+         - [ ] string -> int, base specified as optional arg
+       - [ ] Flonum conversions [0/5]
+         - [ ] fixnum -> flonum
+         - [ ] bignum -> flonum
+         - [ ] rational -> flonum
+         - [ ] complex -> flonum
+	       Extra argument for Im(z)
+         - [ ] string -> flonum
+       - [ ] Rational conversions [0/5]
+         - [ ] fixnum -> rational
+	       This has no real effect.  It will still return the original
+	       fixnum, without error.         
+         - [ ] bignum -> rational
+	       Also has no effect, returning the original bignum without
+	       error.
+         - [ ] flonum -> rational
+         - [ ] complex -> rational
+	       Extra argument for Im(z)
+         - [ ] string -> rational, base specified as optional arg
+	       May return a fixnum or a bignum instead depending on the
+	       value therein.
+       - [ ] String conversions [0/9]
+         - [ ] char -> string
+         - [ ] fixnum -> string
+	       Has extra argument specifying base
+         - [ ] bignum -> string
+	       Has extra argument specifying base
+         - [ ] rational -> string
+	       Has extra argument specifying base
+         - [ ] flonum -> string
+         - [ ] complex -> string
+         - [ ] cons -> string (only for lists of chars)
+         - [ ] vector -> string (only for a character vector)
+         - [ ] symbol -> string
+       - [ ] Complex conversions [0/4]
+         - [ ] fixnum -> complex
+	       Works the same as fixnum -> flonum
+         - [ ] bignum -> complex
+	       Works the same as bignum -> flonum
+         - [ ] flonum -> complex
+	       Has no effect, returning the original flonum
+         - [ ] string -> complex
+	       May return a flonum if no imaginary part is specified.
+       - [ ] Cons conversions [0/4]
+         - [ ] rational -> cons
+	       car = numerator, cdr = denominator, could be fixnums or
+	       bignums as needed.
+         - [ ] complex -> cons
+	       car = Re(z), cdr = Im(z)
+         - [ ] vector -> cons
+         - [ ] string -> cons (char list)
+       - [ ] Symbol conversions [0/2]
+         - [ ] char -> sym
+         - [ ] string -> sym
+       - [ ] Vector conversions [0/2]
+         - [ ] string -> vector (char vector)
+         - [ ] cons -> vector
        - [ ] fixnum -> char (limit to 0 - 0x10FFFF)
-       - [ ] fixnum -> flonum
-       - [ ] fixnum -> rational
-	     This has no real effect.  It will still return the original
-	     fixnum, without error.
-       - [ ] fixnum -> complex
-	     Works the same as fixnum -> flonum
-       - [ ] fixnum -> string
-	     Has extra argument specifying base
-       - [ ] bignum -> flonum
-       - [ ] bignum -> rational
-	     Also has no effect, returning the original bignum without
-	     error.
-       - [ ] bignum -> complex
-	     Works the same as bignum -> flonum
-       - [ ] bignum -> string
-	     Has extra argument specifying base
-       - [ ] rational -> flonum
-       - [ ] rational -> string
-	     Has extra argument specifying base
-       - [ ] rational -> fixnum
-	     May return a bignum if required by magnitude of rational
-       - [ ] rational -> bignum
-	     May return a fixnum if precision is not required
-       - [ ] rational -> int
-	     May return fixnum or bignum as needed
-       - [ ] rational -> cons
-	     car = numerator, cdr = denominator, could be fixnums or
-	     bignums as needed.
-       - [ ] needed -> string
-	     Has extra argument specifying base
-       - [ ] flonum -> fixnum
-	     May return a bignum if required by magnitude
-       - [ ] flonum -> bignum
-	     May return a fixnum if magnitude is not needed
-       - [ ] flonum -> int
-	     Either fixnum or bignum as needed.
-       - [ ] flonum -> rational
-       - [ ] flonum -> complex
-	     Has no effect, returning the original flonum
-       - [ ] flonum -> string
-       - [ ] complex -> fixnum
-	     Real part by default.  Extra argument may specify 're
-	     or 'im converting to real or imaginary part.  As
-	     usual, may return bignum if precision required.
-       - [ ] complex -> bignum
-	     Extra argument for Im(z)
-       - [ ] complex -> flonum
-	     Extra argument for Im(z)
-       - [ ] complex -> rational
-	     Extra argument for Im(z)
-       - [ ] complex -> cons
-	     car = Re(z), cdr = Im(z)
-       - [ ] complex -> string
-       - [ ] string -> sym
-       - [ ] string -> cons (char list)
-       - [ ] string -> vector (char vector)
-       - [ ] string -> int, base specified as optional arg
-       - [ ] string -> fixnum, base specified as optional arg (same as
-             string -> int)
-       - [ ] string -> bignum, base specified as optional arg (same as
-             string -> int)
-       - [ ] string -> rational, base specified as optional arg
-	     May return a fixnum or a bignum instead depending on the
-	     value therein.
-       - [ ] string -> flonum
-       - [ ] string -> complex
-	     May return a flonum if no imaginary part is specified.
-       - [ ] cons -> vector
-       - [ ] cons -> string (only for lists of chars)
-       - [ ] vector -> cons
-       - [ ] vector -> string (only for a character vector)
-       - [ ] symbol -> string
      - [X] type
    - [X] Predicates [9/9]
      - [X] Less-than (<) *
