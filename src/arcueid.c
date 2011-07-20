@@ -260,10 +260,151 @@ value arc_bound(arc *c, value sym)
 }
 
 static struct {
+  char *name;
+  value sym;
+} typesyms[] = {
+  { "sym", CNIL },
+  { "fixnum", CNIL },
+  { "bignum", CNIL },
+  { "flonum", CNIL },
+  { "rational", CNIL },
+  { "complex", CNIL },
+  { "char", CNIL },
+  { "string", CNIL },
+  { "cons", CNIL },
+  { "table", CNIL },
+  { "input", CNIL },
+  { "output", CNIL },
+  { "exception", CNIL },
+  { "port", CNIL },
+  { "thread", CNIL },
+  { "vector", CNIL },
+  { "continuation", CNIL },
+  { "closure", CNIL },
+  { "code", CNIL },
+  { "environment", CNIL },
+  { "vmcode", CNIL },
+  { "ccode", CNIL },
+  { "custom", CNIL },
+  { "unknown", CNIL },
+  { NULL, CNIL }
+};
+
+enum {
+  IDX_sym=0,
+  IDX_fixnum,
+  IDX_bignum,
+  IDX_flonum,
+  IDX_rational,
+  IDX_complex,
+  IDX_char,
+  IDX_string,
+  IDX_cons,
+  IDX_table,
+  IDX_input,
+  IDX_output,
+  IDX_exception,
+  IDX_port,
+  IDX_thread,
+  IDX_vector,
+  IDX_continuation,
+  IDX_closure,
+  IDX_code,
+  IDX_environment,
+  IDX_vmcode,
+  IDX_ccode,
+  IDX_custom,
+  IDX_unknown
+};
+
+value arc_type(arc *c, value obj)
+{
+  switch (TYPE(obj)) {
+  case T_NIL:
+  case T_TRUE:
+  case T_SYMBOL:
+    return(typesyms[IDX_sym].sym);
+    break;
+  case T_FIXNUM:
+    return(typesyms[IDX_fixnum].sym);
+    break;
+  case T_BIGNUM:
+    return(typesyms[IDX_bignum].sym);
+    break;
+  case T_FLONUM:
+    return(typesyms[IDX_flonum].sym);
+    break;
+  case T_RATIONAL:
+    return(typesyms[IDX_rational].sym);
+    break;
+  case T_COMPLEX:
+    return(typesyms[IDX_complex].sym);
+    break;
+  case T_CHAR:
+    return(typesyms[IDX_char].sym);
+    break;
+  case T_STRING:
+    return(typesyms[IDX_string].sym);
+    break;
+  case T_CONS:
+    return(typesyms[IDX_cons].sym);
+    break;
+  case T_TABLE:
+    return(typesyms[IDX_cons].sym);
+    break;
+  case T_TAGGED:
+    /* A tagged object created by annotate has as its car the type
+       as a symbol */
+    return(car(obj));
+    break;
+  case T_INPUT:
+    return(typesyms[IDX_input].sym);
+    break;
+  case T_EXCEPTION:
+    return(typesyms[IDX_exception].sym);
+    break;
+  case T_PORT:
+    return(typesyms[IDX_port].sym);
+    break;
+  case T_THREAD:
+    return(typesyms[IDX_thread].sym);
+    break;
+  case T_VECTOR:
+    return(typesyms[IDX_vector].sym);
+    break;
+  case T_CONT:
+    return(typesyms[IDX_continuation].sym);
+    break;
+  case T_CLOS:
+    return(typesyms[IDX_closure].sym);
+    break;
+  case T_CODE:
+    return(typesyms[IDX_code].sym);
+    break;
+  case T_ENV:
+    return(typesyms[IDX_environment].sym);
+    break;
+  case T_VMCODE:
+    return(typesyms[IDX_vmcode].sym);
+    break;
+  case T_CCODE:
+    return(typesyms[IDX_ccode].sym);
+    break;
+  case T_CUSTOM:
+    return(typesyms[IDX_custom].sym);
+    break;
+  default:
+    break;
+  }
+  return(typesyms[IDX_unknown].sym);
+}
+
+static struct {
   char *fname;
   int argc;
   value (*fnptr)();
 } fntable[] = {
+  { "type", 1, arc_type },
   { ">", 2, arc_gt },
   { "<", 2, arc_lt },
   { ">=", 2, arc_gte },
@@ -299,5 +440,7 @@ value arc_init_builtins(arc *c)
     cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr);
     arc_bindcstr(c, fntable[i].fname, cfunc);
   }
+  for (i=0; typesyms[i].name != NULL; i++)
+    typesyms[i].sym = arc_intern_cstr(c, typesyms[i].name);
   return(CNIL);
 }
