@@ -206,6 +206,16 @@ START_TEST(test_builtin_coerce_int)
 		     arc_mkchar(&c, 0x86df));
   fail_unless(TYPE(val) == T_FIXNUM);
   fail_unless(val == INT2FIX(0x86df));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "fixnum"),
+		     arc_mkchar(&c, 0x86df));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(0x86df));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "bignum"),
+		     arc_mkchar(&c, 0x86df));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(0x86df));
 }
 END_TEST
 
