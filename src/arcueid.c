@@ -286,6 +286,7 @@ static struct {
   { "vmcode", CNIL },
   { "ccode", CNIL },
   { "custom", CNIL },
+  { "int", CNIL },
   { "unknown", CNIL },
   { NULL, CNIL }
 };
@@ -314,6 +315,7 @@ enum {
   IDX_vmcode,
   IDX_ccode,
   IDX_custom,
+  IDX_int,
   IDX_unknown
 };
 
@@ -399,12 +401,56 @@ value arc_type(arc *c, value obj)
   return(typesyms[IDX_unknown].sym);
 }
 
+static value coerce_integer(arc *c, value obj, value argv)
+{
+  switch (TYPE(obj)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+    /* Null "conversions" */
+    return(obj);
+  case T_CHAR:
+    return(INT2FIX(REP(obj)._char));
+#ifdef HAVE_GMP_H
+  case T_RATIONAL:
+#endif
+  case T_FLONUM:
+  case T_COMPLEX:
+  case T_STRING:
+  default:
+    c->signal_error(c, "cannot coerce %O to integer type", obj);
+    break;
+  }
+  return(CNIL);
+}
+
+value arc_coerce(arc *c, value argv)
+{
+  value obj, ntype;
+
+  if (VECLEN(argv) < 2) {
+    c->signal_error(c, "too few arguments to coerce");
+    return(CNIL);
+  }
+
+  obj = VINDEX(argv, 0);
+  ntype = VINDEX(argv, 1);
+  /* Integer coercions */
+  if (ntype == typesyms[IDX_fixnum].sym
+      || ntype == typesyms[IDX_bignum].sym
+      || ntype == typesyms[IDX_int].sym) {
+    return(coerce_integer(c, obj, argv));
+  }
+  c->signal_error(c, "invalid coercion type specifier %O", ntype);
+  return(CNIL);
+}
+
 static struct {
   char *fname;
   int argc;
   value (*fnptr)();
 } fntable[] = {
   { "type", 1, arc_type },
+  { "coerce", -2, arc_coerce },
   { ">", 2, arc_gt },
   { "<", 2, arc_lt },
   { ">=", 2, arc_gte },
