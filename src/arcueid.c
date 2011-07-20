@@ -403,6 +403,8 @@ value arc_type(arc *c, value obj)
 
 static value coerce_integer(arc *c, value obj, value argv)
 {
+  value res;
+
   switch (TYPE(obj)) {
   case T_FIXNUM:
   case T_BIGNUM:
@@ -410,10 +412,25 @@ static value coerce_integer(arc *c, value obj, value argv)
     return(obj);
   case T_CHAR:
     return(INT2FIX(REP(obj)._char));
+  case T_FLONUM:
+#ifdef HAVE_GMP_H
+    {
+      value fnres;
+
+      res = arc_mkbignuml(c, 0);
+      arc_coerce_bignum(c, obj, REP(res)._bignum);
+      fnres = arc_coerce_fixnum(c, res);
+      return((fnres == CNIL) ? res : fnres);
+    }
+#else
+    res = arc_coerce_fixnum(c, obj);
+    if (res == CNIL)
+      res = INT2FIX(FIXNUM_MAX);
+    return(res);
+#endif
 #ifdef HAVE_GMP_H
   case T_RATIONAL:
 #endif
-  case T_FLONUM:
   case T_COMPLEX:
   case T_STRING:
   default:
