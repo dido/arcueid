@@ -114,13 +114,19 @@ END_TEST
 
 START_TEST(test_builtin_exact)
 {
+#ifdef HAVE_GMP_H
   value val;
+#endif
 
   fail_unless(test_builtin("exact", 1, INT2FIX(31337)) == CTRUE);
+#ifdef HAVE_GMP_H
   fail_unless(test_builtin("exact", 1, arc_mkrationall(&c, 1, 2)) == CTRUE);
+#endif
   fail_unless(test_builtin("exact", 1, arc_mkflonum(&c, 3.14159)) == CNIL);
+#ifdef HAVE_GMP_H
   val = test_builtin("expt", 2, INT2FIX(1024), INT2FIX(2));
   fail_unless(test_builtin("exact", 1, val) == CTRUE);
+#endif
 
 }
 END_TEST
@@ -136,7 +142,9 @@ END_TEST
 START_TEST(test_builtin_expt)
 {
   value val;
+#ifdef HAVE_GMP_H
   mpz_t expected;
+#endif
 
   fail_unless(test_builtin("expt", 2, INT2FIX(24), INT2FIX(2)) == INT2FIX(16777216));
   val = test_builtin("expt", 2, INT2FIX(24), arc_mkflonum(&c, 2));
@@ -216,13 +224,40 @@ START_TEST(test_builtin_coerce_int)
 		     arc_mkchar(&c, 0x86df));
   fail_unless(TYPE(val) == T_FIXNUM);
   fail_unless(val == INT2FIX(0x86df));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		     arc_mkflonum(&c, 3.1416));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(3));
+#ifdef HAVE_GMP_H
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		     arc_mkflonum(&c, 1.0e100));
+  fail_unless(TYPE(val) == T_BIGNUM);
+  /* Since mpz_set_d has unpredictable results in the lower order digits
+     when converting a very large float to a bignum, we try to convert the
+     result back to a double and do our comparisons of the logarithms of
+     each. */
+  {
+    double d;
+
+    d = mpz_get_d(REP(val)._bignum);
+    fail_unless(fabs(log(d) - log(1.0e100)) < 1e-6);
+  }
+#else
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		     arc_mkflonum(&c, 1.0e100));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == FIXNUM_MAX);
+#endif
 }
 END_TEST
 
 START_TEST(test_builtin_pow)
 {
   value val;
+#ifdef HAVE_GMP_H
   mpz_t expected;
+#endif
 
   fail_unless(test_builtin("pow", 2, INT2FIX(24), INT2FIX(2)) == INT2FIX(16777216));
   val = test_builtin("pow", 2, INT2FIX(24), arc_mkflonum(&c, 2));
