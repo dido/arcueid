@@ -342,6 +342,8 @@ extern value arc_lt(arc *c, value v1, value v2);
 extern value arc_gte(arc *c, value v1, value v2);
 extern value arc_lte(arc *c, value v1, value v2);
 
+extern value arc_type(arc *c, value obj);
+
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
 extern value arc_list_append(value list, value val);
