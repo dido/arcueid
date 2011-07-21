@@ -149,7 +149,7 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
     mpz_set(*bignum, REP(v)._bignum);
     break;
   case T_RATIONAL:
-    mpz_cdiv_q(*bignum,
+    mpz_tdiv_q(*bignum,
 	       mpq_numref(REP(v)._rational),
 	       mpq_denref(REP(v)._rational));
     break;
