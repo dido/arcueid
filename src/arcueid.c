@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include <float.h>
 #include "arcueid.h"
 #include "alloc.h"
@@ -515,6 +516,129 @@ static value coerce_integer(arc *c, value obj, value argv)
   return(CNIL);
 }
 
+static int digitval(Rune r, int base)
+{
+  int v;
+
+  if (isdigit(r)) {
+    v = r - '0';
+  } else if (isalpha(r)) {
+    v = toupper(r) - 'A' + 10;
+  } else
+    return(-1);
+
+  if (v >= base)
+    return(-1);
+  return(v);
+}
+
+static value str2flo(arc *c, value obj, value b, int strptr, int limit)
+{
+  int sign;
+  double num;			/* the number so far */
+  int got_dot;			/* found a (decimal) point */
+  int got_digit;		/* seen any digits */
+  value exponent;		/* exponent of the number */
+  Rune r;
+  int dv;			/* digit value */
+  int base;			/* base */
+  value res;
+  char str[4];
+
+  base = FIX2INT(b);
+  if (strptr >= limit)
+    goto noconv;
+
+  /* Get the sign */
+  r = arc_strindex(c, obj, strptr);
+  sign = (r == '-') ? -1 : 1;
+  if (r == '-' || r == '+')
+    ++strptr;
+
+  num = 0.0;
+  got_dot = 0;
+  got_digit = 0;
+  exponent = INT2FIX(0);
+
+  /* Check special cases of INF and NAN */
+  if (limit - strptr == 3) {
+    int i;
+
+    for (i=0; i<3; i++)
+      str[i] = (char)arc_strindex(c, obj, strptr + i);
+    str[3] = 0;
+    if (strcasecmp(str, "INF") == 0)
+      return(arc_mkflonum(c, sign*INFINITY));
+    if (strcasecmp(str, "NAN") == 0)
+      return(arc_mkflonum(c, sign*NAN));
+  }
+  for (;; ++strptr) {
+    if (strptr >= limit)
+      break;
+    r = arc_strindex(c, obj, strptr);
+    dv = digitval(r, base);
+    if (dv >= 0) {
+      got_digit = 1;
+      num = (num * (double)base) + (double)dv;
+      /* Keep track of the number of digits after the decimal point.
+	 If we just divided by base here, we would lose precision. */
+      if (got_dot)
+	exponent = INT2FIX(FIX2INT(exponent) - 1);
+    } else if (!got_dot && r == '.') {
+      /* XXX - should we obey locale specifications for decimal points? */
+      got_dot = 1;
+    } else {
+      /* any other character terminates the number */
+      break;
+    }
+  }
+
+  if (!got_digit)
+    goto noconv;
+
+  if (strptr < limit) {
+    r = tolower(arc_strindex(c, obj, strptr++));
+    if (r == 'e' || r == 'p' || r == '&') {
+      /* get the exponent specified after the 'e', 'p', or '&' */
+      value exp;
+
+      exp = str2int(c, obj, b, strptr, limit);
+
+#ifdef HAVE_GMP_H
+      if (TYPE(exp) == T_BIGNUM) {
+	/* The exponent overflowed a fixnum.  It is probably a safe assumption
+	   that an exponent that needs to be represented by a bignum exceeds
+	   the limits of a double! */
+	if (mpz_cmp_si(REP(exp)._bignum, 0) < 0)
+	  return(arc_mkflonum(c, 0.0));
+	else
+	  return(arc_mkflonum(c, INFINITY));
+      }
+      exponent = __arc_add2(c, exponent, exp);
+#endif
+      if (num == 0.0)
+	return(arc_mkflonum(c, 0.0));
+
+#ifdef HAVE_GMP_H
+      /* check the exponent again */
+      if (TYPE(exponent) == T_BIGNUM) {
+	if (mpz_cmp_si(REP(exp)._bignum, 0) < 0)
+	  return(arc_mkflonum(c, 0.0));
+	else
+	  return(arc_mkflonum(c, INFINITY));
+      }
+    }
+#endif
+  }
+  /* Multiply NUM by BASE to the EXPONENT power */
+  res = __arc_mul2(c, arc_mkflonum(c, sign*num),
+		   arc_expt(c, arc_mkflonum(c, arc_coerce_flonum(c, b)),
+			    arc_mkflonum(c, arc_coerce_flonum(c, exponent))));
+  return(res);
+ noconv:
+  return(CNIL);
+}
+
 static value coerce_flonum(arc *c, value obj, value argv)
 {
   switch (TYPE(obj)) {
@@ -530,8 +654,33 @@ static value coerce_flonum(arc *c, value obj, value argv)
 	   arc_mkflonum(c, REP(obj)._complex.im)
 	   : arc_mkflonum(c, REP(obj)._complex.re));
   case T_STRING:
+    {
+      value val, base = INT2FIX(10);
+
+      /* Arcueid extension, bases from 2 to 36 are supported */
+      if (VECLEN(argv) >= 3) {
+	base = VINDEX(argv, 2);
+	if (TYPE(base) != T_FIXNUM) {
+	  c->signal_error(c, "string->flonum, invalid base specifier %O", obj);
+	  return(CNIL);
+	}
+
+	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
+	  c->signal_error(c, "string->flonum, out of range base %O", obj);
+	  return(CNIL);
+	}
+      }
+
+      val = str2flo(c, obj, base, 0, arc_strlen(c, obj));
+      if (val == CNIL) {
+	c->signal_error(c, "string->flonum cannot convert %O to a flonum", obj);
+	return(CNIL);
+      }
+      return(val);
+    }
+    break;
   default:
-    c->signal_error(c, "cannot coerce %O to integer type", obj);
+    c->signal_error(c, "cannot coerce %O to flonum type", obj);
     break;
   }
   return(CNIL);
