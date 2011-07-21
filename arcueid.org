@@ -157,6 +157,16 @@ notice and this notice are preserved.
          - [X] string -> rational, base specified as optional arg
 	       May return a fixnum or a bignum instead depending on the
 	       value therein.
+       - [ ] Complex conversions [0/4]
+         - [ ] fixnum -> complex
+	       Works the same as fixnum -> flonum
+         - [ ] bignum -> complex
+	       Works the same as bignum -> flonum
+         - [ ] flonum -> complex
+	       Has no effect, returning the original flonum
+         - [ ] string -> complex
+	       May return a flonum if no imaginary part is specified.
+	 - [ ] cons -> complex
        - [ ] String conversions [0/9]
          - [ ] char -> string
          - [ ] fixnum -> string
@@ -170,15 +180,6 @@ notice and this notice are preserved.
          - [ ] cons -> string (only for lists of chars)
          - [ ] vector -> string (only for a character vector)
          - [ ] symbol -> string
-       - [ ] Complex conversions [0/4]
-         - [ ] fixnum -> complex
-	       Works the same as fixnum -> flonum
-         - [ ] bignum -> complex
-	       Works the same as bignum -> flonum
-         - [ ] flonum -> complex
-	       Has no effect, returning the original flonum
-         - [ ] string -> complex
-	       May return a flonum if no imaginary part is specified.
        - [ ] Cons conversions [0/4]
          - [ ] rational -> cons
 	       car = numerator, cdr = denominator, could be fixnums or
