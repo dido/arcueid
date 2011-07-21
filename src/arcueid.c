@@ -293,6 +293,7 @@ static struct {
   { "unknown", CNIL },
   { "re", CNIL },
   { "im", CNIL },
+  { "num", CNIL },
   { NULL, CNIL }
 };
 
@@ -323,7 +324,8 @@ enum {
   IDX_int,
   IDX_unknown,
   IDX_re,
-  IDX_im
+  IDX_im,
+  IDX_num
 };
 
 value arc_type(arc *c, value obj)
@@ -749,6 +751,86 @@ static value coerce_rational(arc *c, value obj, value argv)
   return(CNIL);
 }
 
+static value coerce_complex(arc *c, value obj, value argv)
+{
+  switch (TYPE(obj)) {
+  case T_FLONUM:
+  case T_COMPLEX:
+    return(obj);
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+    return(coerce_flonum(c, obj, argv));
+  case T_CONS:
+    return(arc_mkcomplex(c, REP(coerce_flonum(c, car(obj), argv))._flonum,
+			 REP(coerce_flonum(c, cdr(obj), argv))._flonum));
+  case T_STRING:
+    {
+      /* To do this, we have to find where the real part ends and
+	 the complex part begins.  The real part ends after a + or -
+	 that is NOT preceded by an E, P, or &, which is where the
+	 imaginary part begins.  The imaginary unit i/j must be at the
+	 end of the string.   Once we know where the parts are we can
+	 use the functions for extracting floating point numbers to
+	 get the real and imaginary parts of the number. */
+      value base = INT2FIX(10), re, im;
+      int reend = -1, i, len, b;
+      Rune r;
+
+      /* Arcueid extension, bases from 2 to 36 are supported */
+      if (VECLEN(argv) >= 3) {
+	base = VINDEX(argv, 2);
+	if (TYPE(base) != T_FIXNUM) {
+	  c->signal_error(c, "string->complex, invalid base specifier %O", obj);
+	  return(CNIL);
+	}
+
+	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
+	  c->signal_error(c, "string->complex, out of range base %O", obj);
+	  return(CNIL);
+	}
+      }
+      b = FIX2INT(base);
+
+      len = arc_strlen(c, obj);
+      for (i=0; i<len; i++) {
+	r = arc_strindex(c, obj, i);
+	if ((r == '-' || r == '+') && i-1 >= 0) {
+	  Rune prev = arc_strindex(c, obj, i-1);
+	  if (b < 14 && (prev == 'e' || prev == 'E'))
+	    continue;
+	  if (b < 25 && (prev == 'p' || prev == 'P'))
+	    continue;
+	  if (prev == '&')
+	    continue;
+	  reend = i;
+	  break;
+	}
+      }
+      if (reend < 0) {
+	c->signal_error(c, "cannot find end of real part of number", obj);
+	return(CNIL);
+      }
+      r = tolower(arc_strindex(c, obj, len-1));
+      if (r != 'i' && r != 'j') {
+	c->signal_error(c, "cannot find end of imaginary part of number", obj);
+	return(CNIL);
+      }
+      re = str2flo(c, obj, base, 0, reend);
+      im = str2flo(c, obj, base, reend, len-1);
+      if (re == CNIL || im == CNIL) {
+	c->signal_error(c, "failed to parse complex number", obj);
+	return(CNIL);
+      }
+      return(arc_mkcomplex(c, REP(re)._flonum, REP(im)._flonum));
+    }
+  default:
+    c->signal_error(c, "cannot coerce %O to complex type", obj);
+    break;
+  }
+  return(CNIL);
+}
+
 value arc_coerce(arc *c, value argv)
 {
   value obj, ntype;
@@ -771,8 +853,13 @@ value arc_coerce(arc *c, value argv)
   if (ntype == typesyms[IDX_flonum].sym)
     return(coerce_flonum(c, obj, argv));
 
+  /* Rational coercions */
   if (ntype == typesyms[IDX_rational].sym)
     return(coerce_rational(c, obj, argv));
+
+  /* Complex coercions */
+  if (ntype == typesyms[IDX_complex].sym)
+    return(coerce_complex(c, obj, argv));
 
   c->signal_error(c, "invalid coercion type specifier %O", ntype);
   return(CNIL);
