@@ -278,14 +278,14 @@ START_TEST(test_builtin_coerce_int)
     value v1, v2;
     mpz_t expected;
 
-    v1 = arc_mkrationall(&c, 1, 2);
+    v1 = arc_mkrationall(&c, 3, 2);
     v2 = arc_mkbignuml(&c, 0);
     mpz_set_str(REP(v2)._bignum, "100000000000000000000000000000", 10);
     val = __arc_add2(&c, v1, v2);
     val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"), val);
     fail_unless(TYPE(val) == T_BIGNUM);
     mpz_init(expected);
-    mpz_set_str(expected, "100000000000000000000000000000", 10);
+    mpz_set_str(expected, "100000000000000000000000000001", 10);
     fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
     mpz_clear(expected);
   }
