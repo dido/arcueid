@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include "../src/arcueid.h"
 #include "../src/alloc.h"
+#include "../src/arith.h"
 #include "../config.h"
 #include "../src/vmengine.h"
 
@@ -266,6 +267,31 @@ START_TEST(test_builtin_coerce_int)
 		     arc_mkcomplex(&c, 3.1416, 2.718));
   fail_unless(TYPE(val) == T_FIXNUM);
   fail_unless(val == INT2FIX(3));
+
+#ifdef HAVE_GMP_H
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		     arc_mkrationall(&c, 1, 2));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(0));
+
+  {
+    value v1, v2;
+    mpz_t expected;
+
+    v1 = arc_mkrationall(&c, 1, 2);
+    v2 = arc_mkbignuml(&c, 0);
+    mpz_set_str(REP(v2)._bignum, "100000000000000000000000000000", 10);
+    val = __arc_add2(&c, v1, v2);
+    val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"), val);
+    fail_unless(TYPE(val) == T_BIGNUM);
+    mpz_init(expected);
+    mpz_set_str(expected, "100000000000000000000000000000", 10);
+    fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
+    mpz_clear(expected);
+  }
+
+#endif
+
 }
 END_TEST
 
