@@ -130,11 +130,11 @@ notice and this notice are preserved.
          - [X] rational -> int
 	       May return fixnum or bignum as needed
          - [X] string -> int, base specified as optional arg
-       - [-] Flonum conversions [3/5]
+       - [-] Flonum conversions [4/5]
          - [X] fixnum -> flonum
          - [X] bignum -> flonum
          - [X] rational -> flonum
-         - [ ] complex -> flonum
+         - [X] complex -> flonum
 	       Extra argument for Im(z)
          - [ ] string -> flonum
 	       A base may be specified here as well.  Arc3 does not allow
