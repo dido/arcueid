@@ -341,6 +341,11 @@ START_TEST(test_builtin_coerce_flonum)
   val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"), val);
   fail_unless(TYPE(val) == T_FLONUM);
   fail_unless(fabs(log(REP(val)._flonum) - log(1e100)) < 1e-6);
+
+  val = arc_mkrationall(&c, 47627751, 15160384);
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"), val);
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 3.1415926535897771) < 1e-6);
 #endif
 }
 END_TEST
