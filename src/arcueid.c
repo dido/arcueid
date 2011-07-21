@@ -416,6 +416,7 @@ static value coerce_integer(arc *c, value obj, value argv)
     return(obj);
   case T_CHAR:
     return(INT2FIX(REP(obj)._char));
+    break;
   case T_COMPLEX:
     obj = (VECLEN(argv) >= 3 && VINDEX(argv, 2) == typesyms[IDX_im].sym) ?
       arc_mkflonum(c, REP(obj)._complex.im)
@@ -423,6 +424,7 @@ static value coerce_integer(arc *c, value obj, value argv)
     /* fall through */
   case T_FLONUM:
 #ifdef HAVE_GMP_H
+  case T_RATIONAL:
     {
       value fnres;
 
@@ -436,9 +438,6 @@ static value coerce_integer(arc *c, value obj, value argv)
     if (res == CNIL)
       res = INT2FIX(FIXNUM_MAX);
     return(res);
-#endif
-#ifdef HAVE_GMP_H
-  case T_RATIONAL:
 #endif
   case T_STRING:
   default:
