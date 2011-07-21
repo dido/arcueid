@@ -291,7 +291,38 @@ START_TEST(test_builtin_coerce_int)
   }
 
 #endif
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		     arc_mkstringc(&c, "31337"));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val = INT2FIX(31337));
 
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		     arc_mkstringc(&c, "-31337"));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val = INT2FIX(-31337));
+
+  val = test_builtin("coerce", 3, INT2FIX(16), arc_intern_cstr(&c, "int"),
+		     arc_mkstringc(&c, "1234abcd"));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val = INT2FIX(305441741));
+
+  val = test_builtin("coerce", 3, INT2FIX(36), arc_intern_cstr(&c, "int"),
+		     arc_mkstringc(&c, "1z2y"));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val = INT2FIX(2662));
+
+#ifdef HAVE_GMP_H
+  {
+    mpz_t expected;
+    val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
+		       arc_mkstringc(&c, "100000000000000000000000000000"));
+    fail_unless(TYPE(val) == T_BIGNUM);
+    mpz_init(expected);
+    mpz_set_str(expected, "100000000000000000000000000000", 10);
+    fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
+    mpz_clear(expected);
+  }
+#endif
 }
 END_TEST
 
