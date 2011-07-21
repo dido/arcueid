@@ -130,9 +130,9 @@ notice and this notice are preserved.
          - [X] rational -> int
 	       May return fixnum or bignum as needed
          - [X] string -> int, base specified as optional arg
-       - [-] Flonum conversions [1/5]
+       - [-] Flonum conversions [2/5]
          - [X] fixnum -> flonum
-         - [ ] bignum -> flonum
+         - [X] bignum -> flonum
          - [ ] rational -> flonum
          - [ ] complex -> flonum
 	       Extra argument for Im(z)
