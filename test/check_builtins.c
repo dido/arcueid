@@ -427,6 +427,36 @@ START_TEST(test_builtin_coerce_flonum)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_rational)
+{
+#ifdef HAVE_GMP_H
+  value val, val2;
+
+  val = arc_mkflonum(&c, 0.5);
+  val2 = test_builtin("coerce", 2, arc_intern_cstr(&c, "rational"), val);
+  fail_unless(TYPE(val2) == T_RATIONAL);
+  fail_unless(mpz_get_ui(mpq_numref(REP(val2)._rational)) == 1);
+  fail_unless(mpz_get_ui(mpq_denref(REP(val2)._rational)) == 2);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "rational"),
+		     INT2FIX(31337));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(31337));
+
+  val = arc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val)._bignum, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
+  val2 = test_builtin("coerce", 2, arc_intern_cstr(&c, "rational"), val);
+  fail_unless(TYPE(val) == T_BIGNUM);
+  fail_unless(mpz_cmp(REP(val2)._bignum, REP(val)._bignum) == 0);
+
+  val = arc_mkrationall(&c, 1, 2);
+  val2 = test_builtin("coerce", 2, arc_intern_cstr(&c, "rational"), val);
+  fail_unless(TYPE(val2) == T_RATIONAL);
+  fail_unless(mpq_cmp(REP(val2)._rational, REP(val)._rational) == 0);
+#endif
+}
+END_TEST
+
 START_TEST(test_builtin_pow)
 {
   value val;
@@ -500,6 +530,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_type);
   tcase_add_test(tc_bif, test_builtin_coerce_int);
   tcase_add_test(tc_bif, test_builtin_coerce_flonum);
+  tcase_add_test(tc_bif, test_builtin_coerce_rational);
 
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
