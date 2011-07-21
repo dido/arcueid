@@ -334,6 +334,14 @@ START_TEST(test_builtin_coerce_flonum)
 		     INT2FIX(31337));
   fail_unless(TYPE(val) == T_FLONUM);
   fail_unless(fabs(REP(val)._flonum - 31337.0) < 1e-6);
+
+#ifdef HAVE_GMP_H
+  val = arc_mkbignuml(&c, 0);
+  mpz_set_str(REP(val)._bignum, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"), val);
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(log(REP(val)._flonum) - log(1e100)) < 1e-6);
+#endif
 }
 END_TEST
 
