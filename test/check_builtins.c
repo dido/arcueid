@@ -347,6 +347,17 @@ START_TEST(test_builtin_coerce_flonum)
   fail_unless(TYPE(val) == T_FLONUM);
   fail_unless(fabs(REP(val)._flonum - 3.1415926535897771) < 1e-6);
 #endif
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkcomplex(&c, 3.1416, 2.718));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 3.1416) < 1e-6);
+
+  val = test_builtin("coerce", 3, arc_intern_cstr(&c, "im"),
+		     arc_intern_cstr(&c, "flonum"),
+		     arc_mkcomplex(&c, 3.1416, 2.718));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 2.718) < 1e-6);
 }
 END_TEST
 
