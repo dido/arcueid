@@ -432,6 +432,12 @@ START_TEST(test_builtin_coerce_rational)
 #ifdef HAVE_GMP_H
   value val, val2;
 
+  val2 = test_builtin("coerce", 2, arc_intern_cstr(&c, "rational"),
+		      arc_mkstringc(&c, "1/2"));
+  fail_unless(TYPE(val2) == T_RATIONAL);
+  fail_unless(mpz_get_ui(mpq_numref(REP(val2)._rational)) == 1);
+  fail_unless(mpz_get_ui(mpq_denref(REP(val2)._rational)) == 2);
+
   val = arc_mkflonum(&c, 0.5);
   val2 = test_builtin("coerce", 2, arc_intern_cstr(&c, "rational"), val);
   fail_unless(TYPE(val2) == T_RATIONAL);
