@@ -707,6 +707,40 @@ static value coerce_rational(arc *c, value obj, value argv)
     mpq_set_d(REP(val)._rational, REP(obj)._flonum);
     return(val);
   case T_STRING:
+    {
+      value base = INT2FIX(10), numer, denom;
+      int slashpos=-1, i;
+
+      /* Arcueid extension, bases from 2 to 36 are supported */
+      if (VECLEN(argv) >= 3) {
+	base = VINDEX(argv, 2);
+	if (TYPE(base) != T_FIXNUM) {
+	  c->signal_error(c, "string->rational, invalid base specifier %O", obj);
+	  return(CNIL);
+	}
+
+	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
+	  c->signal_error(c, "string->rational, out of range base %O", obj);
+	  return(CNIL);
+	}
+      }
+      for (i=0; i<arc_strlen(c, obj); i++) {
+	if (arc_strindex(c, obj, i) == '/') {
+	  slashpos = i;
+	  break;
+	}
+      }
+      /* No slash, convert as integer */
+      if (slashpos < 1)
+	return(coerce_integer(c, obj, argv));
+      numer = str2int(c, obj, base, 0, slashpos);
+      denom = str2int(c, obj, base, slashpos+1, arc_strlen(c, obj));
+      if (numer == CNIL || denom == CNIL) {
+	c->signal_error(c, "string->flonum cannot convert %O to a rational", obj);
+	return(CNIL);
+      }
+      return(__arc_div2(c, numer, denom));
+    }
   default:
     c->signal_error(c, "cannot coerce %O to rational type", obj);
     break;
