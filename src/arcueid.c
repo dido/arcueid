@@ -452,12 +452,12 @@ static value coerce_integer(arc *c, value obj, value argv)
       if (VECLEN(argv) >= 3) {
 	base = VINDEX(argv, 2);
 	if (TYPE(base) != T_FIXNUM) {
-	  c->signal_error(c, "string->number, invalid base specifier %O", obj);
+	  c->signal_error(c, "string->int, invalid base specifier %O", obj);
 	  return(CNIL);
 	}
 
 	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
-	  c->signal_error(c, "string->number, out of range base %O", obj);
+	  c->signal_error(c, "string->int, out of range base %O", obj);
 	  return(CNIL);
 	}
       }
@@ -496,11 +496,31 @@ static value coerce_integer(arc *c, value obj, value argv)
       if (negative)
 	res = __arc_neg(c, res);
       return(res);
-    noconv:
-      c->signal_error(c, "string->number, cannot convert %O", obj);
-      return(CNIL);
     }
+    noconv:
+      /* fall through */
+  default:
+    c->signal_error(c, "string->int cannot coerce %O to integer type", obj);
     break;
+  }
+  return(CNIL);
+}
+
+static value coerce_flonum(arc *c, value obj, value argv)
+{
+  switch (TYPE(obj)) {
+  case T_FLONUM:
+    /* null conversion */
+    return(obj);
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+    return(arc_mkflonum(c, arc_coerce_flonum(c, obj)));
+  case T_COMPLEX:
+    return((VECLEN(argv) >= 3 && VINDEX(argv, 2) == typesyms[IDX_im].sym) ?
+	   arc_mkflonum(c, REP(obj)._complex.im)
+	   : arc_mkflonum(c, REP(obj)._complex.re));
+  case T_STRING:
   default:
     c->signal_error(c, "cannot coerce %O to integer type", obj);
     break;
@@ -525,6 +545,11 @@ value arc_coerce(arc *c, value argv)
       || ntype == typesyms[IDX_int].sym) {
     return(coerce_integer(c, obj, argv));
   }
+
+  /* Flonum coercions */
+  if (ntype == typesyms[IDX_flonum].sym)
+    return(coerce_flonum(c, obj, argv));
+
   c->signal_error(c, "invalid coercion type specifier %O", ntype);
   return(CNIL);
 }
