@@ -21,6 +21,7 @@
 /* miscellaneous procedures and initialization */
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
@@ -440,6 +441,66 @@ static value coerce_integer(arc *c, value obj, value argv)
     return(res);
 #endif
   case T_STRING:
+    {
+      /* Tell me if this looks too much like glibc's implementation of
+	 strtol... */
+      value base = INT2FIX(10);
+      int strptr, save, negative, limit = arc_strlen(c, obj);
+      Rune r;
+
+      /* Arcueid extension, bases from 2 to 36 are supported */
+      if (VECLEN(argv) >= 3) {
+	base = VINDEX(argv, 2);
+	if (TYPE(base) != T_FIXNUM) {
+	  c->signal_error(c, "string->number, invalid base specifier %O", obj);
+	  return(CNIL);
+	}
+
+	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
+	  c->signal_error(c, "string->number, out of range base %O", obj);
+	  return(CNIL);
+	}
+      }
+
+      strptr = 0;
+      if (strptr >= limit)
+	goto noconv;
+      if (arc_strindex(c, obj, strptr) == '-') {
+	negative = 1;
+	++strptr;
+      } else if (arc_strindex(c, obj, strptr) == '+') {
+	negative = 0;
+	++strptr;
+      } else
+	negative = 0;
+      /* save the pointer so we can check later if anything happened */
+      save = strptr;
+      res = INT2FIX(0);
+      for (r = arc_strindex(c, obj, strptr); strptr < limit; r = arc_strindex(c, obj, ++strptr)) {
+	if (isdigit(r))
+	  r -= '0';
+	else if (isalpha(r))
+	  r = toupper(r) - 'A' + 10;
+	else
+	  goto noconv;
+	if (r > FIX2INT(base))
+	  goto noconv;
+	res = __arc_mul2(c, res, base);
+	res = __arc_add2(c, res, INT2FIX(r));
+      }
+
+      /* check if anything actually happened */
+      if (strptr == save)
+	goto noconv;
+
+      if (negative)
+	res = __arc_neg(c, res);
+      return(res);
+    noconv:
+      c->signal_error(c, "string->number, cannot convert %O", obj);
+      return(CNIL);
+    }
+    break;
   default:
     c->signal_error(c, "cannot coerce %O to integer type", obj);
     break;
