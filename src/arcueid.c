@@ -686,6 +686,35 @@ static value coerce_flonum(arc *c, value obj, value argv)
   return(CNIL);
 }
 
+static value coerce_rational(arc *c, value obj, value argv)
+{
+#ifdef HAVE_GMP_H
+  value val;
+
+  switch (TYPE(obj)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+    /* null conversion */
+    return(obj);
+  case T_COMPLEX:
+    obj = (VECLEN(argv) >= 3 && VINDEX(argv, 2) == typesyms[IDX_im].sym) ?
+      arc_mkflonum(c, REP(obj)._complex.im)
+      : arc_mkflonum(c, REP(obj)._complex.re);
+    /* fall through */
+  case T_FLONUM:
+    val = arc_mkrationall(c, 0, 1);
+    mpq_set_d(REP(val)._rational, REP(obj)._flonum);
+    return(val);
+  case T_STRING:
+  default:
+    c->signal_error(c, "cannot coerce %O to rational type", obj);
+    break;
+  }
+#endif
+  return(CNIL);
+}
+
 value arc_coerce(arc *c, value argv)
 {
   value obj, ntype;
@@ -707,6 +736,9 @@ value arc_coerce(arc *c, value argv)
   /* Flonum coercions */
   if (ntype == typesyms[IDX_flonum].sym)
     return(coerce_flonum(c, obj, argv));
+
+  if (ntype == typesyms[IDX_rational].sym)
+    return(coerce_rational(c, obj, argv));
 
   c->signal_error(c, "invalid coercion type specifier %O", ntype);
   return(CNIL);
