@@ -409,6 +409,21 @@ START_TEST(test_builtin_coerce_flonum)
   fail_unless(TYPE(val) == T_FLONUM);
   fail_unless(fabs(REP(val)._flonum - 4670.25) < 1e-6);
 
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "Inf"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(isinf(REP(val)._flonum));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "-Inf"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(isinf(REP(val)._flonum));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "NaN"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(isnan(REP(val)._flonum));
+
 }
 END_TEST
 
