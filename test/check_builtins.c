@@ -358,6 +358,57 @@ START_TEST(test_builtin_coerce_flonum)
 		     arc_mkcomplex(&c, 3.1416, 2.718));
   fail_unless(TYPE(val) == T_FLONUM);
   fail_unless(fabs(REP(val)._flonum - 2.718) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "3.1416"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 3.1416) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "+3.1416"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 3.1416) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "-3.1416"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - -3.1416) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "3.1416e2"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 3.1416e2) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "31.416e2"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 31.416e2) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "3.1416e-2"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 3.1416e-2) < 1e-6);
+
+  val = test_builtin("coerce", 3, INT2FIX(8), arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "1.23e4"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 5312.0) < 1e-6);
+
+  val = test_builtin("coerce", 3, INT2FIX(16), arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "1.23e4"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 1.14019775390625) < 1e-6);
+
+  val = test_builtin("coerce", 3, INT2FIX(16), arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "1.23e4p2"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 291.890625) < 1e-6);
+
+  val = test_builtin("coerce", 3, INT2FIX(16), arc_intern_cstr(&c, "flonum"),
+		     arc_mkstringc(&c, "1.23e4&3"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 4670.25) < 1e-6);
+
 }
 END_TEST
 
