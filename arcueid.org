@@ -144,14 +144,14 @@ notice and this notice are preserved.
                less than 25 (as per strtod).  The strings '±inf' and 'nan'
                with any capitalization, with or without a trailing .0, will
                create an infinity or a NaN respectively.
-       - [ ] Rational conversions [0/5]
-         - [ ] fixnum -> rational
+       - [-] Rational conversions [3/5]
+         - [X] fixnum -> rational
 	       This has no real effect.  It will still return the original
 	       fixnum, without error.         
-         - [ ] bignum -> rational
+         - [X] bignum -> rational
 	       Also has no effect, returning the original bignum without
 	       error.
-         - [ ] flonum -> rational
+         - [X] flonum -> rational
          - [ ] complex -> rational
 	       Extra argument for Im(z)
          - [ ] string -> rational, base specified as optional arg
@@ -195,7 +195,14 @@ notice and this notice are preserved.
          - [ ] cons -> vector
        - [ ] fixnum -> char (limit to 0 - 0x10FFFF)
        - [ ] string -> num
-	     Converts any string into a number of the appropriate type.
+	     Converts any string into a number of the appropriate
+	     type.  This should use the best available numeric type
+	     that is able to most accurately represent the value
+	     described by the string, e.g. if bignum support is not
+	     available, it should return very large numbers as floats,
+	     and rationals as floats, but if bignum support is
+	     available these should be represented as bignums or
+	     rationals.
      - [X] type
    - [X] Predicates [9/9]
      - [X] Less-than (<) *
