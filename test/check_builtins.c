@@ -326,6 +326,17 @@ START_TEST(test_builtin_coerce_int)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_flonum)
+{
+  value val;
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "flonum"),
+		     INT2FIX(31337));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 31337.0) < 1e-6);
+}
+END_TEST
+
 START_TEST(test_builtin_pow)
 {
   value val;
@@ -398,6 +409,7 @@ int main(void)
 
   tcase_add_test(tc_bif, test_builtin_type);
   tcase_add_test(tc_bif, test_builtin_coerce_int);
+  tcase_add_test(tc_bif, test_builtin_coerce_flonum);
 
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
