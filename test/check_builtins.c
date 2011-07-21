@@ -475,6 +475,36 @@ START_TEST(test_builtin_coerce_rational)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_complex)
+{
+  value val;
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "complex"),
+		     arc_mkstringc(&c, "1e-3+2e+2i"));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(REP(val)._complex.re - 1e-3) < 1e-6);
+  fail_unless(fabs(REP(val)._complex.im - 2e+2) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "complex"),
+		     arc_mkstringc(&c, "1-2e+2i"));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(REP(val)._complex.re - 1.0) < 1e-6);
+  fail_unless(fabs(REP(val)._complex.im - -2e+2) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "complex"),
+		     arc_mkstringc(&c, "15p3-2&-2j"));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(REP(val)._complex.re - 15.0e3) < 1e-6);
+  fail_unless(fabs(REP(val)._complex.im - -2e-2) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "complex"),
+		     cons(&c, INT2FIX(1), INT2FIX(2)));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(REP(val)._complex.re - 1.0) < 1e-6);
+  fail_unless(fabs(REP(val)._complex.im - 2.0) < 1e-6);
+}
+END_TEST
+
 START_TEST(test_builtin_pow)
 {
   value val;
@@ -549,6 +579,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_int);
   tcase_add_test(tc_bif, test_builtin_coerce_flonum);
   tcase_add_test(tc_bif, test_builtin_coerce_rational);
+  tcase_add_test(tc_bif, test_builtin_coerce_complex);
 
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
