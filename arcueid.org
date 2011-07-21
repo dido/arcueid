@@ -120,14 +120,14 @@ notice and this notice are preserved.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [1/2]
      - [ ] coerce [0/9]
-       - [-] Integer conversions [3/5]
+       - [-] Integer conversions [4/5]
 	     Note that fixnum and bignum may be used as aliases for int
          - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
          - [X] flonum -> int
 	       Either fixnum or bignum as needed.
          - [X] complex -> int
 	       optional argument for imaginary, use 'im
-         - [ ] rational -> int
+         - [X] rational -> int
 	       May return fixnum or bignum as needed
          - [ ] string -> int, base specified as optional arg
        - [ ] Flonum conversions [0/5]
