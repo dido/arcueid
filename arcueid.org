@@ -144,7 +144,7 @@ notice and this notice are preserved.
                less than 25 (as per strtod).  The strings '±inf' and 'nan'
                with any capitalization, with or without a trailing .0, will
                create an infinity or a NaN respectively.
-       - [-] Rational conversions [3/5]
+       - [-] Rational conversions [4/5]
          - [X] fixnum -> rational
 	       This has no real effect.  It will still return the original
 	       fixnum, without error.         
@@ -152,7 +152,7 @@ notice and this notice are preserved.
 	       Also has no effect, returning the original bignum without
 	       error.
          - [X] flonum -> rational
-         - [ ] complex -> rational
+         - [X] complex -> rational
 	       Extra argument for Im(z)
          - [ ] string -> rational, base specified as optional arg
 	       May return a fixnum or a bignum instead depending on the
