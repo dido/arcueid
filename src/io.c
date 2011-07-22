@@ -283,7 +283,7 @@ value arc_instring(arc *c, value str)
   return(fd);
 }
 
-value arc_outstring(arc *c, value str)
+value arc_outstring(arc *c)
 {
   return(arc_instring(c, arc_mkstringc(c, "")));
 }
