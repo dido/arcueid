@@ -505,6 +505,18 @@ START_TEST(test_builtin_coerce_complex)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_string)
+{
+  value val;
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "string"),
+		     arc_mkchar(&c, 0x86df));
+  fail_unless(TYPE(val) == T_STRING);
+  fail_unless(arc_strlen(&c, val) == 1);
+  fail_unless(arc_strindex(&c, val, 0) == 0x86df);
+}
+END_TEST
+
 START_TEST(test_builtin_pow)
 {
   value val;
@@ -580,6 +592,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_flonum);
   tcase_add_test(tc_bif, test_builtin_coerce_rational);
   tcase_add_test(tc_bif, test_builtin_coerce_complex);
+  tcase_add_test(tc_bif, test_builtin_coerce_string);
 
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
