@@ -810,6 +810,98 @@ value __arc_div2(arc *c, value arg1, value arg2)
   return(CNIL);
 }
 
+value __arc_mod2(arc *c, value arg1, value arg2)
+{
+  ldiv_t res;
+
+  if (TYPE(arg2) == T_FIXNUM && FIX2INT(arg2) == 0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    long varg1, varg2;
+
+    varg1 = FIX2INT(arg1);
+    varg2 = FIX2INT(arg2);
+
+    res = ldiv(varg1, varg2);
+    return(INT2FIX(res.rem));
+  } 
+
+#ifdef HAVE_GMP_H
+  else if ((TYPE(arg1) == T_BIGNUM && TYPE(arg2) == T_FIXNUM)
+	   || (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_BIGNUM)
+	   || (TYPE(arg1) == T_BIGNUM && TYPE(arg2) == T_BIGNUM)) {
+    mpz_t barg1, barg2;
+    value res, r2;
+
+    mpz_init(barg1);
+    mpz_init(barg2);
+    arc_coerce_bignum(c, arg1, &barg1);
+    arc_coerce_bignum(c, arg2, &barg2);
+    res = arc_mkbignuml(c, 0);
+    mpz_tdiv_r(REP(res)._bignum, barg1, barg2);
+    mpz_clear(barg1);
+    mpz_clear(barg2);
+    /* force to fixnum where possible */
+    r2 = arc_coerce_fixnum(c, res);
+    if (r2 == CNIL)
+      r2 = res;
+    return(r2);
+  }
+#endif
+
+  c->signal_error(c, "Invalid types for modulus");
+  return(CNIL);
+}
+
+value __arc_idiv2(arc *c, value arg1, value arg2)
+{
+  ldiv_t res;
+
+  if (TYPE(arg2) == T_FIXNUM && FIX2INT(arg2) == 0) {
+    c->signal_error(c, "Division by zero");
+    return(CNIL);
+  }
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    long varg1, varg2;
+
+    varg1 = FIX2INT(arg1);
+    varg2 = FIX2INT(arg2);
+
+    res = ldiv(varg1, varg2);
+    return(INT2FIX(res.quot));
+  } 
+
+#ifdef HAVE_GMP_H
+  else if ((TYPE(arg1) == T_BIGNUM && TYPE(arg2) == T_FIXNUM)
+	   || (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_BIGNUM)
+	   || (TYPE(arg1) == T_BIGNUM && TYPE(arg2) == T_BIGNUM)) {
+    mpz_t barg1, barg2;
+    value res, r2;
+
+    mpz_init(barg1);
+    mpz_init(barg2);
+    arc_coerce_bignum(c, arg1, &barg1);
+    arc_coerce_bignum(c, arg2, &barg2);
+    res = arc_mkbignuml(c, 0);
+    mpz_tdiv_q(REP(res)._bignum, barg1, barg2);
+    mpz_clear(barg1);
+    mpz_clear(barg2);
+    /* force to fixnum where possible */
+    r2 = arc_coerce_fixnum(c, res);
+    if (r2 == CNIL)
+      r2 = res;
+    return(r2);
+  }
+#endif
+
+  c->signal_error(c, "Invalid types for modulus");
+  return(CNIL);
+}
+
 /* Multiplies arg1 by 2^n and adds it to acc.  This is generally used
    for CIEL.  Note that acc is modified if it is a bignum! */
 value __arc_amul_2exp(arc *c, value acc, value arg1, int n)
@@ -1218,18 +1310,36 @@ value arc_exact(arc *c, value v)
   return((FIXNUM_P(v) || TYPE(v) == T_BIGNUM || TYPE(v) == T_RATIONAL) ? CTRUE : CNIL);
 }
 
-#if 0
-value arc_abs(arc *c, value v)
+value __arc_abs(arc *c, value v)
 {
+  value val;
+
   switch (TYPE(v)) {
   case T_FIXNUM:
-  case T_BIGNUM:
+    return(INT2FIX(ABS(FIX2INT(v))));
   case T_FLONUM:
+    return(arc_mkflonum(c, ABS(REP(v)._flonum)));
   case T_COMPLEX:
+    {
+      double complex v2;
+
+      v2 = REP(v)._complex.re + I*REP(v)._complex.im;
+      return(arc_mkflonum(c, cabs(v2)));
+    }
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    val = arc_mkbignuml(c, 0);
+    mpz_abs(REP(val)._bignum, REP(v)._bignum);
+    return(val);
   case T_RATIONAL:
-  }
-}
+    val = arc_mkrationall(c, 0, 1);
+    mpq_abs(REP(val)._rational, REP(v)._rational);
+    return(val);
 #endif
+  }
+    c->signal_error(c, "Invalid types for absolute value");
+  return(CNIL);
+}
 
 value arc_expt(arc *c, value a, value b)
 {
@@ -1332,4 +1442,21 @@ value arc_expt(arc *c, value a, value b)
   mpz_clear(adenom);
   return(result);
 #endif
+}
+
+static const char _itoa_lower_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+static const char _itoa_upper_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+value __arc_itoa(arc *c, value stream, value num, value base,
+			int uc, int sign)
+{
+  const char *digits = (uc) ? _itoa_upper_digits : _itoa_lower_digits;
+  value dig;
+
+  while (arc_numcmp(c, num, INT2FIX(0)) > 0) {
+    dig = __arc_mod2(c, num, base);
+    arc_writec_rune(c, (Rune)digits[FIX2INT(dig)], stream);
+    num = __arc_idiv2(c, num, base);
+  }
+  return(CNIL);
 }
