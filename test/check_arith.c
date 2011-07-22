@@ -1171,6 +1171,44 @@ START_TEST(test_div_misc)
 }
 END_TEST
 
+START_TEST(test_mod)
+{
+  value m;
+
+  m = __arc_mod2(&c, INT2FIX(14), INT2FIX(12));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(2));
+
+  m = __arc_mod2(&c, INT2FIX(-14), INT2FIX(12));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(10));
+
+  m = __arc_mod2(&c, INT2FIX(14), INT2FIX(-12));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(-10));
+
+  m = __arc_mod2(&c, INT2FIX(-14), INT2FIX(-12));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(-2));
+
+
+  m = __arc_mod2(&c, INT2FIX(89), INT2FIX(17));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(4));
+
+  m = __arc_mod2(&c, INT2FIX(-89), INT2FIX(17));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(13));
+
+  m = __arc_mod2(&c, INT2FIX(89), INT2FIX(-17));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(-13));
+
+  m = __arc_mod2(&c, INT2FIX(-89), INT2FIX(-17));
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(-4));
+}
+END_TEST
 
 START_TEST(test_sub_fixnum)
 {
@@ -1954,6 +1992,10 @@ int main(void)
   tcase_add_test(tc_ops, test_div_fixnum2complex);
 
   tcase_add_test(tc_ops, test_div_misc);
+
+
+  tcase_add_test(tc_ops, test_mod);
+
 
   tcase_add_test(tc_ops, test_add_fixnum);
   tcase_add_test(tc_ops, test_add_bignum);
