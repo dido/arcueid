@@ -31,8 +31,7 @@ extern value __arc_bitor2(arc *c, value arg1, value arg2);
 extern value __arc_bitxor2(arc *c, value arg1, value arg2);
 extern value __arc_amul_2exp(arc *c, value acc, value arg1, int n);
 
-extern value __arc_itoa(arc *c, value stream, value num, value base,
-			int uc, int sign);
+extern value __arc_itoa(arc *c, value num, value base, int uc, int sign);
 extern value __arc_abs(arc *c, value v);
 
 #endif
