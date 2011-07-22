@@ -426,7 +426,7 @@ extern void arc_print_string(arc *c, value str);
 extern value arc_infile(arc *c, value filename);
 extern value arc_outfile(arc *c, value filename, value xmode);
 extern value arc_instring(arc *c, value str);
-extern value arc_outstring(arc *c, value str);
+extern value arc_outstring(arc *c);
 extern value arc_fstr_inside(arc *c, value fstr);
 extern value arc_readb(arc *c, value fd);
 extern value arc_writeb(arc *c, value byte, value fd);
