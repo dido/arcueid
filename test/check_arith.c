@@ -1174,6 +1174,10 @@ END_TEST
 START_TEST(test_mod)
 {
   value m;
+#ifdef HAVE_GMP_H
+  value v1, v2;
+  mpz_t expected;
+#endif
 
   m = __arc_mod2(&c, INT2FIX(14), INT2FIX(12));
   fail_unless(TYPE(m) == T_FIXNUM);
@@ -1207,6 +1211,60 @@ START_TEST(test_mod)
   m = __arc_mod2(&c, INT2FIX(-89), INT2FIX(-17));
   fail_unless(TYPE(m) == T_FIXNUM);
   fail_unless(m == INT2FIX(-4));
+
+#ifdef HAVE_GMP_H
+  v1 = arc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v1)._bignum, "47469399417712610569126236648663416022569604314900505405835385663651109539391", 10);
+  v2 = arc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v2)._bignum, "337934473528578712729202", 10);
+  mpz_init(expected);
+  mpz_set_str(expected, "292503905893903802678877", 10);
+  m = __arc_mod2(&c, v1, v2);
+  fail_unless(TYPE(m) == T_BIGNUM);
+  fail_unless(mpz_cmp(expected, REP(m)._bignum) == 0);
+
+  mpz_set_str(REP(v1)._bignum, "-47469399417712610569126236648663416022569604314900505405835385663651109539391", 10);
+  mpz_set_str(REP(v2)._bignum, "337934473528578712729202", 10);
+  mpz_set_str(expected, "45430567634674910050325", 10);
+  m = __arc_mod2(&c, v1, v2);
+  fail_unless(TYPE(m) == T_BIGNUM);
+  fail_unless(mpz_cmp(expected, REP(m)._bignum) == 0);
+
+  mpz_set_str(REP(v1)._bignum, "47469399417712610569126236648663416022569604314900505405835385663651109539391", 10);
+  mpz_set_str(REP(v2)._bignum, "-337934473528578712729202", 10);
+  mpz_init(expected);
+  mpz_set_str(expected, "-45430567634674910050325", 10);
+  m = __arc_mod2(&c, v1, v2);
+  fail_unless(TYPE(m) == T_BIGNUM);
+  fail_unless(mpz_cmp(expected, REP(m)._bignum) == 0);
+
+  mpz_clear(expected);
+
+  mpz_set_str(REP(v1)._bignum, "47469399417712610569126236648663416022569604314900505405835385663651109539391", 10);
+  v2 = INT2FIX(948);
+  m = __arc_mod2(&c, v1, v2);
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(867));
+
+  mpz_set_str(REP(v1)._bignum, "-47469399417712610569126236648663416022569604314900505405835385663651109539391", 10);
+  v2 = INT2FIX(948);
+  m = __arc_mod2(&c, v1, v2);
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(81));
+
+  mpz_set_str(REP(v1)._bignum, "47469399417712610569126236648663416022569604314900505405835385663651109539391", 10);
+  v2 = INT2FIX(-948);
+  m = __arc_mod2(&c, v1, v2);
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(-81));
+
+  mpz_set_str(REP(v1)._bignum, "-47469399417712610569126236648663416022569604314900505405835385663651109539391", 10);
+  v2 = INT2FIX(-948);
+  m = __arc_mod2(&c, v1, v2);
+  fail_unless(TYPE(m) == T_FIXNUM);
+  fail_unless(m == INT2FIX(-867));
+
+#endif
 }
 END_TEST
 
