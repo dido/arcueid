@@ -574,7 +574,7 @@ static value coerce_complex(arc *c, value obj, value argv)
 
 static value coerce_string(arc *c, value obj, value argv)
 {
-  value val;
+  value val, base;
 
   switch (TYPE(obj)) {
   case T_STRING:
@@ -584,6 +584,10 @@ static value coerce_string(arc *c, value obj, value argv)
     val = arc_mkstringlen(c, 1);
     arc_strsetindex(c, val, 0, REP(obj)._char);
     return(val);
+  case T_FIXNUM:
+  case T_BIGNUM:
+    base = numeric_base(c, argv, "int->string");
+    return(__arc_itoa(c, obj, base, 0, 0));
   default:
     c->signal_error(c, "cannot coerce %O to string type", obj);
     break;
