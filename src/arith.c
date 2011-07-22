@@ -1450,22 +1450,35 @@ value arc_expt(arc *c, value a, value b)
 static const char _itoa_lower_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 static const char _itoa_upper_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-value __arc_itoa(arc *c, value stream, value onum, value base,
+value __arc_itoa(arc *c, value onum, value base,
 			int uc, int sf)
 {
   const char *digits = (uc) ? _itoa_upper_digits : _itoa_lower_digits;
-  value dig, num, sign;
+  value dig, num;
+  value str = arc_mkstringc(c, "");
+  int p, q, sign;
+  Rune t;
 
   num = __arc_abs(c, onum);
-  sign = arc_numcmp(c, onum, INT2FIX(0));
-  if (FIX2INT(sign) < 0)
-    arc_writec_rune(c, '-', stream);
-  else if (sf)
-    arc_writec_rune(c, '+', stream);
-  while (arc_numcmp(c, num, INT2FIX(0)) > 0) {
+  sign = FIX2INT(arc_numcmp(c, onum, INT2FIX(0)));
+  while (arc_numcmp(c, num, INT2FIX(0)) > INT2FIX(0)) {
     dig = __arc_mod2(c, num, base);
-    arc_writec_rune(c, (Rune)digits[FIX2INT(dig)], stream);
+    str = arc_strcatc(c, str, (Rune)digits[FIX2INT(dig)]);
     num = __arc_idiv2(c, num, base);
   }
-  return(CNIL);
+  /* sign goes at the end if it's present, since the digits come in
+     reversed. */
+  if (sign < 0)
+    str = arc_strcatc(c, str, (Rune)'-');
+  else if (sf)
+    str = arc_strcatc(c, str, (Rune)'+');
+  /* Reverse the string */
+  q = arc_strlen(c, str);
+  p = 0;
+  for (--q; p < q; ++p, --q) {
+    t = arc_strindex(c, str, p);
+    arc_strsetindex(c, str, p, arc_strindex(c, str, q));
+    arc_strsetindex(c, str, q, t);
+  }
+  return(str);
 }
