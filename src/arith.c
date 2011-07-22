@@ -226,7 +226,7 @@ value arc_coerce_fixnum(arc *c, value v)
       mpz_t temp;
 
       mpz_init(temp);
-      mpz_cdiv_q(temp,
+      mpz_fdiv_q(temp,
 		 mpq_numref(REP(v)._rational),
 		 mpq_denref(REP(v)._rational));
       if (mpz_cmp_si(temp, FIXNUM_MAX) <= 0
@@ -890,7 +890,7 @@ value __arc_idiv2(arc *c, value arg1, value arg2)
     arc_coerce_bignum(c, arg1, &barg1);
     arc_coerce_bignum(c, arg2, &barg2);
     res = arc_mkbignuml(c, 0);
-    mpz_tdiv_q(REP(res)._bignum, barg1, barg2);
+    mpz_fdiv_q(REP(res)._bignum, barg1, barg2);
     mpz_clear(barg1);
     mpz_clear(barg2);
     /* force to fixnum where possible */
