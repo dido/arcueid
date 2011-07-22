@@ -167,13 +167,13 @@ notice and this notice are preserved.
          - [X] string -> complex
 	       May return a flonum if no imaginary part is specified.
 	 - [X] cons -> complex
-       - [-] String conversions [3/9]
+       - [-] String conversions [4/9]
          - [X] char -> string
          - [X] fixnum -> string
 	       Has extra argument specifying base
          - [X] bignum -> string
 	       Has extra argument specifying base
-         - [ ] rational -> string
+         - [X] rational -> string
 	       Has extra argument specifying base
          - [ ] flonum -> string
          - [ ] complex -> string
