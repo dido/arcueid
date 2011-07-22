@@ -221,12 +221,12 @@ notice and this notice are preserved.
      - [X] cons (implemented as a virtual machine instruction)
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
-   - [-] Math operations [4/8]
+   - [-] Math operations [5/8]
      - [X] * Multiplication (virtual machine instruction)
      - [X] + Addition (virtual machine instruction)
      - [X] - Subtraction (virtual machine instruction)
      - [X] / Division (virtual machine instruction)
-     - [ ] integer division
+     - [X] idiv integer division
      - [-] Arc3-current functions [2/5]
        - [X] expt
        - [X] mod
