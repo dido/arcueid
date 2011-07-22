@@ -92,6 +92,37 @@ enum {
   IDX_num
 };
 
+value __arc_init_typesyms(arc *c)
+{
+  int i;
+
+  for (i=0; typesyms[i].name != NULL; i++)
+    typesyms[i].sym = arc_intern_cstr(c, typesyms[i].name);
+  return(CNIL);
+
+}
+
+/* Determine numeric base from argument 2 of a coerce */
+static value numeric_base(arc *c, value argv, const char *caller)
+{
+  value base = INT2FIX(10);
+
+  /* Arcueid extension, bases from 2 to 36 are supported */
+  if (VECLEN(argv) >= 3) {
+    base = VINDEX(argv, 2);
+    if (TYPE(base) != T_FIXNUM) {
+      c->signal_error(c, "%s, invalid base specifier %O", caller, base);
+      return(CNIL);
+    }
+
+    if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
+      c->signal_error(c, "%s, out of range base %O", caller, base);
+      return(CNIL);
+    }
+  }
+  return(base);
+}
+
 value arc_type(arc *c, value obj)
 {
   switch (TYPE(obj)) {
@@ -254,21 +285,7 @@ static value coerce_integer(arc *c, value obj, value argv)
     return(res);
 #endif
   case T_STRING: {
-    value base = INT2FIX(10);
-
-    /* Arcueid extension, bases from 2 to 36 are supported */
-    if (VECLEN(argv) >= 3) {
-      base = VINDEX(argv, 2);
-      if (TYPE(base) != T_FIXNUM) {
-	c->signal_error(c, "string->int, invalid base specifier %O", obj);
-	return(CNIL);
-      }
-
-      if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
-	c->signal_error(c, "string->int, out of range base %O", obj);
-	return(CNIL);
-      }
-    }
+    value base = numeric_base(c, argv, "string->int");
 
     res = str2int(c, obj, base, 0, arc_strlen(c, obj));
     if (res != CNIL)
@@ -421,21 +438,7 @@ static value coerce_flonum(arc *c, value obj, value argv)
 	   : arc_mkflonum(c, REP(obj)._complex.re));
   case T_STRING:
     {
-      value val, base = INT2FIX(10);
-
-      /* Arcueid extension, bases from 2 to 36 are supported */
-      if (VECLEN(argv) >= 3) {
-	base = VINDEX(argv, 2);
-	if (TYPE(base) != T_FIXNUM) {
-	  c->signal_error(c, "string->flonum, invalid base specifier %O", obj);
-	  return(CNIL);
-	}
-
-	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
-	  c->signal_error(c, "string->flonum, out of range base %O", obj);
-	  return(CNIL);
-	}
-      }
+      value val, base = numeric_base(c, argv, "string->flonum");
 
       val = str2flo(c, obj, base, 0, arc_strlen(c, obj));
       if (val == CNIL) {
@@ -474,22 +477,9 @@ static value coerce_rational(arc *c, value obj, value argv)
     return(val);
   case T_STRING:
     {
-      value base = INT2FIX(10), numer, denom;
+      value numer, denom, base = numeric_base(c, argv, "string->rational");
       int slashpos=-1, i;
 
-      /* Arcueid extension, bases from 2 to 36 are supported */
-      if (VECLEN(argv) >= 3) {
-	base = VINDEX(argv, 2);
-	if (TYPE(base) != T_FIXNUM) {
-	  c->signal_error(c, "string->rational, invalid base specifier %O", obj);
-	  return(CNIL);
-	}
-
-	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
-	  c->signal_error(c, "string->rational, out of range base %O", obj);
-	  return(CNIL);
-	}
-      }
       for (i=0; i<arc_strlen(c, obj); i++) {
 	if (arc_strindex(c, obj, i) == '/') {
 	  slashpos = i;
@@ -537,23 +527,10 @@ static value coerce_complex(arc *c, value obj, value argv)
 	 end of the string.   Once we know where the parts are we can
 	 use the functions for extracting floating point numbers to
 	 get the real and imaginary parts of the number. */
-      value base = INT2FIX(10), re, im;
+      value re, im, base = numeric_base(c, argv, "string->complex");
       int reend = -1, i, len, b;
       Rune r;
 
-      /* Arcueid extension, bases from 2 to 36 are supported */
-      if (VECLEN(argv) >= 3) {
-	base = VINDEX(argv, 2);
-	if (TYPE(base) != T_FIXNUM) {
-	  c->signal_error(c, "string->complex, invalid base specifier %O", obj);
-	  return(CNIL);
-	}
-
-	if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
-	  c->signal_error(c, "string->complex, out of range base %O", obj);
-	  return(CNIL);
-	}
-      }
       b = FIX2INT(base);
 
       len = arc_strlen(c, obj);
@@ -629,12 +606,3 @@ value arc_coerce(arc *c, value argv)
   return(CNIL);
 }
 
-value __arc_init_typesyms(arc *c)
-{
-  int i;
-
-  for (i=0; typesyms[i].name != NULL; i++)
-    typesyms[i].sym = arc_intern_cstr(c, typesyms[i].name);
-  return(CNIL);
-
-}
