@@ -227,9 +227,9 @@ notice and this notice are preserved.
      - [X] - Subtraction (virtual machine instruction)
      - [X] / Division (virtual machine instruction)
      - [ ] integer division
-     - [-] Arc3-current functions [1/5]
+     - [-] Arc3-current functions [2/5]
        - [X] expt
-       - [ ] mod
+       - [X] mod
        - [ ] rand
        - [ ] sqrt
        - [ ] trunc
