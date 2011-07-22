@@ -1450,12 +1450,18 @@ value arc_expt(arc *c, value a, value b)
 static const char _itoa_lower_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 static const char _itoa_upper_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-value __arc_itoa(arc *c, value stream, value num, value base,
-			int uc, int sign)
+value __arc_itoa(arc *c, value stream, value onum, value base,
+			int uc, int sf)
 {
   const char *digits = (uc) ? _itoa_upper_digits : _itoa_lower_digits;
-  value dig;
+  value dig, num, sign;
 
+  num = __arc_abs(c, onum);
+  sign = arc_numcmp(c, onum, INT2FIX(0));
+  if (FIX2INT(sign) < 0)
+    arc_writec_rune(c, '-', stream);
+  else if (sf)
+    arc_writec_rune(c, '+', stream);
   while (arc_numcmp(c, num, INT2FIX(0)) > 0) {
     dig = __arc_mod2(c, num, base);
     arc_writec_rune(c, (Rune)digits[FIX2INT(dig)], stream);
