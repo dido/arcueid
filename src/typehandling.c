@@ -588,6 +588,19 @@ static value coerce_string(arc *c, value obj, value argv)
   case T_BIGNUM:
     base = numeric_base(c, argv, "int->string");
     return(__arc_itoa(c, obj, base, 0, 0));
+  case T_RATIONAL:
+    {
+      value numstr, denstr;
+      base = numeric_base(c, argv, "rational->string");
+      numstr = arc_mkbignuml(c, 0);
+      mpz_set(REP(numstr)._bignum, mpq_numref(REP(obj)._rational));
+      numstr = __arc_itoa(c, numstr, base, 0, 0);
+      numstr = arc_strcatc(c, numstr, '/');
+      denstr = arc_mkbignuml(c, 0);
+      mpz_set(REP(denstr)._bignum, mpq_denref(REP(obj)._rational));
+      denstr = __arc_itoa(c, denstr, base, 0, 0);
+      return(arc_strcat(c, numstr, denstr));
+    }
   default:
     c->signal_error(c, "cannot coerce %O to string type", obj);
     break;
