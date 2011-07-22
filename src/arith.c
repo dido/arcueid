@@ -27,6 +27,7 @@
 #include "utf.h"
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
+#define SGN(x) (((x)>=0)?(1):(-(1)))
 
 /* Type constructors */
 value arc_mkflonum(arc *c, double val)
@@ -824,8 +825,10 @@ value __arc_mod2(arc *c, value arg1, value arg2)
 
     varg1 = FIX2INT(arg1);
     varg2 = FIX2INT(arg2);
-
     res = ldiv(varg1, varg2);
+    /* Corrections to make the modulo Euclidean */
+    if ((varg1 < 0 && varg2 > 0) || (varg1 > 0 && varg2 < 0))
+      res = ldiv(res.rem + varg2, varg2);
     return(INT2FIX(res.rem));
   } 
 
@@ -841,7 +844,7 @@ value __arc_mod2(arc *c, value arg1, value arg2)
     arc_coerce_bignum(c, arg1, &barg1);
     arc_coerce_bignum(c, arg2, &barg2);
     res = arc_mkbignuml(c, 0);
-    mpz_tdiv_r(REP(res)._bignum, barg1, barg2);
+    mpz_fdiv_r(REP(res)._bignum, barg1, barg2);
     mpz_clear(barg1);
     mpz_clear(barg2);
     /* force to fixnum where possible */
