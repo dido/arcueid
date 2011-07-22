@@ -25,9 +25,13 @@ extern value __arc_sub2(arc *c, value arg1, value arg2);
 extern value __arc_mul2(arc *c, value arg1, value arg2);
 extern value __arc_div2(arc *c, value arg1, value arg2);
 extern value __arc_mod2(arc *c, value arg1, value arg2);
+extern value __arc_idiv2(arc *c, value arg1, value arg2);
 extern value __arc_bitand2(arc *c, value arg1, value arg2);
 extern value __arc_bitor2(arc *c, value arg1, value arg2);
 extern value __arc_bitxor2(arc *c, value arg1, value arg2);
 extern value __arc_amul_2exp(arc *c, value acc, value arg1, int n);
+
+extern value __arc_itoa(arc *c, value stream, value num, value base,
+			int uc, int sign);
 
 #endif
