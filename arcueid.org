@@ -221,24 +221,27 @@ notice and this notice are preserved.
      - [X] cons (implemented as a virtual machine instruction)
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
-   - [-] Math operations [4/7]
+   - [-] Math operations [4/8]
      - [X] * Multiplication (virtual machine instruction)
      - [X] + Addition (virtual machine instruction)
      - [X] - Subtraction (virtual machine instruction)
      - [X] / Division (virtual machine instruction)
+     - [ ] integer division
      - [-] Arc3-current functions [1/5]
        - [X] expt
        - [ ] mod
        - [ ] rand
        - [ ] sqrt
        - [ ] trunc
-     - [ ] Complex arithmetic [0/5]
+     - [ ] Complex arithmetic [0/6]
        - [ ] real
        - [ ] imag
        - [ ] sreal
        - [ ] simag
        - [ ] conjugate
-     - [-] C99 math.h functions (Arcueid only) [1/37]
+       - [ ] arg -- complex argument
+     - [-] C99 math.h functions (Arcueid only) [2/37]
+       - [X] abs -- works for all numeric types
        - [ ] acos
        - [ ] acosh
        - [ ] asin
@@ -254,7 +257,6 @@ notice and this notice are preserved.
        - [ ] erfc
        - [ ] exp
        - [ ] expm1
-       - [ ] abs (fabs)
        - [ ] fmod
        - [ ] frexp
        - [ ] hypot
