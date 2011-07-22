@@ -625,6 +625,13 @@ START_TEST(test_builtin_mod)
 }
 END_TEST
 
+START_TEST(test_builtin_idiv)
+{
+  /* We don't need to test this one too exhaustively */
+  fail_unless(test_builtin("idiv", 2, INT2FIX(12), INT2FIX(14)) == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -654,6 +661,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_complex);
   tcase_add_test(tc_bif, test_builtin_coerce_string);
 
+  tcase_add_test(tc_bif, test_builtin_idiv);
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
   tcase_add_test(tc_bif, test_builtin_mod);
