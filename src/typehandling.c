@@ -618,6 +618,26 @@ static value coerce_string(arc *c, value obj, value argv)
       denstr = __arc_itoa(c, denstr, base, 0, 0);
       return(arc_strcat(c, numstr, denstr));
     }
+  case T_COMPLEX:
+    {
+      /* XXX - radix is ignored */
+      char *buf;
+      int bufsize = 32, n;
+
+      for (;;) {
+	buf = (char *)alloca(bufsize*sizeof(char));
+	n = snprintf(buf, bufsize, "%lf%+lfi", REP(obj)._complex.re,
+		     REP(obj)._complex.im);
+	if (n > 1 && n < bufsize)
+	  break;
+	if (n > -1)		/* glibc 2.1 */
+	  bufsize = n+1;
+	else			/* glibc 2.0 */
+	  bufsize *= 2;
+	/* next loop iteration will allocate more memory if needed */
+      }
+      return(arc_mkstringc(c, buf));
+    }
   case T_FLONUM:
     {
       /* XXX - radix is ignored */
