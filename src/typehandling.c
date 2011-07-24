@@ -667,6 +667,16 @@ static value coerce_string(arc *c, value obj, value argv)
       cdrstr = coerce_string(c, cdr(obj), argv);
       return(arc_strcat(c, carstr, cdrstr));
     }
+  case T_VECTOR:
+    {
+      value str;
+      int i;
+
+      str = arc_mkstringc(c, "");
+      for (i=0; i<VECLEN(obj); i++)
+	str = arc_strcat(c, str, coerce_string(c, VINDEX(obj, i), argv));
+      return(str);
+    }
   default:
     c->signal_error(c, "cannot coerce %O to string type", obj);
     break;
