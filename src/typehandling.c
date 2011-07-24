@@ -594,6 +594,8 @@ static value coerce_string(arc *c, value obj, value argv)
   value val, base;
 
   switch (TYPE(obj)) {
+  case T_NIL:
+    return(arc_mkstringc(c, ""));
   case T_STRING:
     return(obj);
   case T_CHAR:
@@ -656,6 +658,14 @@ static value coerce_string(arc *c, value obj, value argv)
 	/* next loop iteration will allocate more memory if needed */
       }
       return(arc_mkstringc(c, buf));
+    }
+  case T_CONS:
+    {
+      value carstr, cdrstr;
+
+      carstr = coerce_string(c, car(obj), argv);
+      cdrstr = coerce_string(c, cdr(obj), argv);
+      return(arc_strcat(c, carstr, cdrstr));
     }
   default:
     c->signal_error(c, "cannot coerce %O to string type", obj);
