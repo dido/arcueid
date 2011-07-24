@@ -22,9 +22,26 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 #include "arcueid.h"
 #include "arith.h"
 #include "../config.h"
+
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
 
 static struct {
   char *name;
@@ -600,6 +617,25 @@ static value coerce_string(arc *c, value obj, value argv)
       mpz_set(REP(denstr)._bignum, mpq_denref(REP(obj)._rational));
       denstr = __arc_itoa(c, denstr, base, 0, 0);
       return(arc_strcat(c, numstr, denstr));
+    }
+  case T_FLONUM:
+    {
+      /* XXX - radix is ignored */
+      char *buf;
+      int bufsize = 32, n;
+
+      for (;;) {
+	buf = (char *)alloca(bufsize*sizeof(char));
+	n = snprintf(buf, bufsize, "%lf", REP(obj)._flonum);
+	if (n > 1 && n < bufsize)
+	  break;
+	if (n > -1)		/* glibc 2.1 */
+	  bufsize = n+1;
+	else			/* glibc 2.0 */
+	  bufsize *= 2;
+	/* next loop iteration will allocate more memory if needed */
+      }
+      return(arc_mkstringc(c, buf));
     }
   default:
     c->signal_error(c, "cannot coerce %O to string type", obj);
