@@ -167,7 +167,7 @@ notice and this notice are preserved.
          - [X] string -> complex
 	       May return a flonum if no imaginary part is specified.
 	 - [X] cons -> complex
-       - [-] String conversions [7/10]
+       - [-] String conversions [8/10]
 	 - [X] nil -> string
          - [X] char -> string
          - [X] fixnum -> string
@@ -178,7 +178,7 @@ notice and this notice are preserved.
 	       Has extra argument specifying base
          - [X] flonum -> string
          - [X] complex -> string
-         - [ ] cons -> string
+         - [X] cons -> string
          - [ ] vector -> string
          - [ ] symbol -> string
        - [ ] Cons conversions [0/4]
