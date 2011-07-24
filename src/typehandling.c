@@ -677,6 +677,8 @@ static value coerce_string(arc *c, value obj, value argv)
 	str = arc_strcat(c, str, coerce_string(c, VINDEX(obj, i), argv));
       return(str);
     }
+  case T_SYMBOL:
+    return(arc_sym2name(c, obj));
   default:
     c->signal_error(c, "cannot coerce %O to string type", obj);
     break;
