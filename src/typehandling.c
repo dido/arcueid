@@ -718,6 +718,16 @@ value coerce_cons(arc *c, value obj, value argv)
 	ret = cons(c, VINDEX(obj, i), ret);
       return(ret);
     }
+  case T_STRING:
+    {
+      /* Step through the string backwards to generate the list */
+      int i;
+      value ret = CNIL;
+
+      for (i=arc_strlen(c, obj)-1; i>=0; i--)
+	ret = cons(c, arc_mkchar(c, arc_strindex(c, obj, i)), ret);
+      return(ret);
+    }
   default:
     c->signal_error(c, "cannot coerce %O to cons type", obj);
     break;
