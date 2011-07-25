@@ -614,6 +614,35 @@ START_TEST(test_builtin_coerce_string)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_cons)
+{
+  value val;
+
+#ifdef HAVE_GMP_H
+  {
+    value expect;
+
+    val = arc_mkrationall(&c, 1, 2);
+    val = test_builtin("coerce", 2, arc_intern_cstr(&c, "cons"), val);
+    fail_unless(car(val) == INT2FIX(1));
+    fail_unless(cdr(val) == INT2FIX(2));
+
+    val = arc_mkrationall(&c, 1, 2);
+    mpq_set_str(REP(val)._rational, "33432311598195032051244152090146991671992470962663769691565787342862839974874/316026798634956773167298493198184647803", 10);
+    val = test_builtin("coerce", 2, arc_intern_cstr(&c, "cons"), val);
+    fail_unless(TYPE(car(val)) == T_BIGNUM);
+    fail_unless(TYPE(cdr(val)) == T_BIGNUM);
+    expect = arc_mkbignuml(&c, 0);
+    mpz_set_str(REP(expect)._bignum, "33432311598195032051244152090146991671992470962663769691565787342862839974874", 10);
+    fail_unless(arc_cmp(&c, car(val), expect) == INT2FIX(0));
+    mpz_set_str(REP(expect)._bignum, "316026798634956773167298493198184647803", 10);
+    fail_unless(arc_cmp(&c, cdr(val), expect) == INT2FIX(0));
+
+  }
+#endif
+}
+END_TEST
+
 START_TEST(test_builtin_abs)
 {
   value val;
@@ -757,6 +786,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_rational);
   tcase_add_test(tc_bif, test_builtin_coerce_complex);
   tcase_add_test(tc_bif, test_builtin_coerce_string);
+  tcase_add_test(tc_bif, test_builtin_coerce_cons);
 
   tcase_add_test(tc_bif, test_builtin_idiv);
   tcase_add_test(tc_bif, test_builtin_expt);
