@@ -778,6 +778,24 @@ value coerce_vector(arc *c, value obj, value argv)
 	VINDEX(vec, i) = arc_mkchar(c, arc_strindex(c, obj, i));
       return(vec);
     }
+  case T_CONS:
+    {
+      int curlen = 16, idx = 0;
+      value vec = arc_mkvector(c, curlen), elem;
+
+      for (; obj != CNIL; obj = cdr(obj)) {
+	elem = car(obj);
+	if (idx > curlen) {
+	  curlen *= 2;
+	  vec = arc_growvector(c, vec, curlen);
+	}
+	VINDEX(vec, idx) = elem;
+	++idx;
+      }
+      if (curlen != idx)
+	vec = arc_growvector(c, vec, idx);
+      return(vec);
+    }
   default:
     c->signal_error(c, "cannot coerce %O to vector type", obj);
     break;
