@@ -701,6 +701,23 @@ START_TEST(test_builtin_coerce_sym)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_vector)
+{
+  value val;
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "vector"),
+		     arc_mkstringc(&c, "abc"));
+  fail_unless(TYPE(val) == T_VECTOR);
+  fail_unless(VECLEN(val) == 3);
+  fail_unless(TYPE(VINDEX(val, 0)) == T_CHAR);
+  fail_unless(REP(VINDEX(val, 0))._char == 'a');
+  fail_unless(TYPE(VINDEX(val, 1)) == T_CHAR);
+  fail_unless(REP(VINDEX(val, 1))._char == 'b');
+  fail_unless(TYPE(VINDEX(val, 2)) == T_CHAR);
+  fail_unless(REP(VINDEX(val, 2))._char == 'c');
+}
+END_TEST
+
 START_TEST(test_builtin_abs)
 {
   value val;
@@ -846,6 +863,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_string);
   tcase_add_test(tc_bif, test_builtin_coerce_cons);
   tcase_add_test(tc_bif, test_builtin_coerce_sym);
+  tcase_add_test(tc_bif, test_builtin_coerce_vector);
 
   tcase_add_test(tc_bif, test_builtin_idiv);
   tcase_add_test(tc_bif, test_builtin_expt);
