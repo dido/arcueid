@@ -156,7 +156,7 @@ value arc_growvector(arc *c, value vect, int newlength)
   len = REP(vect)._vector.length;
   if (len > newlength)
     len = newlength;
-  memcpy(REP(vect)._vector.data, REP(newvect)._vector.data, len);
+  memcpy(REP(newvect)._vector.data, REP(vect)._vector.data, sizeof(value)*len);
   c->free_block(c, (void *)vect);
   return(newvect);
 }
