@@ -682,6 +682,22 @@ START_TEST(test_builtin_coerce_sym)
 		     arc_mkchar(&c, 'a'));
   fail_unless(TYPE(val) == T_SYMBOL);
   fail_unless(val == arc_intern_cstr(&c, "a"));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "sym"),
+		     arc_mkstringc(&c, "foo"));
+  fail_unless(TYPE(val) == T_SYMBOL);
+  fail_unless(val == arc_intern_cstr(&c, "foo"));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "sym"),
+		     arc_mkstringc(&c, "nil"));
+  fail_unless(TYPE(val) == T_NIL);
+  fail_unless(val == CNIL);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "sym"),
+		     arc_mkstringc(&c, "t"));
+  fail_unless(TYPE(val) == T_TRUE);
+  fail_unless(val == CTRUE);
+
 }
 END_TEST
 
