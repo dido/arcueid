@@ -106,7 +106,7 @@ enum {
   IDX_unknown,
   IDX_re,
   IDX_im,
-  IDX_num
+  IDX_num,
 };
 
 value __arc_init_typesyms(arc *c)
@@ -686,6 +686,32 @@ static value coerce_string(arc *c, value obj, value argv)
   return(CNIL);
 }
 
+value coerce_cons(arc *c, value obj, value argv)
+{
+  switch(TYPE(obj)) {
+  case T_RATIONAL:
+    {
+      value num, den, t;
+
+      num = arc_mkbignuml(c, 0);
+      mpz_set(REP(num)._bignum, mpq_numref(REP(obj)._rational));
+      t = arc_coerce_fixnum(c, num);
+      if (t != CNIL)
+	num = t;
+      den = arc_mkbignuml(c, 0);
+      mpz_set(REP(den)._bignum, mpq_denref(REP(obj)._rational));
+      t = arc_coerce_fixnum(c, den);
+      if (t != CNIL)
+	den = t;
+      return(cons(c, num, den));
+    }
+  default:
+    c->signal_error(c, "cannot coerce %O to cons type", obj);
+    break;
+  }
+  return(CNIL);
+}
+
 value arc_coerce(arc *c, value argv)
 {
   value obj, ntype;
@@ -719,6 +745,10 @@ value arc_coerce(arc *c, value argv)
   /* String coercions */
   if (ntype == typesyms[IDX_string].sym)
     return(coerce_string(c, obj, argv));
+
+  /* Cons coercions */
+  if (ntype == typesyms[IDX_cons].sym)
+    return(coerce_cons(c, obj, argv));
 
   c->signal_error(c, "invalid coercion type specifier %O", ntype);
   return(CNIL);
