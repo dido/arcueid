@@ -618,18 +618,26 @@ START_TEST(test_builtin_coerce_cons)
 {
   value val;
 
+  val = arc_mkcomplex(&c, 3.1416, 2.718);
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "cons"), val);
+  fail_unless(TYPE(val) == T_CONS);
+  fail_unless(fabs(REP(car(val))._flonum - 3.1416) < 1e-6);
+  fail_unless(fabs(REP(cdr(val))._flonum - 2.718) < 1e-6);
+
 #ifdef HAVE_GMP_H
   {
     value expect;
 
     val = arc_mkrationall(&c, 1, 2);
     val = test_builtin("coerce", 2, arc_intern_cstr(&c, "cons"), val);
+    fail_unless(TYPE(val) == T_CONS);
     fail_unless(car(val) == INT2FIX(1));
     fail_unless(cdr(val) == INT2FIX(2));
 
     val = arc_mkrationall(&c, 1, 2);
     mpq_set_str(REP(val)._rational, "33432311598195032051244152090146991671992470962663769691565787342862839974874/316026798634956773167298493198184647803", 10);
     val = test_builtin("coerce", 2, arc_intern_cstr(&c, "cons"), val);
+    fail_unless(TYPE(val) == T_CONS);
     fail_unless(TYPE(car(val)) == T_BIGNUM);
     fail_unless(TYPE(cdr(val)) == T_BIGNUM);
     expect = arc_mkbignuml(&c, 0);
