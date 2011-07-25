@@ -118,8 +118,8 @@ notice and this notice are preserved.
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
-   - [-] Type handling [1/2]
-     - [-] coerce [5/10]
+   - [-] Type handling [1/5]
+     - [-] coerce [5/11]
        - [X] Integer conversions [5/5]
 	     Note that fixnum and bignum may be used as aliases for int
          - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
@@ -181,11 +181,11 @@ notice and this notice are preserved.
          - [X] cons -> string
          - [X] vector -> string
          - [X] symbol -> string
-       - [ ] Cons conversions [0/4]
-         - [ ] rational -> cons
+       - [-] Cons conversions [2/4]
+         - [X] rational -> cons
 	       car = numerator, cdr = denominator, could be fixnums or
 	       bignums as needed.
-         - [ ] complex -> cons
+         - [X] complex -> cons
 	       car = Re(z), cdr = Im(z)
          - [ ] vector -> cons
          - [ ] string -> cons (char list)
@@ -205,7 +205,11 @@ notice and this notice are preserved.
 	     and rationals as floats, but if bignum support is
 	     available these should be represented as bignums or
 	     rationals.
+       - [ ] string -> sym
      - [X] type
+     - [ ] annotate
+     - [ ] rep
+     - [ ] sym
    - [X] Predicates [9/9]
      - [X] Less-than (<) *
      - [X] Greater-than (>) *
