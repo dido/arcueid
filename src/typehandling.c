@@ -75,6 +75,8 @@ static struct {
   { "re", CNIL },
   { "im", CNIL },
   { "num", CNIL },
+  { "nil", CNIL },
+  { "t", CNIL },
   { NULL, CNIL }
 };
 
@@ -107,6 +109,8 @@ enum {
   IDX_re,
   IDX_im,
   IDX_num,
+  IDX_nil,
+  IDX_t
 };
 
 value __arc_init_typesyms(arc *c)
@@ -689,6 +693,8 @@ static value coerce_string(arc *c, value obj, value argv)
 value coerce_cons(arc *c, value obj, value argv)
 {
   switch(TYPE(obj)) {
+  case T_CONS:
+    return(obj);
   case T_RATIONAL:
     {
       value num, den, t;
@@ -737,15 +743,22 @@ value coerce_cons(arc *c, value obj, value argv)
 
 value coerce_sym(arc *c, value obj, value argv)
 {
-  switch (TYPE(obj)) {
-  case T_CHAR:
-    {
-      value sym;
+  value sym;
 
-      sym = arc_mkstringlen(c, 1);
-      arc_strsetindex(c, sym, 0, REP(obj)._char);
-      return(arc_intern(c, sym));
-    }
+  switch (TYPE(obj)) {
+  case T_SYMBOL:
+    return(obj);
+  case T_CHAR:
+    sym = arc_mkstringlen(c, 1);
+    arc_strsetindex(c, sym, 0, REP(obj)._char);
+    return(arc_intern(c, sym));
+  case T_STRING:
+    sym = arc_intern(c, obj);
+    if (sym == typesyms[IDX_nil].sym)
+      return(CNIL);
+    if (sym == typesyms[IDX_t].sym)
+      return(CTRUE);
+    return(sym);
   default:
     c->signal_error(c, "cannot coerce %O to sym type", obj);
     break;
