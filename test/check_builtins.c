@@ -624,6 +624,17 @@ START_TEST(test_builtin_coerce_cons)
   fail_unless(fabs(REP(car(val))._flonum - 3.1416) < 1e-6);
   fail_unless(fabs(REP(cdr(val))._flonum - 2.718) < 1e-6);
 
+  val = arc_mkvector(&c, 3);
+  VINDEX(val, 0) = INT2FIX(1);
+  VINDEX(val, 1) = INT2FIX(2);
+  VINDEX(val, 2) = INT2FIX(3);
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "cons"), val);
+  fail_unless(TYPE(val) == T_CONS);
+  fail_unless(car(val) == INT2FIX(1));
+  fail_unless(car(cdr(val)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(val))) == INT2FIX(3));
+  fail_unless(cdr(cdr(cdr(val))) == CNIL);
+
 #ifdef HAVE_GMP_H
   {
     value expect;
