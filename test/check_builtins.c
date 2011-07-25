@@ -635,6 +635,18 @@ START_TEST(test_builtin_coerce_cons)
   fail_unless(car(cdr(cdr(val))) == INT2FIX(3));
   fail_unless(cdr(cdr(cdr(val))) == CNIL);
 
+  val = arc_mkstringc(&c, "abc");
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "cons"), val);
+  fail_unless(TYPE(val) == T_CONS);
+  fail_unless(TYPE(car(val)) == T_CHAR);
+  fail_unless(REP(car(val))._char == 'a');
+  fail_unless(TYPE(car(cdr(val))) == T_CHAR);
+  fail_unless(REP(car(cdr(val)))._char == 'b');
+  fail_unless(TYPE(car(cdr(cdr(val)))) == T_CHAR);
+  fail_unless(REP(car(cdr(cdr(val))))._char == 'c');
+
+  fail_unless(cdr(cdr(cdr(val))) == CNIL);
+
 #ifdef HAVE_GMP_H
   {
     value expect;
