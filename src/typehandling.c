@@ -735,6 +735,24 @@ value coerce_cons(arc *c, value obj, value argv)
   return(CNIL);
 }
 
+value coerce_sym(arc *c, value obj, value argv)
+{
+  switch (TYPE(obj)) {
+  case T_CHAR:
+    {
+      value sym;
+
+      sym = arc_mkstringlen(c, 1);
+      arc_strsetindex(c, sym, 0, REP(obj)._char);
+      return(arc_intern(c, sym));
+    }
+  default:
+    c->signal_error(c, "cannot coerce %O to sym type", obj);
+    break;
+  }
+  return(CNIL);
+}
+
 value arc_coerce(arc *c, value argv)
 {
   value obj, ntype;
@@ -772,6 +790,10 @@ value arc_coerce(arc *c, value argv)
   /* Cons coercions */
   if (ntype == typesyms[IDX_cons].sym)
     return(coerce_cons(c, obj, argv));
+
+  /* Symbol coercions */
+  if (ntype == typesyms[IDX_sym].sym)
+    return(coerce_sym(c, obj, argv));
 
   c->signal_error(c, "invalid coercion type specifier %O", ntype);
   return(CNIL);
