@@ -181,13 +181,13 @@ notice and this notice are preserved.
          - [X] cons -> string
          - [X] vector -> string
          - [X] symbol -> string
-       - [-] Cons conversions [2/4]
+       - [-] Cons conversions [3/4]
          - [X] rational -> cons
 	       car = numerator, cdr = denominator, could be fixnums or
 	       bignums as needed.
          - [X] complex -> cons
 	       car = Re(z), cdr = Im(z)
-         - [ ] vector -> cons
+         - [X] vector -> cons
          - [ ] string -> cons (char list)
        - [ ] Symbol conversions [0/2]
          - [ ] char -> sym
