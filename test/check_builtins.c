@@ -674,6 +674,17 @@ START_TEST(test_builtin_coerce_cons)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_sym)
+{
+  value val;
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "sym"),
+		     arc_mkchar(&c, 'a'));
+  fail_unless(TYPE(val) == T_SYMBOL);
+  fail_unless(val == arc_intern_cstr(&c, "a"));
+}
+END_TEST
+
 START_TEST(test_builtin_abs)
 {
   value val;
@@ -818,6 +829,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_complex);
   tcase_add_test(tc_bif, test_builtin_coerce_string);
   tcase_add_test(tc_bif, test_builtin_coerce_cons);
+  tcase_add_test(tc_bif, test_builtin_coerce_sym);
 
   tcase_add_test(tc_bif, test_builtin_idiv);
   tcase_add_test(tc_bif, test_builtin_expt);
