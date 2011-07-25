@@ -192,8 +192,8 @@ notice and this notice are preserved.
        - [X] Symbol conversions [2/2]
          - [X] char -> sym
          - [X] string -> sym
-       - [ ] Vector conversions [0/2]
-         - [ ] string -> vector (char vector)
+       - [-] Vector conversions [1/2]
+         - [X] string -> vector (char vector)
          - [ ] cons -> vector
        - [ ] fixnum -> char (limit to 0 - 0x10FFFF)
        - [ ] string -> num
