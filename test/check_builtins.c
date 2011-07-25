@@ -715,6 +715,19 @@ START_TEST(test_builtin_coerce_vector)
   fail_unless(REP(VINDEX(val, 1))._char == 'b');
   fail_unless(TYPE(VINDEX(val, 2)) == T_CHAR);
   fail_unless(REP(VINDEX(val, 2))._char == 'c');
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "vector"),
+		     cons(&c, INT2FIX(1),
+			  cons(&c, INT2FIX(2),
+			       cons(&c, INT2FIX(3), CNIL))));
+  fail_unless(TYPE(val) == T_VECTOR);
+  fail_unless(VECLEN(val) == 3);
+  fail_unless(TYPE(VINDEX(val, 0)) == T_FIXNUM);
+  fail_unless(VINDEX(val, 0) == INT2FIX(1));
+  fail_unless(TYPE(VINDEX(val, 1)) == T_FIXNUM);
+  fail_unless(VINDEX(val, 1) == INT2FIX(2));
+  fail_unless(TYPE(VINDEX(val, 2)) == T_FIXNUM);
+  fail_unless(VINDEX(val, 2) == INT2FIX(3));
 }
 END_TEST
 
