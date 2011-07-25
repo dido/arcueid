@@ -708,6 +708,16 @@ value coerce_cons(arc *c, value obj, value argv)
   case T_COMPLEX:
     return(cons(c, arc_mkflonum(c, REP(obj)._complex.re),
 		arc_mkflonum(c, REP(obj)._complex.im)));
+  case T_VECTOR:
+    {
+      /* Step through the vector backwards to generate the equivalent cons */
+      int i;
+      value ret = CNIL;
+
+      for (i=VECLEN(obj)-1; i>=0; i--)
+	ret = cons(c, VINDEX(obj, i), ret);
+      return(ret);
+    }
   default:
     c->signal_error(c, "cannot coerce %O to cons type", obj);
     break;
