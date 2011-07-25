@@ -766,6 +766,25 @@ value coerce_sym(arc *c, value obj, value argv)
   return(CNIL);
 }
 
+value coerce_vector(arc *c, value obj, value argv)
+{
+  switch (TYPE(obj)) {
+  case T_STRING:
+    {
+      int len = arc_strlen(c, obj), i;
+      value vec = arc_mkvector(c, len);
+
+      for (i=0; i<len; i++)
+	VINDEX(vec, i) = arc_mkchar(c, arc_strindex(c, obj, i));
+      return(vec);
+    }
+  default:
+    c->signal_error(c, "cannot coerce %O to vector type", obj);
+    break;
+  }
+  return(CNIL);
+}
+
 value arc_coerce(arc *c, value argv)
 {
   value obj, ntype;
@@ -807,6 +826,10 @@ value arc_coerce(arc *c, value argv)
   /* Symbol coercions */
   if (ntype == typesyms[IDX_sym].sym)
     return(coerce_sym(c, obj, argv));
+
+  /* Vector coercions */
+  if (ntype == typesyms[IDX_vector].sym)
+    return(coerce_vector(c, obj, argv));
 
   c->signal_error(c, "invalid coercion type specifier %O", ntype);
   return(CNIL);
