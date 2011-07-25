@@ -119,7 +119,7 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [1/5]
-     - [-] coerce [7/10]
+     - [-] coerce [8/10]
        - [X] Integer conversions [5/5]
 	     Note that fixnum and bignum may be used as aliases for int
          - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
@@ -192,9 +192,9 @@ notice and this notice are preserved.
        - [X] Symbol conversions [2/2]
          - [X] char -> sym
          - [X] string -> sym
-       - [-] Vector conversions [1/2]
+       - [X] Vector conversions [2/2]
          - [X] string -> vector (char vector)
-         - [ ] cons -> vector
+         - [X] cons -> vector
        - [ ] fixnum -> char (limit to 0 - 0x10FFFF)
        - [ ] string -> num
 	     Converts any string into a number of the appropriate
