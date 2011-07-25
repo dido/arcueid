@@ -705,6 +705,9 @@ value coerce_cons(arc *c, value obj, value argv)
 	den = t;
       return(cons(c, num, den));
     }
+  case T_COMPLEX:
+    return(cons(c, arc_mkflonum(c, REP(obj)._complex.re),
+		arc_mkflonum(c, REP(obj)._complex.im)));
   default:
     c->signal_error(c, "cannot coerce %O to cons type", obj);
     break;
