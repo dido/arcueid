@@ -269,6 +269,9 @@ static struct {
 } fntable[] = {
   { "type", 1, arc_type },
   { "coerce", -2, arc_coerce },
+  { "annotate", 2, arc_annotate },
+  { "rep", 1, arc_rep },
+
   { ">", 2, arc_gt },
   { "<", 2, arc_lt },
   { ">=", 2, arc_gte },
