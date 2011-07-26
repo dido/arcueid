@@ -907,3 +907,18 @@ value arc_coerce(arc *c, value argv)
   return(CNIL);
 }
 
+value arc_annotate(arc *c, value typesym, value obj)
+{
+  value ann;
+
+  ann = cons(c, typesym, obj);
+  BTYPE(ann) = T_TAGGED;
+  return(ann);
+}
+
+value arc_rep(arc *c, value obj)
+{
+  if (TYPE(obj) != T_TAGGED)
+    return(obj);
+  return(cdr(obj));
+}
