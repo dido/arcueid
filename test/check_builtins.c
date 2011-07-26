@@ -701,23 +701,6 @@ START_TEST(test_builtin_coerce_sym)
 }
 END_TEST
 
-/* Tests for annotate, type, and rep */
-START_TEST(test_builtin_atr)
-{
-  value val, tr;
-
-  val = test_builtin("annotate", 2, INT2FIX(31337),
-		     arc_intern_cstr(&c, "foo"));
-  fail_unless(TYPE(val) == T_TAGGED);
-
-  tr = test_builtin("type", 1, val);
-  fail_unless(tr == arc_intern_cstr(&c, "foo"));
-
-  tr = test_builtin("rep", 1, val);
-  fail_unless(tr == INT2FIX(31337));
-}
-END_TEST
-
 START_TEST(test_builtin_coerce_vector)
 {
   value val;
@@ -827,6 +810,32 @@ START_TEST(test_builtin_coerce_num)
 
 #endif
 
+}
+END_TEST
+
+/* Tests for annotate, type, and rep */
+START_TEST(test_builtin_atr)
+{
+  value val, tr;
+
+  val = test_builtin("annotate", 2, INT2FIX(31337),
+		     arc_intern_cstr(&c, "foo"));
+  fail_unless(TYPE(val) == T_TAGGED);
+
+  tr = test_builtin("type", 1, val);
+  fail_unless(tr == arc_intern_cstr(&c, "foo"));
+
+  tr = test_builtin("rep", 1, val);
+  fail_unless(tr == INT2FIX(31337));
+}
+END_TEST
+
+START_TEST(test_builtin_sym)
+{
+  value val;
+
+  val = test_builtin("sym", 1, arc_mkstringc(&c, "foobar"));
+  fail_unless(val == arc_intern_cstr(&c, "foobar"));
 }
 END_TEST
 
@@ -979,6 +988,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_char);
   tcase_add_test(tc_bif, test_builtin_coerce_num);
   tcase_add_test(tc_bif, test_builtin_atr);
+  tcase_add_test(tc_bif, test_builtin_sym);
 
   tcase_add_test(tc_bif, test_builtin_idiv);
   tcase_add_test(tc_bif, test_builtin_expt);
