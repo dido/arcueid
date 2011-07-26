@@ -118,8 +118,8 @@ notice and this notice are preserved.
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
-   - [-] Type handling [1/5]
-     - [-] coerce [9/10]
+   - [-] Type handling [2/5]
+     - [X] coerce [10/10]
        - [X] Integer conversions [5/5]
 	     Note that fixnum and bignum may be used as aliases for int
          - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
@@ -198,15 +198,24 @@ notice and this notice are preserved.
        - [X] fixnum -> char
              limit to 0 - 0x10FFFF, also exclude 0xd800-0xdfff, invalid
 	     Unicode block.
-       - [ ] string -> num
+       - [X] string -> num
 	     Converts any string into a number of the appropriate
 	     type.  This should use the best available numeric type
 	     that is able to most accurately represent the value
-	     described by the string, e.g. if bignum support is not
-	     available, it should return very large numbers as floats,
-	     and rationals as floats, but if bignum support is
-	     available these should be represented as bignums or
-	     rationals.
+	     described by the string.  Numeric base may be specified
+	     as an optional argument as before.
+
+	     Basic algorithm makes the following tests:
+
+	 1. If string ends with 'i' or 'j', convert as complex
+	 2. If string contains '.', convert as floating point.
+	 3. If base is less than 14 and the string contains 'e/E',
+	    convert as floating point.
+	 4. If base is less than 25 and the string contains 'p/P',
+	    convert as floating point.
+	 5. If string contains '&', convert as floating point.
+	 6. If string contains '/', convert as rational.
+	 7. Otherwise, consider string as representing an integer
      - [X] type
      - [ ] annotate
      - [ ] rep
