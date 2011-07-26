@@ -742,6 +742,77 @@ START_TEST(test_builtin_coerce_char)
 }
 END_TEST
 
+START_TEST(test_builtin_coerce_num)
+{
+  value val;
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "3.1416-2.718i"));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(REP(val)._complex.re - 3.1416) < 1e-6);
+  fail_unless(fabs(REP(val)._complex.im - -2.718) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "-3.1416+2.718j"));
+  fail_unless(TYPE(val) == T_COMPLEX);
+  fail_unless(fabs(REP(val)._complex.re - -3.1416) < 1e-6);
+  fail_unless(fabs(REP(val)._complex.im - 2.718) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "-3.1416"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - -3.1416) < 1e-6);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "1e6"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 1e6) < 1e-6);
+
+  /* base overrides the exponential identification */
+  val = test_builtin("coerce", 3, INT2FIX(16), arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "1e6"));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(0x1e6));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "1p6"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 1e6) < 1e-6);
+
+  /* base overrides the exponential identification */
+  val = test_builtin("coerce", 3, INT2FIX(36), arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "1p6"));
+  fail_unless(TYPE(val) == T_FIXNUM);
+  fail_unless(val == INT2FIX(2202));
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "1&6"));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 1e6) < 1e-6);
+
+#ifdef HAVE_GMP_H
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		     arc_mkstringc(&c, "1/2"));
+  fail_unless(TYPE(val) == T_RATIONAL);
+  fail_unless(mpz_get_ui(mpq_numref(REP(val)._rational)) == 1);
+  fail_unless(mpz_get_ui(mpq_denref(REP(val)._rational)) == 2);
+
+  {
+    mpz_t expected;
+    val = test_builtin("coerce", 2, arc_intern_cstr(&c, "num"),
+		       arc_mkstringc(&c, "39174440345711397351903379231183395006881508225168016033485596806965668391752"));
+    fail_unless(TYPE(val) == T_BIGNUM);
+    mpz_init(expected);
+    mpz_set_str(expected, "39174440345711397351903379231183395006881508225168016033485596806965668391752", 10);
+    fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
+    mpz_clear(expected);
+  }
+
+#endif
+
+}
+END_TEST
+
 START_TEST(test_builtin_abs)
 {
   value val;
@@ -889,6 +960,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_sym);
   tcase_add_test(tc_bif, test_builtin_coerce_vector);
   tcase_add_test(tc_bif, test_builtin_coerce_char);
+  tcase_add_test(tc_bif, test_builtin_coerce_num);
 
   tcase_add_test(tc_bif, test_builtin_idiv);
   tcase_add_test(tc_bif, test_builtin_expt);
