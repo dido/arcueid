@@ -118,7 +118,7 @@ notice and this notice are preserved.
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
-   - [-] Type handling [2/5]
+   - [-] Type handling [4/5]
      - [X] coerce [10/10]
        - [X] Integer conversions [5/5]
 	     Note that fixnum and bignum may be used as aliases for int
@@ -217,8 +217,8 @@ notice and this notice are preserved.
 	 6. If string contains '/', convert as rational.
 	 7. Otherwise, consider string as representing an integer
      - [X] type
-     - [ ] annotate
-     - [ ] rep
+     - [X] annotate
+     - [X] rep
      - [ ] sym
    - [X] Predicates [9/9]
      - [X] Less-than (<) *
