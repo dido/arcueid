@@ -271,6 +271,7 @@ static struct {
   { "coerce", -2, arc_coerce },
   { "annotate", 2, arc_annotate },
   { "rep", 1, arc_rep },
+  { "sym", 1, arc_intern },
 
   { ">", 2, arc_gt },
   { "<", 2, arc_lt },
