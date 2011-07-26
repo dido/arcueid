@@ -803,6 +803,46 @@ value coerce_vector(arc *c, value obj, value argv)
   return(CNIL);
 }
 
+value coerce_num(arc *c, value obj, value argv)
+{
+  int len, base;
+
+  len = arc_strlen(c, obj);
+
+  /* 1. If string ends with 'i' or 'j', convert as complex */
+  if (arc_strindex(c, obj, len-1) == 'i'
+      || arc_strindex(c, obj, len-1) == 'j')
+    return(coerce_complex(c, obj, argv));
+
+  /* 2. If string contains '.', convert as floating point. */
+  if (!(arc_strchr(c, obj, '.') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+  base = FIX2INT(numeric_base(c, argv, "string->num"));
+  /* 3. If base is less than 14 and the string contains 'e/E',
+        convert as floating point. */
+  if (base < 14 && !(arc_strchr(c, obj, 'e') == CNIL
+		     && arc_strchr(c, obj, 'E') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+  /* 4. If base is less than 25 and the string contains 'p/P',
+        convert as floating point. */
+  if (base < 25 && !(arc_strchr(c, obj, 'p') == CNIL
+		     && arc_strchr(c, obj, 'P') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+  /* 5. If string contains '&', convert as floating point. */
+  if (!(arc_strchr(c, obj, '&') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+  /* 6. If string contains '/', convert as rational. */
+  if (!(arc_strchr(c, obj, '/') == CNIL))
+    return(coerce_rational(c, obj, argv));
+
+  /* 7. Otherwise, consider string as representing an integer */
+  return(coerce_integer(c, obj, argv));
+}
+
 value arc_coerce(arc *c, value argv)
 {
   value obj, ntype;
@@ -858,6 +898,10 @@ value arc_coerce(arc *c, value argv)
     }
     return(arc_mkchar(c, (Rune)ch));
   }
+
+  /* Vector coercions */
+  if (ntype == typesyms[IDX_num].sym &&  TYPE(obj) == T_STRING)
+    return(coerce_num(c, obj, argv));
 
   c->signal_error(c, "cannot coerce %O to %O", obj, ntype);
   return(CNIL);
