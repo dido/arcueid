@@ -114,11 +114,11 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [4/17]
+** TODO Runtime Built-In Functions [5/17]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
-   - [-] Type handling [4/5]
+   - [X] Type handling [5/5]
      - [X] coerce [10/10]
        - [X] Integer conversions [5/5]
 	     Note that fixnum and bignum may be used as aliases for int
@@ -219,7 +219,7 @@ notice and this notice are preserved.
      - [X] type
      - [X] annotate
      - [X] rep
-     - [ ] sym
+     - [X] sym
    - [X] Predicates [9/9]
      - [X] Less-than (<) *
      - [X] Greater-than (>) *
