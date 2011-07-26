@@ -849,7 +849,17 @@ value arc_coerce(arc *c, value argv)
   if (ntype == typesyms[IDX_vector].sym)
     return(coerce_vector(c, obj, argv));
 
-  c->signal_error(c, "invalid coercion type specifier %O", ntype);
+  if (ntype == typesyms[IDX_char].sym && TYPE(obj) == T_FIXNUM) {
+    int ch = FIX2INT(obj);
+
+    if (ch < 0 || ch > 0x10fff || (ch >= 0xd800 && ch <=0xdfff)) {
+      c->signal_error(c, "integer->char expects exact integer between 0-0x10FFFF, and not in 0xd800-0xdfff; given %O", obj);
+      return(CNIL);
+    }
+    return(arc_mkchar(c, (Rune)ch));
+  }
+
+  c->signal_error(c, "cannot coerce %O to %O", obj, ntype);
   return(CNIL);
 }
 
