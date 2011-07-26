@@ -344,6 +344,8 @@ extern value arc_lte(arc *c, value v1, value v2);
 
 extern value arc_type(arc *c, value obj);
 extern value arc_coerce(arc *c, value argv);
+extern value arc_annotate(arc *c, value typesym, value obj);
+extern value arc_rep(arc *c, value obj);
 
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
