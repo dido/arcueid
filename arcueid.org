@@ -114,7 +114,7 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [5/17]
+** TODO Runtime Built-In Functions [6/17]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -408,9 +408,9 @@ notice and this notice are preserved.
    - [ ] Miscellaneous OS operations [0/2]
      - [ ] system
      - [ ] quit
-   - [-] Miscellaneous [1/2]
+   - [X] Miscellaneous [2/2]
      - [X] sref *
-     - [ ] len
+     - [X] len
 ** TODO write a base reader for CIEL files (src/ciel.c) [1/2]
    Our CIEL bytecode interpreter must at the very least support the
    instructions given in comp-bsdef.arc and be able to decode CIEL
@@ -470,3 +470,6 @@ notice and this notice are preserved.
    We do want to someday make a statically-typed, non-garbage
    collected dialect of Arc similar to Richard Kelsey's PreScheme, so
    we can write the entire runtime in Arc.
+** TODO Format strings
+   We will provide for format strings similar to C, but with a few
+   extensions that make sense for Arc.
