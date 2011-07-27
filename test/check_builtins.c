@@ -988,6 +988,31 @@ START_TEST(test_builtin_sref)
 }
 END_TEST
 
+START_TEST(test_builtin_len)
+{
+  value val, val2;
+
+  val2 = arc_mkhash(&c, 8);
+  val = test_builtin("sref", 3, INT2FIX(1), INT2FIX(2), val2);
+  val = test_builtin("sref", 3, INT2FIX(2), INT2FIX(3), val2);
+  val = test_builtin("sref", 3, INT2FIX(3), INT2FIX(4), val2);
+  fail_unless(FIX2INT(test_builtin("len", 1, val2)) == 3);
+
+  val2 = arc_mkstringc(&c, "abcd");
+  fail_unless(FIX2INT(test_builtin("len", 1, val2)) == 4);
+
+  val2 = cons(&c, INT2FIX(1), cons(&c, INT2FIX(2), cons(&c, INT2FIX(3), CNIL)));
+  fail_unless(FIX2INT(test_builtin("len", 1, val2)) == 3);
+
+  val2 = arc_mkvector(&c, 4);
+  VINDEX(val2, 0) = INT2FIX(1);
+  VINDEX(val2, 1) = INT2FIX(2);
+  VINDEX(val2, 2) = INT2FIX(3);
+  VINDEX(val2, 3) = INT2FIX(4);
+  fail_unless(FIX2INT(test_builtin("len", 1, val2)) == 4);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1031,6 +1056,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_abs);
 
   tcase_add_test(tc_bif, test_builtin_sref);
+  tcase_add_test(tc_bif, test_builtin_len);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
