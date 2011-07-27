@@ -954,6 +954,40 @@ START_TEST(test_builtin_idiv)
 }
 END_TEST
 
+START_TEST(test_builtin_sref)
+{
+  value val, val2;
+  char str[64];
+
+  val2 = arc_mkhash(&c, 8);
+  val = test_builtin("sref", 3, INT2FIX(1), INT2FIX(2), val2);
+  fail_unless(val == INT2FIX(2));
+  fail_unless(arc_hash_lookup(&c, val2, INT2FIX(1)) == INT2FIX(2));
+
+  val2 = arc_mkstringc(&c, "abc");
+  val = test_builtin("sref", 3, INT2FIX(1), arc_mkchar(&c, 'z'), val2);
+  fail_unless(TYPE(val) == T_CHAR);
+  fail_unless(REP(val)._char == 'z');
+  arc_str2cstr(&c, val2, str);
+  fail_unless(strcmp(str, "azc") == 0);
+
+  val2 = cons(&c, INT2FIX(1), cons(&c, INT2FIX(2), cons(&c, INT2FIX(3), CNIL)));
+  val = test_builtin("sref", 3, INT2FIX(1), INT2FIX(31337), val2);
+  fail_unless(val == INT2FIX(31337));
+  fail_unless(car(val2) == INT2FIX(1));
+  fail_unless(car(cdr(val2)) == INT2FIX(31337));
+  fail_unless(car(cdr(cdr(val2))) == INT2FIX(3));
+
+  val2 = arc_mkvector(&c, 3);
+  VINDEX(val2, 0) = INT2FIX(1);
+  VINDEX(val2, 1) = INT2FIX(2);
+  VINDEX(val2, 2) = INT2FIX(3);
+  val = test_builtin("sref", 3, INT2FIX(1), INT2FIX(31337), val2);
+  fail_unless(val == INT2FIX(31337));
+  fail_unless(VINDEX(val2, 1) == INT2FIX(31337));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -995,6 +1029,8 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_pow);
   tcase_add_test(tc_bif, test_builtin_mod);
   tcase_add_test(tc_bif, test_builtin_abs);
+
+  tcase_add_test(tc_bif, test_builtin_sref);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
