@@ -405,11 +405,11 @@ notice and this notice are preserved.
      - [ ] current-process-milliseconds
      - [ ] msec
      - [ ] seconds
-   - [ ] Miscellaneous OS operations
+   - [ ] Miscellaneous OS operations [0/2]
      - [ ] system
      - [ ] quit
-   - [ ] Miscellaneous [0/2]
-     - [ ] sref *
+   - [-] Miscellaneous [1/2]
+     - [X] sref *
      - [ ] len
 ** TODO write a base reader for CIEL files (src/ciel.c) [1/2]
    Our CIEL bytecode interpreter must at the very least support the
