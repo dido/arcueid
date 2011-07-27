@@ -473,3 +473,13 @@ value arc_hash_iter(arc *c, value hash, ccrContParam)
   }
   ccrFinish(CUNBOUND);
 }
+
+int arc_hash_length(arc *c, value hash)
+{
+  void *ctx = NULL;
+  int count = 0;
+
+  while (arc_hash_iter(c, hash, &ctx) != CUNBOUND)
+    count++;
+  return(count);
+}
