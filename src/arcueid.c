@@ -316,6 +316,28 @@ value arc_sref(arc *c, value com, value val, value ind)
   return(val);
 }
 
+value arc_len(arc *c, value obj)
+{
+  switch (TYPE(obj)) {
+  case T_NIL:
+    /* Note that, oddly, PG-Arc returns 1 for this! */
+    return(INT2FIX(0));
+  case T_STRING:
+    return(INT2FIX(arc_strlen(c, obj)));
+  case T_CONS:
+    return(arc_list_length(c, obj));
+  case T_VECTOR:
+    return(INT2FIX(VECLEN(obj)));
+  case T_TABLE:
+    return(INT2FIX(arc_hash_length(c, obj)));
+  default:
+    /* Note that PG-Arc also allows the length of symbols to be taken,
+       but why this should be remains inexplicable to me. */
+    c->signal_error(c, "can't get length of object of type %T", obj);
+  }
+  return(CNIL);
+}
+
 static struct {
   char *fname;
   int argc;
@@ -344,6 +366,7 @@ static struct {
   { "abs", 1, __arc_abs },
 
   { "sref", 3, arc_sref },
+  { "len", 1, arc_len },
 
   { NULL, 0, NULL }
 };
