@@ -450,4 +450,7 @@ extern value arc_expt(arc *c, value a, value b);
 /* Ciel */
 extern value arc_ciel_unmarshal(arc *c, value fd);
 
+extern value arc_sref(arc *c, value com, value val, value ind);
+
+
 #endif
