@@ -262,6 +262,60 @@ value arc_bound(arc *c, value sym)
   return((arc_hash_lookup(c, c->genv, sym) == CUNBOUND) ? CNIL: CTRUE);
 }
 
+value arc_sref(arc *c, value com, value val, value ind)
+{
+  switch (TYPE(com)) {
+  case T_TABLE:
+    if (val == CNIL)
+      arc_hash_delete(c, com, ind);
+    else
+      arc_hash_insert(c, com, ind, val);
+    break;
+  case T_STRING:
+    if (TYPE(val) != T_CHAR) {
+      c->signal_error(c, "cannot set string index to non-character %O", val);
+      return(CNIL);
+    }
+    if (TYPE(ind) != T_FIXNUM || FIX2INT(ind) < 0) {
+      c->signal_error(c, "string index must be non-negative exact integer %O", ind);
+      return(CNIL);
+    }
+    arc_strsetindex(c, com, FIX2INT(ind), REP(val)._char);
+    break;
+  case T_CONS:
+    if (TYPE(ind) != T_FIXNUM || FIX2INT(ind) < 0) {
+      c->signal_error(c, "list index must be non-negative exact integer %O", ind);
+      return(CNIL);
+    } else {
+      int idx = FIX2INT(ind), notfound = 1;
+      value obj;
+
+      for (obj=com; obj != CNIL; obj = cdr(obj), --idx) {
+	if (idx == 0) {
+	  scar(obj, val);
+	  notfound = 0;
+	  break;
+	}
+      }
+      if (notfound) {
+	c->signal_error(c, "index %O too large for list %O", ind, com);
+	return(CNIL);
+      }
+    }
+    break;
+  case T_VECTOR:
+    if (FIX2INT(ind) >= VECLEN(com)) {
+      c->signal_error(c, "index %O too large for vector %O", ind, com);
+      return(CNIL);
+    }
+    VINDEX(com, FIX2INT(ind)) = val;
+    break;
+  default:
+    c->signal_error(c, "can't set reference to object %O", com);
+  }
+  return(val);
+}
+
 static struct {
   char *fname;
   int argc;
@@ -288,6 +342,9 @@ static struct {
   { "pow", 2, arc_expt },
   { "mod", 2, __arc_mod2 },
   { "abs", 1, __arc_abs },
+
+  { "sref", 3, arc_sref },
+
   { NULL, 0, NULL }
 };
 
