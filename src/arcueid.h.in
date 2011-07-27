@@ -381,6 +381,7 @@ extern value arc_hash_lookup2(arc *c, value hash, value key);
 extern value arc_hash_lookup_cstr(arc *c, value hash, const char *key);
 extern value arc_hash_delete(arc *c, value hash, value key);
 extern value arc_hash_iter(arc *c, value hash, void **context);
+extern int arc_hash_length(arc *c, value hash);
 extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
@@ -451,6 +452,6 @@ extern value arc_expt(arc *c, value a, value b);
 extern value arc_ciel_unmarshal(arc *c, value fd);
 
 extern value arc_sref(arc *c, value com, value val, value ind);
-
+extern value arc_len(arc *c, value obj);
 
 #endif
