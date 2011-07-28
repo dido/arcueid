@@ -954,6 +954,20 @@ START_TEST(test_builtin_idiv)
 }
 END_TEST
 
+START_TEST(test_builtin_times)
+{
+  value v;
+
+  /* Just call the functions and make sure they don't make any errors.
+     We have no real way to independenly validate the values they
+     produce. */
+  fail_unless((v=test_builtin("current-gc-milliseconds", 0)) != CNIL);
+  fail_unless((v=test_builtin("current-process-milliseconds", 0)) != CNIL);
+  fail_unless((v=test_builtin("seconds", 0)) != CNIL);
+  fail_unless((v=test_builtin("msec", 0)) != CNIL);
+}
+END_TEST
+
 START_TEST(test_builtin_sref)
 {
   value val, val2;
@@ -1054,6 +1068,8 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_pow);
   tcase_add_test(tc_bif, test_builtin_mod);
   tcase_add_test(tc_bif, test_builtin_abs);
+
+  tcase_add_test(tc_bif, test_builtin_times);
 
   tcase_add_test(tc_bif, test_builtin_sref);
   tcase_add_test(tc_bif, test_builtin_len);
