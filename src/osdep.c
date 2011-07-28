@@ -20,6 +20,9 @@
 */
 #include <stdlib.h>
 #include <assert.h>
+#include <time.h>
+#include <unistd.h>
+#include "arcueid.h"
 #include "alloc.h"
 #include "../config.h"
 
@@ -76,4 +79,32 @@ void *__arc_aligned_malloc(size_t osize, int modulo, void **block)
 void __arc_aligned_free(void *addr, size_t size)
 {
   free(addr);
+}
+
+double __arc_seconds(void)
+{
+#ifdef HAVE_CLOCK_GETTIME
+  struct timespec tp;
+  double t;
+
+  if (clock_gettime(CLOCK_REALTIME, &tp) < 0) {
+    /* fall back to using time() if we have an error */
+    return((double)time(NULL));
+  }
+  t = (double)tp.tv_sec + (((double)tp.tv_nsec)/1e9);
+  return(t);
+#else
+  /* fall back to using time(2) if clock_gettime is not available */
+  return(time(NULL));
+#endif
+}
+
+value arc_seconds(arc *c)
+{
+  return(arc_mkflonum(c, __arc_seconds()));
+}
+
+value arc_msec(arc *c)
+{
+  return(arc_mkflonum(c, 1000.0*__arc_seconds()));
 }
