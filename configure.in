@@ -50,6 +50,8 @@ AX_LIB_READLINE
 
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(double)
 AC_MSG_CHECKING([that long and void * have the same size])
@@ -105,12 +107,19 @@ if test "x$enable_threaded_interpreter" != xno; then
    fi
 fi
 
+AC_CHECK_FUNCS(clock_gettime, [], [
+  AC_CHECK_LIB(rt, clock_gettime, [
+    AC_DEFINE(HAVE_CLOCK_GETTIME, 1)
+    EXTRA_LIBS="$EXTRA_LIBS -lrt"
+  ])
+])
+
 AC_ARG_ENABLE([mmap], [AS_HELP_STRING([--disable-mmap], [disable usage of mmap for memory allocation (fallback to malloc)])], [], [enable_mmap=yes])
 if test "x$enable_mmap" != xno; then
    AC_CHECK_HEADERS(sys/mman.h)
    AC_FUNC_MMAP
 fi
-LIBARCUEID_LIBS="-L${libdir} -larcueid $GMP_LIBS $MATH_LIBS"
+LIBARCUEID_LIBS="-L${libdir} -larcueid $GMP_LIBS $MATH_LIBS $EXTRA_LIBS"
 AC_SUBST(LIBARCUEID_LIBS)
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([arcueid.pc Makefile src/Makefile test/Makefile doc/Makefile src/arcueid.h])
