@@ -114,7 +114,7 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [6/17]
+** TODO Runtime Built-In Functions [7/17]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -400,11 +400,11 @@ notice and this notice are preserved.
      - [ ] on-err
      - [ ] ccc
      - [ ] protect
-   - [ ] Time [0/4]
-     - [ ] current-gc-milliseconds
-     - [ ] current-process-milliseconds
-     - [ ] msec
-     - [ ] seconds
+   - [X] Time [4/4]
+     - [X] current-gc-milliseconds
+     - [X] current-process-milliseconds
+     - [X] msec
+     - [X] seconds
    - [ ] Miscellaneous OS operations [0/2]
      - [ ] system
      - [ ] quit
