@@ -365,6 +365,11 @@ static struct {
   { "mod", 2, __arc_mod2 },
   { "abs", 1, __arc_abs },
 
+  { "current-gc-milliseconds", 0, arc_current_gc_milliseconds },
+  { "current-process-milliseconds", 0, arc_current_process_milliseconds },
+  { "msec", 0, arc_msec },
+  { "seconds", 0, arc_seconds },
+
   { "sref", 3, arc_sref },
   { "len", 1, arc_len },
 
