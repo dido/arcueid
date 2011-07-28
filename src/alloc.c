@@ -29,6 +29,7 @@
 #include <assert.h>
 #include "arcueid.h"
 #include "alloc.h"
+#include "arith.h"
 #include "../config.h"
 
 static Bhdr *fl_head = NULL;
@@ -51,6 +52,7 @@ static int marker = 1;
 static int sweeper = 2;
 #define propagator PROPAGATOR_COLOR
 #define MAX_MARK_RECURSION 64
+static unsigned long long gc_milliseconds = 0ULL;
 
 /* Allocate memory for the heap.  This uses the low level memory allocator
    function specified in the arc structure.  Takes care of filling in the
@@ -418,7 +420,9 @@ static void rootset(arc *c)
 static void rungc(arc *c)
 {
   value h;
+  unsigned long long gcst, gcet;
 
+  gcst = __arc_milliseconds();
   gcnruns++;
 
   for (visit = quanta; visit > 0;) {
@@ -460,7 +464,7 @@ static void rungc(arc *c)
     quanta = MAX_GC_QUANTA;
 
   if (gchptr != NULL)		/* completed this iteration? */
-    return;
+    goto endgc;
 
   if (nprop == 0) {		/* completed the epoch? */
     gcepochs++;
@@ -468,9 +472,12 @@ static void rungc(arc *c)
     rootset(c);
     gce = 0;
     gct = 1;
-    return;
+    goto endgc;
   }
   nprop = 0;
+ endgc:
+  gcet = __arc_milliseconds();
+  gc_milliseconds += (gcet - gcst);
 }
 
 void arc_set_memmgr(arc *c)
@@ -499,4 +506,38 @@ void arc_set_memmgr(arc *c)
   /* Set default parameters for heap expansion policy */
   c->minexp = DFL_MIN_EXP;
   c->over_percent = DFL_OVER_PERCENT;
+}
+
+value arc_current_gc_milliseconds(arc *c)
+{
+  unsigned long long ms;
+
+  ms = gc_milliseconds;
+  if (ms < FIXNUM_MAX) {
+    return(INT2FIX(ms));
+  } else {
+#ifdef HAVE_GMP_H
+    value msbn;
+
+#if SIZEOF_UNSIGNED_LONG_LONG == 8
+    /* feed value into the bignum 32 bits at a time */
+    msbn = arc_mkbignuml(c, (ms >> 32)&0xffffffff);
+    mpz_mul_2exp(REP(msbn)._bignum, REP(msbn)._bignum, 32);
+    mpz_add_ui(REP(msbn)._bignum, REP(msbn)._bignum, ms & 0xffffffff);
+#else
+    int i;
+
+    msbn = arc_mkbignuml(c, 0);
+    for (i=SIZEOF_UNSIGNED_LONG_LONG-1; i>=0; i--) {
+      mpz_mul_2exp(REP(msbn)._bignum, REP(msbn)._bignum, 8);
+      mpz_add_ui(REP(msbn)._bignum, REP(msbn)._bignum, (ms >> (i*8)) & 0xff);
+    }
+#endif
+    return(msbn);
+#else
+    /* floating point */
+    return(arc_mkflonum(c, (double)ms));
+#endif
+  }
+  return(CNIL);
 }
