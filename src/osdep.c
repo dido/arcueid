@@ -22,6 +22,8 @@
 #include <assert.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include "arcueid.h"
 #include "alloc.h"
 #include "../config.h"
@@ -81,30 +83,70 @@ void __arc_aligned_free(void *addr, size_t size)
   free(addr);
 }
 
-double __arc_seconds(void)
+unsigned long long __arc_milliseconds(void)
 {
 #ifdef HAVE_CLOCK_GETTIME
   struct timespec tp;
-  double t;
+  unsigned long long t;
 
   if (clock_gettime(CLOCK_REALTIME, &tp) < 0) {
     /* fall back to using time() if we have an error */
-    return((double)time(NULL));
+    return((unsigned long long)time(NULL)*1000LL);
   }
-  t = (double)tp.tv_sec + (((double)tp.tv_nsec)/1e9);
+
+  t = ((unsigned long long)tp.tv_sec)*1000LL
+    + ((unsigned long long)tp.tv_nsec / 1000000LL);
   return(t);
 #else
   /* fall back to using time(2) if clock_gettime is not available */
-  return(time(NULL));
+  return((unsigend long long)time(NULL)*1000LL);
 #endif
 }
 
 value arc_seconds(arc *c)
 {
-  return(arc_mkflonum(c, __arc_seconds()));
+  return(arc_mkflonum(c, __arc_milliseconds()/1000.0));
 }
 
 value arc_msec(arc *c)
 {
-  return(arc_mkflonum(c, 1000.0*__arc_seconds()));
+  unsigned long long ms;
+
+  ms = __arc_milliseconds();
+  if (ms < FIXNUM_MAX) {
+    return(INT2FIX(ms));
+  } else {
+#ifdef HAVE_GMP_H
+    value msbn;
+
+#if SIZEOF_UNSIGNED_LONG_LONG == 8
+    /* feed value into the bignum 32 bits at a time */
+    msbn = arc_mkbignuml(c, (ms >> 32)&0xffffffff);
+    mpz_mul_2exp(REP(msbn)._bignum, REP(msbn)._bignum, 32);
+    mpz_add_ui(REP(msbn)._bignum, REP(msbn)._bignum, ms & 0xffffffff);
+#else
+    int i;
+
+    msbn = arc_mkbignuml(c, 0);
+    for (i=SIZEOF_UNSIGNED_LONG_LONG-1; i>=0; i--) {
+      mpz_mul_2exp(REP(msbn)._bignum, REP(msbn)._bignum, 8);
+      mpz_add_ui(REP(msbn)._bignum, REP(msbn)._bignum, (ms >> (i*8)) & 0xff);
+    }
+#endif
+    return(msbn);
+#else
+    /* floating point */
+    return(arc_mkflonum(c, (double)ms));
+#endif
+  }
+  return(CNIL);
+}
+
+value arc_current_process_milliseconds(arc *c)
+{
+  struct rusage usage;
+
+  getrusage(RUSAGE_SELF, &usage);
+  return(arc_mkflonum(c, 1000.0*((double)usage.ru_utime.tv_sec
+				 + ((double)(usage.ru_utime.tv_usec))/1e6)));
 }
