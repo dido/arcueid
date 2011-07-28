@@ -68,9 +68,10 @@ void arc_vmengine(arc *c, value thr, int quanta)
 #else
   value curr_instr;
 #endif
-
   if (TSTATE(thr) != Tready)
     return;
+  c->curthread = thr;
+
 #ifdef HAVE_THREADED_INTERPRETER
   goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
@@ -559,3 +560,71 @@ value arc_mkclosure(arc *c, value code, value env)
   return(clos);
 }
 
+/* Main dispatcher.  Will run each thread in the thread list for
+   at most quanta cycles or until the thread leaves ready state.
+   Also runs garbage collector threads periodically.  This should
+   be called with at least one thread already in the run queue.
+   Terminates when no more threads can run. */
+void arc_thread_dispatch(arc *c, int quanta)
+{
+  value prev = CNIL, thr;
+  c->vmqueue = CNIL;
+  int nthreads = 0, blockedthreads = 0, ncycles = 0;
+
+  for (;;) {
+    /* loop back to the beginning if we hit the nil at the end */
+    if (c->vmqueue == CNIL) {
+      /* Simple deadlock detection.  We declare deadlock if after two
+	 cycles through the run queue we find that all threads are in
+	 a blocked state. */
+      if (nthreads != 0 && nthreads == blockedthreads && ++ncycles > 2) {
+	c->signal_error(c, "fatal: deadlock detected");
+	return;
+      } else {
+	/* reset cycle counter if we get a state where there are
+	   some threads which are not blocked */
+	ncycles = 0;
+      }
+      c->vmqueue = c->vmthreads;
+      prev = CNIL;
+      /* No more available threads, exit */
+      if (c->vmqueue == CNIL)
+	return;
+      /* reset thread counts */
+      nthreads = 0;
+      blockedthreads = 0;
+    }
+    ++nthreads;
+    thr = car(c->vmqueue);
+    arc_vmengine(c, thr, quanta);
+    switch (TSTATE(thr)) {
+      /* see if the thread has changed state to Trelease, Texiting, or
+       Tbroken.  Remove the thread from the queue if so. */
+    case Trelease:
+    case Texiting:
+    case Tbroken:
+      /* dequeue the terminated thread */
+      if (prev == CNIL) {
+	WB(&c->vmthreads, cdr(c->vmqueue));
+      } else {
+	scdr(prev, cdr(c->vmqueue));
+      }
+      break;
+    case Talt:
+    case Tsend:
+    case Trecv:
+      /* increment count of threads in blocked states */
+      ++blockedthreads;
+      break;
+    default:
+      break;
+    }
+
+    /* garbage collect */
+    c->rungc(c);
+
+    /* queue next thread */
+    prev = c->vmqueue;
+    c->vmqueue = cdr(c->vmqueue);
+  }
+}
