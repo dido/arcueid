@@ -322,11 +322,11 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   return(thr);
 }
 
-static void closapply(arc *c, value thr)
+static void closapply(arc *c, value thr, value fun)
 {
   value cl;
 
-  cl = TVALR(thr);
+  cl = fun;
   WB(&TFUNR(thr), car(cl));
   WB(&TENVR(thr), cdr(cl));
   TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
@@ -354,7 +354,7 @@ static value c4apply(arc *c, value thr, value avec,
     /* 4. Restart, with the value register pointing to the callee,
        so that it gets "called" */
     TVALR(thr) = VINDEX(retval, 2);
-    closapply(c, thr);
+    arc_apply(c, thr, VINDEX(retval, 2));
     /* when this returns, we go back to the virtual machine loop,
        resuming execution at the address of the called virtual machine
        function. */
@@ -367,12 +367,12 @@ void arc_apply(arc *c, value thr, value fun)
   value *argv, cfn, avec, retval;
   int argc, i;
 
-  switch (TYPE(TVALR(thr))) {
+  switch (TYPE(fun)) {
   case T_CLOS:
-    closapply(c, thr);
+    closapply(c, thr, fun);
     break;
   case T_CCODE:
-    cfn = TVALR(thr);
+    cfn = fun;
     argc = TARGC(thr);
     if (REP(cfn)._cfunc.argc >= 0 && REP(cfn)._cfunc.argc != argc) {
       c->signal_error(c, "wrong number of arguments (%d for %d)\n", argc,
@@ -454,7 +454,7 @@ void arc_apply(arc *c, value thr, value fun)
       ocount = count;
       if ((FIXNUM_P(count) || TYPE(count) == T_BIGNUM) &&
 	  (cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(-1)) {
-	value list=TVALR(thr), res;
+	value list=fun, res;
 	/* We now have a non-negative exact integer for the count */
 	do {
 	  if (!CONS_P(list)) {
@@ -485,7 +485,7 @@ void arc_apply(arc *c, value thr, value fun)
       ocount = count;
       if (FIXNUM_P(count) &&
 	  (cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(-1)) {
-	value vec=TVALR(thr), res;
+	value vec=fun, res;
 	/* We now have a non-negative exact integer for the count/index */
 	if (FIX2INT(count) >= VECLEN(vec)) {
 	  c->signal_error(c, "index %d too large for vector", ocount);
@@ -510,7 +510,7 @@ void arc_apply(arc *c, value thr, value fun)
     } else {
       value tbl, key, dflt, bind;
 
-      tbl = TVALR(thr);
+      tbl = fun;
       key = CPOP(thr);
       dflt = (TARGC(thr) == 1) ? CNIL : CPOP(thr);
       bind = arc_hash_lookup(c, tbl, key);
@@ -529,7 +529,7 @@ void arc_apply(arc *c, value thr, value fun)
       ocount = count;
       if (FIXNUM_P(count) &&
 	  (cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(-1)) {
-	value str=TVALR(thr), res;
+	value str=fun, res;
 	/* We now have a non-negative exact integer for the count/index.
 	   XXX - string length is always a fixnum? */
 	if (FIX2INT(count) >= arc_strlen(c, str)) {
