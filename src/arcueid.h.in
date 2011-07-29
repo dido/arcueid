@@ -322,6 +322,30 @@ static inline int TYPE(value v)
 
 #define CONS_P(x) ((TYPE(x)) == (T_CONS))
 
+/* These are the really ugly macros used to support Calling Convention
+   4.  They are inspired by Simon Tatham's C coroutines, and
+   essentially provide a coroutine-style mechanism for performing
+   calls from a C extension into the virtual machine.  This is quite
+   possibly the most twisted use of C I will ever do... */
+#define CC4CTX value __cc4ctx__
+#define CC4VDEFBEGIN int __vidx__ = 1
+#define CC4VARDEF(x) int x = __vidx__++
+#define CC4VDEFEND
+#define CC4V(x) VINDEX(__cc4ctx__, x)
+#define CC4BEGIN(c) \
+  if (NIL_P(__cc4ctx__)) {						\
+    __cc4ctx__ = arc_mkvector(c, __vidx__+1);				\
+    VINDEX(__cc4ctx__, 0) = INT2FIX(0);					\
+  }									\
+  if (!NIL_P(__cc4ctx__)) {						\
+  switch (FIX2INT(VINDEX(__cc4ctx__, 0))) {				\
+ case 0:;
+#define CC4END } }
+#define CC4CALL(c, argv, func, fargc, ...)				\
+  do {									\
+    VINDEX(__cc4ctx__, 0) = INT2FIX(__LINE__); return(arc_mkxcont(c, __cc4ctx__, argv, func, fargc, __VA_ARGS__)); case __LINE__:; \
+  } while (0)
+
 /* Global environment */
 extern value arc_bindsym(arc *c, value sym, value binding);
 extern value arc_bindcstr(arc *c, const char *csym, value binding);
@@ -391,6 +415,9 @@ extern value arc_hash_lookup_cstr(arc *c, value hash, const char *key);
 extern value arc_hash_delete(arc *c, value hash, value key);
 extern value arc_hash_iter(arc *c, value hash, int *index);
 extern int arc_hash_length(arc *c, value hash);
+extern value arc_hash_map(arc *c, value argv, value rv, CC4CTX);
+extern value arc_table(arc *c);
+
 extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
@@ -470,29 +497,5 @@ extern value arc_current_gc_milliseconds(arc *c);
 extern value arc_current_process_milliseconds(arc *c);
 extern value arc_seconds(arc *c);
 extern value arc_msec(arc *c);
-
-/* These are the really ugly macros used to support Calling Convention
-   4.  They are inspired by Simon Tatham's C coroutines, and
-   essentially provide a coroutine-style mechanism for performing
-   calls from a C extension into the virtual machine.  This is quite
-   possibly the most twisted use of C I will ever do... */
-#define CC4CTX value __cc4ctx__
-#define CC4VDEFBEGIN int __vidx__ = 1
-#define CC4VARDEF(x) int x = __vidx__++
-#define CC4VDEFEND
-#define CC4V(x) VINDEX(__cc4ctx__, x)
-#define CC4BEGIN(c) \
-  if (NIL_P(__cc4ctx__)) {						\
-    __cc4ctx__ = arc_mkvector(c, __vidx__+1);				\
-    VINDEX(__cc4ctx__, 0) = INT2FIX(0);					\
-  }									\
-  if (!NIL_P(__cc4ctx__)) {						\
-  switch (FIX2INT(VINDEX(__cc4ctx__, 0))) {				\
- case 0:;
-#define CC4END } }
-#define CC4CALL(c, argv, func, fargc, ...)				\
-  do {									\
-    VINDEX(__cc4ctx__, 0) = INT2FIX(__LINE__); return(arc_mkxcont(c, __cc4ctx__, argv, func, fargc, __VA_ARGS__)); case __LINE__:; \
-  } while (0)
 
 #endif
