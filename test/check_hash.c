@@ -167,7 +167,6 @@ START_TEST(test_hash_table)
 {
   value table, notfoundstr, str;
   int i;
-  void *ctx = NULL;
 
   /* Start with 3 bits.  This should expand to at least five bits after
      we add the 17 names above. */
@@ -200,10 +199,8 @@ START_TEST(test_hash_table)
   arc_hash_insert(&c, table, str, INT2FIX(100));
   fail_unless(arc_hash_lookup(&c, table, str) == INT2FIX(100));
 
-  /* Test iteration */
-  i=0;
-  while (arc_hash_iter(&c, table, &ctx) != CUNBOUND)
-    i++;
+  /* Test length */
+  i=arc_hash_length(&c, table);
   fail_unless(i==17);
 
   /* Test deletion */
@@ -211,9 +208,7 @@ START_TEST(test_hash_table)
     arc_hash_delete(&c, table, vnames[i]);
     fail_unless(arc_hash_lookup(&c, table, vnames[i]) == CUNBOUND);
   }
-  i=0;
-  while (arc_hash_iter(&c, table, &ctx) != CUNBOUND)
-    i++;
+  i=arc_hash_length(&c, table);
   fail_unless(i==0);
 }
 END_TEST
