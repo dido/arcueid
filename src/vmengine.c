@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "../config.h"
 #include "arcueid.h"
 #include "vmengine.h"
@@ -47,7 +48,7 @@ void *alloca (size_t);
 #define INST(name) lbl_##name
 #define JTBASE ((void *)&&lbl_inop)
 #define NEXT {							\
-    if (--quanta <= 0 || TSTATE(thr) != Tready)			\
+    if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
       goto endquantum;						\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #else
@@ -71,12 +72,13 @@ void arc_vmengine(arc *c, value thr, int quanta)
   if (TSTATE(thr) != Tready)
     return;
   c->curthread = thr;
+  TQUANTA(thr) = quanta;
 
 #ifdef HAVE_THREADED_INTERPRETER
   goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
   for (;;) {
-    if (--quanta <= 0 || TSTATE(thr) != Tready)
+    if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)
       goto endquantum;
     curr_instr = *TIP(thr)++;
     switch (curr_instr) {
@@ -316,20 +318,58 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   code = VINDEX(TFUNR(thr), 0);
   TIP(thr) = &VINDEX(code, ip);
   TENVR(thr) = TVALR(thr) = CNIL;
+  TTID(thr) = ++c->tid_nonce;
   return(thr);
+}
+
+static void closapply(arc *c, value thr)
+{
+  value cl;
+
+  cl = TVALR(thr);
+  WB(&TFUNR(thr), car(cl));
+  WB(&TENVR(thr), cdr(cl));
+  TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
+}
+
+static value c4apply(arc *c, value thr, value avec,
+		     value c4rv, value c4ctx)
+{
+  value retval, cont, nargv, cfn;
+  int i;
+
+  cfn = TVALR(thr);
+  WB(&TFUNR(thr), TVALR(thr));
+  retval = REP(cfn)._cfunc.fnptr(c, avec, c4rv, c4ctx);
+  if (TYPE(retval) == T_XCONT) {
+    /* 1. Create a continuation object using the xcont as the offset */
+    cont = arc_mkcont(c, retval, thr);
+    /* 2. Put the continuation on the continuation register. */
+    WB(&TCONR(thr), cons(c, cont, TCONR(thr)));
+    /* 3. Push the parameters for the new call on the stack */
+    nargv = VINDEX(retval, 3);
+    for (i=VECLEN(nargv)-1; i>=0; i--) {
+      CPUSH(thr, VINDEX(nargv, i));
+    }
+    /* 4. Restart, with the value register pointing to the callee,
+       so that it gets "called" */
+    TVALR(thr) = VINDEX(retval, 2);
+    closapply(c, thr);
+    /* when this returns, we go back to the virtual machine loop,
+       resuming execution at the address of the called virtual machine
+       function. */
+  }
+  return(retval);
 }
 
 void arc_apply(arc *c, value thr, value fun)
 {
-  value *argv, cl, cfn, avec;
+  value *argv, cfn, avec, retval;
   int argc, i;
 
   switch (TYPE(TVALR(thr))) {
   case T_CLOS:
-    cl = TVALR(thr);
-    WB(&TFUNR(thr), car(cl));
-    WB(&TENVR(thr), cdr(cl));
-    TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
+    closapply(c, thr);
     break;
   case T_CCODE:
     cfn = TVALR(thr);
@@ -343,6 +383,18 @@ void arc_apply(arc *c, value thr, value fun)
     for (i=0; i<argc; i++)
       argv[i] = CPOP(thr);
     switch (REP(cfn)._cfunc.argc) {
+    case -3:
+      /* Calling convention 4 */
+      avec = arc_mkvector(c, argc);
+      memcpy(&VINDEX(avec, 0), argv, sizeof(value)*argc);
+      /* initial call of a CC4 function.  The context and return value
+	 of called function are initially nil. */
+      retval = c4apply(c, thr, avec, CNIL, CNIL);
+      if (TYPE(retval) == T_XCONT)
+	return;			/* go back to the virtual machine loop */
+      else
+	TVALR(thr) = retval;	/* normal return */
+      break;
     case -2:
       avec = arc_mkvector(c, argc);
       memcpy(&VINDEX(avec, 0), argv, sizeof(value)*argc);
@@ -500,28 +552,80 @@ void arc_apply(arc *c, value thr, value fun)
   }
 }
 
-/* Restore a continuation */
+/* Restore a continuation.  This can only restore a normal continuation. */
 void arc_restorecont(arc *c, value thr, value cont)
 {
   int stklen, offset;
 
   WB(&TFUNR(thr), VINDEX(cont, 1));
-  offset = FIX2INT(VINDEX(cont, 0));
-  TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
   WB(&TENVR(thr), VINDEX(cont, 2));
   stklen = VECLEN(VINDEX(cont, 3));
   TSP(thr) = TSTOP(thr) - stklen;
   memcpy(TSP(thr), &VINDEX(VINDEX(cont, 3), 0), stklen*sizeof(value));
+  offset = FIX2INT(VINDEX(cont, 0));
+  TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
 }
 
-/* Restore the continuation at the head of the continuation register */
+/* Restore an extended continuation inside a continuation */
+int arc_restorexcont(arc *c, value thr, value cont)
+{
+  value c4ctx, c4rv, oargv, xcont, retval;
+  int stklen, i;
+
+  WB(&TFUNR(thr), VINDEX(cont, 1));
+  WB(&TENVR(thr), VINDEX(cont, 2));
+  stklen = VECLEN(VINDEX(cont, 3));
+  TSP(thr) = TSTOP(thr) - stklen;
+  memcpy(TSP(thr), &VINDEX(VINDEX(cont, 3), 0), stklen*sizeof(value));
+  xcont = VINDEX(cont, 0);
+  /* An xcont offset is created by a CC4 "return".  If we see one,
+     we should "apply" the function again with the updated context and
+     return value in the value register with the same parameters.
+     The function and environment have been restored as part of the
+     normal progress of the continuation.  */
+  c4ctx = VINDEX(xcont, 0);	/* saved context */
+  c4rv = TVALR(thr);		/* return value of callee */
+  WB(&TVALR(thr), TFUNR(thr));	/* set value reg to func reg in prep for
+				   call to c4apply */
+  /* restore original parameters */
+  oargv = VINDEX(xcont, 1);
+  for (i=VECLEN(oargv)-1; i>=0; i--)
+    CPUSH(thr, VINDEX(oargv, i));
+  /* apply the original function, causing it to return to the place
+     specified by the context ("returning" as it were from the call),
+     with the return value of the callee as one of its parameters. */
+  retval = c4apply(c, thr, oargv, c4rv, c4ctx);
+  if (TYPE(retval) == T_XCONT) {
+    /* In this case, we do a simple return.  Everything has been set up
+       to "call" (by returning!) to the function which the caller is
+       trying to call. */
+    return(1);
+  }
+  /* Otherwise, the CC4 function has at last returned normally, so
+     now we can put its return value in the value register.  The
+     continuation register now contains a continuation which should be
+     a standard continuation that we can restore. */
+  WB(&TVALR(thr), retval);
+  return(0);
+}
+
+/* restore the continuation at the head of the continuation register */
 void arc_return(arc *c, value thr)
 {
   value cont;
 
-  cont = car(TCONR(thr));
-  WB(&TCONR(thr), cdr(TCONR(thr)));
-  arc_restorecont(c, thr, cont);
+  for (;;) {
+    cont = car(TCONR(thr));
+    WB(&TCONR(thr), cdr(TCONR(thr)));
+    if (TYPE(VINDEX(cont, 0)) == T_XCONT) {
+      if (arc_restorexcont(c, thr, cont)) {
+	return;
+      }
+      continue;
+    }
+    arc_restorecont(c, thr, cont);
+    return;
+  }
 }
 
 value arc_mkcont(arc *c, value offset, value thr)
@@ -540,6 +644,27 @@ value arc_mkcont(arc *c, value offset, value thr)
   memcpy(&VINDEX(savedstk, 0), TSP(thr), stklen*sizeof(value));
   WB(&VINDEX(cont, 3), savedstk);
   return(cont);
+}
+
+/* This creates a T_XCONT object, which is used to support calling
+   convention 4. */
+value arc_mkxcont(arc *c, value cc4ctx, value argv, value func, int fargc, ...)
+{
+  value xcont = arc_mkvector(c, 4);
+  value fargv = arc_mkvector(c, fargc);
+  int i;
+  va_list ap;
+
+  va_start(ap, fargc);
+  for (i=0; i<fargc; i++)
+    VINDEX(fargv, i) = va_arg(ap, value);
+
+  BTYPE(xcont) = T_XCONT;
+  WB(&VINDEX(xcont, 0), cc4ctx); /* context */
+  WB(&VINDEX(xcont, 1), argv);	 /* original params */
+  WB(&VINDEX(xcont, 2), func);	 /* callee function */
+  WB(&VINDEX(xcont, 3), fargv);	 /* callee arguments */
+  return(xcont);
 }
 
 value arc_mkenv(arc *c, value parent, int size)
@@ -596,7 +721,6 @@ void arc_thread_dispatch(arc *c, int quanta)
     }
     ++nthreads;
     thr = car(c->vmqueue);
-    arc_vmengine(c, thr, quanta);
     switch (TSTATE(thr)) {
       /* see if the thread has changed state to Trelease, Texiting, or
        Tbroken.  Remove the thread from the queue if so. */
@@ -616,7 +740,15 @@ void arc_thread_dispatch(arc *c, int quanta)
       /* increment count of threads in blocked states */
       ++blockedthreads;
       break;
-    default:
+    case Tsleep:
+      /* Wake up a sleeping thread if the wakeup time is reached */
+      if (__arc_milliseconds() >= TWAKEUP(thr))
+	TSTATE(thr) = Tready;
+      /* fall through -- let the thread run */
+    case Tdebug:
+      /* this does nothing special for now */
+    case Tready:
+      arc_vmengine(c, thr, quanta);
       break;
     }
 
