@@ -115,7 +115,7 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [7/17]
+** TODO Runtime Built-In Functions [8/17]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -294,9 +294,9 @@ notice and this notice are preserved.
        - [ ] tanh
        - [ ] tgamma
        - [ ] trunc (also in arc3)
-   - [ ] Table operations [0/2]
-     - [ ] maptable
-     - [ ] table
+   - [X] Table operations [2/2]
+     - [X] maptable
+     - [X] table
    - [ ] Evaluation [0/4]
      - [ ] eval
      - [ ] apply
