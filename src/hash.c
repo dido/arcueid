@@ -23,7 +23,6 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "utf.h"
-#include "coroutine.h"
 #include "../config.h"
 
 #if SIZEOF_LONG >= 8
@@ -460,26 +459,26 @@ value arc_hash_delete(arc *c, value hash, value key)
   return(v);
 }
 
-value arc_hash_iter(arc *c, value hash, ccrContParam)
+value arc_hash_iter(arc *c, value hash, int *index)
 {
-  ccrBeginContext;
-  unsigned int index;
-  ccrEndContext(ctx);
-
-  ccrBegin(ctx);
-  for (ctx->index=0; ctx->index < TABLESIZE(hash); ctx->index++) {
-    if (!EMPTYP(TABLEPTR(hash)[ctx->index]))
-      ccrReturn(TABLEPTR(hash)[ctx->index]);
+  if ((*index) >= TABLESIZE(hash))
+    return(CUNBOUND);
+  for (;;) {
+    if (*index >= TABLESIZE(hash))
+      break;
+    if (!EMPTYP(TABLEPTR(hash)[*index]))
+      return(TABLEPTR(hash)[(*index)++]);
+    ++(*index);
   }
-  ccrFinish(CUNBOUND);
+  return(CUNBOUND);
 }
 
 int arc_hash_length(arc *c, value hash)
 {
-  void *ctx = NULL;
   int count = 0;
+  int index = 0;
 
-  while (arc_hash_iter(c, hash, &ctx) != CUNBOUND)
+  while (arc_hash_iter(c, hash, &index) != CUNBOUND)
     count++;
   return(count);
 }
