@@ -359,6 +359,9 @@ static struct {
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
 
+  { "maptable", -3, arc_hash_map },
+  { "table", 0, arc_table },
+
   { "idiv", 2, __arc_idiv2 },
   { "expt", 2, arc_expt },
   { "pow", 2, arc_expt },
