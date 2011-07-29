@@ -225,7 +225,7 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
   case T_TABLE:
     {
       value val;
-      void *ctx = NULL;
+      int ctx = 0;
 
       append_cstring(c, "#hash(", ppstr);
       while ((val = arc_hash_iter(c, sexpr, &ctx)) != CUNBOUND) {
