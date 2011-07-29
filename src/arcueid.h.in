@@ -63,6 +63,7 @@ typedef struct arc {
   value vmthreads;		/* virtual machine thread objects */
   value vmqueue;		/* virtual machine run queue */
   value curthread;		/* current thread */
+  int tid_nonce;		/* thread id nonce */
 
   unsigned long lastsym;	/* last symbol value */
   value symtable;		/* symbol table */
@@ -108,6 +109,7 @@ enum arc_types {
   T_VMCODE = 0x18,		/* a VM code block */
   T_CCODE = 0x19,		/* a C function */
   T_CUSTOM = 0x1a,		/* custom type */
+  T_XCONT = 0x1b,		/* CC4 x-continuation */
 
   T_NONE=0xff
 };
@@ -149,7 +151,7 @@ struct vmthread {
   int tid;			/* unique thread id */
   int quanta;		/* time slice */
   unsigned long long ticks;	/* time used */
-  value wakeuptime;		/* wakeup time as a floating point epoch time */
+  unsigned long long wakeuptime; /* wakeup time */
 };
 
 #define TFUNR(t) (REP(t)._thread.funr)
@@ -163,6 +165,9 @@ struct vmthread {
 #define TIP(t) (REP(t)._thread.ip)
 #define TARGC(t) (REP(t)._thread.argc)
 #define TSTATE(t) (REP(t)._thread.state)
+#define TQUANTA(t) (REP(t)._thread.quanta)
+#define TWAKEUP(t) (REP(t)._thread.wakeuptime)
+#define TTID(t) (REP(t)._thread.tid)
 
 /* Cells for boxed items */
 struct cell {
@@ -400,6 +405,8 @@ extern void arc_vmengine(arc *c, value thr, int quanta);
 extern value arc_mkthread(arc *c, value funptr, int stksize, int ip);
 
 extern value arc_mkcont(arc *c, value offset, value thr);
+extern value arc_mkxcont(arc *c, value cc4ctx, value argv, value func,
+			 int fargc, ...);
 extern value arc_mkenv(arc *c, value parent, int size);
 extern void arc_apply(arc *c, value thr, value fun);
 extern void arc_return(arc *c, value thr);
@@ -463,5 +470,29 @@ extern value arc_current_gc_milliseconds(arc *c);
 extern value arc_current_process_milliseconds(arc *c);
 extern value arc_seconds(arc *c);
 extern value arc_msec(arc *c);
+
+/* These are the really ugly macros used to support Calling Convention
+   4.  They are inspired by Simon Tatham's C coroutines, and
+   essentially provide a coroutine-style mechanism for performing
+   calls from a C extension into the virtual machine.  This is quite
+   possibly the most twisted use of C I will ever do... */
+#define CC4CTX value __cc4ctx__
+#define CC4VDEFBEGIN int __vidx__ = 1
+#define CC4VARDEF(x) int x = __vidx__++
+#define CC4VDEFEND
+#define CC4V(x) VINDEX(__cc4ctx__, x)
+#define CC4BEGIN(c) \
+  if (NIL_P(__cc4ctx__)) {						\
+    __cc4ctx__ = arc_mkvector(c, __vidx__+1);				\
+    VINDEX(__cc4ctx__, 0) = INT2FIX(0);					\
+  }									\
+  if (!NIL_P(__cc4ctx__)) {						\
+  switch (FIX2INT(VINDEX(__cc4ctx__, 0))) {				\
+ case 0:;
+#define CC4END } }
+#define CC4CALL(c, argv, func, fargc, ...)				\
+  do {									\
+    VINDEX(__cc4ctx__, 0) = INT2FIX(__LINE__); return(arc_mkxcont(c, __cc4ctx__, argv, func, fargc, __VA_ARGS__)); case __LINE__:; \
+  } while (0)
 
 #endif
