@@ -389,7 +389,7 @@ extern value arc_hash_lookup(arc *c, value hash, value key);
 extern value arc_hash_lookup2(arc *c, value hash, value key);
 extern value arc_hash_lookup_cstr(arc *c, value hash, const char *key);
 extern value arc_hash_delete(arc *c, value hash, value key);
-extern value arc_hash_iter(arc *c, value hash, void **context);
+extern value arc_hash_iter(arc *c, value hash, int *index);
 extern int arc_hash_length(arc *c, value hash);
 extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
