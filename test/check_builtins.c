@@ -954,6 +954,57 @@ START_TEST(test_builtin_idiv)
 }
 END_TEST
 
+static char *names[] = {
+  "Arcueid Brunestud",
+  "Tohno Shiki",
+  "Ciel",
+  "Tohno Akiha",
+  "Hisui",
+  "Kohaku",
+  "Aozaki Aoko",
+  "Inui Arihiko",
+  "Michael Roa Valdamjong",
+  "Nero Chaos",
+  "Yumizuka Satsuki"
+};
+
+START_TEST(test_builtin_table)
+{
+  value v, v2, sym, func, clos;
+  value cctx;
+  int i;
+
+  v=test_builtin("table", 0);
+  fail_unless(TYPE(v) == T_TABLE);
+  for (i=0; i<11; i++) {
+    v2 = arc_mkstringc(&c, names[i]);
+    arc_hash_insert(&c, v, v2, INT2FIX(i));
+  }
+
+  /* Testing maptable is a little tricky.  We need to create a
+     function that updates a global variable with the count. */
+  sym = arc_intern_cstr(&c, "count");
+  arc_hash_insert(&c, c.genv, sym, INT2FIX(0));
+  cctx = arc_mkcctx(&c, 1, 1);
+  VINDEX(CCTX_LITS(cctx), 0) = sym;
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, imvarg, 0);
+  arc_gcode1(&c, cctx, imvarg, 1);
+  arc_gcode1(&c, cctx, ildg, 0);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, iadd);
+  arc_gcode1(&c, cctx, istg, 0);
+  arc_gcode(&c, cctx, iret);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  CODE_LITERAL(func, 0) = VINDEX(CCTX_LITS(cctx), 0);
+  clos = arc_mkclosure(&c, func, CNIL);
+  v=test_builtin("maptable", 2, v, clos);
+  fail_unless(TYPE(v) == T_TABLE);
+  fail_unless(arc_hash_lookup(&c, c.genv, sym) == INT2FIX(11));
+}
+END_TEST
+
 START_TEST(test_builtin_times)
 {
   value v;
@@ -1068,6 +1119,8 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_pow);
   tcase_add_test(tc_bif, test_builtin_mod);
   tcase_add_test(tc_bif, test_builtin_abs);
+
+  tcase_add_test(tc_bif, test_builtin_table);
 
   tcase_add_test(tc_bif, test_builtin_times);
 
