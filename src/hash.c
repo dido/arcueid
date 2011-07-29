@@ -22,6 +22,7 @@
 #include <string.h>
 #include "arcueid.h"
 #include "alloc.h"
+#include "arith.h"
 #include "utf.h"
 #include "../config.h"
 
@@ -481,4 +482,46 @@ int arc_hash_length(arc *c, value hash)
   while (arc_hash_iter(c, hash, &index) != CUNBOUND)
     count++;
   return(count);
+}
+
+/* maptable */
+value arc_hash_map(arc *c, value argv, value rv, CC4CTX)
+{
+  value proc, table;
+  CC4VDEFBEGIN;
+  CC4VARDEF(i);
+  CC4VDEFEND;
+
+  if (VECLEN(argv) != 2) {
+    c->signal_error(c, "wrong number of arguments (%d for 2)", VECLEN(argv));
+    return(CNIL);
+  }
+  proc = VINDEX(argv, 0);
+  table = VINDEX(argv, 1);
+  if (TYPE(table) != T_TABLE) {
+    c->signal_error(c, "maptable expects hash as 2nd argument, given %O",
+		    table);
+    return(CNIL);
+  }
+  if (TYPE(proc) != T_CLOS && TYPE(proc) != T_CCODE) {
+    c->signal_error(c, "maptable expects function as 1st argument, given %O",
+		    table);
+    return(CNIL);
+  }
+  CC4BEGIN(c);
+  for (CC4V(i) = INT2FIX(0); FIX2INT(CC4V(i))<TABLESIZE(table);
+       CC4V(i) = __arc_add2(c, CC4V(i), INT2FIX(1))) {
+    value tent = TABLEPTR(table)[FIX2INT(CC4V(i))];
+    if (!EMPTYP(tent))
+      CC4CALL(c, argv, proc, 2, car(tent), cdr(tent));
+  }
+  CC4END;
+  return(table);
+}
+
+#define DEFAULT_TABLE_BITS 8
+
+value arc_table(arc *c)
+{
+  return(arc_mkhash(c, DEFAULT_TABLE_BITS));
 }
