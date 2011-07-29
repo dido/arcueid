@@ -64,10 +64,11 @@ notice and this notice are preserved.
       - [X] dup
       - [X] cls
       - [X] consr
-    - [X] Build a foreign function interface [3/3]
+    - [X] Build a foreign function interface [4/4]
       - [X] Calling convention 1 (straight args)
       - [X] Calling convention 2 (args as a C array)
       - [X] Calling convention 3 (args as an Arcueid vector)
+      - [X] Calling convention 4 - functions that can call Arc functions
     - [X] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
