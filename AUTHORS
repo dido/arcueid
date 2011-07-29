@@ -20,9 +20,11 @@ The hash functions used in hash.c are the hash functions proposed by
 Bob Jenkins (lookup3.c on 32-bit and lookup8.c on 64-bit builds).  See
 http://www.burtleburtle.net/bob/hash/index.html for more details.
 
-C coroutines are used in various places to provide iterators, using a
-technique developed by Simon Tatham.  The file src/coroutine.h is due
-to him.
+The soon to be infamous calling convention 4 used to allow C extension
+functions to call into Arcueid virtual machine functions is inspired
+in large part by Simon Tatham's C coroutines.  See
+http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html for more
+information on the technique.
 
 The autoconf readline testing code in m4/ax_lib_readline.m4 is
 Copyright (c) 2008 Ville Laurikari.
