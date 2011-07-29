@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "../src/arcueid.h"
+#include "../src/arith.h"
 #include "../src/alloc.h"
 #include "../config.h"
 #include "../src/vmengine.h"
@@ -879,6 +880,68 @@ START_TEST(test_vm_ffi_cc3)
 }
 END_TEST
 
+/* This is a sample of a calling convention 4 function.  It will call the
+   passed function ten times with the numbers 0 to 9 as its first argument,
+   and the previous return value of the function as its second argument.
+   It should thus return 1013 when passed a function that adds its two
+   arguments together. */
+static value cc4demo(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VARDEF(i);
+  CC4VARDEF(t);
+  CC4VDEFEND;
+  CC4BEGIN(c);
+  CC4V(t) = INT2FIX(0);
+  for (CC4V(i) = INT2FIX(0);
+       FIX2INT(CC4V(i)) < 10;
+       CC4V(i) = __arc_add2(c, CC4V(i), INT2FIX(1))) {
+    CC4CALL(c, argv, VINDEX(argv, 0), 2, CC4V(i), CC4V(t));
+    CC4V(t) = __arc_add2(c, rv, CC4V(t));
+  }
+  CC4END;
+  return(CC4V(t));
+}
+
+START_TEST(test_vm_ffi_cc4)
+{
+  value cctx, cctx2, thr, func, func2;
+  int contofs, base;
+
+  /* The function to call.  Just adds its arguments */
+  cctx = arc_mkcctx(&c, 1, 0);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, imvarg, 0);
+  arc_gcode1(&c, cctx, imvarg, 1);
+  arc_gcode2(&c, cctx, ilde, 0, 0);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode2(&c, cctx, ilde, 0, 1);
+  arc_gcode(&c, cctx, iadd);
+  arc_gcode(&c, cctx, iret);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+
+  cctx2 = arc_mkcctx(&c, 1, 2);
+  VINDEX(CCTX_LITS(cctx2), 0) = arc_mkccode(&c, -3, cc4demo);
+  VINDEX(CCTX_LITS(cctx2), 1) = func;
+  base = FIX2INT(CCTX_VCPTR(cctx2));
+  arc_gcode1(&c, cctx2, icont, 0);
+  contofs = FIX2INT(CCTX_VCPTR(cctx2)) - 1;
+  arc_gcode1(&c, cctx2, ildl, 1);
+  arc_gcode(&c, cctx2, icls);
+  arc_gcode(&c, cctx2, ipush);
+  arc_gcode1(&c, cctx2, ildl, 0);
+  arc_gcode1(&c, cctx2, iapply, 1);
+  VINDEX(CCTX_VCODE(cctx2), contofs) = FIX2INT(CCTX_VCPTR(cctx2)) - base;
+  arc_gcode(&c, cctx2, ihlt);
+  func2 = arc_mkcode(&c, CCTX_VCODE(cctx2), arc_mkstringc(&c, "test2"), CNIL, 1);
+  CODE_LITERAL(func2, 0) = VINDEX(CCTX_LITS(cctx2), 0);
+  CODE_LITERAL(func2, 1) = VINDEX(CCTX_LITS(cctx2), 1);
+  thr = arc_mkthread(&c, func2, 2048, 0);
+  arc_vmengine(&c, thr, 1000);
+  fail_unless(TVALR(thr) == INT2FIX(1013));
+}
+END_TEST
+
 START_TEST(test_vm_apply_list)
 {
   int base, contofs;
@@ -1460,6 +1523,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_ffi_cc1);
   tcase_add_test(tc_vm, test_vm_ffi_cc2);
   tcase_add_test(tc_vm, test_vm_ffi_cc3);
+  tcase_add_test(tc_vm, test_vm_ffi_cc4);
   tcase_add_test(tc_vm, test_vm_apply_list);
   tcase_add_test(tc_vm, test_vm_apply_list_err1);
   tcase_add_test(tc_vm, test_vm_apply_list_err2);
