@@ -307,10 +307,10 @@ notice and this notice are preserved.
      - [X] apply
      - [ ] ssexpand
      - [ ] ssyntax
-   - [-] Macros [2/4]
+   - [-] Macros [3/4]
      - [X] macex (implemented in Arc)
      - [X] macex1 (implemented in Arc)
-     - [ ] sig
+     - [X] sig
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
      - [ ] uniq
@@ -330,7 +330,7 @@ notice and this notice are preserved.
 	   readb (yes, readb with a 'b'!) will return this
 	   CHARACTER.  This saves us the trouble of decoding Unicode
 	   all over again, and reinforces the maxim of never mixing
-	       the b functions with the c functions.
+	   the b functions with the c functions.
      - [X] Output [2/2]
        - [X] writeb
        - [X] writec
