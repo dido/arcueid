@@ -348,7 +348,7 @@ static value c4apply(arc *c, value thr, value avec,
     WB(&TCONR(thr), cons(c, cont, TCONR(thr)));
     /* 3. Push the parameters for the new call on the stack */
     nargv = VINDEX(retval, 3);
-    for (i=VECLEN(nargv)-1; i>=0; i--) {
+    for (i=0; i<VECLEN(nargv); i++) {
       CPUSH(thr, VINDEX(nargv, i));
     }
     /* 4. Restart, with the value register pointing to the callee,
@@ -552,6 +552,44 @@ void arc_apply(arc *c, value thr, value fun)
   }
 }
 
+/* arc_apply intended to be called from functions */
+value arc_apply2(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VDEFEND;
+  /* we don't care what happens to these variables after */
+  value func, args, fargv;
+
+  if (VECLEN(argv) < 1 || VECLEN(argv) > 2) {
+    c->signal_error(c, "apply expects 2 arguments given %d", VECLEN(argv));
+    return(CNIL);
+  }
+  func = VINDEX(argv, 0);
+  args = VINDEX(argv, 1);
+  if (TYPE(args) != T_VECTOR && TYPE(args) != T_CONS) {
+    c->signal_error(c, "apply expects second argument to be a list or vector, given %O", args);
+    return(CNIL);
+  }
+
+  if (TYPE(args) == T_CONS) {
+    /* highly doubtful, but this may become a bignum... */
+    int listlen = FIX2INT(arc_list_length(c, args)), i;
+    fargv = arc_mkvector(c, listlen);
+    i = 0;
+    while (args != CNIL) {
+      VINDEX(fargv, i) = car(args);
+      args = cdr(args);
+      ++i;
+    }
+  } else {
+    fargv = args;
+  }
+  CC4BEGIN(c);
+  CC4CALLV(c, argv, func, fargv);
+  CC4END;
+  return(rv);
+}
+
 /* Restore a continuation.  This can only restore a normal continuation. */
 void arc_restorecont(arc *c, value thr, value cont)
 {
@@ -646,25 +684,29 @@ value arc_mkcont(arc *c, value offset, value thr)
   return(cont);
 }
 
-/* This creates a T_XCONT object, which is used to support calling
-   convention 4. */
-value arc_mkxcont(arc *c, value cc4ctx, value argv, value func, int fargc, ...)
+value arc_mkxcontv(arc *c, value cc4ctx, value argv, value func, value fargv)
 {
   value xcont = arc_mkvector(c, 4);
-  value fargv = arc_mkvector(c, fargc);
-  int i;
-  va_list ap;
-
-  va_start(ap, fargc);
-  for (i=0; i<fargc; i++)
-    VINDEX(fargv, i) = va_arg(ap, value);
-
   BTYPE(xcont) = T_XCONT;
   WB(&VINDEX(xcont, 0), cc4ctx); /* context */
   WB(&VINDEX(xcont, 1), argv);	 /* original params */
   WB(&VINDEX(xcont, 2), func);	 /* callee function */
   WB(&VINDEX(xcont, 3), fargv);	 /* callee arguments */
   return(xcont);
+}
+
+/* This creates a T_XCONT object, which is used to support calling
+   convention 4. */
+value arc_mkxcont(arc *c, value cc4ctx, value argv, value func, int fargc, ...)
+{
+  value fargv = arc_mkvector(c, fargc);
+  va_list ap;
+  int i;
+
+  va_start(ap, fargc);
+  for (i=0; i<fargc; i++)
+    VINDEX(fargv, i) = va_arg(ap, value);
+  return(arc_mkxcontv(c, cc4ctx, argv, func, fargv));
 }
 
 value arc_mkenv(arc *c, value parent, int size)
