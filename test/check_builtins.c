@@ -1005,6 +1005,15 @@ START_TEST(test_builtin_table)
 }
 END_TEST
 
+START_TEST(test_symbols)
+{
+  fail_unless(arc_hash_lookup(&c, c.genv, arc_intern_cstr(&c, "nil")) == CNIL);
+  fail_unless(arc_hash_lookup(&c, c.genv, arc_intern_cstr(&c, "t")) == CTRUE);
+  fail_unless(TYPE(arc_hash_lookup(&c, c.genv,
+				   arc_intern_cstr(&c, "sig"))) == T_TABLE);
+}
+END_TEST
+
 START_TEST(test_builtin_apply)
 {
   value v, args, func, clos;
@@ -1152,6 +1161,8 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_abs);
 
   tcase_add_test(tc_bif, test_builtin_table);
+
+  tcase_add_test(tc_bif, test_symbols);
 
   tcase_add_test(tc_bif, test_builtin_apply);
 
