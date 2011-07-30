@@ -1005,6 +1005,37 @@ START_TEST(test_builtin_table)
 }
 END_TEST
 
+START_TEST(test_builtin_apply)
+{
+  value v, args, func, clos;
+  value cctx;
+
+  cctx = arc_mkcctx(&c, 1, 0);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, imvarg, 0);
+  arc_gcode1(&c, cctx, imvarg, 1);
+  arc_gcode2(&c, cctx, ilde, 0, 0);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode2(&c, cctx, ilde, 0, 1);
+  arc_gcode(&c, cctx, isub);
+  arc_gcode(&c, cctx, iret);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  clos = arc_mkclosure(&c, func, CNIL);
+
+  args = arc_mkvector(&c, 2);
+  VINDEX(args, 0) = INT2FIX(7);
+  VINDEX(args, 1) = INT2FIX(3);
+  v=test_builtin("apply", 2, args, clos);
+  fail_unless(TYPE(v) == T_FIXNUM);
+  fail_unless(v == INT2FIX(4));
+
+  args = cons(&c, INT2FIX(10), cons(&c, INT2FIX(7), CNIL));
+  v=test_builtin("apply", 2, args, clos);
+  fail_unless(TYPE(v) == T_FIXNUM);
+  fail_unless(v == INT2FIX(3));
+}
+END_TEST
+
 START_TEST(test_builtin_times)
 {
   value v;
@@ -1121,6 +1152,8 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_abs);
 
   tcase_add_test(tc_bif, test_builtin_table);
+
+  tcase_add_test(tc_bif, test_builtin_apply);
 
   tcase_add_test(tc_bif, test_builtin_times);
 
