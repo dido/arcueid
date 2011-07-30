@@ -359,14 +359,16 @@ static struct {
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
 
-  { "maptable", -3, arc_hash_map },
-  { "table", 0, arc_table },
-
   { "idiv", 2, __arc_idiv2 },
   { "expt", 2, arc_expt },
   { "pow", 2, arc_expt },
   { "mod", 2, __arc_mod2 },
   { "abs", 1, __arc_abs },
+
+  { "maptable", -3, arc_hash_map },
+  { "table", 0, arc_table },
+
+  { "apply", -3, arc_apply2 },
 
   { "current-gc-milliseconds", 0, arc_current_gc_milliseconds },
   { "current-process-milliseconds", 0, arc_current_process_milliseconds },
