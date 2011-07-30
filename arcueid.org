@@ -115,7 +115,7 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [8/17]
+** TODO Runtime Built-In Functions [9/17]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -307,13 +307,13 @@ notice and this notice are preserved.
      - [X] apply
      - [ ] ssexpand
      - [ ] ssyntax
-   - [-] Macros [3/4]
+   - [X] Macros [4/4]
      - [X] macex (implemented in Arc)
      - [X] macex1 (implemented in Arc)
      - [X] sig
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
-     - [ ] uniq
+     - [X] uniq
    - [X] Basic I/O primitives (src/io.c) [3/3]
          These are the base I/O functions provided by the Arcueid C
          runtime.
