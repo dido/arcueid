@@ -250,6 +250,9 @@ notice and this notice are preserved.
        - [ ] sqrt
        - [ ] trunc
      - [ ] Complex arithmetic [0/6]
+	   This is again an Arcueid extension.  It's rather annoying
+	   to have support for complex numbers but no functions to
+	   manipulate them.
        - [ ] real
        - [ ] imag
        - [ ] sreal
@@ -257,6 +260,8 @@ notice and this notice are preserved.
        - [ ] conjugate
        - [ ] arg -- complex argument
      - [-] C99 math.h functions (Arcueid only) [2/37]
+	   These functions should support complex arguments in as far
+	   as it makes sense to do so.
        - [X] abs -- works for all numeric types
        - [ ] acos
        - [ ] acosh
@@ -297,15 +302,17 @@ notice and this notice are preserved.
    - [X] Table operations [2/2]
      - [X] maptable
      - [X] table
-   - [ ] Evaluation [0/4]
+   - [-] Evaluation [1/4]
      - [ ] eval
-     - [ ] apply
+     - [X] apply
      - [ ] ssexpand
      - [ ] ssyntax
    - [-] Macros [2/4]
      - [X] macex (implemented in Arc)
      - [X] macex1 (implemented in Arc)
      - [ ] sig
+	   This is actually a global variable, and needs to be
+	   assigned at initialization.	   
      - [ ] uniq
    - [X] Basic I/O primitives (src/io.c) [3/3]
          These are the base I/O functions provided by the Arcueid C
