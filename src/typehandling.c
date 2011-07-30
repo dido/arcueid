@@ -77,6 +77,7 @@ static struct {
   { "num", CNIL },
   { "nil", CNIL },
   { "t", CNIL },
+  { "sig", CNIL },
   { NULL, CNIL }
 };
 
@@ -110,7 +111,8 @@ enum {
   IDX_im,
   IDX_num,
   IDX_nil,
-  IDX_t
+  IDX_t,
+  IDX_sig
 };
 
 value __arc_init_typesyms(arc *c)
@@ -119,8 +121,11 @@ value __arc_init_typesyms(arc *c)
 
   for (i=0; typesyms[i].name != NULL; i++)
     typesyms[i].sym = arc_intern_cstr(c, typesyms[i].name);
+  /* Initialize values of symbols */
+  arc_hash_insert(c, c->genv, typesyms[IDX_nil].sym, CNIL);
+  arc_hash_insert(c, c->genv, typesyms[IDX_t].sym, CTRUE);
+  arc_hash_insert(c, c->genv, typesyms[IDX_sig].sym, arc_mkhash(c, 10));
   return(CNIL);
-
 }
 
 /* Determine numeric base from argument 2 of a coerce */
