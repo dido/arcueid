@@ -1014,6 +1014,17 @@ START_TEST(test_symbols)
 }
 END_TEST
 
+START_TEST(test_builtin_uniq)
+{
+  value v, v2;
+
+  v = test_builtin("uniq", 0);
+  fail_unless(TYPE(v) == T_SYMBOL);
+  v2 = test_builtin("uniq", 0);
+  fail_unless(v != v2);
+}
+END_TEST
+
 START_TEST(test_builtin_apply)
 {
   value v, args, func, clos;
@@ -1163,6 +1174,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_table);
 
   tcase_add_test(tc_bif, test_symbols);
+  tcase_add_test(tc_bif, test_builtin_uniq);
 
   tcase_add_test(tc_bif, test_builtin_apply);
 
