@@ -19,6 +19,7 @@
   02110-1301 USA.
 */
 /* miscellaneous procedures and initialization */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -338,6 +339,18 @@ value arc_len(arc *c, value obj)
   return(CNIL);
 }
 
+#define UNIQ_START_VAL 2874
+#define UNIQ_PREFIX 'g'
+
+value arc_uniq(arc *c)
+{
+  static unsigned long long uniqnum = UNIQ_START_VAL;
+  char buffer[1024];
+
+  snprintf(buffer, sizeof(buffer)/sizeof(char), "g%llu", uniqnum++);
+  return(arc_intern_cstr(c, buffer));
+}
+
 static struct {
   char *fname;
   int argc;
@@ -369,6 +382,8 @@ static struct {
   { "table", 0, arc_table },
 
   { "apply", -3, arc_apply2 },
+
+  { "uniq", 0, arc_uniq },
 
   { "current-gc-milliseconds", 0, arc_current_gc_milliseconds },
   { "current-process-milliseconds", 0, arc_current_process_milliseconds },
