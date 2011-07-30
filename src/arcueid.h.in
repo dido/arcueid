@@ -334,7 +334,7 @@ static inline int TYPE(value v)
 #define CC4V(x) VINDEX(__cc4ctx__, x)
 #define CC4BEGIN(c) \
   if (NIL_P(__cc4ctx__)) {						\
-    __cc4ctx__ = arc_mkvector(c, __vidx__+1);				\
+    __cc4ctx__ = arc_mkvector(c, __vidx__++);				\
     VINDEX(__cc4ctx__, 0) = INT2FIX(0);					\
   }									\
   if (!NIL_P(__cc4ctx__)) {						\
@@ -344,6 +344,11 @@ static inline int TYPE(value v)
 #define CC4CALL(c, argv, func, fargc, ...)				\
   do {									\
     VINDEX(__cc4ctx__, 0) = INT2FIX(__LINE__); return(arc_mkxcont(c, __cc4ctx__, argv, func, fargc, __VA_ARGS__)); case __LINE__:; \
+  } while (0)
+
+#define CC4CALLV(c, argv, func, fargv)					\
+  do {									\
+    VINDEX(__cc4ctx__, 0) = INT2FIX(__LINE__); return(arc_mkxcontv(c, __cc4ctx__, argv, func, fargv)); case __LINE__:; \
   } while (0)
 
 /* Global environment */
@@ -432,10 +437,13 @@ extern void arc_vmengine(arc *c, value thr, int quanta);
 extern value arc_mkthread(arc *c, value funptr, int stksize, int ip);
 
 extern value arc_mkcont(arc *c, value offset, value thr);
+extern value arc_mkxcontv(arc *c, value cc4ctx, value argv, value func,
+			  value fargv);
 extern value arc_mkxcont(arc *c, value cc4ctx, value argv, value func,
 			 int fargc, ...);
 extern value arc_mkenv(arc *c, value parent, int size);
 extern void arc_apply(arc *c, value thr, value fun);
+extern value arc_apply2(arc *c, value argv, value rv, CC4CTX);
 extern void arc_return(arc *c, value thr);
 extern value arc_mkvmcode(arc *c, int length);
 extern value arc_mkcode(arc *c, value vmccode, value fname, value args,
