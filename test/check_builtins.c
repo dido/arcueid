@@ -954,6 +954,31 @@ START_TEST(test_builtin_idiv)
 }
 END_TEST
 
+START_TEST(test_builtin_rand)
+{
+  value r;
+
+  /* Maybe we ought to make more meaningful tests... */
+  fail_unless(test_builtin("srand", 1, INT2FIX(31337)) == INT2FIX(31337));
+  fail_unless(TYPE(test_builtin("rand", 0)) == T_FLONUM);
+  r = test_builtin("rand", 1, INT2FIX(65536));
+  fail_unless(TYPE(r) == T_FIXNUM);
+  fail_unless(r == INT2FIX(17800));
+  r = test_builtin("rand", 1, INT2FIX(65536));
+  fail_unless(r == INT2FIX(36822));
+  r = test_builtin("rand", 1, INT2FIX(65536));
+  fail_unless(r == INT2FIX(36591));
+  r = test_builtin("rand", 1, INT2FIX(65536));
+  fail_unless(r == INT2FIX(41661));
+  r = test_builtin("rand", 1, INT2FIX(65536));
+  fail_unless(r == INT2FIX(44925));
+  r = test_builtin("rand", 1, INT2FIX(65536));
+  fail_unless(r == INT2FIX(55506));
+  r = test_builtin("rand", 1, INT2FIX(65536));
+  fail_unless(r == INT2FIX(1287));
+}
+END_TEST
+
 static char *names[] = {
   "Arcueid Brunestud",
   "Tohno Shiki",
@@ -1170,6 +1195,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_pow);
   tcase_add_test(tc_bif, test_builtin_mod);
   tcase_add_test(tc_bif, test_builtin_abs);
+  tcase_add_test(tc_bif, test_builtin_rand);
 
   tcase_add_test(tc_bif, test_builtin_table);
 
