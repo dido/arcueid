@@ -20,6 +20,10 @@ The hash functions used in hash.c are the hash functions proposed by
 Bob Jenkins (lookup3.c on 32-bit and lookup8.c on 64-bit builds).  See
 http://www.burtleburtle.net/bob/hash/index.html for more details.
 
+The random number generator is also based on an algorithm devised by
+Bob Jenkins, ISAAC64 (used on all builds).  See
+http://burtleburtle.net/bob/rand/isaacafa.html for more details.
+
 The soon to be infamous calling convention 4 used to allow C extension
 functions to call into Arcueid virtual machine functions is inspired
 in large part by Simon Tatham's C coroutines.  See
