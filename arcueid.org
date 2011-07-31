@@ -243,10 +243,11 @@ notice and this notice are preserved.
      - [X] - Subtraction (virtual machine instruction)
      - [X] / Division (virtual machine instruction)
      - [X] idiv integer division
-     - [-] Arc3-current functions [2/5]
+     - [-] Arc3-current functions [4/6]
        - [X] expt
        - [X] mod
-       - [ ] rand
+       - [X] rand
+       - [X] srand
        - [ ] sqrt
        - [ ] trunc
      - [ ] Complex arithmetic [0/6]
@@ -459,6 +460,10 @@ notice and this notice are preserved.
    This is also the same format specification used by the error
    handler function signal_error.
 
+** TODO Macros
+   It seems that implementing macros may have to require some work
+   in the VM and the compiler as well.  I lean more to macros getting
+   executed only at compile time for performance reasons.
 ** TODO Additional CIEL instructions [0/3]
    The following additional instructions are required by the final version:
    - [ ] gtab
