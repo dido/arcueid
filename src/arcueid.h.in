@@ -493,6 +493,8 @@ extern value arc_close(arc *c, value fd);
 
 /* Mathematical functions */
 extern value arc_expt(arc *c, value a, value b);
+extern value arc_rand(arc *c, int argc, value *argv);
+extern value arc_srand(arc *ccc, value seed);
 
 /* Ciel */
 extern value arc_ciel_unmarshal(arc *c, value fd);
