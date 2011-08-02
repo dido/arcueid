@@ -468,6 +468,95 @@ static value read_char(arc *c, value src, int *index)
   return(symch);
 }
 
+#endif
+
+
+value arc_ssyntax(arc *c, value x)
+{
+  value name;
+  int i;
+  Rune ch;
+
+  if (TYPE(x) != T_SYMBOL)
+    return(CNIL);
+
+  name = arc_sym2name(c, x);
+  for (i=0; i<arc_strlen(c, name); i++) {
+    ch = arc_strindex(c, name, i);
+    if (ch == ':' || ch == '~' || ch == '&' || ch == '.' || ch == '!')
+      return(CTRUE);
+  }
+  return(CNIL);
+}
+
+static Rune readxchar(arc *c, value str, int *idx)
+{
+  if (*idx >= arc_strlen(c, str))
+    return(Runeerror);
+  (*idx)++;
+  return(arc_strindex(c, str, *idx));
+}
+
+#define STRMAX 256
+
+/* I imagine this can be done a lot more cleanly! */
+static value expand_compose(arc *c, value sym)
+{
+  value top, last, nelt, elt;
+  Rune ch, buf[STRMAX];
+  int index = 0, negate = 0, i=0, run = 1;
+
+  top = elt = last = CNIL;
+  while (run) {
+    ch = readxchar(c, sym, &index);
+    switch (ch) {
+    case ':':
+    case Runeerror:
+      nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
+      elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
+      if (elt != CNIL)
+	elt = arc_intern(c, elt);
+      i=0;
+      if (negate) {
+	elt = (elt == CNIL) ? ARC_BUILTIN(c, S_NO) 
+	  : cons(c, ARC_BUILTIN(c, S_COMPLEMENT), cons(c, elt, CNIL));
+	if (ch == Runeerror && top == CNIL)
+	  return(elt);
+	negate = 0;
+      }
+      if (elt == CNIL) {
+	if (ch == Runeerror)
+	  run = 0;
+	continue;
+      }
+      elt = cons(c, elt, CNIL);
+      if (last)
+	scdr(last, elt);
+      else
+	top = elt;
+      last = elt;
+      elt = CNIL;
+      if (ch == Runeerror)
+	run = 0;
+      break;
+    case '~':
+      negate = 1;
+      break;
+    default:
+      if (i >= STRMAX) {
+	nelt = arc_mkstring(c, buf, i);
+	elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
+	i=0;
+      }
+      buf[i++] = ch;
+      break;
+    }
+  }
+  if (cdr(top) == CNIL)
+    return(car(top));
+  return(cons(c, ARC_BUILTIN(c, S_COMPOSE), top));
+}
+
 static value expand_sexpr(arc *c, value sym)
 {
   Rune ch, buf[STRMAX], prevchar;
@@ -475,7 +564,7 @@ static value expand_sexpr(arc *c, value sym)
   int i=0, index=0;
 
   last = cur = elt = nelt = CNIL;
-  while ((ch = readchar(c, sym, &index)) != Runeerror) {
+  while ((ch = readxchar(c, sym, &index)) != Runeerror) {
     switch (ch) {
     case '.':
     case '!':
@@ -530,7 +619,7 @@ static value expand_and(arc *c, value sym)
 
   top = elt = last = CNIL;
   while (run) {
-    ch = readchar(c, sym, &index);
+    ch = readxchar(c, sym, &index);
     switch (ch) {
     case '&':
     case Runeerror:
@@ -569,7 +658,26 @@ static value expand_and(arc *c, value sym)
   return(cons(c, ARC_BUILTIN(c, S_ANDF), top));
 }
 
-#endif
+static value expand_ssyntax(arc *c, value sym)
+{
+  if (arc_strchr(c, sym, ':') != CNIL || arc_strchr(c, sym, '~') != CNIL)
+    return(expand_compose(c, sym));
+  if (arc_strchr(c, sym, '.') != CNIL || arc_strchr(c, sym, '!') != CNIL)
+    return(expand_sexpr(c, sym));
+  if (arc_strchr(c, sym, '&') != CNIL)
+    return(expand_and(c, sym));
+  return(CNIL);
+} 
+
+value arc_ssexpand(arc *c, value sym)
+{
+  value x;
+
+  if (TYPE(sym) != T_SYMBOL)
+    return(sym);
+  x = arc_sym2name(c, sym);
+  return(expand_ssyntax(c, x));
+}
 
 static struct {
   char *str;
