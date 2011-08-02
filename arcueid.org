@@ -303,10 +303,10 @@ notice and this notice are preserved.
    - [X] Table operations [2/2]
      - [X] maptable
      - [X] table
-   - [-] Evaluation [2/4]
+   - [-] Evaluation [3/4]
      - [ ] eval
      - [X] apply
-     - [ ] ssexpand
+     - [X] ssexpand
      - [X] ssyntax
    - [X] Macros [4/4]
      - [X] macex (implemented in Arc)
