@@ -27,8 +27,9 @@
 #include "../src/arith.h"
 #include "../config.h"
 #include "../src/vmengine.h"
+#include "../src/symbols.h"
 
-arc c;
+arc c, *cc;
 
 static value test_builtin(const char *symname, int argc, ...)
 {
@@ -1041,13 +1042,123 @@ END_TEST
 
 START_TEST(test_ssyntax)
 {
+  value sexpr;
+
   fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "x:~y:z")) == CTRUE);
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "x&y&z")) == CTRUE);
   fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "+.1.2")) == CTRUE);
   fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "cons!a!b")) == CTRUE);
   fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "foo")) == CNIL);
   fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "+")) == CNIL);
   fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "++")) == CNIL);
   fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "_")) == CNIL);
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "~"));
+  fail_unless(TYPE(sexpr) == T_SYMBOL);
+  fail_unless(sexpr == ARC_BUILTIN(cc, S_NO));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a:"));
+  fail_unless(TYPE(sexpr) == T_SYMBOL);
+  fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, ":a"));
+  fail_unless(TYPE(sexpr) == T_SYMBOL);
+  fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a:b"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPOSE));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern_cstr(&c, "a"));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern_cstr(&c, "b"));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a:b:c"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPOSE));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(&c, arc_mkstringc(&c, "b")));
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(&c, arc_mkstringc(&c, "c")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "~a"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPLEMENT));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a:~b:c"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPOSE));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_CONS);
+  fail_unless(car(car(cdr(cdr(sexpr)))) == ARC_BUILTIN(cc, S_COMPLEMENT));
+  fail_unless(TYPE(car(cdr(car(cdr(cdr(sexpr)))))) == T_SYMBOL);
+  fail_unless(car(cdr(car(cdr(cdr(sexpr))))) == arc_intern(&c, arc_mkstringc(&c, "b")));
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(&c, arc_mkstringc(&c, "c")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a&"));
+  fail_unless(TYPE(sexpr) == T_SYMBOL);
+  fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "&a"));
+  fail_unless(TYPE(sexpr) == T_SYMBOL);
+  fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a&b"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_ANDF));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(&c, arc_mkstringc(&c, "b")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a&b&c"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_ANDF));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(&c, arc_mkstringc(&c, "b")));
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(&c, arc_mkstringc(&c, "c")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a.b"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "b")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a.b.c"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_CONS);
+  fail_unless(car(car(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(car(cdr(car(sexpr))) == arc_intern(&c, arc_mkstringc(&c, "b")));
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "c")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, ".a"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_GET));
+  fail_unless(car(cdr(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "a!b"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(car(cdr(sexpr)) == ARC_BUILTIN(cc, S_QUOTE));
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(&c, arc_mkstringc(&c, "b")));
+
+  sexpr = test_builtin("ssexpand", 1, arc_intern_cstr(&c, "!a"));
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_GET));
+  fail_unless(car(cdr(sexpr)) == ARC_BUILTIN(cc, S_QUOTE));
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(&c, arc_mkstringc(&c, "a")));
 }
 END_TEST
 
@@ -1177,6 +1288,8 @@ int main(void)
   arc_init_reader(&c);
   c.genv = arc_mkhash(&c, 8);
   arc_init_builtins(&c);
+
+  cc = &c;
 
   tcase_add_test(tc_bif, test_builtin_is);
   tcase_add_test(tc_bif, test_builtin_iso);
