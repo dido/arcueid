@@ -352,6 +352,24 @@ value arc_uniq(arc *c)
   return(arc_intern_cstr(c, buffer));
 }
 
+value arc_ssyntax(arc *c, value x)
+{
+  value name;
+  int i;
+  Rune ch;
+
+  if (TYPE(x) != T_SYMBOL)
+    return(CNIL);
+
+  name = arc_sym2name(c, x);
+  for (i=0; i<arc_strlen(c, name); i++) {
+    ch = arc_strindex(c, name, i);
+    if (ch == ':' || ch == '~' || ch == '&' || ch == '.' || ch == '!')
+      return(CTRUE);
+  }
+  return(CNIL);
+}
+
 static struct {
   char *fname;
   int argc;
@@ -384,8 +402,8 @@ static struct {
   { "maptable", -3, arc_hash_map },
   { "table", 0, arc_table },
 
-
   { "apply", -3, arc_apply2 },
+  { "ssyntax", 1, arc_ssyntax },
 
   { "uniq", 0, arc_uniq },
 
