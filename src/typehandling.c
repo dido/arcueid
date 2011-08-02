@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "arcueid.h"
 #include "arith.h"
+#include "typehandling.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -78,41 +79,9 @@ static struct {
   { "nil", CNIL },
   { "t", CNIL },
   { "sig", CNIL },
+  { "compose", CNIL },
+  { "complement", CNIL },
   { NULL, CNIL }
-};
-
-enum {
-  IDX_sym=0,
-  IDX_fixnum,
-  IDX_bignum,
-  IDX_flonum,
-  IDX_rational,
-  IDX_complex,
-  IDX_char,
-  IDX_string,
-  IDX_cons,
-  IDX_table,
-  IDX_input,
-  IDX_output,
-  IDX_exception,
-  IDX_port,
-  IDX_thread,
-  IDX_vector,
-  IDX_continuation,
-  IDX_closure,
-  IDX_code,
-  IDX_environment,
-  IDX_vmcode,
-  IDX_ccode,
-  IDX_custom,
-  IDX_int,
-  IDX_unknown,
-  IDX_re,
-  IDX_im,
-  IDX_num,
-  IDX_nil,
-  IDX_t,
-  IDX_sig
 };
 
 value __arc_init_typesyms(arc *c)
@@ -926,4 +895,9 @@ value arc_rep(arc *c, value obj)
   if (TYPE(obj) != T_TAGGED)
     return(obj);
   return(cdr(obj));
+}
+
+value __arc_typesym(arc *c, int index)
+{
+  return(typesyms[index].sym);
 }
