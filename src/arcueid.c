@@ -29,6 +29,8 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
+#include "utf.h"
+#include "symbols.h"
 #include "../config.h"
 
 value arc_is(arc *c, value v1, value v2)
@@ -352,24 +354,6 @@ value arc_uniq(arc *c)
   return(arc_intern_cstr(c, buffer));
 }
 
-value arc_ssyntax(arc *c, value x)
-{
-  value name;
-  int i;
-  Rune ch;
-
-  if (TYPE(x) != T_SYMBOL)
-    return(CNIL);
-
-  name = arc_sym2name(c, x);
-  for (i=0; i<arc_strlen(c, name); i++) {
-    ch = arc_strindex(c, name, i);
-    if (ch == ':' || ch == '~' || ch == '&' || ch == '.' || ch == '!')
-      return(CTRUE);
-  }
-  return(CNIL);
-}
-
 static struct {
   char *fname;
   int argc;
@@ -404,6 +388,7 @@ static struct {
 
   { "apply", -3, arc_apply2 },
   { "ssyntax", 1, arc_ssyntax },
+  { "ssexpand", 1, arc_ssexpand },
 
   { "uniq", 0, arc_uniq },
 
@@ -429,8 +414,6 @@ value arc_bindcstr(arc *c, const char *csym, value binding)
   return(arc_bindsym(c, sym, binding));
 }
 
-extern value __arc_init_typesyms(arc *c);
-
 value arc_init_builtins(arc *c)
 {
   int i;
@@ -440,6 +423,9 @@ value arc_init_builtins(arc *c)
     cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr);
     arc_bindcstr(c, fntable[i].fname, cfunc);
   }
-  __arc_init_typesyms(c);
+
+  arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
+  arc_bindsym(c, ARC_BUILTIN(c, S_T), CTRUE);
+  arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
   return(CNIL);
 }
