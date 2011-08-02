@@ -37,6 +37,36 @@ enum builtin_syms {
   S_NO,				/* no */
   S_ANDF,			/* andf */
   S_GET,			/* get */
+  S_SYM,			/* sym */
+  S_FIXNUM,			/* fixnum */
+  S_BIGNUM,			/* bignum */
+  S_FLONUM,			/* flonum */
+  S_RATIONAL,			/* rational */
+  S_COMPLEX,			/* complex */
+  S_CHAR,			/* char */
+  S_STRING,			/* string */
+  S_CONS,			/* cons */
+  S_TABLE,			/* table */
+  S_INPUT,			/* input */
+  S_OUTPUT,			/* output */
+  S_EXCEPTION,			/* exception */
+  S_PORT,			/* port */
+  S_THREAD,			/* thread */
+  S_VECTOR,			/* vector */
+  S_CONTINUATION,		/* continuation */
+  S_CLOSURE,			/* closure */
+  S_CODE,			/* code */
+  S_ENVIRONMENT,		/* environment */
+  S_VMCODE,			/* vmcode */
+  S_CCODE,			/* ccode */
+  S_CUSTOM,			/* custom */
+  S_INT,			/* int */
+  S_UNKNOWN,			/* unknown */
+  S_RE,				/* re */
+  S_IM,				/* im */
+  S_NUM,			/* num */
+  S_SIG,			/* sig */
+
   S_THE_END			/* end of the line */
 };
 
