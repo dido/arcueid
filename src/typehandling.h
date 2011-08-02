@@ -53,7 +53,9 @@ enum {
   IDX_num,
   IDX_nil,
   IDX_t,
-  IDX_sig
+  IDX_sig,
+  IDX_compose,
+  IDX_complement
 };
 
 extern value __arc_typesym(arc *c, int index);
