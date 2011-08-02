@@ -1039,6 +1039,18 @@ START_TEST(test_symbols)
 }
 END_TEST
 
+START_TEST(test_ssyntax)
+{
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "x:~y:z")) == CTRUE);
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "+.1.2")) == CTRUE);
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "cons!a!b")) == CTRUE);
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "foo")) == CNIL);
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "+")) == CNIL);
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "++")) == CNIL);
+  fail_unless(test_builtin("ssyntax", 1, arc_intern_cstr(&c, "_")) == CNIL);
+}
+END_TEST
+
 START_TEST(test_builtin_uniq)
 {
   value v, v2;
@@ -1200,6 +1212,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_table);
 
   tcase_add_test(tc_bif, test_symbols);
+  tcase_add_test(tc_bif, test_ssyntax);
   tcase_add_test(tc_bif, test_builtin_uniq);
 
   tcase_add_test(tc_bif, test_builtin_apply);
