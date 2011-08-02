@@ -493,8 +493,7 @@ static Rune readxchar(arc *c, value str, int *idx)
 {
   if (*idx >= arc_strlen(c, str))
     return(Runeerror);
-  (*idx)++;
-  return(arc_strindex(c, str, *idx));
+  return(arc_strindex(c, str, (*idx)++));
 }
 
 #define STRMAX 256
