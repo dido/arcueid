@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include "arcueid.h"
 #include "arith.h"
-#include "typehandling.h"
+#include "symbols.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -43,59 +43,6 @@
 # include <stddef.h>
 void *alloca (size_t);
 #endif
-
-static struct {
-  char *name;
-  value sym;
-} typesyms[] = {
-  { "sym", CNIL },
-  { "fixnum", CNIL },
-  { "bignum", CNIL },
-  { "flonum", CNIL },
-  { "rational", CNIL },
-  { "complex", CNIL },
-  { "char", CNIL },
-  { "string", CNIL },
-  { "cons", CNIL },
-  { "table", CNIL },
-  { "input", CNIL },
-  { "output", CNIL },
-  { "exception", CNIL },
-  { "port", CNIL },
-  { "thread", CNIL },
-  { "vector", CNIL },
-  { "continuation", CNIL },
-  { "closure", CNIL },
-  { "code", CNIL },
-  { "environment", CNIL },
-  { "vmcode", CNIL },
-  { "ccode", CNIL },
-  { "custom", CNIL },
-  { "int", CNIL },
-  { "unknown", CNIL },
-  { "re", CNIL },
-  { "im", CNIL },
-  { "num", CNIL },
-  { "nil", CNIL },
-  { "t", CNIL },
-  { "sig", CNIL },
-  { "compose", CNIL },
-  { "complement", CNIL },
-  { NULL, CNIL }
-};
-
-value __arc_init_typesyms(arc *c)
-{
-  int i;
-
-  for (i=0; typesyms[i].name != NULL; i++)
-    typesyms[i].sym = arc_intern_cstr(c, typesyms[i].name);
-  /* Initialize values of symbols */
-  arc_hash_insert(c, c->genv, typesyms[IDX_nil].sym, CNIL);
-  arc_hash_insert(c, c->genv, typesyms[IDX_t].sym, CTRUE);
-  arc_hash_insert(c, c->genv, typesyms[IDX_sig].sym, arc_mkhash(c, 10));
-  return(CNIL);
-}
 
 /* Determine numeric base from argument 2 of a coerce */
 static value numeric_base(arc *c, value argv, const char *caller)
@@ -124,34 +71,34 @@ value arc_type(arc *c, value obj)
   case T_NIL:
   case T_TRUE:
   case T_SYMBOL:
-    return(typesyms[IDX_sym].sym);
+    return(ARC_BUILTIN(c, S_SYM));
     break;
   case T_FIXNUM:
-    return(typesyms[IDX_fixnum].sym);
+    return(ARC_BUILTIN(c, S_FIXNUM));
     break;
   case T_BIGNUM:
-    return(typesyms[IDX_bignum].sym);
+    return(ARC_BUILTIN(c, S_BIGNUM));
     break;
   case T_FLONUM:
-    return(typesyms[IDX_flonum].sym);
+    return(ARC_BUILTIN(c, S_FLONUM));
     break;
   case T_RATIONAL:
-    return(typesyms[IDX_rational].sym);
+    return(ARC_BUILTIN(c, S_FLONUM));
     break;
   case T_COMPLEX:
-    return(typesyms[IDX_complex].sym);
+    return(ARC_BUILTIN(c, S_COMPLEX));
     break;
   case T_CHAR:
-    return(typesyms[IDX_char].sym);
+    return(ARC_BUILTIN(c, S_CHAR));
     break;
   case T_STRING:
-    return(typesyms[IDX_string].sym);
+    return(ARC_BUILTIN(c, S_STRING));
     break;
   case T_CONS:
-    return(typesyms[IDX_cons].sym);
+    return(ARC_BUILTIN(c, S_CONS));
     break;
   case T_TABLE:
-    return(typesyms[IDX_cons].sym);
+    return(ARC_BUILTIN(c, S_TABLE));
     break;
   case T_TAGGED:
     /* A tagged object created by annotate has as its car the type
@@ -159,45 +106,45 @@ value arc_type(arc *c, value obj)
     return(car(obj));
     break;
   case T_INPUT:
-    return(typesyms[IDX_input].sym);
+    return(ARC_BUILTIN(c, S_INPUT));
     break;
   case T_EXCEPTION:
-    return(typesyms[IDX_exception].sym);
+    return(ARC_BUILTIN(c, S_EXCEPTION));
     break;
   case T_PORT:
-    return(typesyms[IDX_port].sym);
+    return(ARC_BUILTIN(c, S_PORT));
     break;
   case T_THREAD:
-    return(typesyms[IDX_thread].sym);
+    return(ARC_BUILTIN(c, S_THREAD));
     break;
   case T_VECTOR:
-    return(typesyms[IDX_vector].sym);
+    return(ARC_BUILTIN(c, S_VECTOR));
     break;
   case T_CONT:
-    return(typesyms[IDX_continuation].sym);
+    return(ARC_BUILTIN(c, S_CONTINUATION));
     break;
   case T_CLOS:
-    return(typesyms[IDX_closure].sym);
+    return(ARC_BUILTIN(c, S_CLOSURE));
     break;
   case T_CODE:
-    return(typesyms[IDX_code].sym);
+    return(ARC_BUILTIN(c, S_CODE));
     break;
   case T_ENV:
-    return(typesyms[IDX_environment].sym);
+    return(ARC_BUILTIN(c, S_ENVIRONMENT));
     break;
   case T_VMCODE:
-    return(typesyms[IDX_vmcode].sym);
+    return(ARC_BUILTIN(c, S_VMCODE));
     break;
   case T_CCODE:
-    return(typesyms[IDX_ccode].sym);
+    return(ARC_BUILTIN(c, S_CCODE));
     break;
   case T_CUSTOM:
-    return(typesyms[IDX_custom].sym);
+    return(ARC_BUILTIN(c, S_CUSTOM));
     break;
   default:
     break;
   }
-  return(typesyms[IDX_unknown].sym);
+  return(ARC_BUILTIN(c, S_UNKNOWN));
 }
 
 static value str2int(arc *c, value obj, value base, int strptr, int limit)
@@ -258,7 +205,7 @@ static value coerce_integer(arc *c, value obj, value argv)
     return(INT2FIX(REP(obj)._char));
     break;
   case T_COMPLEX:
-    obj = (VECLEN(argv) >= 3 && VINDEX(argv, 2) == typesyms[IDX_im].sym) ?
+    obj = (VECLEN(argv) >= 3 && VINDEX(argv, 2) == ARC_BUILTIN(c, S_IM)) ?
       arc_mkflonum(c, REP(obj)._complex.im)
       : arc_mkflonum(c, REP(obj)._complex.re);
     /* fall through */
@@ -428,7 +375,7 @@ static value coerce_flonum(arc *c, value obj, value argv)
   case T_RATIONAL:
     return(arc_mkflonum(c, arc_coerce_flonum(c, obj)));
   case T_COMPLEX:
-    return((VECLEN(argv) >= 3 && VINDEX(argv, 2) == typesyms[IDX_im].sym) ?
+    return((VECLEN(argv) >= 3 && VINDEX(argv, 2) == ARC_BUILTIN(c, S_IM)) ?
 	   arc_mkflonum(c, REP(obj)._complex.im)
 	   : arc_mkflonum(c, REP(obj)._complex.re));
   case T_STRING:
@@ -462,7 +409,7 @@ static value coerce_rational(arc *c, value obj, value argv)
     /* null conversion */
     return(obj);
   case T_COMPLEX:
-    obj = (VECLEN(argv) >= 3 && VINDEX(argv, 2) == typesyms[IDX_im].sym) ?
+    obj = (VECLEN(argv) >= 3 && VINDEX(argv, 2) == ARC_BUILTIN(c, S_IM)) ?
       arc_mkflonum(c, REP(obj)._complex.im)
       : arc_mkflonum(c, REP(obj)._complex.re);
     /* fall through */
@@ -728,9 +675,9 @@ value coerce_sym(arc *c, value obj, value argv)
     return(arc_intern(c, sym));
   case T_STRING:
     sym = arc_intern(c, obj);
-    if (sym == typesyms[IDX_nil].sym)
+    if (sym == ARC_BUILTIN(c, S_NIL))
       return(CNIL);
-    if (sym == typesyms[IDX_t].sym)
+    if (sym == ARC_BUILTIN(c, S_T))
       return(CTRUE);
     return(sym);
   default:
@@ -829,41 +776,41 @@ value arc_coerce(arc *c, value argv)
   obj = VINDEX(argv, 0);
   ntype = VINDEX(argv, 1);
   /* Integer coercions */
-  if (ntype == typesyms[IDX_fixnum].sym
-      || ntype == typesyms[IDX_bignum].sym
-      || ntype == typesyms[IDX_int].sym) {
+  if (ntype == ARC_BUILTIN(c, S_FIXNUM)
+      || ntype == ARC_BUILTIN(c, S_BIGNUM)
+      || ntype == ARC_BUILTIN(c, S_INT)) {
     return(coerce_integer(c, obj, argv));
   }
 
   /* Flonum coercions */
-  if (ntype == typesyms[IDX_flonum].sym)
+  if (ntype == ARC_BUILTIN(c, S_FLONUM))
     return(coerce_flonum(c, obj, argv));
 
   /* Rational coercions */
-  if (ntype == typesyms[IDX_rational].sym)
+  if (ntype == ARC_BUILTIN(c, S_RATIONAL))
     return(coerce_rational(c, obj, argv));
 
   /* Complex coercions */
-  if (ntype == typesyms[IDX_complex].sym)
+  if (ntype == ARC_BUILTIN(c, S_COMPLEX))
     return(coerce_complex(c, obj, argv));
 
   /* String coercions */
-  if (ntype == typesyms[IDX_string].sym)
+  if (ntype == ARC_BUILTIN(c, S_STRING))
     return(coerce_string(c, obj, argv));
 
   /* Cons coercions */
-  if (ntype == typesyms[IDX_cons].sym)
+  if (ntype == ARC_BUILTIN(c, S_CONS))
     return(coerce_cons(c, obj, argv));
 
   /* Symbol coercions */
-  if (ntype == typesyms[IDX_sym].sym)
+  if (ntype == ARC_BUILTIN(c, S_SYM))
     return(coerce_sym(c, obj, argv));
 
   /* Vector coercions */
-  if (ntype == typesyms[IDX_vector].sym)
+  if (ntype == ARC_BUILTIN(c, S_VECTOR))
     return(coerce_vector(c, obj, argv));
 
-  if (ntype == typesyms[IDX_char].sym && TYPE(obj) == T_FIXNUM) {
+  if (ntype == ARC_BUILTIN(c, S_CHAR) && TYPE(obj) == T_FIXNUM) {
     int ch = FIX2INT(obj);
 
     if (ch < 0 || ch > 0x10fff || (ch >= 0xd800 && ch <=0xdfff)) {
@@ -873,8 +820,8 @@ value arc_coerce(arc *c, value argv)
     return(arc_mkchar(c, (Rune)ch));
   }
 
-  /* Vector coercions */
-  if (ntype == typesyms[IDX_num].sym &&  TYPE(obj) == T_STRING)
+  /* numeric coercions */
+  if (ntype == ARC_BUILTIN(c, S_NUM) &&  TYPE(obj) == T_STRING)
     return(coerce_num(c, obj, argv));
 
   c->signal_error(c, "cannot coerce %O to %O", obj, ntype);
@@ -897,7 +844,3 @@ value arc_rep(arc *c, value obj)
   return(cdr(obj));
 }
 
-value __arc_typesym(arc *c, int index)
-{
-  return(typesyms[index].sym);
-}
