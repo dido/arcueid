@@ -339,8 +339,8 @@ static value str2flo(arc *c, value obj, value b, int strptr, int limit)
 	else
 	  return(arc_mkflonum(c, INFINITY));
       }
-      exponent = __arc_add2(c, exponent, exp);
 #endif
+      exponent = __arc_add2(c, exponent, exp);
       if (num == 0.0)
 	return(arc_mkflonum(c, 0.0));
 
