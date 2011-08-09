@@ -352,8 +352,8 @@ static value str2flo(arc *c, value obj, value b, int strptr, int limit)
 	else
 	  return(arc_mkflonum(c, INFINITY));
       }
-    }
 #endif
+    }
   }
   /* Multiply NUM by BASE to the EXPONENT power */
   res = __arc_mul2(c, arc_mkflonum(c, sign*num),
@@ -532,6 +532,7 @@ static value coerce_string(arc *c, value obj, value argv)
   case T_BIGNUM:
     base = numeric_base(c, argv, "int->string");
     return(__arc_itoa(c, obj, base, 0, 0));
+#ifdef HAVE_GMP_H
   case T_RATIONAL:
     {
       value numstr, denstr;
@@ -545,6 +546,7 @@ static value coerce_string(arc *c, value obj, value argv)
       denstr = __arc_itoa(c, denstr, base, 0, 0);
       return(arc_strcat(c, numstr, denstr));
     }
+#endif
   case T_COMPLEX:
     {
       /* XXX - radix is ignored */
@@ -616,6 +618,7 @@ value coerce_cons(arc *c, value obj, value argv)
   switch(TYPE(obj)) {
   case T_CONS:
     return(obj);
+#ifdef HAVE_GMP_H
   case T_RATIONAL:
     {
       value num, den, t;
@@ -632,6 +635,7 @@ value coerce_cons(arc *c, value obj, value argv)
 	den = t;
       return(cons(c, num, den));
     }
+#endif
   case T_COMPLEX:
     return(cons(c, arc_mkflonum(c, REP(obj)._complex.re),
 		arc_mkflonum(c, REP(obj)._complex.im)));
