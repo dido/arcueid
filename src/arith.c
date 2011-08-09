@@ -1315,7 +1315,9 @@ value arc_exact(arc *c, value v)
 
 value __arc_abs(arc *c, value v)
 {
+#ifdef HAVE_GMP_H
   value val;
+#endif
 
   switch (TYPE(v)) {
   case T_FIXNUM:
