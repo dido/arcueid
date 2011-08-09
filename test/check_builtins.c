@@ -148,7 +148,13 @@ START_TEST(test_builtin_expt)
   mpz_t expected;
 #endif
 
+#ifdef HAVE_GMP_H
   fail_unless(test_builtin("expt", 2, INT2FIX(24), INT2FIX(2)) == INT2FIX(16777216));
+#else
+  val = test_builtin("expt", 2, INT2FIX(24), INT2FIX(2));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 16777216.0) < 1e-6);
+#endif
   val = test_builtin("expt", 2, INT2FIX(24), arc_mkflonum(&c, 2));
   fail_unless(TYPE(val) == T_FLONUM);
   fail_unless(fabs(16777216.0 - REP(val)._flonum) < 1e-6);
@@ -249,7 +255,7 @@ START_TEST(test_builtin_coerce_int)
   val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
 		     arc_mkflonum(&c, 1.0e100));
   fail_unless(TYPE(val) == T_FIXNUM);
-  fail_unless(val == FIXNUM_MAX);
+  fail_unless(val == INT2FIX(FIXNUM_MAX));
 #endif
 
   val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"),
@@ -899,7 +905,14 @@ START_TEST(test_builtin_pow)
   mpz_t expected;
 #endif
 
+#ifdef HAVE_GMP_H
   fail_unless(test_builtin("pow", 2, INT2FIX(24), INT2FIX(2)) == INT2FIX(16777216));
+#else
+  val = test_builtin("pow", 2, INT2FIX(24), INT2FIX(2));
+  fail_unless(TYPE(val) == T_FLONUM);
+  fail_unless(fabs(REP(val)._flonum - 16777216.0) < 1e-6);
+#endif
+
   val = test_builtin("pow", 2, INT2FIX(24), arc_mkflonum(&c, 2));
   fail_unless(TYPE(val) == T_FLONUM);
   fail_unless(fabs(16777216.0 - REP(val)._flonum) < 1e-6);
