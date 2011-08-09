@@ -915,8 +915,8 @@ value __arc_amul_2exp(arc *c, value acc, value arg1, int n)
 
   if (TYPE(arg1) == T_FIXNUM) {
     /* First, try to use an ordinary bit shift on the fixnum. */
-    if (n < (sizeof(long) - 1) * 8) {
-      long res = FIX2INT(arg1) << n;
+    if (n <= (sizeof(long long) - 1) * 8) {
+      long long res = ((long long)FIX2INT(arg1)) << n;
 
       if (res >= FIX2INT(arg1))
 	return(__arc_add2(c, acc, INT2FIX(res)));
