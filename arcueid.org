@@ -93,29 +93,30 @@ notice and this notice are preserved.
 	 when we have real threads in the language we'll make it into
 	 a real threaded implementation with a real OS-level thread to
 	 do the marking and sweeping.
-** DONE compiler in Arc
-    Debugging and feature-completeness are all on the agenda of course.
-** TODO basic data types [11/14]
+** TODO compiler in Arc   
+** TODO basic data types [13/15]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
-       - [X] fixnum
-       - [X] bignum
-       - [X] flonum
-       - [X] complex
-       - [X] rational
+      - [X] fixnum
+      - [X] bignum
+      - [X] flonum
+      - [X] complex
+      - [X] rational
     - [X] Characters
     - [X] Strings
     - [X] Symbols
     - [X] Conses
     - [X] Tables
     - [X] Vectors
-    - [ ] Tagged
-    - [ ] Functions
+    - [X] Tagged
+    - [X] Functions
     - [X] Input Ports
     - [X] Output Ports
     - [ ] Threads
-** TODO Runtime Built-In Functions [9/17]
+    - [ ] Channels
+    - [ ] Regular Expressions
+** TODO Runtime Built-In Functions [8/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -221,7 +222,7 @@ notice and this notice are preserved.
      - [X] annotate
      - [X] rep
      - [X] sym
-   - [X] Predicates [9/9]
+   - [-] Predicates [9/10]
      - [X] Less-than (<) *
      - [X] Greater-than (>) *
      - [X] Less-than or equal (<=) *
@@ -231,6 +232,7 @@ notice and this notice are preserved.
      - [X] exact
      - [X] is
      - [X] iso
+     - [ ] fixnump
    - [X] List operations [5/5]
      - [X] car (implemented as a virtual machine instruction)
      - [X] cdr (implemented as a virtual machine instruction)
@@ -305,6 +307,12 @@ notice and this notice are preserved.
      - [X] table
    - [-] Evaluation [3/4]
      - [ ] eval
+	   We will implement eval by calling the compiler on the
+	   expression to be evaluated.  There should be a special
+	   entry point that compiles a sexpr as though it were
+	   enclosed in a (fn () ...) form.  The output of the compiler
+	   is a T_CODE object which we can convert into a closure by
+	   combining it with the caller's environment.
      - [X] apply
      - [X] ssexpand
      - [X] ssyntax
@@ -353,29 +361,36 @@ notice and this notice are preserved.
              implement CIEL.
          - [X] seek
          - [X] tell
-   - [ ] Additional I/O functions (src/io.c) [0/3]
+   - [ ] Compiler Support Functions [0/6]
+	 These functions are expected by the Arcueid compiler.
+     - [ ] code-generate
+     - [ ] code-ptr
+     - [ ] code-patch
+     - [ ] find-literal
+     - [ ] compiler-new-context
+     - [ ] context->code
+   - [ ] Additional I/O functions (src/io.c) [0/6]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
-     - [ ] File I/O [0/1]
-       - [ ] pipe-from
-     - [ ] stdin, stdout, stderr [0/5]
-       - [ ] stdin
-       - [ ] stdout
-       - [ ] stderr
-       - [ ] call-w/stdin
-       - [ ] call-w/stdout
-     - [ ] Threads [0/3]
-       - [ ] Creating and managing threads [0/3]
-         - [ ] new-thread
-         - [ ] break-thread
-         - [ ] kill-thread
-       - [ ] Synchronization (basic) [0/1]
-	 - [ ] atomic-invoke
-       - [ ] Channels (cf. Limbo and CSP) [0/4]
-	 - [ ] chan
-         - [ ] <-
-         - [ ] ->
-         - [ ] alt
+     - [ ] pipe-from
+     - [ ] stdin
+     - [ ] stdout
+     - [ ] stderr
+     - [ ] call-w/stdin
+     - [ ] call-w/stdout
+   - [ ] Threads [0/2]
+     - [ ] Creating and managing threads [0/6]
+       - [ ] new-thread (spawn)
+       - [ ] break-thread
+       - [ ] kill-thread
+       - [ ] dead
+       - [ ] sleep
+       - [ ] atomic-invoke
+     - [ ] Channels (cf. Limbo and CSP, Arcueid extension) [0/4]
+       - [ ] chan
+       - [ ] <- (read-channel) *
+       - [ ] <-= (write-channel) *
+       - [ ] alt *
    - [ ] Networking [0/10]
      - [ ] open-socket
      - [ ] open-socket-dgram (Arcueid only)
@@ -396,13 +411,6 @@ notice and this notice are preserved.
      - [ ] dir-exists
      - [ ] file-exists
      - [ ] rmfile
-   - [ ] Threading [0/6]
-     - [ ] atomic-invoke
-     - [ ] break-thread
-     - [ ] dead
-     - [ ] kill-thread
-     - [ ] new-thread (spawn)
-     - [ ] sleep
    - [ ] Error handling and continuations [0/5]
      - [ ] details
      - [ ] err
@@ -414,6 +422,10 @@ notice and this notice are preserved.
      - [X] current-process-milliseconds
      - [X] msec
      - [X] seconds
+   - [ ] Regular Expressions [0/3]
+     - [ ] re-compile
+     - [ ] re-escape
+     - [ ] regex-match (=~)
    - [ ] Miscellaneous OS operations [0/2]
      - [ ] system
      - [ ] quit
@@ -461,9 +473,9 @@ notice and this notice are preserved.
    handler function signal_error.
 
 ** TODO Macros
-   It seems that implementing macros may have to require some work
-   in the VM and the compiler as well.  I lean more to macros getting
-   executed only at compile time for performance reasons.
+   Macros can probably be handled entirely by the compiler.  After
+   all, the compiler needs to have access to macro definitions.  The 
+** TODO Dynamic Loader for external C functions
 ** TODO Additional CIEL instructions [0/3]
    The following additional instructions are required by the final version:
    - [ ] gtab
