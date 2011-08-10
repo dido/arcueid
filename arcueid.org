@@ -361,14 +361,16 @@ notice and this notice are preserved.
              implement CIEL.
          - [X] seek
          - [X] tell
-   - [ ] Compiler Support Functions [0/6]
-	 These functions are expected by the Arcueid compiler.
-     - [ ] code-generate
-     - [ ] code-ptr
-     - [ ] code-patch
-     - [ ] find-literal
-     - [ ] compiler-new-context
-     - [ ] context->code
+   - [-] Compiler Support Functions [1/6]
+	 These functions are expected by the Arcueid compiler.  May
+	 also be used by alternate compilers targeting Arcueid
+	 bytecode.
+     - [X] cgenctx
+     - [ ] cgen
+     - [ ] cptr
+     - [ ] cpatch
+     - [ ] cliteral
+     - [ ] ctx2code
    - [ ] Additional I/O functions (src/io.c) [0/6]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
