@@ -37,7 +37,7 @@ static value test_builtin(const char *symname, int argc, ...)
   int contofs, base, i;
   va_list ap;
 
-  cctx = arc_mkcctx(&c, 1, 1);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   sym = arc_intern_cstr(&c, symname);
   VINDEX(CCTX_LITS(cctx), 0) = sym;
   base = FIX2INT(CCTX_VCPTR(cctx));
@@ -1031,7 +1031,7 @@ START_TEST(test_builtin_table)
      function that updates a global variable with the count. */
   sym = arc_intern_cstr(&c, "count");
   arc_hash_insert(&c, c.genv, sym, INT2FIX(0));
-  cctx = arc_mkcctx(&c, 1, 1);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   VINDEX(CCTX_LITS(cctx), 0) = sym;
   arc_gcode1(&c, cctx, ienv, 2);
   arc_gcode1(&c, cctx, imvarg, 0);
@@ -1198,7 +1198,7 @@ START_TEST(test_builtin_apply)
   value v, args, func, clos;
   value cctx;
 
-  cctx = arc_mkcctx(&c, 1, 0);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
   arc_gcode1(&c, cctx, ienv, 2);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode1(&c, cctx, imvarg, 1);
