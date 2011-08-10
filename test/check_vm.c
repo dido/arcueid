@@ -33,7 +33,7 @@ arc c;
 #define ITEST_HEADER(nlits) \
   value cctx, thr, func; \
   int i; \
-  cctx = arc_mkcctx(&c, 1, nlits)
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(nlits))
 
 #define ITEST_FOOTER(nlits) \
   func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, nlits); \
@@ -260,12 +260,12 @@ START_TEST(test_vm_apply)
   value cctx, cctx2, func, func2, thr;
   int contofs, base;
 
-  cctx = arc_mkcctx(&c, 1, 0);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, iret);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
 
-  cctx2 = arc_mkcctx(&c, 1, 1);
+  cctx2 = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   VINDEX(CCTX_LITS(cctx2), 0) = func;
   base = FIX2INT(CCTX_VCPTR(cctx2));
   arc_gcode1(&c, cctx2, ildi, INT2FIX(0xf1e));
@@ -647,7 +647,7 @@ START_TEST(test_vm_dsb)
      (fn (a (b c) d) (cons a (cons b (cons c (cons d nil)))))
 
      This performs a destructuring bind of its arguments. */
-  cctx = arc_mkcctx(&c, 1, 0);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
   arc_gcode1(&c, cctx, ienv, 4);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode(&c, cctx, idup);
@@ -680,7 +680,7 @@ START_TEST(test_vm_dsb)
   /* Attempt to apply the arguments 1 (2 3) 4 to the above destructuring
      bind function.   This should result in the list (1 2 3 4) if it works
      properly. */
-  cctx = arc_mkcctx(&c, 1, 1);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   VINDEX(CCTX_LITS(cctx), 0) = func;
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 0);
@@ -752,7 +752,7 @@ START_TEST(test_vm_oarg)
      (fn ((o x 1) (o y 2)) (+ x y))
 
      With an optional argument having a default value */
-  cctx = arc_mkcctx(&c, 1, 0);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
   arc_gcode1(&c, cctx, ienv, 2);
   arc_gcode1(&c, cctx, imvoarg, 0);
   arc_gcode2(&c, cctx, ilde, 0, 0);
@@ -777,7 +777,7 @@ START_TEST(test_vm_oarg)
   func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
 
   /* Attempt to apply the argument 3 to the above function. Should result in 5 */
-  cctx = arc_mkcctx(&c, 1, 1);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   VINDEX(CCTX_LITS(cctx), 0) = func;
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 10); /* computed offset by compiler */
@@ -909,7 +909,7 @@ START_TEST(test_vm_ffi_cc4)
   int contofs, base;
 
   /* The function to call.  Just adds its arguments */
-  cctx = arc_mkcctx(&c, 1, 0);
+  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
   arc_gcode1(&c, cctx, ienv, 2);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode1(&c, cctx, imvarg, 1);
@@ -920,7 +920,7 @@ START_TEST(test_vm_ffi_cc4)
   arc_gcode(&c, cctx, iret);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
 
-  cctx2 = arc_mkcctx(&c, 1, 2);
+  cctx2 = arc_mkcctx(&c, INT2FIX(1), INT2FIX(2));
   VINDEX(CCTX_LITS(cctx2), 0) = arc_mkccode(&c, -3, cc4demo);
   VINDEX(CCTX_LITS(cctx2), 1) = func;
   base = FIX2INT(CCTX_VCPTR(cctx2));
