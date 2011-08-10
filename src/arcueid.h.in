@@ -356,22 +356,27 @@ extern value arc_bindsym(arc *c, value sym, value binding);
 extern value arc_bindcstr(arc *c, const char *csym, value binding);
 extern value arc_bound(arc *c, value sym);
 
+/* flonum */
 extern value arc_mkflonum(arc *c, double val);
 extern value arc_mkcomplex(arc *c, double re, double im);
 extern value arc_mkbignuml(arc *c, long val);
 extern value arc_mkrationall(arc *c, long num, long den);
 
+/* numeric coercions */
 extern double arc_coerce_flonum(arc *c, value v);
 extern void arc_coerce_complex(arc *c, value v, double *re, double *im);
 extern void arc_coerce_bignum(arc *c, value v, void *bignum);
 extern void arc_coerce_rational(arc *c, value v, void *rat);
 extern value arc_coerce_fixnum(arc *c, value v);
 
+/* arithmetic */
 extern value arc_arith_op(arc *c, int opval, value args);
 extern value arc_string2num(arc *c, value v);
 extern value arc_numcmp(arc *c, value v1, value v2);
 extern value arc_exact(arc *c, value v);
+extern value arc_fixnump(arc *c, value v);
 
+/* predicates */
 extern value arc_is(arc *c, value v1, value v2);
 extern value arc_iso(arc *c, value v1, value v2);
 extern value arc_cmp(arc *c, value v1, value v2);
@@ -380,17 +385,20 @@ extern value arc_lt(arc *c, value v1, value v2);
 extern value arc_gte(arc *c, value v1, value v2);
 extern value arc_lte(arc *c, value v1, value v2);
 
+/* type handling */
 extern value arc_type(arc *c, value obj);
 extern value arc_coerce(arc *c, value argv);
 extern value arc_annotate(arc *c, value typesym, value obj);
 extern value arc_rep(arc *c, value obj);
 
+/* lists */
 extern value scar(value x, value y);
 extern value scdr(value x, value y);
 extern value arc_list_append(value list, value val);
 extern value arc_list_assoc(arc *c, value key, value a_list);
 extern value arc_list_length(arc *c, value list);
 
+/* strings */
 extern value arc_mkstringlen(arc *c, int length);
 extern value arc_mkstring(arc *c, const Rune *data, int length);
 extern value arc_mkstringc(arc *c, const char *s);
@@ -407,6 +415,7 @@ extern value arc_strcmp(arc *c, value vs1, value vs2);
 extern value arc_strutflen(arc *c, value str);
 extern void arc_str2cstr(arc *c, value s, char *ptr);
 
+/* hash tables */
 extern void arc_hash_init(arc_hs *s, unsigned long level);
 extern void arc_hash_update(arc_hs *s, unsigned long val);
 extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
@@ -423,20 +432,25 @@ extern int arc_hash_length(arc *c, value hash);
 extern value arc_hash_map(arc *c, value argv, value rv, CC4CTX);
 extern value arc_table(arc *c);
 
+/* symbols */
 extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
 
+/* vectors */
 extern value arc_mkvector(arc *c, int length);
 extern value arc_growvector(arc *c, value vect, int newlength);
 
+/* I/O */
 extern value arc_read(arc *c, value src);
 extern value arc_ssyntax(arc *c, value x);
 extern value arc_ssexpand(arc *c, value sym);
 
+/* virtual machine */
 extern void arc_vmengine(arc *c, value thr, int quanta);
 extern value arc_mkthread(arc *c, value funptr, int stksize, int ip);
 
+/* application */
 extern value arc_mkcont(arc *c, value offset, value thr);
 extern value arc_mkxcontv(arc *c, value cc4ctx, value argv, value func,
 			  value fargv);
@@ -454,11 +468,13 @@ extern value arc_mkccode(arc *c, int argc, value (*_cfunc)());
 extern value arc_mkcctx(arc *c, int codesize, int litsize);
 extern value arc_compile(arc *c, value expr, value env, value fname);
 
+/* code object handling */
 #define CODE_CODE(c) (VINDEX((c), 0))
 #define CODE_NAME(c) (VINDEX((c), 1))
 #define CODE_ARGS(c) (VINDEX((c), 2))
 #define CODE_LITERAL(c, idx) (VINDEX((c), 3+(idx)))
 
+/* environment handling */
 #define ENV_NAMES(e) (VINDEX((e), 0))
 #define ENV_VALUE(e, idx) (VINDEX((e), (idx)+1))
 #define ENV_P(e) (TYPE(e) == T_ENV)
@@ -469,6 +485,7 @@ extern void arc_init_reader(arc *c);
 extern void arc_init_compiler(arc *c);
 extern value arc_init_builtins(arc *c);
 
+/* pretty printer */
 extern value arc_prettyprint(arc *c, value v);
 extern void arc_print_string(arc *c, value str);
 
@@ -500,9 +517,11 @@ extern value arc_srand(arc *ccc, value seed);
 /* Ciel */
 extern value arc_ciel_unmarshal(arc *c, value fd);
 
+/* misc */
 extern value arc_sref(arc *c, value com, value val, value ind);
 extern value arc_len(arc *c, value obj);
 
+/* time */
 extern unsigned long long __arc_milliseconds(void);
 extern value arc_current_gc_milliseconds(arc *c);
 extern value arc_current_process_milliseconds(arc *c);
