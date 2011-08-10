@@ -1625,3 +1625,7 @@ value arc_rand(arc *c, int argc, value *argv)
   return(INT2FIX(RAND() % max));
 }
 
+value arc_fixnump(arc *c, value v)
+{
+  return((FIXNUM_P(v)) ? CTRUE : CNIL);
+}
