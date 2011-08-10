@@ -129,9 +129,10 @@ value arc_mkccode(arc *c, int argc, value (*cfunc)())
   return(code);
 }
 
-value arc_mkcctx(arc *c, int codesize, int litsize)
+value arc_mkcctx(arc *c, value vcodesize, value vlitsize)
 {
   value cctx;
+  int codesize = FIX2INT(vcodesize), litsize = FIX2INT(vlitsize);
 
   cctx = arc_mkvector(c, 4);
   CCTX_LPTR(cctx) = CCTX_VCPTR(cctx) = INT2FIX(0);
