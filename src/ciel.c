@@ -261,10 +261,17 @@ static value fill_code(arc *c, value cctx, value bytecode, value lits)
     VINDEX(CCTX_LITS(cctx), i++) = car(list);
   /* XXX - we need to find a way to fill the function name and arguments
      here, either that or dispense with them entirely */
-  code = arc_mkcode(c, CCTX_VCODE(cctx), arc_mkstringc(c, ""), CNIL,
-		    VECLEN(CCTX_LITS(cctx)));
-  for (i=0; i<VECLEN(CCTX_LITS(cctx)); i++)
-    CODE_LITERAL(code, i) = VINDEX(CCTX_LITS(cctx), i);
+  {
+    value vcode = CCTX_VCODE(cctx);
+    int nlits;
+
+    nlits = (NIL_P(CCTX_LITS(cctx))) ? 0 : VECLEN(CCTX_LITS(cctx));
+    code = arc_mkcode(c, vcode, arc_mkstringc(c, ""), CNIL, nlits);
+  }
+  if (!NIL_P(CCTX_LITS(cctx))) {
+    for (i=0; i<VECLEN(CCTX_LITS(cctx)); i++)
+      CODE_LITERAL(code, i) = VINDEX(CCTX_LITS(cctx), i);
+  }
   return(code);
 }
 
@@ -377,7 +384,8 @@ value arc_ciel_unmarshal(arc *c, value fd)
 	c->signal_error(c, "Malformed code annotation, non-list (type %d) found for literals", TYPE(lits));
 	return(CNIL);
       }
-      cctx = arc_mkcctx(c, arc_strlen(c, code), arc_list_length(c, lits));
+      cctx = arc_mkcctx(c, INT2FIX(arc_strlen(c, code)),
+			arc_list_length(c, lits));
       PUSH(fill_code(c, cctx, code, lits));
       break;
     }
