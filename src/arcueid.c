@@ -393,6 +393,8 @@ static struct {
 
   { "uniq", 0, arc_uniq },
 
+  { "cgenctx", 2, arc_mkccode},
+
   { "current-gc-milliseconds", 0, arc_current_gc_milliseconds },
   { "current-process-milliseconds", 0, arc_current_process_milliseconds },
   { "msec", 0, arc_msec },
