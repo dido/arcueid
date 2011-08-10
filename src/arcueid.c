@@ -374,6 +374,7 @@ static struct {
   { "exact", 1, arc_exact },
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
+  { "fixnump", 1, arc_fixnump },
 
   { "idiv", 2, __arc_idiv2 },
   { "expt", 2, arc_expt },
