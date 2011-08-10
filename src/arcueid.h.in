@@ -465,7 +465,7 @@ extern value arc_mkcode(arc *c, value vmccode, value fname, value args,
 			 int nlits);
 extern value arc_mkclosure(arc *c, value code, value env);
 extern value arc_mkccode(arc *c, int argc, value (*_cfunc)());
-extern value arc_mkcctx(arc *c, int codesize, int litsize);
+extern value arc_mkcctx(arc *c, value vcodesize, value vlitsize);
 extern value arc_compile(arc *c, value expr, value env, value fname);
 
 /* code object handling */
