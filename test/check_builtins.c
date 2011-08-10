@@ -141,6 +141,13 @@ START_TEST(test_builtin_spaceship)
 }
 END_TEST
 
+START_TEST(test_builtin_fixnump)
+{
+  fail_unless(test_builtin("fixnump", 1, INT2FIX(31337)) == CTRUE);
+  fail_unless(test_builtin("fixnump", 1, arc_mkflonum(&c, 3.14159)) == CNIL);
+}
+END_TEST
+
 START_TEST(test_builtin_expt)
 {
   value val;
@@ -1313,6 +1320,7 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_bound);
   tcase_add_test(tc_bif, test_builtin_exact);
   tcase_add_test(tc_bif, test_builtin_spaceship);
+  tcase_add_test(tc_bif, test_builtin_fixnump);
 
   tcase_add_test(tc_bif, test_builtin_type);
   tcase_add_test(tc_bif, test_builtin_coerce_int);
