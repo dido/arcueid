@@ -116,7 +116,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [8/19]
+** TODO Runtime Built-In Functions [9/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -222,7 +222,7 @@ notice and this notice are preserved.
      - [X] annotate
      - [X] rep
      - [X] sym
-   - [-] Predicates [9/10]
+   - [X] Predicates [10/10]
      - [X] Less-than (<) *
      - [X] Greater-than (>) *
      - [X] Less-than or equal (<=) *
@@ -232,7 +232,7 @@ notice and this notice are preserved.
      - [X] exact
      - [X] is
      - [X] iso
-     - [ ] fixnump
+     - [X] fixnump
    - [X] List operations [5/5]
      - [X] car (implemented as a virtual machine instruction)
      - [X] cdr (implemented as a virtual machine instruction)
