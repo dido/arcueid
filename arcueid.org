@@ -87,9 +87,9 @@ notice and this notice are preserved.
 	 when we have real threads in the language we'll make it into
 	 a real threaded implementation with a real OS-level thread to
 	 do the marking and sweeping.
-** TODO Arc reader [4/9]
+** TODO Arc reader [5/10]
    - [X] Lists
-   - [ ] Bracketed functions
+   - [X] Bracketed functions
    - [ ] Quotes
    - [ ] Quasiquotes
    - [ ] Comma expressions
@@ -97,6 +97,7 @@ notice and this notice are preserved.
    - [X] Characters
    - [ ] Comments
    - [X] Atoms and Symbols
+   - [ ] Special syntax
 ** TODO Arc compiler
 ** TODO basic data types [13/15]
     - [X] Nil
