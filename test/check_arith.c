@@ -376,16 +376,14 @@ END_TEST
 
 START_TEST(test_add_misc)
 {
-  value sum;
-
   error = 0;
 
-  sum = __arc_add2(&c, CNIL, CNIL);
+  __arc_add2(&c, CNIL, CNIL);
   fail_unless(error == 1);
   error = 0;
 
-  sum = __arc_add2(&c, cons(&c, FIX2INT(1), CNIL), 
-		    cons(&c, FIX2INT(2), CNIL));
+  __arc_add2(&c, cons(&c, FIX2INT(1), CNIL), 
+	     cons(&c, FIX2INT(2), CNIL));
 }
 END_TEST
 
@@ -557,16 +555,14 @@ END_TEST
 
 START_TEST(test_mul_misc)
 {
-  value prod;
-
   error = 0;
 
-  prod = __arc_mul2(&c, CNIL, CNIL);
+  __arc_mul2(&c, CNIL, CNIL);
   fail_unless(error == 1);
   error = 0;
 
-  prod = __arc_mul2(&c, cons(&c, FIX2INT(1), CNIL), 
-		     cons(&c, FIX2INT(2), CNIL));
+  __arc_mul2(&c, cons(&c, FIX2INT(1), CNIL), 
+	     cons(&c, FIX2INT(2), CNIL));
 }
 END_TEST
 
@@ -1156,15 +1152,13 @@ END_TEST
 
 START_TEST(test_div_misc)
 {
-  value quot;
-
   error = 0;
 
-  quot = __arc_div2(&c, CNIL, CNIL);
+  __arc_div2(&c, CNIL, CNIL);
   fail_unless(error == 1);
   error = 0;
 
-  quot = __arc_div2(&c, cons(&c, FIX2INT(1), CNIL), 
+  __arc_div2(&c, cons(&c, FIX2INT(1), CNIL), 
 		     cons(&c, FIX2INT(2), CNIL));
   fail_unless(error == 1);
   error = 0;
@@ -1638,16 +1632,14 @@ END_TEST
 
 START_TEST(test_sub_misc)
 {
-  value diff;
-
   error = 0;
 
-  diff = __arc_sub2(&c, CNIL, CNIL);
+  __arc_sub2(&c, CNIL, CNIL);
   fail_unless(error == 1);
   error = 0;
 
-  diff = __arc_sub2(&c, cons(&c, FIX2INT(1), CNIL), 
-		    cons(&c, FIX2INT(2), CNIL));
+  __arc_sub2(&c, cons(&c, FIX2INT(1), CNIL), 
+	     cons(&c, FIX2INT(2), CNIL));
   fail_unless(error == 1);
 }
 END_TEST
