@@ -420,6 +420,36 @@ START_TEST(test_ssyntax)
 }
 END_TEST
 
+START_TEST(test_comment)
+{
+  value str, sexpr, fp;
+
+  /* inline comments */
+  str = arc_mkstringc(&c, "(123 ; Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n456)");
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_FIXNUM);
+  fail_unless(INT2FIX(123) == car(sexpr));
+  fail_unless(TYPE(cdr(sexpr)) == T_CONS);
+  fail_unless(TYPE(car(cdr(sexpr))) == T_FIXNUM);
+  fail_unless(INT2FIX(456) == car(cdr(sexpr)));
+  fail_unless(cdr(cdr(sexpr)) == CNIL);
+
+  /* long comments */
+  str = arc_mkstringc(&c, "; Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n; do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n; Ut enim ad minim veniam, quis nostrud exercitation ullamco\n; laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure\n; dolor in reprehenderit in voluptate velit esse cillum dolore eu\n; fugiat nulla pariatur. Excepteur sint occaecat cupidatat non\n; proident, sunt in culpa qui officia deserunt mollit anim id\n; est laborum.\n(789 897)");
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_FIXNUM);
+  fail_unless(INT2FIX(789) == car(sexpr));
+  fail_unless(TYPE(cdr(sexpr)) == T_CONS);
+  fail_unless(TYPE(car(cdr(sexpr))) == T_FIXNUM);
+  fail_unless(INT2FIX(897) == car(cdr(sexpr)));
+  fail_unless(cdr(cdr(sexpr)) == CNIL);
+}
+END_TEST
+
 extern unsigned long long gcepochs;
 
 int main(void)
@@ -456,6 +486,7 @@ int main(void)
   tcase_add_test(tc_reader, test_bracketfn);
   tcase_add_test(tc_reader, test_quote);
   tcase_add_test(tc_reader, test_ssyntax);
+  tcase_add_test(tc_reader, test_comment);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
