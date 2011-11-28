@@ -226,17 +226,14 @@ START_TEST(test_bracketfn)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_quote)
 {
-  value str, sexpr, qexpr;
-  int index;
+  value str, sexpr, qexpr, fp;
 
-  index = 0;
   str = arc_mkstringc(&c, "'(+ 1 2)");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
-  fail_unless(TYPE(sexpr) == T_CONS);
+
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_QUOTE));
   qexpr = car(cdr(sexpr));
@@ -248,9 +245,9 @@ START_TEST(test_quote)
   fail_unless(TYPE(car(cdr(cdr(qexpr)))) == T_FIXNUM);
   fail_unless(FIX2INT(car(cdr(cdr(qexpr)))) == 2);
 
-  index = 0;
   str = arc_mkstringc(&c, "`(* 3 4)");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_QQUOTE));
@@ -264,6 +261,8 @@ START_TEST(test_quote)
   fail_unless(FIX2INT(car(cdr(cdr(qexpr)))) == 4);
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_ssyntax)
 {
@@ -459,8 +458,8 @@ int main(void)
   tcase_add_test(tc_reader, test_list);
   tcase_add_test(tc_reader, test_character);
   tcase_add_test(tc_reader, test_bracketfn);
-#if 0
   tcase_add_test(tc_reader, test_quote);
+#if 0
   tcase_add_test(tc_reader, test_ssyntax);
 #endif
 
