@@ -128,81 +128,80 @@ START_TEST(test_list)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_character)
 {
-  value str, sexpr;
-  int index;
+  value str, sexpr, fp;
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\a");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'a');
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\\351\276\215");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x9f8d);
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\102");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'B');
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\102");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'B');
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\newline");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == '\n');
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\null");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == '\0');
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\u5a");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x5a);
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\x5a");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x5a);
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\u4e9c");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x4e9c);
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\U12031");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x12031);
 
-  index = 0;
   str = arc_mkstringc(&c, "#\\\346\227\245");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x65e5);
 
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_bracketfn)
 {
@@ -458,8 +457,8 @@ int main(void)
   tcase_add_test(tc_reader, test_atom);
   tcase_add_test(tc_reader, test_string);
   tcase_add_test(tc_reader, test_list);
-#if 0
   tcase_add_test(tc_reader, test_character);
+#if 0
   tcase_add_test(tc_reader, test_quote);
   tcase_add_test(tc_reader, test_bracketfn);
   tcase_add_test(tc_reader, test_ssyntax);
