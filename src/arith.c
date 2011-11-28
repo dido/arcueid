@@ -1134,7 +1134,7 @@ static double str2flonum(arc *c, value str, int index, int imagflag)
 
 static value string2numindex(arc *c, value str, int index, int rational)
 {
-  int state = 1, sign, radsel = 0;
+  int state = 1, sign=1, radsel = 0;
   Rune ch;
   value nval = INT2FIX(0), digitval, radix = INT2FIX(10), denom;
 
