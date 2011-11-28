@@ -7,12 +7,6 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-   We want to be able to write as little of the runtime in C as
-   possible.  Of course, unless we have an Arc to native compiler, or
-   even a limited one analogous to Richard Kelsey's PreScheme, we have
-   no choice but to write a few portions in C.  I don't yet have the
-   chops or the time to make one like that now, but that would
-   certainly be ideal, and then we'd have an Arc just like Scheme48.
 ** DONE base virtual machine [7/7]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
@@ -93,14 +87,14 @@ notice and this notice are preserved.
 	 when we have real threads in the language we'll make it into
 	 a real threaded implementation with a real OS-level thread to
 	 do the marking and sweeping.
-** TODO Arc reader [3/9]
+** TODO Arc reader [4/9]
    - [X] Lists
    - [ ] Bracketed functions
    - [ ] Quotes
    - [ ] Quasiquotes
    - [ ] Comma expressions
    - [X] Strings
-   - [ ] Characters
+   - [X] Characters
    - [ ] Comments
    - [X] Atoms and Symbols
 ** TODO Arc compiler
