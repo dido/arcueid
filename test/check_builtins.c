@@ -1274,12 +1274,12 @@ END_TEST
 
 START_TEST(test_builtin_len)
 {
-  value val, val2;
+  value val2;
 
   val2 = arc_mkhash(&c, 8);
-  val = test_builtin("sref", 3, INT2FIX(1), INT2FIX(2), val2);
-  val = test_builtin("sref", 3, INT2FIX(2), INT2FIX(3), val2);
-  val = test_builtin("sref", 3, INT2FIX(3), INT2FIX(4), val2);
+  test_builtin("sref", 3, INT2FIX(1), INT2FIX(2), val2);
+  test_builtin("sref", 3, INT2FIX(2), INT2FIX(3), val2);
+  test_builtin("sref", 3, INT2FIX(3), INT2FIX(4), val2);
   fail_unless(FIX2INT(test_builtin("len", 1, val2)) == 3);
 
   val2 = arc_mkstringc(&c, "abcd");
