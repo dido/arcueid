@@ -201,16 +201,14 @@ START_TEST(test_character)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_bracketfn)
 {
-  value str, sexpr, fnbody;
-  int index;
+  value str, sexpr, fnbody, fp;
 
-  index = 0;
+  /* This bracket function should become (fn (_) (+ 1 _)) */
   str = arc_mkstringc(&c, "[+ 1 _]");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_FN));
@@ -227,6 +225,8 @@ START_TEST(test_bracketfn)
   fail_unless(car(cdr(cdr(fnbody))) == ARC_BUILTIN(cc, S_US));
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_quote)
 {
@@ -458,9 +458,9 @@ int main(void)
   tcase_add_test(tc_reader, test_string);
   tcase_add_test(tc_reader, test_list);
   tcase_add_test(tc_reader, test_character);
+  tcase_add_test(tc_reader, test_bracketfn);
 #if 0
   tcase_add_test(tc_reader, test_quote);
-  tcase_add_test(tc_reader, test_bracketfn);
   tcase_add_test(tc_reader, test_ssyntax);
 #endif
 
