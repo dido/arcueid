@@ -86,22 +86,19 @@ START_TEST(test_string)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_list)
 {
-  value str, sexpr;
-  int index;
+  value str, sexpr, fp;
 
-  index = 0;
   str = arc_mkstringc(&c, "()");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_NIL);
   fail_unless(sexpr == CNIL);
 
-  index = 0;
   str = arc_mkstringc(&c, "(foo 1 2 3)");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(arc_is(&c, arc_mkstringc(&c, "foo"),
@@ -113,9 +110,9 @@ START_TEST(test_list)
   fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_FIXNUM);
   fail_unless(FIX2INT((car(cdr(cdr(cdr(sexpr)))))) == 3);
 
-  index = 0;
   str = arc_mkstringc(&c, "(foo (bar 4) 5)");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(arc_is(&c, arc_mkstringc(&c, "foo"),
@@ -130,6 +127,8 @@ START_TEST(test_list)
   fail_unless(FIX2INT(car(cdr(cdr(sexpr)))) == 5);
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_character)
 {
@@ -458,9 +457,9 @@ int main(void)
   cc = &c;
   tcase_add_test(tc_reader, test_atom);
   tcase_add_test(tc_reader, test_string);
+  tcase_add_test(tc_reader, test_list);
 #if 0
   tcase_add_test(tc_reader, test_character);
-  tcase_add_test(tc_reader, test_list);
   tcase_add_test(tc_reader, test_quote);
   tcase_add_test(tc_reader, test_bracketfn);
   tcase_add_test(tc_reader, test_ssyntax);
