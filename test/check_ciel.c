@@ -66,7 +66,7 @@ START_TEST(test_ciel_int)
   Rune data2[] =
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
       0x02, 45, 210, 4, 0, 0, 0, 0, 0, 128 };	      /* GINT */
-#ifdef HAVE_GMP_H
+#if 0
   Rune data3[] =
     { 0xc1, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* header */
       0x02, 43, 192, 136, 86, 99, 197, 86, 65, 88,
@@ -87,7 +87,7 @@ START_TEST(test_ciel_int)
   fail_unless(FIXNUM_P(result));
   fail_unless(FIX2INT(result) == -1234);
 
-#ifdef HAVE_GMP_H
+#if 0
   cieldata = arc_mkstring(cc, data3, sizeof(data3) / sizeof(Rune));
   cielfd = arc_instring(cc, cieldata);
   result = arc_ciel_unmarshal(cc, cielfd);
