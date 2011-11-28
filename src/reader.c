@@ -103,6 +103,7 @@ value arc_read(arc *c, value src)
       return(read_char(c, src));
     case ';':
       read_comment(c, src);
+      break;
     default:
       arc_ungetc_rune(c, ch, src);
       return(read_symbol(c, src));
