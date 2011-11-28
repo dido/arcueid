@@ -87,11 +87,11 @@ notice and this notice are preserved.
 	 when we have real threads in the language we'll make it into
 	 a real threaded implementation with a real OS-level thread to
 	 do the marking and sweeping.
-** TODO Arc reader [5/10]
+** TODO Arc reader [7/10]
    - [X] Lists
    - [X] Bracketed functions
-   - [ ] Quotes
-   - [ ] Quasiquotes
+   - [X] Quotes
+   - [X] Quasiquotes
    - [ ] Comma expressions
    - [X] Strings
    - [X] Characters
