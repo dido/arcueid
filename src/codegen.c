@@ -143,3 +143,8 @@ value arc_mkcctx(arc *c, value vcodesize, value vlitsize)
     CCTX_LITS(cctx) = arc_mkvector(c, litsize);
   return(cctx);
 }
+
+value arc_vcptr(arc *c, value cctx)
+{
+  return(CCTX_VCPTR(cctx));
+}
