@@ -61,8 +61,6 @@ value arc_sym2name(arc *c, value sym)
   return(arc_hash_lookup(c, c->rsymtable, sym));
 }
 
-#if 0
-
 static Rune scan(arc *c, value src);
 static value read_list(arc *c, value src);
 static value read_anonf(arc *c, value src);
@@ -106,11 +104,11 @@ value arc_read(arc *c, value src)
     case ';':
       read_comment(c, src);
     default:
-      arc_unreadchar_rune(c, src, ch);
+      arc_ungetc_rune(c, ch, src);
       return(read_symbol(c, src));
-      return(CTRUE);
     }
   }
+  c->signal_error(c, "unexpected end of source");
   return(CNIL);
 }
 
@@ -128,10 +126,8 @@ static value read_list(arc *c, value src)
     case ')':
       return(top);
     default:
-      arc_unreadchar_rune(c, src, ch);
-      if (!arc_read(c, src, index, &val))
-	c->signal_error(c, "unexpected end of source");
-      val = cons(c, val, CNIL);
+      arc_ungetc_rune(c, ch, src);
+      val = cons(c, arc_read(c, src), CNIL);
       if (last)
 	scdr(last, val);
       else
@@ -144,14 +140,14 @@ static value read_list(arc *c, value src)
   return(CNIL);
 }
 
-static void read_comment(arc *c, value src, int *index)
+static void read_comment(arc *c, value src)
 {
   Rune ch;
 
-  while ((ch = readchar(c, src, index)) != Runeerror && !ucisnl(ch))
+  while ((ch = arc_readc_rune(c, src)) != -1 && !ucisnl(ch))
     ;
-  if (ch != Runeerror)
-    arc_unreadchar_rune(c, src, ch);
+  if (ch != -1)
+    arc_ungetc_rune(c, ch, src);
 }
 
 static int issym(Rune ch)
@@ -169,7 +165,7 @@ static int issym(Rune ch)
 
 #define STRMAX 256
 
-static value getsymbol(arc *c, value src, int *index)
+static value getsymbol(arc *c, value src)
 {
   Rune buf[STRMAX];
   Rune ch;
@@ -178,7 +174,7 @@ static value getsymbol(arc *c, value src, int *index)
 
   sym = CNIL;
   i=0;
-  while ((ch = readchar(c, src, index)) != Runeerror && issym(ch)) {
+  while ((ch = arc_readc_rune(c, src)) != -1 && issym(ch)) {
     if (i >= STRMAX) {
       nstr = arc_mkstring(c, buf, i);
       sym = (sym == CNIL) ? nstr : arc_strcat(c, sym, nstr);
@@ -191,23 +187,24 @@ static value getsymbol(arc *c, value src, int *index)
   nstr = arc_mkstring(c, buf, i);
   sym = (sym == CNIL) ? nstr : arc_strcat(c, sym, nstr);
 
-  unreadchar(c, src, ch, index);
+  arc_ungetc_rune(c, ch, src);
   return(sym);
 }
 
 /* parse a symbol name or number */
-static value read_symbol(arc *c, value str, int *index)
+static value read_symbol(arc *c, value str)
 {
   value sym, num, ssx;
 
-  if ((sym = getsymbol(c, str, index)) == CNIL)
+  if ((sym = getsymbol(c, str)) == CNIL)
     c->signal_error(c, "expecting symbol name");
   num = arc_string2num(c, sym);
   if (num == CNIL) {
     ssx = expand_ssyntax(c, sym);
     return((ssx == CNIL) ? arc_intern(c, sym) : ssx);    
-  } else
+  } else {
     return(num);
+  }
 }
 
 /* scan for first non-blank character */
@@ -222,26 +219,25 @@ static Rune scan(arc *c, value src)
 
 /* Read an Arc square bracketed anonymous function.  This expands to
    (fn (_) ...) */
-static value read_anonf(arc *c, value src, int *index)
+static value read_anonf(arc *c, value src)
 {
   value top, val, last, ret;
   Rune ch;
 
   top = val = last = CNIL;
-  while ((ch = scan(c, src, index)) != Runeerror) {
+  while ((ch = scan(c, src)) != -1) {
     switch (ch) {
     case ';':
-      read_comment(c, src, index);
+      read_comment(c, src);
       break;
     case ']':
-      ret = cons(c, ARC_BUILTIN(c, S_FN), cons(c, cons(c, ARC_BUILTIN(c, S_US), CNIL), cons(c, top, CNIL)));
-
+      ret = cons(c, ARC_BUILTIN(c, S_FN),
+		 cons(c, cons(c, ARC_BUILTIN(c, S_US), CNIL),
+		      cons(c, top, CNIL)));
       return(ret);
     default:
-      unreadchar(c, src, ch, index);
-      if (!arc_read(c, src, index, &val))
-	c->signal_error(c, "unexpected end of source");
-      val = cons(c, val, CNIL);
+      arc_ungetc_rune(c, ch, src);
+      val = cons(c, arc_read(c, src), CNIL);
       if (last)
 	scdr(last, val);
       else
@@ -255,33 +251,32 @@ static value read_anonf(arc *c, value src, int *index)
 
 }
 
-static value read_quote(arc *c, value src, int *index, value sym)
+static value read_quote(arc *c, value src, value sym)
 {
   value val;
 
-  if (arc_read(c, src, index, &val) == CNIL)
-    c->signal_error(c, "unexpected end of source");
+  val = arc_read(c, src);
   return(cons(c, sym, cons(c, val, CNIL)));
 }
 
-static value read_comma(arc *c, value src, int *index)
+static value read_comma(arc *c, value src)
 {
   Rune ch;
 
-  if ((ch = readchar(c, src, index)) == '@')
-    return(read_quote(c, src, index, ARC_BUILTIN(c, S_UNQUOTESP)));
-  unreadchar(c, src, ch, index);
-  return(read_quote(c, src, index, ARC_BUILTIN(c, S_UNQUOTE)));
+  if ((ch = arc_readc_rune(c, src)) == '@')
+    return(read_quote(c, src, ARC_BUILTIN(c, S_UNQUOTESP)));
+  arc_ungetc_rune(c, ch, src);
+  return(read_quote(c, src, ARC_BUILTIN(c, S_UNQUOTE)));
 }
 
 /* XXX - we need to add support for octal and hexadecimal escapes as well */
-static value read_string(arc *c, value src, int *index)
+static value read_string(arc *c, value src)
 {
   Rune buf[STRMAX], ch, escrune;
   int i=0, state=1, digval, digcount;
   value nstr, str = CNIL;
 
-  while ((ch = readchar(c, src, index)) != Runeerror) {
+  while ((ch = arc_readc_rune(c, src)) != -1) {
     switch (state) {
     case 1:
       switch (ch) {
@@ -358,7 +353,7 @@ static value read_string(arc *c, value src, int *index)
     case 3:
       /* Unicode escape */
       if (digcount >= 5) {
-	unreadchar(c, src, ch, index);
+	arc_ungetc_rune(c, ch, src);
 	if (i >= STRMAX) {
 	  nstr = arc_mkstring(c, buf, i);
 	  str = (str == CNIL) ? nstr : arc_strcat(c, str, nstr);
@@ -393,18 +388,18 @@ static value read_string(arc *c, value src, int *index)
    this reader behavior to something more rational (such as sharp
    followed by the actual character, with slash for escapes).  Arc
    does not otherwise use the #-sign for anything else. */
-static value read_char(arc *c, value src, int *index)
+static value read_char(arc *c, value src)
 {
   value tok, symch;
   int alldigits, i;
   Rune val, ch, digit;
 
-  if ((ch = readchar(c, src, index)) != '\\') {
+  if ((ch = arc_readc_rune(c, src)) != '\\') {
     c->signal_error(c, "invalid character constant");
     return(CNIL);
   }
 
-  tok = getsymbol(c, src, index);
+  tok = getsymbol(c, src);
   if (arc_strlen(c, tok) == 1)	/* single character */
     return(arc_mkchar(c, arc_strindex(c, tok, 0)));
   if (arc_strlen(c, tok) == 3) {
@@ -467,9 +462,6 @@ static value read_char(arc *c, value src, int *index)
     c->signal_error(c, "invalid character constant");
   return(symch);
 }
-
-#endif
-
 
 value arc_ssyntax(arc *c, value x)
 {
