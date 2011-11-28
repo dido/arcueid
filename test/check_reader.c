@@ -45,46 +45,48 @@ START_TEST(test_atom)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_string)
 {
-  value str, sexpr;
-  int index, i;
+  value str, sexpr, fp;
+  int i;
   char *teststr;
 
-  index = 0;
+  /* basic */
   str = arc_mkstringc(&c, "\"foo\"");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_STRING);
   fail_unless(arc_is(&c, arc_mkstringc(&c, "foo"), sexpr) == CTRUE);
 
-  index = 0;
+  /* escapes */
   teststr = "\b\t\n\v\f\r\\\'\"\a";
   str = arc_mkstringc(&c, "\"\\b\\t\\n\\v\\f\\r\\\\\'\\\"\\a\"");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_STRING);
   for (i=0; i<arc_strlen(&c, sexpr); i++)
     fail_unless((Rune)teststr[i] == arc_strindex(&c, sexpr, i));
 
   /* Unicode */
-  index = 0;
   str = arc_mkstringc(&c, "\"\\U086dF\351\276\215\"");
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_STRING);
   fail_unless(arc_strindex(&c, sexpr, 0) == 0x86df);
   fail_unless(arc_strindex(&c, sexpr, 1) == 0x9f8d);
 
   /* A long string */
-  index = 0;
   teststr = "\"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\"";
   str = arc_mkstringc(&c, teststr);
-  fail_if(arc_read(&c, str, &index, &sexpr) == CNIL);
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
   fail_unless(TYPE(sexpr) == T_STRING);
   for (i=0; i<arc_strlen(&c, sexpr); i++)
     fail_unless((Rune)teststr[i+1] == arc_strindex(&c, sexpr, i));
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_list)
 {
@@ -455,8 +457,8 @@ int main(void)
 
   cc = &c;
   tcase_add_test(tc_reader, test_atom);
-#if 0
   tcase_add_test(tc_reader, test_string);
+#if 0
   tcase_add_test(tc_reader, test_character);
   tcase_add_test(tc_reader, test_list);
   tcase_add_test(tc_reader, test_quote);
