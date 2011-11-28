@@ -1134,7 +1134,7 @@ static double str2flonum(arc *c, value str, int index, int imagflag)
 
 static value string2numindex(arc *c, value str, int index, int rational)
 {
-  int state = 1, sign = 1, radsel = 0;
+  int state = 1, sign, radsel = 0;
   Rune ch;
   value nval = INT2FIX(0), digitval, radix = INT2FIX(10), denom;
 
@@ -1261,8 +1261,10 @@ static value string2numindex(arc *c, value str, int index, int rational)
   }
   /* For nval to be a valid number, we must have entered at least state 3.
      If we have not, the number is not valid. */
-  if (state >= 3)
+  if (state >= 3) {
+    nval = __arc_mul2(c, nval, INT2FIX(sign));
     return(nval);
+  }
   return(CNIL);
 }
 
@@ -1547,6 +1549,9 @@ value arc_srand(arc *ccc, value seed)
     ccc->signal_error(ccc, "srand requires first argument be a fixnum, given %O", seed);
     return(CNIL);
   }
+
+  for (i=0; i<RANDSIZ; ++i)
+    mm[i]=(uint64_t)0LL;
 
   aa=bb=cc=(uint64_t)0LL;
   a=b=c=d=e=f=g=h=0x9e3779b97f4a7c13LL;  /* the golden ratio */
