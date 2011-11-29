@@ -450,6 +450,28 @@ START_TEST(test_comment)
 }
 END_TEST
 
+START_TEST(test_comma)
+{
+  value str, fp, sexpr;
+
+  str = arc_mkstringc(&c, ",1");
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_UNQUOTE));
+  fail_unless(car(cdr(sexpr)) == INT2FIX(1));
+
+  str = arc_mkstringc(&c, ",@2");
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_UNQUOTESP));
+  fail_unless(car(cdr(sexpr)) == INT2FIX(2));
+}
+END_TEST
+
 extern unsigned long long gcepochs;
 
 int main(void)
@@ -487,6 +509,7 @@ int main(void)
   tcase_add_test(tc_reader, test_quote);
   tcase_add_test(tc_reader, test_ssyntax);
   tcase_add_test(tc_reader, test_comment);
+  tcase_add_test(tc_reader, test_comma);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
