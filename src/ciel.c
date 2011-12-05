@@ -147,7 +147,7 @@ static value getflo(arc *c, value fd)
   return(arc_mkflonum(c, u.d));
 }
 
-static value getchar(arc *c, value fd)
+static value ggetchar(arc *c, value fd)
 {
   Rune r;
   value v;
@@ -157,7 +157,7 @@ static value getchar(arc *c, value fd)
   for (i=0; i<4; i++) {
     v = arc_readb(c, fd);
     if (FIX2INT(v) < 0)
-      c->signal_error(c, "ciel-unmarshal/getchar: unexpected end of file from %v", fd);
+      c->signal_error(c, "ciel-unmarshal/ggetchar: unexpected end of file from %v", fd);
     r |= (FIX2INT(v) & 0xff) << (i*8);
   }
   return(arc_mkchar(c, r));
@@ -315,7 +315,7 @@ value arc_ciel_unmarshal(arc *c, value fd)
       PUSH(getflo(c, fd));
       break;
     case GCHAR:
-      PUSH(getchar(c, fd));
+      PUSH(ggetchar(c, fd));
       break;
     case GSTR:
       PUSH(getstr(c, fd));
