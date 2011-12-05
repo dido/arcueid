@@ -132,13 +132,10 @@ static int file_close(arc *c, struct arc_port *p)
   return(ret);
 }
 
-static value openfile(arc *c, value filename, const char *mode)
+value arc_filefp(arc *c, FILE *fp, value filename)
 {
   void *cellptr;
   value fd;
-  char *utf_filename;
-  FILE *fp;
-  int en;
 
   cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
   if (cellptr == NULL)
@@ -151,13 +148,6 @@ static value openfile(arc *c, value filename, const char *mode)
   PORT(fd)->type = FT_FILE;
   /* XXX make this file name a fully qualified pathname */
   PORTF(fd).name = filename;
-  utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
-  arc_str2cstr(c, filename, utf_filename);
-  fp = fopen(utf_filename, mode);
-  if (fp == NULL) {
-    en = errno;
-    c->signal_error(c, "openfile: cannot open input file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
-  }
   PORTF(fd).fp = fp;
   PORTF(fd).open = 1;
   PORT(fd)->getb = file_getb;
@@ -167,6 +157,22 @@ static value openfile(arc *c, value filename, const char *mode)
   PORT(fd)->close = file_close;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
+}
+
+static value openfile(arc *c, value filename, const char *mode)
+{
+  char *utf_filename;
+  FILE *fp;
+  int en;
+
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
+  arc_str2cstr(c, filename, utf_filename);
+  fp = fopen(utf_filename, mode);
+  if (fp == NULL) {
+    en = errno;
+    c->signal_error(c, "openfile: cannot open input file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
+  }
+  return(arc_filefp(c, fp, filename));
 }
 
 value arc_infile(arc *c, value filename)
