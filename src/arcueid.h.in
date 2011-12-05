@@ -23,6 +23,7 @@
 
 #define _ARCUEID_H_
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
 #include <limits.h>
@@ -55,10 +56,6 @@ typedef struct arc {
   void (*rungc)(struct arc *);
 
   void (*signal_error)(struct arc *, const char *, ...);
-
-  /* Reader */
-  Rune (*readchar)(struct arc *, value, int *);
-  void (*unreadchar)(struct arc *, value, Rune, int *);
 
   value vmthreads;		/* virtual machine thread objects */
   value vmqueue;		/* virtual machine run queue */
@@ -492,6 +489,7 @@ extern value arc_prettyprint(arc *c, value v);
 extern void arc_print_string(arc *c, value str);
 
 /* I/O */
+extern value arc_filefp(arc *c, FILE *fp, value filename);
 extern value arc_infile(arc *c, value filename);
 extern value arc_outfile(arc *c, value filename, value xmode);
 extern value arc_instring(arc *c, value str);
