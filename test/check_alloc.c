@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include "../src/arcueid.h"
 #include "../src/alloc.h"
-#include "../config.h"
 
 START_TEST(test_size_rounding)
 {
@@ -203,157 +202,19 @@ START_TEST(test_alloc)
 }
 END_TEST
 
-extern unsigned long long gcepochs;
-
-START_TEST(test_gc)
-{
-  value list=CNIL, list2=CNIL;
-  value listsym1, listsym2, lss1, lss2, hash1, hash2, vec1, vec2;
-  int i, count, startcount;
-  Hhdr *h;
-  Bhdr *b;
-  unsigned long long oldepoch;
-
-  arc_init_reader(&c);
-
-  /* Create a two small lists */
-  for (i=0; i<4; i++)
-    list=cons(&c, INT2FIX(i), list);
-  for (i=4; i<8; i++) 
-    list2=cons(&c, INT2FIX(i), list);
-
-  /* Add a symbol at the end of each list */
-  lss1 = arc_mkstringc(&c, "list1");
-  lss2 = arc_mkstringc(&c, "list2");
-  listsym1 = arc_intern(&c, lss1);
-  listsym2 = arc_intern(&c, lss2);
-  list = cons(&c, listsym1, list);
-  list2 = cons(&c, listsym2, list2);
-
-  /* Add a string to the end of each list */
-  list = cons(&c, arc_mkstringc(&c, "foo"), list);
-  list2 = cons(&c, arc_mkstringc(&c, "bar"), list);
-
-  /* Add a flonum to the end of each list */
-  list = cons(&c, arc_mkflonum(&c, 1.234), list);
-  list2 = cons(&c, arc_mkflonum(&c, 5.678), list);
-
-#ifdef HAVE_GMP_H
-  /* Add a bignum and a rational to the end of each list */
-  list = cons(&c, arc_mkbignuml(&c, FIXNUM_MAX + 1), list);
-  list2 = cons(&c, arc_mkbignuml(&c, FIXNUM_MAX + 2), list);
-
-  list = cons(&c, arc_mkrationall(&c, 1, 4), list);
-  list2 = cons(&c, arc_mkrationall(&c, 3, 4), list);
-#endif
-
-  /* Add a character to the end of each list */
-  list = cons(&c, arc_mkchar(&c, 0x86df), list);
-  list2 = cons(&c, arc_mkchar(&c, 0x9f8d), list2);
-
-  /* Add a vector to each list, and populate it with fixnums and a string */
-  vec1 = arc_mkvector(&c, 10);
-  vec2 = arc_mkvector(&c, 10);
-
-  for (i=0; i<9; i++) {
-    VINDEX(vec1, i) = INT2FIX(i);
-    VINDEX(vec2, i) = INT2FIX(i);
-  }
-
-  VINDEX(vec1, 9) = arc_mkstringc(&c, "foo");
-  VINDEX(vec2, 9) = arc_mkstringc(&c, "bar");
-  list = cons(&c, vec1, list);
-  list2 = cons(&c, vec2, list2);
-
-  /* Create two hash tables, put a fixnum and a string mapping in
-     each, and add them to each list. */
-  hash1 = arc_mkhash(&c, 4);
-  hash2 = arc_mkhash(&c, 4);
-  arc_hash_insert(&c, hash1, INT2FIX(1), INT2FIX(2));
-  arc_hash_insert(&c, hash1, INT2FIX(3), arc_mkstringc(&c, "three"));
-  arc_hash_insert(&c, hash2, INT2FIX(5), INT2FIX(6));
-  arc_hash_insert(&c, hash2, INT2FIX(7), arc_mkstringc(&c, "seven"));
-  list = cons(&c, hash1, list);
-  list2 = cons(&c, hash2, list2);
-
-  /* Cons up 128 more values to the lists just to make them longer
-     and ensure that the incremental collection works properly. */
-  for (i=0; i<128; i++) {
-    list=cons(&c, INT2FIX(i), list);
-    list2=cons(&c, INT2FIX(i), list2);
-  }
-
-  count = 0;
-  for (h = __arc_get_heap_start(); h; h = h->next) {
-    for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
-	 b = B2NB(b)) {
-      if (b->magic == MAGIC_A)
-	count++;
-    }
-  }
-  startcount = count;
-
-  /* Mark [list] with a propagator, but not [list2] */
-  D2B(b, (void *)list);
-  oldepoch = gcepochs;
-  b->color = 3;	       /* mark [list] with propagator color */
-  while (gcepochs == oldepoch) {
-    c.rungc(&c);
-  }
-
-  oldepoch = gcepochs;
-  b->color = 3;	       /* mark [list] with propagator color */
-  while (gcepochs == oldepoch) {
-    c.rungc(&c);
-  }
-
-  oldepoch = gcepochs;
-  b->color = 3;	       /* mark [list] with propagator color */
-  while (gcepochs == oldepoch) {
-    c.rungc(&c);
-  }
-
-  /* After three epochs of the garbage collector, [list2], whose head was
-     never marked as a propagator, should have been garbage collected. */
-  count = 0;
-  for (h = __arc_get_heap_start(); h; h = h->next) {
-    for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
-	 b = B2NB(b)) {
-      if (b->magic == MAGIC_A)
-	count++;
-    }
-  }
-
-  /*  printf("count = %d\n", startcount - count); */
-
-  /* There are 150 objects (154 if we have the bignum and the
-     rational) represented by list2, and they must all be collected. */
-#ifdef HAVE_GMP_H
-  fail_unless(startcount - count == 154);
-#else
-  fail_unless(startcount - count == 150);
-#endif
-  /* check if the symbol is still there */
-  fail_unless(arc_sym2name(&c, listsym2) == CUNBOUND);
-}
-END_TEST
-
 int main(void)
 {
   int number_failed;
   Suite *s = suite_create("Memory Allocation");
   TCase *tc_alloc = tcase_create("Allocation");
-  TCase *tc_gc = tcase_create("Garbage Collection");
   SRunner *sr;
 
   arc_set_memmgr(&c);
 
   tcase_add_test(tc_alloc, test_size_rounding);
   tcase_add_test(tc_alloc, test_alloc);
-  tcase_add_test(tc_gc, test_gc);
 
   suite_add_tcase(s, tc_alloc);
-  suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
   srunner_run_all(sr, CK_NORMAL);
   number_failed = srunner_ntests_failed(sr);
