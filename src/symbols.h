@@ -66,6 +66,9 @@ enum builtin_syms {
   S_IM,				/* im */
   S_NUM,			/* num */
   S_SIG,			/* sig */
+  S_STDIN,			/* stdin */
+  S_STDOUT,			/* stdout */
+  S_STDERR,			/* stderr */
 
   S_THE_END			/* end of the line */
 };
