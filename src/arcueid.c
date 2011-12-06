@@ -431,5 +431,11 @@ value arc_init_builtins(arc *c)
   arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
   arc_bindsym(c, ARC_BUILTIN(c, S_T), CTRUE);
   arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
+
+  /* bindings for stdin, stdout, and stderr */
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDIN), arc_filefp(c, stdin, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT), arc_filefp(c, stdout, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDERR), arc_filefp(c, stderr, CNIL));
+
   return(CNIL);
 }
