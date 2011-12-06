@@ -291,9 +291,15 @@ static void mark(arc *c, value v, int reclevel)
      leaving only symbols which are actually in active use. */
   if (TYPE(v) == T_SYMBOL) {
     val = arc_hash_lookup2(c, c->rsymtable, v);
-    mark(c, val, reclevel);
+    /* avoid double-marking symbols whose buckets are already set
+       to mutator color. */
+    D2B(b, (void *)val);
+    if (b->color != mutator)
+      mark(c, val, reclevel);
     val = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
-    mark(c, val, reclevel);
+    D2B(b, (void *)val);
+    if (b->color != mutator)
+      mark(c, val, reclevel);
     return;
   }
 
