@@ -266,7 +266,7 @@ static value fill_code(arc *c, value cctx, value bytecode, value lits)
     int nlits;
 
     nlits = (NIL_P(CCTX_LITS(cctx))) ? 0 : VECLEN(CCTX_LITS(cctx));
-    code = arc_mkcode(c, vcode, arc_mkstringc(c, ""), CNIL, nlits);
+    code = arc_mkcode(c, vcode, nlits);
   }
   if (!NIL_P(CCTX_LITS(cctx))) {
     for (i=0; i<VECLEN(CCTX_LITS(cctx)); i++)
