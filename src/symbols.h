@@ -69,6 +69,7 @@ enum builtin_syms {
   S_STDIN,			/* stdin */
   S_STDOUT,			/* stdout */
   S_STDERR,			/* stderr */
+  S_MAC,			/* mac */
 
   S_THE_END			/* end of the line */
 };
