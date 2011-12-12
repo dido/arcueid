@@ -177,7 +177,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	value ienvsize = *TIP(thr)++;
 
 	WB(&TENVR(thr), arc_mkenv(c, TENVR(thr), ienvsize));
-	ENV_NAMES(car(TENVR(thr))) = CODE_NAME(TFUNR(thr));
+	ENV_NAMES(car(TENVR(thr))) = CNIL;
 	WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
       }
       NEXT;
