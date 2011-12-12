@@ -69,6 +69,7 @@ extern void arc_gcode1(arc *c, value cctx, enum vminst inst, value arg);
 extern void arc_gcode2(arc *c, value cctx, enum vminst inst, value arg1,
 		       value arg2);
 extern void arc_literal(arc *c, value cctx, value literal);
+extern value arc_cctx2code(arc *c, value cctx);
 
 /* A code generation context (cctx) is a vector with the following
    items as indexes:
