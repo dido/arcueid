@@ -98,15 +98,16 @@ enum arc_types {
   T_PORT=0x11,
   T_THREAD=0x12,
   T_VECTOR=0x13,
+  T_MACRO=0x14,
 
-  T_CONT = 0x14,		/* continuation */
-  T_CLOS = 0x15,		/* closure */
-  T_CODE = 0x16,		/* actual compiled code */
-  T_ENV = 0x17,			/* environment */
-  T_VMCODE = 0x18,		/* a VM code block */
-  T_CCODE = 0x19,		/* a C function */
-  T_CUSTOM = 0x1a,		/* custom type */
-  T_XCONT = 0x1b,		/* CC4 x-continuation */
+  T_CONT = 0x15,		/* continuation */
+  T_CLOS = 0x16,		/* closure */
+  T_CODE = 0x17,		/* actual compiled code */
+  T_ENV = 0x18,			/* environment */
+  T_VMCODE = 0x19,		/* a VM code block */
+  T_CCODE = 0x1a,		/* a C function */
+  T_CUSTOM = 0x1b,		/* custom type */
+  T_XCONT = 0x1c,		/* CC4 x-continuation */
 
   T_NONE=0xff
 };
