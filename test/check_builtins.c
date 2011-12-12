@@ -53,8 +53,7 @@ static value test_builtin(const char *symname, int argc, ...)
   arc_gcode1(&c, cctx, iapply, argc);
   VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
   arc_gcode(&c, cctx, ihlt);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL,
-		    1);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 1);
   CODE_LITERAL(func, 0) = VINDEX(CCTX_LITS(cctx), 0);
   thr = arc_mkthread(&c, func, 2048, 0);
   arc_vmengine(&c, thr, 1000);
@@ -1042,7 +1041,7 @@ START_TEST(test_builtin_table)
   arc_gcode(&c, cctx, iadd);
   arc_gcode1(&c, cctx, istg, 0);
   arc_gcode(&c, cctx, iret);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
   CODE_LITERAL(func, 0) = VINDEX(CCTX_LITS(cctx), 0);
   clos = arc_mkclosure(&c, func, CNIL);
   v=test_builtin("maptable", 2, v, clos);
@@ -1207,7 +1206,7 @@ START_TEST(test_builtin_apply)
   arc_gcode2(&c, cctx, ilde, 0, 1);
   arc_gcode(&c, cctx, isub);
   arc_gcode(&c, cctx, iret);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
   clos = arc_mkclosure(&c, func, CNIL);
 
   args = arc_mkvector(&c, 2);
