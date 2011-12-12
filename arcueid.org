@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [6/7]
+** DONE base virtual machine [7/7]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
    should probably write our own interpreter core directly.
@@ -17,7 +17,7 @@ notice and this notice are preserved.
 	  easily use switch threading, call threading, GCC labels as
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
-    - [ ] Build code generation infrastructure
+    - [X] Build code generation infrastructure
     - [X] Implement virtual machine instructions [39/39]
       - [X] nop
       - [X] push
