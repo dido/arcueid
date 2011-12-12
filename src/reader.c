@@ -686,7 +686,7 @@ static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
 			"thread", "vector", "continuation", "closure",
 			"code", "environment", "vmcode", "ccode",
 			"custom", "int", "unknown", "re", "im", "num",
-			"sig", "stdin", "stdout", "stderr" };
+			"sig", "stdin", "stdout", "stderr", "mac" };
 
 void arc_init_reader(arc *c)
 {
