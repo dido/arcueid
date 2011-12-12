@@ -120,6 +120,9 @@ value arc_type(arc *c, value obj)
   case T_VECTOR:
     return(ARC_BUILTIN(c, S_VECTOR));
     break;
+  case T_MACRO:
+    return(ARC_BUILTIN(c, S_MAC));
+    break;
   case T_CONT:
     return(ARC_BUILTIN(c, S_CONTINUATION));
     break;
@@ -835,6 +838,11 @@ value arc_coerce(arc *c, value argv)
 value arc_annotate(arc *c, value typesym, value obj)
 {
   value ann;
+
+  if (typesym == ARC_BUILTIN(c, S_MAC)) {
+    BTYPE(obj) = T_MACRO;
+    return(obj);
+  }
 
   ann = cons(c, typesym, obj);
   BTYPE(ann) = T_TAGGED;
