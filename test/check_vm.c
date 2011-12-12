@@ -36,7 +36,7 @@ arc c;
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(nlits))
 
 #define ITEST_FOOTER(nlits) \
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, nlits); \
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), nlits); \
   for (i=0; i<nlits; i++) \
     CODE_LITERAL(func, i) = VINDEX(CCTX_LITS(cctx), i); \
   thr = arc_mkthread(&c, func, 2048, 0); \
@@ -83,7 +83,7 @@ START_TEST(test_vm_ldi)
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, inop);
   arc_gcode(&c, cctx, ihlt);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(31337));
 }
@@ -237,7 +237,7 @@ START_TEST(test_vm_true)
   arc_gcode(&c, cctx, itrue);
   arc_gcode(&c, cctx, inop);
   arc_gcode(&c, cctx, ihlt);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == CTRUE);
 }
@@ -249,7 +249,7 @@ START_TEST(test_vm_nil)
   arc_gcode(&c, cctx, inil);
   arc_gcode(&c, cctx, inop);
   arc_gcode(&c, cctx, ihlt);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == CNIL);
 }
@@ -263,7 +263,7 @@ START_TEST(test_vm_apply)
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, iret);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
   cctx2 = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   VINDEX(CCTX_LITS(cctx2), 0) = func;
@@ -277,7 +277,7 @@ START_TEST(test_vm_apply)
   arc_gcode1(&c, cctx2, iapply, 0);
   VINDEX(CCTX_VCODE(cctx2), contofs) = FIX2INT(CCTX_VCPTR(cctx2)) - base;
   arc_gcode(&c, cctx2, ihlt);
-  func2 = arc_mkcode(&c, CCTX_VCODE(cctx2), arc_mkstringc(&c, "test2"), CNIL, 1);
+  func2 = arc_mkcode(&c, CCTX_VCODE(cctx2), 1);
   CODE_LITERAL(func2, 0) = VINDEX(CCTX_LITS(cctx2), 0);
   thr = arc_mkthread(&c, func2, 2048, 0);
   arc_vmengine(&c, thr, 1000);
@@ -675,7 +675,7 @@ START_TEST(test_vm_dsb)
   arc_gcode(&c, cctx, iconsr);
   arc_gcode(&c, cctx, iconsr);
   arc_gcode(&c, cctx, iret);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
   /* Attempt to apply the arguments 1 (2 3) 4 to the above destructuring
      bind function.   This should result in the list (1 2 3 4) if it works
@@ -702,7 +702,7 @@ START_TEST(test_vm_dsb)
   arc_gcode1(&c, cctx, iapply, 3);
   VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
   arc_gcode(&c, cctx, ihlt);
-  func2 = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test2"), CNIL, 1);
+  func2 = arc_mkcode(&c, CCTX_VCODE(cctx), 1);
   CODE_LITERAL(func2, 0) = VINDEX(CCTX_LITS(cctx), 0);
   thr = arc_mkthread(&c, func2, 2048, 0);
   arc_vmengine(&c, thr, 1000);
@@ -774,7 +774,7 @@ START_TEST(test_vm_oarg)
   arc_gcode2(&c, cctx, ilde, 0, 1);
   arc_gcode(&c, cctx, iadd);
   arc_gcode(&c, cctx, iret);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
   /* Attempt to apply the argument 3 to the above function. Should result in 5 */
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
@@ -789,7 +789,7 @@ START_TEST(test_vm_oarg)
   arc_gcode1(&c, cctx, iapply, 1);
   fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
   arc_gcode(&c, cctx, ihlt);
-  func2 = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test2"), CNIL, 1);
+  func2 = arc_mkcode(&c, CCTX_VCODE(cctx), 1);
   CODE_LITERAL(func2, 0) = VINDEX(CCTX_LITS(cctx), 0);
   thr = arc_mkthread(&c, func2, 2048, 0);
   arc_vmengine(&c, thr, 1000);
@@ -918,7 +918,7 @@ START_TEST(test_vm_ffi_cc4)
   arc_gcode2(&c, cctx, ilde, 0, 1);
   arc_gcode(&c, cctx, iadd);
   arc_gcode(&c, cctx, iret);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), arc_mkstringc(&c, "test"), CNIL, 0);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
   cctx2 = arc_mkcctx(&c, INT2FIX(1), INT2FIX(2));
   VINDEX(CCTX_LITS(cctx2), 0) = arc_mkccode(&c, -3, cc4demo);
@@ -933,7 +933,7 @@ START_TEST(test_vm_ffi_cc4)
   arc_gcode1(&c, cctx2, iapply, 1);
   VINDEX(CCTX_VCODE(cctx2), contofs) = FIX2INT(CCTX_VCPTR(cctx2)) - base;
   arc_gcode(&c, cctx2, ihlt);
-  func2 = arc_mkcode(&c, CCTX_VCODE(cctx2), arc_mkstringc(&c, "test2"), CNIL, 1);
+  func2 = arc_mkcode(&c, CCTX_VCODE(cctx2), 1);
   CODE_LITERAL(func2, 0) = VINDEX(CCTX_LITS(cctx2), 0);
   CODE_LITERAL(func2, 1) = VINDEX(CCTX_LITS(cctx2), 1);
   thr = arc_mkthread(&c, func2, 2048, 0);
