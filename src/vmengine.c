@@ -189,7 +189,13 @@ void arc_vmengine(arc *c, value thr, int quanta)
       }
       NEXT;
     INST(iret):
-      arc_return(c, thr);
+      /* If the continuation register is empty, we want to immediately
+	 release the thread, making the ret instruction behave just
+	 like a hlt instruction. */
+      if (arc_return(c, thr)) {
+	TSTATE(thr) = Trelease;
+	goto endquantum;
+      }
       NEXT;
     INST(ijmp):
       {
@@ -648,21 +654,25 @@ int arc_restorexcont(arc *c, value thr, value cont)
 }
 
 /* restore the continuation at the head of the continuation register */
-void arc_return(arc *c, value thr)
+int arc_return(arc *c, value thr)
 {
   value cont;
 
   for (;;) {
+    if (TCONR(thr) == CNIL)
+      return(1);
     cont = car(TCONR(thr));
+    if (cont == CNIL)
+      return(1);
     WB(&TCONR(thr), cdr(TCONR(thr)));
     if (TYPE(VINDEX(cont, 0)) == T_XCONT) {
       if (arc_restorexcont(c, thr, cont)) {
-	return;
+	return(0);
       }
       continue;
     }
     arc_restorecont(c, thr, cont);
-    return;
+    return(0);
   }
 }
 
