@@ -59,6 +59,23 @@ START_TEST(test_vm_push)
 }
 END_TEST
 
+START_TEST(test_vm_push_ret)
+{
+  ITEST_HEADER(0);
+  arc_gcode(&c, cctx, inil);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode(&c, cctx, itrue);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode(&c, cctx, iret);	/* this should behave just like a hlt */
+  ITEST_FOOTER(0);
+  fail_unless(*(TSP(thr)+1) == INT2FIX(31337));
+  fail_unless(*(TSP(thr)+2) == CTRUE);
+  fail_unless(*(TSP(thr)+3) == CNIL);
+}
+END_TEST
+
 START_TEST(test_vm_pop)
 {
   ITEST_HEADER(0);
@@ -1480,6 +1497,7 @@ int main(void)
   c.genv = arc_mkhash(&c, 8);
 
   tcase_add_test(tc_vm, test_vm_push);
+  tcase_add_test(tc_vm, test_vm_push_ret);
   tcase_add_test(tc_vm, test_vm_pop);
   tcase_add_test(tc_vm, test_vm_ldi);
   tcase_add_test(tc_vm, test_vm_ldl);
