@@ -839,19 +839,14 @@ value arc_annotate(arc *c, value typesym, value obj)
 {
   value ann;
 
-  if (typesym == ARC_BUILTIN(c, S_MAC)) {
-    BTYPE(obj) = T_MACRO;
-    return(obj);
-  }
-
   ann = cons(c, typesym, obj);
-  BTYPE(ann) = T_TAGGED;
+  BTYPE(ann) = (typesym == ARC_BUILTIN(c, S_MAC)) ? T_MACRO : T_TAGGED;
   return(ann);
 }
 
 value arc_rep(arc *c, value obj)
 {
-  if (TYPE(obj) != T_TAGGED)
+  if (!(TYPE(obj) == T_TAGGED || TYPE(obj) == T_MACRO))
     return(obj);
   return(cdr(obj));
 }
