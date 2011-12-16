@@ -503,3 +503,12 @@ notice and this notice are preserved.
 ** TODO Format strings
    We will provide for format strings similar to C, but with a few
    extensions that make sense for Arc.
+* Limitations that should be lifted
+** Macro expansion
+   - Macros cannot use threading primitives. Attempting to do so with
+     the current version of arc_macapply will cause an immediate
+     deadlock because macros are executed single threaded as the only
+     thread available.
+   - Garbage collection not performed during macro execution.  This
+     requires some fairly careful work to ensure that local variables
+     inside the compiler do not get garbage collected.
