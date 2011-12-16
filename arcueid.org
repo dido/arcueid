@@ -512,3 +512,5 @@ notice and this notice are preserved.
    - Garbage collection not performed during macro execution.  This
      requires some fairly careful work to ensure that local variables
      inside the compiler do not get garbage collected.
+   - Macros may only be normal functions.  C functions cannot be used
+     as macros yet.
