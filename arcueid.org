@@ -99,9 +99,9 @@ notice and this notice are preserved.
    - [X] Atoms and Symbols
    - [X] Special syntax
 ** TODO Arc compiler [0/3]
-   - [-] Literal expressions [1/9]
+   - [-] Literal expressions [2/9]
      - [X] nil
-     - [ ] true
+     - [X] true (t)
      - [ ] character
      - [ ] string
      - [ ] fixnum
