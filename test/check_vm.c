@@ -1500,9 +1500,7 @@ START_TEST(test_vm_macapply)
   arc_gcode(&c, cctx, iret);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
-  args = arc_mkvector(&c, 2);
-  VINDEX(args, 0) = INT2FIX(7);
-  VINDEX(args, 1) = INT2FIX(31337);
+  args = cons(&c, INT2FIX(31337), cons(&c, INT2FIX(7), CNIL));
   ret = arc_macapply(&c, func, args);
   fail_unless(ret == INT2FIX(31330));
 }
