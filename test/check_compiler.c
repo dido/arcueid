@@ -96,6 +96,22 @@ START_TEST(test_compile_string)
 }
 END_TEST
 
+START_TEST(test_compile_char)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "#\\a");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_CHAR);
+  fail_unless(REP(sexpr)._char == 'a');
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -114,6 +130,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_t);
   tcase_add_test(tc_compiler, test_compile_fixnum);
   tcase_add_test(tc_compiler, test_compile_string);
+  tcase_add_test(tc_compiler, test_compile_char);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
