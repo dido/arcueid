@@ -51,6 +51,8 @@ typedef struct arc {
 
   int over_percent;    /* additional free space over heap expansion */
   size_t minexp;       /* minimum expansion amount */
+  int stksize;	       /* default stack size */
+  int quantum;	       /* default execution quantum */
 
   /* Garbage collector */
   void (*rungc)(struct arc *);
@@ -457,6 +459,7 @@ extern value arc_mkxcont(arc *c, value cc4ctx, value argv, value func,
 extern value arc_mkenv(arc *c, value parent, int size);
 extern void arc_apply(arc *c, value thr, value fun);
 extern value arc_apply2(arc *c, value argv, value rv, CC4CTX);
+extern value arc_macapply(arc *c, value func, value args);
 extern int arc_return(arc *c, value thr);
 extern value arc_mkvmcode(arc *c, int length);
 extern value arc_mkcode(arc *c, value vmccode, int nlits);
