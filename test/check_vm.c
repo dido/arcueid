@@ -1485,6 +1485,29 @@ START_TEST(test_vm_apply_str_err3)
 }
 END_TEST
 
+START_TEST(test_vm_macapply)
+{
+  value cctx, func, args, ret;
+
+  cctx = arc_mkcctx(&c, INT2FIX(1), 0);
+  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode1(&c, cctx, imvarg, 0);
+  arc_gcode1(&c, cctx, imvarg, 1);
+  arc_gcode2(&c, cctx, ilde, 0, 0);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode2(&c, cctx, ilde, 0, 1);
+  arc_gcode(&c, cctx, isub);
+  arc_gcode(&c, cctx, iret);
+  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
+
+  args = arc_mkvector(&c, 2);
+  VINDEX(args, 0) = INT2FIX(7);
+  VINDEX(args, 1) = INT2FIX(31337);
+  ret = arc_macapply(&c, func, args);
+  fail_unless(ret == INT2FIX(31330));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1495,6 +1518,8 @@ int main(void)
   arc_set_memmgr(&c);
   arc_init_reader(&c);
   c.genv = arc_mkhash(&c, 8);
+  c.stksize = TSTKSIZE;
+  c.quantum = PQUANTA;
 
   tcase_add_test(tc_vm, test_vm_push);
   tcase_add_test(tc_vm, test_vm_push_ret);
@@ -1558,6 +1583,8 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_apply_str_err1);
   tcase_add_test(tc_vm, test_vm_apply_str_err2);
   tcase_add_test(tc_vm, test_vm_apply_str_err3);
+
+  tcase_add_test(tc_vm, test_vm_macapply);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
