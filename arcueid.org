@@ -98,7 +98,25 @@ notice and this notice are preserved.
    - [X] Comments
    - [X] Atoms and Symbols
    - [X] Special syntax
-** TODO Arc compiler
+** TODO Arc compiler [0/3]
+   - [-] Literal expressions [1/9]
+     - [X] nil
+     - [ ] true
+     - [ ] character
+     - [ ] string
+     - [ ] fixnum
+     - [ ] bignum
+     - [ ] flonum
+     - [ ] rational
+     - [ ] complex
+   - [ ] Symbols [0/3]
+     - [ ] Special syntax
+     - [ ] Environment symbols
+     - [ ] Global symbols
+   - [ ] Lists [0/3]
+     - [ ] Special forms
+     - [ ] Inline functions
+     - [ ] Function applications
 ** TODO basic data types [13/15]
     - [X] Nil
     - [X] True
