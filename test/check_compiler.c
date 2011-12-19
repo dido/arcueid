@@ -50,6 +50,21 @@ START_TEST(test_compile_nil)
 }
 END_TEST
 
+START_TEST(test_compile_t)
+
+{  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "t");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -65,6 +80,7 @@ int main(void)
   cc.quantum = PQUANTA;
 
   tcase_add_test(tc_compiler, test_compile_nil);
+  tcase_add_test(tc_compiler, test_compile_t);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
