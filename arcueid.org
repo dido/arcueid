@@ -99,12 +99,12 @@ notice and this notice are preserved.
    - [X] Atoms and Symbols
    - [X] Special syntax
 ** TODO Arc compiler [0/3]
-   - [-] Literal expressions [2/9]
+   - [-] Literal expressions [3/9]
      - [X] nil
      - [X] true (t)
      - [ ] character
      - [ ] string
-     - [ ] fixnum
+     - [X] fixnum
      - [ ] bignum
      - [ ] flonum
      - [ ] rational
