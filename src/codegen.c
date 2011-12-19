@@ -127,17 +127,19 @@ void arc_gcode2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
 }
 
 /* Add a literal, growing the literal vector as needed */
-void arc_literal(arc *c, value cctx, value literal)
+int arc_literal(arc *c, value cctx, value literal)
 {
-  int lptr;
+  int lptr, lidx;
   value lits;
 
   lptr = FIX2INT(CCTX_LPTR(cctx));
   lits = CCTX_LITS(cctx);
   if (lptr >= VECLEN(lits))
     lits = expand_literals(c, cctx);
+  lidx = lptr;
   VINDEX(lits, lptr++) = (value)literal;
   CCTX_LPTR(cctx) = INT2FIX(lptr);
+  return(lptr);
 }
 
 value arc_mkvmcode(arc *c, int length)
