@@ -368,6 +368,50 @@ static value c4apply(arc *c, value thr, value avec,
   return(retval);
 }
 
+/* Apply a function in a new thread created for this purpose.  Primarily
+   intended for expanding macros.  This will run the thread until the
+   thread reaches Trelease state, and no other threads can execute.
+   Note that garbage collection.  Note that macros cannot be defined
+   in C either.  A stub must be used to call a C function. */
+value arc_macapply(arc *c, value func, value args)
+{
+  value thr, oldthr, retval, arg;
+  int argc;
+
+  oldthr = c->curthread;
+  thr = arc_mkthread(c, func, c->stksize, 0);
+  /* push the args */
+  argc = 0;
+  for (arg = args; arg != CNIL; arg = cdr(arg)) {
+    CPUSH(thr, car(arg));
+    argc++;
+  }
+  TARGC(thr) = argc;
+  /* run the new thread until we hit Trelease */
+  while (TSTATE(thr) != Trelease) {
+    /* XXX - this makes macros more special and restricted than they
+       have to be.  Threading primitives cannot be used in macros because
+       they do not run like ordinary processes! */
+    if (TSTATE(thr) != Tready) {
+      c->signal_error(c, "fatal: deadlock detected in macro execution");
+      return(CNIL);
+    }
+    arc_vmengine(c, thr, c->quantum);
+    /* XXX - Consider whether we should be able to execute the garbage
+       collector thread after each quantum.  This will require careful
+       work in ensuring that the local variables in the compiler
+       cannot be garbage collected, and ensuring this is the case may
+       be somewhat complicated. Garbage generated as a macro is
+       executed in this way will eventually be collected of course,
+       but only after the compiler finishes execution.  This may
+       result in more memory being consumed if a function being
+       compiled invokes many macros. */
+  }
+  retval = TVALR(thr);
+  c->curthread = oldthr;
+  return(retval);
+}
+
 void arc_apply(arc *c, value thr, value fun)
 {
   value *argv, cfn, avec, retval;
@@ -738,11 +782,11 @@ value arc_mkclosure(arc *c, value code, value env)
 }
 
 /* Main dispatcher.  Will run each thread in the thread list for
-   at most quanta cycles or until the thread leaves ready state.
+   at most c->quanta cycles or until the thread leaves ready state.
    Also runs garbage collector threads periodically.  This should
    be called with at least one thread already in the run queue.
    Terminates when no more threads can run. */
-void arc_thread_dispatch(arc *c, int quanta)
+void arc_thread_dispatch(arc *c)
 {
   value prev = CNIL, thr;
   c->vmqueue = CNIL;
@@ -800,11 +844,11 @@ void arc_thread_dispatch(arc *c, int quanta)
     case Tdebug:
       /* this does nothing special for now */
     case Tready:
-      arc_vmengine(c, thr, quanta);
+      arc_vmengine(c, thr, c->quantum);
       break;
     }
 
-    /* garbage collect */
+    /* run a garbage collection cycle */
     c->rungc(c);
 
     /* queue next thread */
