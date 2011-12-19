@@ -101,9 +101,11 @@ static int find_literal(arc *c, value ctx, value lit)
   int i;
 
   lits = CCTX_LITS(ctx);
-  for (i=0; i<VECLEN(lits); i++) {
-    if (arc_iso(c, VINDEX(lits, i), lit))
-      return(i);
+  if (lits != CNIL) {
+    for (i=0; i<VECLEN(lits); i++) {
+      if (arc_iso(c, VINDEX(lits, i), lit))
+	return(i);
+    }
   }
   /* create the literal since it doesn't exist */
   return(arc_literal(c, ctx, lit));
