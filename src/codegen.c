@@ -167,7 +167,7 @@ value arc_cctx2code(arc *c, value cctx)
 
   fit_vmcode(c, cctx);
   func = arc_mkcode(c, CCTX_VCODE(cctx), CCTX_LPTR(cctx));
-  for (i=0; i<CCTX_LPTR(cctx); i++)
+  for (i=0; i<FIX2INT(CCTX_LPTR(cctx)); i++)
     CODE_LITERAL(func, i) = VINDEX(CCTX_LITS(cctx), i);
   return(func);
 }
