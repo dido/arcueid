@@ -1506,6 +1506,17 @@ START_TEST(test_vm_macapply)
 }
 END_TEST
 
+START_TEST(test_vm_macapply_cc)
+{
+  value func, args, ret;
+
+  func = arc_mkccode(&c, 1, test_cfunc);
+  args = cons(&c, INT2FIX(31337), CNIL);
+  ret = arc_macapply(&c, func, args);
+  fail_unless(ret == INT2FIX(31339));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1583,6 +1594,7 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_apply_str_err3);
 
   tcase_add_test(tc_vm, test_vm_macapply);
+  tcase_add_test(tc_vm, test_vm_macapply_cc);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
