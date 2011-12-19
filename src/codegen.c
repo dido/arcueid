@@ -139,7 +139,7 @@ int arc_literal(arc *c, value cctx, value literal)
   lidx = lptr;
   VINDEX(lits, lptr++) = (value)literal;
   CCTX_LPTR(cctx) = INT2FIX(lptr);
-  return(lptr);
+  return(lidx);
 }
 
 value arc_mkvmcode(arc *c, int length)
