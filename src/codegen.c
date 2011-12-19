@@ -60,10 +60,11 @@ static value __resize_literals(arc *c, value cctx, int fit)
   if (size == 0)
     return(CNIL);
   nlit = arc_mkvector(c, size);
-  if (lit != CNIL)
+  if (lit != CNIL) {
     memcpy(&VINDEX(nlit, 0), &(VINDEX(lit, 0)), lptr*sizeof(value));
+    c->free_block(c, (void *)lit);
+  }
   CCTX_LITS(cctx) = nlit;
-  c->free_block(c, (void *)lit);
   return(nlit);
 }
 
@@ -134,7 +135,7 @@ int arc_literal(arc *c, value cctx, value literal)
 
   lptr = FIX2INT(CCTX_LPTR(cctx));
   lits = CCTX_LITS(cctx);
-  if (lptr >= VECLEN(lits))
+  if (lits == CNIL || lptr >= VECLEN(lits))
     lits = expand_literals(c, cctx);
   lidx = lptr;
   VINDEX(lits, lptr++) = (value)literal;
