@@ -512,5 +512,6 @@ notice and this notice are preserved.
    - Garbage collection not performed during macro execution.  This
      requires some fairly careful work to ensure that local variables
      inside the compiler do not get garbage collected.
-   - Macros may only be normal functions.  C functions cannot be used
-     as macros yet.
+   - Macros can be anything but a CC4 function.  CC4 functions make some
+     subtle interplay between the virtual machine and all that and can
+     be somewhat difficult to handle.
