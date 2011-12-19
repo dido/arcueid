@@ -371,8 +371,7 @@ static value c4apply(arc *c, value thr, value avec,
 /* Apply a function in a new thread created for this purpose.  Primarily
    intended for expanding macros.  This will run the thread until the
    thread reaches Trelease state, and no other threads can execute.
-   Note that garbage collection.  Note that macros cannot be defined
-   in C either.  A stub must be used to call a C function. */
+   Note that garbage collection cycles do not execute while this is done. */
 value arc_macapply(arc *c, value func, value args)
 {
   value thr, oldthr, retval, arg;
@@ -388,6 +387,21 @@ value arc_macapply(arc *c, value func, value args)
   }
   TARGC(thr) = argc;
   /* run the new thread until we hit Trelease */
+  if (TYPE(func) != T_CLOS && TYPE(func) != T_CODE) {
+    /* handle C-defined functions -- CC4 functions still won't work though. */
+    arc_apply(c, thr, func);
+    retval = TVALR(thr);
+    c->curthread = oldthr;
+    return(retval);
+  }
+
+  if (TYPE(func) == T_CLOS) {
+    WB(&TFUNR(thr), car(func));
+    WB(&TENVR(thr), cdr(func));
+  } else {
+    WB(&TFUNR(thr), func);
+  }
+  TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
   while (TSTATE(thr) != Trelease) {
     /* XXX - this makes macros more special and restricted than they
        have to be.  Threading primitives cannot be used in macros because
