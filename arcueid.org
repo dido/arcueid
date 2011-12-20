@@ -109,10 +109,9 @@ notice and this notice are preserved.
      - [X] flonum
      - [X] rational
      - [X] complex
-   - [ ] Symbols [0/3]
-     - [ ] Special syntax
+   - [-] Symbols [1/2]
      - [ ] Environment symbols
-     - [ ] Global symbols
+     - [X] Global symbols
    - [ ] Lists [0/3]
      - [ ] Special forms
      - [ ] Inline functions
