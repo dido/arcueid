@@ -58,15 +58,17 @@ value arc_macex(arc *c, value e)
 }
 
 static value compile_literal(arc *c, value lit, value ctx, value cont);
-static value compile_ident(arc *c, value ident, value ctx, value cont);
-static value compile_list(arc *c, value list, value ctx, value cont);
+static value compile_ident(arc *c, value ident, value ctx, value env,
+			   value cont);
+static value compile_list(arc *c, value list, value ctx, value env,
+			  value cont);
 static value compile_continuation(arc *c, value ctx, value cont);
 static int find_literal(arc *c, value ctx, value lit);
 
 /* Given an expression nexpr, a compilation context ctx, and a continuation
    flag, return the compilation context after the expression is compiled.
    NOTE: all macros must be fully expanded before compiling! */
-value arc_compile(arc *c, value nexpr, value ctx, value cont)
+value arc_compile(arc *c, value nexpr, value ctx, value env, value cont)
 {
   value expr;
 
@@ -79,9 +81,9 @@ value arc_compile(arc *c, value nexpr, value ctx, value cont)
       || TYPE(expr) == T_RATIONAL || TYPE(expr) == T_COMPLEX)
     return(compile_literal(c, expr, ctx, cont));
   if (SYMBOL_P(expr))
-    return(compile_ident(c, expr, ctx, cont));
+    return(compile_ident(c, expr, ctx, env, cont));
   if (CONS_P(expr))
-    return(compile_list(c, expr, ctx, cont));
+    return(compile_list(c, expr, ctx, env, cont));
   c->signal_error(c, "invalid_expression %p", expr);
   return(ctx);
 }
@@ -125,12 +127,14 @@ static value compile_literal(arc *c, value lit, value ctx, value cont)
   return(compile_continuation(c, ctx, cont));
 }
 
-static value compile_ident(arc *c, value ident, value ctx, value cont)
+static value compile_ident(arc *c, value ident, value ctx, value env,
+			   value cont)
 {
   return(CNIL);
 }
 
-static value compile_list(arc *c, value list, value ctx, value cont)
+static value compile_list(arc *c, value list, value ctx, value env,
+			  value cont)
 {
   return(CNIL);
 }
