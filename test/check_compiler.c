@@ -186,6 +186,24 @@ START_TEST(test_compile_complex)
 }
 END_TEST
 
+START_TEST(test_compile_ident)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  /* Make a global symbol binding for foo*/
+  arc_bindsym(c, arc_intern_cstr(c, "foo"), INT2FIX(31337));
+  str = arc_mkstringc(c, "foo");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(31337));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -213,6 +231,7 @@ int main(void)
 
   tcase_add_test(tc_compiler, test_compile_flonum);
   tcase_add_test(tc_compiler, test_compile_complex);
+  tcase_add_test(tc_compiler, test_compile_ident);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
