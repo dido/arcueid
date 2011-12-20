@@ -189,9 +189,10 @@ END_TEST
 START_TEST(test_compile_ident)
 {
   value str, sexpr, fp, cctx, code, ret;
+  value envframe;
 
   /* Make a global symbol binding for foo*/
-  arc_bindsym(c, arc_intern_cstr(c, "foo"), INT2FIX(31337));
+  arc_bindcstr(c, "foo", INT2FIX(31337));
   str = arc_mkstringc(c, "foo");
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
