@@ -164,8 +164,112 @@ static value compile_ident(arc *c, value ident, value ctx, value env,
   return(compile_continuation(c, ctx, cont));
 }
 
-static value compile_list(arc *c, value list, value ctx, value env,
-			  value cont)
+static value compile_if(arc *c, value args, value ctx, value env,
+			value cont)
+{
+  int jumpaddr, jumpaddr2;
+
+  /* If we run out of arguments, the last value becomes nil */
+  if (NIL_P(args)) {
+    arc_gcode(c, ctx, inil);
+    return(compile_continuation(c, ctx, cont));
+  }
+
+  /* If the next is the end of the line, compile the tail end if no
+     additional */
+  if (NIL_P(cdr(args))) {
+    arc_compile(c, car(args), ctx, env, CNIL);
+    return(compile_continuation(c, ctx, cont));
+  }
+
+  /* In the final case, we have the conditional (car), the then
+     portion (cadr), and the else portion (cddr). */
+  /* First, compile the conditional */
+  arc_compile(c, car(args), ctx, env, CNIL);
+  /* this jump address will be the address of the jf instruction
+     which we are about to generate.  We have to patch it with the
+     address of the start of the else portion once we know it. */
+  jumpaddr = FIX2INT(CCTX_VCPTR(ctx));
+  /* this jf instruction has to be patched with the address of the
+     else portion. */
+  arc_gcode1(c, ctx, ijf, 0);
+  arc_compile(c, cadr(args), ctx, env, CNIL);
+  /* This jump address the address of the unconditional jump at the end.
+     It should be patched after the else portion is compiled. */
+  jumpaddr2 = FIX2INT(CCTX_VCPTR(ctx));
+  arc_gcode1(c, ctx, ijmp, 0);
+  /* patch jumpaddr so that it will jump to the address of the else
+     portion which is about to be compiled */
+  VINDEX(CCTX_VCODE(ctx), jumpaddr+1) = FIX2INT(CCTX_VCPTR(ctx)) - jumpaddr;
+  /* the actual if portion gets compiled now */
+  compile_if(c, cddr(args), ctx, env, cont);
+  /* Fix the target address of the unconditional jump at the end of the
+     then portion (jumpaddr2). */
+  VINDEX(CCTX_VCODE(ctx), jumpaddr2+1) = FIX2INT(CCTX_VCPTR(ctx)) - jumpaddr2;
+  return(compile_continuation(c, ctx, cont));
+}
+
+static value compile_fn(arc *c, value expr, value ctx, value env,
+			value cont)
 {
   return(CNIL);
+}
+
+static value compile_quote(arc *c, value expr, value ctx, value env,
+			   value cont)
+{
+  return(CNIL);
+}
+
+static value compile_quasiquote(arc *c, value expr, value ctx, value env,
+				value cont)
+{
+  return(CNIL);
+}
+
+static value compile_assign(arc *c, value expr, value ctx, value env,
+			    value cont)
+{
+  return(CNIL);
+}
+
+static value (*spform(arc *c, value ident))(arc *, value, value, value, value)
+{
+  if (ARC_BUILTIN(c, S_IF) == ident)
+    return(compile_if);
+  if (ARC_BUILTIN(c, S_FN) == ident)
+    return(compile_fn);
+  if (ARC_BUILTIN(c, S_QUOTE) == ident)
+    return(compile_quote);
+  if (ARC_BUILTIN(c, S_QQUOTE) == ident)
+    return(compile_quasiquote);
+  if (ARC_BUILTIN(c, S_ASSIGN) == ident)
+    return(compile_assign);
+  return(NULL);
+}
+
+static value (*inline_func(arc *c, value ident))(arc *, value,
+						 value, value, value)
+{
+  return(NULL);
+}
+
+static value compile_apply(arc *c, value expr, value ctx, value env,
+			   value cont)
+{
+  return(CNIL);
+}
+
+static value compile_list(arc *c, value expr, value ctx, value env,
+			  value cont)
+{
+  value (*fun)(arc *, value, value, value, value) = NULL;
+
+  if ((fun = spform(c, car(expr))) != NULL)
+    fun(c, cdr(expr), ctx, env, cont);
+  else if ((fun = inline_func(c, car(expr))) != NULL)
+    fun(c, expr, ctx, env, cont);
+  else
+    compile_apply(c, expr, ctx, env, cont);
+  return(compile_continuation(c, ctx, cont));
 }
