@@ -169,6 +169,23 @@ START_TEST(test_compile_flonum)
 }
 END_TEST
 
+START_TEST(test_compile_complex)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "1.1+2.2i");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(fabs(1.1 - REP(sexpr)._complex.re) < 1e-6);
+  fail_unless(fabs(2.2 - REP(sexpr)._complex.im) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -195,6 +212,7 @@ int main(void)
 #endif
 
   tcase_add_test(tc_compiler, test_compile_flonum);
+  tcase_add_test(tc_compiler, test_compile_complex);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
