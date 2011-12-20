@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
+#include <math.h>
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/symbols.h"
@@ -136,6 +137,22 @@ END_TEST
 
 #endif
 
+START_TEST(test_compile_flonum)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "3.14159");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(fabs(3.14159 - REP(sexpr)._flonum) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -159,6 +176,8 @@ int main(void)
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_compiler, test_compile_bignum);
 #endif
+
+  tcase_add_test(tc_compiler, test_compile_flonum);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
