@@ -112,9 +112,24 @@ notice and this notice are preserved.
    - [-] Symbols [1/2]
      - [ ] Environment symbols
      - [X] Global symbols
-   - [ ] Lists [0/3]
-     - [ ] Special forms
-     - [ ] Inline functions
+   - [-] Lists [0/3]
+     - [-] Special forms [1/5]
+       - [X] if
+       - [ ] fn
+       - [ ] quote
+       - [ ] quasiquote
+       - [ ] assign
+     - [ ] Inline functions [0/10]
+       - [ ] cons
+       - [ ] car
+       - [ ] cdr
+       - [ ] scar
+       - [ ] scdr
+       - [ ] is
+       - [ ] +
+       - [ ] -
+       - [ ] *
+       - [ ] /
      - [ ] Function applications
    - [ ] Macros
 ** TODO basic data types [13/15]
