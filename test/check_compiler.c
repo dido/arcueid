@@ -112,6 +112,30 @@ START_TEST(test_compile_char)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+START_TEST(test_compile_bignum)
+{
+  value str, sexpr, fp, cctx, code, ret;
+  mpz_t expected;
+
+  str = arc_mkstringc(c, "300000000000000000000000000000");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(REP(sexpr)._char == 'a');
+  mpz_init(expected);
+  mpz_set_str(expected, "300000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+#endif
+
 int main(void)
 {
   int number_failed;
@@ -131,6 +155,10 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_fixnum);
   tcase_add_test(tc_compiler, test_compile_string);
   tcase_add_test(tc_compiler, test_compile_char);
+
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_compiler, test_compile_bignum);
+#endif
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
