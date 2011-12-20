@@ -24,6 +24,7 @@
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/symbols.h"
+#include "../config.h"
 
 arc *c, cc;
 
@@ -127,11 +128,26 @@ START_TEST(test_compile_bignum)
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_BIGNUM);
-  fail_unless(REP(sexpr)._char == 'a');
   mpz_init(expected);
   mpz_set_str(expected, "300000000000000000000000000000", 10);
-  fail_unless(mpz_cmp(expected, REP(sum)._bignum) == 0);
+  fail_unless(mpz_cmp(expected, REP(ret)._bignum) == 0);
   mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_compile_rational)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "1/2");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REP(ret)._rational, 1, 2) == 0);
 }
 END_TEST
 
@@ -175,6 +191,7 @@ int main(void)
 
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_compiler, test_compile_bignum);
+  tcase_add_test(tc_compiler, test_compile_rational);
 #endif
 
   tcase_add_test(tc_compiler, test_compile_flonum);
