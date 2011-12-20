@@ -127,10 +127,41 @@ static value compile_literal(arc *c, value lit, value ctx, value cont)
   return(compile_continuation(c, ctx, cont));
 }
 
+/* Find the symbol var in the environment env.  Each environment frame
+   is simply a list of hash tables, each hash table key being a symbol
+   name, and each value being the index inside the environment frame.
+   Returns CNIL if var is a name unbound in the current environment.
+   Returns CTRUE otherwise, and sets frameno to the frame number of the
+   environment, and idx to the index in that environment. */
+static value find_var(arc *c, value var, value env, int *frameno, int *idx)
+{
+  value vidx;
+  int fnum;
+
+  for (fnum=0; env; env = cdr(env), fnum++) {
+    if ((vidx = arc_hash_lookup(c, car(env), var)) != CUNBOUND) {
+      *frameno = fnum;
+      *idx = FIX2INT(vidx);
+      return(CTRUE);
+    }
+  }
+  return(CNIL);
+}
+
 static value compile_ident(arc *c, value ident, value ctx, value env,
 			   value cont)
 {
-  return(CNIL);
+  int level, offset;
+
+  /* look for the variable in the environment first */
+  if (find_var(c, ident, env, &level, &offset) == CTRUE) {
+    arc_gcode2(c, ctx, ilde, level, offset);
+  } else {
+    /* If the variable is not bound in the current environment, check
+       it in the global symbol table. */
+    arc_gcode1(c, ctx, ildg, find_literal(c, ctx, ident));
+  }
+  return(compile_continuation(c, ctx, cont));
 }
 
 static value compile_list(arc *c, value list, value ctx, value env,
