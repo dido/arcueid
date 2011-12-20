@@ -204,6 +204,131 @@ START_TEST(test_compile_ident)
 }
 END_TEST
 
+/* simple case of an empty if, should just be nil */
+START_TEST(test_compile_if_empty)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(if)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CNIL);
+}
+END_TEST
+
+/* should compile (if x) to simply x */
+START_TEST(test_compile_if_x)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(if 4)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(4));
+}
+END_TEST
+
+/* should compile a full if statement */
+START_TEST(test_compile_if_full)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(if t 1 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(if nil 1 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(2));
+}
+END_TEST
+
+/* should compile a partial if statement */
+START_TEST(test_compile_if_partial)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(if t 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(if nil 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CNIL);
+}
+END_TEST
+
+/* should compile a compound if statement */
+START_TEST(test_compile_if_compound)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(if t 1 t 3 t 5 6)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(if nil 1 t 3 t 5 6)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(3));
+
+  str = arc_mkstringc(c, "(if nil 1 nil 3 t 5 6)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(5));
+
+  str = arc_mkstringc(c, "(if nil 1 nil 3 nil 5 6)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(6));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -232,6 +357,12 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_flonum);
   tcase_add_test(tc_compiler, test_compile_complex);
   tcase_add_test(tc_compiler, test_compile_ident);
+
+  tcase_add_test(tc_compiler, test_compile_if_empty);
+  tcase_add_test(tc_compiler, test_compile_if_x);
+  tcase_add_test(tc_compiler, test_compile_if_full);
+  tcase_add_test(tc_compiler, test_compile_if_partial);
+  tcase_add_test(tc_compiler, test_compile_if_compound);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
