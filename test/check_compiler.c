@@ -36,7 +36,7 @@ START_TEST(test_compile_nil)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == CNIL);
@@ -45,7 +45,7 @@ START_TEST(test_compile_nil)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == CNIL);
@@ -60,7 +60,7 @@ START_TEST(test_compile_t)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == CTRUE);
@@ -75,7 +75,7 @@ START_TEST(test_compile_fixnum)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == INT2FIX(123));
@@ -90,7 +90,7 @@ START_TEST(test_compile_string)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_STRING);
@@ -106,7 +106,7 @@ START_TEST(test_compile_char)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_CHAR);
@@ -124,7 +124,7 @@ START_TEST(test_compile_bignum)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_BIGNUM);
@@ -143,7 +143,7 @@ START_TEST(test_compile_rational)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_RATIONAL);
@@ -161,7 +161,7 @@ START_TEST(test_compile_flonum)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_FLONUM);
@@ -177,7 +177,7 @@ START_TEST(test_compile_complex)
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CTRUE);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_COMPLEX);
