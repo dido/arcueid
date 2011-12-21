@@ -210,8 +210,8 @@ START_TEST(test_compile_ident)
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
-  fail_unless(TYPE(ret) == T_FIXNUM);
-  fail_unless(ret == INT2FIX(73313));
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(73313));
 }
 END_TEST
 
