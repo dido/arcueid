@@ -87,8 +87,9 @@ notice and this notice are preserved.
 	 when we have real threads in the language we'll make it into
 	 a real threaded implementation with a real OS-level thread to
 	 do the marking and sweeping.
-** DONE Arc reader [10/10]
+** DONE Arc reader [10/11]
    - [X] Lists
+   - [ ] Improper lists
    - [X] Bracketed functions
    - [X] Quotes
    - [X] Quasiquotes
@@ -115,7 +116,12 @@ notice and this notice are preserved.
    - [-] Lists [0/3]
      - [-] Special forms [1/5]
        - [X] if
-       - [ ] fn
+       - [-] fn [2/5]
+	 - [X] single symbol arguments
+	 - [X] simple argument lists
+	 - [ ] optional arguments
+         - [ ] rest arguments
+	 - [ ] destructuring binds
        - [ ] quote
        - [ ] quasiquote
        - [ ] assign
