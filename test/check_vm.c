@@ -242,8 +242,8 @@ START_TEST(test_vm_mvrarg)
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
   rarg = ENV_VALUE(car(TENVR(thr)), 0);
-  fail_unless(car(rarg) == INT2FIX(31337));
-  fail_unless(car(cdr(rarg)) == INT2FIX(31338));
+  fail_unless(car(rarg) == INT2FIX(31338));
+  fail_unless(car(cdr(rarg)) == INT2FIX(31337));
   fail_unless(cdr(cdr(rarg)) == CNIL);
 }
 END_TEST
