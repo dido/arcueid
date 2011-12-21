@@ -98,7 +98,7 @@ notice and this notice are preserved.
    - [X] Comments
    - [X] Atoms and Symbols
    - [X] Special syntax
-** TODO Arc compiler [1/4]
+** TODO Arc compiler [2/4]
    - [X] Literal expressions [9/9]
      - [X] nil
      - [X] true (t)
@@ -109,8 +109,8 @@ notice and this notice are preserved.
      - [X] flonum
      - [X] rational
      - [X] complex
-   - [-] Symbols [1/2]
-     - [ ] Environment symbols
+   - [X] Symbols [2/2]
+     - [X] Environment symbols
      - [X] Global symbols
    - [-] Lists [0/3]
      - [-] Special forms [1/5]
