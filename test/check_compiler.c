@@ -203,15 +203,15 @@ START_TEST(test_compile_ident)
   fail_unless(ret == INT2FIX(31337));
 
   /* Try to compile a local symbol binding for foo as well */
-  str = arc_mkstringc(c, "((fn foo foo) 73313)");
+  str = arc_mkstringc(c, "((fn (foo) foo) 73313)");
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
-  fail_unless(TYPE(ret) == T_CONS);
-  fail_unless(car(ret) == INT2FIX(73313));
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(73313));
 }
 END_TEST
 
