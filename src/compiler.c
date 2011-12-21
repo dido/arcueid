@@ -222,7 +222,46 @@ value add_env_frame(arc *c, value names, value env)
   return(cons(c, envframe, env));
 }
 
-/* Generate code to set up the new environment given the arguments. 
+static value arglist(arc *c, value args, value ctx, value env, int *nargs)
+{
+  value rn = CNIL, ahd, cur, nahd;
+
+  *nargs = 0;
+  for (;;) {
+    if (SYMBOL_P(car(args))) {
+      /* Ordinary symbol arg.  When we see this, cons it up to the list
+	 of names, and create a mvarg instruction for it. */
+      rn = cons(c, car(args), rn);
+      arc_gcode1(c, ctx, imvarg, (*nargs)++);
+    } else if (CONS_P(car(args))) {
+      /* XXX - destructuring bind or optional arg */
+    }
+
+    if (SYMBOL_P(cdr(args))) {
+      /* We have a rest arg here. */
+      rn = cons(c, cdr(args), rn);
+      arc_gcode1(c, ctx, imvrarg, (*nargs)++);
+      break;
+    } else if (NIL_P(cdr(args))) {
+      /* done */
+      break;
+    }
+    /* next arg */
+    args = cdr(args);
+  }
+  /* the names in rn are reversed.  Reverse it before returning */
+  ahd = cur = rn;
+  nahd = CNIL;
+  while (cur != CNIL) {
+    ahd = cdr(ahd);
+    scdr(cur, nahd);
+    nahd = cur;
+    cur = ahd;
+  }
+  return(nahd);
+}
+
+/* generate code to set up the new environment given the arguments. 
    After producing the code to generate the new environment, which
    generally consists of an env instruction to create an environment
    of the appropriate size and mvargs/mvoargs/mvrargs to move data from
@@ -233,19 +272,33 @@ value add_env_frame(arc *c, value names, value env)
    names. */
 static value compile_args(arc *c, value args, value ctx, value env)
 {
+  value names;
+  int envinstaddr, nargs;
+
   /* just return the current environment if no args */
   if (args == CNIL)
     return(env);
 
   if (SYMBOL_P(args)) {
-    /* If args is a single name, make an environment with that
-       one symbol. */
+    /* If args is a single name, make an environment with a single
+       name and a list containing the name of the sole argument. */
     arc_gcode1(c, ctx, ienv, 1);
     arc_gcode1(c, ctx, imvrarg, 0);
     return(add_env_frame(c, cons(c, args, CNIL), env));
   }
-  /* XXX fill this in */
-  return(env);
+
+  if (!CONS_P(args)) {
+    c->signal_error(c, "invalid fn arg %p", args);
+    return(env);
+  }
+  envinstaddr = FIX2INT(CCTX_VCPTR(ctx));
+  /* this instruction will get patched once the true number of named
+     arguments has been identified. */
+  arc_gcode1(c, ctx, ienv, 0);
+  names = arglist(c, args, ctx, env, &nargs);
+  /* patch the true number of arguments into the instruction */
+  VINDEX(CCTX_VCODE(ctx), envinstaddr+1) = nargs;
+  return(add_env_frame(c, names, env));
 }
 
 static value compile_fn(arc *c, value expr, value ctx, value env,
