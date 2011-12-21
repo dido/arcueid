@@ -386,6 +386,57 @@ START_TEST(test_compile_fn_basic)
 }
 END_TEST
 
+START_TEST(test_compile_fn_oarg)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "((fn (a (o b)) a) 1 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(1));
+
+  str = arc_mkstringc(c, "((fn (a (o b)) b) 1 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(2));
+
+  str = arc_mkstringc(c, "((fn (a (o b)) b) 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CNIL);
+
+  str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(7));
+
+  str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(2));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -422,6 +473,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_if_compound);
 
   tcase_add_test(tc_compiler, test_compile_fn_basic);
+  tcase_add_test(tc_compiler, test_compile_fn_oarg);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
