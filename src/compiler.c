@@ -209,10 +209,66 @@ static value compile_if(arc *c, value args, value ctx, value env,
   return(compile_continuation(c, ctx, cont));
 }
 
+/* Add a new environment frame with names names to the list of
+   environments env. */
+value add_env_frame(arc *c, value names, value env)
+{
+  value envframe;
+  int idx;
+
+  envframe = arc_mkhash(c, 8);
+  for (idx=0; names; names = cdr(names), idx++)
+    arc_hash_insert(c, envframe, car(names), INT2FIX(idx));
+  return(cons(c, envframe, env));
+}
+
+/* Generate code to set up the new environment given the arguments. 
+   After producing the code to generate the new environment, which
+   generally consists of an env instruction to create an environment
+   of the appropriate size and mvargs/mvoargs/mvrargs to move data from
+   the stack into the appropriate environment slot as well as including
+   instructions to perform any destructuring binds, return the new
+   environment which includes all the names specified properly ordered.
+   so that a call to find-var with the new environment can find the
+   names. */
+static value compile_args(arc *c, value args, value ctx, value env)
+{
+  /* just return the current environment if no args */
+  if (args == CNIL)
+    return(env);
+
+  if (SYMBOL_P(args)) {
+    /* If args is a single name, make an environment with that
+       one symbol. */
+    arc_gcode1(c, ctx, ienv, 1);
+    arc_gcode1(c, ctx, imvarg, 0);
+    return(add_env_frame(c, cons(c, args, CNIL), env));
+  }
+  /* XXX fill this in */
+  return(env);
+}
+
 static value compile_fn(arc *c, value expr, value ctx, value env,
 			value cont)
 {
-  return(CNIL);
+  value args, body, nctx, nenv, newcode;
+
+  args = car(expr);
+  body = cdr(expr);
+  nctx = arc_mkcctx(c, INT2FIX(1), 0);
+  nenv = compile_args(c, args, nctx, env);
+  /* the body of a fn works as an implicit do/progn */
+  for (; body; body = cdr(body))
+    arc_compile(c, car(body), nctx, nenv, CNIL);
+  compile_continuation(c, nctx, CTRUE);
+  /* convert the new context into a code object and generate an
+     instruction in the present context to load it as a literal,
+     then create a closure using the code object and the current
+     environment. */
+  newcode = arc_cctx2code(c, nctx);
+  arc_gcode1(c, ctx, ildl, find_literal(c, ctx, newcode));
+  arc_gcode(c, ctx, icls);
+  return(compile_continuation(c, nctx, cont));
 }
 
 static value compile_quote(arc *c, value expr, value ctx, value env,
@@ -257,7 +313,38 @@ static value (*inline_func(arc *c, value ident))(arc *, value,
 static value compile_apply(arc *c, value expr, value ctx, value env,
 			   value cont)
 {
-  return(CNIL);
+  value fname, args, ahd, nahd, cur;
+  int contaddr, nargs;
+
+  fname = car(expr);
+  args = cdr(expr);
+
+  /* to perform a function application, we first try to make a continuation.
+     The address of the continuation will be computed later. */
+  arc_gcode1(c, ctx, icont, 0);
+  contaddr = FIX2INT(CCTX_VCPTR(ctx)) - 1;
+  /* Compile the arguments in reverse order.  This will destructively
+     reverse the list of arguments! */
+  ahd = cur = args;
+  nahd = CNIL;
+  while (cur != CNIL) {
+    ahd = cdr(ahd);
+    scdr(cur, nahd);
+    nahd = cur;
+    cur = ahd;
+  }
+
+  /* Traverse the reversed arguments, compiling each */
+  for (nargs = 0; nahd; nahd = cdr(nahd), nargs++) {
+    arc_compile(c, car(nahd), ctx, env, CNIL);
+    arc_gcode(c, ctx, ipush);
+  }
+  /* Compile the function name, loading it to the value reg. */
+  arc_compile(c, fname, ctx, env, CNIL);
+  arc_gcode1(c, ctx, iapply, nargs);
+  /* fix the continuation address */
+  VINDEX(CCTX_VCODE(ctx), contaddr) = FIX2INT(CCTX_VCPTR(ctx)) - contaddr + 1;
+  return(compile_continuation(c, ctx, cont));  
 }
 
 static value compile_list(arc *c, value expr, value ctx, value env,
@@ -266,10 +353,9 @@ static value compile_list(arc *c, value expr, value ctx, value env,
   value (*fun)(arc *, value, value, value, value) = NULL;
 
   if ((fun = spform(c, car(expr))) != NULL)
-    fun(c, cdr(expr), ctx, env, cont);
-  else if ((fun = inline_func(c, car(expr))) != NULL)
-    fun(c, expr, ctx, env, cont);
-  else
-    compile_apply(c, expr, ctx, env, cont);
-  return(compile_continuation(c, ctx, cont));
+    return(fun(c, cdr(expr), ctx, env, cont));
+  if ((fun = inline_func(c, car(expr))) != NULL)
+    return(fun(c, expr, ctx, env, cont));
+
+  return(compile_apply(c, expr, ctx, env, cont));
 }
