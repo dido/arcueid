@@ -72,6 +72,7 @@ enum builtin_syms {
   S_MAC,			/* mac */
   S_IF,				/* if */
   S_ASSIGN,			/* assign */
+  S_O,				/* o */
 
   S_THE_END			/* end of the line */
 };
