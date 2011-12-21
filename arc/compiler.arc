@@ -300,7 +300,7 @@
     (let contaddr (- (code-ptr ctx) 1)
       (walk (rev args) [do (compile _ ctx env nil)
 			   (generate ctx 'ipush)])
-      (compile fname ctx env cont)
+      (compile fname ctx env nil)
       (generate ctx 'iapply (len args))
       (code-patch ctx contaddr (+ (- (code-ptr ctx) contaddr) 1))
       (compile-continuation ctx cont))))
