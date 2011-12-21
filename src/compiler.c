@@ -224,7 +224,8 @@ value add_env_frame(arc *c, value names, value env)
 
 static value arglist(arc *c, value args, value ctx, value env, int *nargs)
 {
-  value rn = CNIL, ahd, cur, nahd;
+  value rn = CNIL, ahd, cur, nahd, oarg;
+  int jumpaddr;
 
   *nargs = 0;
   for (;;) {
@@ -233,8 +234,31 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
 	 of names, and create a mvarg instruction for it. */
       rn = cons(c, car(args), rn);
       arc_gcode1(c, ctx, imvarg, (*nargs)++);
+    } else if (CONS_P(car(args)) && car(car(args)) == ARC_BUILTIN(c, S_O)) {
+      /* Optional arg.  Note that this will not enforce optional args at
+	 the end. */
+      oarg = car(args);
+      arc_gcode1(c, ctx, imvoarg, *nargs);
+      /* default parameters */
+      if (cddr(oarg) != CNIL) {
+	/* When we have an optional argument, load up whatever value
+	 it received from the execution of the mvoarg instruction. */
+	arc_gcode2(c, ctx, ilde, 0, *nargs);
+	/* This jt instruction is patched later.  The jump is taken when
+	   some value is provided for the optional argument. */
+	jumpaddr = FIX2INT(CCTX_VCPTR(ctx));
+	arc_gcode1(c, ctx, ijt, 0);
+	/* Compile the value of the optional arg */
+	arc_compile(c, car(cddr(oarg)), ctx, env, CNIL);
+	arc_gcode(c, ctx, ipush); /* push default value */
+	arc_gcode1(c, ctx, imvoarg, *nargs);
+	/* The jt instruction is patched with the current address */
+	VINDEX(CCTX_VCODE(ctx), jumpaddr+1) = FIX2INT(CCTX_VCPTR(ctx)) - jumpaddr;
+      }
+      (*nargs)++;
+      rn = cons(c, cadr(oarg), rn);
     } else if (CONS_P(car(args))) {
-      /* XXX - destructuring bind or optional arg */
+      /* destructuring bind */
     }
 
     if (SYMBOL_P(cdr(args))) {
