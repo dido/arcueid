@@ -156,13 +156,22 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(imvrarg):
       {
 	int iindx = (int)*TIP(thr)++;
-	value list = CNIL, i;
+	value list = CNIL, i, t, rlist = CNIL;
 
 	while (TSP(thr) != TSTOP(thr)) {
 	  i = CPOP(thr);
 	  list = cons(c, i, list);
 	}
-	WB(&ENV_VALUE(car(TENVR(thr)), iindx), list);
+	/* The list of popped arguments is in reverse order.  We
+	   need to reverse it to make it come out right. */
+	t = list;
+	while (t != CNIL) {
+	  list = cdr(list);
+	  scdr(t, rlist);
+	  rlist = t;
+	  t = list;
+	}
+	WB(&ENV_VALUE(car(TENVR(thr)), iindx), rlist);
       }
       NEXT;
     INST(icont):
