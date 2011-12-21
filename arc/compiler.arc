@@ -298,7 +298,7 @@
   (with (fname (car expr) args (cdr expr))
     (generate ctx 'icont 0)
     (let contaddr (- (code-ptr ctx) 1)
-      (walk (rev args) [do (compile _ ctx env cont)
+      (walk (rev args) [do (compile _ ctx env nil)
 			   (generate ctx 'ipush)])
       (compile fname ctx env cont)
       (generate ctx 'iapply (len args))
