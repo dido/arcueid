@@ -241,7 +241,7 @@ static value compile_args(arc *c, value args, value ctx, value env)
     /* If args is a single name, make an environment with that
        one symbol. */
     arc_gcode1(c, ctx, ienv, 1);
-    arc_gcode1(c, ctx, imvarg, 0);
+    arc_gcode1(c, ctx, imvrarg, 0);
     return(add_env_frame(c, cons(c, args, CNIL), env));
   }
   /* XXX fill this in */
