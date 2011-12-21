@@ -116,10 +116,10 @@ notice and this notice are preserved.
    - [-] Lists [0/3]
      - [-] Special forms [1/5]
        - [X] if
-       - [-] fn [2/5]
+       - [-] fn [3/5]
 	 - [X] single symbol arguments
 	 - [X] simple argument lists
-	 - [ ] optional arguments
+	 - [X] optional arguments
          - [ ] rest arguments
 	 - [ ] destructuring binds
        - [ ] quote
