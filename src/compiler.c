@@ -210,7 +210,7 @@ static value compile_if(arc *c, value args, value ctx, value env,
 }
 
 /* Add a new environment frame with names names to the list of
-   environments env. */
+t   environments env. */
 value add_env_frame(arc *c, value names, value env)
 {
   value envframe;
@@ -222,10 +222,108 @@ value add_env_frame(arc *c, value names, value env)
   return(cons(c, envframe, env));
 }
 
+static value optarg(arc *c, value oarg, value ctx, value env, int narg)
+{
+  int jumpaddr;
+
+  arc_gcode1(c, ctx, imvoarg, narg);
+  /* default parameters */
+  if (cddr(oarg) != CNIL) {
+    /* When we have an optional argument, load up whatever value
+       it received from the execution of the mvoarg instruction. */
+    arc_gcode2(c, ctx, ilde, 0, narg);
+    /* This jt instruction is patched later.  The jump is taken when
+       some value is provided for the optional argument. */
+    jumpaddr = FIX2INT(CCTX_VCPTR(ctx));
+    arc_gcode1(c, ctx, ijt, 0);
+    /* Compile the value of the optional arg */
+    arc_compile(c, car(cddr(oarg)), ctx, env, CNIL);
+    arc_gcode(c, ctx, ipush); /* push default value */
+    arc_gcode1(c, ctx, imvoarg, narg);
+    /* The jt instruction is patched with the current address */
+    VINDEX(CCTX_VCODE(ctx), jumpaddr+1) = FIX2INT(CCTX_VCPTR(ctx)) - jumpaddr;
+  }
+  return(cadr(oarg));
+}
+
+/* To perform a destructuring bind, we attempt to traverse the args list,
+   looking for every symbol in the car position.  We duplicate the
+   argument for every such decision point, create a mvarg instruction,
+   and go on.  Returns the list of names, and updates nargs as required.
+
+   As is usual here, the destructuring bind compiler is heavily recursive,
+   and each time it performs the following steps depending on the type of
+   args:
+
+   1. If it is a cons, check to see if either the car or cdr is nil.
+      a. If both car and cdr are non-nil, duplicate the argument, and
+         visit the car, generating a car instruction to visit it.  Then
+         visit the cdr, generating a cdr instruction to visit it.
+      b. If the car is non-nil and the cdr is nil, just visit the car (no
+         need to duplicate).
+      c. If the car is nil and the cdr is non-nil, just visit the cdr (no
+         need to duplicate).
+      d. If they are both nil, do nothing (should not normally happen in
+         practice).
+   2. If it is a symbol or a cons starting with the symbol o, treat it as
+      a normal argument name or optional argument name as the case may be.
+      This causes an argument to added to the list of names and the number
+      of arguments to be incremented.
+*/
+static value destructuring_bind(arc *c, value args, value ctx, value env, int *nargs, value rn)
+{
+  if (NIL_P(args))
+    return(rn);
+
+  if (SYMBOL_P(args)) {
+    /* Ordinary symbol arg.  When we see this, cons it up to the list
+       of names, and create a mvarg instruction for it. */
+    rn = cons(c, args, rn);
+    arc_gcode1(c, ctx, imvarg, (*nargs)++);
+    return(rn);
+  }
+
+  if (CONS_P(args) && car(args) == ARC_BUILTIN(c, S_O)) {
+    /* Optional arg.  Note that this will not enforce optional args at
+       the end. */
+    rn = cons(c, optarg(c, args, ctx, env, (*nargs)++), rn);
+    return(rn);
+  }
+
+  if (!CONS_P(args)) {
+    c->signal_error(c, "strange args %o", args);
+    return(rn);
+  }
+
+  /* Now we have the real destructuring bind... */
+  /* do nothing */
+  if (NIL_P(car(args)) && NIL_P(cdr(args)))
+    return(rn);
+  /* visit car with a car instruction */
+  if (!NIL_P(car(args)) && NIL_P(cdr(args))) {
+    arc_gcode(c, ctx, icar);
+    return(destructuring_bind(c, car(args), ctx, env, nargs, rn));
+  }
+
+  /* visit cdr with a cdr instruction */
+  if (NIL_P(car(args)) && !NIL_P(cdr(args))) {
+    arc_gcode(c, ctx, icdr);
+    return(destructuring_bind(c, cdr(args), ctx, env, nargs, rn));
+  }
+
+  /* duplicate, but visit first the car */
+  arc_gcode(c, ctx, idup);
+  arc_gcode(c, ctx, icar);
+  rn = destructuring_bind(c, car(args), ctx, env, nargs, rn);
+  /* pop the duplicated value, then visit the cdr */
+  arc_gcode(c, ctx, ipop);
+  arc_gcode(c, ctx, icdr);
+  return(destructuring_bind(c, car(args), ctx, env, nargs, rn));
+}
+
 static value arglist(arc *c, value args, value ctx, value env, int *nargs)
 {
   value rn = CNIL, ahd, cur, nahd, oarg;
-  int jumpaddr;
 
   *nargs = 0;
   for (;;) {
@@ -238,27 +336,9 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
       /* Optional arg.  Note that this will not enforce optional args at
 	 the end. */
       oarg = car(args);
-      arc_gcode1(c, ctx, imvoarg, *nargs);
-      /* default parameters */
-      if (cddr(oarg) != CNIL) {
-	/* When we have an optional argument, load up whatever value
-	 it received from the execution of the mvoarg instruction. */
-	arc_gcode2(c, ctx, ilde, 0, *nargs);
-	/* This jt instruction is patched later.  The jump is taken when
-	   some value is provided for the optional argument. */
-	jumpaddr = FIX2INT(CCTX_VCPTR(ctx));
-	arc_gcode1(c, ctx, ijt, 0);
-	/* Compile the value of the optional arg */
-	arc_compile(c, car(cddr(oarg)), ctx, env, CNIL);
-	arc_gcode(c, ctx, ipush); /* push default value */
-	arc_gcode1(c, ctx, imvoarg, *nargs);
-	/* The jt instruction is patched with the current address */
-	VINDEX(CCTX_VCODE(ctx), jumpaddr+1) = FIX2INT(CCTX_VCPTR(ctx)) - jumpaddr;
-      }
-      (*nargs)++;
-      rn = cons(c, cadr(oarg), rn);
+      rn = cons(c, optarg(c, oarg, ctx, env, (*nargs)++), rn);
     } else if (CONS_P(car(args))) {
-      /* destructuring bind */
+      rn = destructuring_bind(c, args, ctx, env, nargs, rn);
     }
 
     if (SYMBOL_P(cdr(args))) {
@@ -351,7 +431,9 @@ static value compile_fn(arc *c, value expr, value ctx, value env,
 static value compile_quote(arc *c, value expr, value ctx, value env,
 			   value cont)
 {
-  return(CNIL);
+  /* compiling quotes need not be more complex... */
+  arc_gcode1(c, ctx, ildl, find_literal(c, ctx, car(expr)));
+  return(compile_continuation(c, ctx, cont));
 }
 
 static value compile_quasiquote(arc *c, value expr, value ctx, value env,
