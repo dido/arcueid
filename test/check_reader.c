@@ -125,6 +125,14 @@ START_TEST(test_list)
   fail_unless(FIX2INT(car(cdr(car(cdr(sexpr))))) == 4);
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_FIXNUM);
   fail_unless(FIX2INT(car(cdr(cdr(sexpr)))) == 5);
+
+  str = arc_mkstringc(&c, "(1 2 . 3)");
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == INT2FIX(1));
+  fail_unless(car(cdr(sexpr)) == INT2FIX(2));
+  fail_unless(cdr(cdr(sexpr)) == INT2FIX(3));
 }
 END_TEST
 
