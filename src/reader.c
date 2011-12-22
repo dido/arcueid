@@ -117,6 +117,7 @@ static value read_list(arc *c, value src)
 {
   value top, val, last;
   Rune ch;
+  int indot = 0;
 
   top = val = last = CNIL;
   while ((ch = scan(c, src)) >= 0) {
@@ -127,13 +128,29 @@ static value read_list(arc *c, value src)
     case ')':
       return(top);
     default:
+      if (indot) {
+	c->signal_error(c, "illegal use of .");
+	return(CNIL);
+      }
       arc_ungetc_rune(c, ch, src);
-      val = cons(c, arc_read(c, src), CNIL);
-      if (last)
-	scdr(last, val);
-      else
-	top = val;
-      last = val;
+      val = arc_read(c, src);
+      if (val == ARC_BUILTIN(c, S_DOT)) {
+	val = arc_read(c, src);
+	if (last) {
+	  scdr(last, val);
+	} else {
+	  c->signal_error(c, "illegal use of .");
+	  return(CNIL);
+	}
+	indot = 1;
+      } else {
+	val = cons(c, val, CNIL);
+	if (last)
+	  scdr(last, val);
+	else
+	  top = val;
+	last = val;
+      }
       break;
     }
   }
@@ -199,6 +216,8 @@ static value read_symbol(arc *c, value str)
 
   if ((sym = getsymbol(c, str)) == CNIL)
     c->signal_error(c, "expecting symbol name");
+  if (arc_strcmp(c, sym, arc_mkstringc(c, ".")) == INT2FIX(0))
+    return(ARC_BUILTIN(c, S_DOT));
   num = arc_string2num(c, sym);
   if (num == CNIL) {
     ssx = expand_ssyntax(c, sym);
@@ -687,7 +706,7 @@ static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
 			"code", "environment", "vmcode", "ccode",
 			"custom", "int", "unknown", "re", "im", "num",
 			"sig", "stdin", "stdout", "stderr", "mac",
-			"if", "assign", "o" };
+			"if", "assign", "o", "." };
 
 void arc_init_reader(arc *c)
 {
