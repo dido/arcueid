@@ -73,6 +73,7 @@ enum builtin_syms {
   S_IF,				/* if */
   S_ASSIGN,			/* assign */
   S_O,				/* o */
+  S_DOT,			/* . */
 
   S_THE_END			/* end of the line */
 };
