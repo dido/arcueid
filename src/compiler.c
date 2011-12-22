@@ -279,6 +279,7 @@ static value destructuring_bind(arc *c, value args, value ctx, value env, int *n
     /* Ordinary symbol arg.  When we see this, cons it up to the list
        of names, and create a mvarg instruction for it. */
     rn = cons(c, args, rn);
+    arc_gcode(c, ctx, ipush);
     arc_gcode1(c, ctx, imvarg, (*nargs)++);
     return(rn);
   }
@@ -286,6 +287,7 @@ static value destructuring_bind(arc *c, value args, value ctx, value env, int *n
   if (CONS_P(args) && car(args) == ARC_BUILTIN(c, S_O)) {
     /* Optional arg.  Note that this will not enforce optional args at
        the end. */
+    arc_gcode(c, ctx, ipush);
     rn = cons(c, optarg(c, args, ctx, env, (*nargs)++), rn);
     return(rn);
   }
@@ -311,14 +313,14 @@ static value destructuring_bind(arc *c, value args, value ctx, value env, int *n
     return(destructuring_bind(c, cdr(args), ctx, env, nargs, rn));
   }
 
-  /* duplicate, but visit first the car */
-  arc_gcode(c, ctx, idup);
+  /* duplicate, then visit the car */
+  arc_gcode(c, ctx, ipush);
   arc_gcode(c, ctx, icar);
   rn = destructuring_bind(c, car(args), ctx, env, nargs, rn);
   /* pop the duplicated value, then visit the cdr */
   arc_gcode(c, ctx, ipop);
   arc_gcode(c, ctx, icdr);
-  return(destructuring_bind(c, car(args), ctx, env, nargs, rn));
+  return(destructuring_bind(c, cdr(args), ctx, env, nargs, rn));
 }
 
 static value arglist(arc *c, value args, value ctx, value env, int *nargs)
@@ -338,7 +340,11 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
       oarg = car(args);
       rn = cons(c, optarg(c, oarg, ctx, env, (*nargs)++), rn);
     } else if (CONS_P(car(args))) {
-      rn = destructuring_bind(c, args, ctx, env, nargs, rn);
+      /* For a destructuring bind, pop the argument to unbind
+	 first.  This will allow subsequent instructions generated in
+	 destructuring_bind to do their thing. */
+      arc_gcode(c, ctx, ipop);
+      rn = destructuring_bind(c, car(args), ctx, env, nargs, rn);
     }
 
     if (SYMBOL_P(cdr(args))) {
