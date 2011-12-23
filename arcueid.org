@@ -125,7 +125,7 @@ notice and this notice are preserved.
        - [X] quote
        - [X] quasiquote
        - [X] assign
-     - [-] Inline functions [7/10]
+     - [-] Inline functions [8/10]
        - [X] cons
        - [X] car
        - [X] cdr
@@ -134,7 +134,7 @@ notice and this notice are preserved.
        - [X] is
        - [X] +
        - [ ] -
-       - [ ] *
+       - [X] *
        - [ ] /
      - [X] Function applications
    - [ ] Macros
