@@ -544,6 +544,29 @@ START_TEST(test_compile_quote)
 }
 END_TEST
 
+START_TEST(test_compile_qquote)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  arc_bindcstr(c, "a", INT2FIX(1));
+  arc_bindcstr(c, "b", cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
+  str = arc_mkstringc(c, "`(0 ,a ,@b 4 5)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(0));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(5));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -584,6 +607,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_fn_dsb);
 
   tcase_add_test(tc_compiler, test_compile_quote);
+  tcase_add_test(tc_compiler, test_compile_qquote);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
