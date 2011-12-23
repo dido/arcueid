@@ -258,10 +258,10 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TVALR(thr) = cdr(TVALR(thr));
       NEXT;
     INST(iscar):
-      scar(TVALR(thr), CPOP(thr));
+      scar(CPOP(thr), TVALR(thr));
       NEXT;
     INST(iscdr):
-      scdr(TVALR(thr), CPOP(thr));
+      scdr(CPOP(thr), TVALR(thr));
       NEXT;
     INST(ispl):
       {
