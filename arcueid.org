@@ -114,7 +114,7 @@ notice and this notice are preserved.
      - [X] Environment symbols
      - [X] Global symbols
    - [-] Lists [1/3]
-     - [-] Special forms [3/5]
+     - [-] Special forms [4/5]
        - [X] if
        - [X] fn [5/5]
 	 - [X] single symbol arguments
@@ -123,7 +123,7 @@ notice and this notice are preserved.
          - [X] rest arguments
 	 - [X] destructuring binds
        - [X] quote
-       - [ ] quasiquote
+       - [X] quasiquote
        - [ ] assign
      - [ ] Inline functions [0/10]
        - [ ] cons
