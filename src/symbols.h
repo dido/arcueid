@@ -74,6 +74,15 @@ enum builtin_syms {
   S_ASSIGN,			/* assign */
   S_O,				/* o */
   S_DOT,			/* . */
+  S_CAR,			/* car */
+  S_CDR,			/* cdr */
+  S_SCAR,			/* scar */
+  S_SCDR,			/* scdr */
+  S_IS,				/* is */
+  S_PLUS,			/* + */
+  S_MINUS,			/* - */
+  S_TIMES,			/* * */
+  S_DIV,			/* / */
 
   S_THE_END			/* end of the line */
 };
