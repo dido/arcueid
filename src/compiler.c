@@ -442,10 +442,44 @@ static value compile_quote(arc *c, value expr, value ctx, value env,
   return(compile_continuation(c, ctx, cont));
 }
 
-static value compile_quasiquote(arc *c, value expr, value ctx, value env,
-				value cont)
+static value qquote(arc *c, value expr, value ctx, value env)
 {
+  if (CONS_P(expr) && car(expr) == ARC_BUILTIN(c, S_UNQUOTE)) {
+    /* to unquote something, all we need to do is evaluate it.  This
+       generates a value that becomes part of the result when recombined. */
+    arc_compile(c, cadr(expr), ctx, env, CNIL);
+    /* do not splice */
+    return(CNIL);
+  }
+  if (CONS_P(expr) && car(expr) == ARC_BUILTIN(c, S_UNQUOTESP)) {
+    arc_compile(c, cadr(expr), ctx, env, CNIL);
+    /* make it splice */
+    return(CTRUE);
+  }
+  if (CONS_P(expr)) {
+    /* If we see a cons, we need to recurse into the cdr of the
+       argument first, generating the code for that, then push
+       the result, then generate the code for the car of the
+       argument, and then generate code to cons them together,
+       or splice them together if the return so indicates. */
+    qquote(c, cdr(expr), ctx, env);
+    arc_gcode(c, ctx, ipush);
+    if (qquote(c, car(expr), ctx, env) == CTRUE) {
+      arc_gcode(c, ctx, ispl);
+    } else {
+      arc_gcode(c, ctx, icons);
+    }
+    return(CNIL);
+  }
+  /* all other elements are treated as literals */
+  compile_literal(c, expr, ctx, CNIL);
   return(CNIL);
+}
+
+static value compile_quasiquote(arc *c, value expr, value ctx, value env, value cont)
+{
+  qquote(c, car(expr), ctx, env);
+  return(compile_continuation(c, ctx, cont));
 }
 
 static value compile_assign(arc *c, value expr, value ctx, value env,
