@@ -1201,9 +1201,9 @@ START_TEST(test_builtin_apply)
   arc_gcode1(&c, cctx, ienv, 2);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode1(&c, cctx, imvarg, 1);
-  arc_gcode2(&c, cctx, ilde, 0, 0);
-  arc_gcode(&c, cctx, ipush);
   arc_gcode2(&c, cctx, ilde, 0, 1);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode2(&c, cctx, ilde, 0, 0);
   arc_gcode(&c, cctx, isub);
   arc_gcode(&c, cctx, iret);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
