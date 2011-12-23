@@ -240,13 +240,13 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TVALR(thr) = __arc_add2(c, TVALR(thr), CPOP(thr));
       NEXT;
     INST(isub):
-      TVALR(thr) = __arc_sub2(c, TVALR(thr), CPOP(thr));
+      TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
       NEXT;
     INST(imul):
       TVALR(thr) = __arc_mul2(c, TVALR(thr), CPOP(thr));
       NEXT;
     INST(idiv):
-      TVALR(thr) = __arc_div2(c, TVALR(thr), CPOP(thr));
+      TVALR(thr) = __arc_div2(c, CPOP(thr), TVALR(thr));
       NEXT;
     INST(icons):
       TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
