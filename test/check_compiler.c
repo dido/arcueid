@@ -698,6 +698,21 @@ START_TEST(test_compile_inline_is)
 }
 END_TEST
 
+START_TEST(test_compile_inline_plus)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(+ 1 2 3 4 5 6 7)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(28));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -747,6 +762,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_inline_cdr);
   tcase_add_test(tc_compiler, test_compile_inline_scar);
   tcase_add_test(tc_compiler, test_compile_inline_is);
+  tcase_add_test(tc_compiler, test_compile_inline_plus);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
