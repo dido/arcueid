@@ -411,9 +411,9 @@ END_TEST
 START_TEST(test_vm_sub)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(7));
-  arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31344));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(7));
   arc_gcode(&c, cctx, isub);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
@@ -437,9 +437,9 @@ END_TEST
 START_TEST(test_vm_div)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
-  arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(62674));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
   arc_gcode(&c, cctx, idiv);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
@@ -1505,7 +1505,7 @@ START_TEST(test_vm_macapply)
   arc_gcode(&c, cctx, iret);
   func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
-  args = cons(&c, INT2FIX(31337), cons(&c, INT2FIX(7), CNIL));
+  args = cons(&c, INT2FIX(7), cons(&c, INT2FIX(31337), CNIL));
   ret = arc_macapply(&c, func, args);
   fail_unless(ret == INT2FIX(31330));
 }
