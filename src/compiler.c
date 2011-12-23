@@ -525,9 +525,54 @@ static value (*spform(arc *c, value ident))(arc *, value, value, value, value)
   return(NULL);
 }
 
+static value compile_inline(arc *c, value inst, int narg, value expr, value ctx, value env, value cont)
+{
+  int count;
+
+  expr = cdr(expr);
+  for (count=0; expr; expr = cdr(expr), count++) {
+    arc_compile(c, car(expr), ctx, env, CNIL);
+    if (cdr(expr) != CNIL)
+      arc_gcode(c, ctx, ipush);
+  }
+  if (count != narg) {
+    c->signal_error(c, "procedure %O expects %d arguments (%d passed)",
+		    car(expr), narg, count);
+  } else {
+    arc_gcode(c, ctx, inst);
+  }
+  return(compile_continuation(c, ctx, cont));
+}
+
+#define INLINE_FUNC(name, instr, nargs) \
+  static value inline_##name(arc *c, value expr, value ctx, value env, value cont) \
+  { \
+  return(compile_inline(c, instr, nargs, expr, ctx, env, cont)); \
+  }
+
+INLINE_FUNC(cons, iconsr, 2);
+INLINE_FUNC(car, icar, 1);
+INLINE_FUNC(cdr, icdr, 1);
+INLINE_FUNC(scar, iscar, 2);
+INLINE_FUNC(scdr, iscdr, 2);
+INLINE_FUNC(is, iis, 2);
+
 static value (*inline_func(arc *c, value ident))(arc *, value,
 						 value, value, value)
 {
+  if (ident == ARC_BUILTIN(c, S_CONS)) {
+    return(inline_cons);
+  } else if (ident == ARC_BUILTIN(c, S_CAR)) {
+    return(inline_car);
+  } else if (ident == ARC_BUILTIN(c, S_CDR)) {
+    return(inline_cdr);
+  } else if (ident == ARC_BUILTIN(c, S_SCAR)) {
+    return(inline_scar);
+  } else if (ident == ARC_BUILTIN(c, S_SCDR)) {
+    return(inline_scdr);
+  } else if (ident == ARC_BUILTIN(c, S_IS)) {
+    return(inline_is);
+  }
   return(NULL);
 }
 
