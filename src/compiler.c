@@ -557,6 +557,55 @@ INLINE_FUNC(scar, iscar, 2);
 INLINE_FUNC(scdr, iscdr, 2);
 INLINE_FUNC(is, iis, 2);
 
+/* XXX - this trades efficiency for simplicity and generality.  There is no
+   need for a base value if we have an even number of arguments. */
+static value compile_inlinen(arc *c, value inst, value expr, value ctx, value env, value cont, value base)
+{
+  arc_compile(c, base, ctx, env, CNIL);
+  for (expr = cdr(expr); expr; expr = cdr(expr)) {
+    arc_gcode(c, ctx, ipush);
+    arc_compile(c, car(expr), ctx, env, CNIL);
+    arc_gcode(c, ctx, inst);
+  }
+  return(compile_continuation(c, ctx, cont));
+}
+
+static value compile_inlinen2(arc *c, value inst, value expr, value ctx, value env, value cont, value base)
+{
+  value xexpr, xelen;
+
+  xexpr = cdr(expr);
+  xelen = arc_list_length(c, xexpr);
+  if (xelen == INT2FIX(0)) {
+    c->signal_error(c, "operator requires at least one argument");
+    return(CNIL);
+  } else if (xelen == INT2FIX(1)) {
+    return(compile_inlinen(c, inst, expr, ctx, env, cont, base));
+  }
+  return(compile_inlinen(c, inst, cons(c, car(expr), cdr(xexpr)), ctx,
+			 env, cont, car(xexpr)));
+}
+
+static value inline_plus(arc *c, value expr, value ctx, value env, value cont)
+{
+  return(compile_inlinen(c, iadd, expr, ctx, env, cont, INT2FIX(0)));
+}
+
+static value inline_times(arc *c, value expr, value ctx, value env, value cont)
+{
+  return(compile_inlinen(c, imul, expr, ctx, env, cont, INT2FIX(1)));
+}
+
+static value inline_minus(arc *c, value expr, value ctx, value env, value cont)
+{
+  return(compile_inlinen2(c, isub, expr, ctx, env, cont, INT2FIX(0)));
+}
+
+static value inline_div(arc *c, value expr, value ctx, value env, value cont)
+{
+  return(compile_inlinen2(c, idiv, expr, ctx, env, cont, INT2FIX(1)));
+}
+
 static value (*inline_func(arc *c, value ident))(arc *, value,
 						 value, value, value)
 {
@@ -572,6 +621,14 @@ static value (*inline_func(arc *c, value ident))(arc *, value,
     return(inline_scdr);
   } else if (ident == ARC_BUILTIN(c, S_IS)) {
     return(inline_is);
+  } else if (ident == ARC_BUILTIN(c, S_PLUS)) {
+    return(inline_plus);
+  } else if (ident == ARC_BUILTIN(c, S_TIMES)) {
+    return(inline_times);
+  } else if (ident == ARC_BUILTIN(c, S_MINUS)) {
+    return(inline_minus);
+  } else if (ident == ARC_BUILTIN(c, S_DIV)) {
+    return(inline_div);
   }
   return(NULL);
 }
@@ -620,6 +677,7 @@ static value compile_list(arc *c, value expr, value ctx, value env,
 
   if ((fun = spform(c, car(expr))) != NULL)
     return(fun(c, cdr(expr), ctx, env, cont));
+
   if ((fun = inline_func(c, car(expr))) != NULL)
     return(fun(c, expr, ctx, env, cont));
 
