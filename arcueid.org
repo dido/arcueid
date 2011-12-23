@@ -125,13 +125,13 @@ notice and this notice are preserved.
        - [X] quote
        - [X] quasiquote
        - [X] assign
-     - [-] Inline functions [5/10]
+     - [-] Inline functions [6/10]
        - [X] cons
        - [X] car
        - [X] cdr
        - [X] scar
        - [X] scdr
-       - [ ] is
+       - [X] is
        - [ ] +
        - [ ] -
        - [ ] *
