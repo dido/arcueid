@@ -615,6 +615,65 @@ START_TEST(test_compile_inline_cons)
 }
 END_TEST
 
+START_TEST(test_compile_inline_car)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(car '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
+START_TEST(test_compile_inline_cdr)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(cdr '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(2));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_compile_inline_scar)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(assign xyzzy '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  arc_macapply(c, code, CNIL);
+
+  str = arc_mkstringc(c, "(scar xyzzy 4)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  arc_macapply(c, code, CNIL);
+  ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "xyzzy"));
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(4));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -660,6 +719,9 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_assign);
 
   tcase_add_test(tc_compiler, test_compile_inline_cons);
+  tcase_add_test(tc_compiler, test_compile_inline_car);
+  tcase_add_test(tc_compiler, test_compile_inline_cdr);
+  tcase_add_test(tc_compiler, test_compile_inline_scar);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
