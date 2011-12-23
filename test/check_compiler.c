@@ -728,6 +728,57 @@ START_TEST(test_compile_inline_times)
 }
 END_TEST
 
+START_TEST(test_compile_inline_minus)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(- 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(ret) == -1);
+
+  str = arc_mkstringc(c, "(- 3 2 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(ret) == 0);
+
+}
+END_TEST
+
+START_TEST(test_compile_inline_div)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(/ 2.0)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(fabs(REP(ret)._flonum - 0.5) < 1e-6);
+
+  str = arc_mkstringc(c, "(/ 8 2 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(ret) == 2);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -779,6 +830,8 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_inline_is);
   tcase_add_test(tc_compiler, test_compile_inline_plus);
   tcase_add_test(tc_compiler, test_compile_inline_times);
+  tcase_add_test(tc_compiler, test_compile_inline_minus);
+  tcase_add_test(tc_compiler, test_compile_inline_div);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
