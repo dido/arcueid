@@ -30,6 +30,8 @@
 
 arc c;
 
+#define CPOP(thr) (*(++TSP(thr)))
+
 #define ITEST_HEADER(nlits) \
   value cctx, thr, func; \
   int i; \
@@ -491,32 +493,35 @@ END_TEST
 START_TEST(test_vm_scar)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
-  arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(62674));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(0));
   arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, iscar);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
-  fail_unless(car(TVALR(thr)) == INT2FIX(31337));
+  /* top of stack contains another copy of the list.  It should have changed */
+  fail_unless(car(CPOP(thr)) == INT2FIX(31337));
 }
 END_TEST
 
 START_TEST(test_vm_scdr)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(62674));
-  arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(0));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, icons);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(62674));
   arc_gcode(&c, cctx, iscdr);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
-  fail_unless(cdr(TVALR(thr)) == INT2FIX(62674));
+  fail_unless(cdr(CPOP(thr)) == INT2FIX(62674));
 }
 END_TEST
 
