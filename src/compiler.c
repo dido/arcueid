@@ -485,7 +485,29 @@ static value compile_quasiquote(arc *c, value expr, value ctx, value env, value 
 static value compile_assign(arc *c, value expr, value ctx, value env,
 			    value cont)
 {
-  return(CNIL);
+  value a, val, envvar;
+  int frameno, idx;
+
+  while (expr != CNIL) {
+    a = arc_macex(c, car(expr));
+    val = cadr(expr);
+    if (a == CNIL) {
+      c->signal_error(c, "Can't rebind nil");
+    } else if (a == ARC_BUILTIN(c, S_T)) {
+      c->signal_error(c, "Can't rebind t");
+    } else {
+      arc_compile(c, val, ctx, env, CNIL);
+      envvar = find_var(c, a, env, &frameno, &idx);
+      if (envvar == CTRUE) {
+	arc_gcode2(c, ctx, iste, frameno, idx);
+      } else {
+	/* global symbol */
+	arc_gcode1(c, ctx, istg, find_literal(c, ctx, a));
+      }
+    }
+    expr = cddr(expr);
+  }
+  return(compile_continuation(c, ctx, cont));
 }
 
 static value (*spform(arc *c, value ident))(arc *, value, value, value, value)
