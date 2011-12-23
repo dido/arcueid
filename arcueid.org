@@ -113,8 +113,8 @@ notice and this notice are preserved.
    - [X] Symbols [2/2]
      - [X] Environment symbols
      - [X] Global symbols
-   - [-] Lists [1/3]
-     - [-] Special forms [4/5]
+   - [-] Lists [2/3]
+     - [X] Special forms [5/5]
        - [X] if
        - [X] fn [5/5]
 	 - [X] single symbol arguments
@@ -124,7 +124,7 @@ notice and this notice are preserved.
 	 - [X] destructuring binds
        - [X] quote
        - [X] quasiquote
-       - [ ] assign
+       - [X] assign
      - [ ] Inline functions [0/10]
        - [ ] cons
        - [ ] car
