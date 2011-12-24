@@ -100,7 +100,6 @@ enum arc_types {
   T_PORT=0x11,
   T_THREAD=0x12,
   T_VECTOR=0x13,
-  T_MACRO=0x14,
 
   T_CONT = 0x15,		/* continuation */
   T_CLOS = 0x16,		/* closure */
