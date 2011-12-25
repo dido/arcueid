@@ -277,7 +277,7 @@ END_TEST
 START_TEST(test_vm_apply)
 {
   value cctx, cctx2, func, func2, thr;
-  int contofs, base;
+  int contofs;
 
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
@@ -286,15 +286,14 @@ START_TEST(test_vm_apply)
 
   cctx2 = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   VINDEX(CCTX_LITS(cctx2), 0) = func;
-  base = FIX2INT(CCTX_VCPTR(cctx2));
   arc_gcode1(&c, cctx2, ildi, INT2FIX(0xf1e));
   arc_gcode(&c, cctx2, ipush);
+  contofs = FIX2INT(CCTX_VCPTR(cctx2));
   arc_gcode1(&c, cctx2, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx2)) - 1;
   arc_gcode1(&c, cctx2, ildl, 0);
   arc_gcode(&c, cctx2, icls);
   arc_gcode1(&c, cctx2, iapply, 0);
-  VINDEX(CCTX_VCODE(cctx2), contofs) = FIX2INT(CCTX_VCPTR(cctx2)) - base;
+  VINDEX(CCTX_VCODE(cctx2), contofs+1) = FIX2INT(CCTX_VCPTR(cctx2)) - contofs;
   arc_gcode(&c, cctx2, ihlt);
   func2 = arc_mkcode(&c, CCTX_VCODE(cctx2), 1);
   CODE_LITERAL(func2, 0) = VINDEX(CCTX_LITS(cctx2), 0);
