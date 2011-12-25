@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [9/19]
+** TODO Runtime Built-In Functions [8/18]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -352,17 +352,15 @@ notice and this notice are preserved.
    - [-] Evaluation [3/4]
      - [ ] eval
 	   We will implement eval by calling the compiler on the
-	   expression to be evaluated.  There should be a special
-	   entry point that compiles a sexpr as though it were
-	   enclosed in a (fn () ...) form.  The output of the compiler
+	   expression to be evaluated.  The output of the compiler
 	   is a T_CODE object which we can convert into a closure by
 	   combining it with the caller's environment.
      - [X] apply
      - [X] ssexpand
      - [X] ssyntax
    - [X] Macros [4/4]
-     - [X] macex (implemented in Arc)
-     - [X] macex1 (implemented in Arc)
+     - [X] macex
+     - [X] macex1
      - [X] sig
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
@@ -405,17 +403,7 @@ notice and this notice are preserved.
              implement CIEL.
          - [X] seek
          - [X] tell
-   - [-] Compiler Support Functions [1/6]
-	 These functions are expected by the Arcueid compiler.  May
-	 also be used by alternate compilers targeting Arcueid
-	 bytecode.
-     - [X] cgenctx
-     - [ ] cgen
-     - [ ] cptr
-     - [ ] cpatch
-     - [ ] cliteral
-     - [ ] ctx2code
-   - [ ] Additional I/O functions (src/io.c) [0/6]
+   - [ ] Additional I/O functions (src/io.c) [0/7]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
      - [ ] pipe-from
@@ -424,6 +412,7 @@ notice and this notice are preserved.
      - [ ] stderr
      - [ ] call-w/stdin
      - [ ] call-w/stdout
+     - [ ] disp
    - [ ] Threads [0/2]
      - [ ] Creating and managing threads [0/6]
        - [ ] new-thread (spawn)
@@ -475,35 +464,17 @@ notice and this notice are preserved.
    - [ ] Miscellaneous OS operations [0/2]
      - [ ] system
      - [ ] quit
-   - [X] Miscellaneous [2/2]
+   - [-] Miscellaneous [2/3]
      - [X] sref *
      - [X] len
-** TODO write a base reader for CIEL files (src/ciel.c) [1/2]
-   Our CIEL bytecode interpreter must at the very least support the
-   instructions given in comp-bsdef.arc and be able to decode CIEL
-   files generated therein.  This should produce code objects suitable
-   for use by the interpreter.
-   - [X] CIEL instructions [15/15]
-     - [X] gnil
-     - [X] gtrue
-     - [X] gint
-     - [X] gflo
-     - [X] gchar
-     - [X] gstr
-     - [X] gsym
-     - [X] gbstr - binary strings
-     - [X] crat
-     - [X] ccomplex
-     - [X] ccons
-     - [X] cannotate - this is for the moment limited to creating T_CODE
-	   objects from a cons consisting of the binary bytecode string
-	   and literals
-     - [X] xdup
-     - [X] xmst
-     - [X] xmld
-   - [ ] Test the base reader by loading more non-trivial code generated
-	 by the compiler
-** TODO write pretty printer in Arc
+     - [ ] bound
+** TODO Revised baseline environment (arc.arc)
+   We obviously need to make our own version of arc.arc which should
+   provide all the stuff inside the pg version as well.  It should
+   probably not require much in the way of customization, but we will
+   see...
+** TODO pretty printer
+** TODO REPL interpreter
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
    function which can be used to output strings according to a format
@@ -517,8 +488,27 @@ notice and this notice are preserved.
    handler function signal_error.
 
 ** TODO Dynamic Loader for external C functions
-** TODO Additional CIEL instructions [0/3]
-   The following additional instructions are required by the final version:
+** TODO CIEL (src/ciel.c) [15/18]
+   The CIEL dump/restore functionality allows Arcueid to save and load
+   workspaces by tracing the global symbol table and threads and dumping
+   those to a file.
+   - [X] gnil
+   - [X] gtrue
+   - [X] gint
+   - [X] gflo
+   - [X] gchar
+   - [X] gstr
+   - [X] gsym
+   - [X] gbstr - binary strings
+   - [X] crat
+   - [X] ccomplex
+   - [X] ccons
+   - [X] cannotate - this is for the moment limited to creating T_CODE
+         objects from a cons consisting of the binary bytecode string
+         and literals
+   - [X] xdup
+   - [X] xmst
+   - [X] xmld
    - [ ] gtab
    - [ ] ctadd
    - [ ] additional functionality for cannotate, so that it can, you
