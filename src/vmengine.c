@@ -383,14 +383,22 @@ static value c4apply(arc *c, value thr, value avec,
    Note that garbage collection cycles do not execute while this is done. */
 value arc_macapply(arc *c, value func, value args)
 {
-  value thr, oldthr, retval, arg;
+  value thr, oldthr, retval, arg, ahd, cur, nahd;
   int argc;
 
   oldthr = c->curthread;
   thr = arc_mkthread(c, func, c->stksize, 0);
-  /* push the args */
+  /* push the args in reverse order */
   argc = 0;
-  for (arg = args; arg != CNIL; arg = cdr(arg)) {
+  ahd = cur = args;
+  nahd = CNIL;
+  while (cur != CNIL) {
+    ahd = cdr(ahd);
+    scdr(cur, nahd);
+    nahd = cur;
+    cur = ahd;
+  }
+  for (arg = nahd; arg != CNIL; arg = cdr(arg)) {
     CPUSH(thr, car(arg));
     argc++;
   }
@@ -748,9 +756,17 @@ value arc_mkcont(arc *c, value offset, value thr)
   value cont = arc_mkvector(c, 4);
   value savedstk;
   int stklen;
+  value *base = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
 
   BTYPE(cont) = T_CONT;
-  WB(&VINDEX(cont, 0), offset);
+  if (FIXNUM_P(offset)) {
+    /* compute the absolute address of the continuation if it is a
+       fixnum (the usual case) */
+    WB(&VINDEX(cont, 0), INT2FIX((TIP(thr) + FIX2INT(offset) - 2) - base));
+  } else {
+    /* offset is probably an XCONT, just store it. */
+    WB(&VINDEX(cont, 0), offset);
+  }
   WB(&VINDEX(cont, 1), TFUNR(thr));
   WB(&VINDEX(cont, 2), TENVR(thr));
   /* Save the used portion of the stack */
