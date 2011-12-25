@@ -403,6 +403,16 @@ START_TEST(test_compile_fn_basic)
   fail_unless(car(ret) == INT2FIX(2));
   fail_unless(car(cdr(ret)) == INT2FIX(3));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(4));
+
+  /* implicit progn */
+  str = arc_mkstringc(c, "((fn nil 1 2))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(2));
 }
 END_TEST
 
@@ -549,8 +559,8 @@ START_TEST(test_compile_qquote)
   value str, sexpr, fp, cctx, code, ret;
 
   arc_bindcstr(c, "a", INT2FIX(1));
-  arc_bindcstr(c, "b", cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
-  str = arc_mkstringc(c, "`(0 ,a ,@b 4 5)");
+  arc_bindcstr(c, "b", cons(c, INT2FIX(2), cons(c, INT2FIX(3), cons(c, INT2FIX(4), CNIL))));
+  str = arc_mkstringc(c, "`(0 ,a ,@b 5 6)");
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
@@ -564,6 +574,7 @@ START_TEST(test_compile_qquote)
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
   fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(4));
   fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(ret))))))) == INT2FIX(6));
 }
 END_TEST
 
@@ -779,6 +790,89 @@ START_TEST(test_compile_inline_div)
 }
 END_TEST
 
+START_TEST(test_compile_macro)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  /* define a macro */
+  str = arc_mkstringc(c, "(assign foo (annotate 'mac (fn () '(+ 1 2))))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  /* Try to use the macro */
+  str = arc_mkstringc(c, "(+ 10 (foo))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(ret) == 13);
+
+  /* Define another few macros. The "do" macro */
+  str = arc_mkstringc(c, "(assign do (annotate 'mac (fn args `((fn () ,@args)))))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  /* Try to use the "do" macro */
+  str = arc_mkstringc(c, "(do 1 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(ret) == 2);
+
+  /* Define another macro */
+  str = arc_mkstringc(c, "(assign when (annotate 'mac (fn (test . body) `(if ,test (do ,@body)))))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  str = arc_mkstringc(c, "(when 1 2 3)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(ret) == 3);
+}
+END_TEST
+
+START_TEST(test_compile_if_fn)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(if 1 ((fn () 2 3)))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -788,8 +882,9 @@ int main(void)
 
   c = &cc;
   arc_set_memmgr(c);
-  arc_init_reader(c);
   cc.genv = arc_mkhash(c, 8);
+  arc_init_reader(c);
+  arc_init_builtins(c);
   cc.stksize = TSTKSIZE;
   cc.quantum = PQUANTA;
 
@@ -813,6 +908,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_if_full);
   tcase_add_test(tc_compiler, test_compile_if_partial);
   tcase_add_test(tc_compiler, test_compile_if_compound);
+  tcase_add_test(tc_compiler, test_compile_if_fn);
 
   tcase_add_test(tc_compiler, test_compile_fn_basic);
   tcase_add_test(tc_compiler, test_compile_fn_oarg);
@@ -833,8 +929,13 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_inline_minus);
   tcase_add_test(tc_compiler, test_compile_inline_div);
 
+  tcase_add_test(tc_compiler, test_compile_macro);
+
+
+
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
+  /* srunner_set_fork_status(sr, CK_NOFORK); */
   srunner_run_all(sr, CK_NORMAL);
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
