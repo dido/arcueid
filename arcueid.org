@@ -99,7 +99,7 @@ notice and this notice are preserved.
    - [X] Comments
    - [X] Atoms and Symbols
    - [X] Special syntax
-** TODO Arc compiler [4/4]
+** DONE Arc compiler [4/4]
    - [X] Literal expressions [9/9]
      - [X] nil
      - [X] true (t)
