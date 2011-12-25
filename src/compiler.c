@@ -40,7 +40,7 @@
 */
 value arc_macex(arc *c, value e)
 {
-  value op;
+  value op, expansion;
 
   if (!CONS_P(e))
     return(e);
@@ -52,9 +52,11 @@ value arc_macex(arc *c, value e)
 
   /* Look up the symbol's binding in the global symbol table */
   op = arc_hash_lookup(c, c->genv, op);
-  if (TYPE(op) != T_MACRO)
+  if (arc_type(c, op) != ARC_BUILTIN(c, S_MAC))
     return(e);			/* not a macro */
-  return(arc_macapply(c, op, cdr(e)));
+  expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
+  /* arc_print_string(c, arc_prettyprint(c, expansion)); */
+  return(expansion);
 }
 
 static value compile_literal(arc *c, value lit, value ctx, value cont);
@@ -178,8 +180,7 @@ static value compile_if(arc *c, value args, value ctx, value env,
   /* If the next is the end of the line, compile the tail end if no
      additional */
   if (NIL_P(cdr(args))) {
-    arc_compile(c, car(args), ctx, env, CNIL);
-    return(compile_continuation(c, ctx, cont));
+    return(arc_compile(c, car(args), ctx, env, cont));
   }
 
   /* In the final case, we have the conditional (car), the then
@@ -193,9 +194,11 @@ static value compile_if(arc *c, value args, value ctx, value env,
   /* this jf instruction has to be patched with the address of the
      else portion. */
   arc_gcode1(c, ctx, ijf, 0);
+  /* compile the then portion */
   arc_compile(c, cadr(args), ctx, env, CNIL);
-  /* This jump address the address of the unconditional jump at the end.
-     It should be patched after the else portion is compiled. */
+  /* This second jump target should be patched with the address of the
+     unconditional jump at the end.  It should be patched after the else
+     portion is compiled. */
   jumpaddr2 = FIX2INT(CCTX_VCPTR(ctx));
   arc_gcode1(c, ctx, ijmp, 0);
   /* patch jumpaddr so that it will jump to the address of the else
@@ -644,8 +647,8 @@ static value compile_apply(arc *c, value expr, value ctx, value env,
 
   /* to perform a function application, we first try to make a continuation.
      The address of the continuation will be computed later. */
+  contaddr = FIX2INT(CCTX_VCPTR(ctx));
   arc_gcode1(c, ctx, icont, 0);
-  contaddr = FIX2INT(CCTX_VCPTR(ctx)) - 1;
   /* Compile the arguments in reverse order.  This will destructively
      reverse the list of arguments! */
   ahd = cur = args;
@@ -666,7 +669,7 @@ static value compile_apply(arc *c, value expr, value ctx, value env,
   arc_compile(c, fname, ctx, env, CNIL);
   arc_gcode1(c, ctx, iapply, nargs);
   /* fix the continuation address */
-  VINDEX(CCTX_VCODE(ctx), contaddr) = FIX2INT(CCTX_VCPTR(ctx)) - contaddr + 1;
+  VINDEX(CCTX_VCODE(ctx), contaddr+1) = FIX2INT(CCTX_VCPTR(ctx)) - contaddr;
   return(compile_continuation(c, ctx, cont));  
 }
 
