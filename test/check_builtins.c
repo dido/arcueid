@@ -1032,7 +1032,7 @@ START_TEST(test_builtin_table)
   arc_hash_insert(&c, c.genv, sym, INT2FIX(0));
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   VINDEX(CCTX_LITS(cctx), 0) = sym;
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode1(&c, cctx, imvarg, 1);
   arc_gcode1(&c, cctx, ildg, 0);
@@ -1198,7 +1198,7 @@ START_TEST(test_builtin_apply)
   value cctx;
 
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode1(&c, cctx, imvarg, 1);
   arc_gcode2(&c, cctx, ilde, 0, 1);
