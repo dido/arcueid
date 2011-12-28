@@ -1,7 +1,3 @@
-;; Copyright (c) 2009 Paul Graham and Robert Morris.
-;; Permission to use it is granted under the Perl Foundation's
-;; Artistic License 2.0.
-
 ; Main Arc lib.  Ported to Scheme version Jul 06.
 
 ; don't like names of conswhen and consif
@@ -25,23 +21,9 @@
 ;  not sure this is a mistake; strings may be subtly different from 
 ;  lists of chars
 
-; Changes made for Arcueid from baseline Graham/Morris arc3:
-;
-; Uncommented macex definition.  Doing otherwise would require macex
-; to be defined in C (debating on whether this should actually be
-; done anyway).
-;
-
-(assign current-load-file* "arc.arc")
-(assign source-file* (table))
-(assign source* (table))
-(assign help* (table))
 
 (assign do (annotate 'mac
              (fn args `((fn () ,@args)))))
-
-(sref sig 'args 'do)
-(sref source-file* current-load-file* 'do)
 
 (assign safeset (annotate 'mac
                   (fn (var val)
@@ -51,28 +33,10 @@
                                  (disp #\newline (stderr))))
                          (assign ,var ,val)))))
 
-(sref sig '(var val) 'safeset)
-(sref source-file* current-load-file* 'safeset)
-
-(assign docify-body (fn (body)
-                      (if (if (is (type car.body) 'string) cdr.body) body
-                          (cons nil body))))
-
-(sref sig '(body) 'docify-body)
-(sref source-file* current-load-file* 'docify-body)
-
 (assign def (annotate 'mac
                (fn (name parms . body)
-                 ((fn ((doc . body))
-                    `(do (sref sig ',parms ',name)
-                         (sref help* ',doc ',name)
-                         (sref source-file* current-load-file* ',name)
-                         (sref source* '(def ,name ,parms ,@body) ',name)
-                         (safeset ,name (fn ,parms ,@body))))
-                   (docify-body body)))))
-
-(sref sig '(name parms . body) 'def)
-(sref source-file* current-load-file* 'def)
+                 `(do (sref sig ',parms ',name)
+                      (safeset ,name (fn ,parms ,@body))))))
 
 (def caar (xs) (car (car xs)))
 (def cadr (xs) (car (cdr xs)))
@@ -115,18 +79,8 @@
 
 (assign mac (annotate 'mac
               (fn (name parms . body)
-                ((fn ((doc . body))
-                   `(do (sref sig ',parms ',name)
-                        (sref help* ',doc ',name)
-                        (sref source-file* current-load-file* ',name)
-                        (sref source* '(mac ,name ,parms ,@body) ',name)
-                        (safeset ,name (annotate 'mac (fn ,parms ,@body)))))
-                  (docify-body body)))))
-
-(sref sig '(name parms . body) 'mac)
-(sref source-file* current-load-file* 'mac)
-
-(mac make-br-fn (body) `(fn (_) ,body))
+                `(do (sref sig ',parms ',name)
+                     (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
 
 (mac and args
   (if args
@@ -250,8 +204,7 @@
 
 (def empty (seq) 
   (or (no seq) 
-      (and (or (is (type seq) 'string) (is (type seq) 'table))
-           (is (len seq) 0))))
+      (and (no (acons seq)) (is (len seq) 0))))
 
 (def reclist (f xs)
   (and xs (or (f xs) (reclist f (cdr xs)))))
@@ -367,6 +320,7 @@
 
 (mac atwiths args
   `(atomic (withs ,@args)))
+
 
 ; setforms returns (vars get set) for a place based on car of an expr
 ;  vars is a list of gensyms alternating with expressions whose vals they
@@ -511,36 +465,20 @@
 
 ; could bind index instead of gensym
 
-(def walk (seq func)
-  (if alist.seq
-        ((afn (l)
-           (when (acons l)
-             (func (car l))
-             (self (cdr l)))) seq)
-      (isa seq 'table)
-        (maptable (fn (k v) (func (list k v))) seq)
-      ; else
-        (for i 0 (- (len seq) 1)
-          (func (seq i)))))
-
 (mac each (var expr . body)
-  `(walk ,expr (fn (,var) ,@body)))
-
-; ; old definition of 'each. possibly faster, but not extendable.
-; (mac each (var expr . body)
-;   (w/uniq (gseq gf gv)
-;     `(let ,gseq ,expr
-;        (if (alist ,gseq)
-;             ((rfn ,gf (,gv)
-;                (when (acons ,gv)
-;                  (let ,var (car ,gv) ,@body)
-;                  (,gf (cdr ,gv))))
-;              ,gseq)
-;            (isa ,gseq 'table)
-;             (maptable (fn ,var ,@body)
-;                       ,gseq)
-;             (for ,gv 0 (- (len ,gseq) 1)
-;               (let ,var (,gseq ,gv) ,@body))))))
+  (w/uniq (gseq gf gv)
+    `(let ,gseq ,expr
+       (if (alist ,gseq)
+            ((rfn ,gf (,gv)
+               (when (acons ,gv)
+                 (let ,var (car ,gv) ,@body)
+                 (,gf (cdr ,gv))))
+             ,gseq)
+           (isa ,gseq 'table)
+            (maptable (fn ,var ,@body)
+                      ,gseq)
+            (for ,gv 0 (- (len ,gseq) 1)
+              (let ,var (,gseq ,gv) ,@body))))))
 
 ; (nthcdr x y) = (cut y x).
 
@@ -720,7 +658,7 @@
 
 (def prn args
   (do1 (apply pr args)
-       (pr #\newline))) ; writec doesn't implicitly flush
+       (writec #\newline)))
 
 (mac wipe args
   `(do ,@(map (fn (a) `(= ,a nil)) args)))
@@ -782,13 +720,13 @@
        (while (no (,gf (= ,var ,expr)))
          ,@body))))
   
-(def macex (e)
-  (if (atom e)
-      e
-      (let op (and (atom (car e)) (eval (car e)))
-        (if (isa op 'mac)
-            (apply (rep op) (cdr e))
-            e))))
+;(def macex (e)
+;  (if (atom e)
+;      e
+;      (let op (and (atom (car e)) (eval (car e)))
+;        (if (isa op 'mac)
+;            (apply (rep op) (cdr e))
+;            e))))
 
 (def consif (x y) (if x (cons x y) y))
 
@@ -826,33 +764,6 @@
 
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
-
-(= declare-fns* (table))
-
-(defs decl-idfn (old new args) new
-      decl-bool (old new args) (no:no new))
-
-(def declaration (key (o setfn decl-idfn) (o default))
-  (= declare-fns*.key  setfn
-     declarations*.key default))
-
-(let mklist (fn (x)
-              (check x alist list.x))
-  (def declare (key val)
-    (let (k . args) mklist.key
-      (iflet f declare-fns*.k
-             (zap f declarations*.k val args)
-             declerr.key))))
-
-(def decl (key)
-  (if declare-fns*.key
-      declarations*.key
-      declerr.key))
-
-(= declerr [err "Unknown declaration: " _])
-
-(map [declaration _ decl-bool]
-     '(atstrings direct-calls explicit-flush))
 
 (let expander 
      (fn (f var name body)
@@ -1066,33 +977,12 @@
 (def punc (c)
   (in c #\. #\, #\; #\: #\! #\?))
 
-;(def readline ((o str (stdin)))
-;  (awhen (readc str)
-;    (tostring 
-;      (writec it)
-;      (whiler c (readc str) [in _ nil #\newline]
-;        (writec c)))))
-
-; from Andrew Wilcox's site (awwx.ws/xloop0.arc)
-(mac xloop (withses . body)
-  (let w (pair withses)
-    `((rfn next ,(map car w) ,@body) ,@(map cadr w))))
-
-; a version of readline that accepts both lf and crlf endings
-; from Andrew Wilcox's site (http://awwx.ws/readline)
-(def readline ((o s (stdin)))
-  (aif (readc s)
-       (string
-	 (accum a
-	   (xloop (c it)
-		  (if (is c #\return)
-		      (if (is (peekc s) #\newline)
-			  (readc s))
-		      (is c #\newline)
-		      nil
-		      (do (a c)
-			  (aif (readc s)
-			       (next it)))))))))
+(def readline ((o str (stdin)))
+  (awhen (readc str)
+    (tostring 
+      (writec it)
+      (whiler c (readc str) [in _ nil #\newline]
+        (writec c)))))
 
 ; Don't currently use this but suspect some code could.
 
@@ -1207,9 +1097,6 @@
     (map (fn ((k v)) (= (x2 k) v))
          (pair args))
     x2))
-
-(def shr (n m)
-  (shl n (- m)))
 
 (def abs (n)
   (if (< n 0) (- n) n))
@@ -1346,7 +1233,7 @@
 
 (def inst (tem . args)
   (let x (table)
-    (each (k v) (if (acons tem) tem (templates* tem))
+    (each (k v) (templates* tem)
       (unless (no v) (= (x k) (v))))
     (each (k v) (pair args)
       (= (x k) v))
@@ -1361,7 +1248,7 @@
 ; Note: discards fields not defined by the template.
 
 (def templatize (tem raw)
-  (with (x (inst tem) fields (if (acons tem) tem (templates* tem)))
+  (with (x (inst tem) fields (templates* tem))
     (each (k v) raw
       (when (assoc k fields)
         (= (x k) v)))
@@ -1514,9 +1401,6 @@
       (do (++ (c (car seq) 0))
           (counts (cdr seq) c))))
 
-(def tree-counts (tree (o c (table)))
-  (counts (flat tree) c))
-
 (def commonest (seq)
   (with (winner nil n 0)
     (each (k v) (counts seq)
@@ -1557,15 +1441,11 @@
        (pr ,@(parse-format str))))
 )
 
-(wipe load-file-stack*)
 (def load (file)
-  (push current-load-file* load-file-stack*)
-  (= current-load-file* file)
-  (after (w/infile f file
-           (w/uniq eof
-             (whiler e (read f eof) eof
-               (eval e))))
-    (= current-load-file* (pop load-file-stack*))))
+  (w/infile f file
+    (w/uniq eof
+      (whiler e (read f eof) eof
+        (eval e)))))
 
 (def positive (x)
   (and (number x) (> x 0)))
@@ -1636,30 +1516,28 @@
   `(point throw ,@body))
 
 (def downcase (x)
-  (if x
-    (let downc (fn (c)
-                 (let n (coerce c 'int)
-                   (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
-                       (coerce (+ n 32) 'char)
-                       c)))
-      (case (type x)
-        string (map downc x)
-        char   (downc x)
-        sym    (sym (map downc (coerce x 'string)))
-               (err "Can't downcase" x)))))
+  (let downc (fn (c)
+               (let n (coerce c 'int)
+                 (if (or (< 64 n 91) (< 191 n 215) (< 215 n 223))
+                     (coerce (+ n 32) 'char)
+                     c)))
+    (case (type x)
+      string (map downc x)
+      char   (downc x)
+      sym    (sym (map downc (coerce x 'string)))
+             (err "Can't downcase" x))))
 
 (def upcase (x)
-  (if x
-    (let upc (fn (c)
-               (let n (coerce c 'int)
-                 (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
-                     (coerce (- n 32) 'char)
-                     c)))
-      (case (type x)
-        string (map upc x)
-        char   (upc x)
-        sym    (sym (map upc (coerce x 'string)))
-               (err "Can't upcase" x)))))
+  (let upc (fn (c)
+             (let n (coerce c 'int)
+               (if (or (< 96 n 123) (< 223 n 247) (< 247 n 255))
+                   (coerce (- n 32) 'char)
+                   c)))
+    (case (type x)
+      string (map upc x)
+      char   (upc x)
+      sym    (sym (map upc (coerce x 'string)))
+             (err "Can't upcase" x))))
 
 (def inc (x (o n 1))
   (coerce (+ (coerce x 'int) n) (type x)))
@@ -1769,10 +1647,6 @@
       0
       (/ (count test xs) (len xs))))
 
-
-(wipe current-load-file*)
-
-; (load "help/arc.arc")
 
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
