@@ -35,6 +35,7 @@ check_*
 *.gcov
 coverage/*
 src/arcueid.h
+src/arcueid
 *.i
 *.aux
 *.cp
