@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
 # 02110-1301 USA.
 #
-SUBDIRS = @SRC_SUBDIRS@
+SUBDIRS = @SRC_SUBDIRS@ arc
 ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = arcueid.pc.in
