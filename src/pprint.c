@@ -244,6 +244,10 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
       append_cstring(c, ")", ppstr);
     }
     break;
+  case T_CODE:
+  case T_CLOS:
+    append_cstring(c, "<procedure>", ppstr);
+    break;
   case T_PORT:
   case T_CUSTOM:
     {
