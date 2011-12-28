@@ -20,6 +20,12 @@
 #include "vmengine.h"
 #include "symbols.h"
 
+/* eval */
+value arc_eval(arc *c, value argv, value rv, CC4CTX)
+{
+  return(CNIL);
+}
+
 /* Macro expansion.  This will look for any macro applications in e
    and attempt to expand them.
 
@@ -51,7 +57,8 @@ value arc_macex(arc *c, value e)
     return(e);
 
   /* Look up the symbol's binding in the global symbol table */
-  op = arc_hash_lookup(c, c->genv, op);
+  while (arc_type(c, op = arc_hash_lookup(c, c->genv, op)) == T_SYMBOL)
+    ;
   if (arc_type(c, op) != ARC_BUILTIN(c, S_MAC))
     return(e);			/* not a macro */
   expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
