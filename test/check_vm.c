@@ -155,12 +155,12 @@ END_TEST
 START_TEST(test_vm_envs)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode(&c, cctx, itrue);
   arc_gcode2(&c, cctx, iste, 0, 0);
   arc_gcode1(&c, cctx, ildi, INT2FIX(1234));
   arc_gcode2(&c, cctx, iste, 0, 1);
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode2(&c, cctx, iste, 0, 0);
   arc_gcode1(&c, cctx, ildi, INT2FIX(73313));
@@ -184,7 +184,7 @@ static void signal_error_test(struct arc *c, const char *fmt, ...)
 START_TEST(test_vm_mvarg)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31338));
@@ -204,7 +204,7 @@ START_TEST(test_vm_mvarg_fail)
   c.signal_error = signal_error_test;
   error = 0;
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, imvarg, 0);
@@ -218,7 +218,7 @@ END_TEST
 START_TEST(test_vm_mvoarg)
 {
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, imvoarg, 0);
@@ -235,7 +235,7 @@ START_TEST(test_vm_mvrarg)
   value rarg;
 
   ITEST_HEADER(0);
-  arc_gcode1(&c, cctx, ienv, 1);
+  arc_gcode2(&c, cctx, ienv, 1, -2);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31337));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(31338));
@@ -669,7 +669,7 @@ START_TEST(test_vm_dsb)
 
      This performs a destructuring bind of its arguments. */
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
-  arc_gcode1(&c, cctx, ienv, 4);
+  arc_gcode2(&c, cctx, ienv, 4, -1);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode(&c, cctx, idup);
   arc_gcode(&c, cctx, icar);
@@ -774,7 +774,7 @@ START_TEST(test_vm_oarg)
 
      With an optional argument having a default value */
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, imvoarg, 0);
   arc_gcode2(&c, cctx, ilde, 0, 0);
   arc_gcode1(&c, cctx, ijt, 7);
@@ -931,7 +931,7 @@ START_TEST(test_vm_ffi_cc4)
 
   /* The function to call.  Just adds its arguments */
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode1(&c, cctx, imvarg, 1);
   arc_gcode2(&c, cctx, ilde, 0, 0);
@@ -1494,7 +1494,7 @@ START_TEST(test_vm_macapply)
   value cctx, func, args, ret;
 
   cctx = arc_mkcctx(&c, INT2FIX(1), 0);
-  arc_gcode1(&c, cctx, ienv, 2);
+  arc_gcode2(&c, cctx, ienv, 2, -1);
   arc_gcode1(&c, cctx, imvarg, 0);
   arc_gcode1(&c, cctx, imvarg, 1);
   arc_gcode2(&c, cctx, ilde, 0, 0);
