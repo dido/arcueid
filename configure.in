@@ -122,5 +122,5 @@ fi
 LIBARCUEID_LIBS="-L${libdir} -larcueid $GMP_LIBS $MATH_LIBS $EXTRA_LIBS"
 AC_SUBST(LIBARCUEID_LIBS)
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([arcueid.pc Makefile src/Makefile test/Makefile doc/Makefile src/arcueid.h])
+AC_CONFIG_FILES([arcueid.pc Makefile src/Makefile test/Makefile doc/Makefile src/arcueid.h arc/Makefile])
 AC_OUTPUT
