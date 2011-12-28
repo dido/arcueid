@@ -16,17 +16,21 @@
   You should have received a copy of the GNU General Public License
   along with this library; if not,  see <http://www.gnu.org/licenses/>.
 */
+#include <stdio.h>
+#include <getopt.h>
 #include "arcueid.h"
 #include "vmengine.h"
 #include "symbols.h"
 #include "utf.h"
 #include "../config.h"
 
+#define DEFAULT_LOADFILE PKGDATA "/arc.arc"
+
 int main(int argc, char **argv)
 {
   arc *c, cc;
-  value sexpr, readfp, cctx, code, ret;
-  Rune ch;
+  value sexpr, readfp, cctx, code, ret, initload;
+  char *loadstr;
 
   c = &cc;
   arc_set_memmgr(c);
@@ -35,15 +39,26 @@ int main(int argc, char **argv)
   arc_init_builtins(c);
   cc.stksize = TSTKSIZE;
   cc.quantum = PQUANTA;
+
+  loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
+
+  initload = arc_infile(c, arc_mkstringc(c, loadstr));
+  while ((sexpr = arc_read(c, initload)) != CNIL) {
+    /* arc_print_string(c, arc_prettyprint(c, sexpr)); */
+    cctx = arc_mkcctx(c, INT2FIX(1), 0);
+    arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+    code = arc_cctx2code(c, cctx);
+    ret = arc_macapply(c, code, CNIL);
+    c->rungc(c);
+  }
+  arc_close(c, initload);
+
   readfp = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN));
   for (;;) {
     printf("arc> ");
-    while ((ch = arc_readc_rune(c, readfp)) >= 0 && ucisspace(ch))
-      ;
-    if (ch < 0)
-      break;
-    arc_ungetc_rune(c, ch, readfp);
     sexpr = arc_read(c, readfp);
+    if (sexpr == CNIL)
+      break;
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
