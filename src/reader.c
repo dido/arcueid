@@ -75,6 +75,21 @@ static value expand_compose(arc *c, value sym);
 static value expand_sexpr(arc *c, value sym);
 static value expand_and(arc *c, value sym);
 
+value arc_read2(arc *c, int argc, value *argv)
+{
+  value fp;
+
+  if (argc > 1) {
+    c->signal_error(c, "read expects 0 or 1 argument, given %d", argc);
+    return(CNIL);
+  }
+
+  
+  fp = (argc == 0) ? arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN))
+    : argv[0];
+  return(arc_read(c, fp));
+}
+
 value arc_read(arc *c, value src)
 {
   Rune ch;
