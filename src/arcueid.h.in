@@ -469,6 +469,8 @@ extern value arc_vcptr(arc *c, value cctx);
 
 extern value arc_compile(arc *c, value expr, value ctx, value env,
 			 value cont);
+extern value arc_macex(arc *c, value expr);
+extern value arc_macex1(arc *c, value expr);
 
 /* code object handling */
 #define CODE_CODE(c) (VINDEX((c), 0))
