@@ -44,26 +44,39 @@ value arc_eval(arc *c, value argv, value rv, CC4CTX)
    macros, so the eval inside the reference Arc implementation becomes
    nothing but a lookup in the global symbol table here.
 */
-value arc_macex(arc *c, value e)
+static value macex(arc *c, value e, value once)
 {
   value op, expansion;
 
-  if (!CONS_P(e))
-    return(e);
-  op = car(e);
-  /* I don't know if it's possible to make any other type of atom evaluate
-     to a macro. */
-  if (!SYMBOL_P(op))
-    return(e);
+  do {
+    if (!CONS_P(e))
+      return(e);
+    op = car(e);
+    /* I don't know if it's possible to make any other type of atom evaluate
+       to a macro. */
+    if (!SYMBOL_P(op))
+      return(e);
 
-  /* Look up the symbol's binding in the global symbol table */
-  while (arc_type(c, op = arc_hash_lookup(c, c->genv, op)) == T_SYMBOL)
-    ;
-  if (arc_type(c, op) != ARC_BUILTIN(c, S_MAC))
-    return(e);			/* not a macro */
-  expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
-  /* arc_print_string(c, arc_prettyprint(c, expansion)); */
-  return(expansion);
+    /* Look up the symbol's binding in the global symbol table */
+    while (arc_type(c, op = arc_hash_lookup(c, c->genv, op)) == T_SYMBOL)
+      ;
+    if (arc_type(c, op) != ARC_BUILTIN(c, S_MAC))
+      return(e);			/* not a macro */
+    expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
+    /* arc_print_string(c, arc_prettyprint(c, expansion)); */
+    e = expansion;
+  } while (once == CTRUE);
+  return(e);
+}
+
+value arc_macex(arc *c, value expr)
+{
+  return(macex(c, expr, CTRUE));
+}
+
+value arc_macex1(arc *c, value expr)
+{
+  return(macex(c, expr, CNIL));
 }
 
 static value compile_literal(arc *c, value lit, value ctx, value cont);
@@ -81,7 +94,7 @@ value arc_compile(arc *c, value nexpr, value ctx, value env, value cont)
 {
   value expr;
 
-  expr = arc_macex(c, nexpr);
+  expr = macex(c, nexpr, CTRUE);
   if (expr == ARC_BUILTIN(c, S_T) || expr == ARC_BUILTIN(c, S_NIL)
       || expr == CNIL || expr == CTRUE
       || TYPE(expr) == T_CHAR || TYPE(expr) == T_STRING
@@ -499,7 +512,7 @@ static value compile_assign(arc *c, value expr, value ctx, value env,
   int frameno, idx;
 
   while (expr != CNIL) {
-    a = arc_macex(c, car(expr));
+    a = macex(c, car(expr), CTRUE);
     val = cadr(expr);
     if (a == CNIL) {
       c->signal_error(c, "Can't rebind nil");
