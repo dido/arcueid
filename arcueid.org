@@ -475,8 +475,9 @@ notice and this notice are preserved.
    probably not require much in the way of customization, but we will
    see...
 ** TODO pretty printer
-** TODO REPL [1/2]
+** TODO REPL [2/3]
    - [X] Simple non-readline REPL
+   - [X] Read in an initial file for REPL
    - [ ] Readline support
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
