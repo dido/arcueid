@@ -124,7 +124,6 @@ value arc_read(arc *c, value src)
       return(read_symbol(c, src));
     }
   }
-  c->signal_error(c, "unexpected end of source");
   return(CNIL);
 }
 
