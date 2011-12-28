@@ -391,6 +391,8 @@ static struct {
   { "ssyntax", 1, arc_ssyntax },
   { "ssexpand", 1, arc_ssexpand },
 
+  { "macex", 1, arc_macex },
+  { "macex1", 1, arc_macex1 },
   { "uniq", 0, arc_uniq },
 
   { "cgenctx", 2, arc_mkcctx},
