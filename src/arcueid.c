@@ -398,6 +398,8 @@ static struct {
 
   { "read", -1, arc_read2 },
 
+  { "prn", -1, arc_prn },
+
   { "cgenctx", 2, arc_mkcctx},
   { "cptr", 2, arc_vcptr},
 
