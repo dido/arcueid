@@ -396,6 +396,8 @@ static struct {
   { "macex1", 1, arc_macex1 },
   { "uniq", 0, arc_uniq },
 
+  { "read", -1, arc_read2 },
+
   { "cgenctx", 2, arc_mkcctx},
   { "cptr", 2, arc_vcptr},
 
