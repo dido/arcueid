@@ -368,7 +368,7 @@ notice and this notice are preserved.
    - [X] Basic I/O primitives (src/io.c) [3/3]
          These are the base I/O functions provided by the Arcueid C
          runtime.
-     - [X] Input [4/4]
+     - [X] Input [5/5]
        - [X] readb
        - [X] readc
        - [X] peekc
@@ -382,6 +382,7 @@ notice and this notice are preserved.
 	   CHARACTER.  This saves us the trouble of decoding Unicode
 	   all over again, and reinforces the maxim of never mixing
 	   the b functions with the c functions.
+       - [X] read
      - [X] Output [2/2]
        - [X] writeb
        - [X] writec
