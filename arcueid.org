@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [8/18]
+** TODO Runtime Built-In Functions [9/18]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -349,8 +349,8 @@ notice and this notice are preserved.
    - [X] Table operations [2/2]
      - [X] maptable
      - [X] table
-   - [-] Evaluation [3/4]
-     - [ ] eval
+   - [X] Evaluation [4/4]
+     - [X] eval
 	   We will implement eval by calling the compiler on the
 	   expression to be evaluated.  The output of the compiler
 	   is a T_CODE object which we can convert into a closure by
@@ -474,7 +474,7 @@ notice and this notice are preserved.
    probably not require much in the way of customization, but we will
    see...
 ** TODO pretty printer
-** TODO REPL interpreter
+** TODO REPL
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
    function which can be used to output strings according to a format
