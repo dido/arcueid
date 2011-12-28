@@ -388,6 +388,7 @@ static struct {
   { "table", 0, arc_table },
 
   { "apply", -3, arc_apply2 },
+  { "eval", -3, arc_eval },
   { "ssyntax", 1, arc_ssyntax },
   { "ssexpand", 1, arc_ssexpand },
 
