@@ -23,7 +23,28 @@
 /* eval */
 value arc_eval(arc *c, value argv, value rv, CC4CTX)
 {
-  return(CNIL);
+  value expr, ctx, code, clos;
+  value env;
+
+  CC4VDEFBEGIN;
+  CC4VDEFEND;
+
+  if (VECLEN(argv) != 1) {
+    c->signal_error(c, "wrong number of arguments (%d for 1)", VECLEN(argv));
+    return(CNIL);
+  }
+
+  CC4BEGIN(c);
+  expr = VINDEX(argv, 0);
+  ctx = arc_mkcctx(c, INT2FIX(1), 0);
+  env = (NIL_P(TENVR(c->curthread))) ? CNIL : ENV_NAMES(TENVR(c->curthread));
+  arc_compile(c, expr, ctx, env, CTRUE);
+  code = arc_cctx2code(c, ctx);
+  /* use current thread as environment */
+  clos = arc_mkclosure(c, code, TENVR(c->curthread));
+  CC4CALL(c, argv, clos, 0, CNIL);
+  CC4END;
+  return(rv);
 }
 
 /* Macro expansion.  This will look for any macro applications in e
@@ -405,7 +426,7 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
    names. */
 static value compile_args(arc *c, value args, value ctx, value env)
 {
-  value names;
+  value names, frame;
   int envinstaddr, nargs;
 
   /* just return the current environment if no args */
@@ -415,9 +436,10 @@ static value compile_args(arc *c, value args, value ctx, value env)
   if (SYMBOL_P(args)) {
     /* If args is a single name, make an environment with a single
        name and a list containing the name of the sole argument. */
-    arc_gcode1(c, ctx, ienv, 1);
+    frame = add_env_frame(c, cons(c, args, CNIL), env);
+    arc_gcode2(c, ctx, ienv, 1, find_literal(c, ctx, frame));
     arc_gcode1(c, ctx, imvrarg, 0);
-    return(add_env_frame(c, cons(c, args, CNIL), env));
+    return(frame);
   }
 
   if (!CONS_P(args)) {
@@ -427,11 +449,14 @@ static value compile_args(arc *c, value args, value ctx, value env)
   envinstaddr = FIX2INT(CCTX_VCPTR(ctx));
   /* this instruction will get patched once the true number of named
      arguments has been identified. */
-  arc_gcode1(c, ctx, ienv, 0);
+  arc_gcode2(c, ctx, ienv, 0, 0);
   names = arglist(c, args, ctx, env, &nargs);
   /* patch the true number of arguments into the instruction */
   VINDEX(CCTX_VCODE(ctx), envinstaddr+1) = nargs;
-  return(add_env_frame(c, names, env));
+  /* patch the frame */
+  frame = add_env_frame(c, names, env);
+  VINDEX(CCTX_VCODE(ctx), envinstaddr+2) = find_literal(c, ctx, frame);
+  return(frame);
 }
 
 static value compile_fn(arc *c, value expr, value ctx, value env,
