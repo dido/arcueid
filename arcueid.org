@@ -475,7 +475,9 @@ notice and this notice are preserved.
    probably not require much in the way of customization, but we will
    see...
 ** TODO pretty printer
-** TODO REPL
+** TODO REPL [1/2]
+   - [X] Simple non-readline REPL
+   - [ ] Readline support
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
    function which can be used to output strings according to a format
