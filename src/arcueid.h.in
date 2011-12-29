@@ -396,6 +396,11 @@ extern value scdr(value x, value y);
 extern value arc_list_append(value list, value val);
 extern value arc_list_assoc(arc *c, value key, value a_list);
 extern value arc_list_length(arc *c, value list);
+extern value arc_car(arc *c, value v);
+extern value arc_cdr(arc *c, value v);
+extern value arc_cons(arc *c, value ca, value cd);
+extern value arc_scar(arc *c, value x, value y);
+extern value arc_scdr(arc *c, value x, value y);
 
 /* strings */
 extern value arc_mkstringlen(arc *c, int length);
