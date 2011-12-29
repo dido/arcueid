@@ -222,6 +222,18 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
       append_cstring(c, ")", ppstr);
     }
     break;
+  case T_VECTOR:
+    {
+      int i;
+
+      append_cstring(c, "[", ppstr);
+      for (i=0; i<VECLEN(sexpr); i++) {
+	prettyprint(c, VINDEX(sexpr, i), ppstr);
+	append_cstring(c, " ", ppstr);
+      }
+      append_cstring(c, "]", ppstr);
+    }
+    break;
   case T_TABLE:
     {
       value val;
