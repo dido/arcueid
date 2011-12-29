@@ -226,11 +226,19 @@ value arc_disasm(arc *c, value code)
   codesize = VECLEN(VINDEX(code, 0));
   codeblk = VINDEX(code, 0);
   for (index = 0; index < codesize;) {
-    printf("%08x %s", index, disasmtbl[VINDEX(codeblk, index)].inst);
-    nargs = disasmtbl[VINDEX(codeblk, index)].argc;
+    value opcode = VINDEX(codeblk, index);
+
+    printf("%08x %s", index, disasmtbl[opcode].inst);
+    nargs = disasmtbl[opcode].argc;
     index++;
     for (;nargs; nargs--) {
-      printf("\t%02lx", VINDEX(codeblk, index++));
+      if (disasmtbl[opcode].jmpflg) {
+	int jaddr = VINDEX(codeblk, index++);
+
+	printf("\t%04x (%02x)", jaddr + index - 2, jaddr);
+      } else {
+	printf("\t%02lx", VINDEX(codeblk, index++));
+      }
     }
     printf("\n");
   }
