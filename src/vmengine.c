@@ -101,6 +101,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
       {
 	value tmp;
 	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
+
 	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
 	  c->signal_error(c, "Unbound symbol %S\n", tmp);
 	  TVALR(thr) = CNIL;
@@ -527,9 +528,9 @@ void arc_apply(arc *c, value thr, value fun)
     arc_return(c, thr);
     break;
   case T_CONS:
-    if (TARGC(thr) != 1) {
+    if (FIX2INT(TARGC(thr)) != 1) {
       c->signal_error(c, "list application expects 1 argument, given %d",
-		      INT2FIX(TARGC(thr)));
+		      FIX2INT(TARGC(thr)));
       TVALR(thr) = CNIL;
     } else {
       value count = CPOP(thr), ocount, cval;
