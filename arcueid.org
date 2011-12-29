@@ -469,11 +469,9 @@ notice and this notice are preserved.
      - [X] sref *
      - [X] len
      - [ ] bound
-** TODO Revised baseline environment (arc.arc)
-   We obviously need to make our own version of arc.arc which should
-   provide all the stuff inside the pg version as well.  It should
-   probably not require much in the way of customization, but we will
-   see...
+** TODO Baseline environment (arc.arc)
+   We will doubtless need to customize the base environment provided in
+   PG-Arc.
 ** TODO pretty printer
 ** TODO REPL [2/3]
    - [X] Simple non-readline REPL
