@@ -36,7 +36,7 @@ enum vminst {
   imvoarg=74,
   imvrarg=75,
   icont=76,
-  ienv=77,
+  ienv=141,
   iapply=78,
   iret=15,
   ijmp=80,
