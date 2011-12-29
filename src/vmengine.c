@@ -180,6 +180,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	int icofs = (int)*TIP(thr)++;
 	WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
 			     TCONR(thr)));
+	TSP(thr) = TSTOP(thr);
       }
       NEXT;
     INST(ienv):
@@ -677,13 +678,17 @@ value arc_apply2(arc *c, value argv, value rv, CC4CTX)
 /* Restore a continuation.  This can only restore a normal continuation. */
 void arc_restorecont(arc *c, value thr, value cont)
 {
-  int stklen, offset;
+  int stklen, offset, i;
+  value savedstk;
 
   WB(&TFUNR(thr), VINDEX(cont, 1));
   WB(&TENVR(thr), VINDEX(cont, 2));
-  stklen = VECLEN(VINDEX(cont, 3));
+  savedstk = VINDEX(cont, 3);
+  stklen = VECLEN(savedstk);
   TSP(thr) = TSTOP(thr) - stklen;
-  memcpy(TSP(thr), &VINDEX(VINDEX(cont, 3), 0), stklen*sizeof(value));
+  for (i=0; i<stklen; i++) {
+    *(TSP(thr) + i + 1) = VINDEX(savedstk, i);
+  }
   offset = FIX2INT(VINDEX(cont, 0));
   TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
 }
@@ -758,7 +763,7 @@ value arc_mkcont(arc *c, value offset, value thr)
 {
   value cont = arc_mkvector(c, 4);
   value savedstk;
-  int stklen;
+  int stklen, i;
   value *base = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
 
   BTYPE(cont) = T_CONT;
@@ -775,7 +780,9 @@ value arc_mkcont(arc *c, value offset, value thr)
   /* Save the used portion of the stack */
   stklen = TSTOP(thr) - (TSP(thr));
   savedstk = arc_mkvector(c, stklen);
-  memcpy(&VINDEX(savedstk, 0), TSP(thr), stklen*sizeof(value));
+  for (i=0; i<stklen; i++) {
+    VINDEX(savedstk, i) = *(TSP(thr) + i + 1);
+  }
   WB(&VINDEX(cont, 3), savedstk);
   return(cont);
 }
