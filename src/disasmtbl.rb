@@ -6,7 +6,7 @@ STDIN.each do |line|
     in_vminst = true;
   end
   next if !in_vminst
-  if /^\s+(i.*)=([0-9]+)/ =~ line
+  if /^\s+i(.*)=([0-9]+)/ =~ line
     instructions[$2.to_i] = $1.clone
   elsif /^};$/ =~ line
     break
@@ -17,11 +17,13 @@ instrlist = []
 puts "static struct {
   char *inst;
   int argc;
+  int jmpflg;
 } disasmtbl[] = {"
 0.upto(255) do |index|
   if instructions.has_key?(index)
     nargs = (index & 0xc0) >> 6
-    instrlist << "  { \"#{instructions[index]}\", #{nargs}}"
+    jmpflg = (/(jmp|jf|jt|cont)/ === instructions[index]) ? 1 : 0
+    instrlist << "  { \"#{instructions[index]}\", #{nargs}, #{jmpflg}}"
   else
     instrlist << sprintf("  { \"?? %02x\", 0 }", index)
   end
