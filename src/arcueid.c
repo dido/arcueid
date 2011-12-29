@@ -356,11 +356,15 @@ value arc_uniq(arc *c)
 
 value arc_car(arc *c, value v)
 {
+  if (NIL_P(v))
+    return(CNIL);
   return(car(v));
 }
 
 value arc_cdr(arc *c, value v)
 {
+  if (NIL_P(v))
+    return(CNIL);
   return(cdr(v));
 }
 
