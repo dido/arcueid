@@ -1,5 +1,5 @@
 ARCUEID README -- Important introductory notes.
-Copyright (C) 2009,2010 Rafael R. Sevilla
+Copyright (C) 2009,2010,2011 Rafael R. Sevilla
 See the end for copying conditions.
 
 This is Arcueid, an implementation of Paul Graham's Arc dialect of
@@ -9,7 +9,11 @@ The main core library, libarcueid, is licensed under the GNU Lesser
 General public license.  The main REPL interpreter, arcueid is
 licensed under the GPL.
 
-See arcueid.org for current functionality status.
+See the file arcueid.org in the main directory of the distribution for
+current functionality status.  It's an Emacs org-mode file (just plain
+text), not a URL! Note: The URL arcueid.org is as of this writing a
+fan site for the anime/visual novel Tsukihime: Lunar Legend (真月譚月
+姫), which should explain where the name 'Arcueid' comes from. :)
 
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
