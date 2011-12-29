@@ -965,11 +965,8 @@ END_TEST
 
 START_TEST(test_vm_apply_list)
 {
-  int base, contofs;
   ITEST_HEADER(0);
-  base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 20); /* computed offset by compiler */
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
   arc_gcode1(&c, cctx, ildi, INT2FIX(2));
   arc_gcode(&c, cctx, ipush);
   arc_gcode(&c, cctx, inil);
@@ -983,7 +980,6 @@ START_TEST(test_vm_apply_list)
   arc_gcode1(&c, cctx, ildi, 3);
   arc_gcode(&c, cctx, icons);
   arc_gcode1(&c, cctx, iapply, 1);
-  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(0);
   fail_unless(TVALR(thr) == INT2FIX(3));
