@@ -23,7 +23,7 @@ puts "static struct {
     nargs = (index & 0xc0) >> 6
     instrlist << "  { \"#{instructions[index]}\", #{nargs}}"
   else
-    instrlist << "  { \"??\", 0 }"
+    instrlist << sprintf("  { \"?? %02x\", 0 }", index)
   end
 end
 puts instrlist.join(",\n")
