@@ -736,7 +736,7 @@ int arc_return(arc *c, value thr)
   value cont;
 
   for (;;) {
-    if (TCONR(thr) == CNIL)
+    if (!CONS_P(TCONR(thr)))
       return(1);
     cont = car(TCONR(thr));
     if (cont == CNIL)
