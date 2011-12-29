@@ -354,6 +354,32 @@ value arc_uniq(arc *c)
   return(arc_intern_cstr(c, buffer));
 }
 
+value arc_car(arc *c, value v)
+{
+  return(car(v));
+}
+
+value arc_cdr(arc *c, value v)
+{
+  return(cdr(v));
+}
+
+value arc_cons(arc *c, value ca, value cd)
+{
+  return(cons(c, ca, cd));
+}
+
+value arc_scar(arc *c, value x, value y)
+{
+  return(scar(x, y));
+}
+
+value arc_scdr(arc *c, value x, value y)
+{
+  return(scdr(x, y));
+}
+
+
 static struct {
   char *fname;
   int argc;
@@ -410,6 +436,12 @@ static struct {
 
   { "sref", 3, arc_sref },
   { "len", 1, arc_len },
+
+  { "car", 1, arc_car },
+  { "cdr", 1, arc_cdr },
+  { "cons", 2, arc_cons },
+  { "scar", 2, arc_scar },
+  { "scdr", 2, arc_scdr },
 
   { NULL, 0, NULL }
 };
