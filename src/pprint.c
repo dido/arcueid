@@ -247,6 +247,15 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
       append_cstring(c, ")", ppstr);
     }
     break;
+  case T_TAGGED:
+    {
+      append_cstring(c, "#(tagged ", ppstr);
+      prettyprint(c, arc_type(c, sexpr), ppstr);
+      append_cstring(c, " ", ppstr);
+      prettyprint(c, arc_rep(c, sexpr), ppstr);
+      append_cstring(c, ")", ppstr);
+    }
+    break;
   case T_TBUCKET:
     {
       append_cstring(c, "(", ppstr);
@@ -258,7 +267,7 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     break;
   case T_CODE:
   case T_CLOS:
-    append_cstring(c, "<procedure>", ppstr);
+    append_cstring(c, "#<procedure>", ppstr);
     break;
   case T_PORT:
   case T_CUSTOM:
