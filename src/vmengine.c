@@ -255,10 +255,10 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
       NEXT;
     INST(icar):
-      TVALR(thr) = car(TVALR(thr));
+      TVALR(thr) = (TVALR(thr) == CNIL) ? CNIL : car(TVALR(thr));
       NEXT;
     INST(icdr):
-      TVALR(thr) = cdr(TVALR(thr));
+      TVALR(thr) = (TVALR(thr) == CNIL) ? CNIL : cdr(TVALR(thr));
       NEXT;
     INST(iscar):
       scar(CPOP(thr), TVALR(thr));
@@ -528,9 +528,9 @@ void arc_apply(arc *c, value thr, value fun)
     arc_return(c, thr);
     break;
   case T_CONS:
-    if (FIX2INT(TARGC(thr)) != 1) {
+    if (TARGC(thr) != 1) {
       c->signal_error(c, "list application expects 1 argument, given %d",
-		      FIX2INT(TARGC(thr)));
+		      INT2FIX(TARGC(thr)));
       TVALR(thr) = CNIL;
     } else {
       value count = CPOP(thr), ocount, cval;
