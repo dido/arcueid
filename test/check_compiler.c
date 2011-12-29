@@ -578,6 +578,26 @@ START_TEST(test_compile_qquote)
 }
 END_TEST
 
+START_TEST(test_compile_qquote2)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "`(,((fn (x (o y 1)) (+ x y)) 1) 3)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  /* arc_print_string(c, arc_prettyprint(c, sexpr)); */
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  /* arc_disasm(c, code); */
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(2));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(NIL_P(cdr(cdr(ret))));
+}
+END_TEST
+
 START_TEST(test_compile_assign)
 {
   value str, sexpr, fp, cctx, code, ret;
@@ -931,6 +951,7 @@ int main(void)
 
   tcase_add_test(tc_compiler, test_compile_quote);
   tcase_add_test(tc_compiler, test_compile_qquote);
+  tcase_add_test(tc_compiler, test_compile_qquote2);
 
   tcase_add_test(tc_compiler, test_compile_assign);
 
