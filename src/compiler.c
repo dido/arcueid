@@ -280,10 +280,9 @@ static value optarg(arc *c, value oarg, value ctx, value env, int narg)
        some value is provided for the optional argument. */
     jumpaddr = FIX2INT(CCTX_VCPTR(ctx));
     arc_gcode1(c, ctx, ijt, 0);
-    /* Compile the value of the optional arg */
+    /* Compile the value of the optional arg and store in the addr */
     arc_compile(c, car(cddr(oarg)), ctx, env, CNIL);
-    arc_gcode(c, ctx, ipush); /* push default value */
-    arc_gcode1(c, ctx, imvoarg, narg);
+    arc_gcode2(c, ctx, iste, 0, narg);
     /* The jt instruction is patched with the current address */
     VINDEX(CCTX_VCODE(ctx), jumpaddr+1) = FIX2INT(CCTX_VCPTR(ctx)) - jumpaddr;
   }
