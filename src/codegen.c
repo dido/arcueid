@@ -203,3 +203,47 @@ value arc_vcptr(arc *c, value cctx)
 {
   return(CCTX_VCPTR(cctx));
 }
+
+#include "disasmtbl.h"
+
+/* Disassemble a code object */
+value arc_disasm(arc *c, value code)
+{
+  int codesize, index, nargs;
+  value codeblk;
+
+  printf("====\n");
+  if (TYPE(code) == T_CLOS) {
+    code = car(code);
+  }
+
+  if (TYPE(code) != T_CODE) {
+    c->signal_error(c, "Cannot disassemble a non-T_CODE object");
+    return(CNIL);
+  }
+
+  /* disassemble instructions */
+  codesize = VECLEN(VINDEX(code, 0));
+  codeblk = VINDEX(code, 0);
+  for (index = 0; index < codesize;) {
+    printf("%08x %s", index, disasmtbl[VINDEX(codeblk, index)].inst);
+    nargs = disasmtbl[VINDEX(codeblk, index)].argc;
+    index++;
+    for (;nargs; nargs--) {
+      printf("\t%02lx", VINDEX(codeblk, index++));
+    }
+    printf("\n");
+  }
+
+  /* disassemble literal values */
+  for (index = 1; index < VECLEN(code); index++) {
+    printf("Literal: %02x Type: ", index-1);
+    arc_print_string(c, arc_prettyprint(c, arc_type(c, VINDEX(code, index))));
+    if (TYPE(VINDEX(code, index)) == T_CODE) {
+      arc_disasm(c, VINDEX(code, index));
+    } else
+      arc_print_string(c, arc_prettyprint(c, VINDEX(code, index)));
+  }
+  printf("====\n");
+  return(CNIL);
+}
