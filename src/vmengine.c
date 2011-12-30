@@ -45,11 +45,17 @@ void *alloca (size_t);
 /* instruction decoding macros */
 #ifdef HAVE_THREADED_INTERPRETER
 /* threaded interpreter */
+#define TRACE(thr)							\
+  if (vmtrace) {							\
+    arc_disasm_inst(c, TIP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0), TIP(thr)); \
+    getc(stdin);							\
+  }
 #define INST(name) lbl_##name
 #define JTBASE ((void *)&&lbl_inop)
 #define NEXT {							\
     if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
       goto endquantum;						\
+    TRACE(thr);							\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #else
 /* switch interpreter */
@@ -59,6 +65,8 @@ void *alloca (size_t);
 
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
 #define CPOP(thr) (*(++TSP(thr)))
+
+int vmtrace = 0;
 
 void arc_vmengine(arc *c, value thr, int quanta)
 {
@@ -75,6 +83,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
   TQUANTA(thr) = quanta;
 
 #ifdef HAVE_THREADED_INTERPRETER
+  TRACE(thr);
   goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
   for (;;) {
@@ -643,32 +652,19 @@ value arc_apply2(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFBEGIN;
   CC4VDEFEND;
   /* we don't care what happens to these variables after */
-  value func, args, fargv;
+  value func, fargv;
+  int i;
 
-  if (VECLEN(argv) < 1 || VECLEN(argv) > 2) {
-    c->signal_error(c, "apply expects 2 arguments given %d", VECLEN(argv));
+  if (VECLEN(argv) < 1) {
+    c->signal_error(c, "apply expects at least 1 argument");
     return(CNIL);
   }
   func = VINDEX(argv, 0);
-  args = VINDEX(argv, 1);
-  if (TYPE(args) != T_VECTOR && TYPE(args) != T_CONS) {
-    c->signal_error(c, "apply expects second argument to be a list or vector, given %O", args);
-    return(CNIL);
-  }
+  fargv = arc_mkvector(c, VECLEN(argv) - 1);
+  /* Copy the args for the call */
+  for (i=0; i<VECLEN(argv)-1; i++)
+    VINDEX(fargv, i) = VINDEX(argv, i+1);
 
-  if (TYPE(args) == T_CONS) {
-    /* highly doubtful, but this may become a bignum... */
-    int listlen = FIX2INT(arc_list_length(c, args)), i;
-    fargv = arc_mkvector(c, listlen);
-    i = 0;
-    while (args != CNIL) {
-      VINDEX(fargv, i) = car(args);
-      args = cdr(args);
-      ++i;
-    }
-  } else {
-    fargv = args;
-  }
   CC4BEGIN(c);
   CC4CALLV(c, argv, func, fargv);
   CC4END;
