@@ -260,3 +260,21 @@ value arc_disasm(arc *c, value code)
   printf("====\n");
   return(CNIL);
 }
+
+void arc_disasm_inst(arc *c, int index, value *codeptr)
+{
+  value opcode = *codeptr;
+  int nargs;
+
+  printf("%08x %s", index, disasmtbl[opcode].inst);
+  nargs = disasmtbl[opcode].argc;
+  codeptr++;
+  for (;nargs; nargs--) {
+    if (disasmtbl[opcode].jmpflg) {
+      int jaddr = *codeptr++;
+      printf("\t%04x (%02x)", jaddr + index - 2, jaddr);
+    } else {
+      printf("\t%02lx", *codeptr++);
+    }
+  }
+}
