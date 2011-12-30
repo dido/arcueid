@@ -447,6 +447,8 @@ static struct {
   { "scar", 2, arc_scar },
   { "scdr", 2, arc_scdr },
 
+  { "disasm", 1, arc_disasm },
+
   { NULL, 0, NULL }
 };
 
