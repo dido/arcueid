@@ -32,6 +32,11 @@
 #elif HAVE_READLINE_READLINE_H
 #include <readline/readline.h>
 #endif
+#ifdef HAVE_HISTORY_H
+#include <history.h>
+#elif HAVE_READLINE_HISTORY
+#include <readline/history.h>
+#endif
 
 #include "io.h"
 
@@ -60,17 +65,19 @@ static int readline_getb(arc *c, struct arc_port *p)
   int len;
 
   len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
-  if (p->u.strfile.idx >= len) {
+  while (p->u.strfile.idx >= len) {
     /* try to read a new line */
     if (line_read) {
       free(line_read);
       line_read = (char *)NULL;
     }
     line_read = readline("arc> ");
-    if (line_read && *line_read)
+    if (line_read && *line_read) {
       add_history(line_read);
       p->u.strfile.str = (line_read == NULL) ? CNIL : arc_mkstringc(c, line_read);
-    p->u.strfile.idx = 0;
+      len = arc_strlen(c, p->u.strfile.str);
+      p->u.strfile.idx = 0;
+    }
     if (line_read == NULL)
       return(EOF);
   }
@@ -80,6 +87,7 @@ static int readline_getb(arc *c, struct arc_port *p)
 static int readline_putb(arc *c, struct arc_port *p, int byte)
 {
   c->signal_error(c, "cannot write to a readline port");
+  return(byte);
 }
 
 /* works just like stringio */
@@ -138,6 +146,7 @@ value arc_readlineport(arc *c)
   PORT(fd)->tell = readline_tell;
   PORT(fd)->close = readline_close;
   PORT(fd)->ungetrune = -1;	/* no rune available */
+  rl_variable_bind("blink-matching-paren", "on");
   return(fd);
 }
 
@@ -187,7 +196,7 @@ int main(int argc, char **argv)
   setjmp(err_jmp_buf);
 #ifdef HAVE_LIBREADLINE
   readfp = arc_readlineport(c);
-  arc_bindsym(c, "repl-readline", readfp);
+  arc_bindsym(c, arc_intern_cstr(c, "repl-readline"), readfp);
 #else
   readfp = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN));
 #endif
