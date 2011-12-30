@@ -25,6 +25,7 @@
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
+#include "symbols.h"
 
 /* Expand the vmcode object of a cctx, doubling it in size.  All entries
    are copied, and the old vmcode object is freed manually.  The fit
@@ -212,7 +213,10 @@ value arc_disasm(arc *c, value code)
   int codesize, index, nargs;
   value codeblk;
 
-  printf("====\n");
+  if (TYPE(code) == T_TAGGED && arc_type(c, code) == ARC_BUILTIN(c, S_MAC)) {
+    code = arc_rep(c, code);
+  }
+
   if (TYPE(code) == T_CLOS) {
     code = car(code);
   }
@@ -222,6 +226,7 @@ value arc_disasm(arc *c, value code)
     return(CNIL);
   }
 
+  printf("====\n");
   /* disassemble instructions */
   codesize = VECLEN(VINDEX(code, 0));
   codeblk = VINDEX(code, 0);
