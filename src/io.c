@@ -33,39 +33,8 @@
 #include <inttypes.h>
 #include "arcueid.h"
 #include "utf.h"
+#include "io.h"
 #include "../config.h"
-
-enum file_types {
-  FT_FILE,			/* normal file */
-  FT_STRING,			/* string file */
-  FT_SOCKET			/* socket */
-};
-
-struct arc_port {
-  int type;			/* type of file */
-  union {
-    struct {
-      value str;
-      int idx;
-    } strfile;
-    struct {
-      value name;
-      FILE *fp;
-      int open;
-    } file;
-    int sock;
-  } u;
-  int (*getb)(arc *, struct arc_port *);
-  int (*putb)(arc *, struct arc_port *, int);
-  int (*seek)(arc *, struct arc_port *, int64_t, int);
-  int64_t (*tell)(arc *, struct arc_port *);
-  int (*close)(arc *, struct arc_port *);
-  Rune ungetrune;		/* unget rune */
-};
-
-#define PORT(v) ((struct arc_port *)REP(v)._custom.data)
-#define PORTF(v) (PORT(v)->u.file)
-#define PORTS(v) (PORT(v)->u.strfile)
 
 static value file_pp(arc *c, value v)
 {
