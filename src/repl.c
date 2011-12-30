@@ -18,6 +18,8 @@
 */
 #include <stdio.h>
 #include <getopt.h>
+#include <setjmp.h>
+#include <stdarg.h>
 #include "arcueid.h"
 #include "vmengine.h"
 #include "symbols.h"
@@ -27,6 +29,14 @@
 #define DEFAULT_LOADFILE PKGDATA "/arc.arc"
 
 extern int debug;
+
+static jmp_buf err_jmp_buf;
+
+static void error_handler(struct arc *c, const char *fmt, ...)
+{
+  puts(fmt);
+  longjmp(err_jmp_buf, 1);
+}
 
 int main(int argc, char **argv)
 {
@@ -41,6 +51,7 @@ int main(int argc, char **argv)
   arc_init_builtins(c);
   cc.stksize = TSTKSIZE;
   cc.quantum = PQUANTA;
+  cc.signal_error = error_handler;
 
   loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
 
@@ -56,6 +67,7 @@ int main(int argc, char **argv)
   arc_close(c, initload);
 
   /* arc_disasm(c, arc_rep(c, arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "or")))); */
+  setjmp(err_jmp_buf);
   readfp = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN));
   for (;;) {
     printf("arc> ");
