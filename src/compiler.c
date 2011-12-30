@@ -78,10 +78,12 @@ static value macex(arc *c, value e, value once)
     if (!SYMBOL_P(op))
       return(e);
 
+    /*
     if (debug) {
       arc_print_string(c, arc_prettyprint(c, op));
       arc_print_string(c, arc_prettyprint(c, cdr(e)));
     }
+    */
 
     /* Look up the symbol's binding in the global symbol table */
     while (arc_type(c, op = arc_hash_lookup(c, c->genv, op)) == T_SYMBOL)
@@ -89,8 +91,10 @@ static value macex(arc *c, value e, value once)
     if (arc_type(c, op) != ARC_BUILTIN(c, S_MAC))
       return(e);			/* not a macro */
     expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
+    /*
     if (debug)
       arc_print_string(c, arc_prettyprint(c, expansion));
+    */
     e = expansion;
   } while (once == CTRUE);
   return(e);
