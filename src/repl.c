@@ -26,6 +26,123 @@
 #include "utf.h"
 #include "../config.h"
 
+#ifdef HAVE_LIBREADLINE
+#ifdef HAVE_READLINE_H
+#include <readline.h>
+#elif HAVE_READLINE_READLINE_H
+#include <readline/readline.h>
+#endif
+
+#include "io.h"
+
+/* Readline stuff -- NOTE: since libreadline is GPLed, we put this here,
+   so as not to prevent the main libarcueid from being LGPLed instead. */
+
+static value readline_pp(arc *c, value v)
+{
+  return(arc_mkstringc(c, "#<readline-port>"));
+}
+
+static void readline_marker(arc *c, value v, int level,
+			void (*mark)(arc *, value, int))
+{
+  mark(c, PORTS(v).str, level+1);
+}
+
+static void readline_sweeper(arc *c, value v)
+{
+  c->free_block(c, (void *)v);
+}
+
+static int readline_getb(arc *c, struct arc_port *p)
+{
+  static char *line_read = (char *)NULL;
+  int len;
+
+  len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
+  if (p->u.strfile.idx >= len) {
+    /* try to read a new line */
+    if (line_read) {
+      free(line_read);
+      line_read = (char *)NULL;
+    }
+    line_read = readline("arc> ");
+    if (line_read && *line_read)
+      add_history(line_read);
+      p->u.strfile.str = (line_read == NULL) ? CNIL : arc_mkstringc(c, line_read);
+    p->u.strfile.idx = 0;
+    if (line_read == NULL)
+      return(EOF);
+  }
+  return(arc_strindex(c, p->u.strfile.str, p->u.strfile.idx++));
+}
+
+static int readline_putb(arc *c, struct arc_port *p, int byte)
+{
+  c->signal_error(c, "cannot write to a readline port");
+}
+
+/* works just like stringio */
+static int readline_seek(arc *c, struct arc_port *p, int64_t offset, int whence)
+{
+  int64_t len;
+
+  len = (int64_t)arc_strlen(c, p->u.strfile.str);
+  switch (whence) {
+  case SEEK_SET:
+    break;
+  case SEEK_CUR:
+    offset += p->u.strfile.idx;
+    break;
+  case SEEK_END:
+    offset = len - offset;
+    break;
+  default:
+    return(-1);
+  }
+  if (offset >= len || offset < 0)
+    return(-1);
+  p->u.strfile.idx = offset;
+  return(0);
+}
+
+static int64_t readline_tell(arc *c, struct arc_port *p)
+{
+  return(p->u.strfile.idx);
+}
+
+static int readline_close(arc *c, struct arc_port *p)
+{
+  return(0);
+}
+
+value arc_readlineport(arc *c)
+{
+  void *cellptr;
+  value fd;
+
+  cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
+  if (cellptr == NULL)
+    c->signal_error(c, "openstring: cannot allocate memory");
+  fd = (value)cellptr;
+  BTYPE(fd) = T_PORT;
+  REP(fd)._custom.pprint = readline_pp;
+  REP(fd)._custom.marker = readline_marker;
+  REP(fd)._custom.sweeper = readline_sweeper;
+  PORT(fd)->type = FT_STRING;
+  PORTS(fd).idx = 0;
+  PORTS(fd).str = CNIL;
+  PORT(fd)->getb = readline_getb;
+  PORT(fd)->putb = readline_putb;
+  PORT(fd)->seek = readline_seek;
+  PORT(fd)->tell = readline_tell;
+  PORT(fd)->close = readline_close;
+  PORT(fd)->ungetrune = -1;	/* no rune available */
+  return(fd);
+}
+
+#endif
+
 #define DEFAULT_LOADFILE PKGDATA "/arc.arc"
 
 extern int debug;
@@ -68,9 +185,16 @@ int main(int argc, char **argv)
 
   /* arc_disasm(c, arc_rep(c, arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "or")))); */
   setjmp(err_jmp_buf);
+#ifdef HAVE_LIBREADLINE
+  readfp = arc_readlineport(c);
+  arc_bindsym(c, "repl-readline", readfp);
+#else
   readfp = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN));
+#endif
   for (;;) {
+#ifndef HAVE_LIBREADLINE
     printf("arc> ");
+#endif
     sexpr = arc_read(c, readfp);
     if (sexpr == CNIL)
       break;
