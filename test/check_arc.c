@@ -565,6 +565,28 @@ START_TEST(test_withs)
 }
 END_TEST
 
+START_TEST(test_join)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  /* uses upper binding a is 3 */
+  str = arc_mkstringc(c, "(join '(1 2 3) '(4 5 6))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(6));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -614,6 +636,7 @@ int main(void)
   tcase_add_test(tc_arc, test_with);
   tcase_add_test(tc_arc, test_let);
   tcase_add_test(tc_arc, test_withs);
+  tcase_add_test(tc_arc, test_join);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
