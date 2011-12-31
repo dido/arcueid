@@ -210,7 +210,7 @@ value arc_vcptr(arc *c, value cctx)
 /* Disassemble a code object */
 value arc_disasm(arc *c, value code)
 {
-  int codesize, index, nargs;
+  int codesize, index;
   value codeblk;
 
   if (TYPE(code) == T_TAGGED && arc_type(c, code) == ARC_BUILTIN(c, S_MAC)) {
@@ -231,20 +231,7 @@ value arc_disasm(arc *c, value code)
   codesize = VECLEN(VINDEX(code, 0));
   codeblk = VINDEX(code, 0);
   for (index = 0; index < codesize;) {
-    value opcode = VINDEX(codeblk, index);
-
-    printf("%08x %s", index, disasmtbl[opcode].inst);
-    nargs = disasmtbl[opcode].argc;
-    index++;
-    for (;nargs; nargs--) {
-      if (disasmtbl[opcode].jmpflg) {
-	int jaddr = VINDEX(codeblk, index++);
-
-	printf("\t%04x (%02x)", jaddr + index - 2, jaddr);
-      } else {
-	printf("\t%02lx", VINDEX(codeblk, index++));
-      }
-    }
+    index = arc_disasm_inst(c, index, &VINDEX(codeblk, index));
     printf("\n");
   }
 
@@ -261,20 +248,24 @@ value arc_disasm(arc *c, value code)
   return(CNIL);
 }
 
-void arc_disasm_inst(arc *c, int index, value *codeptr)
+int arc_disasm_inst(arc *c, int index, value *codeptr)
 {
   value opcode = *codeptr;
-  int nargs;
+  int nargs, nidx = index;
 
   printf("%08x %s", index, disasmtbl[opcode].inst);
   nargs = disasmtbl[opcode].argc;
   codeptr++;
+  nidx++;
   for (;nargs; nargs--) {
     if (disasmtbl[opcode].jmpflg) {
       int jaddr = *codeptr++;
+      nidx++;
       printf("\t%04x (%02x)", jaddr + index - 2, jaddr);
     } else {
       printf("\t%02lx", *codeptr++);
+      nidx++;
     }
   }
+  return(nidx);
 }
