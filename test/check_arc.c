@@ -22,6 +22,7 @@
 #include <check.h>
 #include <math.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/symbols.h"
@@ -31,7 +32,8 @@ arc *c, cc;
 
 static void error_handler(struct arc *c, const char *fmt, ...)
 {
-  puts(fmt);
+  /* always fail the test if this ever gets called */
+  fail(fmt);
 }
 
 START_TEST(test_do)
@@ -76,6 +78,32 @@ START_TEST(test_do)
 }
 END_TEST
 
+START_TEST(test_safeset)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(safeset foo 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(2));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "foo")) == INT2FIX(2));
+
+  str = arc_mkstringc(c, "(safeset foo 3)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(3));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "foo")) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -84,14 +112,10 @@ int main(void)
   SRunner *sr;
   char *loadstr = "arc.arc";
   value initload, sexpr, cctx, code;
-  char wd[1024];
-
-  getcwd(wd, 1024);
-  printf("%s\n", wd);
 
   c = &cc;
   arc_set_memmgr(c);
-  cc.genv = arc_mkhash(c, 8);
+  cc.genv = arc_mkhash(c, 16);
   arc_init_reader(c);
   arc_init_builtins(c);
   cc.stksize = TSTKSIZE;
@@ -100,8 +124,6 @@ int main(void)
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
   while ((sexpr = arc_read(c, initload)) != CNIL) {
-    /* I don't know why the test fails when run from make without this line */
-    arc_prettyprint(c, sexpr);
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
@@ -111,6 +133,7 @@ int main(void)
   arc_close(c, initload);
 
   tcase_add_test(tc_arc, test_do);
+  tcase_add_test(tc_arc, test_safeset);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
