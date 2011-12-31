@@ -231,7 +231,7 @@ value arc_disasm(arc *c, value code)
   codesize = VECLEN(VINDEX(code, 0));
   codeblk = VINDEX(code, 0);
   for (index = 0; index < codesize;) {
-    index = arc_disasm_inst(c, index, &VINDEX(codeblk, index));
+    index = arc_disasm_inst(c, index, &VINDEX(codeblk, index), code);
     printf("\n");
   }
 
@@ -239,16 +239,18 @@ value arc_disasm(arc *c, value code)
   for (index = 1; index < VECLEN(code); index++) {
     printf("Literal: %02x Type: ", index-1);
     arc_print_string(c, arc_prettyprint(c, arc_type(c, VINDEX(code, index))));
+    printf("\n");
     if (TYPE(VINDEX(code, index)) == T_CODE) {
       arc_disasm(c, VINDEX(code, index));
     } else
       arc_print_string(c, arc_prettyprint(c, VINDEX(code, index)));
+    printf("\n");
   }
   printf("====\n");
   return(CNIL);
 }
 
-int arc_disasm_inst(arc *c, int index, value *codeptr)
+int arc_disasm_inst(arc *c, int index, value *codeptr, value code)
 {
   value opcode = *codeptr;
   int nargs, nidx = index;
@@ -261,7 +263,12 @@ int arc_disasm_inst(arc *c, int index, value *codeptr)
     if (disasmtbl[opcode].jmpflg) {
       int jaddr = *codeptr++;
       nidx++;
-      printf("\t%04x (%02x)", jaddr + index - 2, jaddr);
+      printf("\t%04x (%02x)", jaddr + index, jaddr);
+    } else if (opcode == ildg || opcode == ildl) {
+      printf("\t[");
+      arc_print_string(c, arc_prettyprint(c, CODE_LITERAL(code, *codeptr)));
+      printf("]\t(%02lx)", *codeptr++);
+      nidx++;
     } else {
       printf("\t%02lx", *codeptr++);
       nidx++;
