@@ -694,6 +694,8 @@ value coerce_sym(arc *c, value obj, value argv)
 value coerce_vector(arc *c, value obj, value argv)
 {
   switch (TYPE(obj)) {
+  case T_NIL:
+    return(arc_mkvector(c, 0));
   case T_STRING:
     {
       int len = arc_strlen(c, obj), i;
@@ -722,6 +724,7 @@ value coerce_vector(arc *c, value obj, value argv)
       return(vec);
     }
   default:
+    printf("type = %d\n", TYPE(obj));
     c->signal_error(c, "cannot coerce %O to vector type", obj);
     break;
   }
