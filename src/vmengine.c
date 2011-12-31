@@ -25,6 +25,7 @@
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
+#include "symbols.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -419,9 +420,10 @@ static value c4apply(arc *c, value thr, value avec,
     cont = arc_mkcont(c, retval, thr);
     /* 2. Put the continuation on the continuation register. */
     WB(&TCONR(thr), cons(c, cont, TCONR(thr)));
-    /* 3. Push the parameters for the new call on the stack */
+    /* 3. Push the parameters for the new call on the stack in reverse
+          order */
     nargv = VINDEX(retval, 3);
-    for (i=0; i<VECLEN(nargv); i++) {
+    for (i=VECLEN(nargv)-1; i>=0; i--) {
       CPUSH(thr, VINDEX(nargv, i));
     }
     /* 4. Restart, with the value register pointing to the callee,
@@ -697,22 +699,27 @@ value arc_apply2(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFBEGIN;
   CC4VDEFEND;
   /* we don't care what happens to these variables after */
-  value func, fargv;
-  int i, j;
+  value func, fargv, coerceargv;
+  int i, argc;
 
-  if (VECLEN(argv) < 1) {
+  argc = VECLEN(argv);
+  if (argc < 1) {
     c->signal_error(c, "apply expects at least 1 argument");
     return(CNIL);
   }
   func = VINDEX(argv, 0);
-  fargv = arc_mkvector(c, VECLEN(argv) - 1);
   /* Copy the args for the call */
-  for (i=1,j=VECLEN(argv)-1; i<VECLEN(argv); i++) {
-    VINDEX(fargv, --j) = VINDEX(argv, i);
+  fargv = (argv == 1) ? CNIL : VINDEX(argv, 1);
+  if (argc > 2) {
+    for (i=2; i<argc; i++)
+      fargv = cons(c, fargv, VINDEX(argv, i));
   }
 
+  coerceargv = arc_mkvector(c, 2);
+  VINDEX(coerceargv, 0) = fargv;
+  VINDEX(coerceargv, 1) = ARC_BUILTIN(c, S_VECTOR);
   CC4BEGIN(c);
-  CC4CALLV(c, argv, func, fargv);
+  CC4CALLV(c, argv, func, arc_coerce(c, coerceargv));
   CC4END;
   return(rv);
 }
