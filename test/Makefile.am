@@ -17,10 +17,10 @@
 #
 TESTS = check_arith check_alloc check_hash check_io check_pp \
 	check_unicode check_vm check_ciel check_builtins check_reader \
-	check_gc check_compiler
+	check_gc check_compiler check_arc
 check_PROGRAMS = check_arith check_alloc check_hash check_io \
 	check_pp check_unicode check_vm check_ciel check_builtins \
-	check_reader check_gc check_compiler
+	check_reader check_gc check_compiler check_arc
 
 check_arith_SOURCES = check_arith.c $(top_builddir)/src/arcueid.h
 check_arith_CFLAGS = @CHECK_CFLAGS@
@@ -69,3 +69,7 @@ check_builtins_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 check_compiler_SOURCES = check_compiler.c $(top_builddir)/src/arcueid.h
 check_compiler_CFLAGS = @CHECK_CFLAGS@
 check_compiler_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+check_arc_SOURCES = check_arc.c $(top_builddir)/src/arcueid.h
+check_arc_CFLAGS = @CHECK_CFLAGS@
+check_arc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
