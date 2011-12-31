@@ -472,14 +472,20 @@ static value compile_fn(arc *c, value expr, value ctx, value env,
 			value cont)
 {
   value args, body, nctx, nenv, newcode;
+  int stmts = 0;
 
   args = car(expr);
   body = cdr(expr);
   nctx = arc_mkcctx(c, INT2FIX(1), 0);
   nenv = compile_args(c, args, nctx, env);
   /* the body of a fn works as an implicit do/progn */
-  for (; body; body = cdr(body))
+  for (; body; body = cdr(body)) {
     arc_compile(c, car(body), nctx, nenv, CNIL);
+    stmts++;
+  }
+  /* If we have an empty list of statements add a nil */
+  if (stmts == 0)
+    arc_gcode(c, nctx, inil);
   compile_continuation(c, nctx, CTRUE);
   /* convert the new context into a code object and generate an
      instruction in the present context to load it as a literal,
