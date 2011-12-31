@@ -353,6 +353,102 @@ START_TEST(test_pair)
 }
 END_TEST
 
+START_TEST(test_mac)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(mac foofoo () (list '+ 1 2))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  /* Try to use the macro */
+  str = arc_mkstringc(c, "(+ 10 (foofoo))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(ret) == 13);
+}
+END_TEST
+
+START_TEST(test_and)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(and 1 2 3)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(3));
+
+  str = arc_mkstringc(c, "(and 1 nil 3)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CNIL);
+
+  str = arc_mkstringc(c, "(and nil 3 4)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CNIL);
+}
+END_TEST
+
+START_TEST(test_assoc)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(assoc 'a '((a 1) (b 2)))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == arc_intern_cstr(c, "a"));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(assoc 'b '((a 1) (b 2)))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == arc_intern_cstr(c, "b"));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+
+  str = arc_mkstringc(c, "(assoc 'c '((a 1) (b 2)))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -395,6 +491,9 @@ int main(void)
   tcase_add_test(tc_arc, test_idfn);
   tcase_add_test(tc_arc, test_map1);
   tcase_add_test(tc_arc, test_pair);
+  tcase_add_test(tc_arc, test_mac);
+  tcase_add_test(tc_arc, test_and);
+  tcase_add_test(tc_arc, test_assoc);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
