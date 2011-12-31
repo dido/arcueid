@@ -48,17 +48,17 @@
 
 (def atom (x) (no (acons x)))
 
-; Can return to this def once Rtm gets ac to make all rest args
-; nil-terminated lists.
+; Arcueid's rest args are always nil terminated lists
 
-; (def list args args)
+(def list args args)
 
 (def copylist (xs)
   (if (no xs) 
       nil 
       (cons (car xs) (copylist (cdr xs)))))
 
-(def list args (copylist args))
+;; definition used by arc3
+;; (def list args (copylist args))
 
 (def idfn (x) x)
 
