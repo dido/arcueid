@@ -1192,30 +1192,6 @@ START_TEST(test_builtin_uniq)
 }
 END_TEST
 
-
-START_TEST(test_builtin_apply)
-{
-  value v, func, clos;
-  value cctx;
-
-  cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
-  arc_gcode2(&c, cctx, ienv, 2, -1);
-  arc_gcode1(&c, cctx, imvarg, 0);
-  arc_gcode1(&c, cctx, imvarg, 1);
-  arc_gcode2(&c, cctx, ilde, 0, 1);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode2(&c, cctx, ilde, 0, 0);
-  arc_gcode(&c, cctx, isub);
-  arc_gcode(&c, cctx, iret);
-  func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
-  clos = arc_mkclosure(&c, func, CNIL);
-
-  v=test_builtin("apply", 3, INT2FIX(7), INT2FIX(3), clos);
-  fail_unless(TYPE(v) == T_FIXNUM);
-  fail_unless(v == INT2FIX(4));
-}
-END_TEST
-
 START_TEST(test_builtin_times)
 {
   value v;
@@ -1340,8 +1316,6 @@ int main(void)
   tcase_add_test(tc_bif, test_symbols);
   tcase_add_test(tc_bif, test_ssyntax);
   tcase_add_test(tc_bif, test_builtin_uniq);
-
-  tcase_add_test(tc_bif, test_builtin_apply);
 
   tcase_add_test(tc_bif, test_builtin_times);
 
