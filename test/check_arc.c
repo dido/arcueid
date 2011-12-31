@@ -153,7 +153,7 @@ START_TEST(test_caar)
 {
   value str, sexpr, fp, cctx, code, ret;
 
-  str = arc_mkstringc(c, "(caar '((1 2) 3))");
+  str = arc_mkstringc(c, "(caar '((1 2) 3 4))");
   fp = arc_instring(c, str);
   sexpr = arc_read(c, fp);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
@@ -161,6 +161,37 @@ START_TEST(test_caar)
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
+START_TEST(test_cadr)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(cadr '((1 2) 3 4))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_cddr)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(cddr '((1 2) 3 4))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(3));
 }
 END_TEST
 
