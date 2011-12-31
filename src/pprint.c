@@ -304,7 +304,6 @@ void arc_print_string(arc *c, value str)
     for (j=0; j<nc; j++)
       putchar(buf[j]);
   }
-  putchar('\n');
 }
 
 value arc_prn(arc *c, int argc, char *argv)
