@@ -175,7 +175,7 @@
          `(let ,g ,(car args)
             (if ,g ,g (or ,@(cdr args)))))))
 
-;; (def alist (x) (or (no x) (is (type x) 'cons)))
+(def alist (x) (or (no x) (is (type x) 'cons)))
 
 ;; (mac in (x . choices)
 ;;   (w/uniq g
