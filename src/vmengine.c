@@ -391,6 +391,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TIP(thr) = &VINDEX(code, ip);
   TENVR(thr) = TVALR(thr) = CNIL;
   TTID(thr) = ++c->tid_nonce;
+  TCONR(thr) = CNIL;
   return(thr);
 }
 
