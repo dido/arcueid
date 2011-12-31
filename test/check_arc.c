@@ -191,7 +191,7 @@ START_TEST(test_cddr)
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(TYPE(ret) == T_CONS);
-  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(car(ret) == INT2FIX(4));
 }
 END_TEST
 
@@ -216,6 +216,75 @@ START_TEST(test_no)
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == CNIL);
+}
+END_TEST
+
+START_TEST(test_acons)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(acons nil)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CNIL);
+
+  str = arc_mkstringc(c, "(acons 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CNIL);
+
+  str = arc_mkstringc(c, "(acons '(1 2))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_copylist)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(copylist '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_list)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(list 1 2 3)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
 }
 END_TEST
 
@@ -252,7 +321,12 @@ int main(void)
   tcase_add_test(tc_arc, test_apply);
   tcase_add_test(tc_arc, test_def);
   tcase_add_test(tc_arc, test_caar);
+  tcase_add_test(tc_arc, test_cadr);
+  tcase_add_test(tc_arc, test_cddr);
   tcase_add_test(tc_arc, test_no);
+  tcase_add_test(tc_arc, test_acons);
+  tcase_add_test(tc_arc, test_copylist);
+  tcase_add_test(tc_arc, test_list);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
