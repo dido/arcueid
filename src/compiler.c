@@ -488,7 +488,7 @@ static value compile_fn(arc *c, value expr, value ctx, value env,
   newcode = arc_cctx2code(c, nctx);
   arc_gcode1(c, ctx, ildl, find_literal(c, ctx, newcode));
   arc_gcode(c, ctx, icls);
-  return(compile_continuation(c, nctx, cont));
+  return(compile_continuation(c, ctx, cont));
 }
 
 static value compile_quote(arc *c, value expr, value ctx, value env,
