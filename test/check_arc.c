@@ -539,6 +539,32 @@ START_TEST(test_let)
 }
 END_TEST
 
+START_TEST(test_withs)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  /* uses upper binding a is 3 */
+  str = arc_mkstringc(c, "(let a 3 (with (a 1 b (+ a 1)) (+ a b)))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(5));
+
+  /* uses simultaneous binding, so a is 1 */
+  str = arc_mkstringc(c, "(let a 3 (withs (a 1 b (+ a 1)) (+ a b)))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -587,6 +613,7 @@ int main(void)
   tcase_add_test(tc_arc, test_alref);
   tcase_add_test(tc_arc, test_with);
   tcase_add_test(tc_arc, test_let);
+  tcase_add_test(tc_arc, test_withs);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
