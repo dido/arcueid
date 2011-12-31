@@ -66,9 +66,9 @@ enum builtin_syms {
   S_IM,				/* im */
   S_NUM,			/* num */
   S_SIG,			/* sig */
-  S_STDIN,			/* stdin */
-  S_STDOUT,			/* stdout */
-  S_STDERR,			/* stderr */
+  S_STDIN_FD,			/* stdin-fd */
+  S_STDOUT_FD,			/* stdout-fd */
+  S_STDERR_FD,			/* stderr-fd */
   S_MAC,			/* mac */
   S_IF,				/* if */
   S_ASSIGN,			/* assign */
