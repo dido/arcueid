@@ -42,12 +42,17 @@
 void *alloca (size_t);
 #endif
 
+static void dump_registers(arc *c, value thr)
+{
+}
+
 /* instruction decoding macros */
 #ifdef HAVE_THREADED_INTERPRETER
 /* threaded interpreter */
 #define TRACE(thr)							\
   if (vmtrace) {							\
-    arc_disasm_inst(c, TIP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0), TIP(thr)); \
+    dump_registers(c, thr);						\
+    arc_disasm_inst(c, TIP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0), TIP(thr), TFUNR(thr)); \
     getc(stdin);							\
   }
 #define INST(name) lbl_##name
@@ -653,7 +658,7 @@ value arc_apply2(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFEND;
   /* we don't care what happens to these variables after */
   value func, fargv;
-  int i;
+  int i, j;
 
   if (VECLEN(argv) < 1) {
     c->signal_error(c, "apply expects at least 1 argument");
@@ -662,8 +667,9 @@ value arc_apply2(arc *c, value argv, value rv, CC4CTX)
   func = VINDEX(argv, 0);
   fargv = arc_mkvector(c, VECLEN(argv) - 1);
   /* Copy the args for the call */
-  for (i=0; i<VECLEN(argv)-1; i++)
-    VINDEX(fargv, i) = VINDEX(argv, i+1);
+  for (i=1,j=VECLEN(argv)-1; i<VECLEN(argv); i++) {
+    VINDEX(fargv, --j) = VINDEX(argv, i);
+  }
 
   CC4BEGIN(c);
   CC4CALLV(c, argv, func, fargv);
