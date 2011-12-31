@@ -515,6 +515,30 @@ START_TEST(test_with)
 }
 END_TEST
 
+START_TEST(test_let)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(let x 1 x)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(let x 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -562,6 +586,7 @@ int main(void)
   tcase_add_test(tc_arc, test_assoc);
   tcase_add_test(tc_arc, test_alref);
   tcase_add_test(tc_arc, test_with);
+  tcase_add_test(tc_arc, test_let);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
