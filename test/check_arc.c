@@ -332,6 +332,27 @@ START_TEST(test_map1)
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(4));
 }
 END_TEST
+
+START_TEST(test_pair)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(pair '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(CONS_P(car(ret)));
+  fail_unless(car(car(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(car(ret))) == INT2FIX(2));
+  fail_unless(CONS_P(car(cdr(ret))));
+  fail_unless(car(car(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -373,6 +394,7 @@ int main(void)
   tcase_add_test(tc_arc, test_list);
   tcase_add_test(tc_arc, test_idfn);
   tcase_add_test(tc_arc, test_map1);
+  tcase_add_test(tc_arc, test_pair);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
