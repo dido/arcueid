@@ -26,6 +26,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "utf.h"
+#include "symbols.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -306,11 +307,25 @@ void arc_print_string(arc *c, value str)
   }
 }
 
-value arc_prn(arc *c, int argc, char *argv)
+value arc_prn(arc *c, int argc, value *argv)
 {
   int i;
 
   for (i=0; i<argc; i++)
     arc_print_string(c, arc_prettyprint(c, argv[i]));
   return(argv[argc-1]);
+}
+
+value arc_disp(arc *c, int argc, value *argv)
+{
+  int i;
+  value port, pp, val;
+
+  val = (argc == 0) ? CNIL : argv[0];
+  port = (argc > 2) ? argv[1] : arc_hash_lookup(c, c->genv,
+						ARC_BUILTIN(c, S_STDOUT_FD));
+  pp = arc_prettyprint(c, val);
+  for (i=0; i<arc_strlen(c, pp); i++)
+    arc_writec_rune(c, arc_strindex(c, pp, i), port);
+  return(val);
 }
