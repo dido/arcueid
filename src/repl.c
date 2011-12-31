@@ -212,6 +212,7 @@ int main(int argc, char **argv)
     code = arc_cctx2code(c, cctx);
     ret = arc_macapply(c, code, CNIL);
     arc_print_string(c, arc_prettyprint(c, ret));
+    printf("\n");
     c->rungc(c);
   }
   return(EXIT_SUCCESS);
