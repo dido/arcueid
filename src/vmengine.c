@@ -49,7 +49,7 @@ static void dump_registers(arc *c, value thr)
   printf("VALR = ");
   arc_print_string(c, arc_prettyprint(c, TVALR(thr)));
 
-  printf("\nstack = [");
+  printf("\tstack = [");
   for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
     arc_print_string(c, arc_prettyprint(c, *sv));
     printf(" ");
@@ -57,21 +57,43 @@ static void dump_registers(arc *c, value thr)
   printf("]\n");
 }
 
+static void trace(arc *c, value thr)
+{
+  char str[256];
+  static value *bpofs = NULL;		/* breakpoint offset */
+  static value bp = CNIL;	/* breakpoint function */
+
+  if (bp == TFUNR(thr) && bpofs == TIP(thr)) {
+    bp = CNIL;
+    bpofs = NULL;
+  } else if (bp != CNIL) {
+    return;
+  }
+  dump_registers(c, thr);
+  arc_disasm_inst(c, TIP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0), TIP(thr), TFUNR(thr));
+  printf("\n- ");
+  fgets(str, 256, stdin);
+  if (str[0] == 'n') {
+    value cont = car(TCONR(thr));
+
+    /* create a breakpoint at the next continuation, if any */
+    if (cont == CNIL || TYPE(VINDEX(cont, 0)) == T_XCONT)
+      return;
+    bp = VINDEX(cont, 1);
+    bpofs = &VINDEX(VINDEX(bp, 0), FIX2INT(VINDEX(cont, 0)));
+  }
+}
+
 /* instruction decoding macros */
 #ifdef HAVE_THREADED_INTERPRETER
 /* threaded interpreter */
-#define TRACE(thr)							\
-  if (vmtrace) {							\
-    dump_registers(c, thr);						\
-    arc_disasm_inst(c, TIP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0), TIP(thr), TFUNR(thr)); \
-    getc(stdin);							\
-  }
 #define INST(name) lbl_##name
 #define JTBASE ((void *)&&lbl_inop)
 #define NEXT {							\
     if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
       goto endquantum;						\
-    TRACE(thr);							\
+    if (vmtrace)						\
+      trace(c, thr);						\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #else
 /* switch interpreter */
@@ -86,6 +108,7 @@ int vmtrace = 0;
 
 void arc_vmengine(arc *c, value thr, int quanta)
 {
+
 #ifdef HAVE_THREADED_INTERPRETER
   static const int jumptbl[] = {
 #include "jumptbl.h"
@@ -99,7 +122,8 @@ void arc_vmengine(arc *c, value thr, int quanta)
   TQUANTA(thr) = quanta;
 
 #ifdef HAVE_THREADED_INTERPRETER
-  TRACE(thr);
+  if (vmtrace)
+    trace(c, thr);
   goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
   for (;;) {
