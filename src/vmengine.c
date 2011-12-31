@@ -44,6 +44,17 @@ void *alloca (size_t);
 
 static void dump_registers(arc *c, value thr)
 {
+  value *sv;
+
+  printf("VALR = ");
+  arc_print_string(c, arc_prettyprint(c, TVALR(thr)));
+
+  printf("\nstack = [");
+  for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
+    arc_print_string(c, arc_prettyprint(c, *sv));
+    printf(" ");
+  }
+  printf("]\n");
 }
 
 /* instruction decoding macros */
