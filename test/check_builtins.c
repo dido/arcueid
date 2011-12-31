@@ -1192,9 +1192,10 @@ START_TEST(test_builtin_uniq)
 }
 END_TEST
 
+
 START_TEST(test_builtin_apply)
 {
-  value v, args, func, clos;
+  value v, func, clos;
   value cctx;
 
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(0));
@@ -1209,17 +1210,9 @@ START_TEST(test_builtin_apply)
   func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
   clos = arc_mkclosure(&c, func, CNIL);
 
-  args = arc_mkvector(&c, 2);
-  VINDEX(args, 0) = INT2FIX(7);
-  VINDEX(args, 1) = INT2FIX(3);
-  v=test_builtin("apply", 2, args, clos);
+  v=test_builtin("apply", 3, INT2FIX(7), INT2FIX(3), clos);
   fail_unless(TYPE(v) == T_FIXNUM);
   fail_unless(v == INT2FIX(4));
-
-  args = cons(&c, INT2FIX(10), cons(&c, INT2FIX(7), CNIL));
-  v=test_builtin("apply", 2, args, clos);
-  fail_unless(TYPE(v) == T_FIXNUM);
-  fail_unless(v == INT2FIX(3));
 }
 END_TEST
 
