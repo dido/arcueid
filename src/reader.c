@@ -85,7 +85,7 @@ value arc_read2(arc *c, int argc, value *argv)
   }
 
   
-  fp = (argc == 0) ? arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN))
+  fp = (argc == 0) ? arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD))
     : argv[0];
   return(arc_read(c, fp));
 }
@@ -719,9 +719,9 @@ static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
 			"thread", "vector", "continuation", "closure",
 			"code", "environment", "vmcode", "ccode",
 			"custom", "int", "unknown", "re", "im", "num",
-			"sig", "stdin", "stdout", "stderr", "mac",
-			"if", "assign", "o", ".", "car", "cdr", "scar",
-			"scdr", "is", "+", "-", "*", "/" };
+			"sig", "stdin-fd", "stdout-fd", "stderr-fd",
+			"mac", "if", "assign", "o", ".", "car", "cdr",
+			"scar", "scdr", "is", "+", "-", "*", "/" };
 
 void arc_init_reader(arc *c)
 {
