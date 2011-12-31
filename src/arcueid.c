@@ -397,6 +397,21 @@ value arc_trace(arc *c)
   return(CTRUE);
 }
 
+value arc_stdin(arc *c)
+{
+  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
+}
+
+value arc_stdout(arc *c)
+{
+  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
+}
+
+value arc_stderr(arc *c)
+{
+  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
+}
+
 static struct {
   char *fname;
   int argc;
@@ -439,9 +454,13 @@ static struct {
   { "macex1", 1, arc_macex1 },
   { "uniq", 0, arc_uniq },
 
+  { "stdin", 0, arc_stdin },
+  { "stdout", 0, arc_stdout },
+  { "stderr", 0, arc_stderr },
   { "read", -1, arc_read2 },
 
   { "prn", -1, arc_prn },
+  { "disp", -1, arc_disp },
 
   { "cgenctx", 2, arc_mkcctx},
   { "cptr", 2, arc_vcptr},
@@ -492,9 +511,9 @@ value arc_init_builtins(arc *c)
   arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
 
   /* bindings for stdin, stdout, and stderr */
-  arc_bindsym(c, ARC_BUILTIN(c, S_STDIN), arc_filefp(c, stdin, CNIL));
-  arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT), arc_filefp(c, stdout, CNIL));
-  arc_bindsym(c, ARC_BUILTIN(c, S_STDERR), arc_filefp(c, stderr, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDIN_FD), arc_filefp(c, stdin, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT_FD), arc_filefp(c, stdout, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDERR_FD), arc_filefp(c, stderr, CNIL));
 
   return(CNIL);
 }
