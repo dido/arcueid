@@ -160,8 +160,6 @@ value arc_readlineport(arc *c)
 
 #define DEFAULT_LOADFILE PKGDATA "/arc.arc"
 
-extern int debug;
-
 static jmp_buf err_jmp_buf;
 
 static void error_handler(struct arc *c, const char *fmt, ...)
