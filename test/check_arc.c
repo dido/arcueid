@@ -800,6 +800,32 @@ START_TEST(test_in)
 }
 END_TEST
 
+START_TEST(test_when)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(when t (assign whentest 123))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(123));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+
+  str = arc_mkstringc(c, "(when nil (assign whentest 456))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -860,6 +886,7 @@ int main(void)
      when we test the other functions. */
   tcase_add_test(tc_arc, test_or);
   tcase_add_test(tc_arc, test_in);
+  tcase_add_test(tc_arc, test_when);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
