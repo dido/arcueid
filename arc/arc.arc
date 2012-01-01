@@ -204,285 +204,289 @@
         (when ,gp ,@body (,gf ,test)))
       ,test)))
 
-;; (def empty (seq) 
-;;   (or (no seq) 
-;;       (and (no (acons seq)) (is (len seq) 0))))
+(def empty (seq) 
+  (or (no seq) 
+      (and (no (acons seq)) (is (len seq) 0))))
 
-;; (def reclist (f xs)
-;;   (and xs (or (f xs) (reclist f (cdr xs)))))
+(def reclist (f xs)
+  (and xs (or (f xs) (reclist f (cdr xs)))))
 
-;; (def recstring (test s (o start 0))
-;;   ((afn (i)
-;;      (and (< i (len s))
-;;           (or (test i)
-;;               (self (+ i 1)))))
-;;    start))
+(def recstring (test s (o start 0))
+  ((afn (i)
+     (and (< i (len s))
+          (or (test i)
+              (self (+ i 1)))))
+   start))
 
-;; (def testify (x)
-;;   (if (isa x 'fn) x [is _ x]))
+(def testify (x)
+  (if (isa x 'fn) x [is _ x]))
 
-;; ; Like keep, seems like some shouldn't testify.  But find should,
-;; ; and all probably should.
+; Like keep, seems like some shouldn't testify.  But find should,
+; and all probably should.
 
-;; (def some (test seq)
-;;   (let f (testify test)
-;;     (if (alist seq)
-;;         (reclist f:car seq)
-;;         (recstring f:seq seq))))
+(def some (test seq)
+  (let f (testify test)
+    (if (alist seq)
+        (reclist f:car seq)
+        (recstring f:seq seq))))
 
-;; (def all (test seq) 
-;;   (~some (complement (testify test)) seq))
+(def all (test seq) 
+  (~some (complement (testify test)) seq))
        
-;; (def mem (test seq)
-;;   (let f (testify test)
-;;     (reclist [if (f:car _) _] seq)))
+(def mem (test seq)
+  (let f (testify test)
+    (reclist [if (f:car _) _] seq)))
 
-;; (def find (test seq)
-;;   (let f (testify test)
-;;     (if (alist seq)
-;;         (reclist   [if (f:car _) (car _)] seq)
-;;         (recstring [if (f:seq _) (seq _)] seq))))
+(def find (test seq)
+  (let f (testify test)
+    (if (alist seq)
+        (reclist   [if (f:car _) (car _)] seq)
+        (recstring [if (f:seq _) (seq _)] seq))))
 
-;; (def isa (x y) (is (type x) y))
+(def isa (x y) (is (type x) y))
 
-;; ; Possible to write map without map1, but makes News 3x slower.
+; Possible to write map without map1, but makes News 3x slower.
 
-;; ;(def map (f . seqs)
-;; ;  (if (some1 no seqs)
-;; ;       nil
-;; ;      (no (cdr seqs))
-;; ;       (let s1 (car seqs)
-;; ;         (cons (f (car s1))
-;; ;               (map f (cdr s1))))
-;; ;      (cons (apply f (map car seqs))
-;; ;            (apply map f (map cdr seqs)))))
+;(def map (f . seqs)
+;  (if (some1 no seqs)
+;       nil
+;      (no (cdr seqs))
+;       (let s1 (car seqs)
+;         (cons (f (car s1))
+;               (map f (cdr s1))))
+;      (cons (apply f (map car seqs))
+;            (apply map f (map cdr seqs)))))
 
 
-;; (def map (f . seqs)
-;;   (if (some [isa _ 'string] seqs) 
-;;        (withs (n   (apply min (map len seqs))
-;;                new (newstring n))
-;;          ((afn (i)
-;;             (if (is i n)
-;;                 new
-;;                 (do (sref new (apply f (map [_ i] seqs)) i)
-;;                     (self (+ i 1)))))
-;;           0))
-;;       (no (cdr seqs)) 
-;;        (map1 f (car seqs))
-;;       ((afn (seqs)
-;;         (if (some no seqs)  
-;;             nil
-;;             (cons (apply f (map1 car seqs))
-;;                   (self (map1 cdr seqs)))))
-;;        seqs)))
+(def map (f . seqs)
+  (if (some [isa _ 'string] seqs) 
+       (withs (n   (apply min (map len seqs))
+               new (newstring n))
+         ((afn (i)
+            (if (is i n)
+                new
+                (do (sref new (apply f (map [_ i] seqs)) i)
+                    (self (+ i 1)))))
+          0))
+      (no (cdr seqs)) 
+       (map1 f (car seqs))
+      ((afn (seqs)
+        (if (some no seqs)  
+            nil
+            (cons (apply f (map1 car seqs))
+                  (self (map1 cdr seqs)))))
+       seqs)))
 
-;; (def mappend (f . args)
-;;   (apply + nil (apply map f args)))
+(def mappend (f . args)
+  (apply + nil (apply map f args)))
 
-;; (def firstn (n xs)
-;;   (if (no n)            xs
-;;       (and (> n 0) xs)  (cons (car xs) (firstn (- n 1) (cdr xs)))
-;;                         nil))
+(def firstn (n xs)
+  (if (no n)            xs
+      (and (> n 0) xs)  (cons (car xs) (firstn (- n 1) (cdr xs)))
+                        nil))
 
-;; (def nthcdr (n xs)
-;;   (if (no n)  xs
-;;       (> n 0) (nthcdr (- n 1) (cdr xs))
-;;               xs))
+(def nthcdr (n xs)
+  (if (no n)  xs
+      (> n 0) (nthcdr (- n 1) (cdr xs))
+              xs))
 
-;; ; Generalization of pair: (tuples x) = (pair x)
+; Generalization of pair: (tuples x) = (pair x)
 
-;; (def tuples (xs (o n 2))
-;;   (if (no xs)
-;;       nil
-;;       (cons (firstn n xs)
-;;             (tuples (nthcdr n xs) n))))
+(def tuples (xs (o n 2))
+  (if (no xs)
+      nil
+      (cons (firstn n xs)
+            (tuples (nthcdr n xs) n))))
 
-;; ; If ok to do with =, why not with def?  But see if use it.
+; If ok to do with =, why not with def?  But see if use it.
 
-;; (mac defs args
-;;   `(do ,@(map [cons 'def _] (tuples args 3))))
+(mac defs args
+  `(do ,@(map [cons 'def _] (tuples args 3))))
 
-;; (def caris (x val) 
-;;   (and (acons x) (is (car x) val)))
+(def caris (x val) 
+  (and (acons x) (is (car x) val)))
 
-;; (def warn (msg . args)
-;;   (disp (+ "Warning: " msg ". "))
-;;   (map [do (write _) (disp " ")] args)
-;;   (disp #\newline))
+(def warn (msg . args)
+  (disp (+ "Warning: " msg ". "))
+  (map [do (write _) (disp " ")] args)
+  (disp #\newline))
 
-;; (mac atomic body
-;;   `(atomic-invoke (fn () ,@body)))
+;; XXX - does nothing really special for now.  Once we have threads
+;; this will be defined in the core somehow.
+(def atomic-invoke (args) (args))
 
-;; (mac atlet args
-;;   `(atomic (let ,@args)))
+(mac atomic body
+  `(atomic-invoke (fn () ,@body)))
+
+(mac atlet args
+  `(atomic (let ,@args)))
   
-;; (mac atwith args
-;;   `(atomic (with ,@args)))
+(mac atwith args
+  `(atomic (with ,@args)))
 
-;; (mac atwiths args
-;;   `(atomic (withs ,@args)))
+(mac atwiths args
+  `(atomic (withs ,@args)))
 
 
-;; ; setforms returns (vars get set) for a place based on car of an expr
-;; ;  vars is a list of gensyms alternating with expressions whose vals they
-;; ;   should be bound to, suitable for use as first arg to withs
-;; ;  get is an expression returning the current value in the place
-;; ;  set is an expression representing a function of one argument
-;; ;   that stores a new value in the place
+; setforms returns (vars get set) for a place based on car of an expr
+;  vars is a list of gensyms alternating with expressions whose vals they
+;   should be bound to, suitable for use as first arg to withs
+;  get is an expression returning the current value in the place
+;  set is an expression representing a function of one argument
+;   that stores a new value in the place
 
-;; ; A bit gross that it works based on the *name* in the car, but maybe
-;; ; wrong to worry.  Macros live in expression land.
+; A bit gross that it works based on the *name* in the car, but maybe
+; wrong to worry.  Macros live in expression land.
 
-;; ; seems meaningful to e.g. (push 1 (pop x)) if (car x) is a cons.
-;; ; can't in cl though.  could I define a setter for push or pop?
+; seems meaningful to e.g. (push 1 (pop x)) if (car x) is a cons.
+; can't in cl though.  could I define a setter for push or pop?
 
-;; (assign setter (table))
+(assign setter (table))
 
-;; (mac defset (name parms . body)
-;;   (w/uniq gexpr
-;;     `(sref setter 
-;;            (fn (,gexpr)
-;;              (let ,parms (cdr ,gexpr)
-;;                ,@body))
-;;            ',name)))
+(mac defset (name parms . body)
+  (w/uniq gexpr
+    `(sref setter 
+           (fn (,gexpr)
+             (let ,parms (cdr ,gexpr)
+               ,@body))
+           ',name)))
 
-;; (defset car (x)
-;;   (w/uniq g
-;;     (list (list g x)
-;;           `(car ,g)
-;;           `(fn (val) (scar ,g val)))))
+(defset car (x)
+  (w/uniq g
+    (list (list g x)
+          `(car ,g)
+          `(fn (val) (scar ,g val)))))
 
-;; (defset cdr (x)
-;;   (w/uniq g
-;;     (list (list g x)
-;;           `(cdr ,g)
-;;           `(fn (val) (scdr ,g val)))))
+(defset cdr (x)
+  (w/uniq g
+    (list (list g x)
+          `(cdr ,g)
+          `(fn (val) (scdr ,g val)))))
 
-;; (defset caar (x)
-;;   (w/uniq g
-;;     (list (list g x)
-;;           `(caar ,g)
-;;           `(fn (val) (scar (car ,g) val)))))
+(defset caar (x)
+  (w/uniq g
+    (list (list g x)
+          `(caar ,g)
+          `(fn (val) (scar (car ,g) val)))))
 
-;; (defset cadr (x)
-;;   (w/uniq g
-;;     (list (list g x)
-;;           `(cadr ,g)
-;;           `(fn (val) (scar (cdr ,g) val)))))
+(defset cadr (x)
+  (w/uniq g
+    (list (list g x)
+          `(cadr ,g)
+          `(fn (val) (scar (cdr ,g) val)))))
 
-;; (defset cddr (x)
-;;   (w/uniq g
-;;     (list (list g x)
-;;           `(cddr ,g)
-;;           `(fn (val) (scdr (cdr ,g) val)))))
+(defset cddr (x)
+  (w/uniq g
+    (list (list g x)
+          `(cddr ,g)
+          `(fn (val) (scdr (cdr ,g) val)))))
 
-;; ; Note: if expr0 macroexpands into any expression whose car doesn't
-;; ; have a setter, setforms assumes it's a data structure in functional 
-;; ; position.  Such bugs will be seen only when the code is executed, when 
-;; ; sref complains it can't set a reference to a function.
+; Note: if expr0 macroexpands into any expression whose car doesn't
+; have a setter, setforms assumes it's a data structure in functional 
+; position.  Such bugs will be seen only when the code is executed, when 
+; sref complains it can't set a reference to a function.
 
-;; (def setforms (expr0)
-;;   (let expr (macex expr0)
-;;     (if (isa expr 'sym)
-;;          (if (ssyntax expr)
-;;              (setforms (ssexpand expr))
-;;              (w/uniq (g h)
-;;                (list (list g expr)
-;;                      g
-;;                      `(fn (,h) (assign ,expr ,h)))))
-;;         ; make it also work for uncompressed calls to compose
-;;         (and (acons expr) (metafn (car expr)))
-;;          (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
-;;         (and (acons expr) (acons (car expr)) (is (caar expr) 'get))
-;;          (setforms (list (cadr expr) (cadr (car expr))))
-;;          (let f (setter (car expr))
-;;            (if f
-;;                (f expr)
-;;                ; assumed to be data structure in fn position
-;;                (do (when (caris (car expr) 'fn)
-;;                      (warn "Inverting what looks like a function call"
-;;                            expr0 expr))
-;;                    (w/uniq (g h)
-;;                      (let argsyms (map [uniq] (cdr expr))
-;;                         (list (+ (list g (car expr))
-;;                                  (mappend list argsyms (cdr expr)))
-;;                               `(,g ,@argsyms)
-;;                               `(fn (,h) (sref ,g ,h ,(car argsyms))))))))))))
+(def setforms (expr0)
+  (let expr (macex expr0)
+    (if (isa expr 'sym)
+         (if (ssyntax expr)
+             (setforms (ssexpand expr))
+             (w/uniq (g h)
+               (list (list g expr)
+                     g
+                     `(fn (,h) (assign ,expr ,h)))))
+        ; make it also work for uncompressed calls to compose
+        (and (acons expr) (metafn (car expr)))
+         (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
+        (and (acons expr) (acons (car expr)) (is (caar expr) 'get))
+         (setforms (list (cadr expr) (cadr (car expr))))
+         (let f (setter (car expr))
+           (if f
+               (f expr)
+               ; assumed to be data structure in fn position
+               (do (when (caris (car expr) 'fn)
+                     (warn "Inverting what looks like a function call"
+                           expr0 expr))
+                   (w/uniq (g h)
+                     (let argsyms (map [uniq] (cdr expr))
+                        (list (+ (list g (car expr))
+                                 (mappend list argsyms (cdr expr)))
+                              `(,g ,@argsyms)
+                              `(fn (,h) (sref ,g ,h ,(car argsyms))))))))))))
 
-;; (def metafn (x)
-;;   (or (ssyntax x)
-;;       (and (acons x) (in (car x) 'compose 'complement))))
+(def metafn (x)
+  (or (ssyntax x)
+      (and (acons x) (in (car x) 'compose 'complement))))
 
-;; (def expand-metafn-call (f args)
-;;   (if (is (car f) 'compose)
-;;        ((afn (fs)
-;;           (if (caris (car fs) 'compose)            ; nested compose
-;;                (self (join (cdr (car fs)) (cdr fs)))
-;;               (cdr fs)
-;;                (list (car fs) (self (cdr fs)))
-;;               (cons (car fs) args)))
-;;         (cdr f))
-;;       (is (car f) 'no)
-;;        (err "Can't invert " (cons f args))
-;;        (cons f args)))
+(def expand-metafn-call (f args)
+  (if (is (car f) 'compose)
+       ((afn (fs)
+          (if (caris (car fs) 'compose)            ; nested compose
+               (self (join (cdr (car fs)) (cdr fs)))
+              (cdr fs)
+               (list (car fs) (self (cdr fs)))
+              (cons (car fs) args)))
+        (cdr f))
+      (is (car f) 'no)
+       (err "Can't invert " (cons f args))
+       (cons f args)))
 
-;; (def expand= (place val)
-;;   (if (and (isa place 'sym) (~ssyntax place))
-;;       `(assign ,place ,val)
-;;       (let (vars prev setter) (setforms place)
-;;         (w/uniq g
-;;           `(atwith ,(+ vars (list g val))
-;;              (,setter ,g))))))
+(def expand= (place val)
+  (if (and (isa place 'sym) (~ssyntax place))
+      `(assign ,place ,val)
+      (let (vars prev setter) (setforms place)
+        (w/uniq g
+          `(atwith ,(+ vars (list g val))
+             (,setter ,g))))))
 
-;; (def expand=list (terms)
-;;   `(do ,@(map (fn ((p v)) (expand= p v))  ; [apply expand= _]
-;;                   (pair terms))))
+(def expand=list (terms)
+  `(do ,@(map (fn ((p v)) (expand= p v))  ; [apply expand= _]
+                  (pair terms))))
 
-;; (mac = args
-;;   (expand=list args))
+(mac = args
+  (expand=list args))
 
-;; (mac loop (start test update . body)
-;;   (w/uniq (gfn gparm)
-;;     `(do ,start
-;;          ((rfn ,gfn (,gparm) 
-;;             (if ,gparm
-;;                 (do ,@body ,update (,gfn ,test))))
-;;           ,test))))
+(mac loop (start test update . body)
+  (w/uniq (gfn gparm)
+    `(do ,start
+         ((rfn ,gfn (,gparm) 
+            (if ,gparm
+                (do ,@body ,update (,gfn ,test))))
+          ,test))))
 
-;; (mac for (v init max . body)
-;;   (w/uniq (gi gm)
-;;     `(with (,v nil ,gi ,init ,gm (+ ,max 1))
-;;        (loop (assign ,v ,gi) (< ,v ,gm) (assign ,v (+ ,v 1))
-;;          ,@body))))
+(mac for (v init max . body)
+  (w/uniq (gi gm)
+    `(with (,v nil ,gi ,init ,gm (+ ,max 1))
+       (loop (assign ,v ,gi) (< ,v ,gm) (assign ,v (+ ,v 1))
+         ,@body))))
 
-;; (mac down (v init min . body)
-;;   (w/uniq (gi gm)
-;;     `(with (,v nil ,gi ,init ,gm (- ,min 1))
-;;        (loop (assign ,v ,gi) (> ,v ,gm) (assign ,v (- ,v 1))
-;;          ,@body))))
+(mac down (v init min . body)
+  (w/uniq (gi gm)
+    `(with (,v nil ,gi ,init ,gm (- ,min 1))
+       (loop (assign ,v ,gi) (> ,v ,gm) (assign ,v (- ,v 1))
+         ,@body))))
 
-;; (mac repeat (n . body)
-;;   `(for ,(uniq) 1 ,n ,@body))
+(mac repeat (n . body)
+  `(for ,(uniq) 1 ,n ,@body))
 
-;; ; could bind index instead of gensym
+; could bind index instead of gensym
 
-;; (mac each (var expr . body)
-;;   (w/uniq (gseq gf gv)
-;;     `(let ,gseq ,expr
-;;        (if (alist ,gseq)
-;;             ((rfn ,gf (,gv)
-;;                (when (acons ,gv)
-;;                  (let ,var (car ,gv) ,@body)
-;;                  (,gf (cdr ,gv))))
-;;              ,gseq)
-;;            (isa ,gseq 'table)
-;;             (maptable (fn ,var ,@body)
-;;                       ,gseq)
-;;             (for ,gv 0 (- (len ,gseq) 1)
-;;               (let ,var (,gseq ,gv) ,@body))))))
+(mac each (var expr . body)
+  (w/uniq (gseq gf gv)
+    `(let ,gseq ,expr
+       (if (alist ,gseq)
+            ((rfn ,gf (,gv)
+               (when (acons ,gv)
+                 (let ,var (car ,gv) ,@body)
+                 (,gf (cdr ,gv))))
+             ,gseq)
+           (isa ,gseq 'table)
+            (maptable (fn ,var ,@body)
+                      ,gseq)
+            (for ,gv 0 (- (len ,gseq) 1)
+              (let ,var (,gseq ,gv) ,@body))))))
 
-;; ; (nthcdr x y) = (cut y x).
+; (nthcdr x y) = (cut y x).
 
 ;; (def cut (seq start (o end))
 ;;   (let end (if (no end)   (len seq)
