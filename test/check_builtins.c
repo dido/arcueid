@@ -90,22 +90,6 @@ START_TEST(test_builtin_lt)
 }
 END_TEST
 
-START_TEST(test_builtin_gte)
-{
-  fail_unless(test_builtin(">=", 2, INT2FIX(31337), INT2FIX(31338)) == CTRUE);
-  fail_unless(test_builtin(">=", 2, INT2FIX(31337), INT2FIX(31337)) == CTRUE);
-  fail_unless(test_builtin(">=", 2, INT2FIX(31338), INT2FIX(31337)) == CNIL);
-}
-END_TEST
-
-START_TEST(test_builtin_lte)
-{
-  fail_unless(test_builtin("<=", 2, INT2FIX(31338), INT2FIX(31337)) == CTRUE);
-  fail_unless(test_builtin("<=", 2, INT2FIX(31337), INT2FIX(31338)) == CNIL);
-  fail_unless(test_builtin("<=", 2, INT2FIX(31337), INT2FIX(31337)) == CTRUE);
-}
-END_TEST
-
 START_TEST(test_builtin_bound)
 {
   fail_unless(test_builtin("bound", 1, arc_intern_cstr(&c, "bound")) == CTRUE);
@@ -1274,8 +1258,6 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_iso);
   tcase_add_test(tc_bif, test_builtin_gt);
   tcase_add_test(tc_bif, test_builtin_lt);
-  tcase_add_test(tc_bif, test_builtin_gte);
-  tcase_add_test(tc_bif, test_builtin_lte);
   tcase_add_test(tc_bif, test_builtin_bound);
   tcase_add_test(tc_bif, test_builtin_exact);
   tcase_add_test(tc_bif, test_builtin_spaceship);
