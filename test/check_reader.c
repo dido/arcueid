@@ -146,6 +146,13 @@ START_TEST(test_character)
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'a');
 
+  /* Issue #15 */
+  str = arc_mkstringc(&c, "#\\;");
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(REP(sexpr)._char == ';');
+
   str = arc_mkstringc(&c, "#\\\351\276\215");
   fp = arc_instring(&c, str);
   sexpr = arc_read(&c, fp);
