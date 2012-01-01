@@ -951,6 +951,63 @@ value __arc_amul_2exp(arc *c, value acc, value arg1, int n)
 
 }
 
+value __arc_add(arc *c, int argc, value *argv)
+{
+  value sum = INT2FIX(0);
+  int i;
+
+  for (i=0; i<argc; i++)
+    sum = __arc_add2(c, sum, argv[i]);
+  return(sum);
+}
+
+value __arc_sub(arc *c, int argc, value *argv)
+{
+  value diff = INT2FIX(0);
+  int i = 0;
+
+  if (argc < 1) {
+    c->signal_error(c, "-: expects at least 1 argument, given %d", argc);
+    return(CNIL);
+  }
+  if (argc > 1) {
+    diff = argv[0];
+    i = 1;
+  }
+
+  for (; i<argc; i++)
+    diff = __arc_sub2(c, diff, argv[i]);
+  return(diff);
+}
+
+value __arc_mul(arc *c, int argc, value *argv)
+{
+  value prod = INT2FIX(1);
+  int i;
+
+  for (i=0; i<argc; i++)
+    prod = __arc_mul2(c, prod, argv[i]);
+  return(prod);
+}
+
+value __arc_div(arc *c, int argc, value *argv)
+{
+  value quot = INT2FIX(1);
+  int i = 0;
+
+  if (argc < 1) {
+    c->signal_error(c, "/: expects at least 1 argument, given %d", argc);
+    return(CNIL);
+  }
+  if (argc > 1) {
+    quot = argv[0];
+    i = 1;
+  }
+
+  for (; i<argc; i++)
+    quot = __arc_div2(c, quot, argv[i]);
+  return(quot);
+}
 
 static value rune2dig(Rune r, int radix)
 {
