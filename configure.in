@@ -18,7 +18,7 @@
 # 02110-1301 USA.
 #
 AC_PREREQ(2.61)
-AC_INIT([Arcueid], [0.0.1], [dido@imperium.ph])
+AC_INIT([Arcueid], [0.0.2], [dido@imperium.ph])
 AC_CONFIG_SRCDIR([src/alloc.c])
 
 AM_INIT_AUTOMAKE([-Wall -Werror])
