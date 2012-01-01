@@ -827,58 +827,6 @@ START_TEST(test_builtin_atr)
 }
 END_TEST
 
-START_TEST(test_builtin_abs)
-{
-  value val;
-#ifdef HAVE_GMP_H
-  mpz_t expected;
-#endif
-
-  fail_unless(test_builtin("abs", 1, INT2FIX(1)) == INT2FIX(1));
-  fail_unless(test_builtin("abs", 1, INT2FIX(-1)) == INT2FIX(1));
-
-  val = test_builtin("abs", 1, arc_mkflonum(&c, 1.0));
-  fail_unless(TYPE(val) == T_FLONUM);
-  fail_unless(fabs(REP(val)._flonum - 1.0) < 1e-6);
-
-  val = test_builtin("abs", 1, arc_mkflonum(&c, -1.0));
-  fail_unless(TYPE(val) == T_FLONUM);
-  fail_unless(fabs(REP(val)._flonum - 1.0) < 1e-6);
-
-  val = test_builtin("abs", 1, arc_mkcomplex(&c, 2.0, 2.0));
-  fail_unless(TYPE(val) == T_FLONUM);
-  fail_unless(fabs(REP(val)._flonum - 2.82842712474619) < 1e-6);
-
-#ifdef HAVE_GMP_H
-  mpz_init(expected);
-  mpz_set_str(expected, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
-  val = arc_mkbignuml(&c, 0);
-  mpz_set_str(REP(val)._bignum, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
-  val = test_builtin("abs", 1, val);
-  fail_unless(TYPE(val) == T_BIGNUM);
-  fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
-
-  mpz_set_str(REP(val)._bignum, "-10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
-  val = test_builtin("abs", 1, val);
-  fail_unless(TYPE(val) == T_BIGNUM);
-  fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
-  mpz_clear(expected);
-
-  val = arc_mkrationall(&c, 1, 2);
-  val = test_builtin("abs", 1, val);
-  fail_unless(TYPE(val) == T_RATIONAL);
-  fail_unless(mpq_cmp_ui(REP(val)._rational, 1, 2) == 0);
-
-  val = arc_mkrationall(&c, -1, 2);
-  val = test_builtin("abs", 1, val);
-  fail_unless(TYPE(val) == T_RATIONAL);
-  fail_unless(mpq_cmp_ui(REP(val)._rational, 1, 2) == 0);
-
-#endif
-
-}
-END_TEST
-
 START_TEST(test_builtin_pow)
 {
   value val;
@@ -1280,7 +1228,6 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_expt);
   tcase_add_test(tc_bif, test_builtin_pow);
   tcase_add_test(tc_bif, test_builtin_mod);
-  tcase_add_test(tc_bif, test_builtin_abs);
   tcase_add_test(tc_bif, test_builtin_rand);
 
   tcase_add_test(tc_bif, test_builtin_table);
