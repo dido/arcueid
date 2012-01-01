@@ -307,15 +307,6 @@ void arc_print_string(arc *c, value str)
   }
 }
 
-value arc_prn(arc *c, int argc, value *argv)
-{
-  int i;
-
-  for (i=0; i<argc; i++)
-    arc_print_string(c, arc_prettyprint(c, argv[i]));
-  return(argv[argc-1]);
-}
-
 value arc_disp(arc *c, int argc, value *argv)
 {
   int i;
