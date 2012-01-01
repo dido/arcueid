@@ -843,15 +843,6 @@ START_TEST(test_builtin_atr)
 }
 END_TEST
 
-START_TEST(test_builtin_sym)
-{
-  value val;
-
-  val = test_builtin("sym", 1, arc_mkstringc(&c, "foobar"));
-  fail_unless(val == arc_intern_cstr(&c, "foobar"));
-}
-END_TEST
-
 START_TEST(test_builtin_abs)
 {
   value val;
@@ -1302,7 +1293,6 @@ int main(void)
   tcase_add_test(tc_bif, test_builtin_coerce_char);
   tcase_add_test(tc_bif, test_builtin_coerce_num);
   tcase_add_test(tc_bif, test_builtin_atr);
-  tcase_add_test(tc_bif, test_builtin_sym);
 
   tcase_add_test(tc_bif, test_builtin_idiv);
   tcase_add_test(tc_bif, test_builtin_expt);
