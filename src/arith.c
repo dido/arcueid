@@ -406,6 +406,18 @@ value __arc_add2(arc *c, value arg1, value arg2)
       return(arc_mkbignuml(c, fixnum_sum));
     return(INT2FIX(fixnum_sum));
   } 
+
+  /* Frankly, I think overloading + in this way is a mistake,
+     but it is not my design decision. */
+  if ((NIL_P(arg1) || TYPE(arg1) == T_CONS)
+      && (NIL_P(arg2) || TYPE(arg2) == T_CONS)) {
+    if (arg1 == CNIL)
+      return(arg2);
+    if (arg2 == CNIL)
+      return(arg1);
+    return(arc_list_append(arg1, arg2));
+  }
+
   TYPE_CASES(add, arg1, arg2);
 
   c->signal_error(c, "Invalid types for addition");
@@ -955,6 +967,9 @@ value __arc_add(arc *c, int argc, value *argv)
 {
   value sum = INT2FIX(0);
   int i;
+
+  if (argc > 0 && (NIL_P(argv[0]) || CONS_P(argv[0])))
+      sum = CNIL;
 
   for (i=0; i<argc; i++)
     sum = __arc_add2(c, sum, argv[i]);
