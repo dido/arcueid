@@ -34,4 +34,9 @@ extern value __arc_amul_2exp(arc *c, value acc, value arg1, int n);
 extern value __arc_itoa(arc *c, value num, value base, int uc, int sign);
 extern value __arc_abs(arc *c, value v);
 
+extern value __arc_add(arc *c, int argc, value *argv);
+extern value __arc_sub(arc *c, int argc, value *argv);
+extern value __arc_mul(arc *c, int argc, value *argv);
+extern value __arc_div(arc *c, int argc, value *argv);
+
 #endif
