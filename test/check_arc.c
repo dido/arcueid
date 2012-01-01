@@ -641,6 +641,48 @@ START_TEST(test_compose)
 }
 END_TEST
 
+START_TEST(test_complement)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "((complement atom) 'foo)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+
+  str = arc_mkstringc(c, "((complement atom) '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+
+  str = arc_mkstringc(c, "(~atom 'foo)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+
+  str = arc_mkstringc(c, "(~atom '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -694,6 +736,7 @@ int main(void)
   tcase_add_test(tc_arc, test_rfn);
   tcase_add_test(tc_arc, test_afn);
   tcase_add_test(tc_arc, test_compose);
+  tcase_add_test(tc_arc, test_complement);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
