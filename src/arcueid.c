@@ -432,7 +432,6 @@ static struct {
   { "expt", 2, arc_expt },
   { "pow", 2, arc_expt },
   { "mod", 2, __arc_mod2 },
-  { "abs", 1, __arc_abs },
   { "srand", 1, arc_srand },
   { "rand", -1, arc_rand },
 
