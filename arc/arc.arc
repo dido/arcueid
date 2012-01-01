@@ -923,79 +923,79 @@
 ;   (w/uniq (a b)
 ;     `(with (,a ,x ,b ,y) (if (> ,a ,b) ,a ,b))))
 
-;; (def most (f seq) 
-;;   (unless (no seq)
-;;     (withs (wins (car seq) topscore (f wins))
-;;       (each elt (cdr seq)
-;;         (let score (f elt)
-;;           (if (> score topscore) (= wins elt topscore score))))
-;;       wins)))
+(def most (f seq) 
+  (unless (no seq)
+    (withs (wins (car seq) topscore (f wins))
+      (each elt (cdr seq)
+        (let score (f elt)
+          (if (> score topscore) (= wins elt topscore score))))
+      wins)))
 
-;; ; Insert so that list remains sorted.  Don't really want to expose
-;; ; these but seem to have to because can't include a fn obj in a 
-;; ; macroexpansion.
+; Insert so that list remains sorted.  Don't really want to expose
+; these but seem to have to because can't include a fn obj in a 
+; macroexpansion.
   
-;; (def insert-sorted (test elt seq)
-;;   (if (no seq)
-;;        (list elt) 
-;;       (test elt (car seq)) 
-;;        (cons elt seq)
-;;       (cons (car seq) (insert-sorted test elt (cdr seq)))))
+(def insert-sorted (test elt seq)
+  (if (no seq)
+       (list elt) 
+      (test elt (car seq)) 
+       (cons elt seq)
+      (cons (car seq) (insert-sorted test elt (cdr seq)))))
 
-;; (mac insort (test elt seq)
-;;   `(zap [insert-sorted ,test ,elt _] ,seq))
+(mac insort (test elt seq)
+  `(zap [insert-sorted ,test ,elt _] ,seq))
 
-;; (def reinsert-sorted (test elt seq)
-;;   (if (no seq) 
-;;        (list elt) 
-;;       (is elt (car seq))
-;;        (reinsert-sorted test elt (cdr seq))
-;;       (test elt (car seq)) 
-;;        (cons elt (rem elt seq))
-;;       (cons (car seq) (reinsert-sorted test elt (cdr seq)))))
+(def reinsert-sorted (test elt seq)
+  (if (no seq) 
+       (list elt) 
+      (is elt (car seq))
+       (reinsert-sorted test elt (cdr seq))
+      (test elt (car seq)) 
+       (cons elt (rem elt seq))
+      (cons (car seq) (reinsert-sorted test elt (cdr seq)))))
 
-;; (mac insortnew (test elt seq)
-;;   `(zap [reinsert-sorted ,test ,elt _] ,seq))
+(mac insortnew (test elt seq)
+  `(zap [reinsert-sorted ,test ,elt _] ,seq))
 
-;; ; Could make this look at the sig of f and return a fn that took the 
-;; ; right no of args and didn't have to call apply (or list if 1 arg).
+; Could make this look at the sig of f and return a fn that took the 
+; right no of args and didn't have to call apply (or list if 1 arg).
 
-;; (def memo (f)
-;;   (with (cache (table) nilcache (table))
-;;     (fn args
-;;       (or (cache args)
-;;           (and (no (nilcache args))
-;;                (aif (apply f args)
-;;                     (= (cache args) it)
-;;                     (do (set (nilcache args))
-;;                         nil)))))))
+(def memo (f)
+  (with (cache (table) nilcache (table))
+    (fn args
+      (or (cache args)
+          (and (no (nilcache args))
+               (aif (apply f args)
+                    (= (cache args) it)
+                    (do (set (nilcache args))
+                        nil)))))))
 
 
-;; (mac defmemo (name parms . body)
-;;   `(safeset ,name (memo (fn ,parms ,@body))))
+(mac defmemo (name parms . body)
+  `(safeset ,name (memo (fn ,parms ,@body))))
 
-;; (def <= args
-;;   (or (no args)
-;;       (no (cdr args))
-;;       (and (no (> (car args) (cadr args)))
-;;            (apply <= (cdr args)))))
+(def <= args
+  (or (no args)
+      (no (cdr args))
+      (and (no (> (car args) (cadr args)))
+           (apply <= (cdr args)))))
 
-;; (def >= args
-;;   (or (no args)
-;;       (no (cdr args))
-;;       (and (no (< (car args) (cadr args)))
-;;            (apply >= (cdr args)))))
+(def >= args
+  (or (no args)
+      (no (cdr args))
+      (and (no (< (car args) (cadr args)))
+           (apply >= (cdr args)))))
 
-;; (def whitec (c)
-;;   (in c #\space #\newline #\tab #\return))
+(def whitec (c)
+  (in c #\space #\newline #\tab #\return))
 
-;; (def nonwhite (c) (no (whitec c)))
+(def nonwhite (c) (no (whitec c)))
 
-;; (def letter (c) (or (<= #\a c #\z) (<= #\A c #\Z)))
+(def letter (c) (or (<= #\a c #\z) (<= #\A c #\Z)))
 
-;; (def digit (c) (<= #\0 c #\9))
+(def digit (c) (<= #\0 c #\9))
 
-;; (def alphadig (c) (or (letter c) (digit c)))
+(def alphadig (c) (or (letter c) (digit c)))
 
 ;; (def punc (c)
 ;;   (in c #\. #\, #\; #\: #\! #\?))
