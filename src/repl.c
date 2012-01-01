@@ -15,6 +15,10 @@
 
   You should have received a copy of the GNU General Public License
   along with this library; if not,  see <http://www.gnu.org/licenses/>.
+
+  Note that unlike most of the other code in src this particular one
+  is licensed under GPLv3 not LGPLv3.  It contains code that links to
+  readline, which is GPL.
 */
 #include <stdio.h>
 #include <getopt.h>
@@ -63,6 +67,7 @@ static int readline_getb(arc *c, struct arc_port *p)
 {
   static char *line_read = (char *)NULL;
   int len;
+  value rlstr;
 
   len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
   while (p->u.strfile.idx >= len) {
@@ -74,7 +79,8 @@ static int readline_getb(arc *c, struct arc_port *p)
     line_read = readline("arc> ");
     if (line_read && *line_read) {
       add_history(line_read);
-      p->u.strfile.str = (line_read == NULL) ? CNIL : arc_mkstringc(c, line_read);
+      rlstr = arc_mkstringc(c, line_read);
+      p->u.strfile.str = arc_strcatc(c, rlstr, '\n');
       len = arc_strlen(c, p->u.strfile.str);
       p->u.strfile.idx = 0;
     }
