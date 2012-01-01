@@ -651,7 +651,15 @@ static value compile_inlinen2(arc *c, value inst, value expr, value ctx, value e
 
 static value inline_plus(arc *c, value expr, value ctx, value env, value cont)
 {
-  return(compile_inlinen(c, iadd, expr, ctx, env, cont, INT2FIX(0)));
+  value xexpr, xelen;
+
+  xexpr = cdr(expr);
+  xelen = arc_list_length(c, xexpr);
+  if (xelen == INT2FIX(0))
+    return(arc_compile(c, INT2FIX(0), ctx, env, cont));
+  if (xelen == INT2FIX(1))
+    return(arc_compile(c, car(xexpr), ctx, env, cont));
+  return(compile_inlinen2(c, iadd, expr, ctx, env, cont, INT2FIX(0)));
 }
 
 static value inline_times(arc *c, value expr, value ctx, value env, value cont)
