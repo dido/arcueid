@@ -189,7 +189,8 @@ int main(int argc, char **argv)
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
   while ((sexpr = arc_read(c, initload)) != CNIL) {
-    /* arc_print_string(c, arc_prettyprint(c, sexpr)); */
+    /*    arc_print_string(c, arc_prettyprint(c, sexpr));
+	  printf("\n"); */
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
@@ -198,7 +199,6 @@ int main(int argc, char **argv)
   }
   arc_close(c, initload);
 
-  /* arc_disasm(c, arc_rep(c, arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "or")))); */
   setjmp(err_jmp_buf);
 #ifdef HAVE_LIBREADLINE
   readfp = arc_readlineport(c);
