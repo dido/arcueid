@@ -124,7 +124,7 @@ value arc_type(arc *c, value obj)
     return(ARC_BUILTIN(c, S_CONTINUATION));
     break;
   case T_CLOS:
-    return(ARC_BUILTIN(c, S_CLOSURE));
+    return(ARC_BUILTIN(c, S_FN));
     break;
   case T_CODE:
     return(ARC_BUILTIN(c, S_CODE));
