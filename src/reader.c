@@ -433,6 +433,13 @@ static value read_char(arc *c, value src)
     return(CNIL);
   }
 
+  /* Special case for any special characters that are not valid symbols. */
+  ch = arc_readc_rune(c, src);
+  if (!issym(ch)) {
+    return(arc_mkchar(c, ch));
+  }
+
+  arc_ungetc_rune(c, ch, src);
   tok = getsymbol(c, src);
   if (arc_strlen(c, tok) == 1)	/* single character */
     return(arc_mkchar(c, arc_strindex(c, tok, 0)));
