@@ -228,8 +228,16 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(icont):
       {
 	int icofs = (int)*TIP(thr)++;
-	WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
-			     TCONR(thr)));
+	value *dest;
+	/* A first attempt at tail call optimization. See if icofs points
+	   to a return statement.  Only make a new continuation if it
+	   is not a return.  We can dispense with the continuation
+	   in this case since it's a tail call.. */
+	dest = TIP(thr) + icofs - 2;
+	if (*dest != iret) {
+	  WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
+			       TCONR(thr)));
+	}
 	TSP(thr) = TSTOP(thr);
       }
       NEXT;
