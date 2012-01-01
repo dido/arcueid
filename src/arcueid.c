@@ -251,16 +251,6 @@ value arc_lt(arc *c, value v1, value v2)
   return((FIX2INT(arc_cmp(c, v1, v2)) < 0) ? CTRUE : CNIL);
 }
 
-value arc_gte(arc *c, value v1, value v2)
-{
-  return((FIX2INT(arc_cmp(c, v1, v2)) >= 0) ? CTRUE : CNIL);
-}
-
-value arc_lte(arc *c, value v1, value v2)
-{
-  return((FIX2INT(arc_cmp(c, v1, v2)) <= 0) ? CTRUE : CNIL);
-}
-
 value arc_bound(arc *c, value sym)
 {
   return((arc_hash_lookup(c, c->genv, sym) == CUNBOUND) ? CNIL: CTRUE);
@@ -431,8 +421,6 @@ static struct {
 
   { ">", 2, arc_gt },
   { "<", 2, arc_lt },
-  { ">=", 2, arc_gte },
-  { "<=", 2, arc_lte },
   { "<=>", 2, arc_cmp },
   { "bound", 1, arc_bound },
   { "exact", 1, arc_exact },
