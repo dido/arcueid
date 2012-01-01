@@ -415,7 +415,7 @@ value __arc_add2(arc *c, value arg1, value arg2)
       return(arg2);
     if (arg2 == CNIL)
       return(arg1);
-    return(arc_list_append(arg1, arg2));
+    return(arc_list_append(arg2, arg1));
   }
 
   TYPE_CASES(add, arg1, arg2);
@@ -972,7 +972,7 @@ value __arc_add(arc *c, int argc, value *argv)
       sum = CNIL;
 
   for (i=0; i<argc; i++)
-    sum = __arc_add2(c, sum, argv[i]);
+    sum = __arc_add2(c, argv[i], sum);
   return(sum);
 }
 
