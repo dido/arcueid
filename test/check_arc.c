@@ -683,6 +683,48 @@ START_TEST(test_complement)
 }
 END_TEST
 
+START_TEST(test_rev)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(rev '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+}
+END_TEST
+
+START_TEST(test_isnt)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(isnt 1 1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+
+  str = arc_mkstringc(c, "(isnt 1 2)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -737,6 +779,8 @@ int main(void)
   tcase_add_test(tc_arc, test_afn);
   tcase_add_test(tc_arc, test_compose);
   tcase_add_test(tc_arc, test_complement);
+  tcase_add_test(tc_arc, test_rev);
+  tcase_add_test(tc_arc, test_isnt);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
