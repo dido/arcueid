@@ -177,13 +177,14 @@
 
 (def alist (x) (or (no x) (is (type x) 'cons)))
 
-;; (mac in (x . choices)
-;;   (w/uniq g
-;;     `(let ,g ,x
-;;        (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
+(mac in (x . choices)
+  (w/uniq g
+    `(let ,g ,x
+       (or ,@(map1 (fn (c) `(is ,g ,c)) choices)))))
 
-;; ; Could take n args, but have never once needed that.
-
+;; 'iso' is defined in Arcueid's core, so this definition should not
+;; be used.
+; Could take n args, but have never once needed that.
 ;; (def iso (x y)
 ;;   (or (is x y)
 ;;       (and (acons x) 
@@ -191,17 +192,17 @@
 ;;            (iso (car x) (car y)) 
 ;;            (iso (cdr x) (cdr y)))))
 
-;; (mac when (test . body)
-;;   `(if ,test (do ,@body)))
+(mac when (test . body)
+  `(if ,test (do ,@body)))
 
-;; (mac unless (test . body)
-;;   `(if (no ,test) (do ,@body)))
+(mac unless (test . body)
+  `(if (no ,test) (do ,@body)))
 
-;; (mac while (test . body)
-;;   (w/uniq (gf gp)
-;;     `((rfn ,gf (,gp)
-;;         (when ,gp ,@body (,gf ,test)))
-;;       ,test)))
+(mac while (test . body)
+  (w/uniq (gf gp)
+    `((rfn ,gf (,gp)
+        (when ,gp ,@body (,gf ,test)))
+      ,test)))
 
 ;; (def empty (seq) 
 ;;   (or (no seq) 
