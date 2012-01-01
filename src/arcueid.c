@@ -423,6 +423,13 @@ static struct {
   { "rep", 1, arc_rep },
   { "sym", 1, arc_intern },
 
+  /* Used when they don't appear in functional position.
+     Inline definition will be used otherwise. */
+  { "+", -1, __arc_add },
+  { "-", -1, __arc_sub },
+  { "*", -1, __arc_mul },
+  { "/", -1, __arc_div },
+
   { ">", 2, arc_gt },
   { "<", 2, arc_lt },
   { ">=", 2, arc_gte },
