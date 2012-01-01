@@ -316,6 +316,7 @@ static void mark(arc *c, value v, int reclevel)
 
     switch (TYPE(v)) {
     case T_CONS:
+    case T_CLOS:
       mark(c, car(v), reclevel+1);
       mark(c, cdr(v), reclevel+1);
       break;
@@ -339,7 +340,6 @@ static void mark(arc *c, value v, int reclevel)
 	mark(c, *vptr, reclevel+1);
       break;
     case T_VECTOR:
-    case T_CLOS:
     case T_CODE:
     case T_CONT:
     case T_ENV:
