@@ -429,6 +429,7 @@ static value c4apply(arc *c, value thr, value avec,
     /* 4. Restart, with the value register pointing to the callee,
        so that it gets "called" */
     TVALR(thr) = VINDEX(retval, 2);
+    TARGC(thr) = VECLEN(nargv);
     arc_apply(c, thr, VINDEX(retval, 2));
     /* when this returns, we go back to the virtual machine loop,
        resuming execution at the address of the called virtual machine
@@ -516,6 +517,8 @@ void arc_apply(arc *c, value thr, value fun)
     cfn = fun;
     argc = TARGC(thr);
     if (REP(cfn)._cfunc.argc >= 0 && REP(cfn)._cfunc.argc != argc) {
+      printf("wrong number of arguments (%d for %d)\n", argc,
+	     REP(cfn)._cfunc.argc);
       c->signal_error(c, "wrong number of arguments (%d for %d)\n", argc,
 		      REP(cfn)._cfunc.argc);
       return;
