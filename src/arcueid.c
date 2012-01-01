@@ -421,7 +421,6 @@ static struct {
   { "coerce", -2, arc_coerce },
   { "annotate", 2, arc_annotate },
   { "rep", 1, arc_rep },
-  { "sym", 1, arc_intern },
 
   /* Used when they don't appear in functional position.
      Inline definition will be used otherwise. */
@@ -466,7 +465,6 @@ static struct {
   { "stderr", 0, arc_stderr },
   { "read", -1, arc_read2 },
 
-  { "prn", -1, arc_prn },
   { "disp", -1, arc_disp },
 
   { "cgenctx", 2, arc_mkcctx},
