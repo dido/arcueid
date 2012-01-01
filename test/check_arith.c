@@ -378,7 +378,7 @@ START_TEST(test_add_misc)
 {
   error = 0;
 
-  __arc_add2(&c, CNIL, CNIL);
+  __arc_add2(&c, CTRUE, CNIL);
   fail_unless(error == 1);
   error = 0;
 
