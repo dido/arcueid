@@ -43,9 +43,9 @@
 void *alloca (size_t);
 #endif
 
-#undef TRACE
+#ifdef HAVE_TRACING
 
-#ifdef TRACE
+int vmtrace = 0;
 
 static void dump_registers(arc *c, value thr)
 {
@@ -96,7 +96,7 @@ static inline void trace(arc *c, value thr)
 /* threaded interpreter */
 #define INST(name) lbl_##name
 #define JTBASE ((void *)&&lbl_inop)
-#ifdef TRACE
+#ifdef HAVE_TRACING
 #define NEXT {							\
     if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
       goto endquantum;						\
@@ -119,8 +119,6 @@ static inline void trace(arc *c, value thr)
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
 #define CPOP(thr) (*(++TSP(thr)))
 
-int vmtrace = 0;
-
 void arc_vmengine(arc *c, value thr, int quanta)
 {
 
@@ -137,7 +135,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
   TQUANTA(thr) = quanta;
 
 #ifdef HAVE_THREADED_INTERPRETER
-#ifdef TRACE
+#ifdef HAVE_TRACING
   if (vmtrace)
     trace(c, thr);
 #endif
