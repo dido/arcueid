@@ -39,7 +39,9 @@
                (fn (name parms . body)
                  `(do (sref sig ',parms ',name)
                       (safeset ,name (fn ,parms ,@body))
-		      (code-setname ,name ',name)))))
+		      (code-setname ,name ',name)
+		      ,name))))
+
 (code-setname def 'def)
 
 (def caar (xs) (car (car xs)))
@@ -85,7 +87,8 @@
               (fn (name parms . body)
                 `(do (sref sig ',parms ',name)
                      (safeset ,name (annotate 'mac (fn ,parms ,@body)))
-		     (code-setname ,name ',name)))))
+		     (code-setname ,name ',name)
+		     ,name))))
 (code-setname mac 'mac)
 
 (mac and args
