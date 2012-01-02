@@ -47,6 +47,16 @@ void *alloca (size_t);
 
 int vmtrace = 0;
 
+static void printobj(arc *c, value obj)
+{
+  arc_print_string(c, arc_prettyprint(c, obj));
+  if (!NIL_P(obj)) {
+    printf("<");
+    arc_print_string(c, arc_prettyprint(c, arc_type(c, obj)));
+    printf(">");
+  }
+}
+
 static void dump_env(arc *c, value env)
 {
   value enames = car(ENV_NAMES(env)), esym;
@@ -58,10 +68,10 @@ static void dump_env(arc *c, value env)
     esym = arc_hash_lookup(c, enames, INT2FIX(i));
     arc_print_string(c, arc_prettyprint(c, esym));
     printf("(%d) => ", i);
-    arc_print_string(c, arc_prettyprint(c, ENV_VALUE(env, i)));
+    printobj(c, ENV_VALUE(env, i));
     printf(" ");
   }
-  printf("}\n");
+  printf("}");
 }
 
 static void dump_registers(arc *c, value thr)
@@ -70,17 +80,25 @@ static void dump_registers(arc *c, value thr)
   int envidx;
 
   printf("VALR = ");
-  arc_print_string(c, arc_prettyprint(c, TVALR(thr)));
+  printobj(c, TVALR(thr));
 
-  printf("\tstack = [");
+  printf("\t\tFUNR = ");
+  arc_print_string(c, arc_prettyprint(c, TFUNR(thr)));
+
+  printf("\nstack = [ ");
   for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
-    arc_print_string(c, arc_prettyprint(c, *sv));
+    printobj(c, TVALR(thr));
     printf(" ");
   }
   printf("]\n");  
-  for (env = TENVR(thr), envidx=0; env != CNIL; env=cdr(env), envidx++) {
+  env = TENVR(thr);
+  envidx = 0;
+  while (env != CNIL) {
     printf("Env %d: ", envidx);
     dump_env(c, car(env));
+    env = cdr(env);
+    envidx++;
+    printf("\n");
   }
 }
 
@@ -97,7 +115,8 @@ static inline void trace(arc *c, value thr)
     return;
   }
   dump_registers(c, thr);
-  arc_disasm_inst(c, TIP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0), TIP(thr), TFUNR(thr));
+  arc_disasm_inst(c, TIP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0), TIP(thr),
+		  TFUNR(thr));
   printf("\n- ");
   fgets(str, 256, stdin);
   if (str[0] == 'n') {
