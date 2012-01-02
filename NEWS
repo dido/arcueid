@@ -1,8 +1,16 @@
 ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
-Copyright (C) 2010 Rafael R. Sevilla
+Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.1.0
+* Version 0.1.0 (2012-??-??)
+- All foundation functions and macros in arc.arc tested
+- Complete built-in functions
+
+* Version 0.0.2 (2011-12-31)
+- Fixes to the compiler and virtual machine to allow arc.arc to load.
+
+* Version 0.0.1 (2011-12-29)
+- Initial release (many bugs)
 
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
