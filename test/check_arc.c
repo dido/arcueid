@@ -1216,6 +1216,25 @@ START_TEST(test_map)
 }
 END_TEST
 
+START_TEST(test_mappend)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(mappend (fn (x y) `(,x ,y)) '(1 2) '(3 4))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1288,6 +1307,7 @@ int main(void)
   tcase_add_test(tc_arc, test_find);
   tcase_add_test(tc_arc, test_isa);
   tcase_add_test(tc_arc, test_map);
+  tcase_add_test(tc_arc, test_mappend);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
