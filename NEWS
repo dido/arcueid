@@ -8,6 +8,7 @@ See the end for copying conditions.
 
 * Version 0.0.2 (2011-12-31)
 - Fixes to the compiler and virtual machine to allow arc.arc to load.
+- Readline support
 
 * Version 0.0.1 (2011-12-29)
 - Initial release (many bugs)
