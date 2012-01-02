@@ -43,6 +43,10 @@
 void *alloca (size_t);
 #endif
 
+#undef TRACE
+
+#ifdef TRACE
+
 static void dump_registers(arc *c, value thr)
 {
   value *sv;
@@ -58,7 +62,7 @@ static void dump_registers(arc *c, value thr)
   printf("]\n");
 }
 
-static void trace(arc *c, value thr)
+static inline void trace(arc *c, value thr)
 {
   char str[256];
   static value *bpofs = NULL;		/* breakpoint offset */
@@ -85,17 +89,27 @@ static void trace(arc *c, value thr)
   }
 }
 
+#endif
+
 /* instruction decoding macros */
 #ifdef HAVE_THREADED_INTERPRETER
 /* threaded interpreter */
 #define INST(name) lbl_##name
 #define JTBASE ((void *)&&lbl_inop)
+#ifdef TRACE
 #define NEXT {							\
     if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
       goto endquantum;						\
     if (vmtrace)						\
       trace(c, thr);						\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
+#else
+#define NEXT {							\
+    if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
+      goto endquantum;						\
+    goto *(JTBASE + jumptbl[*TIP(thr)++]); }
+#endif
+
 #else
 /* switch interpreter */
 #define INST(name) case name
@@ -123,8 +137,10 @@ void arc_vmengine(arc *c, value thr, int quanta)
   TQUANTA(thr) = quanta;
 
 #ifdef HAVE_THREADED_INTERPRETER
+#ifdef TRACE
   if (vmtrace)
     trace(c, thr);
+#endif
   goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
   for (;;) {
