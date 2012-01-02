@@ -2,9 +2,13 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.1.0 (2012-??-??)
-- All foundation functions and macros in arc.arc tested
-- Complete built-in functions
+* Version 0.0.3 (2012-01-02)
+- Several bug fixes from testing the arc.arc functions
+- Updated readline support and bugfixes
+- Some feeble attempts at tail call optimization
+- Compatibility fixes to reference Arc
+- Tracing support now enabled via a configure switch (--enable-tracing)
+- Tracing displays environment variables
 
 * Version 0.0.2 (2011-12-31)
 - Fixes to the compiler and virtual machine to allow arc.arc to load.
