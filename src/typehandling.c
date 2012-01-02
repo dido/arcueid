@@ -83,7 +83,7 @@ value arc_type(arc *c, value obj)
     return(ARC_BUILTIN(c, S_FLONUM));
     break;
   case T_RATIONAL:
-    return(ARC_BUILTIN(c, S_FLONUM));
+    return(ARC_BUILTIN(c, S_RATIONAL));
     break;
   case T_COMPLEX:
     return(ARC_BUILTIN(c, S_COMPLEX));
