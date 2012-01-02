@@ -1479,6 +1479,16 @@ START_TEST(test_walk)
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == INT2FIX(5040));
+
+  str = arc_mkstringc(c, "(with (tbl (table) x 0 y 0) (= (tbl 1) 2) (= (tbl 2) 3) (= (tbl 3) 4) (walk tbl (fn ((xt yt)) (= x (+ x xt)) (= y (+ y yt)))) (list x y))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(6));
+  fail_unless(cadr(ret) == INT2FIX(9));
 }
 END_TEST
 
