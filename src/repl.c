@@ -153,6 +153,8 @@ value arc_readlineport(arc *c)
   PORT(fd)->close = readline_close;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   rl_variable_bind("blink-matching-paren", "on");
+  rl_basic_quote_characters = "\"";
+  rl_basic_word_break_characters = "[]()!:~\"";
   return(fd);
 }
 
