@@ -37,8 +37,10 @@ value arc_intern(arc *c, value name)
 {
   value symval;
 
-  if ((symval = arc_hash_lookup(c, c->symtable, name)) != CUNBOUND)
-    return(symval);
+  if ((symval = arc_hash_lookup(c, c->symtable, name)) != CUNBOUND) {
+    /* do not allow nil to have a symbol value */
+    return((symval == ARC_BUILTIN(c, S_NIL)) ? CNIL : symval);
+  }
 
   symval = ID2SYM(++c->lastsym);
   arc_hash_insert(c, c->symtable, name, symval);
