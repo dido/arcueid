@@ -155,11 +155,28 @@ value arc_mkvmcode(arc *c, int length)
 /* create code and reserve space for nlits */
 value arc_mkcode(arc *c, value vmccode, int nlits)
 {
-  value code = arc_mkvector(c, nlits+1);
+  value code = arc_mkvector(c, nlits+2);
 
   CODE_CODE(code) = vmccode;
+  CODE_NAME(code) = CNIL;
   BTYPE(code) = T_CODE;
   return(code);
+}
+
+value arc_code_setname(arc *c, value code, value codename)
+{
+  if (arc_type(c, code) == ARC_BUILTIN(c, S_MAC))
+    code = arc_rep(c, code);
+  if (TYPE(code) == T_CLOS)
+    code = car(code);
+
+  if (TYPE(code) != T_CODE) {
+    c->signal_error(c, "Cannot set the code name for a non-code object");
+    return(CNIL);
+  }
+
+  CODE_NAME(code) = codename;
+  return(codename);
 }
 
 value arc_cctx2code(arc *c, value cctx)
