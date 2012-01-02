@@ -47,9 +47,27 @@ void *alloca (size_t);
 
 int vmtrace = 0;
 
+static void dump_env(arc *c, value env)
+{
+  value enames = car(ENV_NAMES(env)), esym;
+  int nvals = arc_hash_length(c, enames) / 2; /* mapping + reverse mapping */
+  int i;
+
+  printf("{");
+  for (i=0; i<nvals; i++) {
+    esym = arc_hash_lookup(c, enames, INT2FIX(i));
+    arc_print_string(c, arc_prettyprint(c, esym));
+    printf("(%d) => ", i);
+    arc_print_string(c, arc_prettyprint(c, ENV_VALUE(env, i)));
+    printf(" ");
+  }
+  printf("}\n");
+}
+
 static void dump_registers(arc *c, value thr)
 {
-  value *sv;
+  value *sv, env;
+  int envidx;
 
   printf("VALR = ");
   arc_print_string(c, arc_prettyprint(c, TVALR(thr)));
@@ -59,7 +77,11 @@ static void dump_registers(arc *c, value thr)
     arc_print_string(c, arc_prettyprint(c, *sv));
     printf(" ");
   }
-  printf("]\n");
+  printf("]\n");  
+  for (env = TENVR(thr), envidx=0; env != CNIL; env=cdr(env), envidx++) {
+    printf("Env %d: ", envidx);
+    dump_env(c, car(env));
+  }
 }
 
 static inline void trace(arc *c, value thr)
@@ -167,6 +189,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
 
 	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+	  /* arc_print_string(c, arc_prettyprint(c, tmp)); printf("\n"); */
 	  c->signal_error(c, "Unbound symbol %S\n", tmp);
 	  TVALR(thr) = CNIL;
 	}
@@ -263,7 +286,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	WB(&TENVR(thr), arc_mkenv(c, TENVR(thr), ienvsize));
 	ENV_NAMES(car(TENVR(thr))) = (namesidx < 0) ? CNIL
 	  : CODE_LITERAL(TFUNR(thr), namesidx);
-	WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2));
+	/* WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2)); */
       }
       NEXT;
     INST(iapply):
