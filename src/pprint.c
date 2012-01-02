@@ -267,8 +267,15 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     }
     break;
   case T_CODE:
+    append_cstring(c, "#<procedure: ", ppstr);
+    if (NIL_P(CODE_NAME(sexpr)))
+      append_cstring(c, "(anonymous)", ppstr);
+    else
+      prettyprint(c, CODE_NAME(sexpr), ppstr);
+    append_cstring(c, ">", ppstr);    
+    break;
   case T_CLOS:
-    append_cstring(c, "#<procedure>", ppstr);
+    prettyprint(c, car(sexpr), ppstr);
     break;
   case T_CCODE:
     append_cstring(c, "#<cprocedure>", ppstr);
