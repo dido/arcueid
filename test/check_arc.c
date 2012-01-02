@@ -1418,6 +1418,21 @@ START_TEST(test_loop)
 }
 END_TEST
 
+START_TEST(test_for)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(let result 0 (for i 0 100 (= result (+ result i))) result)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(5050));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1501,6 +1516,7 @@ int main(void)
   /* This test should cover all stuff about places */
   tcase_add_test(tc_arc, test_places);
   tcase_add_test(tc_arc, test_loop);
+  tcase_add_test(tc_arc, test_for);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
