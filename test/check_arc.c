@@ -1433,6 +1433,25 @@ START_TEST(test_for)
 }
 END_TEST
 
+START_TEST(test_down)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(let lst nil (down i 5 1 (= lst (cons i lst))) lst)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(5));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1517,6 +1536,7 @@ int main(void)
   tcase_add_test(tc_arc, test_places);
   tcase_add_test(tc_arc, test_loop);
   tcase_add_test(tc_arc, test_for);
+  tcase_add_test(tc_arc, test_down);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
