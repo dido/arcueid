@@ -416,6 +416,8 @@ static struct {
   { "annotate", 2, arc_annotate },
   { "rep", 1, arc_rep },
 
+  { "code-setname", 2, arc_code_setname },
+
   /* Used when they don't appear in functional position.
      Inline definition will be used otherwise. */
   { "+", -1, __arc_add },
