@@ -24,6 +24,7 @@
 
 (assign do (annotate 'mac
              (fn args `((fn () ,@args)))))
+(code-setname do 'do)
 
 (assign safeset (annotate 'mac
                   (fn (var val)
@@ -32,11 +33,14 @@
                                  (disp ',var (stderr))
                                  (disp #\newline (stderr))))
                          (assign ,var ,val)))))
+(code-setname safeset 'safeset)
 
 (assign def (annotate 'mac
                (fn (name parms . body)
                  `(do (sref sig ',parms ',name)
-                      (safeset ,name (fn ,parms ,@body))))))
+                      (safeset ,name (fn ,parms ,@body))
+		      (code-setname ,name ',name)))))
+(code-setname def 'def)
 
 (def caar (xs) (car (car xs)))
 (def cadr (xs) (car (cdr xs)))
@@ -80,7 +84,9 @@
 (assign mac (annotate 'mac
               (fn (name parms . body)
                 `(do (sref sig ',parms ',name)
-                     (safeset ,name (annotate 'mac (fn ,parms ,@body)))))))
+                     (safeset ,name (annotate 'mac (fn ,parms ,@body)))
+		     (code-setname ,name ',name)))))
+(code-setname mac 'mac)
 
 (mac and args
   (if args
