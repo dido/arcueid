@@ -867,6 +867,66 @@ START_TEST(test_while)
 }
 END_TEST
 
+START_TEST(test_empty)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(empty nil)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+
+  str = arc_mkstringc(c, "(empty \"\")");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+
+  str = arc_mkstringc(c, "(empty (table))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+
+  str = arc_mkstringc(c, "(empty '(1 2 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+
+  str = arc_mkstringc(c, "(empty \"abc\")");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+
+  str = arc_mkstringc(c, "(let x (table) (do (= (x 'foo) 1) (empty x)))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -930,6 +990,7 @@ int main(void)
   tcase_add_test(tc_arc, test_when);
   tcase_add_test(tc_arc, test_unless);
   tcase_add_test(tc_arc, test_while);
+  tcase_add_test(tc_arc, test_empty);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
