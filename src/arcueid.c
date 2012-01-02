@@ -411,7 +411,8 @@ static struct {
   int argc;
   value (*fnptr)();
 } fntable[] = {
-  { "type", 1, arc_type },
+  { "type", 1, arc_type_compat },
+  { "atype", 1, arc_type },
   { "coerce", -2, arc_coerce },
   { "annotate", 2, arc_annotate },
   { "rep", 1, arc_rep },
