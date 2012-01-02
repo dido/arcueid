@@ -1271,6 +1271,29 @@ START_TEST(test_nthcdr)
 }
 END_TEST
 
+START_TEST(test_tuples)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(tuples '(1 2 3 4 5 6 7 8 9 10) 3)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  fail_unless(CONS_P(car(ret)));
+  fail_unless(car(car(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(car(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(car(ret)))) == INT2FIX(3));
+  fail_unless(CONS_P(car(cdr(ret))));
+  fail_unless(car(car(cdr(ret))) == INT2FIX(4));
+  fail_unless(car(cdr(car(cdr(ret)))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(car(cdr(ret))))) == INT2FIX(6));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1346,6 +1369,7 @@ int main(void)
   tcase_add_test(tc_arc, test_mappend);
   tcase_add_test(tc_arc, test_firstn);
   tcase_add_test(tc_arc, test_nthcdr);
+  tcase_add_test(tc_arc, test_tuples);
   /* atomic, atlet, atwith, and atwiths are meaningless until we
      get threading, so we won't bother. */
 
