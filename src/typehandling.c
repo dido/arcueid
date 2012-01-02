@@ -147,6 +147,83 @@ value arc_type(arc *c, value obj)
   return(ARC_BUILTIN(c, S_UNKNOWN));
 }
 
+/* Arc3-compatible type */
+value arc_type_compat(arc *c, value obj)
+{
+  switch (TYPE(obj)) {
+  case T_NIL:
+  case T_TRUE:
+  case T_SYMBOL:
+    return(ARC_BUILTIN(c, S_SYM));
+    break;
+  case T_FIXNUM:
+  case T_BIGNUM:
+    return(ARC_BUILTIN(c, S_INT));
+    break;
+  case T_FLONUM:
+  case T_RATIONAL:
+  case T_COMPLEX:
+    return(ARC_BUILTIN(c, S_NUM));
+    break;
+  case T_CHAR:
+    return(ARC_BUILTIN(c, S_CHAR));
+    break;
+  case T_STRING:
+    return(ARC_BUILTIN(c, S_STRING));
+    break;
+  case T_CONS:
+    return(ARC_BUILTIN(c, S_CONS));
+    break;
+  case T_TABLE:
+    return(ARC_BUILTIN(c, S_TABLE));
+    break;
+  case T_TAGGED:
+    /* A tagged object created by annotate has as its car the type
+       as a symbol */
+    return(car(obj));
+    break;
+  case T_INPUT:
+    return(ARC_BUILTIN(c, S_INPUT));
+    break;
+  case T_EXCEPTION:
+    return(ARC_BUILTIN(c, S_EXCEPTION));
+    break;
+  case T_PORT:
+    return(ARC_BUILTIN(c, S_PORT));
+    break;
+  case T_THREAD:
+    return(ARC_BUILTIN(c, S_THREAD));
+    break;
+  case T_VECTOR:
+    return(ARC_BUILTIN(c, S_VECTOR));
+    break;
+  case T_CONT:
+    return(ARC_BUILTIN(c, S_CONTINUATION));
+    break;
+  case T_CLOS:
+    return(ARC_BUILTIN(c, S_FN));
+    break;
+  case T_CODE:
+    return(ARC_BUILTIN(c, S_CODE));
+    break;
+  case T_ENV:
+    return(ARC_BUILTIN(c, S_ENVIRONMENT));
+    break;
+  case T_VMCODE:
+    return(ARC_BUILTIN(c, S_VMCODE));
+    break;
+  case T_CCODE:
+    return(ARC_BUILTIN(c, S_CCODE));
+    break;
+  case T_CUSTOM:
+    return(ARC_BUILTIN(c, S_CUSTOM));
+    break;
+  default:
+    break;
+  }
+  return(ARC_BUILTIN(c, S_UNKNOWN));
+}
+
 static value str2int(arc *c, value obj, value base, int strptr, int limit)
 {
   /* Tell me if this looks too much like glibc's implementation of
