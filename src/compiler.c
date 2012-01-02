@@ -285,8 +285,10 @@ value add_env_frame(arc *c, value names, value env)
   int idx;
 
   envframe = arc_mkhash(c, 8);
-  for (idx=0; names; names = cdr(names), idx++)
+  for (idx=0; names; names = cdr(names), idx++) {
     arc_hash_insert(c, envframe, car(names), INT2FIX(idx));
+    arc_hash_insert(c, envframe, INT2FIX(idx), car(names));
+  }
   return(cons(c, envframe, env));
 }
 
