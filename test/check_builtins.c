@@ -187,19 +187,19 @@ END_TEST
 
 START_TEST(test_builtin_type)
 {
-  fail_unless(test_builtin("type", 1,
+  fail_unless(test_builtin("atype", 1,
 			   INT2FIX(100)) == arc_intern_cstr(&c, "fixnum"));
-  fail_unless(test_builtin("type", 1, arc_mkflonum(&c, 3.1416))
+  fail_unless(test_builtin("atype", 1, arc_mkflonum(&c, 3.1416))
 	      == arc_intern_cstr(&c, "flonum"));
-  fail_unless(test_builtin("type", 1, arc_mkcomplex(&c, 3.1416, 2.718))
+  fail_unless(test_builtin("atype", 1, arc_mkcomplex(&c, 3.1416, 2.718))
 	      == arc_intern_cstr(&c, "complex"));
-  fail_unless(test_builtin("type", 1, arc_mkstringc(&c, "foo"))
+  fail_unless(test_builtin("atype", 1, arc_mkstringc(&c, "foo"))
 	      == arc_intern_cstr(&c, "string"));
-  fail_unless(test_builtin("type", 1, arc_intern_cstr(&c, "foo"))
+  fail_unless(test_builtin("atype", 1, arc_intern_cstr(&c, "foo"))
 	      == arc_intern_cstr(&c, "sym"));
-  fail_unless(test_builtin("type", 1, cons(&c, INT2FIX(1), CNIL))
+  fail_unless(test_builtin("atype", 1, cons(&c, INT2FIX(1), CNIL))
 	      == arc_intern_cstr(&c, "cons"));
-  fail_unless(test_builtin("type", 1, arc_mkvector(&c, 1))
+  fail_unless(test_builtin("atype", 1, arc_mkvector(&c, 1))
 	      == arc_intern_cstr(&c, "vector"));
 }
 END_TEST
