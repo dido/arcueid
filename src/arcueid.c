@@ -373,6 +373,8 @@ value arc_scdr(arc *c, value x, value y)
   return(scdr(x, y));
 }
 
+#ifdef HAVE_TRACING
+
 extern int vmtrace;
 
 value arc_trace(arc *c)
@@ -386,6 +388,8 @@ value arc_trace(arc *c)
   vmtrace = 1;
   return(CTRUE);
 }
+
+#endif
 
 value arc_stdin(arc *c)
 {
@@ -472,7 +476,9 @@ static struct {
   { "scdr", 2, arc_scdr },
 
   { "disasm", 1, arc_disasm },
+#ifdef HAVE_TRACING
   { "trace", 0, arc_trace },
+#endif
 
   { NULL, 0, NULL }
 };
