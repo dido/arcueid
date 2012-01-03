@@ -1277,6 +1277,29 @@ START_TEST(test_whiler)
 }
 END_TEST
 
+START_TEST(test_consif)
+{
+  value ret;
+
+  TEST("(consif nil 2)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(consif 1 2)");
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(cdr(ret) == INT2FIX(2));
+
+}
+END_TEST
+
+START_TEST(test_string)
+{
+  value ret;
+
+  TEST("(string '(1 2 3) '(a b c))");
+  fail_unless(FIX2INT(arc_strcmp(c, ret, arc_mkstringc(c, "123abc"))) == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1390,6 +1413,8 @@ int main(void)
   tcase_add_test(tc_arc, test_accum);
   tcase_add_test(tc_arc, test_drain);
   tcase_add_test(tc_arc, test_whiler);
+  tcase_add_test(tc_arc, test_consif);
+  tcase_add_test(tc_arc, test_string);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
