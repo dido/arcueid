@@ -30,7 +30,7 @@ value arc_eval(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFEND;
 
   if (VECLEN(argv) != 1) {
-    c->signal_error(c, "wrong number of arguments (%d for 1)", VECLEN(argv));
+    arc_err_cstrfmt(c, "wrong number of arguments (%d for 1)", VECLEN(argv));
     return(CNIL);
   }
 
@@ -142,7 +142,7 @@ value arc_compile(arc *c, value nexpr, value ctx, value env, value cont)
     return(compile_ident(c, expr, ctx, env, cont));
   if (CONS_P(expr))
     return(compile_list(c, expr, ctx, env, cont));
-  c->signal_error(c, "invalid_expression %p", expr);
+  arc_err_cstrfmt(c, "invalid_expression %p", expr);
   return(ctx);
 }
 
@@ -353,7 +353,7 @@ static value destructuring_bind(arc *c, value args, value ctx, value env, int *n
   }
 
   if (!CONS_P(args)) {
-    c->signal_error(c, "strange args %o", args);
+    arc_err_cstrfmt(c, "strange args %o", args);
     return(rn);
   }
 
@@ -451,7 +451,7 @@ static value compile_args(arc *c, value args, value ctx, value env)
   }
 
   if (!CONS_P(args)) {
-    c->signal_error(c, "invalid fn arg %p", args);
+    arc_err_cstrfmt(c, "invalid fn arg %p", args);
     return(env);
   }
   envinstaddr = FIX2INT(CCTX_VCPTR(ctx));
@@ -554,9 +554,9 @@ static value compile_assign(arc *c, value expr, value ctx, value env,
     a = macex(c, car(expr), CTRUE);
     val = cadr(expr);
     if (a == CNIL) {
-      c->signal_error(c, "Can't rebind nil");
+      arc_err_cstrfmt(c, "Can't rebind nil");
     } else if (a == ARC_BUILTIN(c, S_T)) {
-      c->signal_error(c, "Can't rebind t");
+      arc_err_cstrfmt(c, "Can't rebind t");
     } else {
       arc_compile(c, val, ctx, env, CNIL);
       envvar = find_var(c, a, env, &frameno, &idx);
@@ -598,7 +598,7 @@ static value compile_inline(arc *c, value inst, int narg, value expr, value ctx,
       arc_gcode(c, ctx, ipush);
   }
   if (count != narg) {
-    c->signal_error(c, "procedure %O expects %d arguments (%d passed)",
+    arc_err_cstrfmt(c, "procedure %O expects %d arguments (%d passed)",
 		    car(expr), narg, count);
   } else {
     arc_gcode(c, ctx, inst);
@@ -639,7 +639,7 @@ static value compile_inlinen2(arc *c, value inst, value expr, value ctx, value e
   xexpr = cdr(expr);
   xelen = arc_list_length(c, xexpr);
   if (xelen == INT2FIX(0)) {
-    c->signal_error(c, "operator requires at least one argument");
+    arc_err_cstrfmt(c, "operator requires at least one argument");
     return(CNIL);
   } else if (xelen == INT2FIX(1)) {
     return(compile_inlinen(c, inst, expr, ctx, env, cont, base));
