@@ -1146,23 +1146,18 @@ START_TEST(test_zap)
 {
   value ret;
 
-  c->signal_error = NULL;
-
   TEST("(let s \"abc\" (zap upcase (s 0)) s)");
   fail_unless(FIX2INT(arc_strcmp(c, ret, arc_mkstringc(c, "Abc"))) == 0);
 
   TEST("(let x '(10 10) (zap mod (car x) 3) x)");
   fail_unless(car(ret) == INT2FIX(1));
   fail_unless(car(cdr(ret)) == INT2FIX(10));
-  c->signal_error = error_handler;
 }
 END_TEST
 
 START_TEST(test_wipe)
 {
   value ret;
-
-  c->signal_error = NULL;
 
   TEST("(with (a 1 b 2 c 3) (wipe a b c) (list a b c))");
   fail_unless(NIL_P(car(ret)));
@@ -1175,12 +1170,22 @@ START_TEST(test_set)
 {
   value ret;
 
-  c->signal_error = NULL;
-
   TEST("(with (a 1 b 2 c 3) (set a b c) (list a b c))");
   fail_unless(car(ret) == CTRUE);
   fail_unless(car(cdr(ret)) == CTRUE);
   fail_unless(car(cdr(cdr(ret))) == CTRUE);
+}
+END_TEST
+
+START_TEST(test_iflet)
+{
+  value ret;
+
+  TEST("(iflet x t x 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(iflet x nil x 1)");
+  fail_unless(ret == INT2FIX(1));
 }
 END_TEST
 
@@ -1289,6 +1294,7 @@ int main(void)
      more. */
   tcase_add_test(tc_arc, test_wipe);
   tcase_add_test(tc_arc, test_set);
+  tcase_add_test(tc_arc, test_iflet);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
