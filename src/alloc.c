@@ -224,7 +224,7 @@ static Bhdr *expand_heap(arc *c, size_t request)
   ROUNDHEAP(rounded_request, over_request);
   mem = (Bhdr *)alloc_for_heap(c, rounded_request);
   if (mem == NULL) {
-    c->signal_error(c, "No room for growing heap");
+    arc_err_cstrfmt(c, "No room for growing heap");
     return(NULL);
   }
   mem->magic = MAGIC_F;
@@ -252,7 +252,7 @@ static void *alloc(arc *c, size_t osize)
   if (blk == NULL) {
     nblk = expand_heap(c, size);
     if (nblk == NULL) {
-      c->signal_error(c, "Fatal error: out of memory!");
+      arc_err_cstrfmt(c, "Fatal error: out of memory!");
       return(NULL);
     }
     fl_free_block(nblk);
