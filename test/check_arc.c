@@ -1142,6 +1142,22 @@ START_TEST(test_minusminus)
 }
 END_TEST
 
+START_TEST(test_zap)
+{
+  value ret;
+
+  c->signal_error = NULL;
+
+  TEST("(let s \"abc\" (zap upcase (s 0)) s)");
+  fail_unless(FIX2INT(arc_strcmp(c, ret, arc_mkstringc(c, "Abc"))) == 0);
+
+  TEST("(let x '(10 10) (zap mod (car x) 3) x)");
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(10));
+  c->signal_error = error_handler;
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1242,6 +1258,7 @@ int main(void)
   tcase_add_test(tc_arc, test_togglemem);
   tcase_add_test(tc_arc, test_plusplus);
   tcase_add_test(tc_arc, test_minusminus);
+  tcase_add_test(tc_arc, test_zap);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
