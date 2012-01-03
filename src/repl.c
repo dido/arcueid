@@ -92,7 +92,7 @@ static int readline_getb(arc *c, struct arc_port *p)
 
 static int readline_putb(arc *c, struct arc_port *p, int byte)
 {
-  c->signal_error(c, "cannot write to a readline port");
+  arc_err_cstrfmt(c, "cannot write to a readline port");
   return(byte);
 }
 
@@ -137,7 +137,7 @@ value arc_readlineport(arc *c)
 
   cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
   if (cellptr == NULL)
-    c->signal_error(c, "openstring: cannot allocate memory");
+    arc_err_cstrfmt(c, "openstring: cannot allocate memory");
   fd = (value)cellptr;
   BTYPE(fd) = T_PORT;
   REP(fd)._custom.pprint = readline_pp;
@@ -164,9 +164,9 @@ value arc_readlineport(arc *c)
 
 static jmp_buf err_jmp_buf;
 
-static void error_handler(struct arc *c, const char *fmt, ...)
+static void error_handler(struct arc *c, value err)
 {
-  puts(fmt);
+  arc_print_string(c, err);
   longjmp(err_jmp_buf, 1);
 }
 
