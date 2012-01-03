@@ -50,7 +50,7 @@ int vmtrace = 0;
 static void printobj(arc *c, value obj)
 {
   arc_print_string(c, arc_prettyprint(c, obj));
-  if (!NIL_P(obj)) {
+  if (obj != CNIL) {
     printf("<");
     arc_print_string(c, arc_prettyprint(c, arc_type(c, obj)));
     printf(">");
@@ -120,8 +120,11 @@ static inline void trace(arc *c, value thr)
   printf("\n- ");
   fgets(str, 256, stdin);
   if (str[0] == 'n') {
-    value cont = car(TCONR(thr));
+    value cont;
 
+    if (TCONR(thr) == CNIL)
+      return;
+    cont = car(TCONR(thr));
     /* create a breakpoint at the next continuation, if any */
     if (cont == CNIL || TYPE(VINDEX(cont, 0)) == T_XCONT)
       return;
