@@ -521,3 +521,18 @@ value arc_init_builtins(arc *c)
 
   return(CNIL);
 }
+
+void arc_init_sq(arc *c, int stksize, int quanta)
+{
+  arc_set_memmgr(c);
+  c->genv = arc_mkhash(c, 8);
+  arc_init_reader(c);
+  arc_init_builtins(c);
+  c->stksize = stksize;
+  c->quantum = quanta;
+}
+
+void arc_init(arc *c)
+{
+  arc_init_sq(c, TSTKSIZE, PQUANTA);
+}
