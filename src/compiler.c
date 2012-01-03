@@ -79,13 +79,6 @@ static value macex(arc *c, value e, value once)
        to a macro. */
     if (!SYMBOL_P(op))
       return(e);
-    if (macdebug) {
-      printf("Macro: ");
-      arc_print_string(c, arc_prettyprint(c, op));
-      printf("\nArgs: ");
-      arc_print_string(c, arc_prettyprint(c, cdr(e)));
-      printf("\n");
-    }
     /* Look up the symbol's binding in the global symbol table */
     while (arc_type(c, op = arc_hash_lookup(c, c->genv, op)) == T_SYMBOL)
       ;
@@ -93,6 +86,11 @@ static value macex(arc *c, value e, value once)
       return(e);			/* not a macro */
     expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
     if (macdebug) {
+      printf("Macro: ");
+      arc_print_string(c, arc_prettyprint(c, car(e)));
+      printf("\nArgs: ");
+      arc_print_string(c, arc_prettyprint(c, cdr(e)));
+      printf("\n");
       printf("Expansion: ");
       arc_print_string(c, arc_prettyprint(c, expansion));
       printf("\n");
@@ -119,18 +117,6 @@ static value compile_list(arc *c, value list, value ctx, value env,
 			  value cont);
 static value compile_continuation(arc *c, value ctx, value cont);
 static int find_literal(arc *c, value ctx, value lit);
-
-/* utility function */
-static value reverse_list(arc *c, value xs)
-{
-  value acc = CNIL;
-
-  while (xs != CNIL) {
-    acc = cons(c, car(xs), acc);
-    xs = cdr(xs);
-  }
-  return(acc);
-}
 
 /* Given an expression nexpr, a compilation context ctx, and a continuation
    flag, return the compilation context after the expression is compiled.
@@ -429,7 +415,7 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
     args = cdr(args);
   }
   /* the names in rn are reversed.  Reverse it before returning */
-  return(reverse_list(c, rn));
+  return(arc_list_reverse(c, rn));
 }
 
 /* generate code to set up the new environment given the arguments. 
@@ -726,7 +712,7 @@ static value compile_apply(arc *c, value expr, value ctx, value env,
   contaddr = FIX2INT(CCTX_VCPTR(ctx));
   arc_gcode1(c, ctx, icont, 0);
   /* Reverse the arguments and compile */
-  nahd = reverse_list(c, args);
+  nahd = arc_list_reverse(c, args);
 
   /* Traverse the reversed arguments, compiling each */
   for (nargs = 0; nahd; nahd = cdr(nahd), nargs++) {
