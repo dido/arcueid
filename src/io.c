@@ -108,7 +108,7 @@ value arc_filefp(arc *c, FILE *fp, value filename)
 
   cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
   if (cellptr == NULL)
-    c->signal_error(c, "openfile: cannot allocate memory");
+    arc_err_cstrfmt(c, "openfile: cannot allocate memory");
   fd = (value)cellptr;
   BTYPE(fd) = T_PORT;
   REP(fd)._custom.pprint = file_pp;
@@ -139,7 +139,7 @@ static value openfile(arc *c, value filename, const char *mode)
   fp = fopen(utf_filename, mode);
   if (fp == NULL) {
     en = errno;
-    c->signal_error(c, "openfile: cannot open input file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
+    arc_err_cstrfmt(c, "openfile: cannot open input file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
   }
   return(arc_filefp(c, fp, filename));
 }
@@ -240,7 +240,7 @@ value arc_instring(arc *c, value str)
 
   cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
   if (cellptr == NULL)
-    c->signal_error(c, "openstring: cannot allocate memory");
+    arc_err_cstrfmt(c, "openstring: cannot allocate memory");
   fd = (value)cellptr;
   BTYPE(fd) = T_PORT;
   REP(fd)._custom.pprint = fstr_pp;
@@ -421,7 +421,7 @@ value arc_close(arc *c, value fd)
   if (PORT(fd)->close(c, PORT(fd)) != 0) {
     int en = errno;
 
-    c->signal_error(c, "close: cannot close %v \"%s\", (%s; errno=%d)", fd, strerror(en), en);
+    arc_err_cstrfmt(c, "close: cannot close %v \"%s\", (%s; errno=%d)", fd, strerror(en), en);
   }
   return(CNIL);
 }
