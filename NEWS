@@ -2,6 +2,12 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
+* Version 0.0.4 (2012-01-03)
+- Fixed bug for a!b!c expanding wrongly
+- > and < now accept more than two arguments
+- Stability fixes for the virtual machine
+- + operator can now concatenate strings
+
 * Version 0.0.3 (2012-01-02)
 - Several bug fixes from testing the arc.arc functions
 - Updated readline support and bugfixes
