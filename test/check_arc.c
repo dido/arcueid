@@ -1254,6 +1254,17 @@ START_TEST(test_accum)
 }
 END_TEST
 
+START_TEST(test_drain)
+{
+  value ret;
+
+  TEST("(let test '(1 2 3) (drain (do1 (car test) (= test (cdr test)))))");
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1365,6 +1376,7 @@ int main(void)
   tcase_add_test(tc_arc, test_awhen);
   tcase_add_test(tc_arc, test_aand);
   tcase_add_test(tc_arc, test_accum);
+  tcase_add_test(tc_arc, test_drain);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
