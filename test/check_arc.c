@@ -1359,6 +1359,18 @@ START_TEST(test_pos)
 }
 END_TEST
 
+START_TEST(test_even)
+{
+  value ret;
+
+  TEST("(even 7)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(even 8)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1477,6 +1489,7 @@ int main(void)
   tcase_add_test(tc_arc, test_flat);
   tcase_add_test(tc_arc, test_check);
   tcase_add_test(tc_arc, test_pos);
+  tcase_add_test(tc_arc, test_even);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
