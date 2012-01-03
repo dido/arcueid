@@ -1045,6 +1045,21 @@ START_TEST(test_pull)
 }
 END_TEST
 
+START_TEST(test_togglemem)
+{
+  value ret;
+
+  TEST("(let xs '(1 2 3) (togglemem 2 xs) xs)");
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+
+  TEST("(let xs '(1 2 3) (togglemem 2 xs) (togglemem 2 xs) xs)");
+  fail_unless(car(ret) == INT2FIX(2));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
 START_TEST(test_pushnew)
 {
   value ret, stack;
@@ -1200,6 +1215,7 @@ int main(void)
   tcase_add_test(tc_arc, test_adjoin);
   tcase_add_test(tc_arc, test_pushnew);
   tcase_add_test(tc_arc, test_pull);
+  tcase_add_test(tc_arc, test_togglemem);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
