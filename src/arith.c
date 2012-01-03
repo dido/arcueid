@@ -977,7 +977,7 @@ value __arc_add(arc *c, int argc, value *argv)
   value sum = INT2FIX(0);
   int i;
 
-  if (argc > 0 && (NIL_P(argv[0]) || CONS_P(argv[0])))
+  if (argc > 0 && (NIL_P(argv[0]) || CONS_P(argv[0]) || TYPE(argv[0]) == T_STRING))
       sum = CNIL;
 
   for (i=0; i<argc; i++)
