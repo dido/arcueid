@@ -505,8 +505,9 @@ value arc_init_builtins(arc *c)
   value cfunc;
 
   for (i=0; fntable[i].fname != NULL; i++) {
-    cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr);
-    arc_bindcstr(c, fntable[i].fname, cfunc);
+    value name = arc_intern_cstr(c, fntable[i].fname);
+    cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr, name);
+    arc_bindsym(c, name, cfunc);
   }
 
   arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
