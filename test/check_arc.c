@@ -1337,6 +1337,28 @@ START_TEST(test_check)
 }
 END_TEST
 
+START_TEST(test_pos)
+{
+  value ret;
+
+  TEST("(pos 1 '(2 3 4))");
+  fail_unless(NIL_P(ret));
+
+  TEST("(pos 1 '(2 3 1 4))");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(pos 1 '(1 2 3 4))");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(pos 1 '(1 2 3 4) 1)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(pos 1 '(1 3 1 4) 1)");
+  fail_unless(ret == INT2FIX(2));
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1454,6 +1476,7 @@ int main(void)
   tcase_add_test(tc_arc, test_string);
   tcase_add_test(tc_arc, test_flat);
   tcase_add_test(tc_arc, test_check);
+  tcase_add_test(tc_arc, test_pos);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
