@@ -1059,17 +1059,47 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
   env = cdr(errfn);
   offset = INT2FIX(0);
   stk = CNIL;
-  errcont = mkcontfull(c, offset, fun, env, stk);
+  errcont = arc_mkcontfull(c, offset, fun, env, stk);
   WB(&TECONT(thr), cons(c, errcont, TECONT(thr)));
   CC4BEGIN(c);
-  CC4CALL(c, argv, fn, 0);
+  CC4CALL(c, argv, fn, 0, CNIL);
   CC4END;
   return(rv);
 }
 
+value arc_mkexception(arc *c, value details, value lastcall, value contchain)
+{
+  value exception = arc_mkvector(c, 3);
+
+  BTYPE(exception) = T_EXCEPTION;
+  VINDEX(exception, 0) = details;
+  VINDEX(exception, 1) = lastcall;
+  VINDEX(exception, 2) = contchain;
+  return(exception);
+}
+
 #define ESTRMAX 1024
 
-value arc_err_cstrfmt(arc *c, const char *fmt, ...)
+value arc_errexc(arc *c, value exc)
+{
+  value thr, econt;
+
+  thr = c->curthread;
+  if (NIL_P(TECONT(thr))) {
+    c->signal_error(c, VINDEX(exc, 0));
+    return(CNIL);
+  }
+  econt = car(TECONT(thr));
+  WB(&TECONT(thr), cdr(TECONT(thr)));
+  arc_restorecont(c, thr, econt);
+  CPUSH(thr, exc);
+  /* jump back to the start of the virtual machine context executing
+     this. */
+  longjmp(TVJMP(thr), 0);
+  return(CNIL);
+}
+
+value arc_err_cstrfmt2(arc *c, const char *lastcall, const char *fmt, ...)
 {
   va_list ap;
   char text[ESTRMAX];
@@ -1081,7 +1111,7 @@ value arc_err_cstrfmt(arc *c, const char *fmt, ...)
   vsnprintf(text, ESTRMAX, fmt, ap);
   va_end(ap);
   errtext = arc_mkstringc(c, text);
-  return(arc_err(c, errtxt));
+  return(arc_errexc(c, arc_mkexception(c, errtext, arc_mkstringc(c, lastcall), TCONR(c->curthread))));
 }
 
 /* When an error is raised, we first look through the ECONT register.
@@ -1091,17 +1121,8 @@ value arc_err_cstrfmt(arc *c, const char *fmt, ...)
    If the ECONT register is nil, we use the signal_error function. */
 value arc_err(arc *c, value emsg)
 {
-  value thr, econt;
+  value thr = c->curthread;
 
-  thr = c->curthread;
-  if (NIL_P(TECONT(thr)))
-    return(c->signal_error(c, emsg));
-  econt = car(TECONT(thr));
-  WB(&TECONT(thr), cdr(TECONT(thr)));
-  arc_restorecont(c, thr, econt);
-  CPUSH(thr, emsg);
-  /* jump back to the start of the virtual machine context executing
-     this. */
-  longjmp(TVJMP(thr));
-  return(CNIL);
+  return(arc_errexc(c, arc_mkexception(c, emsg, CODE_NAME(TFUNR(thr)),
+				       TCONR(thr))));
 }
