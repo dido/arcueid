@@ -177,13 +177,8 @@ int main(int argc, char **argv)
   char *loadstr;
 
   c = &cc;
-  arc_set_memmgr(c);
-  cc.genv = arc_mkhash(c, 8);
-  arc_init_reader(c);
-  arc_init_builtins(c);
-  cc.stksize = TSTKSIZE;
-  cc.quantum = PQUANTA;
-  cc.signal_error = error_handler;
+  arc_init(c);
+  c->signal_error = error_handler;
 
   loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
 
