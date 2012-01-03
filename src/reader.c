@@ -82,7 +82,7 @@ value arc_read2(arc *c, int argc, value *argv)
   value fp;
 
   if (argc > 1) {
-    c->signal_error(c, "read expects 0 or 1 argument, given %d", argc);
+    arc_err_cstrfmt(c, "read expects 0 or 1 argument, given %d", argc);
     return(CNIL);
   }
 
@@ -101,12 +101,12 @@ value arc_read(arc *c, value src)
     case '(':
       return(read_list(c, src));
     case ')':
-      c->signal_error(c, "misplaced right paren");
+      arc_err_cstrfmt(c, "misplaced right paren");
       return(CNIL);
     case '[':
       return(read_anonf(c, src));
     case ']':
-      c->signal_error(c, "misplaced right bracket");
+      arc_err_cstrfmt(c, "misplaced right bracket");
       return(CNIL);
     case '\'':
       return(read_quote(c, src, ARC_BUILTIN(c, S_QUOTE)));
@@ -145,7 +145,7 @@ static value read_list(arc *c, value src)
       return(top);
     default:
       if (indot) {
-	c->signal_error(c, "illegal use of .");
+	arc_err_cstrfmt(c, "illegal use of .");
 	return(CNIL);
       }
       arc_ungetc_rune(c, ch, src);
@@ -155,7 +155,7 @@ static value read_list(arc *c, value src)
 	if (last) {
 	  scdr(last, val);
 	} else {
-	  c->signal_error(c, "illegal use of .");
+	  arc_err_cstrfmt(c, "illegal use of .");
 	  return(CNIL);
 	}
 	indot = 1;
@@ -170,7 +170,7 @@ static value read_list(arc *c, value src)
       break;
     }
   }
-  c->signal_error(c, "unexpected end of source");
+  arc_err_cstrfmt(c, "unexpected end of source");
   return(CNIL);
 }
 
@@ -231,7 +231,7 @@ static value read_symbol(arc *c, value str)
   value sym, num, ssx;
 
   if ((sym = getsymbol(c, str)) == CNIL)
-    c->signal_error(c, "expecting symbol name");
+    arc_err_cstrfmt(c, "expecting symbol name");
   if (arc_strcmp(c, sym, arc_mkstringc(c, ".")) == INT2FIX(0))
     return(ARC_BUILTIN(c, S_DOT));
   num = arc_string2num(c, sym);
@@ -282,7 +282,7 @@ static value read_anonf(arc *c, value src)
       break;
     }
   }
-  c->signal_error(c, "unexpected end of source");
+  arc_err_cstrfmt(c, "unexpected end of source");
   return(CNIL);
 
 }
@@ -375,7 +375,7 @@ static value read_string(arc *c, value src)
 	state = 3;
         continue;
       default:
-	c->signal_error(c, "unknown escape code");
+	arc_err_cstrfmt(c, "unknown escape code");
 	break;
       }
       if (i >= STRMAX) {
@@ -405,14 +405,14 @@ static value read_string(arc *c, value src)
 	else if (ch >= 'a' && ch <= 'f')
 	  digval = ch - 'a' + 10;
 	else
-	  c->signal_error(c, "invalid character in Unicode escape");
+	  arc_err_cstrfmt(c, "invalid character in Unicode escape");
 	escrune = escrune * 16 + digval;
 	digcount++;
       }
       break;
     }
   }
-  c->signal_error(c, "unterminated string reaches end of input");
+  arc_err_cstrfmt(c, "unterminated string reaches end of input");
   return(CNIL);			/* to pacify -Wall */
 }
 
@@ -431,7 +431,7 @@ static value read_char(arc *c, value src)
   Rune val, ch, digit;
 
   if ((ch = arc_readc_rune(c, src)) != '\\') {
-    c->signal_error(c, "invalid character constant");
+    arc_err_cstrfmt(c, "invalid character constant");
     return(CNIL);
   }
 
@@ -496,13 +496,13 @@ static value read_char(arc *c, value src)
     }
     if (alldigits)
       return(arc_mkchar(c, val));
-    c->signal_error(c, "invalid Unicode escape");
+    arc_err_cstrfmt(c, "invalid Unicode escape");
   }
 
   /* Symbolic character escape */
   symch = arc_hash_lookup(c, c->charesctbl, tok);
   if (symch == CUNBOUND)
-    c->signal_error(c, "invalid character constant");
+    arc_err_cstrfmt(c, "invalid character constant");
   return(symch);
 }
 
@@ -627,7 +627,7 @@ static value expand_sexpr(arc *c, value sym)
   elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
   elt = arc_intern(c, elt);
   if (elt == CNIL) {
-    c->signal_error(c, "Bad ssyntax %s", sym);
+    arc_err_cstrfmt(c, "Bad ssyntax %s", sym);
     return(CNIL);
   }
   if (last == CNIL) {
