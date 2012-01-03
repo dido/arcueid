@@ -546,4 +546,9 @@ extern value arc_current_process_milliseconds(arc *c);
 extern value arc_seconds(arc *c);
 extern value arc_msec(arc *c);
 
+/* init */
+extern void arc_init_sq(arc *c, int stksize, int quanta);
+extern void arc_init(arc *c);
+
+
 #endif
