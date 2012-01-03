@@ -828,7 +828,7 @@ START_TEST(test_vm_ffi_cc1)
   int base, contofs;
   /* Attempt to apply the argument 3 to the above function. Should result in 5 */
   ITEST_HEADER(1);
-  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, 1, test_cfunc);
+  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, 1, test_cfunc, CNIL);
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 9); /* computed offset by compiler */
   contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
@@ -855,7 +855,7 @@ START_TEST(test_vm_ffi_cc2)
   /* Attempt to apply the arguments 3 and 7 to the above function. Should
      result in 10 */
   ITEST_HEADER(1);
-  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, -1, test_cfunc2);
+  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, -1, test_cfunc2, CNIL);
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 0);
   contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
@@ -884,7 +884,7 @@ START_TEST(test_vm_ffi_cc3)
   /* Attempt to apply the arguments 3 and 7 to the above function. Should
      result in 10 */
   ITEST_HEADER(1);
-  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, -2, test_cfunc3);
+  VINDEX(CCTX_LITS(cctx), 0) = arc_mkccode(&c, -2, test_cfunc3, CNIL);
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 0);
   contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
@@ -942,7 +942,7 @@ START_TEST(test_vm_ffi_cc4)
   func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
   cctx2 = arc_mkcctx(&c, INT2FIX(1), INT2FIX(2));
-  VINDEX(CCTX_LITS(cctx2), 0) = arc_mkccode(&c, -3, cc4demo);
+  VINDEX(CCTX_LITS(cctx2), 0) = arc_mkccode(&c, -3, cc4demo, CNIL);
   VINDEX(CCTX_LITS(cctx2), 1) = func;
   base = FIX2INT(CCTX_VCPTR(cctx2));
   arc_gcode1(&c, cctx2, icont, 0);
@@ -1510,7 +1510,7 @@ START_TEST(test_vm_macapply_cc)
 {
   value func, args, ret;
 
-  func = arc_mkccode(&c, 1, test_cfunc);
+  func = arc_mkccode(&c, 1, test_cfunc, CNIL);
   args = cons(&c, INT2FIX(31337), CNIL);
   ret = arc_macapply(&c, func, args);
   fail_unless(ret == INT2FIX(31339));
