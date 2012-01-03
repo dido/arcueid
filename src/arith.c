@@ -418,6 +418,15 @@ value __arc_add2(arc *c, value arg1, value arg2)
     return(arc_list_append(arg2, arg1));
   }
 
+  if ((NIL_P(arg1) || TYPE(arg1) == T_STRING)
+      && (NIL_P(arg2) || TYPE(arg2) == T_STRING)) {
+    if (arg1 == CNIL)
+      return(arg2);
+    if (arg2 == CNIL)
+      return(arg1);
+    return(arc_strcat(c, arg2, arg1));
+  }
+
   TYPE_CASES(add, arg1, arg2);
 
   c->signal_error(c, "Invalid types for addition");
