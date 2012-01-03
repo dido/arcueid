@@ -1300,6 +1300,25 @@ START_TEST(test_string)
 }
 END_TEST
 
+START_TEST(test_flat)
+{
+  value ret;
+
+  TEST("(flat '(1 (2 3 (4 5) 6 (7 8) 9) 10))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(6));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(ret))))))) == INT2FIX(7));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(cdr(ret)))))))) == INT2FIX(8));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(cdr(cdr(ret))))))))) == INT2FIX(9));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(cdr(cdr(cdr(ret)))))))))) == INT2FIX(10));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1415,6 +1434,7 @@ int main(void)
   tcase_add_test(tc_arc, test_whiler);
   tcase_add_test(tc_arc, test_consif);
   tcase_add_test(tc_arc, test_string);
+  tcase_add_test(tc_arc, test_flat);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
