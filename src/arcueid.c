@@ -478,6 +478,8 @@ static struct {
   { "scar", 2, arc_scar },
   { "scdr", 2, arc_scdr },
 
+  { "newstring", 1, arc_newstring },
+
   { "disasm", 1, arc_disasm },
 #ifdef HAVE_TRACING
   { "trace", 0, arc_trace },
