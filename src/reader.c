@@ -607,7 +607,7 @@ static value expand_sexpr(arc *c, value sym)
       if (last == CNIL)
 	last = elt;
       else if (prevchar == '!')
-	last = cons(c, last, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL)));
+	last = cons(c, last, cons(c, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL)), CNIL));
       else
 	last = cons(c, last, cons(c, elt, CNIL));
       elt = CNIL;
@@ -636,7 +636,7 @@ static value expand_sexpr(arc *c, value sym)
     return(cons(c, ARC_BUILTIN(c, S_GET), cons(c, elt, CNIL)));
   }
   if (prevchar == '!')
-    return(cons(c, last, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL))));
+    return(cons(c, last, cons(c, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, elt, CNIL)), CNIL)));
   return(cons(c, last, cons(c, elt, CNIL)));
 }
 
