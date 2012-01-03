@@ -1806,6 +1806,64 @@ START_TEST(test_case)
 }
 END_TEST
 
+START_TEST(test_pushpop)
+{
+  value str, sexpr, fp, cctx, code, ret;
+  value stack;
+
+  str = arc_mkstringc(c, "(do (= stack nil) (push 1 stack) (push 2 stack) (push 3 stack))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(CONS_P(ret));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  fail_unless(CONS_P(stack));
+  fail_unless(car(stack) == INT2FIX(3));
+  fail_unless(car(cdr(stack)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(stack))) == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(pop stack)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(3));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  fail_unless(CONS_P(stack));
+  fail_unless(car(stack) == INT2FIX(2));
+  fail_unless(car(cdr(stack)) == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(pop stack)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(2));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  fail_unless(CONS_P(stack));
+  fail_unless(car(stack) == INT2FIX(1));
+
+  str = arc_mkstringc(c, "(pop stack)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(1));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  fail_unless(NIL_P(stack));
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1897,6 +1955,7 @@ int main(void)
   tcase_add_test(tc_arc, test_do1);
   tcase_add_test(tc_arc, test_caselet);
   tcase_add_test(tc_arc, test_case);
+  tcase_add_test(tc_arc, test_pushpop);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
