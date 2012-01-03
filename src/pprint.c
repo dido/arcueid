@@ -296,6 +296,13 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     prettyprint(c, REP(sexpr)._cfunc.name, ppstr);
     append_cstring(c, ">", ppstr);
     break;
+  case T_EXCEPTION:
+    append_cstring(c, "#<exception:", ppstr);
+    prettyprint(c, VINDEX(sexpr, 0), ppstr);
+    append_cstring(c, ":from:", ppstr);
+    prettyprint(c, VINDEX(sexpr, 1), ppstr);
+    append_cstring(c, ">", ppstr);
+    break;
   case T_PORT:
   case T_CUSTOM:
     {
