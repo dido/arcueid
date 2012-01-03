@@ -171,7 +171,7 @@ value arc_code_setname(arc *c, value code, value codename)
     code = car(code);
 
   if (TYPE(code) != T_CODE) {
-    c->signal_error(c, "Cannot set the code name for a non-code object");
+    arc_err_cstrfmt(c, "Cannot set the code name for a non-code object");
     return(CNIL);
   }
 
@@ -240,7 +240,7 @@ static value disasm(arc *c, value code, int level)
   }
 
   if (TYPE(code) != T_CODE) {
-    c->signal_error(c, "Cannot disassemble a non-T_CODE object");
+    arc_err_cstrfmt(c, "Cannot disassemble a non-T_CODE object");
     return(CNIL);
   }
 
