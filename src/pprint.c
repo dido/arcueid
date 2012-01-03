@@ -274,6 +274,20 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
       prettyprint(c, CODE_NAME(sexpr), ppstr);
     append_cstring(c, ">", ppstr);    
     break;
+  case T_CONT:
+    {
+      int i;
+      append_cstring(c, "#<continuation: ", ppstr);
+      for (i=0; i<VECLEN(sexpr); i++) {
+	prettyprint(c, VINDEX(sexpr, i), ppstr);
+	append_cstring(c, " ", ppstr);
+      }
+      append_cstring(c, ">", ppstr);
+    }
+    break;
+  case T_XCONT:
+    append_cstring(c, "#<xcont>", ppstr);
+    break;
   case T_CLOS:
     prettyprint(c, car(sexpr), ppstr);
     break;
