@@ -484,6 +484,9 @@ START_TEST(test_while)
 
   TEST("(with (x 0) (do (while (isnt x 10) (= x (+ x 1))) x))");
   fail_unless(ret == INT2FIX(10));
+
+  TEST("(with (xs '(1 2 3 4 5 6 7) acc 1) (while (= xs (cdr xs)) (assign acc (* acc (car xs)))) acc)");
+  fail_unless(ret == INT2FIX(5040));
 }
 END_TEST
 
@@ -1265,6 +1268,15 @@ START_TEST(test_drain)
 }
 END_TEST
 
+START_TEST(test_whiler)
+{
+  value ret;
+
+  TEST("(with (xs '(1 2 3 4 5 6 7 8) acc 1) (whiler i (cadr xs) nil (= acc (* acc (car xs))) (= xs (cdr xs))) acc)");
+  fail_unless(ret == INT2FIX(5040));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1377,6 +1389,7 @@ int main(void)
   tcase_add_test(tc_arc, test_aand);
   tcase_add_test(tc_arc, test_accum);
   tcase_add_test(tc_arc, test_drain);
+  tcase_add_test(tc_arc, test_whiler);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
