@@ -1713,6 +1713,39 @@ START_TEST(test_do1)
 }
 END_TEST
 
+START_TEST(test_caselet)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(caselet x 1 1 'a 2 'b 3 'c 'd)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == arc_intern_cstr(c, "a"));
+
+  str = arc_mkstringc(c, "(caselet x 21 1 'a 2 'b 3 'c 'd)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == arc_intern_cstr(c, "d"));
+
+  str = arc_mkstringc(c, "(caselet x 21 1 'a 2 'b 3 'c)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1807,6 +1840,7 @@ int main(void)
   tcase_add_test(tc_arc, test_keep);
   tcase_add_test(tc_arc, test_trues);
   tcase_add_test(tc_arc, test_do1);
+  tcase_add_test(tc_arc, test_caselet);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
