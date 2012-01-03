@@ -581,8 +581,10 @@ void arc_apply(arc *c, value thr, value fun)
     cfn = fun;
     argc = TARGC(thr);
     if (REP(cfn)._cfunc.argc >= 0 && REP(cfn)._cfunc.argc != argc) {
-      printf("wrong number of arguments (%d for %d)\n", argc,
-	     REP(cfn)._cfunc.argc);
+      /*      printf("\n");
+	      printobj(c, fun);
+	      printf("\nwrong number of arguments (%d for %d)\n", argc,
+	      REP(cfn)._cfunc.argc); */
       c->signal_error(c, "wrong number of arguments (%d for %d)\n", argc,
 		      REP(cfn)._cfunc.argc);
       return;
