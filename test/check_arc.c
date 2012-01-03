@@ -1503,6 +1503,7 @@ int main(void)
   tcase_add_test(tc_arc, test_pos);
   tcase_add_test(tc_arc, test_even);
   tcase_add_test(tc_arc, test_odd);
+  /* XXX - after cannot be tested because protect is not yet implemented */
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
