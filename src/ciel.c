@@ -68,7 +68,7 @@ static inline value stackpop(arc *c, value *stack, int *stackptr,
 
   (*stackptr)--;
   if ((*stackptr) < 0)
-    c->signal_error(c, "CIEL stack underflow during decode");
+    arc_err_cstrfmt(c, "CIEL stack underflow during decode");
   val = VINDEX(*stack, *stackptr);
   return(val);
 }
@@ -95,7 +95,7 @@ static value getint(arc *c, int sign, value fd)
     for (i=0; i<8; i++) {
       parts[i] = arc_readb(c, fd);
       if (FIX2INT(parts[i]) < 0) {
-	c->signal_error(c, "ciel-unmarshal/getint: invalid integer found in %v", fd);
+	arc_err_cstrfmt(c, "ciel-unmarshal/getint: invalid integer found in %v", fd);
       }
     }
     for (i=0; i<7; i++) {
@@ -133,7 +133,7 @@ static value getflo(arc *c, value fd)
   for (i=0; i<8; i++) {
     ch = arc_readb(c, fd);
     if (FIX2INT(c) < 0) {
-      c->signal_error(c, "ciel-unmarshal/getflo: invalid integer found in %v", fd);
+      arc_err_cstrfmt(c, "ciel-unmarshal/getflo: invalid integer found in %v", fd);
     }
 #ifdef WORDS_BIGENDIAN
     /* Don't know if this will work; I don't have access to a big-endian
@@ -157,7 +157,7 @@ static value ggetchar(arc *c, value fd)
   for (i=0; i<4; i++) {
     v = arc_readb(c, fd);
     if (FIX2INT(v) < 0)
-      c->signal_error(c, "ciel-unmarshal/ggetchar: unexpected end of file from %v", fd);
+      arc_err_cstrfmt(c, "ciel-unmarshal/ggetchar: unexpected end of file from %v", fd);
     r |= (FIX2INT(v) & 0xff) << (i*8);
   }
   return(arc_mkchar(c, r));
@@ -174,14 +174,14 @@ static value getstr(arc *c, value fd)
     /* XXX - once we have neat things like ropes as strings we'll be
        able to support strings of arbitrary length limited only by
        how much memory one has. */
-    c->signal_error(c, "ciel-unmarshal/getstr: only fixnum lengths are presently allowed for strings", fd);
+    arc_err_cstrfmt(c, "ciel-unmarshal/getstr: only fixnum lengths are presently allowed for strings", fd);
     return(CNIL);
   }
   str = arc_mkstringlen(c, FIX2INT(length));
   for (i=0; i<FIX2INT(length); i++) {
     r = arc_readc_rune(c, fd);
     if (r == Runeerror) {
-      c->signal_error(c, "ciel-unmarshal/getstr: error decoding UTF-8 characters", fd);
+      arc_err_cstrfmt(c, "ciel-unmarshal/getstr: error decoding UTF-8 characters", fd);
       return(CNIL);
     }
     arc_strsetindex(c, str, i, r);
@@ -200,14 +200,14 @@ static value getbstr(arc *c, value fd)
     /* XXX - once we have neat things like ropes as strings we'll be
        able to support strings of arbitrary length limited only by
        how much memory one has. */
-    c->signal_error(c, "ciel-unmarshal/getbstr: only fixnum lengths are presently allowed for binary strings", fd);
+    arc_err_cstrfmt(c, "ciel-unmarshal/getbstr: only fixnum lengths are presently allowed for binary strings", fd);
     return(CNIL);
   }
   str = arc_mkvmcode(c, FIX2INT(length));
   for (i=0; i<FIX2INT(length); i++) {
     r = arc_readb(c, fd);
     if (r < 0) {
-      c->signal_error(c, "ciel-unmarshal/getbstr: unexpected end of file encountered", fd);
+      arc_err_cstrfmt(c, "ciel-unmarshal/getbstr: unexpected end of file encountered", fd);
       return(CNIL);
     }
     VINDEX(str, i) = FIX2INT(r);
@@ -251,7 +251,7 @@ static value fill_code(arc *c, value cctx, value bytecode, value lits)
       arc_gcode2(c, cctx, bc, args[0], args[1]);
       break;
     default:
-      c->signal_error(c, "invalid number of arguments for bytecode %d", bc);
+      arc_err_cstrfmt(c, "invalid number of arguments for bytecode %d", bc);
       break;
     }
   }
@@ -292,7 +292,7 @@ value arc_ciel_unmarshal(arc *c, value fd)
     }
   }
   if (!flag)
-    c->signal_error(c, "ciel-unmarshal: invalid header found in file %v", fd);
+    arc_err_cstrfmt(c, "ciel-unmarshal: invalid header found in file %v", fd);
   /* Initialize stack and memo */
   stacksize = INIT_STACK_SIZE;
   memosize = INIT_MEMO_SIZE;
@@ -365,23 +365,23 @@ value arc_ciel_unmarshal(arc *c, value fd)
       x = POP();		/* should be 'code */
       cc = POP();		/* should be a cons cell */
       if (x != arc_intern_cstr(c, "code")) {
-	c->signal_error(c, "CANNOTATE only supports code annotations");
+	arc_err_cstrfmt(c, "CANNOTATE only supports code annotations");
 	return(CNIL);
       }
 
       if (!CONS_P(cc)) {
-	c->signal_error(c, "Malformed code annotation, cons expected, type %d object found", TYPE(cc));
+	arc_err_cstrfmt(c, "Malformed code annotation, cons expected, type %d object found", TYPE(cc));
 	return(CNIL);
       }
 
       code = cdr(cc);
       if (TYPE(code) != T_VMCODE) {
-	c->signal_error(c, "Malformed code annotation, non-string (type %d) found for bytecode", TYPE(code));
+	arc_err_cstrfmt(c, "Malformed code annotation, non-string (type %d) found for bytecode", TYPE(code));
 	return(CNIL);
       }
       lits = car(cc);
       if (!(CONS_P(lits) || NIL_P(lits))) {
-	c->signal_error(c, "Malformed code annotation, non-list (type %d) found for literals", TYPE(lits));
+	arc_err_cstrfmt(c, "Malformed code annotation, non-list (type %d) found for literals", TYPE(lits));
 	return(CNIL);
       }
       cctx = arc_mkcctx(c, INT2FIX(arc_strlen(c, code)),
@@ -407,7 +407,7 @@ value arc_ciel_unmarshal(arc *c, value fd)
       break;
     }
     default:
-      c->signal_error(c, "Invalid CIEL opcode: %d", bc);
+      arc_err_cstrfmt(c, "Invalid CIEL opcode: %d", bc);
     }
   }
   t = POP();
