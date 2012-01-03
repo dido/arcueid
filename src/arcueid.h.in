@@ -405,6 +405,7 @@ extern value arc_scdr(arc *c, value x, value y);
 
 /* strings */
 extern value arc_mkstringlen(arc *c, int length);
+extern value arc_newstring(arc *c, value length);
 extern value arc_mkstring(arc *c, const Rune *data, int length);
 extern value arc_mkstringc(arc *c, const char *s);
 extern value arc_mkchar(arc *c, Rune r);
