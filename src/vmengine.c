@@ -269,7 +269,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(imvrarg):
       {
 	int iindx = (int)*TIP(thr)++;
-	value list = CNIL, i, t, rlist = CNIL;
+	value list = CNIL, i, rlist = CNIL;
 
 	while (TSP(thr) != TSTOP(thr)) {
 	  i = CPOP(thr);
@@ -277,13 +277,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	}
 	/* The list of popped arguments is in reverse order.  We
 	   need to reverse it to make it come out right. */
-	t = list;
-	while (t != CNIL) {
-	  list = cdr(list);
-	  scdr(t, rlist);
-	  rlist = t;
-	  t = list;
-	}
+	rlist = arc_list_reverse(c, list);
 	WB(&ENV_VALUE(car(TENVR(thr)), iindx), rlist);
       }
       NEXT;
@@ -514,21 +508,14 @@ static value c4apply(arc *c, value thr, value avec,
    Note that garbage collection cycles do not execute while this is done. */
 value arc_macapply(arc *c, value func, value args)
 {
-  value thr, oldthr, retval, arg, ahd, cur, nahd;
+  value thr, oldthr, retval, arg, nahd;
   int argc;
 
   oldthr = c->curthread;
   thr = arc_mkthread(c, func, c->stksize, 0);
   /* push the args in reverse order */
+  nahd = arc_list_reverse(c, args);
   argc = 0;
-  ahd = cur = args;
-  nahd = CNIL;
-  while (cur != CNIL) {
-    ahd = cdr(ahd);
-    scdr(cur, nahd);
-    nahd = cur;
-    cur = ahd;
-  }
   for (arg = nahd; arg != CNIL; arg = cdr(arg)) {
     CPUSH(thr, car(arg));
     argc++;
