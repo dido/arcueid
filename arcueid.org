@@ -447,8 +447,8 @@ notice and this notice are preserved.
      - [ ] dir-exists
      - [ ] file-exists
      - [ ] rmfile
-   - [-] Error handling and continuations [2/5]
-     - [ ] details
+   - [-] Error handling and continuations [3/5]
+     - [X] details
      - [X] err
      - [X] on-err
      - [ ] ccc
