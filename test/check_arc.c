@@ -1900,6 +1900,49 @@ START_TEST(test_rotate)
 }
 END_TEST
 
+START_TEST(test_adjoin)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(adjoin 0 '(1 2 0 3))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
+
+  str = arc_mkstringc(c, "(adjoin 0 '(1 2 0 3) (fn (x y) t))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
+
+  str = arc_mkstringc(c, "(adjoin 0 '(1 2 0 3) (fn (x y) nil))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(0));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1994,6 +2037,7 @@ int main(void)
   tcase_add_test(tc_arc, test_pushpop);
   tcase_add_test(tc_arc, test_swap);
   tcase_add_test(tc_arc, test_rotate);
+  tcase_add_test(tc_arc, test_adjoin);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
