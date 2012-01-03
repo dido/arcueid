@@ -221,7 +221,7 @@ value arc_tag(arc *c, value type, value rep)
 value arc_cmp(arc *c, value v1, value v2)
 {
   if (TYPE(v1) != TYPE(v2)) {
-    c->signal_error(c, "Invalid types for comparison");
+    arc_err_cstrfmt(c, "Invalid types for comparison");
     return(CNIL);
   }
   switch (TYPE(v1)) {
@@ -237,7 +237,7 @@ value arc_cmp(arc *c, value v1, value v2)
     return(arc_strcmp(c, v1, v2));
     break;
   }
-  c->signal_error(c, "Invalid types for comparison");
+  arc_err_cstrfmt(c, "Invalid types for comparison");
   return(CNIL);
 }
 
@@ -311,18 +311,18 @@ value arc_sref(arc *c, value com, value val, value ind)
     break;
   case T_STRING:
     if (TYPE(val) != T_CHAR) {
-      c->signal_error(c, "cannot set string index to non-character %O", val);
+      arc_err_cstrfmt(c, "cannot set string index to non-character %O", val);
       return(CNIL);
     }
     if (TYPE(ind) != T_FIXNUM || FIX2INT(ind) < 0) {
-      c->signal_error(c, "string index must be non-negative exact integer %O", ind);
+      arc_err_cstrfmt(c, "string index must be non-negative exact integer %O", ind);
       return(CNIL);
     }
     arc_strsetindex(c, com, FIX2INT(ind), REP(val)._char);
     break;
   case T_CONS:
     if (TYPE(ind) != T_FIXNUM || FIX2INT(ind) < 0) {
-      c->signal_error(c, "list index must be non-negative exact integer %O", ind);
+      arc_err_cstrfmt(c, "list index must be non-negative exact integer %O", ind);
       return(CNIL);
     } else {
       int idx = FIX2INT(ind), notfound = 1;
@@ -336,20 +336,20 @@ value arc_sref(arc *c, value com, value val, value ind)
 	}
       }
       if (notfound) {
-	c->signal_error(c, "index %O too large for list %O", ind, com);
+	arc_err_cstrfmt(c, "index %O too large for list %O", ind, com);
 	return(CNIL);
       }
     }
     break;
   case T_VECTOR:
     if (FIX2INT(ind) >= VECLEN(com)) {
-      c->signal_error(c, "index %O too large for vector %O", ind, com);
+      arc_err_cstrfmt(c, "index %O too large for vector %O", ind, com);
       return(CNIL);
     }
     VINDEX(com, FIX2INT(ind)) = val;
     break;
   default:
-    c->signal_error(c, "can't set reference to object %O", com);
+    arc_err_cstrfmt(c, "can't set reference to object %O", com);
   }
   return(val);
 }
@@ -371,7 +371,7 @@ value arc_len(arc *c, value obj)
   default:
     /* Note that PG-Arc also allows the length of symbols to be taken,
        but why this should be remains inexplicable to me. */
-    c->signal_error(c, "can't get length of object of type %T", obj);
+    arc_err_cstrfmt(c, "can't get length of object of type %T", obj);
   }
   return(CNIL);
 }
