@@ -62,7 +62,7 @@ value arc_mkbignuml(arc *c, long val)
   mpz_set_si(REP(bignum)._bignum, val);
   return(bignum);
 #else
-  c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
+  arc_err_cstrfmt(c, "Overflow error (this version of Arcueid does not have bignum support)");
   return(CNIL);
 #endif
 }
@@ -79,7 +79,7 @@ value arc_mkrationall(arc *c, long num, long den)
   mpq_canonicalize(REP(rat)._rational);
   return(rat);
 #else
-  c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
+  arc_err_cstrfmt(c, "Overflow error (this version of Arcueid does not have bignum support)");
   return(CNIL);
 #endif
 }
@@ -105,7 +105,7 @@ double arc_coerce_flonum(arc *c, value v)
     val = (double)FIX2INT(v);
     break;
   default:
-    c->signal_error(c, "Cannot convert operand %v into a flonum", v);
+    arc_err_cstrfmt(c, "Cannot convert operand %v into a flonum", v);
     break;
   }
   return(val);
@@ -134,7 +134,7 @@ void arc_coerce_complex(arc *c, value v, double *re, double *im)
     *re = (double)FIX2INT(v);
     break;
   default:
-    c->signal_error(c, "Cannot convert operand %v into a flonum", v);
+    arc_err_cstrfmt(c, "Cannot convert operand %v into a flonum", v);
     break;
   }
   *im = 0.0;
@@ -161,11 +161,11 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
     mpz_set_si(*bignum, FIX2INT(v));
     break;
   default:
-    c->signal_error(c, "Cannot convert operand %v into a bignum", v);
+    arc_err_cstrfmt(c, "Cannot convert operand %v into a bignum", v);
     break;
   }
 #else
-  c->signal_error(c, "Overflow error (no bignum support)");
+  arc_err_cstrfmt(c, "Overflow error (no bignum support)");
 #endif
 }
 
@@ -188,11 +188,11 @@ void arc_coerce_rational(arc *c, value v, void *bptr)
     mpq_set_si(*rat, FIX2INT(v), 1);
     break;
   default:
-    c->signal_error(c, "Cannot convert operand %v into a rational", v);
+    arc_err_cstrfmt(c, "Cannot convert operand %v into a rational", v);
     break;
   }
 #else
-  c->signal_error(c, "Overflow error (no bignum support)");
+  arc_err_cstrfmt(c, "Overflow error (no bignum support)");
 #endif
 }
 
@@ -217,7 +217,7 @@ value arc_coerce_fixnum(arc *c, value v)
       return(INT2FIX(mpz_get_si(REP(v)._bignum)));
     }
 #else
-    c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
+    arc_err_cstrfmt(c, "Overflow error (this version of Arcueid does not have bignum support)");
 #endif
     break;
   case T_RATIONAL:
@@ -239,7 +239,7 @@ value arc_coerce_fixnum(arc *c, value v)
       }
     }
 #else
-    c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
+    arc_err_cstrfmt(c, "Overflow error (this version of Arcueid does not have bignum support)");
 #endif
     break;
   }
@@ -429,7 +429,7 @@ value __arc_add2(arc *c, value arg1, value arg2)
 
   TYPE_CASES(add, arg1, arg2);
 
-  c->signal_error(c, "Invalid types for addition");
+  arc_err_cstrfmt(c, "Invalid types for addition");
   return(CNIL);
 }
 
@@ -461,7 +461,7 @@ value __arc_neg(arc *c, value arg)
     break;
 #endif
   default:
-    c->signal_error(c, "Invalid type for negation");
+    arc_err_cstrfmt(c, "Invalid type for negation");
   }
   return(CNIL);
 }
@@ -526,7 +526,7 @@ value __arc_mul2(arc *c, value arg1, value arg2)
       value v1 = arc_mkbignuml(c, varg1);
       COERCE_OP_BIGNUM(mul2_bignum, v1, arg2);
 #else
-      c->signal_error(c, "Overflow error in multiplication");
+      arc_err_cstrfmt(c, "Overflow error in multiplication");
       return(CNIL);
 #endif
     }
@@ -535,7 +535,7 @@ value __arc_mul2(arc *c, value arg1, value arg2)
 
   TYPE_CASES(mul, arg1, arg2);
 
-  c->signal_error(c, "Invalid types for multiplication");
+  arc_err_cstrfmt(c, "Invalid types for multiplication");
   return(CNIL);
 
 }
@@ -622,7 +622,7 @@ value __arc_sub2(arc *c, value arg1, value arg2)
   }
 #endif
 
-  c->signal_error(c, "Invalid types for subtraction");
+  arc_err_cstrfmt(c, "Invalid types for subtraction");
   return(CNIL);
 }
 
@@ -632,7 +632,7 @@ static inline value div2_complex(arc *c, value arg1, double re, double im)
   double r2, i2;
 
   if (den == 0.0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -647,7 +647,7 @@ static inline value div2r_complex(arc *c, value arg1, double re, double im)
   double den = r1*r1 + i1*i1;
 
   if (den == 0.0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -659,7 +659,7 @@ static inline value div2r_complex(arc *c, value arg1, double re, double im)
 static inline value div2_flonum(arc *c, value arg1, double arg2)
 {
   if (arg2 == 0.0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
   arg2 = REP(arg1)._flonum / arg2;
@@ -669,7 +669,7 @@ static inline value div2_flonum(arc *c, value arg1, double arg2)
 static inline value div2r_flonum(arc *c, value arg1, double arg2)
 {
   if (REP(arg1)._flonum == 0.0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -681,7 +681,7 @@ static inline value div2r_flonum(arc *c, value arg1, double arg2)
 static inline value div2_rational(arc *c, value arg1, mpq_t *arg2)
 {
   if (mpq_cmp_si(*arg2, 0, 1) == 0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -692,7 +692,7 @@ static inline value div2_rational(arc *c, value arg1, mpq_t *arg2)
 static inline value div2r_rational(arc *c, value arg1, mpq_t *arg2)
 {
   if (mpq_cmp_si(REP(arg1)._rational, 0, 1) == 0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -708,7 +708,7 @@ static inline value div2_bignum(arc *c, value arg1, value arg2)
   mpz_t t;
 
   if (mpz_cmp_si(REP(arg2)._bignum, 0) == 0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -733,7 +733,7 @@ static inline value div2r_bignum(arc *c, value arg1, value arg2)
   mpz_t t;
 
   if (mpz_cmp_si(REP(arg1)._bignum, 0) == 0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -765,7 +765,7 @@ value __arc_div2(arc *c, value arg1, value arg2)
     varg2 = FIX2INT(arg2);
 
     if (varg2 == 0) {
-      c->signal_error(c, "Division by zero");
+      arc_err_cstrfmt(c, "Division by zero");
       return(CNIL);
     }
 
@@ -828,7 +828,7 @@ value __arc_div2(arc *c, value arg1, value arg2)
   }
 #endif
 
-  c->signal_error(c, "Invalid types for division");
+  arc_err_cstrfmt(c, "Invalid types for division");
   return(CNIL);
 }
 
@@ -837,7 +837,7 @@ value __arc_mod2(arc *c, value arg1, value arg2)
   ldiv_t res;
 
   if (TYPE(arg2) == T_FIXNUM && FIX2INT(arg2) == 0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -876,7 +876,7 @@ value __arc_mod2(arc *c, value arg1, value arg2)
   }
 #endif
 
-  c->signal_error(c, "Invalid types for modulus");
+  arc_err_cstrfmt(c, "Invalid types for modulus");
   return(CNIL);
 }
 
@@ -885,7 +885,7 @@ value __arc_idiv2(arc *c, value arg1, value arg2)
   ldiv_t res;
 
   if (TYPE(arg2) == T_FIXNUM && FIX2INT(arg2) == 0) {
-    c->signal_error(c, "Division by zero");
+    arc_err_cstrfmt(c, "Division by zero");
     return(CNIL);
   }
 
@@ -922,7 +922,7 @@ value __arc_idiv2(arc *c, value arg1, value arg2)
   }
 #endif
 
-  c->signal_error(c, "Invalid types for modulus");
+  arc_err_cstrfmt(c, "Invalid types for modulus");
   return(CNIL);
 }
 
@@ -949,7 +949,7 @@ value __arc_amul_2exp(arc *c, value acc, value arg1, int n)
     mpz_init_set(val, REP(arg1)._bignum);
 #endif
   } else {
-    c->signal_error(c, "Invalid types for amul2exp");
+    arc_err_cstrfmt(c, "Invalid types for amul2exp");
   }
 #ifdef HAVE_GMP_H
   if (TYPE(acc) == T_FIXNUM) {
@@ -966,7 +966,7 @@ value __arc_amul_2exp(arc *c, value acc, value arg1, int n)
   mpz_clear(val);
   return(acc);
 #else
-  c->signal_error(c, "Overflow error (this version of Arcueid does not have bignum support)");
+  arc_err_cstrfmt(c, "Overflow error (this version of Arcueid does not have bignum support)");
   return(CNIL);
 #endif
 
@@ -991,7 +991,7 @@ value __arc_sub(arc *c, int argc, value *argv)
   int i = 0;
 
   if (argc < 1) {
-    c->signal_error(c, "-: expects at least 1 argument, given %d", argc);
+    arc_err_cstrfmt(c, "-: expects at least 1 argument, given %d", argc);
     return(CNIL);
   }
   if (argc > 1) {
@@ -1020,7 +1020,7 @@ value __arc_div(arc *c, int argc, value *argv)
   int i = 0;
 
   if (argc < 1) {
-    c->signal_error(c, "/: expects at least 1 argument, given %d", argc);
+    arc_err_cstrfmt(c, "/: expects at least 1 argument, given %d", argc);
     return(CNIL);
   }
   if (argc > 1) {
@@ -1386,7 +1386,7 @@ value arc_numcmp(arc *c, value v1, value v2)
     break;
 #endif
   default:
-    c->signal_error(c, "Invalid types for numeric comparison");
+    arc_err_cstrfmt(c, "Invalid types for numeric comparison");
     return(CNIL);
   }
 }
@@ -1425,7 +1425,7 @@ value __arc_abs(arc *c, value v)
     return(val);
 #endif
   }
-    c->signal_error(c, "Invalid types for absolute value");
+    arc_err_cstrfmt(c, "Invalid types for absolute value");
   return(CNIL);
 }
 
@@ -1445,7 +1445,7 @@ value arc_expt(arc *c, value a, value b)
 	&& (TYPE(b) == T_FIXNUM || TYPE(b) == T_FLONUM
 	    || TYPE(b) == T_BIGNUM || TYPE(a) == T_RATIONAL
 	    || TYPE(a) == T_COMPLEX))) {
-    c->signal_error(c, "Invalid types for exponentiation");
+    arc_err_cstrfmt(c, "Invalid types for exponentiation");
     return(CNIL);
   }
   /* We coerce everything to complex and use cpow if any argument
@@ -1474,7 +1474,7 @@ value arc_expt(arc *c, value a, value b)
 #ifdef HAVE_GMP_H
   /* We can't handle a bignum exponent... */
   if (TYPE(b) == T_BIGNUM) {
-    c->signal_error(c, "Exponent too large");
+    arc_err_cstrfmt(c, "Exponent too large");
     return(arc_mkflonum(c, INFINITY));
   }
   /* Special case, zero base */
@@ -1504,7 +1504,7 @@ value arc_expt(arc *c, value a, value b)
   default:
     mpz_clear(anumer);
     mpz_clear(adenom);
-    c->signal_error(c, "Invalid types for exponentiation");
+    arc_err_cstrfmt(c, "Invalid types for exponentiation");
     return(CNIL);
     break;
   }
@@ -1627,7 +1627,7 @@ value arc_srand(arc *ccc, value seed)
   uint64_t a,b,c,d,e,f,g,h;
 
   if (TYPE(seed) != T_FIXNUM) {
-    ccc->signal_error(ccc, "srand requires first argument be a fixnum, given %O", seed);
+    ccarc_err_cstrfmt(ccc, "srand requires first argument be a fixnum, given %O", seed);
     return(CNIL);
   }
 
@@ -1690,7 +1690,7 @@ value arc_rand(arc *c, int argc, value *argv)
   uint64_t rnd1, rnd2, max;
 
   if (argc > 1) {
-    c->signal_error(c, "rand expects 0 or 1 argument, given %d", argc);
+    arc_err_cstrfmt(c, "rand expects 0 or 1 argument, given %d", argc);
     return(CNIL);
   }
 
@@ -1701,7 +1701,7 @@ value arc_rand(arc *c, int argc, value *argv)
   }
 
   if (TYPE(argv[0]) != T_FIXNUM) {
-    c->signal_error(c, "rand expects fixnum argument, given %O", argv[0]);
+    arc_err_cstrfmt(c, "rand expects fixnum argument, given %O", argv[0]);
     return(CNIL);
   }
   max = FIX2INT(argv[0]);
