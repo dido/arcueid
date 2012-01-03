@@ -556,9 +556,18 @@ extern void arc_init_sq(arc *c, int stksize, int quanta);
 extern void arc_init(arc *c);
 
 /* error handling */
-extern value arc_on_err(arc *c, value argv, value rv, CC4CTX);
-extern value arc_err_cstrfmt(arc *c, const char *fmt, ...);
+extern value arc_mkexception(arc *c, value details, value lastcall,
+			     value contchain);
+extern value arc_err_cstrfmt2(arc *c, const char *lastcall,
+			      const char *fmt, ...);
 extern value arc_err(arc *c, value emsg);
+extern value arc_mkexception(arc *c, value details, value lastcall,
+			     value contchain);
+extern value arc_errexc(arc *c, value exc);
+extern value arc_on_err(arc *c, value argv, value rv, CC4CTX);
+extern value arc_exc_details(arc *c, value exc);
 
+
+#define arc_err_cstrfmt(c, fmt, ...) (arc_err_cstrfmt2((c), (__func__), (fmt), ## __VA_ARGS__))
 
 #endif
