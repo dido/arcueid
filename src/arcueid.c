@@ -241,14 +241,46 @@ value arc_cmp(arc *c, value v1, value v2)
   return(CNIL);
 }
 
-value arc_gt(arc *c, value v1, value v2)
+static value arc_gt2(arc *c, value v1, value v2)
 {
   return((FIX2INT(arc_cmp(c, v1, v2)) > 0) ? CTRUE : CNIL);
 }
 
-value arc_lt(arc *c, value v1, value v2)
+static value arc_lt2(arc *c, value v1, value v2)
 {
   return((FIX2INT(arc_cmp(c, v1, v2)) < 0) ? CTRUE : CNIL);
+}
+
+value arc_gt(arc *c, int argc, value *argv)
+{
+  value prev;
+  int i;
+
+  if (argc < 2)
+    return(CTRUE);
+  prev = argv[0];
+  for (i=1; i<argc; i++) {
+    if (arc_gt2(c, prev, argv[i]) == CNIL)
+      return(CNIL);
+    prev = argv[i];
+  }
+  return(CTRUE);
+}
+
+value arc_lt(arc *c, int argc, value *argv)
+{
+  value prev;
+  int i;
+
+  if (argc < 2)
+    return(CTRUE);
+  prev = argv[0];
+  for (i=1; i<argc; i++) {
+    if (arc_lt2(c, prev, argv[i]) == CNIL)
+      return(CNIL);
+    prev = argv[i];
+  }
+  return(CTRUE);
 }
 
 value arc_bound(arc *c, value sym)
@@ -426,8 +458,8 @@ static struct {
   { "*", -1, __arc_mul },
   { "/", -1, __arc_div },
 
-  { ">", 2, arc_gt },
-  { "<", 2, arc_lt },
+  { ">", -1, arc_gt },
+  { "<", -1, arc_lt },
   { "<=>", 2, arc_cmp },
   { "bound", 1, arc_bound },
   { "exact", 1, arc_exact },
