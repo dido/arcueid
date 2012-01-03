@@ -1171,6 +1171,19 @@ START_TEST(test_wipe)
 }
 END_TEST
 
+START_TEST(test_set)
+{
+  value ret;
+
+  c->signal_error = NULL;
+
+  TEST("(with (a 1 b 2 c 3) (set a b c) (list a b c))");
+  fail_unless(car(ret) == CTRUE);
+  fail_unless(car(cdr(ret)) == CTRUE);
+  fail_unless(car(cdr(cdr(ret))) == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1275,6 +1288,7 @@ int main(void)
   /* XXX - no tests for pr, prt and prn yet.  We need to fix I/O
      more. */
   tcase_add_test(tc_arc, test_wipe);
+  tcase_add_test(tc_arc, test_set);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
