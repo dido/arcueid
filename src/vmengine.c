@@ -1126,3 +1126,8 @@ value arc_err(arc *c, value emsg)
   return(arc_errexc(c, arc_mkexception(c, emsg, CODE_NAME(TFUNR(thr)),
 				       TCONR(thr))));
 }
+
+value arc_exc_details(arc *c, value exc)
+{
+  return(VINDEX(exc, 0));
+}
