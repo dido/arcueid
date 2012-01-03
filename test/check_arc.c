@@ -1225,6 +1225,24 @@ START_TEST(test_awhen)
 }
 END_TEST
 
+START_TEST(test_aand)
+{
+  value ret;
+
+  TEST("(aand 1 2 3 (odd it) 4)");
+  fail_unless(ret == INT2FIX(4));
+
+  TEST("(aand 1 2 3 (odd it))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(aand 1 2 3 (even it) 4)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(aand 1 2 3 (even it))");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1334,6 +1352,7 @@ int main(void)
   tcase_add_test(tc_arc, test_whenlet);
   tcase_add_test(tc_arc, test_aif);
   tcase_add_test(tc_arc, test_awhen);
+  tcase_add_test(tc_arc, test_aand);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
