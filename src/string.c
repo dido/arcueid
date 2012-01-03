@@ -35,6 +35,15 @@ value arc_mkstringlen(arc *c, int length)
 
 }
 
+value arc_newstring(arc *c, value length)
+{
+  if (TYPE(length) != T_FIXNUM || FIX2INT(length) < 0) {
+    c->signal_error(c, "newstring: expects argument of type <non-negative exact integer>; given %P", length);
+    return(CNIL);
+  }
+  return(arc_mkstringlen(c, FIX2INT(length)));
+}
+
 /* Make a string based on UCS-4 data */
 value arc_mkstring(arc *c, const Rune *data, int length)
 {
