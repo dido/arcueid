@@ -1319,6 +1319,24 @@ START_TEST(test_flat)
 }
 END_TEST
 
+START_TEST(test_check)
+{
+  value ret;
+
+  TEST("(check 1 [is _ 0])");
+  fail_unless(NIL_P(ret));
+
+  TEST("(check 1 [is _ 0] -1)");
+  fail_unless(ret == INT2FIX(-1));
+
+  TEST("(check 1 [is _ 1])");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(check 1 [is _ 1] -1)");
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1435,6 +1453,7 @@ int main(void)
   tcase_add_test(tc_arc, test_consif);
   tcase_add_test(tc_arc, test_string);
   tcase_add_test(tc_arc, test_flat);
+  tcase_add_test(tc_arc, test_check);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
