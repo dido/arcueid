@@ -447,10 +447,10 @@ notice and this notice are preserved.
      - [ ] dir-exists
      - [ ] file-exists
      - [ ] rmfile
-   - [ ] Error handling and continuations [0/5]
+   - [-] Error handling and continuations [2/5]
      - [ ] details
-     - [ ] err
-     - [ ] on-err
+     - [X] err
+     - [X] on-err
      - [ ] ccc
      - [ ] protect
    - [X] Strings [1/1]
