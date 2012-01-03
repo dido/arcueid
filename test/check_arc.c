@@ -1189,6 +1189,18 @@ START_TEST(test_iflet)
 }
 END_TEST
 
+START_TEST(test_whenlet)
+{
+  value ret;
+
+  TEST("(let tst 1 (whenlet x t (= tst x)) tst)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(let tst 1 (whenlet x nil (= tst x)) tst)");
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1295,6 +1307,7 @@ int main(void)
   tcase_add_test(tc_arc, test_wipe);
   tcase_add_test(tc_arc, test_set);
   tcase_add_test(tc_arc, test_iflet);
+  tcase_add_test(tc_arc, test_whenlet);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
