@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <setjmp.h>
 #include "../config.h"
 #include "arcueid.h"
 #include "vmengine.h"
@@ -176,6 +177,8 @@ void arc_vmengine(arc *c, value thr, int quanta)
 #else
   value curr_instr;
 #endif
+
+  setjmp(TVJMP(thr));
   if (TSTATE(thr) != Tready)
     return;
   c->curthread = thr;
@@ -215,7 +218,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 
 	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
 	  /* arc_print_string(c, arc_prettyprint(c, tmp)); printf("\n"); */
-	  c->signal_error(c, "Unbound symbol %S\n", tmp);
+	  arc_err_cstrfmt(c, "Unbound symbol %S\n", tmp);
 	  TVALR(thr) = CNIL;
 	}
       }
@@ -254,7 +257,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
       {
 	int iindx = (int)*TIP(thr)++;
 	if (TSP(thr) == TSTOP(thr))
-	  c->signal_error(c, "too few arguments");
+	  arc_err_cstrfmt(c, "too few arguments");
 	WB(&ENV_VALUE(car(TENVR(thr)), iindx), CPOP(thr));
       }
       NEXT;
@@ -394,7 +397,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	      if (cdr(list) == CNIL)
 		scdr(list, nlist);
 	      else
-		c->signal_error(c, "splicing improper list");
+		arc_err_cstrfmt(c, "splicing improper list");
 	      break;
 	    }
 	    list = cdr(list);
@@ -430,7 +433,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 #else
     INST(invalid):
 #endif
-      c->signal_error(c, "invalid opcode %02x", *TIP(thr));
+      arc_err_cstrfmt(c, "invalid opcode %02x", *TIP(thr));
 #ifdef HAVE_THREADED_INTERPRETER
 #else
     }
@@ -457,6 +460,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TENVR(thr) = TVALR(thr) = CNIL;
   TTID(thr) = ++c->tid_nonce;
   TCONR(thr) = CNIL;
+  TECONT(thr) = CNIL;
   return(thr);
 }
 
@@ -542,7 +546,7 @@ value arc_macapply(arc *c, value func, value args)
        have to be.  Threading primitives cannot be used in macros because
        they do not run like ordinary processes! */
     if (TSTATE(thr) != Tready) {
-      c->signal_error(c, "fatal: deadlock detected in macro execution");
+      arc_err_cstrfmt(c, "fatal: deadlock detected in macro execution");
       return(CNIL);
     }
     arc_vmengine(c, thr, c->quantum);
@@ -578,7 +582,7 @@ void arc_apply(arc *c, value thr, value fun)
 	      printobj(c, fun);
 	      printf("\nwrong number of arguments (%d for %d)\n", argc,
 	      REP(cfn)._cfunc.argc); */
-      c->signal_error(c, "wrong number of arguments (%d for %d)\n", argc,
+      arc_err_cstrfmt(c, "wrong number of arguments (%d for %d)\n", argc,
 		      REP(cfn)._cfunc.argc);
       return;
     }
@@ -641,14 +645,14 @@ void arc_apply(arc *c, value thr, value fun)
 					 argv[6], argv[7]);
       break;
     default:
-      c->signal_error(c, "too many arguments");
+      arc_err_cstrfmt(c, "too many arguments");
       return;
     }
     arc_return(c, thr);
     break;
   case T_CONS:
     if (TARGC(thr) != 1) {
-      c->signal_error(c, "list application expects 1 argument, given %d",
+      arc_err_cstrfmt(c, "list application expects 1 argument, given %d",
 		      INT2FIX(TARGC(thr)));
       TVALR(thr) = CNIL;
     } else {
@@ -661,7 +665,7 @@ void arc_apply(arc *c, value thr, value fun)
 	/* We now have a non-negative exact integer for the count */
 	do {
 	  if (!CONS_P(list)) {
-	    c->signal_error(c, "index %d too large for list", ocount);
+	    arc_err_cstrfmt(c, "index %d too large for list", ocount);
 	    res = CNIL;
 	    break;
 	  }
@@ -671,7 +675,7 @@ void arc_apply(arc *c, value thr, value fun)
 	} while ((cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(-1));
 	TVALR(thr) = res;
       } else {
-	c->signal_error(c, "list application expects non-negative exact integer argument, given object of type %d", INT2FIX(TYPE(count)));
+	arc_err_cstrfmt(c, "list application expects non-negative exact integer argument, given object of type %d", INT2FIX(TYPE(count)));
 	TVALR(thr) = CNIL;
       }
     }
@@ -679,7 +683,7 @@ void arc_apply(arc *c, value thr, value fun)
     break;
   case T_VECTOR:
     if (TARGC(thr) != 1) {
-      c->signal_error(c, "vector application expects 1 argument, given %d",
+      arc_err_cstrfmt(c, "vector application expects 1 argument, given %d",
 		      INT2FIX(TARGC(thr)));
       TVALR(thr) = CNIL;
     } else {
@@ -691,7 +695,7 @@ void arc_apply(arc *c, value thr, value fun)
 	value vec=fun, res;
 	/* We now have a non-negative exact integer for the count/index */
 	if (FIX2INT(count) >= VECLEN(vec)) {
-	  c->signal_error(c, "index %d too large for vector", ocount);
+	  arc_err_cstrfmt(c, "index %d too large for vector", ocount);
 	  res = CNIL;
 	} else {
 	  res = VINDEX(vec, FIX2INT(count));
@@ -699,7 +703,7 @@ void arc_apply(arc *c, value thr, value fun)
 	TVALR(thr) = res;
       } else {
 	/* XXX - Permit negative indices?  Could be useful. */
-	c->signal_error(c, "vector application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
+	arc_err_cstrfmt(c, "vector application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
 	TVALR(thr) = CNIL;
       }
     }
@@ -707,7 +711,7 @@ void arc_apply(arc *c, value thr, value fun)
     break;
   case T_TABLE:
     if (TARGC(thr) != 1 && TARGC(thr) != 2) {
-      c->signal_error(c, "table application expects 1 or 2 arguments, given %d",
+      arc_err_cstrfmt(c, "table application expects 1 or 2 arguments, given %d",
 		      INT2FIX(TARGC(thr)));
       TVALR(thr) = CNIL;
     } else {
@@ -723,7 +727,7 @@ void arc_apply(arc *c, value thr, value fun)
     break;
   case T_STRING:
     if (TARGC(thr) != 1) {
-      c->signal_error(c, "string application expects 1 argument, given %d",
+      arc_err_cstrfmt(c, "string application expects 1 argument, given %d",
 		      INT2FIX(TARGC(thr)));
       TVALR(thr) = CNIL;
     } else {
@@ -736,7 +740,7 @@ void arc_apply(arc *c, value thr, value fun)
 	/* We now have a non-negative exact integer for the count/index.
 	   XXX - string length is always a fixnum? */
 	if (FIX2INT(count) >= arc_strlen(c, str)) {
-	  c->signal_error(c, "index %d too large for string", ocount);
+	  arc_err_cstrfmt(c, "index %d too large for string", ocount);
 	  res = CNIL;
 	} else {
 	  res = arc_mkchar(c, arc_strindex(c, str, FIX2INT(count)));
@@ -744,14 +748,14 @@ void arc_apply(arc *c, value thr, value fun)
 	TVALR(thr) = res;
       } else {
 	/* XXX - permit negative indices? Not allowed by reference Arc. */
-	c->signal_error(c, "string application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
+	arc_err_cstrfmt(c, "string application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
 	TVALR(thr) = CNIL;
       }
     }
     arc_return(c, thr);
     break;
   default:
-    c->signal_error(c, "invalid function application");
+    arc_err_cstrfmt(c, "invalid function application");
   }
 }
 
@@ -766,7 +770,7 @@ value arc_apply2(arc *c, value argv, value rv, CC4CTX)
 
   argc = VECLEN(argv);
   if (argc < 1) {
-    c->signal_error(c, "apply expects at least 1 argument");
+    arc_err_cstrfmt(c, "apply expects at least 1 argument");
     return(CNIL);
   }
   func = VINDEX(argv, 0);
@@ -795,7 +799,7 @@ void arc_restorecont(arc *c, value thr, value cont)
   WB(&TFUNR(thr), VINDEX(cont, 1));
   WB(&TENVR(thr), VINDEX(cont, 2));
   savedstk = VINDEX(cont, 3);
-  stklen = VECLEN(savedstk);
+  stklen = (savedstk == CNIL) ? 0 : VECLEN(savedstk);
   TSP(thr) = TSTOP(thr) - stklen;
   for (i=0; i<stklen; i++) {
     *(TSP(thr) + i + 1) = VINDEX(savedstk, i);
@@ -870,6 +874,18 @@ int arc_return(arc *c, value thr)
   }
 }
 
+value arc_mkcontfull(arc *c, value offset, value funr, value envr,
+		     value savedstk)
+{
+  value cont = arc_mkvector(c, 4);
+
+  VINDEX(cont, 0) = offset;
+  VINDEX(cont, 1) = funr;
+  VINDEX(cont, 2) = envr;
+  VINDEX(cont, 3) = savedstk;
+  return(cont);
+}
+
 value arc_mkcont(arc *c, value offset, value thr)
 {
   value cont = arc_mkvector(c, 4);
@@ -920,6 +936,7 @@ value arc_mkxcont(arc *c, value cc4ctx, value argv, value func, int fargc, ...)
   va_start(ap, fargc);
   for (i=0; i<fargc; i++)
     VINDEX(fargv, i) = va_arg(ap, value);
+  va_end(ap);
   return(arc_mkxcontv(c, cc4ctx, argv, func, fargv));
 }
 
@@ -959,7 +976,7 @@ void arc_thread_dispatch(arc *c)
 	 cycles through the run queue we find that all threads are in
 	 a blocked state. */
       if (nthreads != 0 && nthreads == blockedthreads && ++ncycles > 2) {
-	c->signal_error(c, "fatal: deadlock detected");
+	arc_err_cstrfmt(c, "fatal: deadlock detected");
 	return;
       } else {
 	/* reset cycle counter if we get a state where there are
@@ -1015,4 +1032,76 @@ void arc_thread_dispatch(arc *c)
     prev = c->vmqueue;
     c->vmqueue = cdr(c->vmqueue);
   }
+}
+
+/* Exception handlers are continuations consed on top of the ECONT
+   register.  It is not possible at the moment to make an error handling
+   function in C.  I have to think about how to do that. */
+value arc_on_err(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VDEFEND;
+  value fun, env, offset, stk, errcont;
+  value errfn, fn, thr = c->curthread;
+
+  if (VECLEN(argv) != 2) {
+    arc_err_cstrfmt(c, "procedure on-err: expects 2 arguments, given %d",
+		    VECLEN(argv));
+    return(CNIL);
+  }
+  errfn = VINDEX(argv, 0);
+  fn = VINDEX(argv, 1);
+  if (TYPE(errfn) != T_CLOS) {
+    arc_err_cstrfmt(c, "procedure on-err: closure required for first arg");
+    return(CNIL);
+  }
+  fun = car(errfn);
+  env = cdr(errfn);
+  offset = INT2FIX(0);
+  stk = CNIL;
+  errcont = mkcontfull(c, offset, fun, env, stk);
+  WB(&TECONT(thr), cons(c, errcont, TECONT(thr)));
+  CC4BEGIN(c);
+  CC4CALL(c, argv, fn, 0);
+  CC4END;
+  return(rv);
+}
+
+#define ESTRMAX 1024
+
+value arc_err_cstrfmt(arc *c, const char *fmt, ...)
+{
+  va_list ap;
+  char text[ESTRMAX];
+  value errtext;
+
+  va_start(ap, fmt);
+  /* XXX - make another formatting function, vsnprintf won't do for
+     some of the other stuff we want to be able to do. */
+  vsnprintf(text, ESTRMAX, fmt, ap);
+  va_end(ap);
+  errtext = arc_mkstringc(c, text);
+  return(arc_err(c, errtxt));
+}
+
+/* When an error is raised, we first look through the ECONT register.
+   If the ECONT register is not null, we will pull the topmost entry
+   and the restore that continuation.  We will push the exception message
+   on the stack so it becomes the parameter of the error handler.
+   If the ECONT register is nil, we use the signal_error function. */
+value arc_err(arc *c, value emsg)
+{
+  value thr, econt;
+
+  thr = c->curthread;
+  if (NIL_P(TECONT(thr)))
+    return(c->signal_error(c, emsg));
+  econt = car(TECONT(thr));
+  WB(&TECONT(thr), cdr(TECONT(thr)));
+  arc_restorecont(c, thr, econt);
+  CPUSH(thr, emsg);
+  /* jump back to the start of the virtual machine context executing
+     this. */
+  longjmp(TVJMP(thr));
+  return(CNIL);
 }
