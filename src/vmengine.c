@@ -85,9 +85,12 @@ static void dump_registers(arc *c, value thr)
   printf("\t\tFUNR = ");
   arc_print_string(c, arc_prettyprint(c, TFUNR(thr)));
 
+  printf("\nCONR = ");
+  arc_print_string(c, arc_prettyprint(c, TCONR(thr)));
+
   printf("\nstack = [ ");
   for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
-    printobj(c, TVALR(thr));
+    printobj(c, *sv);
     printf(" ");
   }
   printf("]\n");  
