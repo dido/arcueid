@@ -267,6 +267,18 @@ value arc_gt(arc *c, int argc, value *argv)
   return(CTRUE);
 }
 
+/* utility function */
+value arc_list_reverse(arc *c, value xs)
+{
+  value acc = CNIL;
+
+  while (xs != CNIL) {
+    acc = cons(c, car(xs), acc);
+    xs = cdr(xs);
+  }
+  return(acc);
+}
+
 value arc_lt(arc *c, int argc, value *argv)
 {
   value prev;
