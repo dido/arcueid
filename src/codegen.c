@@ -191,7 +191,7 @@ value arc_cctx2code(arc *c, value cctx)
   return(func);
 }
 
-value arc_mkccode(arc *c, int argc, value (*cfunc)())
+value arc_mkccode(arc *c, int argc, value (*cfunc)(), value name)
 {
   value code;
 
@@ -199,6 +199,7 @@ value arc_mkccode(arc *c, int argc, value (*cfunc)())
   BTYPE(code) = T_CCODE;
   REP(code)._cfunc.fnptr = cfunc;
   REP(code)._cfunc.argc = argc;
+  REP(code)._cfunc.name = name;
   return(code);
 }
 
