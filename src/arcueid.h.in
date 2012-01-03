@@ -29,6 +29,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <time.h>
+#include <setjmp.h>
 @MP_HEADER@
 
 typedef unsigned long value;
@@ -57,7 +58,8 @@ typedef struct arc {
   /* Garbage collector */
   void (*rungc)(struct arc *);
 
-  void (*signal_error)(struct arc *, const char *, ...);
+  /* Default signal error */
+  void (*signal_error)(struct arc *, value);
 
   value vmthreads;		/* virtual machine thread objects */
   value vmqueue;		/* virtual machine run queue */
@@ -144,6 +146,8 @@ struct vmthread {
   value *stktop;	/* top of value stack */
   value *ip;		/* instruction pointer */
   int argc;		/* argument count register */
+  value econt;		/* error continuations */
+  jmp_buf vjmpbuf;	/* used on error recovery */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -167,6 +171,8 @@ struct vmthread {
 #define TQUANTA(t) (REP(t)._thread.quanta)
 #define TWAKEUP(t) (REP(t)._thread.wakeuptime)
 #define TTID(t) (REP(t)._thread.tid)
+#define TECONT(t) (REP(t)._thread.econt)
+#define TVJMP(t) (REP(t)._thread.vjmpbuf)
 
 /* Cells for boxed items */
 struct cell {
@@ -548,6 +554,11 @@ extern value arc_msec(arc *c);
 /* init */
 extern void arc_init_sq(arc *c, int stksize, int quanta);
 extern void arc_init(arc *c);
+
+/* error handling */
+extern value arc_on_err(arc *c, value argv, value rv, CC4CTX);
+extern value arc_err_cstrfmt(arc *c, const char *fmt, ...);
+extern value arc_err(arc *c, value emsg);
 
 
 #endif
