@@ -36,69 +36,43 @@ static void error_handler(struct arc *c, const char *fmt, ...)
   fail(fmt);
 }
 
+#define TEST(testexpr) {				\
+  value str, sexpr, fp, cctx, code;			\
+  str = arc_mkstringc(c, testexpr);			\
+  fp = arc_instring(c, str);				\
+  sexpr = arc_read(c, fp);				\
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);			\
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);		\
+  code = arc_cctx2code(c, cctx);			\
+  ret = arc_macapply(c, code, CNIL); }
+
 START_TEST(test_do)
 {
-  value str, sexpr, fp, cctx, code, ret;
+  value ret;
 
-  str = arc_mkstringc(c, "(do)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(do)");
   fail_unless(ret == CNIL);
 
-  str = arc_mkstringc(c, "(do 1)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(do 1)");
   fail_unless(ret == INT2FIX(1));
 
-  str = arc_mkstringc(c, "(do 1 2)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(do 1 2)");
   fail_unless(ret == INT2FIX(2));
 
-  str = arc_mkstringc(c, "(do 1 2 3)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(do 1 2 3)");
   fail_unless(ret == INT2FIX(3));
 }
 END_TEST
 
 START_TEST(test_safeset)
 {
-  value str, sexpr, fp, cctx, code, ret;
+  value ret;
 
-  str = arc_mkstringc(c, "(safeset foo 2)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(safeset foo 2)");
   fail_unless(ret == INT2FIX(2));
   fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "foo")) == INT2FIX(2));
 
-  str = arc_mkstringc(c, "(safeset foo 3)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(safeset foo 3)");
   fail_unless(ret == INT2FIX(3));
   fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "foo")) == INT2FIX(3));
 }
@@ -106,15 +80,9 @@ END_TEST
 
 START_TEST(test_apply)
 {
-  value str, sexpr, fp, cctx, code, ret;
-
-  str = arc_mkstringc(c, "(apply (fn a a) '(1 2) '(3 4))");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  value ret;
+  
+  TEST("(apply (fn a a) '(1 2) '(3 4))");
   fail_unless(TYPE(ret) == T_CONS);
   fail_unless(TYPE(car(ret)) == T_CONS);
   fail_unless(car(car(ret)) == INT2FIX(1));
@@ -127,24 +95,12 @@ END_TEST
 
 START_TEST(test_def)
 {
-  value str, sexpr, fp, cctx, code, ret;
+  value ret;
 
-  str = arc_mkstringc(c, "(def bar (a b) (+ a b))");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(def bar (a b) (+ a b))");
   fail_unless(TYPE(ret) == T_CLOS);
 
-  str = arc_mkstringc(c, "(bar 42 75)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(bar 42 75)");
   fail_unless(ret == INT2FIX(117));
 }
 END_TEST
@@ -1883,15 +1839,9 @@ END_TEST
 
 START_TEST(test_rotate)
 {
-  value str, sexpr, fp, cctx, code, ret;
+  value ret;
 
-  str = arc_mkstringc(c, "(let x '(1 2 3 4 5) (rotate (x 0) (x 2) (x 4)) x)");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(let x '(1 2 3 4 5) (rotate (x 0) (x 2) (x 4)) x)");
   fail_unless(car(ret) == INT2FIX(3));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(5));
@@ -1902,44 +1852,84 @@ END_TEST
 
 START_TEST(test_adjoin)
 {
-  value str, sexpr, fp, cctx, code, ret;
+  value ret;
 
-  str = arc_mkstringc(c, "(adjoin 0 '(1 2 0 3))");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(adjoin 0 '(1 2 0 3))");
   fail_unless(car(ret) == INT2FIX(1));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
 
-  str = arc_mkstringc(c, "(adjoin 0 '(1 2 0 3) (fn (x y) t))");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(adjoin 0 '(1 2 0 3) (fn (x y) t))");
   fail_unless(car(ret) == INT2FIX(1));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
 
-  str = arc_mkstringc(c, "(adjoin 0 '(1 2 0 3) (fn (x y) nil))");
-  fp = arc_instring(c, str);
-  sexpr = arc_read(c, fp);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  TEST("(adjoin 0 '(1 2 0 3) (fn (x y) nil))");
   fail_unless(car(ret) == INT2FIX(0));
   fail_unless(car(cdr(ret)) == INT2FIX(1));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(0));
   fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_pushnew)
+{
+  value ret, stack;
+
+  TEST("(do (= pnstack '(1 2 0 3)) (pushnew 0 pnstack))");
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  fail_unless(CONS_P(stack));
+  fail_unless(car(stack) == INT2FIX(1));
+  fail_unless(car(cdr(stack)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(stack))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(stack)))) == INT2FIX(3));
+
+  TEST("(do (= pnstack '(1 2 0 3)) (pushnew 0 pnstack (fn (x y) t))))");
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  fail_unless(CONS_P(stack));
+  fail_unless(car(stack) == INT2FIX(1));
+  fail_unless(car(cdr(stack)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(stack))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(stack)))) == INT2FIX(3));
+
+  TEST("(do (= pnstack '(1 2 0 3)) (pushnew 4 pnstack))");
+  fail_unless(car(ret) == INT2FIX(4));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(3));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  fail_unless(CONS_P(stack));
+  fail_unless(car(stack) == INT2FIX(4));
+  fail_unless(car(cdr(stack)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(stack))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(stack)))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(cdr(stack))))) == INT2FIX(3));
+
+  TEST("(do (= pnstack '(1 2 0 3)) (pushnew 0 pnstack (fn (x y) nil)))");
+  fail_unless(car(ret) == INT2FIX(0));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(3));
+  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  fail_unless(CONS_P(stack));
+  fail_unless(car(stack) == INT2FIX(0));
+  fail_unless(car(cdr(stack)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(stack))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(stack)))) == INT2FIX(0));
+  fail_unless(car(cdr(cdr(cdr(cdr(stack))))) == INT2FIX(3));
 }
 END_TEST
 
@@ -2038,6 +2028,7 @@ int main(void)
   tcase_add_test(tc_arc, test_swap);
   tcase_add_test(tc_arc, test_rotate);
   tcase_add_test(tc_arc, test_adjoin);
+  tcase_add_test(tc_arc, test_pushnew);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
