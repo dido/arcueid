@@ -47,7 +47,10 @@ value arc_eval(arc *c, value argv, value rv, CC4CTX)
   return(rv);
 }
 
+
+/*
 int macdebug;
+*/
 
 /* Macro expansion.  This will look for any macro applications in e
    and attempt to expand them.
@@ -85,6 +88,7 @@ static value macex(arc *c, value e, value once)
     if (arc_type(c, op) != ARC_BUILTIN(c, S_MAC))
       return(e);			/* not a macro */
     expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
+    /*
     if (macdebug) {
       printf("Macro: ");
       arc_print_string(c, arc_prettyprint(c, car(e)));
@@ -95,6 +99,7 @@ static value macex(arc *c, value e, value once)
       arc_print_string(c, arc_prettyprint(c, expansion));
       printf("\n");
     }
+    */
     e = expansion;
   } while (once == CTRUE);
   return(e);
