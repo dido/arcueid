@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [9/18]
+** TODO Runtime Built-In Functions [10/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -453,6 +453,8 @@ notice and this notice are preserved.
      - [ ] on-err
      - [ ] ccc
      - [ ] protect
+   - [X] Strings [1/1]
+     - [X] newstring
    - [X] Time [4/4]
      - [X] current-gc-milliseconds
      - [X] current-process-milliseconds
