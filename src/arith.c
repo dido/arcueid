@@ -1627,7 +1627,7 @@ value arc_srand(arc *ccc, value seed)
   uint64_t a,b,c,d,e,f,g,h;
 
   if (TYPE(seed) != T_FIXNUM) {
-    ccarc_err_cstrfmt(ccc, "srand requires first argument be a fixnum, given %O", seed);
+    arc_err_cstrfmt(ccc, "srand requires first argument be a fixnum, given %O", seed);
     return(CNIL);
   }
 
