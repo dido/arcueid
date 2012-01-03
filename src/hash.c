@@ -493,18 +493,18 @@ value arc_hash_map(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFEND;
 
   if (VECLEN(argv) != 2) {
-    c->signal_error(c, "wrong number of arguments (%d for 2)", VECLEN(argv));
+    arc_err_cstrfmt(c, "wrong number of arguments (%d for 2)", VECLEN(argv));
     return(CNIL);
   }
   proc = VINDEX(argv, 0);
   table = VINDEX(argv, 1);
   if (TYPE(table) != T_TABLE) {
-    c->signal_error(c, "maptable expects hash as 2nd argument, given %O",
+    arc_err_cstrfmt(c, "maptable expects hash as 2nd argument, given %O",
 		    table);
     return(CNIL);
   }
   if (TYPE(proc) != T_CLOS && TYPE(proc) != T_CCODE) {
-    c->signal_error(c, "maptable expects function as 1st argument, given %O",
+    arc_err_cstrfmt(c, "maptable expects function as 1st argument, given %O",
 		    table);
     return(CNIL);
   }
