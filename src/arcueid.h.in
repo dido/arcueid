@@ -224,6 +224,7 @@ struct cell {
 
        where argv is a Arcueid vector of the arguments. */
     struct {
+      value name;
       value (*fnptr)();
       int argc;
     } _cfunc;
@@ -473,7 +474,7 @@ extern value arc_mkvmcode(arc *c, int length);
 extern value arc_mkcode(arc *c, value vmccode, int nlits);
 extern value arc_code_setname(arc *c, value code, value codename);
 extern value arc_mkclosure(arc *c, value code, value env);
-extern value arc_mkccode(arc *c, int argc, value (*_cfunc)());
+extern value arc_mkccode(arc *c, int argc, value (*_cfunc)(), value name);
 extern value arc_mkcctx(arc *c, value vcodesize, value vlitsize);
 extern value arc_vcptr(arc *c, value cctx);
 extern value arc_disasm(arc *c, value code);
