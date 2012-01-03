@@ -1492,6 +1492,31 @@ START_TEST(test_walk)
 }
 END_TEST
 
+START_TEST(test_each)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(let x 1 (each y '(1 2 3 4 5 6 7) (= x (* x y))) x)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(5040));
+
+  str = arc_mkstringc(c, "(with (tbl (table) x 0 y 0) (= (tbl 1) 2) (= (tbl 2) 3) (= (tbl 3) 4) (each z tbl (with (xt (car z) yt (cadr z)) (= x (+ x xt)) (= y (+ y yt)))) (list x y))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(6));
+  fail_unless(cadr(ret) == INT2FIX(9));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1579,6 +1604,7 @@ int main(void)
   tcase_add_test(tc_arc, test_down);
   tcase_add_test(tc_arc, test_repeat);
   tcase_add_test(tc_arc, test_walk);
+  tcase_add_test(tc_arc, test_each);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
