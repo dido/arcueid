@@ -1360,6 +1360,7 @@ START_TEST(test_caris)
 }
 END_TEST
 
+/* This test should cover all the machinery behind places and setforms. */
 START_TEST(test_places)
 {
   value str, sexpr, fp, cctx, code, ret;
@@ -1400,6 +1401,14 @@ START_TEST(test_places)
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == INT2FIX(6));
 
+  str = arc_mkstringc(c, "(let x \"abc\" (= (x 1) #\\z) x)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(arc_strcmp(c, ret, arc_mkstringc(c, "azc"))) == 0);
 }
 END_TEST
 
@@ -1517,6 +1526,52 @@ START_TEST(test_each)
 }
 END_TEST
 
+START_TEST(test_cut)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(cut '(1 2 3 4 5 6) 1 4)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(2));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(4));
+
+  str = arc_mkstringc(c, "(cut '(1 2 3 4 5 6) 2 -1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(car(cdr(ret)) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(5));
+
+  str = arc_mkstringc(c, "(cut \"abcdefgh\" 2 5)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(arc_strcmp(c, ret, arc_mkstringc(c, "cde"))) == 0);
+
+  str = arc_mkstringc(c, "(cut \"abcdefgh\" 3 -1)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(FIX2INT(arc_strcmp(c, ret, arc_mkstringc(c, "defg"))) == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1596,8 +1651,7 @@ int main(void)
   tcase_add_test(tc_arc, test_defs);
   tcase_add_test(tc_arc, test_caris);
   /* atomic, atlet, atwith, and atwiths are meaningless until we
-     get threading, so we won't bother. */
-  /* This test should cover all stuff about places */
+     get threading, so we won't bother writing tests for them. */
   tcase_add_test(tc_arc, test_places);
   tcase_add_test(tc_arc, test_loop);
   tcase_add_test(tc_arc, test_for);
@@ -1605,6 +1659,7 @@ int main(void)
   tcase_add_test(tc_arc, test_repeat);
   tcase_add_test(tc_arc, test_walk);
   tcase_add_test(tc_arc, test_each);
+  tcase_add_test(tc_arc, test_cut);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
