@@ -1816,13 +1816,8 @@ int main(void)
   value initload, sexpr, cctx, code;
 
   c = &cc;
-  arc_set_memmgr(c);
-  cc.genv = arc_mkhash(c, 16);
-  arc_init_reader(c);
-  arc_init_builtins(c);
-  cc.stksize = TSTKSIZE;
-  cc.quantum = PQUANTA;
-  cc.signal_error = error_handler;
+  arc_init(c);
+  c->signal_error = error_handler;
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
   while ((sexpr = arc_read(c, initload)) != CNIL) {
