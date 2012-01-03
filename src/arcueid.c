@@ -529,6 +529,10 @@ static struct {
   { "trace", 0, arc_trace },
 #endif
 
+  { "err", 1, arc_err },
+  { "on-err", -3, arc_on_err },
+  { "details", 1, arc_exc_details },
+
   { NULL, 0, NULL }
 };
 
