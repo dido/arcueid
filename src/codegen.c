@@ -226,7 +226,7 @@ value arc_vcptr(arc *c, value cctx)
 #include "disasmtbl.h"
 
 /* Disassemble a code object */
-value arc_disasm(arc *c, value code)
+static value disasm(arc *c, value code, int level)
 {
   int codesize, index;
   value codeblk;
@@ -244,7 +244,7 @@ value arc_disasm(arc *c, value code)
     return(CNIL);
   }
 
-  printf("====\n");
+  printf("BEGIN %d\n", level);
   /* disassemble instructions */
   codesize = VECLEN(VINDEX(code, 0));
   codeblk = VINDEX(code, 0);
@@ -254,18 +254,23 @@ value arc_disasm(arc *c, value code)
   }
 
   /* disassemble literal values */
-  for (index = 1; index < VECLEN(code); index++) {
+  for (index = 2; index < VECLEN(code); index++) {
     printf("Literal: %02x Type: ", index-1);
     arc_print_string(c, arc_prettyprint(c, arc_type(c, VINDEX(code, index))));
     printf("\n");
     if (TYPE(VINDEX(code, index)) == T_CODE) {
-      arc_disasm(c, VINDEX(code, index));
+      disasm(c, VINDEX(code, index), level+1);
     } else
       arc_print_string(c, arc_prettyprint(c, VINDEX(code, index)));
     printf("\n");
   }
-  printf("====\n");
+  printf("END %d\n", level);
   return(CNIL);
+}
+
+value arc_disasm(arc *c, value code)
+{
+  return(disasm(c, code, 1));
 }
 
 int arc_disasm_inst(arc *c, int index, value *codeptr, value code)
