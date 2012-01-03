@@ -1201,6 +1201,18 @@ START_TEST(test_whenlet)
 }
 END_TEST
 
+START_TEST(test_aif)
+{
+  value ret;
+
+  TEST("(aif t it 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(aif nil it 1)");
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1308,6 +1320,7 @@ int main(void)
   tcase_add_test(tc_arc, test_set);
   tcase_add_test(tc_arc, test_iflet);
   tcase_add_test(tc_arc, test_whenlet);
+  tcase_add_test(tc_arc, test_aif);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
