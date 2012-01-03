@@ -1864,6 +1864,42 @@ START_TEST(test_pushpop)
 }
 END_TEST
 
+START_TEST(test_swap)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(with (x 42 y 24) (swap x y) (list x y))");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(24));
+  fail_unless(car(cdr(ret)) == INT2FIX(42));
+}
+END_TEST
+
+
+START_TEST(test_rotate)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "(let x '(1 2 3 4 5) (rotate (x 0) (x 2) (x 4)) x)");
+  fp = arc_instring(c, str);
+  sexpr = arc_read(c, fp);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1956,6 +1992,8 @@ int main(void)
   tcase_add_test(tc_arc, test_caselet);
   tcase_add_test(tc_arc, test_case);
   tcase_add_test(tc_arc, test_pushpop);
+  tcase_add_test(tc_arc, test_swap);
+  tcase_add_test(tc_arc, test_rotate);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
