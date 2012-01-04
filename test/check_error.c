@@ -92,6 +92,20 @@ START_TEST(test_on_err)
 }
 END_TEST
 
+START_TEST(test_on_err_nested)
+{
+  value ret;
+
+  if (setjmp(err_jmp_buf) == 1) {
+    fail("on-err did not catch the exception!");
+    return;
+  }
+  /* this should evaluate to 4 as the continuations are unwound */
+  TEST("(+ (let x 1 (+ (on-err (fn (x) 1) (fn () (+ 100 (err \"raise error\")))) x)) 2)");
+  fail_unless(ret == INT2FIX(4));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -118,6 +132,7 @@ int main(void)
   tcase_add_test(tc_err, test_divzero_fixnum);
   tcase_add_test(tc_err, test_err);
   tcase_add_test(tc_err, test_on_err);
+  tcase_add_test(tc_err, test_on_err_nested);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
