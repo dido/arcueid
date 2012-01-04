@@ -189,13 +189,6 @@ START_TEST(test_add_flonum2rational)
 }
 END_TEST
 
-static int error = 0;
-
-static void signal_error_test(struct arc *c, const char *fmt, ...)
-{
-  error = 1;
-}
-
 START_TEST(test_add_bignum)
 {
 #ifdef HAVE_GMP_H
@@ -374,27 +367,12 @@ START_TEST(test_add_flonum2complex)
 }
 END_TEST
 
-START_TEST(test_add_misc)
-{
-  error = 0;
-
-  __arc_add2(&c, CTRUE, CNIL);
-  fail_unless(error == 1);
-  error = 0;
-
-  __arc_add2(&c, cons(&c, FIX2INT(1), CNIL), 
-	     cons(&c, FIX2INT(2), CNIL));
-}
-END_TEST
-
 START_TEST(test_mul_fixnum)
 {
   value prod;
 #ifdef HAVE_GMP_H
   mpz_t expected;
 #endif
-
-  error = 0;
 
   prod = __arc_mul2(&c, INT2FIX(8), INT2FIX(21));
   fail_unless(TYPE(prod) == T_FIXNUM);
@@ -434,10 +412,6 @@ START_TEST(test_mul_fixnum)
   mpz_set_si(expected, -2*FIXNUM_MAX);
   fail_unless(mpz_cmp(expected, REP(prod)._bignum) == 0);
   mpz_clear(expected);
-#else
-  prod = __arc_mul2(&c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
-  fail_unless(TYPE(prod) == T_NIL);
-  fail_unless(error == 1);
 #endif
 
 }
@@ -550,19 +524,6 @@ START_TEST(test_mul_fixnum2bignum)
   fail_unless(mpz_cmp(expected, REP(factorial)._bignum) == 0);
   mpz_clear(expected);
 #endif
-}
-END_TEST
-
-START_TEST(test_mul_misc)
-{
-  error = 0;
-
-  __arc_mul2(&c, CNIL, CNIL);
-  fail_unless(error == 1);
-  error = 0;
-
-  __arc_mul2(&c, cons(&c, FIX2INT(1), CNIL), 
-	     cons(&c, FIX2INT(2), CNIL));
 }
 END_TEST
 
@@ -768,8 +729,6 @@ START_TEST(test_div_fixnum)
   mpq_t expected;
 #endif
 
-  error = 0;
-
   quot = __arc_div2(&c, INT2FIX(168), INT2FIX(21));
   fail_unless(TYPE(quot) == T_FIXNUM);
   fail_unless(FIX2INT(quot) == 8);
@@ -785,12 +744,6 @@ START_TEST(test_div_fixnum)
   quot = __arc_div2(&c, INT2FIX(-168), INT2FIX(-21));
   fail_unless(TYPE(quot) == T_FIXNUM);
   fail_unless(FIX2INT(quot) == 8);
-
-  quot = __arc_div2(&c, INT2FIX(168), INT2FIX(0));
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(quot == CNIL);
-  fail_unless(error == 1);
-  error = 0;
 
 #ifdef HAVE_GMP_H
   quot = __arc_div2(&c, INT2FIX(1), INT2FIX(2));
@@ -815,8 +768,6 @@ START_TEST(test_div_bignum)
 #ifdef HAVE_GMP_H
   value val1, val2, quot;
   mpz_t expected;
-
-  error = 0;
 
   /* Bignum result */
   val1 = arc_mkbignuml(&c, 0);
@@ -848,16 +799,6 @@ START_TEST(test_div_bignum)
   fail_unless(TYPE(quot) == T_RATIONAL);
   fail_unless(mpq_cmp_si(REP(quot)._rational, 4, 3) == 0);
 
-  /* Division by zero */
-  error = 0;
-  val1 = arc_mkbignuml(&c, 0);
-  mpz_set_str(REP(val1)._bignum, "40000000000000000000000000000000000000000000000", 10);
-  val2 = arc_mkbignuml(&c, 0);
-  quot = __arc_div2(&c, val1, val2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(quot == CNIL);
-  fail_unless(error == 1);
-  error = 0;
 #endif
 }
 END_TEST
@@ -866,8 +807,6 @@ START_TEST(test_div_flonum)
 {
   value val1, val2, quot;
 
-  error = 0;
-
   val1 = arc_mkflonum(&c, 1.20257);
   val2 = arc_mkflonum(&c, 0.57721);
 
@@ -875,12 +814,6 @@ START_TEST(test_div_flonum)
   fail_unless(TYPE(quot) == T_FLONUM);
   fail_unless(fabs(2.0834185 - REP(quot)._flonum) < 1e-6);
 
-  val1 = arc_mkflonum(&c, 1.20257);
-  val2 = arc_mkflonum(&c, 0.0);
-  quot = __arc_div2(&c, val1, val2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
 }
 END_TEST
 
@@ -889,8 +822,6 @@ START_TEST(test_div_rational)
 #ifdef HAVE_GMP_H
   value val1, val2, quot;
   mpz_t expected;
-
-  error = 0;
 
   val1 = arc_mkrationall(&c, 1, 2);
   val2 = arc_mkrationall(&c, 1, 3);
@@ -914,12 +845,6 @@ START_TEST(test_div_rational)
   fail_unless(mpz_cmp(expected, REP(quot)._bignum) == 0);
   mpz_clear(expected);
 
-  val1 = arc_mkrationall(&c, 1, 1);
-  val2 = arc_mkrationall(&c, 0, 1);
-  quot = __arc_div2(&c, val1, val2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
 #endif
 
 }
@@ -929,8 +854,6 @@ START_TEST(test_div_complex)
 {
   value val1, val2, quot;
 
-  error = 0;
-
   val1 = arc_mkcomplex(&c, 2.0, 1.0);
   val2 = arc_mkcomplex(&c, 3.0, 2.0);
 
@@ -939,13 +862,6 @@ START_TEST(test_div_complex)
   fail_unless(fabs(0.61538462 - REP(quot)._complex.re) < 1e-6);
   fail_unless(fabs(-0.07692308 - REP(quot)._complex.im) < 1e-6);
 
-  val1 = arc_mkcomplex(&c, 2.0, 1.0);
-  val2 = arc_mkcomplex(&c, 0.0, 0.0);
-
-  quot = __arc_div2(&c, val1, val2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
 }
 END_TEST
 
@@ -956,8 +872,6 @@ START_TEST(test_div_fixnum2bignum)
   mpz_t expected;
   mpq_t qexpected;
   int i;
-
-  error = 0;
 
   /* Bignum / Fixnum = Bignum */
   val1 = arc_mkbignuml(&c, 0);
@@ -1018,15 +932,6 @@ START_TEST(test_div_fixnum2bignum)
 	      10);
   fail_unless(mpq_cmp(qexpected, REP(quot)._rational) == 0);
 
-  /* Fixnum / Bignum division by zero */
-  error = 0;
-  val1 = INT2FIX(3);
-  val2 = arc_mkbignuml(&c, 0);
-  quot = __arc_div2(&c, val1, val2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
-
 #endif
 }
 END_TEST
@@ -1034,8 +939,6 @@ END_TEST
 START_TEST(test_div_fixnum2flonum)
 {
   value val1, val2, quot;
-
-  error = 0;
 
   val1 = INT2FIX(2);
   val2 = arc_mkflonum(&c, 3.14159);
@@ -1047,23 +950,6 @@ START_TEST(test_div_fixnum2flonum)
   quot = __arc_div2(&c, quot, val1);
   fail_unless(TYPE(quot) == T_FLONUM);
   fail_unless(fabs(0.3183101 - REP(quot)._flonum) < 1e-6);
-
-  /* Division by zero checks */
-  error = 0;
-  val1 = INT2FIX(2);
-  val2 = arc_mkflonum(&c, 0.0);
-  quot = __arc_div2(&c, val1, val2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
-
-  val1 = arc_mkflonum(&c, 1.0);
-  val2 = INT2FIX(0);
-  quot = __arc_div2(&c, val1, val2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
-
 }
 END_TEST
 
@@ -1071,8 +957,6 @@ START_TEST(test_div_fixnum2rational)
 {
 #ifdef HAVE_GMP_H
   value v1, v2, quot;
-
-  error = 0;
 
   v1 = arc_mkrationall(&c, 1, 2);
   v2 = INT2FIX(3);
@@ -1091,23 +975,6 @@ START_TEST(test_div_fixnum2rational)
   quot = __arc_div2(&c, v1, v2);
   fail_unless(TYPE(quot) == T_FIXNUM);
   fail_unless(FIX2INT(quot) == 2);
-
-  /* Division by zero */
-  error = 0;
-  v1 = arc_mkrationall(&c, 1, 2);
-  v2 = INT2FIX(0);
-  quot = __arc_div2(&c, v1, v2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
-
-  v1 = INT2FIX(1);
-  v2 = arc_mkrationall(&c, 0, 1);
-  quot = __arc_div2(&c, v1, v2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
-
 #endif
 }
 END_TEST
@@ -1115,8 +982,6 @@ END_TEST
 START_TEST(test_div_fixnum2complex)
 {
   value v1, v2, quot;
-
-  error = 0;
 
   v1 = arc_mkcomplex(&c, 1.0, 2.0);
   v2 = INT2FIX(4);
@@ -1131,37 +996,7 @@ START_TEST(test_div_fixnum2complex)
   fail_unless(fabs(0.4 - REP(quot)._complex.re) < 1e-6);
   fail_unless(fabs(-0.8 - REP(quot)._complex.im) < 1e-6);
 
-  /* Division by zero */
-  error = 0;
-  v1 = INT2FIX(2);
-  v2 = arc_mkcomplex(&c, 0.0, 0.0);
-  quot = __arc_div2(&c, v1, v2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
 
-  v1 = arc_mkcomplex(&c, 0.0, 0.0);
-  v2 = INT2FIX(0);
-  quot = __arc_div2(&c, v1, v2);
-  fail_unless(TYPE(quot) == T_NIL);
-  fail_unless(error == 1);
-  error = 0;
-
-}
-END_TEST
-
-START_TEST(test_div_misc)
-{
-  error = 0;
-
-  __arc_div2(&c, CNIL, CNIL);
-  fail_unless(error == 1);
-  error = 0;
-
-  __arc_div2(&c, cons(&c, FIX2INT(1), CNIL), 
-		     cons(&c, FIX2INT(2), CNIL));
-  fail_unless(error == 1);
-  error = 0;
 }
 END_TEST
 
@@ -1630,28 +1465,12 @@ START_TEST(test_sub_rational2complex)
 }
 END_TEST
 
-START_TEST(test_sub_misc)
-{
-  error = 0;
-
-  __arc_sub2(&c, CNIL, CNIL);
-  fail_unless(error == 1);
-  error = 0;
-
-  __arc_sub2(&c, cons(&c, FIX2INT(1), CNIL), 
-	     cons(&c, FIX2INT(2), CNIL));
-  fail_unless(error == 1);
-}
-END_TEST
-
 START_TEST(test_neg)
 {
   value v, neg;
 #ifdef HAVE_GMP_H
   mpz_t expected;
 #endif
-
-  error = 0;
 
   v = INT2FIX(1);
   neg = __arc_neg(&c, v);
@@ -1684,10 +1503,6 @@ START_TEST(test_neg)
   fail_unless(TYPE(neg) == T_RATIONAL);
   fail_unless(mpq_cmp_si(REP(neg)._rational, -1, 2) == 0);
 #endif
-
-  neg = __arc_neg(&c, CNIL);
-  fail_unless(error == 1);
-  fail_unless(neg == CNIL);
 }
 END_TEST
 
@@ -1741,26 +1556,12 @@ START_TEST(test_coerce_flonum)
   d = arc_coerce_flonum(&c, v);
   fail_unless(fabs(1e29 - d) < 1e-6);
 #endif
-
-  v = arc_mkflonum(&c, 3.14159);
-  d = arc_coerce_flonum(&c, v);
-  fail_unless(fabs(3.14159 - d) < 1e-6);
-  v = INT2FIX(0xdeadbee);
-  d = arc_coerce_flonum(&c, v);
-  fail_unless(fabs(233495534.0 - d) < 1e-6);
-  v = c.get_cell(&c);
-  BTYPE(v) = T_CONS;
-  d = arc_coerce_flonum(&c, v);
-  fail_unless(error == 1);
-  error = 0;
 }
 END_TEST
 
 START_TEST(test_coerce_fixnum)
 {
   value v, v2;
-
-  error = 0;
 
   /* Identity */
   v = INT2FIX(1);
@@ -1809,7 +1610,6 @@ START_TEST(test_coerce_bignum)
   value v;
   mpz_t v2;
 
-  error = 0;
   mpz_init(v2);
   v = arc_mkbignuml(&c, 1000);
   arc_coerce_bignum(&c, v, &v2);
@@ -1822,16 +1622,6 @@ START_TEST(test_coerce_bignum)
   v = INT2FIX(32);
   arc_coerce_bignum(&c, v, &v2);
   fail_unless(mpz_get_si(v2) == 32);
-
-  v = cons(&c, 1,2);
-  arc_coerce_bignum(&c, v, &v2);
-  fail_unless(error == 1);
-  error = 0;
-
-  v = arc_mkcomplex(&c, 3.14159, 2.71828);
-  arc_coerce_bignum(&c, v, &v2);
-  fail_unless(error == 1);
-  error = 0;
 
   mpz_clear(v2);
 #endif
@@ -1850,7 +1640,6 @@ START_TEST(test_coerce_rational)
   arc_coerce_rational(&c, v, &v2);
   fail_unless(mpq_cmp(REP(v)._rational, v2) == 0);
 
-  error = 0;
   v = arc_mkbignuml(&c, 1000);
   arc_coerce_rational(&c, v, &v2);
   fail_unless(mpq_cmp_si(v2, 1000, 1) == 0);
@@ -1863,15 +1652,6 @@ START_TEST(test_coerce_rational)
   arc_coerce_rational(&c, v, &v2);
   fail_unless(mpq_cmp_si(v2, 32, 1) == 0);
 
-  v = cons(&c, 1,2);
-  arc_coerce_rational(&c, v, &v2);
-  fail_unless(error == 1);
-  error = 0;
-
-  v = arc_mkcomplex(&c, 3.14159, 2.71828);
-  arc_coerce_rational(&c, v, &v2);
-  fail_unless(error == 1);
-  error = 0;
 #endif
 }
 END_TEST
@@ -1904,11 +1684,6 @@ START_TEST(test_coerce_complex)
   fail_unless(fabs(233495534.0 - re) < 1e-6);
   fail_unless(fabs(im) < 1e-6);
 
-  v = c.get_cell(&c);
-  BTYPE(v) = T_CONS;
-  arc_coerce_complex(&c, v, &re, &im);
-  fail_unless(error == 1);
-  error = 0;
 }
 END_TEST
 
@@ -2082,9 +1857,6 @@ int main(void)
 
   tcase_add_test(tc_ops, test_mul_rational2complex);
 
-  tcase_add_test(tc_ops, test_mul_misc);
-
-
   tcase_add_test(tc_ops, test_div_fixnum);
   tcase_add_test(tc_ops, test_div_bignum);
   tcase_add_test(tc_ops, test_div_flonum);
@@ -2095,8 +1867,6 @@ int main(void)
   tcase_add_test(tc_ops, test_div_fixnum2flonum);
   tcase_add_test(tc_ops, test_div_fixnum2rational);
   tcase_add_test(tc_ops, test_div_fixnum2complex);
-
-  tcase_add_test(tc_ops, test_div_misc);
 
 
   tcase_add_test(tc_ops, test_mod);
@@ -2123,8 +1893,6 @@ int main(void)
 
   tcase_add_test(tc_ops, test_add_rational2complex);
 
-  tcase_add_test(tc_ops, test_add_misc);
-
 
   tcase_add_test(tc_ops, test_sub_fixnum);
   tcase_add_test(tc_ops, test_sub_bignum);
@@ -2146,8 +1914,6 @@ int main(void)
 
   tcase_add_test(tc_ops, test_sub_rational2complex);
 
-  tcase_add_test(tc_ops, test_sub_misc);
-
 
   tcase_add_test(tc_ops, test_neg);
 
@@ -2163,7 +1929,6 @@ int main(void)
   tcase_add_test(tc_conv, test_intfix_conv);
 
   arc_set_memmgr(&c);
-  c.signal_error = signal_error_test;
 
   suite_add_tcase(s, tc_ops);
   suite_add_tcase(s, tc_conv);
