@@ -48,6 +48,8 @@ void *alloca (size_t);
 
 int vmtrace = 0;
 
+void arc_restorecont(arc *c, value thr, value cont);
+
 static void printobj(arc *c, value obj)
 {
   arc_print_string(c, arc_prettyprint(c, obj));
@@ -287,16 +289,8 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(icont):
       {
 	int icofs = (int)*TIP(thr)++;
-	value *dest;
-	/* A first attempt at tail call optimization. See if icofs points
-	   to a return statement.  Only make a new continuation if it
-	   is not a return.  We can dispense with the continuation
-	   in this case since it's a tail call.. */
-	dest = TIP(thr) + icofs - 2;
-	if (*dest != iret) {
-	  WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
+	WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
 			       TCONR(thr)));
-	}
 	TSP(thr) = TSTOP(thr);
       }
       NEXT;
@@ -754,6 +748,15 @@ void arc_apply(arc *c, value thr, value fun)
     }
     arc_return(c, thr);
     break;
+  case T_CONT:
+    if (TARGC(thr) != 1) {
+      arc_err_cstrfmt(c, "wrong number of arguments for continuation (%d for 1)\n", TARGC(thr));
+      return;
+    }
+    retval = CPOP(thr);
+    arc_restorecont(c, thr, fun);
+    TVALR(thr) = retval;
+    break;
   default:
     arc_err_cstrfmt(c, "invalid function application");
   }
@@ -806,6 +809,7 @@ void arc_restorecont(arc *c, value thr, value cont)
   }
   offset = FIX2INT(VINDEX(cont, 0));
   TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
+  TCONR(thr) = VINDEX(cont, 4);
 }
 
 /* Restore an extended continuation inside a continuation */
@@ -875,20 +879,22 @@ int arc_return(arc *c, value thr)
 }
 
 value arc_mkcontfull(arc *c, value offset, value funr, value envr,
-		     value savedstk)
+		     value savedstk, value conr, value econt)
 {
-  value cont = arc_mkvector(c, 4);
+  value cont = arc_mkvector(c, 6);
 
   VINDEX(cont, 0) = offset;
   VINDEX(cont, 1) = funr;
   VINDEX(cont, 2) = envr;
   VINDEX(cont, 3) = savedstk;
+  VINDEX(cont, 4) = conr;
+  VINDEX(cont, 5) = econt;
   return(cont);
 }
 
 value arc_mkcont(arc *c, value offset, value thr)
 {
-  value cont = arc_mkvector(c, 4);
+  value cont = arc_mkvector(c, 6);
   value savedstk;
   int stklen, i;
   value *base = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
@@ -911,6 +917,8 @@ value arc_mkcont(arc *c, value offset, value thr)
     VINDEX(savedstk, i) = *(TSP(thr) + i + 1);
   }
   WB(&VINDEX(cont, 3), savedstk);
+  WB(&VINDEX(cont, 4), TCONR(thr));
+  WB(&VINDEX(cont, 5), TECONT(thr));
   return(cont);
 }
 
@@ -1059,10 +1067,9 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
   env = cdr(errfn);
   offset = INT2FIX(0);
   stk = CNIL;
-  /* the ECONT register contains a list of all error continuations as well
-     as the value of the CONR at that point(so as to restore continuations
-     to the point in question) */
-  errcont = cons(c, arc_mkcontfull(c, offset, fun, env, stk), TCONR(thr));
+  /* the ECONT register contains a list of all error continuations.  It's
+     essentially syntactic sugaring around call/cc. */
+  errcont = arc_mkcontfull(c, offset, fun, env, stk, TCONR(thr), TECONT(thr));
   WB(&TECONT(thr), cons(c, errcont, TECONT(thr)));
   CC4BEGIN(c);
   CC4CALL(c, argv, fn, 0, CNIL);
@@ -1091,18 +1098,15 @@ value arc_mkexception(arc *c, value details, value lastcall, value contchain)
    function as the final fallback. */
 value arc_errexc(arc *c, value exc)
 {
-  value thr, econt, errcont, conr;
+  value thr, errcont;
 
   thr = c->curthread;
   if (NIL_P(TECONT(thr))) {
     c->signal_error(c, VINDEX(exc, 0));
     return(CNIL);
   }
-  econt = car(TECONT(thr));
-  errcont = car(econt);
-  conr = cdr(econt);
+  errcont = car(TECONT(thr));
   WB(&TECONT(thr), cdr(TECONT(thr)));
-  WB(&TCONR(thr), conr);
   arc_restorecont(c, thr, errcont);
   CPUSH(thr, exc);
   /* jump back to the start of the virtual machine context executing
@@ -1137,4 +1141,22 @@ value arc_err(arc *c, value emsg)
 value arc_exc_details(arc *c, value exc)
 {
   return(VINDEX(exc, 0));
+}
+
+value arc_callcc(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VDEFEND;
+  value thr = c->curthread, func;
+
+  if (VECLEN(argv) != 1) {
+    arc_err_cstrfmt(c, "procedure ccc: expects 1 argument, given %d",
+		    VECLEN(argv));
+    return(CNIL);
+  }
+  func = VINDEX(argv, 0);
+  CC4BEGIN(c);
+  CC4CALL(c, argv, func, 1, car(TCONR(thr)));
+  CC4END;
+  return(rv);
 }
