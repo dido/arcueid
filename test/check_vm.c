@@ -176,7 +176,7 @@ END_TEST
 
 static int error = 0;
 
-static void signal_error_test(struct arc *c, const char *fmt, ...)
+static void signal_error_test(struct arc *c, value exc)
 {
   error = 1;
 }
@@ -986,127 +986,6 @@ START_TEST(test_vm_apply_list)
 }
 END_TEST
 
-static void signal_error_multiargs(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "list application expects 1 argument, given %d") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(2));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_list_err1)
-{
-  int base, contofs;
-
-  c.signal_error = signal_error_multiargs;
-  ITEST_HEADER(0);
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 23); /* computed offset by compiler */
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, 7);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 5);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode(&c, cctx, inil);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 7);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 5);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 3);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode1(&c, cctx, iapply, 2);
-  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(0);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
-static void signal_error_negative(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "list application expects non-negative exact integer argument, given object of type %d") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(2));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_list_err2)
-{
-
-  int base, contofs;
-
-  c.signal_error = signal_error_negative;
-  ITEST_HEADER(0);
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 20); /* computed offset by compiler */
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(-1));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode(&c, cctx, inil);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 7);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 5);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 3);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode1(&c, cctx, iapply, 1);
-  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(0);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
-static void signal_error_oob(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "index %d too large for list") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(100));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_list_err3)
-{
-
-  int base, contofs;
-
-  c.signal_error = signal_error_oob;
-  ITEST_HEADER(0);
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 20); /* computed offset by compiler */
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(100));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode(&c, cctx, inil);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 7);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 5);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, 3);
-  arc_gcode(&c, cctx, icons);
-  arc_gcode1(&c, cctx, iapply, 1);
-  fail_unless(VINDEX(CCTX_VCODE(cctx), contofs) == FIX2INT(CCTX_VCPTR(cctx)) - base);
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(0);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
 START_TEST(test_vm_apply_vec)
 {
   int base, contofs;
@@ -1129,116 +1008,6 @@ START_TEST(test_vm_apply_vec)
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(1);
   fail_unless(TVALR(thr) == INT2FIX(2));
-}
-END_TEST
-
-static void signal_error_multiargs_vec(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "vector application expects 1 argument, given %d") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(2));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_vec_err1)
-{
-  int base, contofs;
-  value vec;
-
-  c.signal_error = signal_error_multiargs_vec;
-  ITEST_HEADER(1);
-  vec = arc_mkvector(&c, 3);
-  VINDEX(vec, 0) = INT2FIX(1);
-  VINDEX(vec, 1) = INT2FIX(2);
-  VINDEX(vec, 2) = INT2FIX(3);
-  VINDEX(CCTX_LITS(cctx), 0) = vec;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildl, 0);
-  arc_gcode1(&c, cctx, iapply, 2);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
-static void signal_error_negative_vec(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "vector application expects non-negative fixnum argument, given object of type %d") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(2));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_vec_err2)
-{
-  int base, contofs;
-  value vec;
-
-  c.signal_error = signal_error_negative_vec;
-  ITEST_HEADER(1);
-  vec = arc_mkvector(&c, 3);
-  VINDEX(vec, 0) = INT2FIX(1);
-  VINDEX(vec, 1) = INT2FIX(2);
-  VINDEX(vec, 2) = INT2FIX(3);
-  VINDEX(CCTX_LITS(cctx), 0) = vec;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(-1));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildl, 0);
-  arc_gcode1(&c, cctx, iapply, 1);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
-static void signal_error_oob_vec(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "index %d too large for vector") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(100));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_vec_err3)
-{
-  int base, contofs;
-  value vec;
-
-  c.signal_error = signal_error_oob_vec;
-  ITEST_HEADER(1);
-  vec = arc_mkvector(&c, 3);
-  VINDEX(vec, 0) = INT2FIX(1);
-  VINDEX(vec, 1) = INT2FIX(2);
-  VINDEX(vec, 2) = INT2FIX(3);
-  VINDEX(CCTX_LITS(cctx), 0) = vec;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(100));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildl, 0);
-  arc_gcode1(&c, cctx, iapply, 1);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CNIL);
 }
 END_TEST
 
@@ -1321,46 +1090,6 @@ START_TEST(test_vm_apply_tbl3)
 }
 END_TEST
 
-static void signal_error_multiargs_tbl(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "table application expects 1 or 2 arguments, given %d") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(3));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_tbl_err)
-{
-  int base, contofs;
-  value tbl;
-
-  c.signal_error = signal_error_multiargs_tbl;
-  ITEST_HEADER(1);
-  tbl = arc_mkhash(&c, 6);
-  arc_hash_insert(&c, tbl, INT2FIX(0), INT2FIX(1));
-  arc_hash_insert(&c, tbl, INT2FIX(1), INT2FIX(2));
-  arc_hash_insert(&c, tbl, INT2FIX(2), INT2FIX(3));
-  VINDEX(CCTX_LITS(cctx), 0) = tbl;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(8));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildl, 0);
-  arc_gcode1(&c, cctx, iapply, 3);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
 START_TEST(test_vm_apply_str)
 {
   int base, contofs;
@@ -1381,107 +1110,6 @@ START_TEST(test_vm_apply_str)
   ITEST_FOOTER(1);
   fail_unless(TYPE(TVALR(thr)) == T_CHAR);
   fail_unless(REP(TVALR(thr))._char == 'b');
-}
-END_TEST
-
-static void signal_error_multiargs_str(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "string application expects 1 argument, given %d") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(2));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_str_err1)
-{
-  int base, contofs;
-  value str;
-
-  c.signal_error = signal_error_multiargs_str;
-  ITEST_HEADER(1);
-  str = arc_mkstringc(&c, "abc");
-  VINDEX(CCTX_LITS(cctx), 0) = str;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(1));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildi, INT2FIX(2));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildl, 0);
-  arc_gcode1(&c, cctx, iapply, 2);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
-static void signal_error_negative_str(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "string application expects non-negative fixnum argument, given object of type %d") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(2));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_str_err2)
-{
-  int base, contofs;
-  value str;
-
-  c.signal_error = signal_error_negative_str;
-  ITEST_HEADER(1);
-  str = arc_mkstringc(&c, "abc");
-  VINDEX(CCTX_LITS(cctx), 0) = str;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(-1));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildl, 0);
-  arc_gcode1(&c, cctx, iapply, 1);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CNIL);
-}
-END_TEST
-
-static void signal_error_oob_str(struct arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  fail_unless(strcmp(fmt, "index %d too large for string") == 0);
-  va_start(ap, fmt);
-  fail_unless(va_arg(ap, value) == INT2FIX(100));
-  va_end(ap);
-}
-
-START_TEST(test_vm_apply_str_err3)
-{
-  int base, contofs;
-  value str;
-
-  c.signal_error = signal_error_oob_str;
-  ITEST_HEADER(1);
-  str = arc_mkstringc(&c, "abc");
-  VINDEX(CCTX_LITS(cctx), 0) = str;
-  base = FIX2INT(CCTX_VCPTR(cctx));
-  arc_gcode1(&c, cctx, icont, 0);
-  contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(100));
-  arc_gcode(&c, cctx, ipush);
-  arc_gcode1(&c, cctx, ildl, 0);
-  arc_gcode1(&c, cctx, iapply, 1);
-  VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
-  arc_gcode(&c, cctx, ihlt);
-  ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == CNIL);
 }
 END_TEST
 
@@ -1577,21 +1205,11 @@ int main(void)
   tcase_add_test(tc_vm, test_vm_ffi_cc3);
   tcase_add_test(tc_vm, test_vm_ffi_cc4);
   tcase_add_test(tc_vm, test_vm_apply_list);
-  tcase_add_test(tc_vm, test_vm_apply_list_err1);
-  tcase_add_test(tc_vm, test_vm_apply_list_err2);
-  tcase_add_test(tc_vm, test_vm_apply_list_err3);
   tcase_add_test(tc_vm, test_vm_apply_vec);
-  tcase_add_test(tc_vm, test_vm_apply_vec_err1);
-  tcase_add_test(tc_vm, test_vm_apply_vec_err2);
-  tcase_add_test(tc_vm, test_vm_apply_vec_err3);
   tcase_add_test(tc_vm, test_vm_apply_tbl);
   tcase_add_test(tc_vm, test_vm_apply_tbl2);
   tcase_add_test(tc_vm, test_vm_apply_tbl3);
-  tcase_add_test(tc_vm, test_vm_apply_tbl_err);
   tcase_add_test(tc_vm, test_vm_apply_str);
-  tcase_add_test(tc_vm, test_vm_apply_str_err1);
-  tcase_add_test(tc_vm, test_vm_apply_str_err2);
-  tcase_add_test(tc_vm, test_vm_apply_str_err3);
 
   tcase_add_test(tc_vm, test_vm_macapply);
   tcase_add_test(tc_vm, test_vm_macapply_cc);
