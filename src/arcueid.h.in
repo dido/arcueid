@@ -566,8 +566,7 @@ extern value arc_mkexception(arc *c, value details, value lastcall,
 extern value arc_errexc(arc *c, value exc);
 extern value arc_on_err(arc *c, value argv, value rv, CC4CTX);
 extern value arc_exc_details(arc *c, value exc);
-
-
+extern value arc_callcc(arc *c, value argv, value rv, CC4CTX);
 #define arc_err_cstrfmt(c, fmt, ...) (arc_err_cstrfmt2((c), (__func__), (fmt), ## __VA_ARGS__))
 
 #endif
