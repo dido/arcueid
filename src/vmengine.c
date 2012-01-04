@@ -1059,7 +1059,10 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
   env = cdr(errfn);
   offset = INT2FIX(0);
   stk = CNIL;
-  errcont = arc_mkcontfull(c, offset, fun, env, stk);
+  /* the ECONT register contains a list of all error continuations as well
+     as the value of the CONR at that point(so as to restore continuations
+     to the point in question) */
+  errcont = cons(c, arc_mkcontfull(c, offset, fun, env, stk), TCONR(thr));
   WB(&TECONT(thr), cons(c, errcont, TECONT(thr)));
   CC4BEGIN(c);
   CC4CALL(c, argv, fn, 0, CNIL);
@@ -1080,9 +1083,15 @@ value arc_mkexception(arc *c, value details, value lastcall, value contchain)
 
 #define ESTRMAX 1024
 
+/* When an error is raised, we first look through the ECONT register.
+   If the ECONT register is not null, we will pull the topmost entry
+   and the restore that continuation.  We will push the exception
+   object on the stack so it becomes the parameter of the error
+   handler. If the ECONT register is nil, we use the signal_error
+   function as the final fallback. */
 value arc_errexc(arc *c, value exc)
 {
-  value thr, econt;
+  value thr, econt, errcont, conr;
 
   thr = c->curthread;
   if (NIL_P(TECONT(thr))) {
@@ -1090,8 +1099,11 @@ value arc_errexc(arc *c, value exc)
     return(CNIL);
   }
   econt = car(TECONT(thr));
+  errcont = car(econt);
+  conr = cdr(econt);
   WB(&TECONT(thr), cdr(TECONT(thr)));
-  arc_restorecont(c, thr, econt);
+  WB(&TCONR(thr), conr);
+  arc_restorecont(c, thr, errcont);
   CPUSH(thr, exc);
   /* jump back to the start of the virtual machine context executing
      this. */
@@ -1114,11 +1126,6 @@ value arc_err_cstrfmt2(arc *c, const char *lastcall, const char *fmt, ...)
   return(arc_errexc(c, arc_mkexception(c, errtext, arc_mkstringc(c, lastcall), TCONR(c->curthread))));
 }
 
-/* When an error is raised, we first look through the ECONT register.
-   If the ECONT register is not null, we will pull the topmost entry
-   and the restore that continuation.  We will push the exception message
-   on the stack so it becomes the parameter of the error handler.
-   If the ECONT register is nil, we use the signal_error function. */
 value arc_err(arc *c, value emsg)
 {
   value thr = c->curthread;
