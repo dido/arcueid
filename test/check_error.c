@@ -57,12 +57,40 @@ START_TEST(test_divzero_fixnum)
     fail_unless(1);		/* success */
     return;
   }
-  TEST("(/ 1 1)");
+  TEST("(/ 1 0)");
   fail("division by zero exception not raised");
   fail_unless(ret);
 }
 END_TEST
 
+START_TEST(test_err)
+{
+  value ret;
+
+  if (setjmp(err_jmp_buf) == 1) {
+    fail_unless(1);		/* success */
+    return;
+  }
+  TEST("(err \"test raising an error\")");
+  fail("err did not raise an exception");
+  fail_unless(ret);
+}
+END_TEST
+
+START_TEST(test_on_err)
+{
+  value ret, details;
+
+  if (setjmp(err_jmp_buf) == 1) {
+    fail("on-err did not catch the exception!");
+    return;
+  }
+  TEST("(on-err (fn (x) x) (fn () (err \"test raising an error\")))");
+  fail_unless(TYPE(ret) == T_EXCEPTION);
+  details = arc_exc_details(c, ret);
+  fail_unless(FIX2INT(arc_strcmp(c, details, arc_mkstringc(c, "test raising an error"))) == 0);
+}
+END_TEST
 
 int main(void)
 {
@@ -88,6 +116,8 @@ int main(void)
   arc_close(c, initload);
 
   tcase_add_test(tc_err, test_divzero_fixnum);
+  tcase_add_test(tc_err, test_err);
+  tcase_add_test(tc_err, test_on_err);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
