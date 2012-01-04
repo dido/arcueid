@@ -30,10 +30,10 @@
 
 arc *c, cc;
 
-static void error_handler(struct arc *c, const char *fmt, ...)
+static void error_handler(struct arc *c, value exc)
 {
   /* always fail the test if this ever gets called */
-  fail(fmt);
+  fail("exception received");
 }
 
 #define TEST(testexpr) {				\
