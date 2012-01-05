@@ -115,6 +115,17 @@ START_TEST(test_ccc)
 }
 END_TEST
 
+START_TEST(test_protect_ccc)
+{
+  value ret;
+
+  TEST("(with (x 0 y 0 cont nil) (list (+ 1 (ccc (fn (c) (= cont c) (protect (fn () (protect (fn () (cont 100)) (fn () (++ y)))) (fn () (++ x)))))) x y))");
+  fail_unless(car(ret) == INT2FIX(101));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -143,6 +154,7 @@ int main(void)
   tcase_add_test(tc_err, test_on_err);
   tcase_add_test(tc_err, test_on_err_nested);
   tcase_add_test(tc_err, test_ccc);
+  tcase_add_test(tc_err, test_protect_ccc);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
