@@ -482,7 +482,7 @@ static value c4apply(arc *c, value thr, value avec,
     /* 3. Push the parameters for the new call on the stack in reverse
           order */
     nargv = VINDEX(retval, 3);
-    for (i=VECLEN(nargv)-1; i>=0; i--) {
+    for (i=0; i<VECLEN(nargv); i++) {
       CPUSH(thr, VINDEX(nargv, i));
     }
     /* 4. Restart, with the value register pointing to the callee,
@@ -603,6 +603,15 @@ void arc_apply(arc *c, value thr, value fun)
 
   switch (TYPE(fun)) {
   case T_CLOS:
+    /* XXX - Here is a really ugly kludge.  We reverse the arguments
+       on the stack because the compiler expects arguments to appear
+       in reverse order.  Pfft. */
+    argc = TARGC(thr);
+    argv = alloca(sizeof(value)*argc);
+    for (i=0; i<argc; i++)
+      argv[i] = CPOP(thr);
+    for (i=0; i<argc; i++)
+      CPUSH(thr, argv[i]);
     closapply(c, thr, fun);
     break;
   case T_CCODE:
@@ -618,7 +627,8 @@ void arc_apply(arc *c, value thr, value fun)
       return;
     }
     argv = alloca(sizeof(value)*argc);
-    for (i=0; i<argc; i++)
+    /* reverse arguments again... */
+    for (i=argc-1; i>=0; i--)
       argv[i] = CPOP(thr);
     switch (REP(cfn)._cfunc.argc) {
     case -3:
@@ -828,7 +838,6 @@ value arc_apply2(arc *c, value argv, value rv, CC4CTX)
     for (i=2; i<argc; i++)
       fargv = cons(c, fargv, VINDEX(argv, i));
   }
-
   coerceargv = arc_mkvector(c, 2);
   VINDEX(coerceargv, 0) = fargv;
   VINDEX(coerceargv, 1) = ARC_BUILTIN(c, S_VECTOR);
