@@ -806,7 +806,9 @@ void arc_apply(arc *c, value thr, value fun)
     TVALR(thr) = retval;
 #else
     /* the continuation is in the value register when we get here */
+    retval = CPOP(thr);
     CPUSH(thr, TVALR(thr));
+    CPUSH(thr, retval);
     TVALR(thr) = arc_mkccode(c, -3, apply_continuation, CNIL);
     TARGC(thr) = 2;
     arc_apply(c, thr, TVALR(thr));
