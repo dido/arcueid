@@ -217,7 +217,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 
 	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
 	  /* arc_print_string(c, arc_prettyprint(c, tmp)); printf("\n"); */
-	  arc_err_cstrfmt(c, "Unbound symbol %S\n", tmp);
+	  arc_err_cstrfmt(c, "Unbound symbol %s\n", tmp);
 	  TVALR(thr) = CNIL;
 	}
       }
@@ -569,6 +569,8 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
   CC4VARDEF(conarg);
   CC4VARDEF(tcr);
   CC4VDEFEND;
+  value thr;
+
   CC4BEGIN(c);
   CC4V(cont) = VINDEX(argv, 0);
   CC4V(conarg) = VINDEX(argv, 1);
@@ -590,9 +592,12 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
     CC4CALL(c, argv, protclos, 0, CNIL);
     CC4V(tcr) = cdr(CC4V(tcr));
   }
-  arc_restorecont(c, c->curthread, CC4V(cont));
-  TVALR(c->curthread) = CC4V(conarg);
   CC4END;
+  /* Now, we have to modify the continuation register so that when this
+     function finally returns, it will restore the continuation we
+     provided it. */
+  thr = c->curthread;
+  TCONR(thr) = cons(c, CC4V(cont), VINDEX(CC4V(cont), 4));
   return(CC4V(conarg));
 }
 
@@ -801,6 +806,7 @@ void arc_apply(arc *c, value thr, value fun)
       return;
     }
 #if 0
+    /* simple version that does not deal with protect functions */
     retval = CPOP(thr);
     arc_restorecont(c, thr, fun);
     TVALR(thr) = retval;
