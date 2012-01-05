@@ -29,14 +29,32 @@
 #include "../src/vmengine.h"
 #include "../src/symbols.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 arc c, *cc;
 
 static value test_builtin(const char *symname, int argc, ...)
 {
-  value sym, cctx, thr, func;;
+  value sym, cctx, thr, func, *argv;
   int contofs, base, i;
   va_list ap;
 
+
+  argv = alloca(argc*sizeof(value));
   cctx = arc_mkcctx(&c, INT2FIX(1), INT2FIX(1));
   sym = arc_intern_cstr(&c, symname);
   VINDEX(CCTX_LITS(cctx), 0) = sym;
@@ -44,11 +62,14 @@ static value test_builtin(const char *symname, int argc, ...)
   arc_gcode1(&c, cctx, icont, 0);
   contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
   va_start(ap, argc);
-  for (i=0; i<argc; i++) {
-    arc_gcode1(&c, cctx, ildi, va_arg(ap, value));
-    arc_gcode(&c, cctx, ipush);
+  for (i=argc-1; i>=0; i--) {
+    argv[i] = va_arg(ap, value);
   }
   va_end(ap);
+  for (i=0; i<argc; i++) {
+    arc_gcode1(&c, cctx, ildi, argv[i]);
+    arc_gcode(&c, cctx, ipush);
+  }
   arc_gcode1(&c, cctx, ildg, 0);
   arc_gcode1(&c, cctx, iapply, argc);
   VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
