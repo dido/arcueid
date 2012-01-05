@@ -88,9 +88,6 @@ static void dump_registers(arc *c, value thr)
   printf("\t\tFUNR = ");
   arc_print_string(c, arc_prettyprint(c, TFUNR(thr)));
 
-  printf("\nCONR = ");
-  arc_print_string(c, arc_prettyprint(c, TCONR(thr)));
-
   printf("\nstack = [ ");
   for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
     printobj(c, *sv);
@@ -559,6 +556,46 @@ value arc_macapply(arc *c, value func, value args)
   return(retval);
 }
 
+/* The presence of protect (dynamic-wind) in Arc means that this is
+   no longer a simple matter of restoring the continuation passed
+   to it.  We now need to go down the continuation chain to look for
+   protect functions, executing them until we get to the continuation
+   that we are trying to apply, and only then can we restore the applied
+   continuation. */
+value apply_continuation(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VARDEF(cont);
+  CC4VARDEF(conarg);
+  CC4VARDEF(tcr);
+  CC4VDEFEND;
+  CC4BEGIN(c);
+  CC4V(cont) = VINDEX(argv, 0);
+  CC4V(conarg) = VINDEX(argv, 1);
+  CC4V(tcr) = TCONR(c->curthread);
+  while (CC4V(tcr) != CNIL && car(CC4V(tcr)) != CC4V(cont)) {
+    /* XXX - execute the protect sections of all the continuations above
+       the chain from the continuation which we are about to restore. */
+    value tcont = VINDEX(car(CC4V(tcr)), 6), protclos;
+
+    if (NIL_P(tcont)) {
+      /* no protect section, move on */
+      CC4V(tcr) = cdr(CC4V(tcr));
+      continue;
+    }
+
+    /* We have a continuation with a protect section.  We should now
+       execute the closure embedded inside it. */
+    protclos = arc_mkclosure(c, VINDEX(tcont, 1), VINDEX(tcont, 2));
+    CC4CALL(c, argv, protclos, 0, CNIL);
+    CC4V(tcr) = cdr(CC4V(tcr));
+  }
+  arc_restorecont(c, c->curthread, CC4V(cont));
+  TVALR(c->curthread) = CC4V(conarg);
+  CC4END;
+  return(CC4V(conarg));
+}
+
 void arc_apply(arc *c, value thr, value fun)
 {
   value *argv, cfn, avec, retval;
@@ -750,12 +787,20 @@ void arc_apply(arc *c, value thr, value fun)
     break;
   case T_CONT:
     if (TARGC(thr) != 1) {
-      arc_err_cstrfmt(c, "wrong number of arguments for continuation (%d for 1)\n", TARGC(thr));
+      arc_err_cstrfmt(c, "wrong number of arguments for continuation (%d for 1)", TARGC(thr));
       return;
     }
+#if 0
     retval = CPOP(thr);
     arc_restorecont(c, thr, fun);
     TVALR(thr) = retval;
+#else
+    /* the continuation is in the value register when we get here */
+    CPUSH(thr, TVALR(thr));
+    TVALR(thr) = arc_mkccode(c, -3, apply_continuation, CNIL);
+    TARGC(thr) = 2;
+    arc_apply(c, thr, TVALR(thr));
+#endif
     break;
   default:
     arc_err_cstrfmt(c, "invalid function application");
@@ -858,7 +903,7 @@ int arc_restorexcont(arc *c, value thr, value cont)
 /* restore the continuation at the head of the continuation register */
 int arc_return(arc *c, value thr)
 {
-  value cont;
+  value cont, tmp;
 
   for (;;) {
     if (!CONS_P(TCONR(thr)))
@@ -866,7 +911,28 @@ int arc_return(arc *c, value thr)
     cont = car(TCONR(thr));
     if (cont == CNIL)
       return(1);
-    WB(&TCONR(thr), cdr(TCONR(thr)));
+    /* see if the continuation has a cleanup continuation created
+       by protect.  If so, restore it first and remove it from the
+       continuation at the top, so that when the cleanup continuation
+       returns, it will see this same continuation again. */
+    if (VINDEX(cont, 6) != CNIL) {
+      if (VINDEX(cont, 6) == CTRUE) {
+	/* restore the contents of the value register before
+	   proceeding. */
+	WB(&VINDEX(cont, 6), CNIL);
+	WB(&TVALR(thr), VINDEX(cont, 7));
+	WB(&VINDEX(cont, 7), CNIL);
+	WB(&TCONR(thr), cdr(TCONR(thr)));
+      } else {
+	/* save the contents of the value register */
+	WB(&VINDEX(cont, 7), TVALR(thr));
+	tmp = VINDEX(cont, 6);
+	WB(&VINDEX(cont, 6), CTRUE);
+	cont = tmp;
+      }
+    } else {
+      WB(&TCONR(thr), cdr(TCONR(thr)));
+    }
     if (TYPE(VINDEX(cont, 0)) == T_XCONT) {
       if (arc_restorexcont(c, thr, cont)) {
 	return(0);
@@ -881,7 +947,7 @@ int arc_return(arc *c, value thr)
 value arc_mkcontfull(arc *c, value offset, value funr, value envr,
 		     value savedstk, value conr, value econt)
 {
-  value cont = arc_mkvector(c, 6);
+  value cont = arc_mkvector(c, 8);
 
   VINDEX(cont, 0) = offset;
   VINDEX(cont, 1) = funr;
@@ -889,12 +955,14 @@ value arc_mkcontfull(arc *c, value offset, value funr, value envr,
   VINDEX(cont, 3) = savedstk;
   VINDEX(cont, 4) = conr;
   VINDEX(cont, 5) = econt;
+  VINDEX(cont, 6) = CNIL;	/* protect function */
+  VINDEX(cont, 7) = CNIL;	/* during protect function return */
   return(cont);
 }
 
 value arc_mkcont(arc *c, value offset, value thr)
 {
-  value cont = arc_mkvector(c, 6);
+  value cont = arc_mkvector(c, 8);
   value savedstk;
   int stklen, i;
   value *base = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
@@ -919,6 +987,8 @@ value arc_mkcont(arc *c, value offset, value thr)
   WB(&VINDEX(cont, 3), savedstk);
   WB(&VINDEX(cont, 4), TCONR(thr));
   WB(&VINDEX(cont, 5), TECONT(thr));
+  WB(&VINDEX(cont, 6), CNIL);	/* protect function */
+  WB(&VINDEX(cont, 7), CNIL);	/* during protect function return */
   return(cont);
 }
 
@@ -1157,6 +1227,46 @@ value arc_callcc(arc *c, value argv, value rv, CC4CTX)
   func = VINDEX(argv, 0);
   CC4BEGIN(c);
   CC4CALL(c, argv, func, 1, car(TCONR(thr)));
+  CC4END;
+  return(rv);
+}
+
+value arc_protect(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VDEFEND;
+  value during, after, acont, thr = c->curthread;
+  value fun, env, offset, stk;
+
+  if (VECLEN(argv) != 2) {
+    arc_err_cstrfmt(c, "procedure protect: expects 2 arguments, given %d",
+		    VECLEN(argv));
+    return(CNIL);
+  }
+  during = VINDEX(argv, 0);
+  after = VINDEX(argv, 1);
+  if (TYPE(during) != T_CLOS) {
+    arc_err_cstrfmt(c, "procedure protect: closure required for first arg");
+    return(CNIL);
+  }
+
+  if (TYPE(after) != T_CLOS) {
+    arc_err_cstrfmt(c, "procedure protect: closure required for second arg");
+    return(CNIL);
+  }
+
+  /* The continuation at the top of the stack is the continuation
+     created by the call to 'protect'.  Without the protect call,
+     it would have been created for the call to the during function.
+     Patch the slot in that continuation for the after procedure. */
+  fun = car(after);
+  env = cdr(after);
+  offset = INT2FIX(0);
+  stk = CNIL;
+  acont = arc_mkcontfull(c, offset, fun, env, stk, TCONR(thr), TECONT(thr));
+  WB(&VINDEX(car(TCONR(thr)), 6), acont);
+  CC4BEGIN(c);
+  CC4CALL(c, argv, during, 0, CNIL);
   CC4END;
   return(rv);
 }
