@@ -533,6 +533,7 @@ static struct {
   { "on-err", -3, arc_on_err },
   { "details", 1, arc_exc_details },
   { "ccc", -3, arc_callcc },
+  { "protect", -3, arc_protect },
 
   { NULL, 0, NULL }
 };
