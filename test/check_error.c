@@ -106,6 +106,15 @@ START_TEST(test_on_err_nested)
 }
 END_TEST
 
+START_TEST(test_ccc)
+{
+  value ret;
+
+  TEST("(+ 1 (ccc (fn (c) (c 41) 43)))");
+  fail_unless(ret == INT2FIX(42));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -133,6 +142,7 @@ int main(void)
   tcase_add_test(tc_err, test_err);
   tcase_add_test(tc_err, test_on_err);
   tcase_add_test(tc_err, test_on_err_nested);
+  tcase_add_test(tc_err, test_ccc);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
