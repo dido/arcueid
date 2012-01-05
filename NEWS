@@ -6,6 +6,8 @@ See the end for copying conditions.
 - Basic error handling and recovery mechanisms
 - on-err, err, and details implemented
 - ccc (call/cc) implemented
+- Evaluation order of arguments fixed (was reversed in previous
+  versions)
 
 * Version 0.0.4 (2012-01-03)
 - Fixed bug for a!b!c expanding wrongly
