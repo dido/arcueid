@@ -431,7 +431,11 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
    instructions to perform any destructuring binds, return the new
    environment which includes all the names specified properly ordered.
    so that a call to find-var with the new environment can find the
-   names. */
+   names.
+
+   XXX - This retrieves arguments from the stack in the reverse order
+   from what is expected.  Another algorithm should be devised that
+   binds arguments in the proper order. */
 static value compile_args(arc *c, value args, value ctx, value env)
 {
   value names, frame;
@@ -716,10 +720,8 @@ static value compile_apply(arc *c, value expr, value ctx, value env,
      The address of the continuation will be computed later. */
   contaddr = FIX2INT(CCTX_VCPTR(ctx));
   arc_gcode1(c, ctx, icont, 0);
-  /* Reverse the arguments and compile */
-  nahd = arc_list_reverse(c, args);
-
-  /* Traverse the reversed arguments, compiling each */
+  nahd = args;
+  /* Traverse the arguments, compiling each */
   for (nargs = 0; nahd; nahd = cdr(nahd), nargs++) {
     arc_compile(c, car(nahd), ctx, env, CNIL);
     arc_gcode(c, ctx, ipush);
