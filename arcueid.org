@@ -547,3 +547,12 @@ notice and this notice are preserved.
      be somewhat difficult to handle.
 ** Compilation
    - We need to do tail call optimization somehow!
+   - We need to do something about the kludge involved in reversing
+     arguments for evaluation order.  Compiling a function application
+     will push the arguments in the order in which they appear (so
+     they appear on the stack in reverse order), but the compiler
+     generates code to bind arguments on the stack as if they were
+     pushed in the opposite order!  In order to fix this we have
+     modified the virtual machine to reverse the order of all
+     arguments in arc_apply. This is a really ugly kludge and should
+     be cleaned up.
