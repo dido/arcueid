@@ -1455,6 +1455,19 @@ START_TEST(test_on)
 }
 END_TEST
 
+START_TEST(test_best)
+{
+  value ret;
+
+  TEST("(best > '(3 1 2 4 7 3 6))");
+  fail_unless(ret == INT2FIX(7));
+
+  TEST("(best < '(3 1 2 4 7 3 6))");
+  fail_unless(ret == INT2FIX(1));
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1583,6 +1596,7 @@ int main(void)
   /* no test for rand-string (yet?) */
   tcase_add_test(tc_arc, test_forlen);
   tcase_add_test(tc_arc, test_on);
+  tcase_add_test(tc_arc, test_best);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
