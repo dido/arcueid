@@ -148,6 +148,7 @@ struct vmthread {
   int argc;		/* argument count register */
   value econt;		/* error continuations */
   jmp_buf vjmpbuf;	/* used on error recovery */
+  value exc;		/* current exception */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -173,6 +174,7 @@ struct vmthread {
 #define TTID(t) (REP(t)._thread.tid)
 #define TECONT(t) (REP(t)._thread.econt)
 #define TVJMP(t) (REP(t)._thread.vjmpbuf)
+#define TEXC(t) (REP(t)._thread.exc)
 
 /* Cells for boxed items */
 struct cell {
