@@ -15,6 +15,34 @@ text), not a URL! Note: The URL arcueid.org is as of this writing a
 fan site for the anime/visual novel Tsukihime: Lunar Legend (真月譚月
 姫), which should explain where the name 'Arcueid' comes from. :)
 
+If you are building this from a source tarball, the usual ./configure;
+make; make install combo should work, but you will get an Arcueid REPL
+executable without Readline support if the readline development
+headers are not installed, and you may have to add --disable-bignum if
+you do not have the GMP development headers (but this is not
+recommended: Arcueid has not been very well tested without GMP).  Add
+--enable-unit-tests to enable unit tests (requires GNU Check), and add
+--enable-tracing to build with the bytecode tracer (this causes a
+performance hit so it is not enabled by default).
+
+If you are trying to build this by cloning the Git repository
+(git://github.com/dido/arcueid.git), you need the following
+prerequisites installed:
+
+- The autotools: autoconf, automake, and libtool.
+- GNU MP and any development headers (libgmp and libgmp-dev on
+  Ubuntu/Debian)
+- GNU Check (http://check.sourceforge.net, available under the package
+  name 'check' on Ubuntu)
+- GNU Readline and any development headers (libreadline-dev)
+- pkg-config (http://www.freedesktop.org/wiki/Software/pkg-config,
+  pkg-config on Ubuntu/Debian)
+
+Once all these prerequisites are installed run autoreconf -i in the
+main directory.  This should generate a configure script and
+Makefile.in's, and from there it should be possible to do ./configure
+; make ; make install.
+
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
