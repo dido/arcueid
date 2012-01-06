@@ -166,6 +166,7 @@ static jmp_buf err_jmp_buf;
 
 static void error_handler(struct arc *c, value err)
 {
+  printf("Error: ");
   arc_print_string(c, err);
   printf("\n");
   longjmp(err_jmp_buf, 1);
