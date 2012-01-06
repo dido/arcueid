@@ -215,12 +215,16 @@ void arc_vmengine(arc *c, value thr, int quanta)
       NEXT;
     INST(ildg):
       {
-	value tmp;
-	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
+	value tmp, tmpstr;
+	char *cstr;
 
+	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
 	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+	  tmpstr = arc_sym2name(c, tmp);
+	  cstr = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, tmpstr)) + 1));
+	  arc_str2cstr(c, tmpstr, cstr);
 	  /* arc_print_string(c, arc_prettyprint(c, tmp)); printf("\n"); */
-	  arc_err_cstrfmt(c, "Unbound symbol %s\n", tmp);
+	  arc_err_cstrfmt(c, "Unbound symbol: _%s", cstr);
 	  TVALR(thr) = CNIL;
 	}
       }
