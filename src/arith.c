@@ -105,7 +105,7 @@ double arc_coerce_flonum(arc *c, value v)
     val = (double)FIX2INT(v);
     break;
   default:
-    arc_err_cstrfmt(c, "Cannot convert operand %v into a flonum", v);
+    arc_err_cstrfmt(c, "Cannot convert operand of type %d into a flonum", TYPE(v));
     break;
   }
   return(val);
@@ -134,7 +134,7 @@ void arc_coerce_complex(arc *c, value v, double *re, double *im)
     *re = (double)FIX2INT(v);
     break;
   default:
-    arc_err_cstrfmt(c, "Cannot convert operand %v into a flonum", v);
+    arc_err_cstrfmt(c, "Cannot convert operand of type %d into a flonum", TYPE(v));
     break;
   }
   *im = 0.0;
@@ -161,7 +161,7 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
     mpz_set_si(*bignum, FIX2INT(v));
     break;
   default:
-    arc_err_cstrfmt(c, "Cannot convert operand %v into a bignum", v);
+    arc_err_cstrfmt(c, "Cannot convert operand of type %d into a bignum", TYPE(v));
     break;
   }
 #else
@@ -188,7 +188,7 @@ void arc_coerce_rational(arc *c, value v, void *bptr)
     mpq_set_si(*rat, FIX2INT(v), 1);
     break;
   default:
-    arc_err_cstrfmt(c, "Cannot convert operand %v into a rational", v);
+    arc_err_cstrfmt(c, "Cannot convert operand of type %d into a rational", TYPE(v));
     break;
   }
 #else
@@ -1627,7 +1627,7 @@ value arc_srand(arc *ccc, value seed)
   uint64_t a,b,c,d,e,f,g,h;
 
   if (TYPE(seed) != T_FIXNUM) {
-    arc_err_cstrfmt(ccc, "srand requires first argument be a fixnum, given %O", seed);
+    arc_err_cstrfmt(ccc, "srand requires first argument be a fixnum, given object of type %d", TYPE(seed));
     return(CNIL);
   }
 
@@ -1701,7 +1701,7 @@ value arc_rand(arc *c, int argc, value *argv)
   }
 
   if (TYPE(argv[0]) != T_FIXNUM) {
-    arc_err_cstrfmt(c, "rand expects fixnum argument, given %O", argv[0]);
+    arc_err_cstrfmt(c, "rand expects fixnum argument, given type %d", TYPE(argv[0]));
     return(CNIL);
   }
   max = FIX2INT(argv[0]);
