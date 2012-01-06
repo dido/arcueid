@@ -126,6 +126,24 @@ START_TEST(test_protect_ccc)
 }
 END_TEST
 
+/* First case of err.  No on-err rescue functions registered */
+START_TEST(test_protect_err1)
+{
+  value ret;
+
+  if (setjmp(err_jmp_buf) == 1) {
+    /* Success.  Check if the global variables that were mentioned in the
+       protect clauses were set appropriately */
+    TEST("(and (is x 1) (is y 2))");
+    fail_unless(ret == CTRUE);
+    return;
+  }
+  TEST("(do (= x nil) (= y nil) (protect (fn () (protect (fn () (err \"test raising an error\")) (fn () (= y 2)))) (fn () (= x 1))))");
+  fail("err did not raise an exception");
+  fail_unless(ret);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -155,6 +173,7 @@ int main(void)
   tcase_add_test(tc_err, test_on_err_nested);
   tcase_add_test(tc_err, test_ccc);
   tcase_add_test(tc_err, test_protect_ccc);
+  tcase_add_test(tc_err, test_protect_err1);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
