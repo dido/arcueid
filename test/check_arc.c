@@ -1395,6 +1395,18 @@ START_TEST(test_after)
 }
 END_TEST
 
+START_TEST(test_int)
+{
+  value ret;
+
+  TEST("(int \"100\")");
+  fail_unless(ret == INT2FIX(100));
+
+  TEST("(int \"100\" 16)");
+  fail_unless(ret == INT2FIX(256));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1516,6 +1528,8 @@ int main(void)
   tcase_add_test(tc_arc, test_even);
   tcase_add_test(tc_arc, test_odd);
   tcase_add_test(tc_arc, test_after);
+  /* no tests for I/O functions (yet?) */
+  tcase_add_test(tc_arc, test_int);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
