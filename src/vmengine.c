@@ -145,14 +145,16 @@ static inline void trace(arc *c, value thr)
 #define JTBASE ((void *)&&lbl_inop)
 #ifdef HAVE_TRACING
 #define NEXT {							\
-    if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
+  if (--TQUANTA(thr) <= 0 || !(TSTATE(thr) == Tready		\
+			       || TSTATE(thr)) == Texiting)	\
       goto endquantum;						\
     if (vmtrace)						\
       trace(c, thr);						\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #else
 #define NEXT {							\
-    if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)		\
+    if (--TQUANTA(thr) <= 0 || !(TSTATE(thr) == Tready		\
+				 || TSTATE(thr)) == Texiting)	\
       goto endquantum;						\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #endif
@@ -178,7 +180,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 #endif
 
   setjmp(TVJMP(thr));
-  if (TSTATE(thr) != Tready)
+  if (TSTATE(thr) != Tready && TSTATE(thr) != Texiting)
     return;
   c->curthread = thr;
   TQUANTA(thr) = quanta;
@@ -191,7 +193,8 @@ void arc_vmengine(arc *c, value thr, int quanta)
   goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
   for (;;) {
-    if (--TQUANTA(thr) <= 0 || TSTATE(thr) != Tready)
+    if (--TQUANTA(thr) <= 0 || (TSTATE(thr) != Tready
+				&& TSTATE(thr) != Texiting))
       goto endquantum;
     curr_instr = *TIP(thr)++;
     switch (curr_instr) {
@@ -536,7 +539,7 @@ value arc_macapply(arc *c, value func, value args)
     /* XXX - this makes macros more special and restricted than they
        have to be.  Threading primitives cannot be used in macros because
        they do not run like ordinary processes! */
-    if (TSTATE(thr) != Tready) {
+    if (TSTATE(thr) != Tready && TSTATE(thr) != Texiting) {
       arc_err_cstrfmt(c, "fatal: deadlock detected in macro execution");
       return(CNIL);
     }
@@ -921,30 +924,37 @@ int arc_restorexcont(arc *c, value thr, value cont)
 int arc_return(arc *c, value thr)
 {
   value cont, tmp;
+  static value exc = CNIL;
 
   for (;;) {
-    if (!CONS_P(TCONR(thr)))
+    if (!CONS_P(TCONR(thr))) {
+      if (TSTATE(thr) == Texiting)
+	c->signal_error(c, VINDEX(exc, 0));
       return(1);
+    }
     cont = car(TCONR(thr));
-    if (cont == CNIL)
+    if (cont == CNIL) {
+      if (TSTATE(thr) == Texiting)
+	c->signal_error(c, VINDEX(exc, 0));
       return(1);
+    }
     /* see if the continuation has a cleanup continuation created
        by protect.  If so, restore it first and remove it from the
        continuation at the top, so that when the cleanup continuation
        returns, it will see this same continuation again. */
-    if (VINDEX(cont, 6) != CNIL) {
-      if (VINDEX(cont, 6) == CTRUE) {
+    if (CONT_PRT(cont) != CNIL) {
+      if (CONT_PRT(cont) == CTRUE) {
 	/* restore the contents of the value register before
 	   proceeding. */
-	WB(&VINDEX(cont, 6), CNIL);
-	WB(&TVALR(thr), VINDEX(cont, 7));
-	WB(&VINDEX(cont, 7), CNIL);
+	WB(&CONT_PRT(cont), CNIL);
+	WB(&TVALR(thr), CONT_PRV(cont));
+	WB(&CONT_PRV(cont), CNIL);
 	WB(&TCONR(thr), cdr(TCONR(thr)));
       } else {
 	/* save the contents of the value register */
-	WB(&VINDEX(cont, 7), TVALR(thr));
-	tmp = VINDEX(cont, 6);
-	WB(&VINDEX(cont, 6), CTRUE);
+	WB(&CONT_PRV(cont), TVALR(thr));
+	tmp = CONT_PRT(cont);
+	WB(&CONT_PRT(cont), CTRUE);
 	cont = tmp;
       }
     } else {
@@ -956,6 +966,12 @@ int arc_return(arc *c, value thr)
       }
       continue;
     }
+    if (TSTATE(thr) == Texiting && exc == CNIL) {
+      /* if we are in exiting state, preserve the exception so we
+	 can pass it to signal_error when we run out of continuations
+	 to execute. */
+      exc = CONT_PRV(cont);
+    }
     arc_restorecont(c, thr, cont);
     return(0);
   }
@@ -966,14 +982,14 @@ value arc_mkcontfull(arc *c, value offset, value funr, value envr,
 {
   value cont = arc_mkvector(c, 8);
 
-  VINDEX(cont, 0) = offset;
-  VINDEX(cont, 1) = funr;
-  VINDEX(cont, 2) = envr;
-  VINDEX(cont, 3) = savedstk;
-  VINDEX(cont, 4) = conr;
-  VINDEX(cont, 5) = econt;
-  VINDEX(cont, 6) = CNIL;	/* protect function */
-  VINDEX(cont, 7) = CNIL;	/* during protect function return */
+  CONT_OFS(cont) = offset;
+  CONT_FUN(cont) = funr;
+  CONT_ENV(cont) = envr;
+  CONT_STK(cont) = savedstk;
+  CONT_CON(cont) = conr;
+  CONT_ECR(cont) = econt;
+  CONT_PRT(cont) = CNIL;	/* protect function */
+  CONT_PRV(cont) = CNIL;	/* during protect function return */
   return(cont);
 }
 
@@ -988,24 +1004,24 @@ value arc_mkcont(arc *c, value offset, value thr)
   if (FIXNUM_P(offset)) {
     /* compute the absolute address of the continuation if it is a
        fixnum (the usual case) */
-    WB(&VINDEX(cont, 0), INT2FIX((TIP(thr) + FIX2INT(offset) - 2) - base));
+    WB(&CONT_OFS(cont), INT2FIX((TIP(thr) + FIX2INT(offset) - 2) - base));
   } else {
     /* offset is probably an XCONT, just store it. */
-    WB(&VINDEX(cont, 0), offset);
+    WB(&CONT_OFS(cont), offset);
   }
-  WB(&VINDEX(cont, 1), TFUNR(thr));
-  WB(&VINDEX(cont, 2), TENVR(thr));
+  WB(&CONT_FUN(cont), TFUNR(thr));
+  WB(&CONT_ENV(cont), TENVR(thr));
   /* Save the used portion of the stack */
   stklen = TSTOP(thr) - (TSP(thr));
   savedstk = arc_mkvector(c, stklen);
   for (i=0; i<stklen; i++) {
     VINDEX(savedstk, i) = *(TSP(thr) + i + 1);
   }
-  WB(&VINDEX(cont, 3), savedstk);
-  WB(&VINDEX(cont, 4), TCONR(thr));
-  WB(&VINDEX(cont, 5), TECONT(thr));
-  WB(&VINDEX(cont, 6), CNIL);	/* protect function */
-  WB(&VINDEX(cont, 7), CNIL);	/* during protect function return */
+  WB(&CONT_STK(cont), savedstk);
+  WB(&CONT_CON(cont), TCONR(thr));
+  WB(&CONT_ECR(cont), TECONT(thr));
+  WB(&CONT_PRT(cont), CNIL);	/* protect function */
+  WB(&CONT_PRV(cont), CNIL);	/* during protect function return */
   return(cont);
 }
 
@@ -1090,10 +1106,9 @@ void arc_thread_dispatch(arc *c)
     ++nthreads;
     thr = car(c->vmqueue);
     switch (TSTATE(thr)) {
-      /* see if the thread has changed state to Trelease, Texiting, or
+      /* see if the thread has changed state to Trelease or
        Tbroken.  Remove the thread from the queue if so. */
     case Trelease:
-    case Texiting:
     case Tbroken:
       /* dequeue the terminated thread */
       if (prev == CNIL) {
@@ -1116,6 +1131,7 @@ void arc_thread_dispatch(arc *c)
     case Tdebug:
       /* this does nothing special for now */
     case Tready:
+    case Texiting:
       arc_vmengine(c, thr, c->quantum);
       break;
     }
@@ -1182,16 +1198,55 @@ value arc_mkexception(arc *c, value details, value lastcall, value contchain)
    and the restore that continuation.  We will push the exception
    object on the stack so it becomes the parameter of the error
    handler. If the ECONT register is nil, we use the signal_error
-   function as the final fallback. */
+   function as the final fallback.
+*/
 value arc_errexc(arc *c, value exc)
 {
-  value thr, errcont;
+  value thr, errcont, newconr, cont, pcont;
 
   thr = c->curthread;
   if (NIL_P(TECONT(thr))) {
-    c->signal_error(c, VINDEX(exc, 0));
-    return(CNIL);
+    /* In the absence of any on-error rescue functions,
+       we attempt to build up a new CONR with each of the
+       protect functions registered.  The most recent one
+       should be restored.  The state of the virtual machine
+       is set to Texiting so that when the last such protect
+       continuation finishes execution, it will execute
+       c->signal_error. */
+    newconr = CNIL;
+    cont = TCONR(thr);
+    while (cont != CNIL) {
+      pcont = CONT_PRT(car(cont));
+      if (pcont != CNIL) {
+	CONT_PRV(pcont) = exc; /* put the exception in the return value slot */
+	newconr = cons(c, pcont, newconr);
+      }
+      cont = cdr(cont);
+    }
+    if (newconr == CNIL) {
+      /* if there is nothing, just signal error and be done with it. */
+      c->signal_error(c, VINDEX(exc, 0));
+      return(CNIL);
+    }
+    /* otherwise, reverse the newconr so that the continuations get invoked
+       in the proper order. */
+    newconr = arc_list_reverse(c, newconr);
+    cont = newconr;
+    while (cont != CNIL) {
+      /* we are cooking up a new continuation register: make sure that
+	 the conr's are proper. */
+      CONT_CON(car(cont)) = cdr(cont);
+      cont = cdr(cont);
+    }
+    cont = car(newconr);
+    newconr = cdr(newconr);
+    TSTATE(thr) = Texiting;
+    TCONR(thr) = newconr;	/* replace the continuation register */
+    arc_restorecont(c, thr, cont);
+    longjmp(TVJMP(thr), 0);
   }
+
+  /* XXX - figure out how to handle this case! */
   errcont = car(TECONT(thr));
   WB(&TECONT(thr), cdr(TECONT(thr)));
   arc_restorecont(c, thr, errcont);
