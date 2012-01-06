@@ -144,6 +144,25 @@ START_TEST(test_protect_err1)
 }
 END_TEST
 
+/* Second case of err.  On-err rescue functions registered */
+START_TEST(test_protect_err2)
+{
+  value ret;
+
+  if (setjmp(err_jmp_buf) == 1) {
+    fail("on-err did not catch the exception!");
+    return;
+  }
+  /* This should set y to 1, and x to y+2, and the return value of on-err
+     should be 1 + x + y */
+  TEST("(with (x nil y nil exc nil) (list (+ 1 (on-err (fn (ex) (= exc ex) (+ x y)) (fn () (protect (fn () (protect (fn () (err \"test raising an error\")) (fn () (= y 1)))) (fn () (= x (+ y 2))))))) x y exc))");
+  fail_unless(car(ret) == INT2FIX(5));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+  fail_unless(TYPE(car(cdr(cdr(cdr(ret))))) == T_EXCEPTION);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -174,6 +193,7 @@ int main(void)
   tcase_add_test(tc_err, test_ccc);
   tcase_add_test(tc_err, test_protect_ccc);
   tcase_add_test(tc_err, test_protect_err1);
+  tcase_add_test(tc_err, test_protect_err2);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
