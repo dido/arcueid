@@ -1486,6 +1486,18 @@ START_TEST(test_min)
 }
 END_TEST
 
+START_TEST(test_most)
+{
+  value ret;
+
+  /* compute the stopping time of a hailstone sequence */
+  TEST("(def hailstone (n) (let f (fn (n) (if (even n) (/ n 2) (+ (* 3 n) 1))) ((afn (a i) (if (is a 1) i (self (f a) (+ i 1)))) n 0)))");
+
+  TEST("(let nums nil (for i 1 100 (= nums (cons i nums))) (most hailstone nums))");
+  fail_unless(ret == INT2FIX(97));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1617,6 +1629,7 @@ int main(void)
   tcase_add_test(tc_arc, test_best);
   tcase_add_test(tc_arc, test_max);
   tcase_add_test(tc_arc, test_min);
+  tcase_add_test(tc_arc, test_most);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
