@@ -461,9 +461,9 @@ notice and this notice are preserved.
      - [X] msec
      - [X] seconds
    - [ ] Regular Expressions [0/3]
-     - [ ] re-compile
-     - [ ] re-escape
-     - [ ] regex-match (=~)
+     - [ ] rxcompile
+     - [ ] rxescape
+     - [ ] rxmatch (=~)
    - [ ] Miscellaneous OS operations [0/2]
      - [ ] system
      - [ ] quit
