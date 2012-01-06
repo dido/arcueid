@@ -1383,6 +1383,18 @@ START_TEST(test_odd)
 }
 END_TEST
 
+START_TEST(test_after)
+{
+  value ret;
+
+  TEST("(with (x nil y nil) (list (+ 1 (on-err (fn (ex) (= exc ex) (+ x y)) (fn () (after (after (err \"test\") (= y 1)) (= x (+ y 2)))))) x y exc))");
+  fail_unless(car(ret) == INT2FIX(5));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+  fail_unless(TYPE(car(cdr(cdr(cdr(ret))))) == T_EXCEPTION);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1503,7 +1515,7 @@ int main(void)
   tcase_add_test(tc_arc, test_pos);
   tcase_add_test(tc_arc, test_even);
   tcase_add_test(tc_arc, test_odd);
-  /* XXX - after cannot be tested because protect is not yet implemented */
+  tcase_add_test(tc_arc, test_after);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
