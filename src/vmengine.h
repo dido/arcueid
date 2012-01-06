@@ -89,5 +89,23 @@ extern int arc_disasm_inst(arc *c, int index, value *codeptr, value code);
 #define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
 #define CCTX_LITS(cctx) (VINDEX(cctx, 3))
 
+/* A continuation is a vector with the following items as indexes:
+   0. Offset into the code object
+   1. Function
+   2. Environment
+   3. Saved stack
+   4. Continuation register
+   5. Error continuation register
+   6. Protect continuation
+   7. Saved return value for protect
+ */
+#define CONT_OFS(cont) (VINDEX(cont, 0))
+#define CONT_FUN(cont) (VINDEX(cont, 1))
+#define CONT_ENV(cont) (VINDEX(cont, 2))
+#define CONT_STK(cont) (VINDEX(cont, 3))
+#define CONT_CON(cont) (VINDEX(cont, 4))
+#define CONT_ECR(cont) (VINDEX(cont, 5))
+#define CONT_PRT(cont) (VINDEX(cont, 6))
+#define CONT_PRV(cont) (VINDEX(cont, 7))
 
 #endif
