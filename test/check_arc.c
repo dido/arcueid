@@ -1383,6 +1383,7 @@ START_TEST(test_odd)
 }
 END_TEST
 
+/* compare with the tests for protect in check_error.c */
 START_TEST(test_after)
 {
   value ret;
@@ -1418,6 +1419,19 @@ START_TEST(test_rand_choice)
     TEST("(rand-choice 1 2 3 4)");
     fail_unless(ret == INT2FIX(1) || ret == INT2FIX(2) || ret == INT2FIX(3) || ret == INT2FIX(4));
   }
+}
+END_TEST
+
+START_TEST(test_n_of)
+{
+  value ret;
+
+  TEST("(let x 0 (n-of 5 (++ x)))");
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(5));
 }
 END_TEST
 
@@ -1545,6 +1559,7 @@ int main(void)
   /* no tests for I/O functions (yet?) */
   tcase_add_test(tc_arc, test_int);
   tcase_add_test(tc_arc, test_rand_choice);
+  tcase_add_test(tc_arc, test_n_of);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
