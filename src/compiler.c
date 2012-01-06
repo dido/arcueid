@@ -24,7 +24,6 @@
 value arc_eval(arc *c, value argv, value rv, CC4CTX)
 {
   value expr, ctx, code, clos;
-  value env;
 
   CC4VDEFBEGIN;
   CC4VDEFEND;
@@ -37,11 +36,9 @@ value arc_eval(arc *c, value argv, value rv, CC4CTX)
   CC4BEGIN(c);
   expr = VINDEX(argv, 0);
   ctx = arc_mkcctx(c, INT2FIX(1), 0);
-  env = (NIL_P(TENVR(c->curthread))) ? CNIL : ENV_NAMES(TENVR(c->curthread));
-  arc_compile(c, expr, ctx, env, CTRUE);
+  arc_compile(c, expr, ctx, CNIL, CTRUE);
   code = arc_cctx2code(c, ctx);
-  /* use current thread as environment */
-  clos = arc_mkclosure(c, code, TENVR(c->curthread));
+  clos = arc_mkclosure(c, code, CNIL);
   CC4CALL(c, argv, clos, 0, CNIL);
   CC4END;
   return(rv);
