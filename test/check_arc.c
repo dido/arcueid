@@ -1464,6 +1464,24 @@ START_TEST(test_best)
 
   TEST("(best < '(3 1 2 4 7 3 6))");
   fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
+START_TEST(test_max)
+{
+  value ret;
+
+  TEST("(max 3 1 2 4 7 3 6)");
+  fail_unless(ret == INT2FIX(7));
+}
+END_TEST
+
+START_TEST(test_min)
+{
+  value ret;
+
+  TEST("(min 3 1 2 4 7 3 6)");
+  fail_unless(ret == INT2FIX(1));
 
 }
 END_TEST
@@ -1597,6 +1615,8 @@ int main(void)
   tcase_add_test(tc_arc, test_forlen);
   tcase_add_test(tc_arc, test_on);
   tcase_add_test(tc_arc, test_best);
+  tcase_add_test(tc_arc, test_max);
+  tcase_add_test(tc_arc, test_min);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
