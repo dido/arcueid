@@ -2,12 +2,13 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.0.5 (2012-??-??)
+* Version 0.0.5 (2012-01-06)
 - Basic error handling and recovery mechanisms
 - on-err, err, and details implemented
 - ccc (call/cc) implemented
+- protect implemented
 - Evaluation order of arguments fixed (was reversed in previous
-  versions)
+   versions)
 
 * Version 0.0.4 (2012-01-03)
 - Fixed bug for a!b!c expanding wrongly
