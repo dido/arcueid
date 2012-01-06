@@ -134,11 +134,11 @@ START_TEST(test_protect_err1)
   if (setjmp(err_jmp_buf) == 1) {
     /* Success.  Check if the global variables that were mentioned in the
        protect clauses were set appropriately */
-    TEST("(and (is x 1) (is y 2))");
+    TEST("(and (is x 3) (is y 2))");
     fail_unless(ret == CTRUE);
     return;
   }
-  TEST("(do (= x nil) (= y nil) (protect (fn () (protect (fn () (err \"test raising an error\")) (fn () (= y 2)))) (fn () (= x 1))))");
+  TEST("(do (= x nil) (= y nil) (protect (fn () (protect (fn () (err \"test raising an error\")) (fn () (= y 2)))) (fn () (= x (+ y 1)))))");
   fail("err did not raise an exception");
   fail_unless(ret);
 }
