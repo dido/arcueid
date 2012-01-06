@@ -475,10 +475,10 @@ notice and this notice are preserved.
    We will doubtless need to customize the base environment provided in
    PG-Arc.
 ** TODO pretty printer
-** TODO REPL [2/3]
+** DONE REPL [3/3]
    - [X] Simple non-readline REPL
    - [X] Read in an initial file for REPL
-   - [ ] Readline support
+   - [X] Readline support
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
    function which can be used to output strings according to a format
