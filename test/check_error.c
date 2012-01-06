@@ -115,6 +115,17 @@ START_TEST(test_ccc)
 }
 END_TEST
 
+START_TEST(test_protect_noerr)
+{
+  value ret;
+
+  TEST("(with (x 0 y 0) (list (+ 3 (protect (fn () (protect (fn () (+ x y)) (fn () (++ y)))) (fn () (= x (+ y 1))))) x y))");
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+}
+END_TEST
+
 START_TEST(test_protect_ccc)
 {
   value ret;
@@ -191,6 +202,7 @@ int main(void)
   tcase_add_test(tc_err, test_on_err);
   tcase_add_test(tc_err, test_on_err_nested);
   tcase_add_test(tc_err, test_ccc);
+  tcase_add_test(tc_err, test_protect_noerr);
   tcase_add_test(tc_err, test_protect_ccc);
   tcase_add_test(tc_err, test_protect_err1);
   tcase_add_test(tc_err, test_protect_err2);
