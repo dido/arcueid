@@ -1435,6 +1435,16 @@ START_TEST(test_n_of)
 }
 END_TEST
 
+
+START_TEST(test_forlen)
+{
+  value ret;
+
+  TEST("(with (x 1 y '(1 2 3 4 5 6 7)) (forlen j y (= x (* x (y j)))) x)");
+  fail_unless(ret == INT2FIX(5040));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1560,6 +1570,8 @@ int main(void)
   tcase_add_test(tc_arc, test_int);
   tcase_add_test(tc_arc, test_rand_choice);
   tcase_add_test(tc_arc, test_n_of);
+  /* no test for rand-string (yet?) */
+  tcase_add_test(tc_arc, test_forlen);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
