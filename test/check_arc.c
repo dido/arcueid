@@ -1407,6 +1407,20 @@ START_TEST(test_int)
 }
 END_TEST
 
+
+START_TEST(test_rand_choice)
+{
+  value ret;
+  int i;
+
+  /* do it several times to make sure the choices appear reasonably often */
+  for (i=0; i<100; i++) {
+    TEST("(rand-choice 1 2 3 4)");
+    fail_unless(ret == INT2FIX(1) || ret == INT2FIX(2) || ret == INT2FIX(3) || ret == INT2FIX(4));
+  }
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1530,6 +1544,7 @@ int main(void)
   tcase_add_test(tc_arc, test_after);
   /* no tests for I/O functions (yet?) */
   tcase_add_test(tc_arc, test_int);
+  tcase_add_test(tc_arc, test_rand_choice);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
