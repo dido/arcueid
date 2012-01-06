@@ -311,18 +311,18 @@ value arc_sref(arc *c, value com, value val, value ind)
     break;
   case T_STRING:
     if (TYPE(val) != T_CHAR) {
-      arc_err_cstrfmt(c, "cannot set string index to non-character %O", val);
+      arc_err_cstrfmt(c, "cannot set string index to non-character");
       return(CNIL);
     }
     if (TYPE(ind) != T_FIXNUM || FIX2INT(ind) < 0) {
-      arc_err_cstrfmt(c, "string index must be non-negative exact integer %O", ind);
+      arc_err_cstrfmt(c, "string index must be non-negative exact integer");
       return(CNIL);
     }
     arc_strsetindex(c, com, FIX2INT(ind), REP(val)._char);
     break;
   case T_CONS:
     if (TYPE(ind) != T_FIXNUM || FIX2INT(ind) < 0) {
-      arc_err_cstrfmt(c, "list index must be non-negative exact integer %O", ind);
+      arc_err_cstrfmt(c, "list index must be non-negative exact integer");
       return(CNIL);
     } else {
       int idx = FIX2INT(ind), notfound = 1;
@@ -336,20 +336,20 @@ value arc_sref(arc *c, value com, value val, value ind)
 	}
       }
       if (notfound) {
-	arc_err_cstrfmt(c, "index %O too large for list %O", ind, com);
+	arc_err_cstrfmt(c, "index %d too large for list", FIX2INT(ind));
 	return(CNIL);
       }
     }
     break;
   case T_VECTOR:
     if (FIX2INT(ind) >= VECLEN(com)) {
-      arc_err_cstrfmt(c, "index %O too large for vector %O", ind, com);
+      arc_err_cstrfmt(c, "index %d too large for vector", FIX2INT(ind));
       return(CNIL);
     }
     VINDEX(com, FIX2INT(ind)) = val;
     break;
   default:
-    arc_err_cstrfmt(c, "can't set reference to object %O", com);
+    arc_err_cstrfmt(c, "can't set reference to object of type %d", TYPE(com));
   }
   return(val);
 }
@@ -371,7 +371,7 @@ value arc_len(arc *c, value obj)
   default:
     /* Note that PG-Arc also allows the length of symbols to be taken,
        but why this should be remains inexplicable to me. */
-    arc_err_cstrfmt(c, "can't get length of object of type %T", obj);
+    arc_err_cstrfmt(c, "can't get length of object of type %d", TYPE(obj));
   }
   return(CNIL);
 }
