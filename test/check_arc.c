@@ -1445,6 +1445,16 @@ START_TEST(test_forlen)
 }
 END_TEST
 
+START_TEST(test_on)
+{
+  value ret;
+
+  TEST("(with (x 0 y 1 seq '(1 2 3 4 5 6 7)) (on var seq (= x (+ x index)) (= y (* y var))) (list x y))");
+  fail_unless(car(ret) == INT2FIX(21));
+  fail_unless(car(cdr(ret)) == INT2FIX(5040));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1572,6 +1582,7 @@ int main(void)
   tcase_add_test(tc_arc, test_n_of);
   /* no test for rand-string (yet?) */
   tcase_add_test(tc_arc, test_forlen);
+  tcase_add_test(tc_arc, test_on);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
