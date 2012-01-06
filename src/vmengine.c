@@ -455,6 +455,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TTID(thr) = ++c->tid_nonce;
   TCONR(thr) = CNIL;
   TECONT(thr) = CNIL;
+  TEXC(thr) = CNIL;
   return(thr);
 }
 
@@ -924,18 +925,17 @@ int arc_restorexcont(arc *c, value thr, value cont)
 int arc_return(arc *c, value thr)
 {
   value cont, tmp;
-  static value exc = CNIL;
 
   for (;;) {
     if (!CONS_P(TCONR(thr))) {
       if (TSTATE(thr) == Texiting)
-	c->signal_error(c, VINDEX(exc, 0));
+	c->signal_error(c, VINDEX(TEXC(thr), 0));
       return(1);
     }
     cont = car(TCONR(thr));
     if (cont == CNIL) {
       if (TSTATE(thr) == Texiting)
-	c->signal_error(c, VINDEX(exc, 0));
+	c->signal_error(c, VINDEX(TEXC(thr), 0));
       return(1);
     }
     /* see if the continuation has a cleanup continuation created
@@ -965,12 +965,6 @@ int arc_return(arc *c, value thr)
 	return(0);
       }
       continue;
-    }
-    if (TSTATE(thr) == Texiting && exc == CNIL) {
-      /* if we are in exiting state, preserve the exception so we
-	 can pass it to signal_error when we run out of continuations
-	 to execute. */
-      exc = CONT_PRV(cont);
     }
     arc_restorecont(c, thr, cont);
     return(0);
@@ -1202,7 +1196,7 @@ value arc_mkexception(arc *c, value details, value lastcall, value contchain)
 */
 value arc_errexc(arc *c, value exc)
 {
-  value thr, errcont, newconr, cont, pcont;
+  value thr, errcont, newconr, cont, pcont, endcont;
 
   thr = c->curthread;
   if (NIL_P(TECONT(thr))) {
@@ -1215,12 +1209,11 @@ value arc_errexc(arc *c, value exc)
        c->signal_error. */
     newconr = CNIL;
     cont = TCONR(thr);
+    TEXC(thr) = exc;
     while (cont != CNIL) {
       pcont = CONT_PRT(car(cont));
-      if (pcont != CNIL) {
-	CONT_PRV(pcont) = exc; /* put the exception in the return value slot */
+      if (pcont != CNIL)
 	newconr = cons(c, pcont, newconr);
-      }
       cont = cdr(cont);
     }
     if (newconr == CNIL) {
@@ -1230,8 +1223,7 @@ value arc_errexc(arc *c, value exc)
     }
     /* otherwise, reverse the newconr so that the continuations get invoked
        in the proper order. */
-    newconr = arc_list_reverse(c, newconr);
-    cont = newconr;
+    cont = newconr = arc_list_reverse(c, newconr);
     while (cont != CNIL) {
       /* we are cooking up a new continuation register: make sure that
 	 the conr's are proper. */
@@ -1246,13 +1238,52 @@ value arc_errexc(arc *c, value exc)
     longjmp(TVJMP(thr), 0);
   }
 
-  /* XXX - figure out how to handle this case! */
   errcont = car(TECONT(thr));
   WB(&TECONT(thr), cdr(TECONT(thr)));
-  arc_restorecont(c, thr, errcont);
-  CPUSH(thr, exc);
-  /* jump back to the start of the virtual machine context executing
-     this. */
+
+  /* Now, we have to go through the CONR in the same way as above,
+     adding continuations with registered error handlers as we go.
+     We should stop when we reach the portion of the continuation
+     register specified in CONT_CON of the errcont (which is where
+     the error handler was inserted).
+  */
+  endcont = car(CONT_CON(errcont));
+  newconr = CNIL;
+  cont = TCONR(thr);
+  while (cont != CNIL && cont != endcont) {
+    pcont = CONT_PRT(car(cont));
+    if (pcont != CNIL)
+      newconr = cons(c, pcont, newconr);
+    cont = cdr(cont);
+  }
+
+  if (newconr == CNIL) {
+    /* if there is nothing, just jump to the error continuation and be
+     done. */
+    arc_restorecont(c, thr, errcont);
+    CPUSH(thr, exc);
+    /* jump back to the start of the virtual machine context executing
+       this. */
+    longjmp(TVJMP(thr), 0);
+  }
+  /* otherwise, combine with the error continuation and reverse to make
+     the new continuation register, but first put the exception into
+     the saved stack */
+  CONT_STK(errcont) = arc_mkvector(c, 1);
+  VINDEX(CONT_STK(errcont), 0) = exc;
+  errcont = cons(c, errcont, CONT_CON(errcont));
+  newconr = arc_list_reverse(c, newconr);
+  cont = newconr = arc_list_append(newconr, errcont);
+  while (cont != CNIL) {
+    /* we are cooking up a new continuation register: make sure that
+       the conr's are proper. */
+    CONT_CON(car(cont)) = cdr(cont);
+    cont = cdr(cont);
+  }
+  cont = car(newconr);
+  newconr = cdr(newconr);
+  TCONR(thr) = newconr;	       /* replace the continuation register */
+  arc_restorecont(c, thr, cont);
   longjmp(TVJMP(thr), 0);
   return(CNIL);
 }
