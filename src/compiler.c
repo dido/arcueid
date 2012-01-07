@@ -779,8 +779,6 @@ static value compile_andf(arc *c, value expr, value ctx, value env,
   body = cons(c, cons(c, ARC_BUILTIN(c, S_AND), body), CNIL);
   body = cons(c, cons(c, ARC_BUILTIN(c, S_FN),
 		      cons(c, uniqs, body)), andargs);
-  arc_print_string(c, arc_prettyprint(c, body));
-  printf("\n");
   return(arc_compile(c, body, ctx, env, cont));
 }
 
