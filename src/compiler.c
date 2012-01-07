@@ -731,8 +731,6 @@ static value compile_apply(arc *c, value expr, value ctx, value env,
   return(compile_continuation(c, ctx, cont));  
 }
 
-#if 1
-
 static value fold(arc *c, value expr, value final)
 {
   if (cdr(expr) == CNIL)
@@ -749,7 +747,40 @@ static value compile_compose(arc *c, value expr, value ctx, value env,
   return(arc_compile(c, fold(c, composer, cargs), ctx, env, cont));
 }
 
-#endif
+static value compile_complement(arc *c, value expr, value ctx, value env,
+				value cont)
+{
+  value complemented = cdr(car(expr)), cargs = cdr(expr), result;
+
+  if (!NIL_P(cdr(complemented))) {
+    arc_err_cstrfmt(c, "complement: wrong number of arguments (%d for 1)",
+		    FIX2INT(arc_len(c, complemented)));
+    return(CNIL);
+  }
+  complemented = car(complemented);
+  result = cons(c, ARC_BUILTIN(c, S_NO),
+		cons(c, cons(c, complemented, cargs), CNIL));
+  return(arc_compile(c, result, ctx, env, cont));
+}
+
+static value compile_andf(arc *c, value expr, value ctx, value env,
+				value cont)
+{
+  value andfuncs, andargs, uniqs, body;
+
+  uniqs = CNIL;
+  for (andargs = cdr(expr); andargs; andargs = cdr(andargs))
+    uniqs = cons(c, arc_uniq(c), uniqs);
+  andargs = cdr(expr);
+  body = CNIL;
+  for (andfuncs = cdr(car(expr)); andfuncs; andfuncs = cdr(andfuncs)) {
+    body = cons(c, cons(c, car(andfuncs), uniqs), body);
+  }
+  body = cons(c, ARC_BUILTIN(c, S_AND), body);
+  body = cons(c, cons(c, ARC_BUILTIN(c, S_FN),
+		      cons(c, uniqs, body)), andargs);
+  return(arc_compile(c, body, ctx, env, cont));
+}
 
 static value compile_list(arc *c, value expr, value ctx, value env,
 			  value cont)
@@ -762,11 +793,17 @@ static value compile_list(arc *c, value expr, value ctx, value env,
   if ((fun = inline_func(c, car(expr))) != NULL)
     return(fun(c, expr, ctx, env, cont));
 
-#if 1
   /* compose in a functional position */
   if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPOSE))
     return(compile_compose(c, expr, ctx, env, cont));
-#endif
+
+  /* complement in a functional position */
+  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPLEMENT))
+    return(compile_complement(c, expr, ctx, env, cont));
+
+  /* andf in a functional position */
+  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_ANDF))
+    return(compile_andf(c, expr, ctx, env, cont));
 
   return(compile_apply(c, expr, ctx, env, cont));
 }
