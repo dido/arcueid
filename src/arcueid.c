@@ -225,6 +225,8 @@ value arc_cmp(arc *c, value v1, value v2)
     return(CNIL);
   }
   switch (TYPE(v1)) {
+  case T_CHAR:
+    return(arc_numcmp(c, INT2FIX(REP(v1)._char), INT2FIX(REP(v2)._char)));
   case T_FIXNUM:
   case T_FLONUM:
 #ifdef HAVE_GMP_H
