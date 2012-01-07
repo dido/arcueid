@@ -1625,6 +1625,15 @@ START_TEST(test_nonwhite)
 }
 END_TEST
 
+START_TEST(test_letter)
+{
+  value ret;
+
+  TEST("(and (letter #\\a) (letter #\\A) (letter #\\z) (letter #\\Z) (no (letter #\\0)) (no (letter #\\space)))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1767,6 +1776,7 @@ int main(void)
   tcase_add_test(tc_arc, test_gte);
   tcase_add_test(tc_arc, test_whitec);
   tcase_add_test(tc_arc, test_nonwhite);
+  tcase_add_test(tc_arc, test_letter);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
