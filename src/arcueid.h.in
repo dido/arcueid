@@ -450,6 +450,7 @@ extern value arc_table(arc *c);
 extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
+extern value arc_uniq(arc *c);
 
 /* vectors */
 extern value arc_mkvector(arc *c, int length);
