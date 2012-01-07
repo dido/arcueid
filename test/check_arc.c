@@ -1571,6 +1571,42 @@ START_TEST(test_defmemo)
 }
 END_TEST
 
+START_TEST(test_lte)
+{
+  value ret;
+
+  TEST("(<= 1 2 2 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(< 1 2 2 3)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(<= 1 2 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(<= 1 2 4 3)");
+  fail_unless(ret == CNIL);
+}
+END_TEST
+
+START_TEST(test_gte)
+{
+  value ret;
+
+  TEST("(>= 3 2 2 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(> 3 2 2 1)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(>= 3 2 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(>= 3 4 2 1)");
+  fail_unless(ret == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1709,6 +1745,8 @@ int main(void)
   tcase_add_test(tc_arc, test_insortnew);
   /* memo is tested by defmemo */
   tcase_add_test(tc_arc, test_defmemo);
+  tcase_add_test(tc_arc, test_lte);
+  tcase_add_test(tc_arc, test_gte);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
