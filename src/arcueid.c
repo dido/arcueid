@@ -226,6 +226,7 @@ value arc_cmp(arc *c, value v1, value v2)
   }
   switch (TYPE(v1)) {
   case T_CHAR:
+    /* XXX - should this change to honor LC_COLLATE someday? */
     return(arc_numcmp(c, INT2FIX(REP(v1)._char), INT2FIX(REP(v2)._char)));
   case T_FIXNUM:
   case T_FLONUM:
