@@ -1634,6 +1634,24 @@ START_TEST(test_letter)
 }
 END_TEST
 
+START_TEST(test_digit)
+{
+  value ret;
+
+  TEST("(and (digit #\\0) (digit #\\5) (digit #\\6) (digit #\\9) (no (digit #\\a)) (no (digit #\\space)))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_alphadig)
+{
+  value ret;
+
+  TEST("(and (alphadig #\\a) (alphadig #\\A) (alphadig #\\0) (alphadig #\\9) (no (alphadig #\\$)) (no (alphadig #\\space)))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1777,6 +1795,8 @@ int main(void)
   tcase_add_test(tc_arc, test_whitec);
   tcase_add_test(tc_arc, test_nonwhite);
   tcase_add_test(tc_arc, test_letter);
+  tcase_add_test(tc_arc, test_digit);
+  tcase_add_test(tc_arc, test_alphadig);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
