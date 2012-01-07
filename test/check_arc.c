@@ -1543,6 +1543,23 @@ START_TEST(test_reinsert_sorted)
 }
 END_TEST
 
+START_TEST(test_insortnew)
+{
+  value ret, ret2;
+
+  TEST("(let xs '(0 (1 2 3 4) 6 7) (insortnew < 3 (cadr xs)) xs)");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) = INT2FIX(0));
+  ret2 = car(cdr(ret));
+  fail_unless(car(ret2) == INT2FIX(1));
+  fail_unless(car(cdr(ret2)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret2))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(ret2)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(6));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(7));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1678,6 +1695,7 @@ int main(void)
   tcase_add_test(tc_arc, test_insert_sorted);
   tcase_add_test(tc_arc, test_insort);
   tcase_add_test(tc_arc, test_reinsert_sorted);
+  tcase_add_test(tc_arc, test_insortnew);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
