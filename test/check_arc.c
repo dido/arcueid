@@ -1661,6 +1661,24 @@ START_TEST(test_punc)
 }
 END_TEST
 
+START_TEST(test_summing)
+{
+  value ret;
+
+  TEST("(summing idfn (+ (idfn 1) (+ (idfn 2) 3)))");
+  fail_unless(ret == INT2FIX(2));
+}
+END_TEST
+
+START_TEST(test_sum)
+{
+  value ret;
+
+  TEST("(sum [+ _ 1] '(1 2 3 4))");
+  fail_unless(ret == INT2FIX(14));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1807,6 +1825,9 @@ int main(void)
   tcase_add_test(tc_arc, test_digit);
   tcase_add_test(tc_arc, test_alphadig);
   tcase_add_test(tc_arc, test_punc);
+  /* no test for readline */
+  tcase_add_test(tc_arc, test_summing);
+  tcase_add_test(tc_arc, test_sum);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
