@@ -1498,6 +1498,20 @@ START_TEST(test_most)
 }
 END_TEST
 
+START_TEST(test_insert_sorted)
+{
+  value ret;
+
+  TEST("(insert-sorted < 4 '(1 2 3 5))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(5));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1630,6 +1644,7 @@ int main(void)
   tcase_add_test(tc_arc, test_max);
   tcase_add_test(tc_arc, test_min);
   tcase_add_test(tc_arc, test_most);
+  tcase_add_test(tc_arc, test_insert_sorted);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
