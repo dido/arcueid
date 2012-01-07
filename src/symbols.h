@@ -50,6 +50,7 @@ enum builtin_syms {
   S_INPUT,			/* input */
   S_OUTPUT,			/* output */
   S_EXCEPTION,			/* exception */
+
   S_PORT,			/* port */
   S_THREAD,			/* thread */
   S_VECTOR,			/* vector */
@@ -83,6 +84,7 @@ enum builtin_syms {
   S_MINUS,			/* - */
   S_TIMES,			/* * */
   S_DIV,			/* / */
+  S_AND,			/* and */
 
   S_THE_END			/* end of the line */
 };
