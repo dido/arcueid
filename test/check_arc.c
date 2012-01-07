@@ -1607,6 +1607,15 @@ START_TEST(test_gte)
 }
 END_TEST
 
+START_TEST(test_whitec)
+{
+  value ret;
+
+  TEST("(and (whitec #\\space) (whitec #\\newline) (whitec #\\tab) (whitec #\\return) (no (whitec #\\a)))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1747,6 +1756,7 @@ int main(void)
   tcase_add_test(tc_arc, test_defmemo);
   tcase_add_test(tc_arc, test_lte);
   tcase_add_test(tc_arc, test_gte);
+  tcase_add_test(tc_arc, test_whitec);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
