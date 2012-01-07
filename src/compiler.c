@@ -731,6 +731,26 @@ static value compile_apply(arc *c, value expr, value ctx, value env,
   return(compile_continuation(c, ctx, cont));  
 }
 
+#if 1
+
+static value fold(arc *c, value expr, value final)
+{
+  if (cdr(expr) == CNIL)
+    return(cons(c, car(expr), final));
+  return(cons(c, car(expr), cons(c, fold(c, cdr(expr), final), CNIL)));
+}
+
+static value compile_compose(arc *c, value expr, value ctx, value env,
+			     value cont)
+{
+  value composer = cdr(car(expr));
+  value cargs = cdr(expr);
+
+  return(arc_compile(c, fold(c, composer, cargs), ctx, env, cont));
+}
+
+#endif
+
 static value compile_list(arc *c, value expr, value ctx, value env,
 			  value cont)
 {
@@ -741,6 +761,12 @@ static value compile_list(arc *c, value expr, value ctx, value env,
 
   if ((fun = inline_func(c, car(expr))) != NULL)
     return(fun(c, expr, ctx, env, cont));
+
+#if 1
+  /* compose in a functional position */
+  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPOSE))
+    return(compile_compose(c, expr, ctx, env, cont));
+#endif
 
   return(compile_apply(c, expr, ctx, env, cont));
 }
