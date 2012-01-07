@@ -1560,6 +1560,17 @@ START_TEST(test_insortnew)
 }
 END_TEST
 
+START_TEST(test_defmemo)
+{
+  value ret;
+
+  /* the memoizing functionality of defmemo ensures that memoval is
+     incremented only once for every value of the argument to tdm. */
+  TEST("(do (= memoval 0) (defmemo tdm (x) (++ memoval)) (with (x (tdm 0) y (tdm 0) z (tdm 1) w (tdm 1)) (and (is x y) (is z w) (isnt x z) (isnt x w) (isnt y z) (isnt y w))))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1696,6 +1707,8 @@ int main(void)
   tcase_add_test(tc_arc, test_insort);
   tcase_add_test(tc_arc, test_reinsert_sorted);
   tcase_add_test(tc_arc, test_insortnew);
+  /* memo is tested by defmemo */
+  tcase_add_test(tc_arc, test_defmemo);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
