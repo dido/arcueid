@@ -224,7 +224,7 @@ value arc_tag(arc *c, value type, value rep)
 
 value arc_cmp(arc *c, value v1, value v2)
 {
-  if (TYPE(v1) != TYPE(v2)) {
+  if (!(NUMERIC_P(v1) && NUMERIC_P(v2)) && TYPE(v1) != TYPE(v2)) {
     arc_err_cstrfmt(c, "Invalid types for comparison");
     return(CNIL);
   }
