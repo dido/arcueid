@@ -70,6 +70,8 @@ value arc_is(arc *c, value v1, value v2)
   return(CNIL);
 }
 
+extern value __arc_hash_iso(arc *c, value v1, value v2);
+
 value arc_iso(arc *c, value v1, value v2)
 {
   value elem1, elem2;
@@ -117,6 +119,8 @@ value arc_iso(arc *c, value v1, value v2)
     }
     /* compare last cdr */
     return(arc_iso(c, v1, v2));
+  case T_TABLE:
+    return(__arc_hash_iso(c, v1, v2));
   }
   return(CNIL);
 }
