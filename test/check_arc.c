@@ -1766,6 +1766,15 @@ START_TEST(test_vals)
 }
 END_TEST
 
+START_TEST(test_tablist)
+{
+  value ret;
+
+  TEST("(iso (let tbl (table) (fill-table tbl '(a 1 b 2 c 3)) (sort (fn (a b) (< (coerce (car a) 'string) (coerce (car b) 'string))) (tablist tbl))) '((a 1) (b 2) (c 3)))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1943,6 +1952,7 @@ int main(void)
   tcase_add_test(tc_arc, test_fill_table);
   tcase_add_test(tc_arc, test_keys);
   tcase_add_test(tc_arc, test_vals);
+  tcase_add_test(tc_arc, test_tablist);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
