@@ -1689,6 +1689,28 @@ START_TEST(test_treewise)
 }
 END_TEST
 
+START_TEST(test_carif)
+{
+  value ret;
+
+  TEST("(is (carif 1) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (carif '(3 4 5)) 3)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_tree_subst)
+{
+  value ret;
+
+  /* XXX - do something about 'f' as well as 'base'? */
+  TEST("(iso (tree-subst 'g '(g h i) '(f (b a d c . e) g nil i h)) '(f (b a d c . e) (g h i) nil i h))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1810,7 +1832,26 @@ int main(void)
   tcase_add_test(tc_arc, test_even);
   tcase_add_test(tc_arc, test_odd);
   tcase_add_test(tc_arc, test_after);
-  /* no tests for I/O functions (yet?) */
+  /* no tests for I/O functions and macros (yet?):
+     w/infile
+     w/outfile
+     w/instring
+     w/socket
+     w/outstring
+     w/appendfile
+     w/stdout
+     w/stdin
+     tostring
+     fromstring
+     readstring1
+     read
+     readfile
+     readfile1
+     readall
+     allchars
+     filechars
+     writefile
+   */
   tcase_add_test(tc_arc, test_int);
   tcase_add_test(tc_arc, test_rand_choice);
   tcase_add_test(tc_arc, test_n_of);
@@ -1839,6 +1880,9 @@ int main(void)
   tcase_add_test(tc_arc, test_summing);
   tcase_add_test(tc_arc, test_sum);
   tcase_add_test(tc_arc, test_treewise);
+  tcase_add_test(tc_arc, test_carif);
+  /* no test for prall or prs */
+  tcase_add_test(tc_arc, test_tree_subst);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
