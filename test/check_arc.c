@@ -1793,6 +1793,19 @@ START_TEST(test_obj)
 }
 END_TEST
 
+START_TEST(test_copy)
+{
+  value ret;
+
+  TEST("(withs (x '(a b c) cp (copy x)) (and (no (is x cp)) (iso x cp)))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(withs (x (obj a 1 b 2 c 3) cp (copy x)) (and (no (is x cp)) (iso x cp)))");
+ fail_unless(ret == CTRUE);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1973,6 +1986,9 @@ int main(void)
   tcase_add_test(tc_arc, test_tablist);
   tcase_add_test(tc_arc, test_listtab);
   tcase_add_test(tc_arc, test_obj);
+  /* no tests for load-table, read-table, load-tables, save-table, or
+     write-table yet */
+  tcase_add_test(tc_arc, test_copy);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
