@@ -1757,6 +1757,15 @@ START_TEST(test_keys)
 }
 END_TEST
 
+START_TEST(test_vals)
+{
+  value ret;
+
+  TEST("(iso (let tbl (table) (fill-table tbl '(a 1 b 2 c 3)) (sort (fn (a b) (< a b))  (vals tbl))) '(1 2 3))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1933,6 +1942,7 @@ int main(void)
   tcase_add_test(tc_arc, test_dotted);
   tcase_add_test(tc_arc, test_fill_table);
   tcase_add_test(tc_arc, test_keys);
+  tcase_add_test(tc_arc, test_vals);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
