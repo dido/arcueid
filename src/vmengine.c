@@ -487,6 +487,7 @@ static value c4apply(arc *c, value thr, value avec,
     cont = arc_mkcont(c, retval, thr);
     /* 2. Put the continuation on the continuation register. */
     WB(&TCONR(thr), cons(c, cont, TCONR(thr)));
+    TSP(thr) = TSTOP(thr);
     /* 3. Push the parameters for the new call on the stack in reverse
           order */
     nargv = VINDEX(retval, 3);
@@ -1045,6 +1046,7 @@ value arc_mkxcont(arc *c, value cc4ctx, value argv, value func, int fargc, ...)
   va_start(ap, fargc);
   for (i=0; i<fargc; i++)
     VINDEX(fargv, i) = va_arg(ap, value);
+
   va_end(ap);
   return(arc_mkxcontv(c, cc4ctx, argv, func, fargv));
 }
