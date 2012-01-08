@@ -1806,6 +1806,37 @@ START_TEST(test_copy)
 }
 END_TEST
 
+START_TEST(test_abs)
+{
+  value ret;
+
+  TEST("(is (abs 1) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (abs -1) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (abs -1.0) 1.0)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (abs 1.0) 1.0)");
+  fail_unless(ret == CTRUE);
+
+#ifdef HAVE_GMP_H
+  TEST("(is (abs 1000000000000000000000000000000000000000000000000000000000000) 1000000000000000000000000000000000000000000000000000000000000)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (abs -1000000000000000000000000000000000000000000000000000000000000) 1000000000000000000000000000000000000000000000000000000000000)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (abs 3/2) 3/2)")
+  fail_unless(ret == CTRUE);
+  TEST("(is (abs -3/2) 3/2)")
+  fail_unless(ret == CTRUE);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1989,6 +2020,7 @@ int main(void)
   /* no tests for load-table, read-table, load-tables, save-table, or
      write-table yet */
   tcase_add_test(tc_arc, test_copy);
+  tcase_add_test(tc_arc, test_abs);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
