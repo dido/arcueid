@@ -1739,6 +1739,15 @@ START_TEST(test_dotted)
 }
 END_TEST
 
+START_TEST(test_fill_table)
+{
+  value ret;
+
+  TEST("(let tbl (table) (fill-table tbl '(a 1 b 2 c 3)) (and (is (tbl 'a) 1) (is (tbl 'b) 2) (is (tbl 'c) 3) (no (tbl 'd))))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1913,6 +1922,7 @@ int main(void)
   tcase_add_test(tc_arc, test_tree_subst);
   tcase_add_test(tc_arc, test_ontree);
   tcase_add_test(tc_arc, test_dotted);
+  tcase_add_test(tc_arc, test_fill_table);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
