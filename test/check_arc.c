@@ -1679,6 +1679,16 @@ START_TEST(test_sum)
 }
 END_TEST
 
+START_TEST(test_treewise)
+{
+  value ret;
+
+  /* XXX - do something about 'f' as well as 'base'? */
+  TEST("(iso (let x nil (treewise (fn (x y)) [= x (cons _ x)] '(f (b a d c . e) g nil i h)) x) '(nil h i nil g e c d a b f))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1828,6 +1838,7 @@ int main(void)
   /* no test for readline */
   tcase_add_test(tc_arc, test_summing);
   tcase_add_test(tc_arc, test_sum);
+  tcase_add_test(tc_arc, test_treewise);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
