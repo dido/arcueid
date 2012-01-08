@@ -1775,6 +1775,15 @@ START_TEST(test_tablist)
 }
 END_TEST
 
+START_TEST(test_listtab)
+{
+  value ret;
+
+  TEST("(let tbl (listtab '((a 1) (b 2) (c 3))) (and (is (tbl 'a) 1) (is (tbl 'b) 2) (is (tbl 'c) 3) (no (tbl 'd))))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1953,6 +1962,7 @@ int main(void)
   tcase_add_test(tc_arc, test_keys);
   tcase_add_test(tc_arc, test_vals);
   tcase_add_test(tc_arc, test_tablist);
+  tcase_add_test(tc_arc, test_listtab);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
