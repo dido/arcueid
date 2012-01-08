@@ -492,6 +492,7 @@ static struct {
   { "mod", 2, __arc_mod2 },
   { "srand", 1, arc_srand },
   { "rand", -1, arc_rand },
+  { "trunc", 1, arc_trunc },
 
   { "maptable", -3, arc_hash_map },
   { "table", 0, arc_table },
