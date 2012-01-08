@@ -289,13 +289,13 @@ notice and this notice are preserved.
      - [X] - Subtraction (virtual machine instruction)
      - [X] / Division (virtual machine instruction)
      - [X] idiv integer division
-     - [-] Arc3-current functions [4/6]
+     - [-] Arc3-current functions [5/6]
        - [X] expt
        - [X] mod
        - [X] rand
        - [X] srand
        - [ ] sqrt
-       - [ ] trunc
+       - [X] trunc
      - [ ] Complex arithmetic [0/6]
 	   This is again an Arcueid extension.  It's rather annoying
 	   to have support for complex numbers but no functions to
