@@ -330,6 +330,10 @@ static inline int TYPE(value v)
 
 #define CONS_P(x) ((TYPE(x)) == (T_CONS))
 
+#define NUMERIC_P(x) ((TYPE(x) == (T_FIXNUM)) || (TYPE(x) == (T_BIGNUM)) \
+		      || (TYPE(x) == (T_FLONUM)) || (TYPE(x) == (T_RATIONAL)) \
+		      || (TYPE(x) == (T_COMPLEX)))
+
 /* These are the really ugly macros used to support Calling Convention
    4.  They are inspired by Simon Tatham's C coroutines, and
    essentially provide a coroutine-style mechanism for performing
