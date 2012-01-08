@@ -1721,6 +1721,24 @@ START_TEST(test_ontree)
 }
 END_TEST
 
+START_TEST(test_dotted)
+{
+  value ret;
+
+  TEST("(dotted '(b . c))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(dotted '(a b c d e f . g))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(dotted '(a b c d e f g))");
+  fail_unless(ret == CNIL);
+
+  TEST("(dotted 'a)");
+  fail_unless(ret == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1894,6 +1912,7 @@ int main(void)
   /* no test for prall or prs */
   tcase_add_test(tc_arc, test_tree_subst);
   tcase_add_test(tc_arc, test_ontree);
+  tcase_add_test(tc_arc, test_dotted);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
