@@ -1711,6 +1711,16 @@ START_TEST(test_tree_subst)
 }
 END_TEST
 
+START_TEST(test_ontree)
+{
+  value ret;
+
+  /* XXX - do something about 'f' as well as 'base'? */
+  TEST("(iso (let x nil (ontree [when (atom _) (= x (cons _ x))] '(f (b a d c . e) g nil i h)) x) '(nil h i nil g e c d a b f))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1883,6 +1893,7 @@ int main(void)
   tcase_add_test(tc_arc, test_carif);
   /* no test for prall or prs */
   tcase_add_test(tc_arc, test_tree_subst);
+  tcase_add_test(tc_arc, test_ontree);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
