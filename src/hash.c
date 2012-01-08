@@ -525,3 +525,36 @@ value arc_table(arc *c)
 {
   return(arc_mkhash(c, DEFAULT_TABLE_BITS));
 }
+
+/* This should be called only on hashes */
+value __arc_hash_iso(arc *c, value v1, value v2)
+{
+  int i;
+  value cell, tent;
+
+  /* iterate over both tables */
+  for (i=0; i<TABLESIZE(v1); i++) {
+    tent = TABLEPTR(v1)[i];
+    if (EMPTYP(tent))
+      continue;
+    cell = arc_hash_lookup2(c, v2, car(tent));
+    if (cell == CUNBOUND)
+      return(CNIL);
+    if (arc_iso(c, car(cell), car(tent)) == CNIL
+	|| arc_iso(c, cdr(cell), cdr(tent)) == CNIL)
+      return(CNIL);
+  }
+
+  for (i=0; i<TABLESIZE(v2); i++) {
+    tent = TABLEPTR(v2)[i];
+    if (EMPTYP(tent))
+      continue;
+    cell = arc_hash_lookup2(c, v1, car(tent));
+    if (cell == CUNBOUND)
+      return(CNIL);
+    if (arc_iso(c, car(cell), car(tent)) == CNIL
+	|| arc_iso(c, cdr(cell), cdr(tent)) == CNIL)
+      return(CNIL);
+  }
+  return(CTRUE);
+}
