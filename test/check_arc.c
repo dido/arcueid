@@ -1748,6 +1748,15 @@ START_TEST(test_fill_table)
 }
 END_TEST
 
+START_TEST(test_keys)
+{
+  value ret;
+
+  TEST("(iso (let tbl (table) (fill-table tbl '(a 1 b 2 c 3)) (sort (fn (a b) (< (coerce a 'string) (coerce b 'string)))  (keys tbl))) '(a b c))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1923,6 +1932,7 @@ int main(void)
   tcase_add_test(tc_arc, test_ontree);
   tcase_add_test(tc_arc, test_dotted);
   tcase_add_test(tc_arc, test_fill_table);
+  tcase_add_test(tc_arc, test_keys);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
