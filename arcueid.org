@@ -533,6 +533,13 @@ notice and this notice are preserved.
 ** TODO Format strings
    We will provide for format strings similar to C, but with a few
    extensions that make sense for Arc.
+** TODO Character/string comparisons/translations
+   Character/string comparisons, by default use the Unicode Collation
+   algorithm (http://www.unicode.org/reports/tr10/)?  Capitalization
+   and decapitalization should also be locale-defined. An
+   implementation of the algorithms for doing these things appears to
+   be ICU4C (http://site.icu-project.org).  See if we can adapt the
+   code or use it as a library.
 * Limitations that should be lifted
 ** Macro expansion
    - Macros cannot use threading primitives. Attempting to do so with
