@@ -1715,3 +1715,40 @@ value arc_fixnump(arc *c, value v)
 {
   return((FIXNUM_P(v)) ? CTRUE : CNIL);
 }
+
+value arc_trunc(arc *c, value v)
+{
+  value result = CNIL;
+
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+    result = v;
+    break;
+  case T_FLONUM:
+    /* try to coerce to fixnum first */
+    result = arc_coerce_fixnum(c, v);
+    if (result == CNIL) {
+#ifdef HAVE_GMP_H
+      result = arc_mkbignuml(c, 0);
+      arc_coerce_bignum(c, v, &REP(result)._bignum);
+#else
+      arc_err_cstrfmt(c, "flonum->fixnum conversion overflow (this version of Arcueid does not have bignum support)");
+#endif
+    }
+    break;
+#ifdef HAVE_GMP_H
+  case T_RATIONAL:
+    result = arc_mkbignuml(c, 0);
+    arc_coerce_bignum(c, v, &REP(result)._bignum);
+    break;
+#endif
+  case T_COMPLEX:
+    arc_err_cstrfmt(c, "cannot truncate complex number to integer");
+    break;
+  default:
+    arc_err_cstrfmt(c, "truncate expects numeric type, given object of type %d", TYPE(v));
+    break;
+  }
+  return(result);
+}
