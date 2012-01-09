@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [11/19]
+** TODO Runtime Built-In Functions [12/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -465,10 +465,10 @@ notice and this notice are preserved.
    - [ ] Miscellaneous OS operations [0/2]
      - [ ] system
      - [ ] quit
-   - [-] Miscellaneous [2/3]
+   - [X] Miscellaneous [3/3]
      - [X] sref *
      - [X] len
-     - [ ] bound
+     - [X] bound
 ** TODO Baseline environment (arc.arc)
    We will doubtless need to customize the base environment provided in
    PG-Arc.
