@@ -6,6 +6,9 @@ See the end for copying conditions.
 - Compose, complement, and andf in a functional position are optimized
   by the compiler
 - iso now works for tables as well
+- Math functions, including mathematical functions defined by C99
+  (such as trigonometric, hyperbolic, logs, and many others) have been
+  defined and included.
 
 * Version 0.0.5 (2012-01-06)
 - Basic error handling and recovery mechanisms
