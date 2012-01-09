@@ -485,7 +485,6 @@ static struct {
   { "is", 2, arc_is },
   { "iso", 2, arc_iso },
   { "fixnump", 1, arc_fixnump },
-  { "abs", 1, __arc_abs },
 
   { "idiv", 2, __arc_idiv2 },
   { "expt", 2, arc_expt },
@@ -495,6 +494,11 @@ static struct {
   { "rand", -1, arc_rand },
   { "trunc", 1, arc_trunc },
   { "sqrt", 1, arc_sqrt },
+  { "abs", 1, __arc_abs },
+  { "real", 1, __arc_real },
+  { "imag", 1, __arc_imag },
+  { "conj", 1, __arc_conj },
+  { "arg", 1, __arc_arg },
 
   { "maptable", -3, arc_hash_map },
   { "table", 0, arc_table },
