@@ -26,6 +26,22 @@
 #include "../config.h"
 #include "utf.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 #define SGN(x) (((x)>=0)?(1):(-(1)))
 
@@ -1932,6 +1948,7 @@ value __arc_arg(arc *c, value v)
   return(CNIL);
 }
 
+/* real and complex functions */
 #define DEFFUNC(fname)							\
   value __arc_##fname(arc *c, value v)					\
   {									\
@@ -1950,10 +1967,247 @@ value __arc_arg(arc *c, value v)
     return(arc_mkcomplex(c, creal(z), cimag(z)));			\
     break;								\
   default:								\
-    arc_err_cstrfmt(c, #fname "expects numeric type, given object of type %d", \
+    arc_err_cstrfmt(c, #fname " expects numeric type, given object of type %d", \
 		    TYPE(v));						\
   }									\
   return(CNIL);								\
 }
 
+/* real-only functions */
+#define RDEFFUNC(fname)							\
+  value __arc_##fname(arc *c, value v)					\
+  {									\
+    double x;								\
+    switch (TYPE(v)) {							\
+    case T_FIXNUM:							\
+    case T_BIGNUM:							\
+    case T_RATIONAL:							\
+    case T_FLONUM:							\
+      x = arc_coerce_flonum(c, v);					\
+      return(arc_mkflonum(c, fname(x)));				\
+      break;								\
+    default:								\
+      arc_err_cstrfmt(c, #fname " expects integer/floating type, given object of type %d", \
+		      TYPE(v));						\
+    }									\
+    return(CNIL);							\
+  }
+
+#define DEFFUNCDOM(fname, domain)					\
+  value __arc_##fname(arc *c, value v)					\
+  {									\
+    double complex z;							\
+  double x;								\
+  switch (TYPE(v)) {							\
+  case T_FIXNUM:							\
+  case T_BIGNUM:							\
+  case T_RATIONAL:							\
+  case T_FLONUM:							\
+    x = arc_coerce_flonum(c, v);					\
+    if (domain)								\
+      return(arc_mkflonum(c, fname(x)));				\
+    z = (double complex)x;						\
+    break;								\
+  case T_COMPLEX:							\
+    z = (REP(v)._complex.re) + I*(REP(v)._complex.im);			\
+    break;								\
+  default:								\
+    arc_err_cstrfmt(c, #fname " expects numeric type, given object of type %d", \
+		    TYPE(v));						\
+    return(CNIL);							\
+  }									\
+  z = c##fname(z);							\
+  return(arc_mkcomplex(c, creal(z), cimag(z)));				\
+  }
+
+DEFFUNCDOM(acos, x >= -1.0 && x <= 1.0);
+DEFFUNCDOM(acosh, x >= 1.0);
+DEFFUNCDOM(asin, x >= -1.0 && x <= 1.0);
+DEFFUNC(asinh);
+DEFFUNC(atan);
+
+value __arc_atan2(arc *c, value arg1, value arg2)
+{
+  double x, y;
+
+  x = arc_coerce_flonum(c, arg1);
+  y = arc_coerce_flonum(c, arg2);
+
+  return(arc_mkflonum(c, atan2(x, y)));
+}
+
+DEFFUNCDOM(atanh, x >= -1.0 && x <= 1.0);
+
+value __arc_cbrt(arc *c, value v)
+{
+  double complex z;
+  double x;
+
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_FLONUM:
+    x = arc_coerce_flonum(c, v);
+    return(arc_mkflonum(c, cbrt(x)));
+    break;
+  case T_COMPLEX:
+    z = (REP(v)._complex.re) + I*(REP(v)._complex.im);
+    break;
+  default:
+    arc_err_cstrfmt(c, "cbrt expects numeric type, given object of type %d",
+		    TYPE(v));
+    return(CNIL);
+  }
+  z = cexp(clog(z) / 3.0);
+  return(arc_mkcomplex(c, creal(z), cimag(z)));
+}
+
+value __arc_ceil(arc *c, value arg)
+{
+  double x;
+
+  x = arc_coerce_flonum(c, arg);
+  x = ceil(x);
+  if (x < FIXNUM_MAX)
+    return(INT2FIX((long)x));
+  return(arc_mkflonum(c, x));
+}
+
+DEFFUNC(cos);
+DEFFUNC(cosh);
 DEFFUNC(exp);
+RDEFFUNC(expm1);
+RDEFFUNC(erf);
+RDEFFUNC(erfc);
+
+value __arc_floor(arc *c, value arg)
+{
+  double x;
+
+  x = arc_coerce_flonum(c, arg);
+  x = floor(x);
+  if (x < FIXNUM_MAX)
+    return(INT2FIX((long)x));
+  return(arc_mkflonum(c, x));
+}
+
+value __arc_fmod(arc *c, value arg1, value arg2)
+{
+  double x, y;
+
+  x = arc_coerce_flonum(c, arg1);
+  y = arc_coerce_flonum(c, arg2);
+
+  return(arc_mkflonum(c, fmod(x, y)));
+}
+
+value __arc_frexp(arc *c, value arg)
+{
+  double x;
+  int exp;
+
+  x = arc_coerce_flonum(c, arg);
+  x = frexp(x, &exp);
+
+  return(cons(c, arc_mkflonum(c, x), cons(c, INT2FIX(exp), CNIL)));
+}
+
+value __arc_hypot(arc *c, value arg1, value arg2)
+{
+  double x, y;
+
+  x = arc_coerce_flonum(c, arg1);
+  y = arc_coerce_flonum(c, arg2);
+
+  return(arc_mkflonum(c, hypot(x, y)));
+}
+
+value __arc_ldexp(arc *c, value arg1, value arg2)
+{
+  double x;
+  value y;
+
+  x = arc_coerce_flonum(c, arg1);
+  y = arc_coerce_fixnum(c, arg2);
+  if (y == CNIL) {
+    arc_err_cstrfmt(c, "ldexp cannot convert object of type %d to fixnum",
+		    TYPE(arg2));
+    return(CNIL);
+  }
+
+  return(arc_mkflonum(c, ldexp(x, FIX2INT(y))));
+}
+
+value __arc_lgamma(arc *c, value v)
+{
+  double x;
+  int signp;
+
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_FLONUM:
+    x = arc_coerce_flonum(c, v);
+    x = lgamma_r(x, &signp);
+    return(cons(c, arc_mkflonum(c, x), cons(c, INT2FIX(signp), CNIL)));
+    break;
+  default:
+    arc_err_cstrfmt(c, "lgamma expects integer/floating type, given object of type %d",
+		    TYPE(v));
+  }
+  return(CNIL);
+}
+
+DEFFUNC(log);
+RDEFFUNC(log10);
+RDEFFUNC(log2);
+RDEFFUNC(logb);
+
+value __arc_modf(arc *c, value arg)
+{
+  double x, iptr;
+
+  x = arc_coerce_flonum(c, arg);
+  x = modf(x, &iptr);
+
+  return(cons(c, arc_mkflonum(c, iptr), cons(c, arc_mkflonum(c, x), CNIL)));
+}
+
+value __arc_nan(arc *c, int argc, value *argv)
+{
+  char *tagp;
+
+  if (argc > 1) {
+    arc_err_cstrfmt(c, "nan: too many arguments %d for 1", argc);
+    return(CNIL);
+  }
+  if (argc == 0)
+    return(arc_mkflonum(c, nan("")));
+  if (TYPE(argv[0]) != T_STRING) {
+    arc_err_cstrfmt(c, "nan expects string type, given object of type %d",
+		    TYPE(argv[0]));
+    return(CNIL);
+  }
+  tagp = alloca(sizeof(char)*(arc_strutflen(c, argv[0]) + 1));
+  arc_str2cstr(c, argv[0], tagp);
+  return(arc_mkflonum(c, nan(tagp)));
+}
+
+value __arc_nearbyint(arc *c, value arg)
+{
+  double x;
+
+  x = arc_coerce_flonum(c, arg);
+  x = nearbyint(x);
+  if (x < FIXNUM_MAX)
+    return(INT2FIX((long)x));
+  return(arc_mkflonum(c, x));
+}
+
+DEFFUNC(sin);
+DEFFUNC(sinh);
+DEFFUNC(tan);
+DEFFUNC(tanh);
+RDEFFUNC(tgamma);
