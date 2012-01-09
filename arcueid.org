@@ -563,3 +563,10 @@ notice and this notice are preserved.
      modified the virtual machine to reverse the order of all
      arguments in arc_apply. This is a really ugly kludge and should
      be cleaned up.
+** Complex Rationals
+   Apparently Arc has a complex rational numeric type:
+   e.g. (sqrt -1/4) => 0+1/2i.
+   At present Arcueid has no plans to support such creatures, and
+   (sqrt -1/4) will produce 0+0.5i instead.  I suppose this is an
+   artifact of numeric tower support in MzScheme/Racket, given the
+   paucity of functions to otherwise support complex numbers in Arc.
