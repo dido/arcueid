@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [12/19]
+** TODO Runtime Built-In Functions [13/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -283,7 +283,7 @@ notice and this notice are preserved.
      - [X] cons (implemented as a virtual machine instruction)
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
-   - [-] Math operations [3/4]
+   - [X] Math operations [4/4]
      - [X] Arithmetic [5/5]
        - [X] * Multiplication (virtual machine instruction)
        - [X] + Addition (virtual machine instruction)
@@ -305,46 +305,46 @@ notice and this notice are preserved.
        - [X] srand
        - [X] sqrt
        - [X] trunc
-     - [-] C99 math.h functions (Arcueid only) [2/37]
+     - [X] C99 math.h functions (Arcueid only) [37/37]
 	   These functions should support complex arguments in as far
 	   as it makes sense to do so.
-       - [X] abs -- works for all numeric types -- bound as mag
-       - [ ] acos
-       - [ ] acosh
-       - [ ] asin
-       - [ ] asinh
-       - [ ] atan
-       - [ ] atan2
-       - [ ] atanh
-       - [ ] cbrt
-       - [ ] ceil
-       - [ ] cos
-       - [ ] cosh
-       - [ ] erf
-       - [ ] erfc
-       - [ ] exp
-       - [ ] expm1
-       - [ ] fmod
-       - [ ] frexp
-       - [ ] hypot
-       - [ ] ldexp
-       - [ ] lgamma
-       - [ ] log
-       - [ ] log10
-       - [ ] log2
-       - [ ] logb
-       - [ ] modf
-       - [ ] nan
-       - [ ] nearbyint
+       - [X] abs -- works for all numeric types
+       - [X] acos
+       - [X] acosh
+       - [X] asin
+       - [X] asinh
+       - [X] atan
+       - [X] atan2
+       - [X] atanh
+       - [X] cbrt
+       - [X] ceil
+       - [X] cos
+       - [X] cosh
+       - [X] erf
+       - [X] erfc
+       - [X] exp
+       - [X] expm1
+       - [X] floor
+       - [X] fmod
+       - [X] frexp
+       - [X] hypot
+       - [X] ldexp
+       - [X] lgamma
+       - [X] log
+       - [X] log10
+       - [X] log2
+       - [X] logb
+       - [X] modf
+       - [X] nan
+       - [X] nearbyint
        - [X] pow (alias for expt)
-       - [ ] modf
-       - [ ] sin
-       - [ ] sinh
-       - [ ] sqrt (also in arc3)
-       - [ ] tan
-       - [ ] tanh
-       - [ ] tgamma
-       - [ ] trunc (also in arc3)
+       - [X] sin
+       - [X] sinh
+       - [X] sqrt (also in arc3)
+       - [X] tan
+       - [X] tanh
+       - [X] tgammao
+       - [X] trunc (also in arc3)
    - [X] Table operations [2/2]
      - [X] maptable
      - [X] table
