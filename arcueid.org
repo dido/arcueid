@@ -283,12 +283,21 @@ notice and this notice are preserved.
      - [X] cons (implemented as a virtual machine instruction)
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
-   - [-] Math operations [6/8]
-     - [X] * Multiplication (virtual machine instruction)
-     - [X] + Addition (virtual machine instruction)
-     - [X] - Subtraction (virtual machine instruction)
-     - [X] / Division (virtual machine instruction)
-     - [X] idiv integer division
+   - [-] Math operations [3/4]
+     - [X] Arithmetic [5/5]
+       - [X] * Multiplication (virtual machine instruction)
+       - [X] + Addition (virtual machine instruction)
+       - [X] - Subtraction (virtual machine instruction)
+       - [X] / Division (virtual machine instruction)
+       - [X] idiv integer division
+     - [X] Complex arithmetic [4/4]
+	   This is again an Arcueid extension.  It's rather annoying
+	   to have support for complex numbers but no functions to
+	   manipulate them.
+       - [X] real
+       - [X] imag
+       - [X] conj
+       - [X] arg -- complex argument
      - [X] Arc3-current functions [6/6]
        - [X] expt
        - [X] mod
@@ -296,18 +305,10 @@ notice and this notice are preserved.
        - [X] srand
        - [X] sqrt
        - [X] trunc
-     - [ ] Complex arithmetic [0/4]
-	   This is again an Arcueid extension.  It's rather annoying
-	   to have support for complex numbers but no functions to
-	   manipulate them.
-       - [ ] real
-       - [ ] imag
-       - [ ] conjugate
-       - [ ] arg -- complex argument
      - [-] C99 math.h functions (Arcueid only) [2/37]
 	   These functions should support complex arguments in as far
 	   as it makes sense to do so.
-       - [X] abs -- works for all numeric types
+       - [X] abs -- works for all numeric types -- bound as mag
        - [ ] acos
        - [ ] acosh
        - [ ] asin
