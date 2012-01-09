@@ -1309,8 +1309,8 @@ static value string2numindex(arc *c, value str, int index, int rational)
 	if (rational)
 	  return(CNIL);
 	denom = string2numindex(c, str, index, 1);
-	if (TYPE(denom) == T_FIXNUM || TYPE(denom) == T_FLONUM)
-	  return(__arc_div2(c, nval, denom));
+	if (TYPE(denom) == T_FIXNUM || TYPE(denom) == T_BIGNUM)
+	  return(__arc_div2(c, __arc_mul2(c, INT2FIX(sign), nval), denom));
 	else
 	  return(CNIL);
 	break;
@@ -1465,7 +1465,7 @@ value arc_expt(arc *c, value a, value b)
     arc_coerce_complex(c, b, &re, &im);
     bc = re + I*im;
     p = cpow(ac, bc);
-    if (cimag(p) < DBL_EPSILON)
+    if (fabs(cimag(p)) < DBL_EPSILON)
       return(arc_mkflonum(c, creal(p)));
     return(arc_mkcomplex(c, creal(p), cimag(p)));
 #ifdef HAVE_GMP_H
@@ -1731,6 +1731,7 @@ value arc_trunc(arc *c, value v)
     if (result == CNIL) {
 #ifdef HAVE_GMP_H
       result = arc_mkbignuml(c, 0);
+
       arc_coerce_bignum(c, v, &REP(result)._bignum);
 #else
       arc_err_cstrfmt(c, "flonum->fixnum conversion overflow (this version of Arcueid does not have bignum support)");
@@ -1739,8 +1740,13 @@ value arc_trunc(arc *c, value v)
     break;
 #ifdef HAVE_GMP_H
   case T_RATIONAL:
-    result = arc_mkbignuml(c, 0);
-    arc_coerce_bignum(c, v, &REP(result)._bignum);
+    {
+      value v2;
+
+      result = arc_mkbignuml(c, 0);
+      arc_coerce_bignum(c, v, &REP(result)._bignum);
+      result = NIL_P(v2 = arc_coerce_fixnum(c, result)) ? result : v2;
+    }
     break;
 #endif
   case T_COMPLEX:
@@ -1751,4 +1757,98 @@ value arc_trunc(arc *c, value v)
     break;
   }
   return(result);
+}
+
+static value flosqrt(arc *c, value v)
+{
+  complex s;
+  double d;
+  long int i;
+
+  s = arc_coerce_flonum(c, v);
+  s = csqrt(s);
+  if (fabs(cimag(s)) > DBL_EPSILON)
+    return(arc_mkcomplex(c, creal(s), cimag(s)));
+  /* close enough to real number */
+  d = creal(s);
+  if (d < FIXNUM_MAX) {
+    i = lrint(d);
+    /* see if it's close enough to int */
+    if (fabs(d - (double)i) < DBL_EPSILON)
+      return(INT2FIX(i));
+    /* no, return the double */
+  }
+  return(arc_mkflonum(c, d));
+}
+
+value arc_sqrt(arc *c, value v)
+{
+  complex s;
+  double d;
+  int i;
+
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+    return(flosqrt(c, v));
+    break;
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    {
+      value v2, fn;
+
+      /* fall back to floating point square root if inexact or negative */
+      if (mpz_cmp_si(REP(v)._bignum, 0) <= 0
+	  || !mpz_perfect_square_p(REP(v)._bignum))
+	return(flosqrt(c, v));
+      v2 = arc_mkbignuml(c, 0);
+      mpz_sqrt(REP(v2)._bignum, REP(v)._bignum);
+      if ((fn = arc_coerce_fixnum(c, v2)) == CNIL)
+	return(v2);
+      return(fn);
+    }
+    break;
+#endif
+  case T_FLONUM:
+    return(flosqrt(c, v));
+    break;
+#ifdef HAVE_GMP_H
+  case T_RATIONAL:
+    /* check for inexact case */
+    if ((mpq_sgn(REP(v)._rational) <= 0)
+	|| !mpz_perfect_square_p(mpq_numref(REP(v)._rational))
+	|| !mpz_perfect_square_p(mpq_denref(REP(v)._rational))) {
+      return(flosqrt(c, v));
+    }
+    /* exact case */
+    {
+      value v2;
+
+      v2 = arc_mkrationall(c, 0, 1);
+      mpz_sqrt(mpq_numref(REP(v2)._rational), mpq_numref(REP(v)._rational));
+      mpz_sqrt(mpq_denref(REP(v2)._rational), mpq_denref(REP(v)._rational));
+      mpq_canonicalize(REP(v2)._rational);
+      return(integer_coerce(c, v2));
+    }
+    break;
+#endif
+  case T_COMPLEX:
+    s = csqrt(REP(v)._complex.re + I*REP(v)._complex.im);
+    if (fabs(cimag(s)) < DBL_EPSILON) {
+      d = creal(s);
+      if (d < FIXNUM_MAX) {
+	i = lrint(d);
+	/* see if it's close enough to int */
+	if (fabs(d - (double)i) < DBL_EPSILON)
+	  return(INT2FIX(i));
+      }
+      /* no, return the double */
+      return(arc_mkflonum(c, d));
+    }
+    /* complex case */
+    return(arc_mkcomplex(c, creal(s), cimag(s)));
+  default:
+    arc_err_cstrfmt(c, "sqrt expects numeric type, given object of type %d",
+		    TYPE(v));
+  }
+  return(CNIL);
 }
