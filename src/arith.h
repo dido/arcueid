@@ -39,4 +39,9 @@ extern value __arc_sub(arc *c, int argc, value *argv);
 extern value __arc_mul(arc *c, int argc, value *argv);
 extern value __arc_div(arc *c, int argc, value *argv);
 
+extern value __arc_real(arc *c, value v);
+extern value __arc_imag(arc *c, value v);
+extern value __arc_conj(arc *c, value v);
+extern value __arc_arg(arc *c, value v);
+
 #endif
