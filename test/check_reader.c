@@ -42,6 +42,10 @@ START_TEST(test_atom)
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(arc_is(&c, str, arc_sym2name(&c, sexpr)) == CTRUE);
 
+  str = arc_mkstringc(&c, "0+1i");
+  fp = arc_instring(&c, str);
+  sexpr = arc_read(&c, fp);
+  fail_unless(TYPE(sexpr) == T_COMPLEX);
 }
 END_TEST
 
