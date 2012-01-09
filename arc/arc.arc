@@ -1130,8 +1130,9 @@
          (pair args))
     x2))
 
-(def abs (n)
-  (if (< n 0) (- n) n))
+;; definition in C works also for complex numbers
+; (def abs (n)
+;  (if (< n 0) (- n) n))
 
 ; The problem with returning a list instead of multiple values is that
 ; you can't act as if the fn didn't return multiple vals in cases where
