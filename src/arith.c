@@ -1761,7 +1761,7 @@ value arc_trunc(arc *c, value v)
 
 static value flosqrt(arc *c, value v)
 {
-  complex s;
+  double complex s;
   double d;
   long int i;
 
@@ -1783,7 +1783,7 @@ static value flosqrt(arc *c, value v)
 
 value arc_sqrt(arc *c, value v)
 {
-  complex s;
+  double complex s;
   double d;
   int i;
 
@@ -1848,6 +1848,77 @@ value arc_sqrt(arc *c, value v)
     return(arc_mkcomplex(c, creal(s), cimag(s)));
   default:
     arc_err_cstrfmt(c, "sqrt expects numeric type, given object of type %d",
+		    TYPE(v));
+  }
+  return(CNIL);
+}
+
+value __arc_real(arc *c, value v)
+{
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_FLONUM:
+    return(v);
+  case T_COMPLEX:
+    return(arc_mkflonum(c, REP(v)._complex.re));
+  default:
+    arc_err_cstrfmt(c, "real expects numeric type, given object of type %d",
+		    TYPE(v));
+  }
+  return(CNIL);
+}
+
+value __arc_imag(arc *c, value v)
+{
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_FLONUM:
+    return(INT2FIX(0));
+  case T_COMPLEX:
+    return(arc_mkflonum(c, REP(v)._complex.im));
+  default:
+    arc_err_cstrfmt(c, "imag expects numeric type, given object of type %d",
+		    TYPE(v));
+  }
+  return(CNIL);
+}
+
+value __arc_conj(arc *c, value v)
+{
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_FLONUM:
+    return(v);
+  case T_COMPLEX:
+    return(arc_mkcomplex(c, REP(v)._complex.re, -REP(v)._complex.im));
+  default:
+    arc_err_cstrfmt(c, "conj expects numeric type, given object of type %d",
+		    TYPE(v));
+  }
+  return(CNIL);
+}
+
+value __arc_arg(arc *c, value v)
+{
+  double complex num;
+
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_FLONUM:
+    return(INT2FIX(0));
+  case T_COMPLEX:
+    num = (REP(v)._complex.re) + I*(REP(v)._complex.im);
+    return(arc_mkflonum(c, carg(num)));
+  default:
+    arc_err_cstrfmt(c, "arg expects numeric type, given object of type %d",
 		    TYPE(v));
   }
   return(CNIL);
