@@ -1276,6 +1276,14 @@ static value string2numindex(arc *c, value str, int index, int rational)
       case '.':
 	return(str2flonum(c, str, 0, 0));
 	break;
+      case '+':
+	/* complex */
+	return(str2flonum(c, str, 0, 0));
+	break;
+      case '-':
+	/* complex */
+	return(str2flonum(c, str, 0, 0));
+	break;
       default:
 	if (!isdigit(ch))
 	  return(CNIL);
@@ -1923,3 +1931,29 @@ value __arc_arg(arc *c, value v)
   }
   return(CNIL);
 }
+
+#define DEFFUNC(fname)							\
+  value __arc_##fname(arc *c, value v)					\
+  {									\
+  double complex z;							\
+  double x;								\
+  switch (TYPE(v)) {							\
+  case T_FIXNUM:							\
+  case T_BIGNUM:							\
+  case T_RATIONAL:							\
+  case T_FLONUM:							\
+    x = arc_coerce_flonum(c, v);					\
+    return(arc_mkflonum(c, fname(x)));					\
+  case T_COMPLEX:							\
+    z = (REP(v)._complex.re) + I*(REP(v)._complex.im);			\
+    z = c##fname(z);							\
+    return(arc_mkcomplex(c, creal(z), cimag(z)));			\
+    break;								\
+  default:								\
+    arc_err_cstrfmt(c, #fname "expects numeric type, given object of type %d", \
+		    TYPE(v));						\
+  }									\
+  return(CNIL);								\
+}
+
+DEFFUNC(exp);
