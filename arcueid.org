@@ -296,14 +296,12 @@ notice and this notice are preserved.
        - [X] srand
        - [X] sqrt
        - [X] trunc
-     - [ ] Complex arithmetic [0/6]
+     - [ ] Complex arithmetic [0/4]
 	   This is again an Arcueid extension.  It's rather annoying
 	   to have support for complex numbers but no functions to
 	   manipulate them.
        - [ ] real
        - [ ] imag
-       - [ ] sreal
-       - [ ] simag
        - [ ] conjugate
        - [ ] arg -- complex argument
      - [-] C99 math.h functions (Arcueid only) [2/37]
