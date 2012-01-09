@@ -493,6 +493,7 @@ static struct {
   { "srand", 1, arc_srand },
   { "rand", -1, arc_rand },
   { "trunc", 1, arc_trunc },
+  { "sqrt", 1, arc_sqrt },
 
   { "maptable", -3, arc_hash_map },
   { "table", 0, arc_table },
