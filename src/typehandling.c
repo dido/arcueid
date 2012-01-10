@@ -49,16 +49,19 @@ static value numeric_base(arc *c, value argv, const char *caller)
 {
   value base = INT2FIX(10);
 
+  if (argv == CNIL)
+    return(base);
+
   /* Arcueid extension, bases from 2 to 36 are supported */
   if (VECLEN(argv) >= 3) {
     base = VINDEX(argv, 2);
     if (TYPE(base) != T_FIXNUM) {
-      arc_err_cstrfmt(c, "%s, invalid base specifier %O", caller, base);
+      arc_err_cstrfmt(c, "%s, invalid base specifier", caller);
       return(CNIL);
     }
 
     if (FIX2INT(base) < 2 || FIX2INT(base) > 36) {
-      arc_err_cstrfmt(c, "%s, out of range base %O", caller, base);
+      arc_err_cstrfmt(c, "%s, out of range base", caller);
       return(CNIL);
     }
   }
@@ -591,13 +594,15 @@ static value coerce_complex(arc *c, value obj, value argv)
   return(CNIL);
 }
 
-static value coerce_string(arc *c, value obj, value argv)
+value coerce_string(arc *c, value obj, value argv)
 {
   value val, base;
 
   switch (TYPE(obj)) {
   case T_NIL:
     return(arc_mkstringc(c, ""));
+  case T_TRUE:
+    return(arc_mkstringc(c, "t"));
   case T_STRING:
     return(obj);
   case T_CHAR:
