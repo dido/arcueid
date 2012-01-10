@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -14,9 +14,7 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #include <stdlib.h>
 #include <assert.h>
@@ -27,6 +25,22 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "../config.h"
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
@@ -149,4 +163,15 @@ value arc_current_process_milliseconds(arc *c)
   getrusage(RUSAGE_SELF, &usage);
   return(arc_mkflonum(c, 1000.0*((double)usage.ru_utime.tv_sec
 				 + ((double)(usage.ru_utime.tv_usec))/1e6)));
+}
+
+value arc_system(arc *c, value cmd)
+{
+  int len;
+  char *cmdstr;
+
+  len = FIX2INT(arc_strutflen(c, cmd));
+  cmdstr = (char *)alloca(sizeof(char)*len+1);
+  arc_str2cstr(c, cmd, cmdstr);
+  return((system(cmdstr) == 0) ? CTRUE : CNIL);
 }
