@@ -979,7 +979,7 @@ int arc_return(arc *c, value thr)
 value arc_mkcontfull(arc *c, value offset, value funr, value envr,
 		     value savedstk, value conr, value econt)
 {
-  value cont = arc_mkvector(c, 8);
+  value cont = arc_mkvector(c, 9);
 
   CONT_OFS(cont) = offset;
   CONT_FUN(cont) = funr;
@@ -989,12 +989,13 @@ value arc_mkcontfull(arc *c, value offset, value funr, value envr,
   CONT_ECR(cont) = econt;
   CONT_PRT(cont) = CNIL;	/* protect function */
   CONT_PRV(cont) = CNIL;	/* during protect function return */
+  CONT_FPS(cont) = CNIL;
   return(cont);
 }
 
 value arc_mkcont(arc *c, value offset, value thr)
 {
-  value cont = arc_mkvector(c, 8);
+  value cont = arc_mkvector(c, 9);
   value savedstk;
   int stklen, i;
   value *base = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
@@ -1021,6 +1022,7 @@ value arc_mkcont(arc *c, value offset, value thr)
   WB(&CONT_ECR(cont), TECONT(thr));
   WB(&CONT_PRT(cont), CNIL);	/* protect function */
   WB(&CONT_PRV(cont), CNIL);	/* during protect function return */
+  WB(&CONT_FPS(cont), CNIL);
   return(cont);
 }
 
