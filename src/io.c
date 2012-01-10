@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -81,7 +81,7 @@ static value file_pp(arc *c, value v)
 {
   value nstr = arc_mkstringc(c, "#<port:");
 
-  nstr = arc_strcat(c, nstr, PORTF(v).name);
+  nstr = arc_strcat(c, nstr, PORT(v)->name);
   nstr = arc_strcat(c, nstr, arc_mkstringc(c, ">"));
   return(nstr);
 }
@@ -157,7 +157,7 @@ value arc_filefp(arc *c, FILE *fp, value filename)
   REP(fd)._custom.sweeper = file_sweeper;
   PORT(fd)->type = FT_FILE;
   /* XXX make this file name a fully qualified pathname */
-  PORTF(fd).name = filename;
+  PORT(fd)->name = filename;
   PORTF(fd).fp = fp;
   PORTF(fd).open = 1;
   PORT(fd)->getb = file_getb;
@@ -186,6 +186,9 @@ static value openfile(arc *c, value filename, const char *mode)
   return(arc_filefp(c, fp, filename));
 }
 
+/* XXX - If somebody wants to someday make Arcueid support Windows they
+   should do something about the text/binary distinction that files on
+   that platform have. */
 value arc_infile(arc *c, value filename)
 {
   return(openfile(c, filename, "r"));
@@ -277,7 +280,7 @@ static int fstr_close(arc *c, struct arc_port *p)
   return(0);
 }
 
-value arc_instring(arc *c, value str)
+value arc_instring(arc *c, value str, value name)
 {
   void *cellptr;
   value fd;
@@ -293,6 +296,7 @@ value arc_instring(arc *c, value str)
   PORT(fd)->type = FT_STRING;
   PORTS(fd).idx = 0;
   PORTS(fd).str = str;
+  PORT(fd)->name = name;
   PORT(fd)->getb = fstr_getb;
   PORT(fd)->putb = fstr_putb;
   PORT(fd)->seek = fstr_seek;
@@ -303,10 +307,14 @@ value arc_instring(arc *c, value str)
   return(fd);
 }
 
-value arc_outstring(arc *c)
+SDEF2(instring, CNIL);
+
+value arc_outstring(arc *c, value name)
 {
-  return(arc_instring(c, arc_mkstringc(c, "")));
+  return(arc_instring(c, arc_mkstringc(c, ""), name));
 }
+
+SDEF(outstring, CNIL);
 
 value arc_fstr_inside(arc *c, value fstr)
 {
