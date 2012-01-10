@@ -490,7 +490,7 @@ value arc_swrite(arc *c, value sexpr, value port)
   value ret=CNIL;
 
   prettyprint(c, sexpr, &ret);
-  arc_writestr(ret, port);
+  arc_writestr(c, ret, port);
   return(sexpr);
 }
 
