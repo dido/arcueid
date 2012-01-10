@@ -442,21 +442,6 @@ value arc_trace(arc *c)
 
 #endif
 
-value arc_stdin(arc *c)
-{
-  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
-}
-
-value arc_stdout(arc *c)
-{
-  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
-}
-
-value arc_stderr(arc *c)
-{
-  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
-}
-
 static struct {
   char *fname;
   int argc;
@@ -546,10 +531,16 @@ static struct {
   { "macex1", 1, arc_macex1 },
   { "uniq", 0, arc_uniq },
 
+  { "sread", 2, arc_read },
+  { "readb", -1, arc_sreadb },
+  { "readc", -1, arc_sreadc },
+  { "ungetc", -1, arc_sungetc },
+  { "peekc", -1, arc_speekc },
+  { "writeb", -1, arc_swriteb },
+  { "writec", -1, arc_swritec },
   { "stdin", 0, arc_stdin },
   { "stdout", 0, arc_stdout },
   { "stderr", 0, arc_stderr },
-  { "sread", 2, arc_read },
 
   { "disp", -1, arc_disp },
 
