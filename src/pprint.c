@@ -337,16 +337,150 @@ void arc_print_string(arc *c, value str)
   }
 }
 
-value arc_disp(arc *c, int argc, value *argv)
+value arc_writestr(arc *c, value str, value port)
 {
   int i;
-  value port, pp, val;
+  Rune r;
+
+  for (i=0; i<arc_strlen(c, str); i++) {
+    r = arc_strindex(c, str, i);
+    arc_writec_rune(c, r, port);
+  }
+  return(str);
+}
+
+void arc_writecstr(arc *c, const char *str, value port)
+{
+  int i;
+
+  for (i=0; i<strlen(str); i++)
+    arc_writeb(c, str[i], port);
+}
+
+extern value coerce_string(arc *c, value obj, value argv);
+
+value arc_sdisp(arc *c, value sexpr, value port)
+{
+  value str;
+
+  switch (TYPE(sexpr)) {
+  case T_NIL:
+    arc_writecstr(c, "nil", port);
+    break;
+  case T_TRUE:
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_COMPLEX:
+  case T_STRING:
+  case T_SYMBOL:
+    str = coerce_string(c, sexpr, CNIL);
+    arc_writestr(c, str, port);
+    break;
+  case T_CHAR:
+    arc_writec(c, sexpr, port);
+    break;
+  case T_CONS:
+    {
+      arc_writec_rune(c, '(', port);
+      while (CONS_P(sexpr)) {
+	arc_sdisp(c, car(sexpr), port);
+	sexpr = cdr(sexpr);
+	if (TYPE(sexpr) != CNIL)
+	  arc_writec_rune(c, ' ', port);
+      }
+
+      if (sexpr != CNIL) {
+	arc_writec_rune(c, '.', port);
+	arc_writec_rune(c, ' ', port);
+	arc_sdisp(c, sexpr, port);
+      }
+      arc_writec_rune(c, ')', port);
+    }
+  case T_TABLE:
+    {
+      value val;
+      int ctx = 0;
+
+      arc_writecstr(c, "#hash(", port);
+      while ((val = arc_hash_iter(c, sexpr, &ctx)) != CUNBOUND) {
+	arc_sdisp(c, val, port);
+	arc_writec_rune(c, ' ', port);
+      }
+      arc_writec_rune(c, ')', port);
+    }
+  case T_TAGGED:
+    {
+      arc_writecstr(c, "#(tagged ", port);
+      arc_sdisp(c, arc_type(c, sexpr), port);
+      arc_writec_rune(c, ' ', port);
+      arc_sdisp(c, arc_rep(c, sexpr), port);
+      arc_writec_rune(c, ')', port);
+    }
+    break;
+  case T_TBUCKET:
+    {
+      arc_writec_rune(c, '(', port);
+      arc_sdisp(c, REP(sexpr)._hashbucket.key, port);
+      arc_writecstr(c, " . ", port);
+      arc_sdisp(c, REP(sexpr)._hashbucket.val, port);
+      arc_writec_rune(c, ')', port);
+    }
+    break;
+  case T_CODE:
+    arc_writecstr(c, "#<procedure: ", port);
+    if (NIL_P(CODE_NAME(sexpr)))
+      arc_writecstr(c, "(anonymous)", port);
+    else
+      arc_sdisp(c, CODE_NAME(sexpr), port);
+    arc_writecstr(c, ">", port);    
+    break;
+  case T_CONT:
+    {
+      int i;
+      arc_writecstr(c, "#<continuation: ", port);
+      for (i=0; i<VECLEN(sexpr); i++) {
+	arc_sdisp(c, VINDEX(sexpr, i), port);
+	arc_writecstr(c, " ", port);
+      }
+      arc_writec_rune(c, '>', port);
+    }
+    break;
+  case T_XCONT:
+    arc_writecstr(c, "#<xcont>", port);
+    break;
+  case T_CLOS:
+    arc_sdisp(c, car(sexpr), port);
+    break;
+  case T_CCODE:
+    arc_writecstr(c, "#<cprocedure: ", port);
+    arc_sdisp(c, REP(sexpr)._cfunc.name, port);
+    arc_writec_rune(c, '>', port);
+    break;
+  case T_EXCEPTION:
+    arc_writecstr(c, "#<exception:", port);
+    arc_sdisp(c, VINDEX(sexpr, 0), port);
+    arc_writecstr(c, ":from:", port);
+    arc_sdisp(c, VINDEX(sexpr, 1), port);
+    arc_writec_rune(c, '>', port);
+    break;
+  case T_PORT:
+  case T_CUSTOM:
+    {
+      value nstr = REP(sexpr)._custom.pprint(c, sexpr);
+      arc_writestr(c, nstr, port);
+    }
+    break;
+  }
+  return(sexpr);
+}
+
+value arc_disp(arc *c, int argc, value *argv)
+{
+  value port, val;
 
   val = (argc == 0) ? CNIL : argv[0];
-  port = (argc > 2) ? argv[1] : arc_hash_lookup(c, c->genv,
-						ARC_BUILTIN(c, S_STDOUT_FD));
-  pp = arc_prettyprint(c, val);
-  for (i=0; i<arc_strlen(c, pp); i++)
-    arc_writec_rune(c, arc_strindex(c, pp, i), port);
-  return(val);
+  port = (argc > 2) ? argv[1] : arc_stdout(c);
+
+  return(arc_sdisp(c, val, port));
 }
