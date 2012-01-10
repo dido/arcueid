@@ -583,6 +583,7 @@ static struct {
   { "protect", -3, arc_protect },
 
   { "system", 1, arc_system },
+  { "quit", -1, arc_quit },
 
   { NULL, 0, NULL }
 };
