@@ -354,7 +354,7 @@ void arc_writecstr(arc *c, const char *str, value port)
   int i;
 
   for (i=0; i<strlen(str); i++)
-    arc_writeb(c, str[i], port);
+    arc_writec_rune(c, (Rune)str[i], port);
 }
 
 extern value coerce_string(arc *c, value obj, value argv);
@@ -397,6 +397,7 @@ value arc_sdisp(arc *c, value sexpr, value port)
       }
       arc_writec_rune(c, ')', port);
     }
+    break;
   case T_TABLE:
     {
       value val;
