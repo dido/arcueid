@@ -549,7 +549,7 @@ static struct {
   { "stdin", 0, arc_stdin },
   { "stdout", 0, arc_stdout },
   { "stderr", 0, arc_stderr },
-  { "sread", -1, arc_read2 },
+  { "sread", 2, arc_read },
 
   { "disp", -1, arc_disp },
 
