@@ -40,7 +40,7 @@ static void error_handler(struct arc *c, value exc)
   value str, sexpr, fp, cctx, code;			\
   str = arc_mkstringc(c, testexpr);			\
   fp = arc_instring(c, str);				\
-  sexpr = arc_read(c, fp);				\
+  sexpr = arc_read(c, fp, CNIL);			\
   cctx = arc_mkcctx(c, INT2FIX(1), 0);			\
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);		\
   code = arc_cctx2code(c, cctx);			\
@@ -1851,7 +1851,7 @@ int main(void)
   c->signal_error = error_handler;
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
-  while ((sexpr = arc_read(c, initload)) != CNIL) {
+  while ((sexpr = arc_read(c, initload, CNIL)) != CNIL) {
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
