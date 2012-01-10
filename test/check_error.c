@@ -36,7 +36,7 @@ value current_exception;
 #define TEST(testexpr) {				\
   value str, sexpr, fp, cctx, code;			\
   str = arc_mkstringc(c, testexpr);			\
-  fp = arc_instring(c, str);				\
+  fp = arc_instring(c, str, CNIL);			\
   sexpr = arc_read(c, fp, CNIL);			\
   cctx = arc_mkcctx(c, INT2FIX(1), 0);			\
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);		\
