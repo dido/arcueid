@@ -26,13 +26,13 @@ enum file_types {
 
 struct arc_port {
   int type;			/* type of file */
+  value name;			/* name of file */
   union {
     struct {
       value str;
       int idx;
     } strfile;
     struct {
-      value name;
       FILE *fp;
       int open;
     } file;
