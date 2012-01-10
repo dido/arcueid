@@ -32,19 +32,19 @@ START_TEST(test_atom)
 
   str = arc_mkstringc(&c, "0");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_FIXNUM);
   fail_unless(FIX2INT(sexpr) == 0);
 
   str = arc_mkstringc(&c, "foo");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(arc_is(&c, str, arc_sym2name(&c, sexpr)) == CTRUE);
 
   str = arc_mkstringc(&c, "0+1i");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_COMPLEX);
 }
 END_TEST
@@ -58,7 +58,7 @@ START_TEST(test_string)
   /* basic */
   str = arc_mkstringc(&c, "\"foo\"");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_STRING);
   fail_unless(arc_is(&c, arc_mkstringc(&c, "foo"), sexpr) == CTRUE);
 
@@ -66,7 +66,7 @@ START_TEST(test_string)
   teststr = "\b\t\n\v\f\r\\\'\"\a";
   str = arc_mkstringc(&c, "\"\\b\\t\\n\\v\\f\\r\\\\\'\\\"\\a\"");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_STRING);
   for (i=0; i<arc_strlen(&c, sexpr); i++)
     fail_unless((Rune)teststr[i] == arc_strindex(&c, sexpr, i));
@@ -74,7 +74,7 @@ START_TEST(test_string)
   /* Unicode */
   str = arc_mkstringc(&c, "\"\\U086dF\351\276\215\"");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_STRING);
   fail_unless(arc_strindex(&c, sexpr, 0) == 0x86df);
   fail_unless(arc_strindex(&c, sexpr, 1) == 0x9f8d);
@@ -83,7 +83,7 @@ START_TEST(test_string)
   teststr = "\"Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\"";
   str = arc_mkstringc(&c, teststr);
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_STRING);
   for (i=0; i<arc_strlen(&c, sexpr); i++)
     fail_unless((Rune)teststr[i+1] == arc_strindex(&c, sexpr, i));
@@ -96,13 +96,13 @@ START_TEST(test_list)
 
   str = arc_mkstringc(&c, "()");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_NIL);
   fail_unless(sexpr == CNIL);
 
   str = arc_mkstringc(&c, "(foo 1 2 3)");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(arc_is(&c, arc_mkstringc(&c, "foo"),
@@ -116,7 +116,7 @@ START_TEST(test_list)
 
   str = arc_mkstringc(&c, "(foo (bar 4) 5)");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(arc_is(&c, arc_mkstringc(&c, "foo"),
@@ -132,7 +132,7 @@ START_TEST(test_list)
 
   str = arc_mkstringc(&c, "(1 2 . 3)");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == INT2FIX(1));
   fail_unless(car(cdr(sexpr)) == INT2FIX(2));
@@ -146,74 +146,74 @@ START_TEST(test_character)
 
   str = arc_mkstringc(&c, "#\\a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'a');
 
   /* Issue #15 */
   str = arc_mkstringc(&c, "#\\;");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == ';');
 
   str = arc_mkstringc(&c, "#\\\351\276\215");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x9f8d);
 
   str = arc_mkstringc(&c, "#\\102");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'B');
 
   str = arc_mkstringc(&c, "#\\102");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'B');
 
   str = arc_mkstringc(&c, "#\\newline");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == '\n');
 
   str = arc_mkstringc(&c, "#\\null");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == '\0');
 
   str = arc_mkstringc(&c, "#\\u5a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x5a);
 
   str = arc_mkstringc(&c, "#\\x5a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x5a);
 
   str = arc_mkstringc(&c, "#\\u4e9c");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x4e9c);
 
   str = arc_mkstringc(&c, "#\\U12031");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x12031);
 
   str = arc_mkstringc(&c, "#\\\346\227\245");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 0x65e5);
 
@@ -227,7 +227,7 @@ START_TEST(test_bracketfn)
   /* This bracket function should become (fn (_) (+ 1 _)) */
   str = arc_mkstringc(&c, "[+ 1 _]");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_FN));
@@ -251,7 +251,7 @@ START_TEST(test_quote)
 
   str = arc_mkstringc(&c, "'(+ 1 2)");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_QUOTE));
   qexpr = car(cdr(sexpr));
@@ -265,7 +265,7 @@ START_TEST(test_quote)
 
   str = arc_mkstringc(&c, "`(* 3 4)");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_QQUOTE));
@@ -286,25 +286,25 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "~");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(sexpr == ARC_BUILTIN(cc, S_NO));
 
   str = arc_mkstringc(&c, "a:");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
 
   str = arc_mkstringc(&c, ":a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
 
   str = arc_mkstringc(&c, "a:b");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
@@ -314,7 +314,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "a:b:c");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
@@ -326,7 +326,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "~a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPLEMENT));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
@@ -334,7 +334,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "a:~b:c");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
@@ -348,7 +348,7 @@ START_TEST(test_ssyntax)
 
   sexpr = arc_ssexpand(&c, arc_intern(&c, arc_mkstringc(&c, "a:~b:c")));
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_COMPOSE));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
@@ -362,19 +362,19 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "a&");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
 
   str = arc_mkstringc(&c, "&a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_SYMBOL);
   fail_unless(sexpr == arc_intern(&c, arc_mkstringc(&c, "a")));
 
   str = arc_mkstringc(&c, "a&b");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_ANDF));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
@@ -384,7 +384,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "a&b&c");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_ANDF));
   fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
@@ -396,7 +396,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "a.b");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == arc_intern(&c, arc_mkstringc(&c, "a")));
@@ -404,7 +404,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "a.b.c");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_CONS);
   fail_unless(car(car(sexpr)) == arc_intern(&c, arc_mkstringc(&c, "a")));
@@ -413,7 +413,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, ".a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_GET));
@@ -421,7 +421,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "a!b");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == arc_intern(&c, arc_mkstringc(&c, "a")));
@@ -430,7 +430,7 @@ START_TEST(test_ssyntax)
 
   str = arc_mkstringc(&c, "!a");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_GET));
@@ -446,7 +446,7 @@ START_TEST(test_comment)
   /* inline comments */
   str = arc_mkstringc(&c, "(123 ; Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n456)");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_FIXNUM);
   fail_unless(INT2FIX(123) == car(sexpr));
@@ -458,7 +458,7 @@ START_TEST(test_comment)
   /* long comments */
   str = arc_mkstringc(&c, "; Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n; do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n; Ut enim ad minim veniam, quis nostrud exercitation ullamco\n; laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure\n; dolor in reprehenderit in voluptate velit esse cillum dolore eu\n; fugiat nulla pariatur. Excepteur sint occaecat cupidatat non\n; proident, sunt in culpa qui officia deserunt mollit anim id\n; est laborum.\n(789 897)");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_FIXNUM);
   fail_unless(INT2FIX(789) == car(sexpr));
@@ -475,7 +475,7 @@ START_TEST(test_comma)
 
   str = arc_mkstringc(&c, ",1");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_UNQUOTE));
@@ -483,7 +483,7 @@ START_TEST(test_comma)
 
   str = arc_mkstringc(&c, ",@2");
   fp = arc_instring(&c, str);
-  sexpr = arc_read(&c, fp);
+  sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_UNQUOTESP));
