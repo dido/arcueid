@@ -38,6 +38,7 @@ struct arc_port {
     } file;
     int sock;
   } u;
+  int closed;
   int (*getb)(arc *, struct arc_port *);
   int (*putb)(arc *, struct arc_port *, int);
   int (*seek)(arc *, struct arc_port *, int64_t, int);
