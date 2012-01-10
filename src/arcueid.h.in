@@ -529,6 +529,7 @@ extern value arc_sinstring(arc *c, int argc, value *argv);
 extern value arc_outstring(arc *c, value name);
 extern value arc_soutstring(arc *c, int argc, value *argv);
 extern value arc_fstr_inside(arc *c, value fstr);
+extern value arc_pipe_from(arc *c, value cmd);
 
 extern value arc_readb(arc *c, value fd);
 extern value arc_sreadb(arc *c, int argc, value *argv);
