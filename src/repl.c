@@ -201,7 +201,7 @@ int main(int argc, char **argv)
   readfp = arc_readlineport(c);
   arc_bindsym(c, arc_intern_cstr(c, "repl-readline"), readfp);
 #else
-  readfp = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD));
+  readfp = arc_stdin(c);
 #endif
   for (;;) {
 #ifndef HAVE_LIBREADLINE
