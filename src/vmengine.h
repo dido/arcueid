@@ -98,6 +98,7 @@ extern int arc_disasm_inst(arc *c, int index, value *codeptr, value code);
    5. Error continuation register
    6. Protect continuation
    7. Saved return value for protect
+   8. STDIN/STDOUT/STDERR for the continuation (used by call-w/stdin etc.)
  */
 #define CONT_OFS(cont) (VINDEX(cont, 0))
 #define CONT_FUN(cont) (VINDEX(cont, 1))
@@ -107,5 +108,6 @@ extern int arc_disasm_inst(arc *c, int index, value *codeptr, value code);
 #define CONT_ECR(cont) (VINDEX(cont, 5))
 #define CONT_PRT(cont) (VINDEX(cont, 6))
 #define CONT_PRV(cont) (VINDEX(cont, 7))
+#define CONT_FPS(cont) (VINDEX(cont, 8))
 
 #endif
