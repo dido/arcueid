@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [13/19]
+** TODO Runtime Built-In Functions [14/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -463,9 +463,9 @@ notice and this notice are preserved.
      - [ ] rxcompile
      - [ ] rxescape
      - [ ] rxmatch (=~)
-   - [ ] Miscellaneous OS operations [0/2]
-     - [ ] system
-     - [ ] quit
+   - [X] Miscellaneous OS operations [2/2]
+     - [X] system
+     - [X] quit
    - [X] Miscellaneous [3/3]
      - [X] sref *
      - [X] len
