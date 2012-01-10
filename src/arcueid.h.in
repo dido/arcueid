@@ -463,8 +463,7 @@ extern value arc_mkvector(arc *c, int length);
 extern value arc_growvector(arc *c, value vect, int newlength);
 
 /* I/O */
-extern value arc_read(arc *c, value src);
-extern value arc_read2(arc *c, int argc, value *argv);
+extern value arc_read(arc *c, value src, value eof);
 extern value arc_ssyntax(arc *c, value x);
 extern value arc_ssexpand(arc *c, value sym);
 
