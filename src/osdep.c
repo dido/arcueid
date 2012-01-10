@@ -175,3 +175,17 @@ value arc_system(arc *c, value cmd)
   arc_str2cstr(c, cmd, cmdstr);
   return((system(cmdstr) == 0) ? CTRUE : CNIL);
 }
+
+value arc_quit(arc *c, int argc, value *argv)
+{
+  int exitcode = 0;
+
+  if (argc == 1)
+    exitcode = FIX2INT(argv[0]);
+  else if (argc > 1) {
+    arc_err_cstrfmt(c, "quit: too many arguments (%d for 1)", argc);
+    return(CNIL);
+  }
+  exit(exitcode);
+  return(CNIL);
+}
