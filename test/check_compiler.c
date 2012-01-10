@@ -33,7 +33,7 @@ START_TEST(test_compile_nil)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "()");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -42,7 +42,7 @@ START_TEST(test_compile_nil)
   fail_unless(ret == CNIL);
 
   str = arc_mkstringc(c, "nil");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -57,7 +57,7 @@ START_TEST(test_compile_t)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "t");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -72,7 +72,7 @@ START_TEST(test_compile_fixnum)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "123");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -87,7 +87,7 @@ START_TEST(test_compile_string)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "\"foo\"");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -103,7 +103,7 @@ START_TEST(test_compile_char)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "#\\a");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -121,7 +121,7 @@ START_TEST(test_compile_bignum)
   mpz_t expected;
 
   str = arc_mkstringc(c, "300000000000000000000000000000");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -140,7 +140,7 @@ START_TEST(test_compile_rational)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "1/2");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -158,7 +158,7 @@ START_TEST(test_compile_flonum)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "3.14159");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -174,7 +174,7 @@ START_TEST(test_compile_complex)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "1.1+2.2i");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -193,7 +193,7 @@ START_TEST(test_compile_ident)
   /* Make a global symbol binding for foo*/
   arc_bindcstr(c, "foo", INT2FIX(31337));
   str = arc_mkstringc(c, "foo");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -204,7 +204,7 @@ START_TEST(test_compile_ident)
 
   /* Try to compile a local symbol binding for foo as well */
   str = arc_mkstringc(c, "((fn (foo) foo) 73313)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -221,7 +221,7 @@ START_TEST(test_compile_if_empty)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(if)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -237,7 +237,7 @@ START_TEST(test_compile_if_x)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(if 4)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -253,7 +253,7 @@ START_TEST(test_compile_if_full)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(if t 1 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -262,7 +262,7 @@ START_TEST(test_compile_if_full)
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "(if nil 1 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -278,7 +278,7 @@ START_TEST(test_compile_if_partial)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(if t 1)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -287,7 +287,7 @@ START_TEST(test_compile_if_partial)
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "(if nil 1)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -303,7 +303,7 @@ START_TEST(test_compile_if_compound)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(if t 1 t 3 t 5 6)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -312,7 +312,7 @@ START_TEST(test_compile_if_compound)
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "(if nil 1 t 3 t 5 6)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -321,7 +321,7 @@ START_TEST(test_compile_if_compound)
   fail_unless(ret == INT2FIX(3));
 
   str = arc_mkstringc(c, "(if nil 1 nil 3 t 5 6)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -330,7 +330,7 @@ START_TEST(test_compile_if_compound)
   fail_unless(ret == INT2FIX(5));
 
   str = arc_mkstringc(c, "(if nil 1 nil 3 nil 5 6)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -345,7 +345,7 @@ START_TEST(test_compile_fn_basic)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "((fn (a b c) a) 1 2 3)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -354,7 +354,7 @@ START_TEST(test_compile_fn_basic)
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a b c) b) 1 2 3)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -363,7 +363,7 @@ START_TEST(test_compile_fn_basic)
   fail_unless(ret == INT2FIX(2));
 
   str = arc_mkstringc(c, "((fn (a b c) c) 1 2 3)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -372,7 +372,7 @@ START_TEST(test_compile_fn_basic)
   fail_unless(ret == INT2FIX(3));
 
   str = arc_mkstringc(c, "((fn a a) 1 2 3)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -384,7 +384,7 @@ START_TEST(test_compile_fn_basic)
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
 
   str = arc_mkstringc(c, "((fn (a . b) a) 1 2 3 4)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -393,7 +393,7 @@ START_TEST(test_compile_fn_basic)
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a . b) b) 1 2 3 4)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -406,7 +406,7 @@ START_TEST(test_compile_fn_basic)
 
   /* implicit progn */
   str = arc_mkstringc(c, "((fn nil 1 2))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -421,7 +421,7 @@ START_TEST(test_compile_fn_oarg)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "((fn (a (o b)) a) 1 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -430,7 +430,7 @@ START_TEST(test_compile_fn_oarg)
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a (o b)) b) 1 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -439,7 +439,7 @@ START_TEST(test_compile_fn_oarg)
   fail_unless(ret == INT2FIX(2));
 
   str = arc_mkstringc(c, "((fn (a (o b)) b) 1)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -448,7 +448,7 @@ START_TEST(test_compile_fn_oarg)
   fail_unless(ret == CNIL);
 
   str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -457,7 +457,7 @@ START_TEST(test_compile_fn_oarg)
   fail_unless(ret == INT2FIX(7));
 
   str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -472,7 +472,7 @@ START_TEST(test_compile_fn_dsb)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) a) 1 '(2 3 (4 5) 6) 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -481,7 +481,7 @@ START_TEST(test_compile_fn_dsb)
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) b) 1 '(2 3 (4 5) 6) 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -490,7 +490,7 @@ START_TEST(test_compile_fn_dsb)
   fail_unless(ret == INT2FIX(2));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) c) 1 '(2 3 (4 5) 6) 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -499,7 +499,7 @@ START_TEST(test_compile_fn_dsb)
   fail_unless(ret == INT2FIX(3));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) d) 1 '(2 3 (4 5) 6) 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -508,7 +508,7 @@ START_TEST(test_compile_fn_dsb)
   fail_unless(ret == INT2FIX(4));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) e) 1 '(2 3 (4 5) 6) 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -517,7 +517,7 @@ START_TEST(test_compile_fn_dsb)
   fail_unless(ret == INT2FIX(5));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) f) 1 '(2 3 (4 5) 6) 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -526,7 +526,7 @@ START_TEST(test_compile_fn_dsb)
   fail_unless(ret == INT2FIX(6));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) g) 1 '(2 3 (4 5) 6) 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -541,7 +541,7 @@ START_TEST(test_compile_quote)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "'(1 2 3)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -561,7 +561,7 @@ START_TEST(test_compile_qquote)
   arc_bindcstr(c, "a", INT2FIX(1));
   arc_bindcstr(c, "b", cons(c, INT2FIX(2), cons(c, INT2FIX(3), cons(c, INT2FIX(4), CNIL))));
   str = arc_mkstringc(c, "`(0 ,a ,@b 5 6)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -583,7 +583,7 @@ START_TEST(test_compile_qquote2)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "`(,((fn (x (o y 1)) (+ x y)) 1) 3)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   /* arc_print_string(c, arc_prettyprint(c, sexpr)); */
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
@@ -603,7 +603,7 @@ START_TEST(test_compile_qquote3)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "`(,@nil)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   /* arc_print_string(c, arc_prettyprint(c, sexpr)); */
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
@@ -621,7 +621,7 @@ START_TEST(test_compile_assign)
 
   /* assign to global vars */
   str = arc_mkstringc(c, "(assign leet 1337 eleet 31337)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -634,7 +634,7 @@ START_TEST(test_compile_assign)
 
   /* Test assign to a local var */
   str = arc_mkstringc(c, "((fn (x y) (assign x 12345) x) 54321 6789)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -650,7 +650,7 @@ START_TEST(test_compile_inline_cons)
 
   /* assign to global vars */
   str = arc_mkstringc(c, "(cons 1 (cons 2 (cons 3 nil)))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -668,7 +668,7 @@ START_TEST(test_compile_inline_car)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(car '(1 2 3))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -683,7 +683,7 @@ START_TEST(test_compile_inline_cdr)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(cdr '(1 2 3))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -700,7 +700,7 @@ START_TEST(test_compile_inline_scar)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(assign xyzzy '(1 2 3))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -708,7 +708,7 @@ START_TEST(test_compile_inline_scar)
   arc_macapply(c, code, CNIL);
 
   str = arc_mkstringc(c, "(scar xyzzy 4)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -727,7 +727,7 @@ START_TEST(test_compile_inline_is)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(is 1 1)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -736,7 +736,7 @@ START_TEST(test_compile_inline_is)
   fail_unless(ret == CTRUE);
 
   str = arc_mkstringc(c, "(is 1 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -751,7 +751,7 @@ START_TEST(test_compile_inline_plus)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(+ 1 2 3 4 5 6 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -766,7 +766,7 @@ START_TEST(test_compile_inline_times)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(* 1 2 3 4 5 6 7)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -781,7 +781,7 @@ START_TEST(test_compile_inline_minus)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(- 1)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -790,7 +790,7 @@ START_TEST(test_compile_inline_minus)
   fail_unless(FIX2INT(ret) == -1);
 
   str = arc_mkstringc(c, "(- 3 2 1)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -806,7 +806,7 @@ START_TEST(test_compile_inline_div)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(/ 2.0)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -816,7 +816,7 @@ START_TEST(test_compile_inline_div)
   fail_unless(fabs(REP(ret)._flonum - 0.5) < 1e-6);
 
   str = arc_mkstringc(c, "(/ 8 2 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -833,7 +833,7 @@ START_TEST(test_compile_macro)
 
   /* define a macro */
   str = arc_mkstringc(c, "(assign foo (annotate 'mac (fn () '(+ 1 2))))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -844,7 +844,7 @@ START_TEST(test_compile_macro)
 
   /* Try to use the macro */
   str = arc_mkstringc(c, "(+ 10 (foo))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -854,7 +854,7 @@ START_TEST(test_compile_macro)
 
   /* Define another few macros. The "do" macro */
   str = arc_mkstringc(c, "(assign do (annotate 'mac (fn args `((fn () ,@args)))))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -865,7 +865,7 @@ START_TEST(test_compile_macro)
 
   /* Try to use the "do" macro */
   str = arc_mkstringc(c, "(do 1 2)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -875,7 +875,7 @@ START_TEST(test_compile_macro)
 
   /* Define another macro */
   str = arc_mkstringc(c, "(assign when (annotate 'mac (fn (test . body) `(if ,test (do ,@body)))))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -885,7 +885,7 @@ START_TEST(test_compile_macro)
   fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
 
   str = arc_mkstringc(c, "(when 1 2 3)");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -900,7 +900,7 @@ START_TEST(test_compile_if_fn)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(if 1 ((fn () 2 3)))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -915,7 +915,7 @@ START_TEST(test_compile_eval)
   value str, sexpr, fp, cctx, code, ret;
 
   str = arc_mkstringc(c, "(eval '((fn (x) (+ x 1)) 2))");
-  fp = arc_instring(c, str);
+  fp = arc_instring(c, str, CNIL);
   sexpr = arc_read(c, fp, CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
