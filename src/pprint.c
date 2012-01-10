@@ -484,3 +484,21 @@ value arc_disp(arc *c, int argc, value *argv)
 
   return(arc_sdisp(c, val, port));
 }
+
+value arc_swrite(arc *c, value sexpr, value port)
+{
+  value ret=CNIL;
+
+  prettyprint(c, sexpr, &ret);
+  arc_writestr(ret, port);
+  return(sexpr);
+}
+
+value arc_write(arc *c, int argc, value *argv)
+{
+  value port, val;
+
+  val = (argc == 0) ? CNIL : argv[0];
+  port = (argc > 2) ? argv[1] : arc_stdout(c);
+  return(arc_swrite(c, val, port));
+}
