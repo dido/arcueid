@@ -582,11 +582,6 @@ static struct {
   { "ccc", -3, arc_callcc },
   { "protect", -3, arc_protect },
 
-  { "current-gc-milliseconds", 0 },
-  { "current-process-milliseconds", 0 },
-  { "seconds", 0, arc_seconds },
-  { "msec", 0, arc_msec },
-
   { "system", 1, arc_system },
 
   { NULL, 0, NULL }
