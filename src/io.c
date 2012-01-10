@@ -182,6 +182,7 @@ static value openfile(arc *c, value filename, const char *mode)
   if (fp == NULL) {
     en = errno;
     arc_err_cstrfmt(c, "openfile: cannot open input file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
+    return(CNIL);
   }
   return(arc_filefp(c, fp, filename));
 }
@@ -519,3 +520,23 @@ value arc_stderr(arc *c)
   return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD)));
 }
 
+/* Unlike the reference Arc implementation, this actually creates
+   a piped process using popen.  The reference implementation cheats
+   because MzScheme/Racket doesn't wrap popen(3). */
+value arc_pipe_from(arc *c, value cmd)
+{
+  FILE *fp;
+  int len;
+  char *cmdstr;
+
+  len = FIX2INT(arc_strutflen(c, cmd));
+  cmdstr = (char *)alloca(sizeof(char)*len+1);
+  arc_str2cstr(c, cmd, cmdstr);
+
+  fp = popen(cmdstr, "r");
+  if (fp == NULL) {
+    int en = errno;
+    arc_err_cstrfmt(c, "pipe-from: error executing command \"%s\", (%s; errno=%d)", cmdstr, strerror(en), en);
+  }
+  return(arc_filefp(c, fp, cmd));
+}
