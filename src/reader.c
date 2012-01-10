@@ -520,7 +520,7 @@ static value expand_compose(arc *c, value sym)
   Rune ch, buf[STRMAX];
   int negate = 0, i=0, run = 1;
 
-  sh = arc_instring(c, sym);
+  sh = arc_instring(c, sym, CNIL);
   top = elt = last = CNIL;
   while (run) {
     ch = arc_readc_rune(c, sh);
@@ -578,7 +578,7 @@ static value expand_sexpr(arc *c, value sym)
   value last, cur, nelt, elt, sh;
   int i=0;
 
-  sh = arc_instring(c, sym);
+  sh = arc_instring(c, sym, CNIL);
   last = cur = elt = nelt = CNIL;
   while ((ch = arc_readc_rune(c, sh)) != -1) {
     switch (ch) {
@@ -634,7 +634,7 @@ static value expand_and(arc *c, value sym)
   int i=0, run = 1;
 
   top = elt = last = CNIL;
-  sh = arc_instring(c, sym);
+  sh = arc_instring(c, sym, CNIL);
   while (run) {
     ch = arc_readc_rune(c, sh);
     switch (ch) {
