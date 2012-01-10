@@ -34,6 +34,7 @@
 #include "arcueid.h"
 #include "utf.h"
 #include "io.h"
+#include "vmengine.h"
 #include "symbols.h"
 #include "../config.h"
 
@@ -505,18 +506,53 @@ value arc_close(arc *c, value fd)
   return(CNIL);
 }
 
+/* to obtain the current stdin, we have to go through the continuation reg.
+   and find some continuation register that may have a STDIN defined. */
 value arc_stdin(arc *c)
 {
+  value thr = c->curthread;
+  value cont = TCONR(thr);
+  value fps;
+
+  while (cont != CNIL) {
+    fps = CONT_FPS(car(cont));
+    if (!(NIL_P(CNIL) || NIL_P(VINDEX(fps, 0))))
+      return(VINDEX(fps, 0));
+    cont = cdr(cont);
+  }
+  /* fallback to the true stdin if none */
   return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
 }
 
 value arc_stdout(arc *c)
 {
+  value thr = c->curthread;
+  value cont = TCONR(thr);
+  value fps;
+
+  while (cont != CNIL) {
+    fps = CONT_FPS(car(cont));
+    if (!(NIL_P(CNIL) || NIL_P(VINDEX(fps, 1))))
+      return(VINDEX(fps, 1));
+    cont = cdr(cont);
+  }
+  /* fallback to the true stdout if none */
   return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD)));
 }
 
 value arc_stderr(arc *c)
 {
+  value thr = c->curthread;
+  value cont = TCONR(thr);
+  value fps;
+
+  while (cont != CNIL) {
+    fps = CONT_FPS(car(cont));
+    if (!(NIL_P(CNIL) || NIL_P(VINDEX(fps, 2))))
+      return(VINDEX(fps, 2));
+    cont = cdr(cont);
+  }
+  /* fallback to the true stderr if none */
   return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD)));
 }
 
@@ -539,4 +575,64 @@ value arc_pipe_from(arc *c, value cmd)
     arc_err_cstrfmt(c, "pipe-from: error executing command \"%s\", (%s; errno=%d)", cmdstr, strerror(en), en);
   }
   return(arc_filefp(c, fp, cmd));
+}
+
+value arc_call_w_stdin(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VARDEF(thr);
+  CC4VARDEF(cont);
+  CC4VARDEF(port);
+  CC4VARDEF(thunk);
+  CC4VDEFEND;
+  CC4BEGIN(c);
+  if (VECLEN(argv) != 2) {
+    arc_err_cstrfmt(c, "call-w/stdin wrong number of arguments (%d for 2)",
+		    VECLEN(argv));
+    return(CNIL);
+  }
+  CC4V(thr) = c->curthread;
+  CC4V(cont) = car(TCONR(CC4V(thr)));
+  CC4V(port) = VINDEX(argv, 0);
+  CC4V(thunk) = VINDEX(argv, 1);
+  /* modify the continuation created to call this to have its stdin
+     set to whatever was specified. */
+  CONT_FPS(CC4V(cont)) = arc_mkvector(c, 3);
+  VINDEX(CONT_FPS(CC4V(cont)), 0) = CC4V(port);
+  VINDEX(CONT_FPS(CC4V(cont)), 1) = CNIL;
+  VINDEX(CONT_FPS(CC4V(cont)), 2) = CNIL;
+  /* call the thunk -- any calls to arc_stdin will use the port specified */
+  CC4CALL(c, argv, CC4V(thunk), 0, CNIL);
+  CC4END;
+  return(rv);
+}
+
+value arc_call_w_stdout(arc *c, value argv, value rv, CC4CTX)
+{
+  CC4VDEFBEGIN;
+  CC4VARDEF(thr);
+  CC4VARDEF(cont);
+  CC4VARDEF(port);
+  CC4VARDEF(thunk);
+  CC4VDEFEND;
+  CC4BEGIN(c);
+  if (VECLEN(argv) != 2) {
+    arc_err_cstrfmt(c, "call-w/stdout wrong number of arguments (%d for 2)",
+		    VECLEN(argv));
+    return(CNIL);
+  }
+  CC4V(thr) = c->curthread;
+  CC4V(cont) = car(TCONR(CC4V(thr)));
+  CC4V(port) = VINDEX(argv, 0);
+  CC4V(thunk) = VINDEX(argv, 1);
+  /* modify the continuation created to call this to have its stdout
+     set to whatever was specified. */
+  CONT_FPS(CC4V(cont)) = arc_mkvector(c, 3);
+  VINDEX(CONT_FPS(CC4V(cont)), 0) = CNIL;
+  VINDEX(CONT_FPS(CC4V(cont)), 1) = CC4V(port);
+  VINDEX(CONT_FPS(CC4V(cont)), 2) = CNIL;
+  /* call the thunk -- any calls to arc_stdin will use the port specified */
+  CC4CALL(c, argv, CC4V(thunk), 0, CNIL);
+  CC4END;
+  return(rv);
 }
