@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -14,9 +14,7 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef _ARCUEID_H_
@@ -525,8 +523,11 @@ extern value arc_write(arc *c, int argc, value *argv);
 extern value arc_filefp(arc *c, FILE *fp, value filename);
 extern value arc_infile(arc *c, value filename);
 extern value arc_outfile(arc *c, value filename, value xmode);
-extern value arc_instring(arc *c, value str);
-extern value arc_outstring(arc *c);
+extern value arc_soutfile(arc *c, int argc, value *argv);
+extern value arc_instring(arc *c, value str, value name);
+extern value arc_sinstring(arc *c, int argc, value *argv);
+extern value arc_outstring(arc *c, value name);
+extern value arc_soutstring(arc *c, int argc, value *argv);
 extern value arc_fstr_inside(arc *c, value fstr);
 
 extern value arc_readb(arc *c, value fd);
@@ -578,6 +579,8 @@ extern value arc_current_gc_milliseconds(arc *c);
 extern value arc_current_process_milliseconds(arc *c);
 extern value arc_seconds(arc *c);
 extern value arc_msec(arc *c);
+
+extern value arc_system(arc *c, value cmd);
 
 /* init */
 extern void arc_init_sq(arc *c, int stksize, int quanta);
