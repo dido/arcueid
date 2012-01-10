@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [ ] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [14/19]
+** TODO Runtime Built-In Functions [15/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -364,7 +364,7 @@ notice and this notice are preserved.
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
      - [X] uniq
-   - [X] Basic I/O primitives (src/io.c) [3/3]
+   - [X] Basic I/O primitives (src/io.c) [5/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
      - [X] Input [5/5]
@@ -381,37 +381,38 @@ notice and this notice are preserved.
 	   CHARACTER.  This saves us the trouble of decoding Unicode
 	   all over again, and reinforces the maxim of never mixing
 	   the b functions with the c functions.
-       - [X] read
-     - [X] Output [2/2]
+       - [X] sread
+     - [X] Output [3/3]
        - [X] writeb
        - [X] writec
-     - [X] File I/O [5/5]
+       - [X] write
+     - [X] File I/O [3/3]
        - [X] infile
        - [X] outfile
        - [X] close
-       - [X] String port I/O [3/3]
+     - [X] String port I/O [3/3]
 	     Note that doing readb/writeb or readc/writec on a string
 	     port have the same effect.  Strings are made up of Unicode
 	     characters so it would be quite messy to implement a
 	     separate 'byte index' into what is made up of characters.
-	 - [X] instring
-	 - [X] outstring
-	 - [X] inside
-       - [X] Seeking / telling [2/2]
+       - [X] instring
+       - [X] outstring
+       - [X] inside
+     - [X] Seeking / telling [2/2]
              Note that these essential functions are not available in
              PG-Arc for some reason but will probably be necessary to
              implement CIEL.
-         - [X] seek
-         - [X] tell
-   - [-] Additional I/O functions (src/io.c) [5/7]
+       - [X] seek
+       - [X] tell
+   - [X] Additional I/O functions (src/io.c) [7/7]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
      - [X] pipe-from
      - [X] stdin
      - [X] stdout
      - [X] stderr
-     - [ ] call-w/stdin
-     - [ ] call-w/stdout
+     - [X] call-w/stdin
+     - [X] call-w/stdout
      - [X] disp
    - [ ] Threads [0/2]
      - [ ] Creating and managing threads [0/6]
