@@ -328,7 +328,7 @@ Rune arc_readc_rune(arc *c, value fd)
       return(r);
     }
   }
-  return(Runeerror);
+  return(-1);
 }
 
 /* Read a character from fd.  Returns CNIL on end of file, or the
