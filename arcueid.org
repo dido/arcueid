@@ -403,13 +403,13 @@ notice and this notice are preserved.
              implement CIEL.
          - [X] seek
          - [X] tell
-   - [ ] Additional I/O functions (src/io.c) [0/7]
+   - [-] Additional I/O functions (src/io.c) [3/7]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
      - [ ] pipe-from
-     - [ ] stdin
-     - [ ] stdout
-     - [ ] stderr
+     - [X] stdin
+     - [X] stdout
+     - [X] stderr
      - [ ] call-w/stdin
      - [ ] call-w/stdout
      - [ ] disp
