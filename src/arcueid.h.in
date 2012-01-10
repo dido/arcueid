@@ -526,19 +526,35 @@ extern value arc_outfile(arc *c, value filename, value xmode);
 extern value arc_instring(arc *c, value str);
 extern value arc_outstring(arc *c);
 extern value arc_fstr_inside(arc *c, value fstr);
+
 extern value arc_readb(arc *c, value fd);
+extern value arc_sreadb(arc *c, int argc, value *argv);
 extern value arc_writeb(arc *c, value byte, value fd);
+extern value arc_swriteb(arc *c, int argc, value *argv);
+
 extern Rune arc_readc_rune(arc *c, value fd);
 extern value arc_readc(arc *c, value fd);
+extern value arc_sreadc(arc *c, int argc, value *argv);
+
 extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 extern value arc_ungetc(arc *c, value r, value fd);
+extern value arc_sungetc(arc *c, int argc, value *argv);
+
 extern Rune arc_peekc_rune(arc *c, value fd);
 extern value arc_peekc(arc *c, value fd);
+extern value arc_speekc(arc *c, int argc, value *argv);
+
 extern Rune arc_writec_rune(arc *c, Rune r, value fd);
 extern value arc_writec(arc *c, value r, value fd);
+extern value arc_swritec(arc *c, int argc, value *argv);
+
 extern value arc_seek(arc *c, value fd, value ofs, value whence);
 extern value arc_tell(arc *c, value fd);
 extern value arc_close(arc *c, value fd);
+
+extern value arc_stdin(arc *c);
+extern value arc_stdout(arc *c);
+extern value arc_stderr(arc *c);
 
 /* Mathematical functions */
 extern value arc_expt(arc *c, value a, value b);
