@@ -38,7 +38,7 @@ START_TEST(test_ciel_nil)
   value cieldata, cielfd, result;
 
   cieldata = arc_mkstring(cc, data, 9);
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(result == CNIL);
 }
@@ -52,7 +52,7 @@ START_TEST(test_ciel_true)
   value cieldata, cielfd, result;
 
   cieldata = arc_mkstring(cc, data, 9);
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(result == CTRUE);
 }
@@ -76,20 +76,20 @@ START_TEST(test_ciel_int)
   value cieldata, cielfd, result;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(FIXNUM_P(result));
   fail_unless(FIX2INT(result) == 1234);
 
   cieldata = arc_mkstring(cc, data2, sizeof(data2) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(FIXNUM_P(result));
   fail_unless(FIX2INT(result) == -1234);
 
 #if 0
   cieldata = arc_mkstring(cc, data3, sizeof(data3) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_BIGNUM);
   mpz_init(expected);
@@ -118,28 +118,28 @@ START_TEST(test_ciel_flonum)
   double expected;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
   expected = 1.0;
   fail_unless(fabs(REP(result)._flonum - expected)/expected < 1e-6);
 
   cieldata = arc_mkstring(cc, data2, sizeof(data2) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
   expected = 3.14159265358979323846;
   fail_unless(fabs(REP(result)._flonum - expected)/expected < 1e-6);
 
   cieldata = arc_mkstring(cc, data3, sizeof(data3) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
   expected = 6.6260689633e-34;
   fail_unless(fabs(REP(result)._flonum - expected)/expected < 1e-6);
 
   cieldata = arc_mkstring(cc, data4, sizeof(data4) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_FLONUM);
   expected = 6.0221417930e23;
@@ -155,7 +155,7 @@ START_TEST(test_ciel_char)
   value cieldata, cielfd, result;
 
   cieldata = arc_mkstring(cc, data, sizeof(data) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_CHAR);
   fail_unless(REP(result)._char == 0x86df);
@@ -215,7 +215,7 @@ START_TEST(test_ciel_rat)
   double d, expected;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
   fail_unless(TYPE(result) == T_RATIONAL);
   d = mpq_get_d(REP(result)._rational);
@@ -236,7 +236,7 @@ START_TEST(test_ciel_complex)
   double d, expected;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
 
   fail_unless(TYPE(result) == T_COMPLEX);
@@ -263,7 +263,7 @@ START_TEST(test_ciel_cons)
   double d, expected;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
 
   fail_unless(CONS_P(result));
@@ -308,7 +308,7 @@ START_TEST(test_ciel_xdup)
   double d, expected;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   result = arc_ciel_unmarshal(cc, cielfd);
 
   fail_unless(CONS_P(result));
@@ -341,7 +341,7 @@ START_TEST(test_ciel_memo)
   double d, expected;
 
   cieldata = arc_mkstring(cc, data1, sizeof(data1) / sizeof(Rune));
-  cielfd = arc_instring(cc, cieldata);
+  cielfd = arc_instring(cc, cieldata, CNIL);
   v = arc_ciel_unmarshal(cc, cielfd);
 
   fail_unless(TYPE(v) == T_FLONUM);
