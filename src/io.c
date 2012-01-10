@@ -34,7 +34,42 @@
 #include "arcueid.h"
 #include "utf.h"
 #include "io.h"
+#include "symbols.h"
 #include "../config.h"
+
+#define SDEF(fn, defaultport)			\
+  value arc_s##fn(arc *c, int argc, value *argv) \
+  {						\
+    value port;					\
+    if (argc == 0) {				\
+      port = defaultport;			\
+    } else if (argc == 1) {			\
+      port = argv[0];							\
+    } else {								\
+      arc_err_cstrfmt(c, #fn ": too many arguments (%d for 0 or 1)", argc); \
+      return(CNIL);							\
+    }									\
+    return(arc_##fn(c, port));						\
+  }
+
+#define SDEF2(fn, defaultport)						\
+  value arc_s##fn(arc *c, int argc, value *argv)			\
+  {									\
+    value port, ch;							\
+    if (argc == 0) {							\
+      arc_err_cstrfmt(c, #fn ": not enough arguments (%d for 1 or 2)", argc); \
+      return(CNIL);							\
+    } else if (argc == 1) {						\
+      port = defaultport;						\
+    } else if (argc == 2) {						\
+      port = argv[1];							\
+    } else {								\
+      arc_err_cstrfmt(c, #fn ": too many arguments (%d for 1 or 2)", argc); \
+      return(CNIL);							\
+    }									\
+    ch = argv[0];							\
+    return(arc_##fn(c, ch, port));					\
+  }
 
 static value file_pp(arc *c, value v)
 {
@@ -289,6 +324,8 @@ value arc_readb(arc *c, value fd)
   return(INT2FIX(ch));
 }
 
+SDEF(readb, arc_stdin(c));
+
 /* Write a byte.  Returns -1 on failure. */
 value arc_writeb(arc *c, value byte, value fd)
 {
@@ -299,6 +336,8 @@ value arc_writeb(arc *c, value byte, value fd)
     ch = -1;
   return(INT2FIX(ch));
 }
+
+SDEF2(writeb, arc_stdout(c));
 
 /* Read a rune from fd.  On end of file returns -1.  If UTF-8
    cannot be decoded properly, returns Runeerror. */
@@ -343,6 +382,8 @@ value arc_readc(arc *c, value fd)
   return(arc_mkchar(c, r));
 }
 
+SDEF(readc, arc_stdin(c));
+
 Rune arc_writec_rune(arc *c, Rune r, value fd)
 {
   char buf[UTFmax];
@@ -365,6 +406,8 @@ value arc_writec(arc *c, value r, value fd)
   return(r);
 }
 
+SDEF2(writec, arc_stdout(c));
+
 Rune arc_ungetc_rune(arc *c, Rune r, value fd)
 {
   PORT(fd)->ungetrune = r;
@@ -378,6 +421,8 @@ value arc_ungetc(arc *c, value r, value fd)
   return(r);
 }
 
+SDEF2(ungetc, arc_stdin(c));
+
 Rune arc_peekc_rune(arc *c, value fd)
 {
   Rune r;
@@ -386,6 +431,8 @@ Rune arc_peekc_rune(arc *c, value fd)
   arc_ungetc_rune(c, r, fd);
   return(r);
 }
+
+SDEF(peekc, arc_stdin(c));
 
 value arc_peekc(arc *c, value fd)
 {
@@ -425,3 +472,19 @@ value arc_close(arc *c, value fd)
   }
   return(CNIL);
 }
+
+value arc_stdin(arc *c)
+{
+  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
+}
+
+value arc_stdout(arc *c)
+{
+  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD)));
+}
+
+value arc_stderr(arc *c)
+{
+  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD)));
+}
+
