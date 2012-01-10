@@ -549,6 +549,7 @@ static struct {
   { "instring", -1, arc_sinstring },
   { "outstring", -1, arc_soutstring },
   { "inside", 1, arc_fstr_inside },
+  { "pipe-from", 1, arc_pipe_from },
 
   { "disp", -1, arc_disp },
 
