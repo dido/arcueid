@@ -542,6 +542,9 @@ static struct {
   { "stdout", 0, arc_stdout },
   { "stderr", 0, arc_stderr },
   { "write", -1, arc_write },
+  { "infile", 1, arc_infile },
+  { "outfile", -1, arc_soutfile },
+  { "close", 1, arc_close },
 
   { "disp", -1, arc_disp },
 
