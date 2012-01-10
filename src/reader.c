@@ -64,10 +64,10 @@ value arc_sym2name(arc *c, value sym)
 }
 
 static Rune scan(arc *c, value src);
-static value read_list(arc *c, value src);
-static value read_anonf(arc *c, value src);
-static value read_quote(arc *c, value src, value sym);
-static value read_comma(arc *c, value src);
+static value read_list(arc *c, value src, value eof);
+static value read_anonf(arc *c, value src, value eof);
+static value read_quote(arc *c, value src, value sym, value eof);
+static value read_comma(arc *c, value src, value eof);
 static value read_string(arc *c, value src);
 static value read_char(arc *c, value src);
 static void read_comment(arc *c, value src);
@@ -77,43 +77,28 @@ static value expand_compose(arc *c, value sym);
 static value expand_sexpr(arc *c, value sym);
 static value expand_and(arc *c, value sym);
 
-value arc_read2(arc *c, int argc, value *argv)
-{
-  value fp;
-
-  if (argc > 1) {
-    arc_err_cstrfmt(c, "read expects 0 or 1 argument, given %d", argc);
-    return(CNIL);
-  }
-
-  
-  fp = (argc == 0) ? arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD))
-    : argv[0];
-  return(arc_read(c, fp));
-}
-
-value arc_read(arc *c, value src)
+value arc_read(arc *c, value src, value eof)
 {
   Rune ch;
 
   while ((ch = scan(c, src)) >= 0) {
     switch (ch) {
     case '(':
-      return(read_list(c, src));
+      return(read_list(c, src, eof));
     case ')':
       arc_err_cstrfmt(c, "misplaced right paren");
       return(CNIL);
     case '[':
-      return(read_anonf(c, src));
+      return(read_anonf(c, src, eof));
     case ']':
       arc_err_cstrfmt(c, "misplaced right bracket");
       return(CNIL);
     case '\'':
-      return(read_quote(c, src, ARC_BUILTIN(c, S_QUOTE)));
+      return(read_quote(c, src, ARC_BUILTIN(c, S_QUOTE), eof));
     case '`':
-      return(read_quote(c, src, ARC_BUILTIN(c, S_QQUOTE)));
+      return(read_quote(c, src, ARC_BUILTIN(c, S_QQUOTE), eof));
     case ',':
-      return(read_comma(c, src));
+      return(read_comma(c, src, eof));
     case '"':
       return(read_string(c, src));
     case '#':
@@ -121,6 +106,8 @@ value arc_read(arc *c, value src)
     case ';':
       read_comment(c, src);
       break;
+    case -1:
+      return(eof);
     default:
       arc_ungetc_rune(c, ch, src);
       return(read_symbol(c, src));
@@ -129,7 +116,7 @@ value arc_read(arc *c, value src)
   return(CNIL);
 }
 
-static value read_list(arc *c, value src)
+static value read_list(arc *c, value src, value eof)
 {
   value top, val, last;
   Rune ch;
@@ -149,9 +136,9 @@ static value read_list(arc *c, value src)
 	return(CNIL);
       }
       arc_ungetc_rune(c, ch, src);
-      val = arc_read(c, src);
+      val = arc_read(c, src, eof);
       if (val == ARC_BUILTIN(c, S_DOT)) {
-	val = arc_read(c, src);
+	val = arc_read(c, src, eof);
 	if (last) {
 	  scdr(last, val);
 	} else {
@@ -255,7 +242,7 @@ static Rune scan(arc *c, value src)
 
 /* Read an Arc square bracketed anonymous function.  This expands to
    (fn (_) ...) */
-static value read_anonf(arc *c, value src)
+static value read_anonf(arc *c, value src, value eof)
 {
   value top, val, last, ret;
   Rune ch;
@@ -273,7 +260,7 @@ static value read_anonf(arc *c, value src)
       return(ret);
     default:
       arc_ungetc_rune(c, ch, src);
-      val = cons(c, arc_read(c, src), CNIL);
+      val = cons(c, arc_read(c, src, CNIL), CNIL);
       if (last)
 	scdr(last, val);
       else
@@ -287,22 +274,22 @@ static value read_anonf(arc *c, value src)
 
 }
 
-static value read_quote(arc *c, value src, value sym)
+static value read_quote(arc *c, value src, value sym, value eof)
 {
   value val;
 
-  val = arc_read(c, src);
+  val = arc_read(c, src, eof);
   return(cons(c, sym, cons(c, val, CNIL)));
 }
 
-static value read_comma(arc *c, value src)
+static value read_comma(arc *c, value src, value eof)
 {
   Rune ch;
 
   if ((ch = arc_readc_rune(c, src)) == '@')
-    return(read_quote(c, src, ARC_BUILTIN(c, S_UNQUOTESP)));
+    return(read_quote(c, src, ARC_BUILTIN(c, S_UNQUOTESP), eof));
   arc_ungetc_rune(c, ch, src);
-  return(read_quote(c, src, ARC_BUILTIN(c, S_UNQUOTE)));
+  return(read_quote(c, src, ARC_BUILTIN(c, S_UNQUOTE), eof));
 }
 
 /* XXX - we need to add support for octal and hexadecimal escapes as well */
