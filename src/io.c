@@ -37,6 +37,12 @@
 #include "symbols.h"
 #include "../config.h"
 
+#define CHECK_CLOSED(fd)				\
+  if (PORT(fd)->closed) {				\
+    arc_err_cstrfmt(c, "port is closed");		\
+    return(CNIL);					\
+  }
+
 #define SDEF(fn, defaultport)			\
   value arc_s##fn(arc *c, int argc, value *argv) \
   {						\
@@ -159,6 +165,7 @@ value arc_filefp(arc *c, FILE *fp, value filename)
   PORT(fd)->seek = file_seek;
   PORT(fd)->tell = file_tell;
   PORT(fd)->close = file_close;
+  PORT(fd)->closed = 0;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
 }
@@ -190,6 +197,8 @@ value arc_outfile(arc *c, value filename, value xmode)
     return(openfile(c, filename, "a"));
   return(openfile(c, filename, "w"));
 }
+
+SDEF2(outfile, CNIL);
 
 static value fstr_pp(arc *c, value v)
 {
@@ -289,6 +298,7 @@ value arc_instring(arc *c, value str)
   PORT(fd)->seek = fstr_seek;
   PORT(fd)->tell = fstr_tell;
   PORT(fd)->close = fstr_close;
+  PORT(fd)->closed = 0;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
 }
@@ -308,6 +318,7 @@ value arc_readb(arc *c, value fd)
 {
   int ch;
 
+  CHECK_CLOSED(fd);
   /* Note that if there is an unget value available, it will return
      the whole *CHARACTER*, not a possible byte within the character!
      As before, one isn't really supposed to mix the 'c' functions
@@ -331,6 +342,7 @@ value arc_writeb(arc *c, value byte, value fd)
 {
   int ch = FIX2INT(byte);
 
+  CHECK_CLOSED(fd);
   PORT(fd)->putb(c, PORT(fd), ch);
   if (ch == EOF)
     ch = -1;
@@ -348,6 +360,7 @@ Rune arc_readc_rune(arc *c, value fd)
   int i;
   Rune r;
 
+  CHECK_CLOSED(fd);
   if (PORT(fd)->ungetrune >= 0) {
     r = PORT(fd)->ungetrune;
     PORT(fd)->ungetrune = -1;
@@ -376,6 +389,7 @@ value arc_readc(arc *c, value fd)
 {
   Rune r;
 
+  CHECK_CLOSED(fd);
   r = arc_readc_rune(c, fd);
   if (r < 0)
     return(CNIL);
@@ -389,6 +403,7 @@ Rune arc_writec_rune(arc *c, Rune r, value fd)
   char buf[UTFmax];
   int nbytes, i;
 
+  CHECK_CLOSED(fd);
   if (PORT(fd)->type == FT_STRING) {
     PORT(fd)->putb(c, PORT(fd), r);
     return(r);
@@ -402,6 +417,7 @@ Rune arc_writec_rune(arc *c, Rune r, value fd)
 
 value arc_writec(arc *c, value r, value fd)
 {
+  CHECK_CLOSED(fd);
   arc_writec_rune(c, REP(r)._char, fd);
   return(r);
 }
@@ -410,6 +426,7 @@ SDEF2(writec, arc_stdout(c));
 
 Rune arc_ungetc_rune(arc *c, Rune r, value fd)
 {
+  CHECK_CLOSED(fd);
   PORT(fd)->ungetrune = r;
   return(r);
 }
@@ -417,6 +434,7 @@ Rune arc_ungetc_rune(arc *c, Rune r, value fd)
 /* Note that ungetc is a rather simplistic function. */
 value arc_ungetc(arc *c, value r, value fd)
 {
+  CHECK_CLOSED(fd);
   arc_ungetc_rune(c, REP(r)._char, fd);
   return(r);
 }
@@ -427,6 +445,7 @@ Rune arc_peekc_rune(arc *c, value fd)
 {
   Rune r;
 
+  CHECK_CLOSED(fd);
   r = arc_readc_rune(c, fd);
   arc_ungetc_rune(c, r, fd);
   return(r);
@@ -438,6 +457,7 @@ value arc_peekc(arc *c, value fd)
 {
   Rune r;
 
+  CHECK_CLOSED(fd);
   r = arc_peekc_rune(c, fd);
   return(arc_mkchar(c, r));
 }
@@ -448,6 +468,7 @@ value arc_peekc(arc *c, value fd)
    systems) */
 value arc_seek(arc *c, value fd, value ofs, value whence)
 {
+  CHECK_CLOSED(fd);
   if (PORT(fd)->seek(c, PORT(fd), FIX2INT(ofs), FIX2INT(whence)) < 0)
     return(CNIL);
   return(CTRUE);
@@ -457,6 +478,7 @@ value arc_tell(arc *c, value fd)
 {
   int64_t pos;
 
+  CHECK_CLOSED(fd);
   pos = PORT(fd)->tell(c, PORT(fd));
   if (pos < 0)
     return(CNIL);
@@ -470,6 +492,7 @@ value arc_close(arc *c, value fd)
 
     arc_err_cstrfmt(c, "close: cannot close %v \"%s\", (%s; errno=%d)", fd, strerror(en), en);
   }
+  PORT(fd)->closed = 1;
   return(CNIL);
 }
 
