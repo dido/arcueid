@@ -29,7 +29,7 @@ START_TEST(test_str_read)
   int i;
 
   str = arc_mkstringc(&c, "0123456789");
-  strio = arc_instring(&c, str);
+  strio = arc_instring(&c, str, CNIL);
   for (i=0; i<10; i++)
     fail_unless(arc_readb(&c, strio) == INT2FIX(0x30 + i));
   fail_unless(FIX2INT(arc_readb(&c, strio)) < 0);
