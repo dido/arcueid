@@ -185,7 +185,7 @@ int main(int argc, char **argv)
   loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
-  while ((sexpr = arc_read(c, initload)) != CNIL) {
+  while ((sexpr = arc_read(c, initload, CNIL)) != CNIL) {
     /*    arc_print_string(c, arc_prettyprint(c, sexpr));
 	  printf("\n"); */
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 #ifndef HAVE_LIBREADLINE
     printf("arc> ");
 #endif
-    sexpr = arc_read(c, readfp);
+    sexpr = arc_read(c, readfp, CNIL);
     if (sexpr == CNIL)
       break;
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
