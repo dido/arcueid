@@ -559,6 +559,8 @@ extern value arc_close(arc *c, value fd);
 extern value arc_stdin(arc *c);
 extern value arc_stdout(arc *c);
 extern value arc_stderr(arc *c);
+extern value arc_call_w_stdin(arc *c, value argv, value rv, CC4CTX);
+extern value arc_call_w_stdout(arc *c, value argv, value rv, CC4CTX);
 
 /* Mathematical functions */
 extern value arc_expt(arc *c, value a, value b);
