@@ -531,26 +531,33 @@ static struct {
   { "macex1", 1, arc_macex1 },
   { "uniq", 0, arc_uniq },
 
-  { "sread", 2, arc_read },
   { "readb", -1, arc_sreadb },
   { "readc", -1, arc_sreadc },
   { "ungetc", -1, arc_sungetc },
   { "peekc", -1, arc_speekc },
+  { "sread", 2, arc_read },
+
   { "writeb", -1, arc_swriteb },
   { "writec", -1, arc_swritec },
-  { "stdin", 0, arc_stdin },
-  { "stdout", 0, arc_stdout },
-  { "stderr", 0, arc_stderr },
   { "write", -1, arc_write },
 
   { "infile", 1, arc_infile },
   { "outfile", -1, arc_soutfile },
   { "close", 1, arc_close },
+
   { "instring", -1, arc_sinstring },
   { "outstring", -1, arc_soutstring },
   { "inside", 1, arc_fstr_inside },
-  { "pipe-from", 1, arc_pipe_from },
 
+  { "seek", 3, arc_seek },
+  { "tell", 1, arc_tell },
+
+  { "pipe-from", 1, arc_pipe_from },
+  { "stdin", 0, arc_stdin },
+  { "stdout", 0, arc_stdout },
+  { "stderr", 0, arc_stderr },
+  { "call-w/stdin", -3, arc_call_w_stdin },
+  { "call-w/stdout", -3, arc_call_w_stdout },
   { "disp", -1, arc_disp },
 
   { "cgenctx", 2, arc_mkcctx},
