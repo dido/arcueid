@@ -35,7 +35,7 @@ value arc_eval(arc *c, value argv, value rv, CC4CTX)
 
   CC4BEGIN(c);
   expr = VINDEX(argv, 0);
-  TYPECHECK(expr, T_CONS);
+  TYPECHECK(expr, T_CONS, 1);
   ctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, expr, ctx, CNIL, CTRUE);
   code = arc_cctx2code(c, ctx);
