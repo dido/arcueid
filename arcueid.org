@@ -343,7 +343,7 @@ notice and this notice are preserved.
        - [X] sqrt (also in arc3)
        - [X] tan
        - [X] tanh
-       - [X] tgammao
+       - [X] tgamma
        - [X] trunc (also in arc3)
    - [X] Table operations [2/2]
      - [X] maptable
@@ -442,9 +442,10 @@ notice and this notice are preserved.
 	   on systems that support them.  Only fall back to standard
 	   POSIX.1-2001 select(2) only if no alternatives are
 	   available.
-   - [ ] File system operations [0/4]
-     - [ ] dir
+   - [-] File system operations [1/5]
+     - [X] dir
      - [ ] dir-exists
+     - [ ] mkdir (not provided by arc3)
      - [ ] file-exists
      - [ ] rmfile
    - [X] Error handling and continuations [5/5]
@@ -471,6 +472,8 @@ notice and this notice are preserved.
      - [X] sref *
      - [X] len
      - [X] bound
+** TODO Threading
+   Arcueid's threading 
 ** TODO Baseline environment (arc.arc)
    We will doubtless need to customize the base environment provided in
    PG-Arc.
