@@ -1300,7 +1300,7 @@ value arc_err_cstrfmt2(arc *c, const char *lastcall, const char *fmt, ...)
 {
   va_list ap;
   char text[ESTRMAX];
-  value errtext;
+  value errtext, ex, conr;
 
   va_start(ap, fmt);
   /* XXX - make another formatting function, vsnprintf won't do for
@@ -1308,7 +1308,14 @@ value arc_err_cstrfmt2(arc *c, const char *lastcall, const char *fmt, ...)
   vsnprintf(text, ESTRMAX, fmt, ap);
   va_end(ap);
   errtext = arc_mkstringc(c, text);
-  return(arc_errexc(c, arc_mkexception(c, errtext, arc_mkstringc(c, lastcall), TCONR(c->curthread))));
+
+  conr = (c->curthread == CNIL) ? CNIL : TCONR(c->curthread);
+  ex = arc_mkexception(c, errtext, arc_mkstringc(c, lastcall), conr);
+  if (c->curthread == CNIL) {
+    c->signal_error(c, VINDEX(ex, 0));
+    return(CNIL);
+  }
+  return(arc_errexc(c, ex));
 }
 
 value arc_err(arc *c, value emsg)
