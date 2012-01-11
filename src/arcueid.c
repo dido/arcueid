@@ -593,6 +593,8 @@ static struct {
   { "system", 1, arc_system },
   { "quit", -1, arc_quit },
 
+  { "dir", 1, arc_dir },
+
   { NULL, 0, NULL }
 };
 
@@ -638,6 +640,9 @@ void arc_init_sq(arc *c, int stksize, int quanta)
   arc_init_builtins(c);
   c->stksize = stksize;
   c->quantum = quanta;
+  c->curthread = CNIL;
+  c->vmthreads = CNIL;
+  c->vmqueue = CNIL;
 }
 
 void arc_init(arc *c)
