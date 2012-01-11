@@ -328,6 +328,12 @@ static inline int TYPE(value v)
   return(T_NONE);		/* unrecognized immediate type */
 }
 
+#define TYPECHECK(arg, expected, argno)			\
+  if (TYPE(arg) != expected) {				\
+    arc_err_cstrfmt(c, "expected argument %d to be type %d given type %d", argno, expected, TYPE(arg)); \
+    return(CNIL);							\
+  }
+
 #define CONS_P(x) ((TYPE(x)) == (T_CONS))
 
 #define NUMERIC_P(x) ((TYPE(x) == (T_FIXNUM)) || (TYPE(x) == (T_BIGNUM)) \
@@ -539,6 +545,8 @@ extern value arc_swriteb(arc *c, int argc, value *argv);
 extern Rune arc_readc_rune(arc *c, value fd);
 extern value arc_readc(arc *c, value fd);
 extern value arc_sreadc(arc *c, int argc, value *argv);
+
+extern value arc_dir(arc *c, value dirname);
 
 extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 extern value arc_ungetc(arc *c, value r, value fd);
