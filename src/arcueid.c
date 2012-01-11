@@ -292,6 +292,7 @@ value arc_lt(arc *c, int argc, value *argv)
 
 value arc_bound(arc *c, value sym)
 {
+  TYPECHECK(sym, T_SYMBOL, 1);
   return((arc_hash_lookup(c, c->genv, sym) == CUNBOUND) ? CNIL: CTRUE);
 }
 
@@ -387,6 +388,7 @@ value arc_car(arc *c, value v)
 {
   if (NIL_P(v))
     return(CNIL);
+  TYPECHECK(v, T_CONS, 1);
   return(car(v));
 }
 
@@ -394,6 +396,7 @@ value arc_cdr(arc *c, value v)
 {
   if (NIL_P(v))
     return(CNIL);
+  TYPECHECK(v, T_CONS, 1);
   return(cdr(v));
 }
 
@@ -404,11 +407,13 @@ value arc_cons(arc *c, value ca, value cd)
 
 value arc_scar(arc *c, value x, value y)
 {
+  TYPECHECK(x, T_CONS, 1);
   return(scar(x, y));
 }
 
 value arc_scdr(arc *c, value x, value y)
 {
+  TYPECHECK(x, T_CONS, 1);
   return(scdr(x, y));
 }
 
