@@ -371,10 +371,20 @@ void arc_vmengine(arc *c, value thr, int quanta)
       TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
       NEXT;
     INST(icar):
-      TVALR(thr) = (TVALR(thr) == CNIL) ? CNIL : car(TVALR(thr));
+      if (NIL_P(TVALR(thr)))
+	TVALR(thr) = CNIL;
+      else if (TYPE(TVALR(thr)) != T_CONS)
+	arc_err_cstrfmt(c, "can't take car of value with type %s", TYPENAME(TYPE(TVALR(thr))));
+      else
+	TVALR(thr) = car(TVALR(thr));
       NEXT;
     INST(icdr):
-      TVALR(thr) = (TVALR(thr) == CNIL) ? CNIL : cdr(TVALR(thr));
+      if (NIL_P(TVALR(thr)))
+	TVALR(thr) = CNIL;
+      else if (TYPE(TVALR(thr)) != T_CONS)
+	arc_err_cstrfmt(c, "can't take cdr of value with type %s", TYPENAME(TYPE(TVALR(thr))));
+      else
+	TVALR(thr) = cdr(TVALR(thr));
       NEXT;
     INST(iscar):
       scar(CPOP(thr), TVALR(thr));
@@ -1168,6 +1178,12 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
     arc_err_cstrfmt(c, "procedure on-err: closure required for first arg");
     return(CNIL);
   }
+
+  if (TYPE(fn) != T_CLOS) {
+    arc_err_cstrfmt(c, "procedure on-err: closure required for second arg");
+    return(CNIL);
+  }
+
   fun = car(errfn);
   env = cdr(errfn);
   offset = INT2FIX(0);
@@ -1322,12 +1338,14 @@ value arc_err(arc *c, value emsg)
 {
   value thr = c->curthread;
 
+  TYPECHECK(emsg, T_STRING, 1);
   return(arc_errexc(c, arc_mkexception(c, emsg, CODE_NAME(TFUNR(thr)),
 				       TCONR(thr))));
 }
 
 value arc_exc_details(arc *c, value exc)
 {
+  TYPECHECK(exc, T_EXCEPTION, 1);
   return(VINDEX(exc, 0));
 }
 
@@ -1343,6 +1361,7 @@ value arc_callcc(arc *c, value argv, value rv, CC4CTX)
     return(CNIL);
   }
   func = VINDEX(argv, 0);
+  TYPECHECK(func, T_CLOS, 1);
   CC4BEGIN(c);
   CC4CALL(c, argv, func, 1, car(TCONR(thr)));
   CC4END;
