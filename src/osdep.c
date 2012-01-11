@@ -170,6 +170,7 @@ value arc_system(arc *c, value cmd)
   int len;
   char *cmdstr;
 
+  TYPECHECK(cmd, T_STRING, 1);
   len = FIX2INT(arc_strutflen(c, cmd));
   cmdstr = (char *)alloca(sizeof(char)*len+1);
   arc_str2cstr(c, cmd, cmdstr);
@@ -180,7 +181,7 @@ value arc_quit(arc *c, int argc, value *argv)
 {
   int exitcode = 0;
 
-  if (argc == 1)
+  if (argc == 1 && TYPE(argv[0] == T_FIXNUM))
     exitcode = FIX2INT(argv[0]);
   else if (argc > 1) {
     arc_err_cstrfmt(c, "quit: too many arguments (%d for 1)", argc);
