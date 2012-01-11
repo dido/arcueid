@@ -31,6 +31,13 @@
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
+#include <dirent.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "arcueid.h"
 #include "utf.h"
 #include "io.h"
@@ -157,7 +164,6 @@ value arc_filefp(arc *c, FILE *fp, value filename)
   REP(fd)._custom.marker = file_marker;
   REP(fd)._custom.sweeper = file_sweeper;
   PORT(fd)->type = FT_FILE;
-  /* XXX make this file name a fully qualified pathname */
   PORT(fd)->name = filename;
   PORTF(fd).fp = fp;
   PORTF(fd).open = 1;
@@ -287,6 +293,10 @@ value arc_instring(arc *c, value str, value name)
   void *cellptr;
   value fd;
 
+  TYPECHECK(str, T_STRING, 1);
+  if (!NIL_P(name)) {
+    TYPECHECK(name, T_STRING, 2);
+  }
   cellptr = c->get_block(c, sizeof(struct cell) + sizeof(struct arc_port));
   if (cellptr == NULL)
     arc_err_cstrfmt(c, "openstring: cannot allocate memory");
@@ -313,6 +323,9 @@ SDEF2(instring, CNIL);
 
 value arc_outstring(arc *c, value name)
 {
+  if (!NIL_P(name)) {
+    TYPECHECK(name, T_STRING, 1);
+  }
   return(arc_instring(c, arc_mkstringc(c, ""), name));
 }
 
@@ -320,6 +333,11 @@ SDEF(outstring, CNIL);
 
 value arc_fstr_inside(arc *c, value fstr)
 {
+  TYPECHECK(fstr, T_PORT, 1);
+  if (PORT(fstr)->type != FT_STRING) {
+    arc_err_cstrfmt(c, "port is not a string port");
+    return(CNIL);
+  }
   return(PORTS(fstr).str);
 }
 
@@ -328,6 +346,7 @@ value arc_readb(arc *c, value fd)
 {
   int ch;
 
+  TYPECHECK(fd, T_PORT, 1);
   CHECK_CLOSED(fd);
   /* Note that if there is an unget value available, it will return
      the whole *CHARACTER*, not a possible byte within the character!
@@ -352,6 +371,7 @@ value arc_writeb(arc *c, value byte, value fd)
 {
   int ch = FIX2INT(byte);
 
+  TYPECHECK(fd, T_PORT, 2);
   CHECK_CLOSED(fd);
   PORT(fd)->putb(c, PORT(fd), ch);
   if (ch == EOF)
@@ -399,6 +419,7 @@ value arc_readc(arc *c, value fd)
 {
   Rune r;
 
+  TYPECHECK(fd, T_PORT, 1);
   CHECK_CLOSED(fd);
   r = arc_readc_rune(c, fd);
   if (r < 0)
@@ -413,6 +434,7 @@ Rune arc_writec_rune(arc *c, Rune r, value fd)
   char buf[UTFmax];
   int nbytes, i;
 
+  TYPECHECK(fd, T_PORT, 1);
   CHECK_CLOSED(fd);
   if (PORT(fd)->type == FT_STRING) {
     PORT(fd)->putb(c, PORT(fd), r);
@@ -427,6 +449,8 @@ Rune arc_writec_rune(arc *c, Rune r, value fd)
 
 value arc_writec(arc *c, value r, value fd)
 {
+  TYPECHECK(r, T_CHAR, 1);
+  TYPECHECK(fd, T_PORT, 2);
   CHECK_CLOSED(fd);
   arc_writec_rune(c, REP(r)._char, fd);
   return(r);
@@ -444,6 +468,8 @@ Rune arc_ungetc_rune(arc *c, Rune r, value fd)
 /* Note that ungetc is a rather simplistic function. */
 value arc_ungetc(arc *c, value r, value fd)
 {
+  TYPECHECK(fd, T_CHAR, 1);
+  TYPECHECK(fd, T_PORT, 2);
   CHECK_CLOSED(fd);
   arc_ungetc_rune(c, REP(r)._char, fd);
   return(r);
@@ -467,6 +493,7 @@ value arc_peekc(arc *c, value fd)
 {
   Rune r;
 
+  TYPECHECK(fd, T_PORT, 1);
   CHECK_CLOSED(fd);
   r = arc_peekc_rune(c, fd);
   return(arc_mkchar(c, r));
@@ -478,6 +505,9 @@ value arc_peekc(arc *c, value fd)
    systems) */
 value arc_seek(arc *c, value fd, value ofs, value whence)
 {
+  TYPECHECK(fd, T_PORT, 1);
+  TYPECHECK(ofs, T_FIXNUM, 2);
+  TYPECHECK(whence, T_FIXNUM, 3);
   CHECK_CLOSED(fd);
   if (PORT(fd)->seek(c, PORT(fd), FIX2INT(ofs), FIX2INT(whence)) < 0)
     return(CNIL);
@@ -488,6 +518,7 @@ value arc_tell(arc *c, value fd)
 {
   int64_t pos;
 
+  TYPECHECK(fd, T_PORT, 1);
   CHECK_CLOSED(fd);
   pos = PORT(fd)->tell(c, PORT(fd));
   if (pos < 0)
@@ -497,6 +528,7 @@ value arc_tell(arc *c, value fd)
 
 value arc_close(arc *c, value fd)
 {
+  TYPECHECK(fd, T_PORT, 1);
   if (PORT(fd)->close(c, PORT(fd)) != 0) {
     int en = errno;
 
@@ -565,6 +597,7 @@ value arc_pipe_from(arc *c, value cmd)
   int len;
   char *cmdstr;
 
+  TYPECHECK(cmd, T_STRING, 1);
   len = FIX2INT(arc_strutflen(c, cmd));
   cmdstr = (char *)alloca(sizeof(char)*len+1);
   arc_str2cstr(c, cmd, cmdstr);
@@ -595,6 +628,8 @@ value arc_call_w_stdin(arc *c, value argv, value rv, CC4CTX)
   CC4V(cont) = car(TCONR(CC4V(thr)));
   CC4V(port) = VINDEX(argv, 0);
   CC4V(thunk) = VINDEX(argv, 1);
+  TYPECHECK(CC4V(port), T_PORT, 1);
+  TYPECHECK(CC4V(thunk), T_CLOS, 2);
   /* modify the continuation created to call this to have its stdin
      set to whatever was specified. */
   CONT_FPS(CC4V(cont)) = arc_mkvector(c, 3);
@@ -625,6 +660,8 @@ value arc_call_w_stdout(arc *c, value argv, value rv, CC4CTX)
   CC4V(cont) = car(TCONR(CC4V(thr)));
   CC4V(port) = VINDEX(argv, 0);
   CC4V(thunk) = VINDEX(argv, 1);
+  TYPECHECK(CC4V(port), T_PORT, 1);
+  TYPECHECK(CC4V(thunk), T_CLOS, 2);
   /* modify the continuation created to call this to have its stdout
      set to whatever was specified. */
   CONT_FPS(CC4V(cont)) = arc_mkvector(c, 3);
@@ -635,4 +672,41 @@ value arc_call_w_stdout(arc *c, value argv, value rv, CC4CTX)
   CC4CALL(c, argv, CC4V(thunk), 0, CNIL);
   CC4END;
   return(rv);
+}
+
+value arc_dir(arc *c, value dirname)
+{
+  char *utf_filename;
+  DIR *dirp;
+  int en;
+  value dirlist;
+  struct dirent *entry, *result;
+  int delen;
+
+  TYPECHECK(dirname, T_STRING, 1);
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, dirname)) + 1);
+  arc_str2cstr(c, dirname, utf_filename);
+  dirp = opendir(utf_filename);
+  if (dirp == NULL) {
+    en = errno;
+    arc_err_cstrfmt(c, "dir: cannot open directory \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
+    return(CNIL);
+  }
+  dirlist = CNIL;
+  delen = offsetof(struct dirent, d_name)
+    + pathconf(utf_filename, _PC_NAME_MAX) + 1;
+  entry = (struct dirent *)alloca(delen);
+  for (;;) {
+    if (readdir_r(dirp, entry, &result) != 0) {
+      /* error */
+      en = errno;
+      arc_err_cstrfmt(c, "dir: error reading directory \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
+      return(CNIL);
+    }
+    /* end of list */
+    if (result == NULL)
+      break;
+    dirlist = cons(c, arc_mkstringc(c, entry->d_name), dirlist);
+  }
+  return(dirlist);
 }
