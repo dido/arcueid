@@ -210,18 +210,6 @@ value arc_list_length(arc *c, value list)
   return(n);
 }
 
-/* Create a tagged object.  Type should be a symbol, and rep
-   should be the representation.  This is most commonly used
-   for macros. */
-value arc_tag(arc *c, value type, value rep)
-{
-  value tag;
-
-  tag = cons(c, type, rep);
-  BTYPE(tag) = T_TAGGED;
-  return(tag);
-}
-
 value arc_cmp(arc *c, value v1, value v2)
 {
   if (!(NUMERIC_P(v1) && NUMERIC_P(v2)) && TYPE(v1) != TYPE(v2)) {
