@@ -109,9 +109,12 @@ enum arc_types {
   T_CCODE = 0x1a,		/* a C function */
   T_CUSTOM = 0x1b,		/* custom type */
   T_XCONT = 0x1c,		/* CC4 x-continuation */
+  T_MAX = 0x1c,
 
   T_NONE=0xff
 };
+
+extern const char *__arc_typenames[];
 
 enum threadstate {
   Talt,				/* blocked in alt instruction */
@@ -328,11 +331,13 @@ static inline int TYPE(value v)
   return(T_NONE);		/* unrecognized immediate type */
 }
 
+#define TYPENAME(tnum) (((tnum) >= 0 && (tnum) <= T_MAX) ? (__arc_typenames[tnum]) : "unknown")
+
 #define TYPECHECK(arg, expected, argno)			\
   if (TYPE(arg) != expected) {				\
-    arc_err_cstrfmt(c, "expected argument %d to be type %d given type %d", argno, expected, TYPE(arg)); \
+    arc_err_cstrfmt(c, "expected argument %d to be type %s given type %s", argno, TYPENAME(expected), TYPENAME(TYPE(arg))); \
     return(CNIL);							\
-  }
+    }
 
 #define CONS_P(x) ((TYPE(x)) == (T_CONS))
 
