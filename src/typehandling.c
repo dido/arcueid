@@ -44,6 +44,38 @@
 void *alloca (size_t);
 #endif
 
+/* make sure this corresponds to arc_types */
+const char *__arc_typenames[] = {
+  "sym",			/* T_NIL */
+  "sym",			/* T_TRUE */
+  "int",			/* T_FIXNUM */
+  "int",			/* T_BIGNUM */
+  "num",			/* T_FLONUM */
+  "num",			/* T_RATIONAL */
+  "num",			/* T_COMPLEX */
+  "char",			/* T_CHAR */
+  "string",			/* T_STRING */
+  "sym",			/* T_SYMBOL */
+  "cons",			/* T_CONS */
+  "table",			/* T_TABLE */
+  "bucket",			/* T_TBUCKET */
+  "tagged",			/* T_TAGGED */
+  "input",			/* T_INPUT */
+  "output",			/* T_OUTPUT */
+  "exception",			/* T_EXCEPTION */
+  "port",			/* T_PORT */
+  "thread",			/* T_THREAD */
+  "vector",			/* T_VECTOR */
+  "fn",				/* T_CONT */
+  "fn",				/* T_CLOS */
+  "fn",				/* T_ENV */
+  "fn",				/* T_VMCODE */
+  "fn",				/* T_CCODE */
+  "custom",			/* T_CUSTOM */
+  "fn",				/* T_XCONT */
+  NULL
+};
+
 /* Determine numeric base from argument 2 of a coerce */
 static value numeric_base(arc *c, value argv, const char *caller)
 {
