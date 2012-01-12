@@ -53,14 +53,14 @@ struct arc_port {
 #define PORTF(v) (PORT(v)->u.file)
 #define PORTS(v) (PORT(v)->u.strfile)
 
-extern void arc_thread_wait_fd(arc *c, int fd);
+extern void arc_thread_wait_fd(volatile arc *c, volatile int fd);
 
 /* This function should be used by basic read I/O functions and must
    be called before any side effects occur. */
 #define READ_CHECK(c, port) do {				\
-  if (!PORT(port)->ready(c, PORT(port))) {			\
+  if (!(PORT(port)->ready(c, PORT(port)))) {			\
     arc_thread_wait_fd(c, PORT(port)->fd(c, PORT(port)));	\
-  } while (0)
+  } } while (0)
 
 #define _IO_H_
 
