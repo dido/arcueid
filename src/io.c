@@ -151,6 +151,24 @@ static int file_close(arc *c, struct arc_port *p)
   return(ret);
 }
 
+static int file_ready(arc *c, struct arc_port *p)
+{
+  FILE *fp;
+
+  fp = p->u.file.fp;
+  /* XXX - NOT PORTABLE! */
+#ifdef _IO_fpos_t
+  return(fp->_IO_read_ptr != fp->_IO_read_end);
+#else
+  return(fp->_gptr < (fp)->_egptr);
+#endif
+}
+
+static int file_fd(arc *c, struct arc_port *p)
+{
+  return(fileno(p->u.file.fp));
+}
+
 value arc_filefp(arc *c, FILE *fp, value filename)
 {
   void *cellptr;
@@ -173,6 +191,8 @@ value arc_filefp(arc *c, FILE *fp, value filename)
   PORT(fd)->seek = file_seek;
   PORT(fd)->tell = file_tell;
   PORT(fd)->close = file_close;
+  PORT(fd)->ready = file_ready;
+  PORT(fd)->fd = file_fd;
   PORT(fd)->closed = 0;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
@@ -289,6 +309,16 @@ static int fstr_close(arc *c, struct arc_port *p)
   return(0);
 }
 
+static int fstr_ready(arc *c, struct arc_port *p)
+{
+  return(1);			/* fstr's are always ready */
+}
+
+static int fstr_fd(arc *c, struct arc_port *p)
+{
+  return(-1);			/* no such thing */
+}
+
 value arc_instring(arc *c, value str, value name)
 {
   void *cellptr;
@@ -315,6 +345,8 @@ value arc_instring(arc *c, value str, value name)
   PORT(fd)->seek = fstr_seek;
   PORT(fd)->tell = fstr_tell;
   PORT(fd)->close = fstr_close;
+  PORT(fd)->ready = fstr_ready;
+  PORT(fd)->fd = fstr_fd;
   PORT(fd)->closed = 0;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   return(fd);
@@ -348,7 +380,6 @@ value arc_readb(arc *c, value fd)
   int ch;
 
   TYPECHECK(fd, T_PORT, 1);
-  CHECK_CLOSED(fd);
   /* Note that if there is an unget value available, it will return
      the whole *CHARACTER*, not a possible byte within the character!
      As before, one isn't really supposed to mix the 'c' functions
@@ -359,6 +390,8 @@ value arc_readb(arc *c, value fd)
     return(INT2FIX(ch));
   }
 
+  READ_CHECK(c, fd);
+  CHECK_CLOSED(fd);
   ch = PORT(fd)->getb(c, PORT(fd));
   if (ch == EOF)
     ch = -1;
@@ -391,7 +424,6 @@ Rune arc_readc_rune(arc *c, value fd)
   int i;
   Rune r;
 
-  CHECK_CLOSED(fd);
   if (PORT(fd)->ungetrune >= 0) {
     r = PORT(fd)->ungetrune;
     PORT(fd)->ungetrune = -1;
@@ -402,6 +434,8 @@ Rune arc_readc_rune(arc *c, value fd)
     return(FIX2INT(arc_readb(c, fd)));
 
   for (i=0; i<UTFmax; i++) {
+    READ_CHECK(c, fd);
+    CHECK_CLOSED(fd);
     ch = PORT(fd)->getb(c, PORT(fd));
     if (ch == EOF)
       return(-1);
