@@ -727,3 +727,19 @@ value arc_dir_exists(arc *c, value dirname)
     return(dirname);
   return(CNIL);
 }
+
+value arc_file_exists(arc *c, value filename)
+{
+  char *utf_filename;
+  struct stat st;
+
+  TYPECHECK(filename, T_STRING, 1);
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
+  arc_str2cstr(c, filename, utf_filename);
+  if (stat(utf_filename, &st) == -1) {
+    return(CNIL);
+  }
+  if (!S_ISDIR(st.st_mode))
+    return(filename);
+  return(CNIL);
+}
