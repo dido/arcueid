@@ -442,9 +442,9 @@ notice and this notice are preserved.
 	   on systems that support them.  Only fall back to standard
 	   POSIX.1-2001 select(2) only if no alternatives are
 	   available.
-   - [-] File system operations [1/5]
+   - [-] File system operations [2/5]
      - [X] dir
-     - [ ] dir-exists
+     - [X] dir-exists
      - [ ] mkdir (not provided by arc3)
      - [ ] file-exists
      - [ ] rmfile
