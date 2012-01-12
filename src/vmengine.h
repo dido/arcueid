@@ -72,6 +72,14 @@ extern int arc_literal(arc *c, value cctx, value literal);
 extern value arc_cctx2code(arc *c, value cctx);
 extern int arc_disasm_inst(arc *c, int index, value *codeptr, value code);
 
+extern value arc_mkvmcode(arc *c, int length);
+extern value arc_mkcode(arc *c, value vmccode, int nlits);
+extern value arc_code_setname(arc *c, value code, value codename);
+extern value arc_mkclosure(arc *c, value code, value env);
+extern value arc_mkccode(arc *c, int argc, value (*_cfunc)(), value name);
+extern value arc_mkcctx(arc *c, value vcodesize, value vlitsize);
+extern value arc_vcptr(arc *c, value cctx);
+
 /* A code generation context (cctx) is a vector with the following
    items as indexes:
 
