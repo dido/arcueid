@@ -39,6 +39,7 @@ struct arc_port {
     int sock;
   } u;
   int closed;
+  int (*ready)(arc *, struct arc_port *);
   int (*getb)(arc *, struct arc_port *);
   int (*putb)(arc *, struct arc_port *, int);
   int (*seek)(arc *, struct arc_port *, int64_t, int);
@@ -50,6 +51,8 @@ struct arc_port {
 #define PORT(v) ((struct arc_port *)REP(v)._custom.data)
 #define PORTF(v) (PORT(v)->u.file)
 #define PORTS(v) (PORT(v)->u.strfile)
+
+extern int arc_thread_wait_fd(arc *c, int fd);
 
 #define _IO_H_
 
