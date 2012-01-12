@@ -21,12 +21,19 @@
 #include <string.h>
 #include <stdarg.h>
 #include <setjmp.h>
+#include <errno.h>
 #include "../config.h"
 #include "arcueid.h"
 #include "vmengine.h"
 #include "alloc.h"
 #include "arith.h"
 #include "symbols.h"
+#include "io.h"
+#ifdef HAVE_SYS_EPOLL_H
+#include <sys/epoll.h>
+#elif defined(HAVE_SYS_SELECT_H)
+#include <sys/select.h>
+#endif
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -138,6 +145,8 @@ static inline void trace(arc *c, value thr)
 
 #endif
 
+#define RUNNABLE(thr) (TSTATE(thr) == Tready || TSTATE(thr) == Texiting || TSTATE(thr) == Tcritical)
+
 /* instruction decoding macros */
 #ifdef HAVE_THREADED_INTERPRETER
 /* threaded interpreter */
@@ -145,16 +154,14 @@ static inline void trace(arc *c, value thr)
 #define JTBASE ((void *)&&lbl_inop)
 #ifdef HAVE_TRACING
 #define NEXT {							\
-  if (--TQUANTA(thr) <= 0 || !(TSTATE(thr) == Tready		\
-			       || TSTATE(thr)) == Texiting)	\
+    if (--TQUANTA(thr) <= 0 || !(RUNNABLE(thr)))		\
       goto endquantum;						\
     if (vmtrace)						\
       trace(c, thr);						\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #else
 #define NEXT {							\
-    if (--TQUANTA(thr) <= 0 || !(TSTATE(thr) == Tready		\
-				 || TSTATE(thr)) == Texiting)	\
+    if (--TQUANTA(thr) <= 0 || !(RUNNABLE(thr)))		\
       goto endquantum;						\
     goto *(JTBASE + jumptbl[*TIP(thr)++]); }
 #endif
@@ -180,8 +187,24 @@ void arc_vmengine(arc *c, value thr, int quanta)
 #endif
 
   setjmp(TVJMP(thr));
-  if (TSTATE(thr) != Tready && TSTATE(thr) != Texiting)
+  if (!RUNNABLE(thr))
     return;
+
+  if (TRESTARTR(thr) != CNIL) {
+    value vargv;
+    int i;
+    /* The restart register has something.  We ought to, you know,
+       restart the C function thus saved! */
+    WB(&TFUNR(thr), car(TRESTARTR(thr)));
+    vargv = cdr(TRESTARTR(thr));
+    for (i=0; i<VECLEN(vargv); i++)
+      CPUSH(thr, VINDEX(vargv, i));
+    TARGC(thr) = VECLEN(vargv);
+    WB(&TRESTARTR(thr), CNIL);
+    arc_apply(c, thr, TFUNR(thr));
+    /* now we can resume */
+  }
+
   c->curthread = thr;
   TQUANTA(thr) = quanta;
 
@@ -193,8 +216,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
   goto *(void *)(JTBASE + jumptbl[*TIP(thr)++]);
 #else
   for (;;) {
-    if (--TQUANTA(thr) <= 0 || (TSTATE(thr) != Tready
-				&& TSTATE(thr) != Texiting))
+    if (--TQUANTA(thr) <= 0 || (!RUNNABLE(thr)))
       goto endquantum;
     curr_instr = *TIP(thr)++;
     switch (curr_instr) {
@@ -471,6 +493,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TECONT(thr) = CNIL;
   TEXC(thr) = CNIL;
   TSTDH(thr) = arc_mkvector(c, 3);
+  TRESTARTR(thr) = CNIL;
   /* standard handles */
   VINDEX(TSTDH(thr), 0) = VINDEX(TSTDH(thr), 1)
     = VINDEX(TSTDH(thr), 2) = CNIL;
@@ -529,6 +552,7 @@ value arc_macapply(arc *c, value func, value args)
   value thr, oldthr, retval, arg, nahd;
   int argc;
 
+  c->in_compile = 1;
   oldthr = c->curthread;
   thr = arc_mkthread(c, func, c->stksize, 0);
   /* push the args in reverse order */
@@ -576,6 +600,7 @@ value arc_macapply(arc *c, value func, value args)
   }
   retval = TVALR(thr);
   c->curthread = oldthr;
+  c->in_compile = 0;
   return(retval);
 }
 
@@ -624,6 +649,17 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
   return(CC4V(conarg));
 }
 
+void set_restart(arc *c, value thr, value fun, int argc, value *argv)
+{
+  value vargv;
+  int i;
+
+  vargv = arc_mkvector(c, argc);
+  for (i=0; i<argc; i++)
+    VINDEX(vargv, i) = argv[i];
+  WB(&TRESTARTR(thr), cons(c, fun, vargv));
+}
+
 void arc_apply(arc *c, value thr, value fun)
 {
   value *argv, cfn, avec, retval;
@@ -664,7 +700,7 @@ void arc_apply(arc *c, value thr, value fun)
       avec = arc_mkvector(c, argc);
       memcpy(&VINDEX(avec, 0), argv, sizeof(value)*argc);
       /* initial call of a CC4 function.  The context and return value
-	 of called function are initially nil. */
+	 of the called function are initially nil. */
       retval = c4apply(c, thr, avec, CNIL, CNIL);
       if (TYPE(retval) == T_XCONT)
 	return;			/* go back to the virtual machine loop */
@@ -715,6 +751,12 @@ void arc_apply(arc *c, value thr, value fun)
       break;
     default:
       arc_err_cstrfmt(c, "too many arguments");
+      return;
+    }
+    /* if we get CRESTART, we set the restart register to the function
+       we just called, and save the arguments passed. */
+    if (TVALR(thr) == CRESTART) {
+      set_restart(c, thr, fun, argc, argv);
       return;
     }
     arc_return(c, thr);
@@ -947,14 +989,18 @@ int arc_return(arc *c, value thr)
 
   for (;;) {
     if (!CONS_P(TCONR(thr))) {
-      if (TSTATE(thr) == Texiting)
+      if (TSTATE(thr) == Texiting) {
+	c->in_compile = 0;
 	c->signal_error(c, VINDEX(TEXC(thr), 0));
+      }
       return(1);
     }
     cont = car(TCONR(thr));
     if (cont == CNIL) {
-      if (TSTATE(thr) == Texiting)
+      if (TSTATE(thr) == Texiting) {
+	c->in_compile = 0;
 	c->signal_error(c, VINDEX(TEXC(thr), 0));
+      }
       return(1);
     }
     /* see if the continuation has a cleanup continuation created
@@ -1170,6 +1216,7 @@ value arc_errexc(arc *c, value exc)
     }
     if (newconr == CNIL) {
       /* if there is nothing, just signal error and be done with it. */
+      c->in_compile = 0;
       c->signal_error(c, VINDEX(exc, 0));
       return(CNIL);
     }
@@ -1256,6 +1303,7 @@ value arc_err_cstrfmt2(arc *c, const char *lastcall, const char *fmt, ...)
   conr = (c->curthread == CNIL) ? CNIL : TCONR(c->curthread);
   ex = arc_mkexception(c, errtext, arc_mkstringc(c, lastcall), conr);
   if (c->curthread == CNIL) {
+    c->in_compile = 0;
     c->signal_error(c, VINDEX(ex, 0));
     return(CNIL);
   }
@@ -1336,20 +1384,88 @@ value arc_protect(arc *c, value argv, value rv, CC4CTX)
   return(rv);
 }
 
+/* Used when threads are waiting on file descriptors */
+int arc_thread_wait_fd(arc *c, int fd)
+{
+  value thr = c->curthread;
+
+  /* Do not wait for file descriptors if we are in a critical
+     section, compiling a macro, the only thread running, or
+     are a thread that is about to be terminated. */
+  if (TSTATE(thr) == Tcritical || TSTATE(thr) == Texiting)
+    return(1);
+  if (c->in_compile)
+    return(1);
+  if (car(c->vmqueue) == thr && cdr(c->vmqueue) == CNIL)
+    return(1);
+
+  TSTATE(thr) = Tiowait;
+  TWAITFD(thr) = fd;
+  return(0);
+}
+
 /* Main dispatcher.  Will run each thread in the thread list for
    at most c->quanta cycles or until the thread leaves ready state.
    Also runs garbage collector threads periodically.  This should
    be called with at least one thread already in the run queue.
-   Terminates when no more threads can run. */
+   Terminates when no more threads can run.
+
+   全く, this is beginning to look a lot a like the reactor pattern!
+*/
 void arc_thread_dispatch(arc *c)
 {
   value prev = CNIL, thr;
   c->vmqueue = CNIL;
-  int nthreads = 0, blockedthreads = 0, ncycles = 0;
+  int nthreads = 0, blockedthreads = 0, ncycles = 0, iowait = 0;
+#ifdef HAVE_SYS_EPOLL_H
+#define MAX_EVENTS 8192
+  int epollfd;
+  int eptimeout, nfds, n;
+  struct epoll_event epevents[MAX_EVENTS], ev;
+#endif
+
+#ifdef HAVE_SYS_EPOLL_H
+  epollfd = epoll_create(MAX_EVENTS);
+#endif
 
   for (;;) {
     /* loop back to the beginning if we hit the nil at the end */
     if (c->vmqueue == CNIL) {
+      /* see if we need to do an epoll/select for threads which
+	 are waiting on file descriptors */
+      if (iowait > 0) {
+#ifdef HAVE_SYS_EPOLL_H
+	/* wait indefinitely if all threads are either blocked or
+	   waiting on I/O, otherwise do not wait, and allow non-blocked
+	   threads to execute. */
+	eptimeout = (iowait == (nthreads - blockedthreads)) ? -1 : 0;
+	nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
+	if (nfds < 0) {
+	  int en = errno;
+	  arc_err_cstrfmt(c, "error waiting for Tiowait fds (%s; errno=%d)",
+			  strerror(en), en);
+	  return;
+	}
+
+	for (n=0; n <nfds; n++) {
+	  int fd;
+	  value thr;
+
+	  fd  = epevents[n].data.fd;
+	  thr = arc_hash_lookup(c, c->iowaittbl, INT2FIX(fd));
+	  if (thr != CNIL) {
+	    TWAITFD(thr) = -1;
+	    TWAITFOR(thr) = 0;
+	    TSTATE(thr) = Tready;
+	  }
+	  arc_hash_delete(c, c->iowaittbl, INT2FIX(fd));
+	  epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &ev);
+	}
+#else
+#error no epoll!
+#endif
+	iowait = 0;
+      }
       c->curthread = CNIL;
       /* Simple deadlock detection.  We declare deadlock if after two
 	 cycles through the run queue we find that all threads are in
@@ -1400,11 +1516,32 @@ void arc_thread_dispatch(arc *c)
     case Texiting:
       arc_vmengine(c, thr, c->quantum);
       break;
+    case Tcritical:
+      /* if we are in a critical section, allow the thread
+	 to keep running by itself until it leaves critical */
+      while (TSTATE(thr) == Tcritical) {
+	arc_vmengine(c, thr, c->quantum);
+      }
+    case Tiowait:
+      iowait++;
+#ifdef HAVE_SYS_EPOLL_H
+      ev.events = EPOLLIN;
+      if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(thr), &ev) < 0) {
+	int en = errno;
+	if (errno != EEXIST) {
+	  arc_err_cstrfmt(c, "error setting epoll for thread on blocking fd (%s; errno=%d)", strerror(en), en);
+	  return;
+	}
+	arc_hash_insert(c, c->iowaittbl, INT2FIX(TWAITFD(thr)), thr);
+      }
+      break;
+#else
+#error no epoll!
+#endif
     }
 
     /* run a garbage collection cycle */
     c->rungc(c);
-
     /* try to run next thread */
     prev = c->vmqueue;
     c->vmqueue = cdr(c->vmqueue);
