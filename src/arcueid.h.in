@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <setjmp.h>
+#include <ucontext.h>
 @MP_HEADER@
 
 typedef unsigned long value;
@@ -123,6 +124,7 @@ enum threadstate {
   Tsend,			/* waiting to send */
   Trecv,			/* waiting to recv */
   Tiowait,			/* I/O wait */
+  Tioready,			/* I/O ready to resume */
   Tready,			/* ready to be scheduled */
   Tsleep,			/* thread sleeping */
   Tcritical,			/* critical section */
@@ -156,7 +158,8 @@ struct vmthread {
   value stdh;		/* standard handles (stdin, stdout, stderr) */
   int waitfd;		/* file descriptor waited on */
   int waitfor;		/* wait for flag */
-  value restartr;	/* restart register */
+  ucontext_t rsc;	/* restart context */
+  jmp_buf rjmpbuf;	/* restart jump buf */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -186,6 +189,8 @@ struct vmthread {
 #define TSTDH(t) (REP(t)._thread.stdh)
 #define TWAITFD(t) (REP(t)._thread.waitfd)
 #define TWAITFOR(t) (REP(t)._thread.waitfor)
+#define TRSC(t) (REP(t)._thread.rsc)
+#define TRJMP(t) (REP(t)._thread.rjmpbuf)
 
 /* Cells for boxed items */
 struct cell {
