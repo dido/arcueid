@@ -190,21 +190,6 @@ void arc_vmengine(arc *c, value thr, int quanta)
   if (!RUNNABLE(thr))
     return;
 
-  if (TRESTARTR(thr) != CNIL) {
-    value vargv;
-    int i;
-    /* The restart register has something.  We ought to, you know,
-       restart the C function thus saved! */
-    WB(&TFUNR(thr), car(TRESTARTR(thr)));
-    vargv = cdr(TRESTARTR(thr));
-    for (i=0; i<VECLEN(vargv); i++)
-      CPUSH(thr, VINDEX(vargv, i));
-    TARGC(thr) = VECLEN(vargv);
-    WB(&TRESTARTR(thr), CNIL);
-    arc_apply(c, thr, TFUNR(thr));
-    /* now we can resume */
-  }
-
   c->curthread = thr;
   TQUANTA(thr) = quanta;
 
@@ -493,7 +478,6 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TECONT(thr) = CNIL;
   TEXC(thr) = CNIL;
   TSTDH(thr) = arc_mkvector(c, 3);
-  TRESTARTR(thr) = CNIL;
   /* standard handles */
   VINDEX(TSTDH(thr), 0) = VINDEX(TSTDH(thr), 1)
     = VINDEX(TSTDH(thr), 2) = CNIL;
@@ -649,17 +633,6 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
   return(CC4V(conarg));
 }
 
-void set_restart(arc *c, value thr, value fun, int argc, value *argv)
-{
-  value vargv;
-  int i;
-
-  vargv = arc_mkvector(c, argc);
-  for (i=0; i<argc; i++)
-    VINDEX(vargv, i) = argv[i];
-  WB(&TRESTARTR(thr), cons(c, fun, vargv));
-}
-
 void arc_apply(arc *c, value thr, value fun)
 {
   value *argv, cfn, avec, retval;
@@ -751,12 +724,6 @@ void arc_apply(arc *c, value thr, value fun)
       break;
     default:
       arc_err_cstrfmt(c, "too many arguments");
-      return;
-    }
-    /* if we get CRESTART, we set the restart register to the function
-       we just called, and save the arguments passed. */
-    if (TVALR(thr) == CRESTART) {
-      set_restart(c, thr, fun, argc, argv);
       return;
     }
     arc_return(c, thr);
