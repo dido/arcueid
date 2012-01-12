@@ -40,6 +40,7 @@ struct arc_port {
   } u;
   int closed;
   int (*ready)(arc *, struct arc_port *);
+  int (*fd)(arc *, struct arc_port *);
   int (*getb)(arc *, struct arc_port *);
   int (*putb)(arc *, struct arc_port *, int);
   int (*seek)(arc *, struct arc_port *, int64_t, int);
@@ -53,6 +54,14 @@ struct arc_port {
 #define PORTS(v) (PORT(v)->u.strfile)
 
 extern int arc_thread_wait_fd(arc *c, int fd);
+
+/* This function should be used by basic read I/O functions and must
+   be called before any side effects occur. */
+#define READ_CHECK(c, port) do {				\
+  if (!PORT(port)->ready(c, PORT(port))) {			\
+    arc_thread_wait_fd(c, PORT(port)->fd(c, PORT(port)));	\
+    return(CRESTART);						\
+  } while (0)
 
 #define _IO_H_
 
