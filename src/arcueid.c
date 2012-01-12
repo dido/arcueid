@@ -643,6 +643,7 @@ void arc_init_sq(arc *c, int stksize, int quanta)
   c->curthread = CNIL;
   c->vmthreads = CNIL;
   c->vmqueue = CNIL;
+  c->in_compile = 0;
 }
 
 void arc_init(arc *c)
