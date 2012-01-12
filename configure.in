@@ -46,7 +46,10 @@ AC_CHECK_HEADERS(math.h,, AC_MSG_FAILURE([Math library header seems to be missin
 
 AC_FUNC_ALLOCA
 
-AX_LIB_READLINE
+AC_ARG_WITH(readline, AC_HELP_STRING(--without-readline,disable readline support))
+if test xno != x$with_readline; then
+   AX_LIB_READLINE
+fi
 
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(long)
