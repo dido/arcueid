@@ -156,6 +156,7 @@ struct vmthread {
   value stdh;		/* standard handles (stdin, stdout, stderr) */
   int waitfd;		/* file descriptor waited on */
   int waitfor;		/* wait for flag */
+  value restartr;	/* restart register */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -185,6 +186,7 @@ struct vmthread {
 #define TSTDH(t) (REP(t)._thread.stdh)
 #define TWAITFD(t) (REP(t)._thread.waitfd)
 #define TWAITFOR(t) (REP(t)._thread.waitfor)
+#define TRESTARTR(t) (REP(t)._thread.restartr)
 
 /* Cells for boxed items */
 struct cell {
