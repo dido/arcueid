@@ -743,3 +743,19 @@ value arc_file_exists(arc *c, value filename)
     return(filename);
   return(CNIL);
 }
+
+value arc_rmfile(arc *c, value filename)
+{
+  char *utf_filename;
+  int en;
+
+  TYPECHECK(filename, T_STRING, 1);
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
+  arc_str2cstr(c, filename, utf_filename);
+  if (unlink(utf_filename) < 0) {
+    en = errno;
+    arc_err_cstrfmt(c, "rmfile: cannot delete file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
+    return(CNIL);
+  }
+  return(CNIL);
+}
