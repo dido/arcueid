@@ -31,6 +31,8 @@
 #include "arith.h"
 #include "utf.h"
 #include "symbols.h"
+#include "builtin.h"
+#include "vmengine.h"
 #include "../config.h"
 
 value arc_is(arc *c, value v1, value v2)
