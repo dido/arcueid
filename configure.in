@@ -125,6 +125,7 @@ if test "x$enable_mmap" != xno; then
    AC_FUNC_MMAP
 fi
 
+AC_ARG_WITH(epoll, AC_HELP_STRING(--without-epoll,disable epoll support (Linux only)))
 dnl System type checks.
 case "$host" in
   *-linux-*)
