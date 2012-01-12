@@ -43,6 +43,7 @@
 #include "io.h"
 #include "vmengine.h"
 #include "symbols.h"
+#include "builtin.h"
 #include "../config.h"
 
 #define CHECK_CLOSED(fd)				\
@@ -709,4 +710,20 @@ value arc_dir(arc *c, value dirname)
     dirlist = cons(c, arc_mkstringc(c, entry->d_name), dirlist);
   }
   return(dirlist);
+}
+
+value arc_dir_exists(arc *c, value dirname)
+{
+  char *utf_filename;
+  struct stat st;
+
+  TYPECHECK(dirname, T_STRING, 1);
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, dirname)) + 1);
+  arc_str2cstr(c, dirname, utf_filename);
+  if (stat(utf_filename, &st) == -1) {
+    return(CNIL);
+  }
+  if (S_ISDIR(st.st_mode))
+    return(dirname);
+  return(CNIL);
 }
