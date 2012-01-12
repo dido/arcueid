@@ -265,8 +265,8 @@ struct cell {
 #define VALUE_SIZE @VALUE_SIZE@
 
 /* Immediate values */
-#define IMMEDIATE_MASK 0x03
-#define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
+#define IMMEDIATE_MASK 0x0f
+#define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND || (value)(x) == CRESTART)
 
 #define SYMBOL_FLAG 0x0e
 #define SYMBOL_P(x) (((value)(x)&0xff)==SYMBOL_FLAG)
@@ -276,6 +276,8 @@ struct cell {
 #define CTRUE ((value)2)
 #define CUNDEF ((value)4)	/* "tombstone" value */
 #define CUNBOUND ((value)6)	/* returned when a hash has no binding value */
+#define CRESTART ((value)8)	/* returned by a C function that is to be
+				   restarted for blocking I/O */
 
 #define BTYPE(v) (((struct cell *)(v))->_type)
 #define REP(v) (((struct cell *)(v))->obj)
