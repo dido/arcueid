@@ -176,8 +176,8 @@ static void error_handler(struct arc *c, value err)
 int main(int argc, char **argv)
 {
   arc *c, cc;
-  value sexpr, readfp, cctx, code, ret, initload;
-  char *loadstr;
+  value sexpr, readfp, cctx, code, initload;
+  char *loadstr, *replcode;
 
   c = &cc;
   arc_init(c);
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
-    ret = arc_macapply(c, code, CNIL);
+    arc_macapply(c, code, CNIL);
     c->rungc(c);
   }
   arc_close(c, initload);
@@ -201,24 +201,21 @@ int main(int argc, char **argv)
 #ifdef HAVE_LIBREADLINE
   readfp = arc_readlineport(c);
   arc_bindsym(c, arc_intern_cstr(c, "repl-readline"), readfp);
+#endif
+
+  /* read-eval-print in Arcueid! */
+#ifdef HAVE_LIBREADLINE
+  replcode = "((afn () (let sexpr (read repl-readline) (if (no sexpr) nil (do (write (eval sexpr)) (prn) (self))))))";
 #else
-  readfp = arc_stdin(c);
+  replcode = "((afn () (disp \"arc> \") (let sexpr (read (stdin)) (if (no sexpr) nil (do (write (eval sexpr)) (prn) (self))))))";
 #endif
-  for (;;) {
-#ifndef HAVE_LIBREADLINE
-    printf("arc> ");
-#endif
-    sexpr = arc_read(c, readfp, CNIL);
-    if (sexpr == CNIL)
-      break;
-    cctx = arc_mkcctx(c, INT2FIX(1), 0);
-    arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-    code = arc_cctx2code(c, cctx);
-    ret = arc_macapply(c, code, CNIL);
-    arc_print_string(c, arc_prettyprint(c, ret));
-    printf("\n");
-    c->rungc(c);
-  }
+  sexpr = arc_read(c, arc_instring(c, arc_mkstringc(c, replcode), CNIL), CNIL);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  code = arc_mkclosure(c, code, CNIL);
+  arc_spawn(c, code);
+  arc_thread_dispatch(c);
   return(EXIT_SUCCESS);
 }
 
