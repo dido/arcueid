@@ -60,7 +60,6 @@ extern int arc_thread_wait_fd(arc *c, int fd);
 #define READ_CHECK(c, port) do {				\
   if (!PORT(port)->ready(c, PORT(port))) {			\
     arc_thread_wait_fd(c, PORT(port)->fd(c, PORT(port)));	\
-    return(CRESTART);						\
   } while (0)
 
 #define _IO_H_
