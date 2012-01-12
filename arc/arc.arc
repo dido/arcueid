@@ -1327,11 +1327,12 @@
   (or (errsafe:load-table filename)
       (table)))
 
-;; This actually system'd a mkdir -p instead.  Arcueid will instead
-;; provide a mkdir function that does mkdir -p.
+
+;; XXX - there is something very wrong with this.  We should make
+;; a built-in function for mkdir
 (def ensure-dir (path)
   (unless (dir-exists path)
-    (mkdir path)))
+    (system (string "mkdir -p " path))))
 
 (def date ((o s (seconds)))
   (rev (nthcdr 3 (timedate s))))
