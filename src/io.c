@@ -543,7 +543,7 @@ value arc_close(arc *c, value fd)
    and find some continuation register that may have a STDIN defined. */
 value arc_stdin(arc *c)
 {
-  value thr = c->curthread, cont, fps, h;
+  value thr = c->curthread, cont, fps, h=CNIL;
 
   if (thr != CNIL) {
     cont = TCONR(thr);
@@ -566,7 +566,7 @@ value arc_stdin(arc *c)
 
 value arc_stdout(arc *c)
 {
-  value thr = c->curthread, cont, fps, h;
+  value thr = c->curthread, cont, fps, h=CNIL;
 
   if (thr != CNIL) {
     cont = TCONR(thr);
@@ -588,7 +588,7 @@ value arc_stdout(arc *c)
 
 value arc_stderr(arc *c)
 {
-  value thr = c->curthread, cont, fps, h;
+  value thr = c->curthread, cont, fps, h=CNIL;
 
   if (thr != CNIL) {
     cont = TCONR(thr);
