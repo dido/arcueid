@@ -470,6 +470,10 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TCONR(thr) = CNIL;
   TECONT(thr) = CNIL;
   TEXC(thr) = CNIL;
+  TSTDH(thr) = arc_mkvector(c, 3);
+  /* standard handles */
+  VINDEX(TSTDH(thr), 0) = VINDEX(TSTDH(thr), 1)
+    = VINDEX(TSTDH(thr), 2) = CNIL;
   return(thr);
 }
 
@@ -1081,82 +1085,6 @@ value arc_mkclosure(arc *c, value code, value env)
   return(clos);
 }
 
-/* Main dispatcher.  Will run each thread in the thread list for
-   at most c->quanta cycles or until the thread leaves ready state.
-   Also runs garbage collector threads periodically.  This should
-   be called with at least one thread already in the run queue.
-   Terminates when no more threads can run. */
-void arc_thread_dispatch(arc *c)
-{
-  value prev = CNIL, thr;
-  c->vmqueue = CNIL;
-  int nthreads = 0, blockedthreads = 0, ncycles = 0;
-
-  for (;;) {
-    /* loop back to the beginning if we hit the nil at the end */
-    if (c->vmqueue == CNIL) {
-      /* Simple deadlock detection.  We declare deadlock if after two
-	 cycles through the run queue we find that all threads are in
-	 a blocked state. */
-      if (nthreads != 0 && nthreads == blockedthreads && ++ncycles > 2) {
-	arc_err_cstrfmt(c, "fatal: deadlock detected");
-	return;
-      } else {
-	/* reset cycle counter if we get a state where there are
-	   some threads which are not blocked */
-	ncycles = 0;
-      }
-      c->vmqueue = c->vmthreads;
-      prev = CNIL;
-      /* No more available threads, exit */
-      if (c->vmqueue == CNIL)
-	return;
-      /* reset thread counts */
-      nthreads = 0;
-      blockedthreads = 0;
-    }
-    ++nthreads;
-    thr = car(c->vmqueue);
-    switch (TSTATE(thr)) {
-      /* see if the thread has changed state to Trelease or
-       Tbroken.  Remove the thread from the queue if so. */
-    case Trelease:
-    case Tbroken:
-      /* dequeue the terminated thread */
-      if (prev == CNIL) {
-	WB(&c->vmthreads, cdr(c->vmqueue));
-      } else {
-	scdr(prev, cdr(c->vmqueue));
-      }
-      break;
-    case Talt:
-    case Tsend:
-    case Trecv:
-      /* increment count of threads in blocked states */
-      ++blockedthreads;
-      break;
-    case Tsleep:
-      /* Wake up a sleeping thread if the wakeup time is reached */
-      if (__arc_milliseconds() >= TWAKEUP(thr))
-	TSTATE(thr) = Tready;
-      /* fall through -- let the thread run */
-    case Tdebug:
-      /* this does nothing special for now */
-    case Tready:
-    case Texiting:
-      arc_vmengine(c, thr, c->quantum);
-      break;
-    }
-
-    /* run a garbage collection cycle */
-    c->rungc(c);
-
-    /* queue next thread */
-    prev = c->vmqueue;
-    c->vmqueue = cdr(c->vmqueue);
-  }
-}
-
 /* Exception handlers are continuations consed on top of the ECONT
    register.  It is not possible at the moment to make an error handling
    function in C.  I have to think about how to do that. */
@@ -1406,4 +1334,96 @@ value arc_protect(arc *c, value argv, value rv, CC4CTX)
   CC4CALL(c, argv, during, 0, CNIL);
   CC4END;
   return(rv);
+}
+
+/* Main dispatcher.  Will run each thread in the thread list for
+   at most c->quanta cycles or until the thread leaves ready state.
+   Also runs garbage collector threads periodically.  This should
+   be called with at least one thread already in the run queue.
+   Terminates when no more threads can run. */
+void arc_thread_dispatch(arc *c)
+{
+  value prev = CNIL, thr;
+  c->vmqueue = CNIL;
+  int nthreads = 0, blockedthreads = 0, ncycles = 0;
+
+  for (;;) {
+    /* loop back to the beginning if we hit the nil at the end */
+    if (c->vmqueue == CNIL) {
+      c->curthread = CNIL;
+      /* Simple deadlock detection.  We declare deadlock if after two
+	 cycles through the run queue we find that all threads are in
+	 a blocked state. */
+      if (nthreads != 0 && nthreads == blockedthreads && ++ncycles > 2) {
+	arc_err_cstrfmt(c, "fatal: deadlock detected");
+	return;
+      } else {
+	/* reset cycle counter if we get a state where there are
+	   some threads which are not blocked */
+	ncycles = 0;
+      }
+      c->vmqueue = c->vmthreads;
+      prev = CNIL;
+      /* No more available threads, exit */
+      if (c->vmqueue == CNIL)
+	return;
+      /* reset thread counts */
+      nthreads = 0;
+      blockedthreads = 0;
+    }
+    thr = car(c->vmqueue);
+    ++nthreads;
+    switch (TSTATE(thr)) {
+      /* see if the thread has changed state to Trelease or
+       Tbroken.  Remove the thread from the queue if so. */
+    case Trelease:
+    case Tbroken:
+      /* dequeue the terminated thread */
+      if (prev == CNIL) {
+	WB(&c->vmthreads, cdr(c->vmqueue));
+      } else {
+	scdr(prev, cdr(c->vmqueue));
+      }
+      break;
+    case Talt:
+    case Tsend:
+    case Trecv:
+      /* increment count of threads in blocked states */
+      ++blockedthreads;
+      break;
+    case Tsleep:
+      /* Wake up a sleeping thread if the wakeup time is reached */
+      if (__arc_milliseconds() >= FIX2INT(TWAKEUP(thr)))
+	TSTATE(thr) = Tready;
+      /* fall through -- let the thread run */
+    case Tready:
+    case Texiting:
+      arc_vmengine(c, thr, c->quantum);
+      break;
+    }
+
+    /* run a garbage collection cycle */
+    c->rungc(c);
+
+    /* try to run next thread */
+    prev = c->vmqueue;
+    c->vmqueue = cdr(c->vmqueue);
+  }
+}
+
+value arc_spawn(arc *c, value thunk)
+{
+  value thr;
+
+  TYPECHECK(thunk, T_CLOS, 1);
+  thr = arc_mkthread(c, car(thunk), c->stksize, 0);
+  TARGC(thr) = 0;
+  TENVR(thr) = cdr(thunk);
+  /* inherit standard handles from calling thread */
+  VINDEX(TSTDH(thr), 0) = arc_stdin(c);
+  VINDEX(TSTDH(thr), 1) = arc_stdout(c);
+  VINDEX(TSTDH(thr), 2) = arc_stderr(c);
+  /* add the new thread to vmthreads */
+  WB(&c->vmthreads, cons(c, thr, c->vmthreads));
+  return(thr);
 }
