@@ -303,6 +303,11 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     prettyprint(c, VINDEX(sexpr, 1), ppstr);
     append_cstring(c, ">", ppstr);
     break;
+  case T_THREAD:
+    append_cstring(c, "#<thread:", ppstr);
+    prettyprint(c, INT2FIX(TTID(sexpr)), ppstr);
+    append_cstring(c, ">", ppstr);
+    break;
   case T_PORT:
   case T_CUSTOM:
     {
@@ -463,6 +468,11 @@ value arc_sdisp(arc *c, value sexpr, value port)
     arc_sdisp(c, VINDEX(sexpr, 0), port);
     arc_writecstr(c, ":from:", port);
     arc_sdisp(c, VINDEX(sexpr, 1), port);
+    arc_writec_rune(c, '>', port);
+    break;
+  case T_THREAD:
+    arc_writecstr(c, "#<thread:", port);
+    arc_sdisp(c, TTID(sexpr), port);
     arc_writec_rune(c, '>', port);
     break;
   case T_PORT:
