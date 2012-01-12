@@ -28,7 +28,6 @@
 #include <stdarg.h>
 #include <time.h>
 #include <setjmp.h>
-#include <ucontext.h>
 @MP_HEADER@
 
 typedef unsigned long value;
@@ -140,6 +139,12 @@ enum threadstate {
 /* default thread stack size */
 #define TSTKSIZE 512
 
+struct ccont {
+  jmp_buf registers;
+  int n;
+  long *stack;
+};
+
 struct vmthread {
   /* virtual machine registers */
   value funr;		/* current function pointer register */
@@ -158,7 +163,7 @@ struct vmthread {
   value stdh;		/* standard handles (stdin, stdout, stderr) */
   int waitfd;		/* file descriptor waited on */
   int waitfor;		/* wait for flag */
-  ucontext_t rsc;	/* restart context */
+  struct ccont *rsc;	/* restart context */
   jmp_buf rjmpbuf;	/* restart jump buf */
 
   /* thread scheduling variables */
