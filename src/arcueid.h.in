@@ -552,6 +552,10 @@ extern value arc_readc(arc *c, value fd);
 extern value arc_sreadc(arc *c, int argc, value *argv);
 
 extern value arc_dir(arc *c, value dirname);
+extern value arc_dir_exists(arc *c, value dirname);
+extern value arc_mkdir(arc *c, value dirname);
+extern value arc_file_exists(arc *c, value filename);
+extern value arc_rmfile(arc *c, value filename);
 
 extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 extern value arc_ungetc(arc *c, value r, value fd);
