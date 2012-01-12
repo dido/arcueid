@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <setjmp.h>
 #include "../src/arcueid.h"
+#include "../src/builtin.h"
 #include "../src/vmengine.h"
 #include "../src/symbols.h"
 #include "../config.h"
