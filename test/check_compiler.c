@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2011 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -22,6 +22,7 @@
 #include <check.h>
 #include <math.h>
 #include "../src/arcueid.h"
+#include "../src/builtin.h"
 #include "../src/vmengine.h"
 #include "../src/symbols.h"
 #include "../config.h"
