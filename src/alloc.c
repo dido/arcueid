@@ -336,6 +336,9 @@ static void mark(arc *c, value v, int reclevel)
       mark(c, TENVR(v), reclevel+1); /* environment register */
       mark(c, TVALR(v), reclevel+1); /* value register */
       mark(c, TCONR(v), reclevel+1); /* continuation register */
+      mark(c, TECONT(v), reclevel+1); /* error continuation */
+      mark(c, TEXC(v), reclevel+1);   /* current exception */
+      mark(c, TSTDH(v), reclevel+1);  /* standard handles */
       /* Mark the stack of this thread (used portions only) */
       for (vptr = TSP(v); vptr == TSTOP(v); vptr++)
 	mark(c, *vptr, reclevel+1);
