@@ -339,7 +339,6 @@ static void mark(arc *c, value v, int reclevel)
       mark(c, TECONT(v), reclevel+1); /* error continuation */
       mark(c, TEXC(v), reclevel+1);   /* current exception */
       mark(c, TSTDH(v), reclevel+1);  /* standard handles */
-      mark(c, TRESTARTR(v), reclevel+1); /* restart register */
       /* Mark the stack of this thread (used portions only) */
       for (vptr = TSP(v); vptr == TSTOP(v); vptr++)
 	mark(c, *vptr, reclevel+1);
