@@ -3,9 +3,9 @@ Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
 * Version 0.0.7 (2012-??-??)
-- Clean up error handling for all functions now that a working error
-  handling mechanism is available
-- Directory and file system calls (ongoing)
+- Cleaned up error handling for all built-in functions now that a
+  working error handling mechanism is available (ongoing)
+- Directory and file system calls
 - Threading (ongoing)
 
 * Version 0.0.6 (2012-01-10)
