@@ -55,6 +55,63 @@ void *alloca (size_t);
 
 int vmtrace = 0;
 
+/* This is a kludge that effectively implements continuations in C.
+   It will actually save and restore the whole stack. */
+
+static long *pbos;
+
+static void save_stack(struct ccont *c, long *pbos, long *ptos)
+{
+  int n = pbos-ptos;
+  int i;
+
+  c->stack = (long *)malloc(n*sizeof(long));
+  c->n = n;
+  for (i=0; i<n; i++)
+    c->stack[i] = pbos[-i];
+}
+
+static struct ccont *saveccont(void) {
+  struct ccont *c = (struct ccont *)malloc(sizeof(struct ccont));
+  long tos;
+
+  if (!setjmp(c->registers)) {
+    save_stack(c, pbos, &tos);
+    return(c);
+  }
+  return(NULL);
+}
+
+static void restore_stack(struct ccont *c, int once_more) {
+  long padding[12];
+  long tos;
+  int i,n;
+
+  memset(padding, 0, 0);
+  if (pbos - c->n < &tos)
+    restore_stack(c, 1);
+
+  if (once_more)
+    restore_stack(c, 0);
+
+  n = c->n;
+  for (i=0; i<n; i++)
+    pbos[-i] = c->stack[i];
+  longjmp(c->registers, 1);
+}
+
+static void restoreccont(struct ccont *c)
+{
+  restore_stack(c, 1);
+}
+
+static void destroyccont(struct ccont *c)
+{
+  free(c->stack);
+  free(c);
+}
+
+
 void arc_restorecont(arc *c, value thr, value cont);
 
 static void printobj(arc *c, value obj)
@@ -1352,23 +1409,37 @@ value arc_protect(arc *c, value argv, value rv, CC4CTX)
 }
 
 /* Used when threads are waiting on file descriptors */
-int arc_thread_wait_fd(arc *c, int fd)
+void arc_thread_wait_fd(volatile arc *c, volatile int fd)
 {
-  value thr = c->curthread;
+  volatile value thr = c->curthread;
+  struct ccont *cc;
+
+  /* No thread? */
+  if (thr == CNIL)
+    return;
 
   /* Do not wait for file descriptors if we are in a critical
      section, compiling a macro, the only thread running, or
      are a thread that is about to be terminated. */
   if (TSTATE(thr) == Tcritical || TSTATE(thr) == Texiting)
-    return(1);
+    return;
   if (c->in_compile)
-    return(1);
-  if (car(c->vmqueue) == thr && cdr(c->vmqueue) == CNIL)
-    return(1);
+    return;
+  if (car(c->vmthreads) == thr && cdr(c->vmthreads) == CNIL)
+    return;
 
   TSTATE(thr) = Tiowait;
   TWAITFD(thr) = fd;
-  return(0);
+  /* save our current context so when Tiowait becomes Tioready,
+     the dispatcher can bring us back to this point. */
+  if ((cc = saveccont()) != NULL) {
+    TRSC(thr) = cc;
+    longjmp(TRJMP(thr), 1);
+  }
+  destroyccont(TRSC(thr));
+  TRSC(thr) = NULL;
+  /* if we are no longer in the I/O wait state, I/O can resume */
+  return;
 }
 
 /* Main dispatcher.  Will run each thread in the thread list for
@@ -1381,16 +1452,19 @@ int arc_thread_wait_fd(arc *c, int fd)
 */
 void arc_thread_dispatch(arc *c)
 {
-  value prev = CNIL, thr;
-  c->vmqueue = CNIL;
+  value thr;
   int nthreads = 0, blockedthreads = 0, ncycles = 0, iowait = 0;
+  int stoppedthreads = 0, tcount;
 #ifdef HAVE_SYS_EPOLL_H
 #define MAX_EVENTS 8192
   int epollfd;
   int eptimeout, nfds, n;
   struct epoll_event epevents[MAX_EVENTS], ev;
 #endif
+  long bos;
 
+  pbos = &bos;
+  c->vmqueue = CNIL;
 #ifdef HAVE_SYS_EPOLL_H
   epollfd = epoll_create(MAX_EVENTS);
 #endif
@@ -1398,6 +1472,8 @@ void arc_thread_dispatch(arc *c)
   for (;;) {
     /* loop back to the beginning if we hit the nil at the end */
     if (c->vmqueue == CNIL) {
+      if (nthreads > 0 && (nthreads == stoppedthreads))
+	return;
       /* see if we need to do an epoll/select for threads which
 	 are waiting on file descriptors */
       if (iowait > 0) {
@@ -1405,7 +1481,14 @@ void arc_thread_dispatch(arc *c)
 	/* wait indefinitely if all threads are either blocked or
 	   waiting on I/O, otherwise do not wait, and allow non-blocked
 	   threads to execute. */
-	eptimeout = (iowait == (nthreads - blockedthreads)) ? -1 : 0;
+	tcount = 0;
+	thr = c->vmthreads;
+	while (!NIL_P(thr)) {
+	  if (TSTATE(car(thr)) != Trelease)
+	    tcount++;
+	  thr = cdr(thr);
+	}
+	eptimeout = (iowait == tcount) ? -1 : 0;
 	nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
 	if (nfds < 0) {
 	  int en = errno;
@@ -1414,16 +1497,16 @@ void arc_thread_dispatch(arc *c)
 	  return;
 	}
 
-	for (n=0; n <nfds; n++) {
+	for (n=0; n<nfds; n++) {
 	  int fd;
 	  value thr;
 
 	  fd  = epevents[n].data.fd;
 	  thr = arc_hash_lookup(c, c->iowaittbl, INT2FIX(fd));
-	  if (thr != CNIL) {
+	  if (thr != CUNBOUND) {
 	    TWAITFD(thr) = -1;
 	    TWAITFOR(thr) = 0;
-	    TSTATE(thr) = Tready;
+	    TSTATE(thr) = Tioready;
 	  }
 	  arc_hash_delete(c, c->iowaittbl, INT2FIX(fd));
 	  epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &ev);
@@ -1446,27 +1529,24 @@ void arc_thread_dispatch(arc *c)
 	ncycles = 0;
       }
       c->vmqueue = c->vmthreads;
-      prev = CNIL;
       /* No more available threads, exit */
       if (c->vmqueue == CNIL)
 	return;
       /* reset thread counts */
       nthreads = 0;
       blockedthreads = 0;
+      stoppedthreads = 0;
     }
     thr = car(c->vmqueue);
     ++nthreads;
+    setjmp(TRJMP(thr));
+    printf("Executing TID = %d, state %d\n", TTID(thr), TSTATE(thr));
     switch (TSTATE(thr)) {
       /* see if the thread has changed state to Trelease or
        Tbroken.  Remove the thread from the queue if so. */
     case Trelease:
     case Tbroken:
-      /* dequeue the terminated thread */
-      if (prev == CNIL) {
-	WB(&c->vmthreads, cdr(c->vmqueue));
-      } else {
-	scdr(prev, cdr(c->vmqueue));
-      }
+      ++stoppedthreads;
       break;
     case Talt:
     case Tsend:
@@ -1493,24 +1573,32 @@ void arc_thread_dispatch(arc *c)
       iowait++;
 #ifdef HAVE_SYS_EPOLL_H
       ev.events = EPOLLIN;
+      ev.data.fd = TWAITFD(thr);
       if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(thr), &ev) < 0) {
 	int en = errno;
 	if (errno != EEXIST) {
 	  arc_err_cstrfmt(c, "error setting epoll for thread on blocking fd (%s; errno=%d)", strerror(en), en);
 	  return;
 	}
-	arc_hash_insert(c, c->iowaittbl, INT2FIX(TWAITFD(thr)), thr);
       }
+      arc_hash_insert(c, c->iowaittbl, INT2FIX(TWAITFD(thr)), thr);
       break;
 #else
 #error no epoll!
 #endif
+    case Tioready:
+      /* Once the select/epoll stuff has figured out that the
+	 associated file descriptor is ready for use, we can
+	 resume the saved context, but with our state changed from
+	 Tiowait to Tready. */
+      TSTATE(thr) = Tready;
+      restoreccont(TRSC(thr));
+      break;
     }
 
     /* run a garbage collection cycle */
     c->rungc(c);
     /* try to run next thread */
-    prev = c->vmqueue;
     c->vmqueue = cdr(c->vmqueue);
   }
 }
