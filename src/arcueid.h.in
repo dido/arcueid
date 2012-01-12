@@ -406,105 +406,9 @@ extern value arc_cmp(arc *c, value v1, value v2);
 extern value arc_gt(arc *c, int argc, value *argv);
 extern value arc_lt(arc *c, int argc, value *argv);
 
-/* type handling */
-extern value arc_type(arc *c, value obj);
-extern value arc_type_compat(arc *c, value obj);
-extern value arc_coerce(arc *c, value argv);
-extern value arc_annotate(arc *c, value typesym, value obj);
-extern value arc_rep(arc *c, value obj);
-
-/* lists */
-extern value scar(value x, value y);
-extern value scdr(value x, value y);
-extern value arc_list_append(value list, value val);
-extern value arc_list_assoc(arc *c, value key, value a_list);
-extern value arc_list_length(arc *c, value list);
-extern value arc_list_reverse(arc *c, value xs);
-extern value arc_car(arc *c, value v);
-extern value arc_cdr(arc *c, value v);
-extern value arc_cons(arc *c, value ca, value cd);
-extern value arc_scar(arc *c, value x, value y);
-extern value arc_scdr(arc *c, value x, value y);
-
-/* strings */
-extern value arc_mkstringlen(arc *c, int length);
-extern value arc_newstring(arc *c, value length);
-extern value arc_mkstring(arc *c, const Rune *data, int length);
-extern value arc_mkstringc(arc *c, const char *s);
-extern value arc_mkchar(arc *c, Rune r);
-extern int arc_strlen(arc *c, value v);
-extern Rune arc_strindex(arc *c, value v, int index);
-extern Rune arc_strsetindex(arc *c, value v, int index, Rune ch);
-extern value arc_strcatc(arc *c, value v1, Rune ch);
-extern value arc_strcat(arc *c, value v1, value v2);
-extern Rune arc_strgetc(arc *c, value src, int *index);
-extern void arc_strungetc(arc *c, int *index);
-extern value arc_strchr(arc *c, value str, Rune ch);
-extern value arc_strcmp(arc *c, value vs1, value vs2);
-extern value arc_strutflen(arc *c, value str);
-extern void arc_str2cstr(arc *c, value s, char *ptr);
-
-/* hash tables */
-extern void arc_hash_init(arc_hs *s, unsigned long level);
-extern void arc_hash_update(arc_hs *s, unsigned long val);
-extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
-extern unsigned long arc_hash(arc *c, value v);
-extern unsigned long arc_hash_cstr(arc *c, const char *str);
-extern value arc_mkhash(arc *c, int hashbits);
-extern value arc_hash_insert(arc *c, value hash, value key, value val);
-extern value arc_hash_lookup(arc *c, value hash, value key);
-extern value arc_hash_lookup2(arc *c, value hash, value key);
-extern value arc_hash_lookup_cstr(arc *c, value hash, const char *key);
-extern value arc_hash_delete(arc *c, value hash, value key);
-extern value arc_hash_iter(arc *c, value hash, int *index);
-extern int arc_hash_length(arc *c, value hash);
-extern value arc_hash_map(arc *c, value argv, value rv, CC4CTX);
-extern value arc_table(arc *c);
-
-/* symbols */
-extern value arc_intern(arc *c, value name);
-extern value arc_intern_cstr(arc *c, const char *name);
-extern value arc_sym2name(arc *c, value sym);
-extern value arc_uniq(arc *c);
-
-/* vectors */
-extern value arc_mkvector(arc *c, int length);
-extern value arc_growvector(arc *c, value vect, int newlength);
-
-/* I/O */
-extern value arc_read(arc *c, value src, value eof);
-extern value arc_ssyntax(arc *c, value x);
-extern value arc_ssexpand(arc *c, value sym);
-
 /* virtual machine */
 extern void arc_vmengine(arc *c, value thr, int quanta);
 extern value arc_mkthread(arc *c, value funptr, int stksize, int ip);
-
-/* application */
-extern value arc_mkcont(arc *c, value offset, value thr);
-extern value arc_mkxcontv(arc *c, value cc4ctx, value argv, value func,
-			  value fargv);
-extern value arc_mkxcont(arc *c, value cc4ctx, value argv, value func,
-			 int fargc, ...);
-extern value arc_mkenv(arc *c, value parent, int size);
-extern void arc_apply(arc *c, value thr, value fun);
-extern value arc_apply2(arc *c, value argv, value rv, CC4CTX);
-extern value arc_eval(arc *c, value expr, value rv, CC4CTX);
-extern value arc_macapply(arc *c, value func, value args);
-extern int arc_return(arc *c, value thr);
-extern value arc_mkvmcode(arc *c, int length);
-extern value arc_mkcode(arc *c, value vmccode, int nlits);
-extern value arc_code_setname(arc *c, value code, value codename);
-extern value arc_mkclosure(arc *c, value code, value env);
-extern value arc_mkccode(arc *c, int argc, value (*_cfunc)(), value name);
-extern value arc_mkcctx(arc *c, value vcodesize, value vlitsize);
-extern value arc_vcptr(arc *c, value cctx);
-extern value arc_disasm(arc *c, value code);
-
-extern value arc_compile(arc *c, value expr, value ctx, value env,
-			 value cont);
-extern value arc_macex(arc *c, value expr);
-extern value arc_macex1(arc *c, value expr);
 
 /* code object handling */
 #define CODE_CODE(c) (VINDEX((c), 0))
@@ -522,86 +426,15 @@ extern void arc_init_reader(arc *c);
 extern void arc_init_compiler(arc *c);
 extern value arc_init_builtins(arc *c);
 
-/* pretty printer */
-extern value arc_prettyprint(arc *c, value v);
-extern void arc_print_string(arc *c, value str);
-extern value arc_disp(arc *c, int argc, value *argv);
-extern value arc_sdisp(arc *c, value sexpr, value port);
-extern value arc_swrite(arc *c, value sexpr, value port);
-extern value arc_write(arc *c, int argc, value *argv);
+/* vectors */
+extern value arc_mkvector(arc *c, int length);
+extern value arc_growvector(arc *c, value vect, int newlength);
 
-/* I/O */
-extern value arc_filefp(arc *c, FILE *fp, value filename);
-extern value arc_infile(arc *c, value filename);
-extern value arc_outfile(arc *c, value filename, value xmode);
-extern value arc_soutfile(arc *c, int argc, value *argv);
-extern value arc_instring(arc *c, value str, value name);
-extern value arc_sinstring(arc *c, int argc, value *argv);
-extern value arc_outstring(arc *c, value name);
-extern value arc_soutstring(arc *c, int argc, value *argv);
-extern value arc_fstr_inside(arc *c, value fstr);
-extern value arc_pipe_from(arc *c, value cmd);
-
-extern value arc_readb(arc *c, value fd);
-extern value arc_sreadb(arc *c, int argc, value *argv);
-extern value arc_writeb(arc *c, value byte, value fd);
-extern value arc_swriteb(arc *c, int argc, value *argv);
-
-extern Rune arc_readc_rune(arc *c, value fd);
-extern value arc_readc(arc *c, value fd);
-extern value arc_sreadc(arc *c, int argc, value *argv);
-
-extern value arc_dir(arc *c, value dirname);
-extern value arc_dir_exists(arc *c, value dirname);
-extern value arc_mkdir(arc *c, value dirname);
-extern value arc_file_exists(arc *c, value filename);
-extern value arc_rmfile(arc *c, value filename);
-
-extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
-extern value arc_ungetc(arc *c, value r, value fd);
-extern value arc_sungetc(arc *c, int argc, value *argv);
-
-extern Rune arc_peekc_rune(arc *c, value fd);
-extern value arc_peekc(arc *c, value fd);
-extern value arc_speekc(arc *c, int argc, value *argv);
-
-extern Rune arc_writec_rune(arc *c, Rune r, value fd);
-extern value arc_writec(arc *c, value r, value fd);
-extern value arc_swritec(arc *c, int argc, value *argv);
-
-extern value arc_seek(arc *c, value fd, value ofs, value whence);
-extern value arc_tell(arc *c, value fd);
-extern value arc_close(arc *c, value fd);
-
-extern value arc_stdin(arc *c);
-extern value arc_stdout(arc *c);
-extern value arc_stderr(arc *c);
-extern value arc_call_w_stdin(arc *c, value argv, value rv, CC4CTX);
-extern value arc_call_w_stdout(arc *c, value argv, value rv, CC4CTX);
-
-/* Mathematical functions */
-extern value arc_expt(arc *c, value a, value b);
-extern value arc_rand(arc *c, int argc, value *argv);
-extern value arc_srand(arc *ccc, value seed);
-extern value arc_trunc(arc *c, value v);
-extern value arc_sqrt(arc *c, value v);
-
-/* Ciel */
-extern value arc_ciel_unmarshal(arc *c, value fd);
-
-/* misc */
-extern value arc_sref(arc *c, value com, value val, value ind);
-extern value arc_len(arc *c, value obj);
-
-/* time */
-extern unsigned long long __arc_milliseconds(void);
-extern value arc_current_gc_milliseconds(arc *c);
-extern value arc_current_process_milliseconds(arc *c);
-extern value arc_seconds(arc *c);
-extern value arc_msec(arc *c);
-
-extern value arc_system(arc *c, value cmd);
-extern value arc_quit(arc *c, int argc, value *argv);
+/* symbols */
+extern value arc_intern(arc *c, value name);
+extern value arc_intern_cstr(arc *c, const char *name);
+extern value arc_sym2name(arc *c, value sym);
+extern value arc_uniq(arc *c);
 
 /* init */
 extern void arc_init_sq(arc *c, int stksize, int quanta);
@@ -621,5 +454,103 @@ extern value arc_exc_details(arc *c, value exc);
 extern value arc_callcc(arc *c, value argv, value rv, CC4CTX);
 #define arc_err_cstrfmt(c, fmt, ...) (arc_err_cstrfmt2((c), (__func__), (fmt), ## __VA_ARGS__))
 extern value arc_protect(arc *c, value argv, value rv, CC4CTX);
+
+/* strings */
+extern value arc_mkchar(arc *c, Rune r);
+extern value arc_mkstringlen(arc *c, int length);
+extern value arc_newstring(arc *c, value length);
+extern value arc_mkstring(arc *c, const Rune *data, int length);
+extern value arc_mkstringc(arc *c, const char *s);
+extern int arc_strlen(arc *c, value v);
+extern Rune arc_strindex(arc *c, value v, int index);
+extern Rune arc_strsetindex(arc *c, value v, int index, Rune ch);
+extern value arc_strcatc(arc *c, value v1, Rune ch);
+extern Rune arc_strgetc(arc *c, value src, int *index);
+extern void arc_strungetc(arc *c, int *index);
+extern value arc_strchr(arc *c, value str, Rune ch);
+extern value arc_strcat(arc *c, value v1, value v2);
+extern value arc_strcmp(arc *c, value vs1, value vs2);
+extern value arc_strutflen(arc *c, value str);
+extern void arc_str2cstr(arc *c, value s, char *ptr);
+
+/* I/O */
+extern Rune arc_readc_rune(arc *c, value fd);
+extern value arc_readb(arc *c, value fd);
+extern value arc_writeb(arc *c, value byte, value fd);
+extern value arc_readc(arc *c, value fd);
+extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
+extern value arc_ungetc(arc *c, value r, value fd);
+extern Rune arc_peekc_rune(arc *c, value fd);
+extern value arc_peekc(arc *c, value fd);
+extern Rune arc_writec_rune(arc *c, Rune r, value fd);
+extern value arc_writec(arc *c, value r, value fd);
+extern value arc_stdin(arc *c);
+extern value arc_stdout(arc *c);
+extern value arc_stderr(arc *c);
+extern value arc_infile(arc *c, value filename);
+extern value arc_outfile(arc *c, value filename, value xmode);
+extern value arc_instring(arc *c, value str, value name);
+extern value arc_outstring(arc *c, value name);
+extern value arc_fstr_inside(arc *c, value fstr);
+
+/* lists */
+extern value scar(value x, value y);
+extern value scdr(value x, value y);
+extern value arc_list_append(value list, value val);
+extern value arc_list_assoc(arc *c, value key, value a_list);
+extern value arc_list_length(arc *c, value list);
+extern value arc_list_reverse(arc *c, value xs);
+extern value arc_car(arc *c, value v);
+extern value arc_cdr(arc *c, value v);
+extern value arc_cons(arc *c, value ca, value cd);
+extern value arc_scar(arc *c, value x, value y);
+extern value arc_scdr(arc *c, value x, value y);
+
+/* time */
+extern unsigned long long __arc_milliseconds(void);
+
+/* hash tables */
+extern void arc_hash_init(arc_hs *s, unsigned long level);
+extern void arc_hash_update(arc_hs *s, unsigned long val);
+extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
+extern unsigned long arc_hash(arc *c, value v);
+extern unsigned long arc_hash_cstr(arc *c, const char *str);
+extern value arc_mkhash(arc *c, int hashbits);
+extern value arc_hash_insert(arc *c, value hash, value key, value val);
+extern value arc_hash_lookup(arc *c, value hash, value key);
+extern value arc_hash_lookup2(arc *c, value hash, value key);
+extern value arc_hash_lookup_cstr(arc *c, value hash, const char *key);
+extern value arc_hash_delete(arc *c, value hash, value key);
+extern value arc_hash_iter(arc *c, value hash, int *index);
+extern int arc_hash_length(arc *c, value hash);
+extern value arc_hash_map(arc *c, value argv, value rv, CC4CTX);
+extern value arc_table(arc *c);
+
+/* type handling */
+extern value arc_type(arc *c, value obj);
+extern value arc_type_compat(arc *c, value obj);
+extern value arc_coerce(arc *c, value argv);
+extern value arc_annotate(arc *c, value typesym, value obj);
+extern value arc_rep(arc *c, value obj);
+
+/* pretty printer */
+extern value arc_prettyprint(arc *c, value v);
+extern void arc_print_string(arc *c, value str);
+
+/* application */
+extern value arc_mkcont(arc *c, value offset, value thr);
+extern value arc_mkxcontv(arc *c, value cc4ctx, value argv, value func,
+			  value fargv);
+extern value arc_mkxcont(arc *c, value cc4ctx, value argv, value func,
+			 int fargc, ...);
+extern value arc_mkenv(arc *c, value parent, int size);
+extern void arc_apply(arc *c, value thr, value fun);
+extern value arc_macapply(arc *c, value func, value args);
+extern int arc_return(arc *c, value thr);
+extern value arc_compile(arc *c, value expr, value ctx, value env,
+			 value cont);
+
+/* misc */
+extern value arc_len(arc *c, value obj);
 
 #endif
