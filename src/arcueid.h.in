@@ -52,6 +52,7 @@ typedef struct arc {
   size_t minexp;       /* minimum expansion amount */
   int stksize;	       /* default stack size */
   int quantum;	       /* default execution quantum */
+  int in_compile;      /* in-compile flag */
 
   /* Garbage collector */
   void (*rungc)(struct arc *);
@@ -120,8 +121,10 @@ enum threadstate {
   Talt,				/* blocked in alt instruction */
   Tsend,			/* waiting to send */
   Trecv,			/* waiting to recv */
+  Tiowait,			/* I/O wait */
   Tready,			/* ready to be scheduled */
   Tsleep,			/* thread sleeping */
+  Tcritical,			/* critical section */
   Trelease,			/* interpreter released */
   Texiting,			/* exit because of kill or error */
   Tbroken,			/* thread crashed */
@@ -150,6 +153,8 @@ struct vmthread {
   jmp_buf vjmpbuf;	/* used on error recovery */
   value exc;		/* current exception */
   value stdh;		/* standard handles (stdin, stdout, stderr) */
+  int waitfd;		/* file descriptor waited on */
+  int waitfor;		/* wait for flag */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -177,6 +182,8 @@ struct vmthread {
 #define TVJMP(t) (REP(t)._thread.vjmpbuf)
 #define TEXC(t) (REP(t)._thread.exc)
 #define TSTDH(t) (REP(t)._thread.stdh)
+#define TWAITFD(t) (REP(t)._thread.waitfd)
+#define TWAITFOR(t) (REP(t)._thread.waitfor)
 
 /* Cells for boxed items */
 struct cell {
@@ -561,5 +568,6 @@ extern value arc_thread_join(arc *c, value thr);
 extern value arc_dead(arc *c);
 extern value arc_atomic_invoke(arc *c, value argv, value rv, CC4CTX);
 extern void arc_thread_dispatch(arc *c);
+extern void arc_thread_wait_fd(arc *c, int fd);
 
 #endif
