@@ -1411,6 +1411,8 @@ void arc_thread_dispatch(arc *c)
   }
 }
 
+static int __arc_tidctr = 0;
+
 value arc_spawn(arc *c, value thunk)
 {
   value thr;
@@ -1423,6 +1425,7 @@ value arc_spawn(arc *c, value thunk)
   VINDEX(TSTDH(thr), 0) = arc_stdin(c);
   VINDEX(TSTDH(thr), 1) = arc_stdout(c);
   VINDEX(TSTDH(thr), 2) = arc_stderr(c);
+  TTID(thr) = __arc_tidctr++;
   /* add the new thread to vmthreads */
   WB(&c->vmthreads, cons(c, thr, c->vmthreads));
   return(thr);
