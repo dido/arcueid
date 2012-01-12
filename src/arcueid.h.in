@@ -64,6 +64,7 @@ typedef struct arc {
   value vmqueue;		/* virtual machine run queue */
   value curthread;		/* current thread */
   int tid_nonce;		/* thread id nonce */
+  value iowaittbl;		/* I/O wait table */
 
   unsigned long lastsym;	/* last symbol value */
   value symtable;		/* symbol table */
@@ -568,6 +569,5 @@ extern value arc_thread_join(arc *c, value thr);
 extern value arc_dead(arc *c);
 extern value arc_atomic_invoke(arc *c, value argv, value rv, CC4CTX);
 extern void arc_thread_dispatch(arc *c);
-extern void arc_thread_wait_fd(arc *c, int fd);
 
 #endif
