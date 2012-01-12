@@ -79,4 +79,11 @@ extern value __arc_tanh(arc *c, value v);
 extern value __arc_tgamma(arc *c, value v);
 extern value __arc_trunc(arc *c, value v);
 
+/* Mathematical functions */
+extern value arc_expt(arc *c, value a, value b);
+extern value arc_rand(arc *c, int argc, value *argv);
+extern value arc_srand(arc *ccc, value seed);
+extern value arc_trunc(arc *c, value v);
+extern value arc_sqrt(arc *c, value v);
+
 #endif
