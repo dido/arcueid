@@ -24,6 +24,9 @@
 #include <getopt.h>
 #include <setjmp.h>
 #include <stdarg.h>
+#include <string.h>
+#include <sys/select.h>
+#include <errno.h>
 #include "arcueid.h"
 #include "vmengine.h"
 #include "symbols.h"
@@ -64,30 +67,24 @@ static void readline_sweeper(arc *c, value v)
   c->free_block(c, (void *)v);
 }
 
+static struct arc_port *rlp;
+static int line_eof = 0;
+static struct arc *cc;
+
 static int readline_getb(arc *c, struct arc_port *p)
 {
-  static char *line_read = (char *)NULL;
   int len;
-  value rlstr;
 
   len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
   while (p->u.strfile.idx >= len) {
-    /* try to read a new line */
-    if (line_read) {
-      free(line_read);
-      line_read = (char *)NULL;
-    }
-    line_read = readline("arc> ");
-    if (line_read && *line_read) {
-      add_history(line_read);
-      rlstr = arc_mkstringc(c, line_read);
-      p->u.strfile.str = arc_strcatc(c, rlstr, '\n');
-      len = arc_strlen(c, p->u.strfile.str);
-      p->u.strfile.idx = 0;
-    }
-    if (line_read == NULL)
+    if (line_eof)
       return(EOF);
+    rlp = p;
+    cc = c;
+    rl_callback_read_char();
+    len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
   }
+
   return(arc_strindex(c, p->u.strfile.str, p->u.strfile.idx++));
 }
 
@@ -131,6 +128,63 @@ static int readline_close(arc *c, struct arc_port *p)
   return(0);
 }
 
+static int readline_ready(arc *c, struct arc_port *p)
+{
+  fd_set rfds;
+  struct timeval tv;
+  int retval, len;
+
+  /* if we have data from readline, obviously we're ready */
+  len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
+  if (p->u.strfile.idx < len)
+    return(1);
+
+  FD_ZERO(&rfds);
+  FD_SET(fileno(stdin), &rfds);
+  tv.tv_usec = tv.tv_sec = 0;
+  retval = select(fileno(stdin)+1, &rfds, NULL, NULL, &tv);
+
+  if (retval == -1) {
+    int en = errno;
+
+    arc_err_cstrfmt(c, "error selecting for readline (%s; errno=%d)", strerror(en), en);
+    return(0);
+  }
+
+  if (retval == 0)
+    return(0);
+  /* yes, we are ready! */
+  return(1);
+}
+
+static int readline_fd(arc *c, struct arc_port *p)
+{
+  return(fileno(stdin));
+}
+
+static void on_readline(char *input)
+{
+  value rlstr;
+
+  if (input == NULL) {
+    line_eof = 1;
+    rl_callback_handler_remove();
+    return;
+  }
+
+  if (input && *input) {
+    add_history(input);
+    rlstr = arc_mkstringc(cc, input);
+    rlp->u.strfile.str = arc_strcatc(cc, rlstr, '\n');
+    rlp->u.strfile.idx = 0;
+  }
+}
+
+void exit_handler(void)
+{
+  (rl_deprep_term_function)();
+}
+
 value arc_readlineport(arc *c)
 {
   void *cellptr;
@@ -152,10 +206,14 @@ value arc_readlineport(arc *c)
   PORT(fd)->seek = readline_seek;
   PORT(fd)->tell = readline_tell;
   PORT(fd)->close = readline_close;
+  PORT(fd)->ready = readline_ready;
+  PORT(fd)->fd = readline_fd;
   PORT(fd)->ungetrune = -1;	/* no rune available */
   rl_variable_bind("blink-matching-paren", "on");
   rl_basic_quote_characters = "\"";
   rl_basic_word_break_characters = "[]()!:~\"";
+  rl_callback_handler_install("arc> ", on_readline);
+  atexit(exit_handler);
   return(fd);
 }
 
@@ -176,7 +234,7 @@ static void error_handler(struct arc *c, value err)
 int main(int argc, char **argv)
 {
   arc *c, cc;
-  value sexpr, readfp, cctx, code, initload;
+  value sexpr, cctx, code, initload;
   char *loadstr, *replcode;
 
   c = &cc;
@@ -199,8 +257,10 @@ int main(int argc, char **argv)
 
   setjmp(err_jmp_buf);
 #ifdef HAVE_LIBREADLINE
-  readfp = arc_readlineport(c);
-  arc_bindsym(c, arc_intern_cstr(c, "repl-readline"), readfp);
+  {
+    value readfp = arc_readlineport(c);
+    arc_bindsym(c, arc_intern_cstr(c, "repl-readline"), readfp);
+  }
 #endif
 
   /* read-eval-print in Arcueid! */
