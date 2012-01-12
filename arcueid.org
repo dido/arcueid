@@ -445,7 +445,6 @@ notice and this notice are preserved.
    - [-] File system operations [4/5]
      - [X] dir
      - [X] dir-exists
-     - [ ] mkdir (not provided by arc3)
      - [X] file-exists
      - [X] rmfile
    - [X] Error handling and continuations [5/5]
