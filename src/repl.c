@@ -27,6 +27,7 @@
 #include "arcueid.h"
 #include "vmengine.h"
 #include "symbols.h"
+#include "builtin.h"
 #include "utf.h"
 #include "../config.h"
 
