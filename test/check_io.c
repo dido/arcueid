@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <check.h>
 #include "../src/utf.h"
+#include "../src/builtin.h"
 
 arc c, *cc;
 
