@@ -124,6 +124,21 @@ if test "x$enable_mmap" != xno; then
    AC_CHECK_HEADERS(sys/mman.h)
    AC_FUNC_MMAP
 fi
+
+dnl System type checks.
+case "$host" in
+  *-linux-*)
+    AC_PATH_PROG(PROG_LDCONFIG, ldconfig, :, $PATH:/usr/sbin:/sbin)
+    if test xno != x$with_epoll; then
+        AC_CHECK_HEADERS("sys/epoll.h")
+        AC_CHECK_FUNCS(epoll_create)
+    fi
+    no_wacky_libs=yes
+    ;;
+esac
+
+AC_CHECK_HEADERS(poll.h sys/select.h sys/socket.h string.h strings.h)
+
 LIBARCUEID_LIBS="-L${libdir} -larcueid $GMP_LIBS $MATH_LIBS $EXTRA_LIBS"
 AC_SUBST(LIBARCUEID_LIBS)
 AC_CONFIG_HEADERS([config.h])
