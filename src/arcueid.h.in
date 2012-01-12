@@ -120,7 +120,6 @@ enum threadstate {
   Talt,				/* blocked in alt instruction */
   Tsend,			/* waiting to send */
   Trecv,			/* waiting to recv */
-  Tdebug,			/* debugged */
   Tready,			/* ready to be scheduled */
   Tsleep,			/* thread sleeping */
   Trelease,			/* interpreter released */
@@ -150,7 +149,7 @@ struct vmthread {
   value econt;		/* error continuations */
   jmp_buf vjmpbuf;	/* used on error recovery */
   value exc;		/* current exception */
-  value dwhere;		/* used for dynamic-wind */
+  value stdh;		/* standard handles (stdin, stdout, stderr) */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -177,7 +176,7 @@ struct vmthread {
 #define TECONT(t) (REP(t)._thread.econt)
 #define TVJMP(t) (REP(t)._thread.vjmpbuf)
 #define TEXC(t) (REP(t)._thread.exc)
-#define TDWHERE(t) (REP(t)._thread.dwhere)
+#define TSTDH(t) (REP(t)._thread.stdh)
 
 /* Cells for boxed items */
 struct cell {
@@ -552,5 +551,15 @@ extern value arc_compile(arc *c, value expr, value ctx, value env,
 
 /* misc */
 extern value arc_len(arc *c, value obj);
+
+/* threading */
+extern value arc_spawn(arc *c, value thunk);
+extern value arc_break_thread(arc *c, value thr);
+extern value arc_kill_thread(arc *c, value thr);
+extern value arc_sleep(arc *c, value secs);
+extern value arc_thread_join(arc *c, value thr);
+extern value arc_dead(arc *c);
+extern value arc_atomic_invoke(arc *c, value argv, value rv, CC4CTX);
+extern void arc_thread_dispatch(arc *c);
 
 #endif
