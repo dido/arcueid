@@ -543,50 +543,69 @@ value arc_close(arc *c, value fd)
    and find some continuation register that may have a STDIN defined. */
 value arc_stdin(arc *c)
 {
-  value thr = c->curthread;
-  value cont = TCONR(thr);
-  value fps;
+  value thr = c->curthread, cont, fps, h;
 
-  while (cont != CNIL) {
-    fps = CONT_FPS(car(cont));
-    if (!(NIL_P(CNIL) || NIL_P(VINDEX(fps, 0))))
-      return(VINDEX(fps, 0));
-    cont = cdr(cont);
+  if (thr != CNIL) {
+    cont = TCONR(thr);
+    while (cont != CNIL) {
+      fps = CONT_FPS(car(cont));
+      if (!(NIL_P(fps) || NIL_P(VINDEX(fps, 0))))
+	return(VINDEX(fps, 0));
+      cont = cdr(cont);
+    }
+    /* fallback to the thread's default stdin if none */
+    h = VINDEX(TSTDH(thr), 0);
   }
-  /* fallback to the true stdin if none */
-  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)));
+
+  if (h == CNIL) {
+    return(arc_hash_lookup(c, c->genv,
+			   ARC_BUILTIN(c, S_STDIN_FD)));
+  }
+  return(h);
 }
 
 value arc_stdout(arc *c)
 {
-  value thr = c->curthread;
-  value cont = TCONR(thr);
-  value fps;
+  value thr = c->curthread, cont, fps, h;
 
-  while (cont != CNIL) {
-    fps = CONT_FPS(car(cont));
-    if (!(NIL_P(CNIL) || NIL_P(VINDEX(fps, 1))))
-      return(VINDEX(fps, 1));
-    cont = cdr(cont);
+  if (thr != CNIL) {
+    cont = TCONR(thr);
+    while (cont != CNIL) {
+      fps = CONT_FPS(car(cont));
+      if (!(NIL_P(fps) || NIL_P(VINDEX(fps, 1))))
+	return(VINDEX(fps, 1));
+      cont = cdr(cont);
+    }
+    /* fallback to the thread default stdout if none */
+    h = VINDEX(TSTDH(thr), 1);
   }
-  /* fallback to the true stdout if none */
-  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD)));
+  if (h == CNIL) {
+    return(arc_hash_lookup(c, c->genv,
+			   ARC_BUILTIN(c, S_STDOUT_FD)));
+  }
+  return(h);
 }
 
 value arc_stderr(arc *c)
 {
-  value thr = c->curthread;
-  value cont = TCONR(thr);
-  value fps;
+  value thr = c->curthread, cont, fps, h;
 
-  while (cont != CNIL) {
-    fps = CONT_FPS(car(cont));
-    if (!(NIL_P(CNIL) || NIL_P(VINDEX(fps, 2))))
-      return(VINDEX(fps, 2));
-    cont = cdr(cont);
+  if (thr != CNIL) {
+    cont = TCONR(thr);
+    while (cont != CNIL) {
+      fps = CONT_FPS(car(cont));
+      if (!(NIL_P(fps) || NIL_P(VINDEX(fps, 2))))
+	return(VINDEX(fps, 2));
+      cont = cdr(cont);
+    }
+    /* fallback to the thread default stderr if none */
+    h = VINDEX(TSTDH(thr), 2);
   }
-  /* fallback to the true stderr if none */
-  return(arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD)));
+  if (h == CNIL) {
+    return(arc_hash_lookup(c, c->genv,
+			   ARC_BUILTIN(c, S_STDERR_FD)));
+  }
+  return(h);
 }
 
 /* Unlike the reference Arc implementation, this actually creates
