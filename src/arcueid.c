@@ -592,6 +592,8 @@ static struct {
   { "dir-exists", 1, arc_dir_exists },
   { "file-exists", 1, arc_file_exists },
   { "rmfile", 1, arc_rmfile },
+  { "spawn", 1, arc_spawn },
+  { "new-thread", 1, arc_spawn },
 
   { NULL, 0, NULL }
 };
