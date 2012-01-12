@@ -67,24 +67,30 @@ static void readline_sweeper(arc *c, value v)
   c->free_block(c, (void *)v);
 }
 
-static struct arc_port *rlp;
-static int line_eof = 0;
-static struct arc *cc;
-
 static int readline_getb(arc *c, struct arc_port *p)
 {
+  static char *line_read = (char *)NULL;
   int len;
+  value rlstr;
 
   len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
   while (p->u.strfile.idx >= len) {
-    if (line_eof)
+    /* try to read a new line */
+    if (line_read) {
+      free(line_read);
+      line_read = (char *)NULL;
+    }
+    line_read = readline("arc> ");
+    if (line_read && *line_read) {
+      add_history(line_read);
+      rlstr = arc_mkstringc(c, line_read);
+      p->u.strfile.str = arc_strcatc(c, rlstr, '\n');
+      len = arc_strlen(c, p->u.strfile.str);
+      p->u.strfile.idx = 0;
+    }
+    if (line_read == NULL)
       return(EOF);
-    rlp = p;
-    cc = c;
-    rl_callback_read_char();
-    len = (p->u.strfile.str == CNIL) ? 0 : arc_strlen(c, p->u.strfile.str);
   }
-
   return(arc_strindex(c, p->u.strfile.str, p->u.strfile.idx++));
 }
 
@@ -139,6 +145,7 @@ static int readline_ready(arc *c, struct arc_port *p)
   if (p->u.strfile.idx < len)
     return(1);
 
+  /* otherwise, see if stdin is readable */
   FD_ZERO(&rfds);
   FD_SET(fileno(stdin), &rfds);
   tv.tv_usec = tv.tv_sec = 0;
@@ -160,29 +167,6 @@ static int readline_ready(arc *c, struct arc_port *p)
 static int readline_fd(arc *c, struct arc_port *p)
 {
   return(fileno(stdin));
-}
-
-static void on_readline(char *input)
-{
-  value rlstr;
-
-  if (input == NULL) {
-    line_eof = 1;
-    rl_callback_handler_remove();
-    return;
-  }
-
-  if (input && *input) {
-    add_history(input);
-    rlstr = arc_mkstringc(cc, input);
-    rlp->u.strfile.str = arc_strcatc(cc, rlstr, '\n');
-    rlp->u.strfile.idx = 0;
-  }
-}
-
-void exit_handler(void)
-{
-  (rl_deprep_term_function)();
 }
 
 value arc_readlineport(arc *c)
@@ -212,8 +196,6 @@ value arc_readlineport(arc *c)
   rl_variable_bind("blink-matching-paren", "on");
   rl_basic_quote_characters = "\"";
   rl_basic_word_break_characters = "[]()!:~\"";
-  rl_callback_handler_install("arc> ", on_readline);
-  atexit(exit_handler);
   return(fd);
 }
 
