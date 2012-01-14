@@ -234,7 +234,6 @@ static inline void trace(arc *c, value thr)
 
 void arc_vmengine(arc *c, value thr, int quanta)
 {
-
 #ifdef HAVE_THREADED_INTERPRETER
   static const int jumptbl[] = {
 #include "jumptbl.h"
@@ -284,6 +283,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 
 	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
 	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+	  trace(c, thr);
 	  tmpstr = arc_sym2name(c, tmp);
 	  cstr = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, tmpstr)) + 1));
 	  arc_str2cstr(c, tmpstr, cstr);
@@ -1434,11 +1434,18 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
      the dispatcher can bring us back to this point. */
   if ((cc = saveccont()) != NULL) {
     TRSC(thr) = cc;
-    longjmp(TRJMP(thr), 1);
+    /* This jump should return us to the head of the virtual
+       machine.  Since it is taken when the thread's state
+       has changed to an unrunnable Tiowait, the vmengine
+       call will immediately return to the dispatcher just
+       as if it had finished its quantum. */
+    longjmp(TVJMP(thr), 1);
   }
+  /* if we are no longer in the I/O wait state, I/O can resume.
+     Destroy the "continuation" we created to get ourselves back
+     here. */
   destroyccont(TRSC(thr));
   TRSC(thr) = NULL;
-  /* if we are no longer in the I/O wait state, I/O can resume */
   return;
 }
 
@@ -1446,15 +1453,15 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
    at most c->quanta cycles or until the thread leaves ready state.
    Also runs garbage collector threads periodically.  This should
    be called with at least one thread already in the run queue.
-   Terminates when no more threads can run.
+   Terminates when no more threads are available.
 
    全く, this is beginning to look a lot a like the reactor pattern!
 */
 void arc_thread_dispatch(arc *c)
 {
-  value thr;
-  int nthreads = 0, blockedthreads = 0, ncycles = 0, iowait = 0;
-  int stoppedthreads = 0, tcount;
+  value thr, prev;
+  int nthreads, blockedthreads, iowait;
+  int stoppedthreads, need_select;
 #ifdef HAVE_SYS_EPOLL_H
 #define MAX_EVENTS 8192
   int epollfd;
@@ -1464,142 +1471,117 @@ void arc_thread_dispatch(arc *c)
   long bos;
 
   pbos = &bos;
-  c->vmqueue = CNIL;
+
+
+  c->vmqueue = c->vmthreads;
+  prev = CNIL;
 #ifdef HAVE_SYS_EPOLL_H
   epollfd = epoll_create(MAX_EVENTS);
 #endif
 
   for (;;) {
-    /* loop back to the beginning if we hit the nil at the end */
-    if (c->vmqueue == CNIL) {
-      if (nthreads > 0 && (nthreads == stoppedthreads))
-	return;
-      /* see if we need to do an epoll/select for threads which
-	 are waiting on file descriptors */
-      if (iowait > 0) {
-#ifdef HAVE_SYS_EPOLL_H
-	/* wait indefinitely if all threads are either blocked or
-	   waiting on I/O, otherwise do not wait, and allow non-blocked
-	   threads to execute. */
-	tcount = 0;
-	thr = c->vmthreads;
-	while (!NIL_P(thr)) {
-	  if (TSTATE(car(thr)) != Trelease)
-	    tcount++;
-	  thr = cdr(thr);
-	}
-	eptimeout = (iowait == tcount) ? -1 : 0;
-	nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
-	if (nfds < 0) {
-	  int en = errno;
-	  arc_err_cstrfmt(c, "error waiting for Tiowait fds (%s; errno=%d)",
-			  strerror(en), en);
-	  return;
-	}
-
-	for (n=0; n<nfds; n++) {
-	  int fd;
-	  value thr;
-
-	  fd  = epevents[n].data.fd;
-	  thr = arc_hash_lookup(c, c->iowaittbl, INT2FIX(fd));
-	  if (thr != CUNBOUND) {
-	    TWAITFD(thr) = -1;
-	    TWAITFOR(thr) = 0;
-	    TSTATE(thr) = Tioready;
-	  }
-	  arc_hash_delete(c, c->iowaittbl, INT2FIX(fd));
-	  epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &ev);
-	}
-#else
-#error no epoll!
-#endif
-	iowait = 0;
-      }
-      c->curthread = CNIL;
-      /* Simple deadlock detection.  We declare deadlock if after two
-	 cycles through the run queue we find that all threads are in
-	 a blocked state. */
-      if (nthreads != 0 && nthreads == blockedthreads && ++ncycles > 2) {
-	arc_err_cstrfmt(c, "fatal: deadlock detected");
-	return;
-      } else {
-	/* reset cycle counter if we get a state where there are
-	   some threads which are not blocked */
-	ncycles = 0;
-      }
-      c->vmqueue = c->vmthreads;
-      /* No more available threads, exit */
-      if (c->vmqueue == CNIL)
-	return;
-      /* reset thread counts */
-      nthreads = 0;
-      blockedthreads = 0;
-      stoppedthreads = 0;
-    }
-    thr = car(c->vmqueue);
-    ++nthreads;
-    setjmp(TRJMP(thr));
-    printf("Executing TID = %d, state %d\n", TTID(thr), TSTATE(thr));
-    switch (TSTATE(thr)) {
-      /* see if the thread has changed state to Trelease or
-       Tbroken.  Remove the thread from the queue if so. */
-    case Trelease:
-    case Tbroken:
-      ++stoppedthreads;
-      break;
-    case Talt:
-    case Tsend:
-    case Trecv:
-      /* increment count of threads in blocked states */
-      ++blockedthreads;
-      break;
-    case Tsleep:
-      /* Wake up a sleeping thread if the wakeup time is reached */
-      if (__arc_milliseconds() >= FIX2INT(TWAKEUP(thr)))
-	TSTATE(thr) = Tready;
-      /* fall through -- let the thread run */
-    case Tready:
-    case Texiting:
-      arc_vmengine(c, thr, c->quantum);
-      break;
-    case Tcritical:
-      /* if we are in a critical section, allow the thread
-	 to keep running by itself until it leaves critical */
-      while (TSTATE(thr) == Tcritical) {
+    nthreads = blockedthreads = iowait = stoppedthreads = need_select = 0;
+    for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
+	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
+      thr = car(c->vmqueue);
+      ++nthreads;
+      switch (TSTATE(thr)) {
+	/* Remove a thread in Trelease or Tbroken state from the queue. */
+      case Trelease:
+      case Tbroken:
+	stoppedthreads++;
+	if (prev == CNIL)
+	  WB(&c->vmthreads, cons(c, cdr(c->vmqueue), c->vmthreads));
+	else
+	  scdr(prev, cdr(c->vmqueue));
+	break;
+      case Talt:
+      case Tsend:
+      case Trecv:
+	/* increment count of threads in blocked states */
+	++blockedthreads;
+	break;
+      case Tsleep:
+	/* Wake up a sleeping thread if the wakeup time is reached */
+	if (__arc_milliseconds() >= FIX2INT(TWAKEUP(thr)))
+	  TSTATE(thr) = Tready;
+	else
+	  continue;    /* keep going */
+	/* fall through and let the thread run if so */
+      case Tready:
+      case Texiting:
+	/* let the thread run */
 	arc_vmengine(c, thr, c->quantum);
-      }
-    case Tiowait:
-      iowait++;
+	break;
+      case Tcritical:
+	/* if we are in a critical section, allow the thread
+	   to keep running by itself until it leaves critical */
+	while (TSTATE(thr) == Tcritical)
+	  arc_vmengine(c, thr, c->quantum);
+      case Tiowait:
+	iowait++;
+	need_select = 1;
 #ifdef HAVE_SYS_EPOLL_H
-      ev.events = EPOLLIN;
-      ev.data.fd = TWAITFD(thr);
-      if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(thr), &ev) < 0) {
-	int en = errno;
-	if (errno != EEXIST) {
-	  arc_err_cstrfmt(c, "error setting epoll for thread on blocking fd (%s; errno=%d)", strerror(en), en);
-	  return;
+	ev.events = EPOLLIN;
+	ev.data.fd = TWAITFD(thr);
+	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(thr), &ev) < 0) {
+	  int en = errno;
+	  if (errno != EEXIST) {
+	    arc_err_cstrfmt(c, "error setting epoll for thread on blocking fd (%s; errno=%d)", strerror(en), en);
+	    return;
+	  }
 	}
-      }
-      arc_hash_insert(c, c->iowaittbl, INT2FIX(TWAITFD(thr)), thr);
-      break;
+	arc_hash_insert(c, c->iowaittbl, INT2FIX(TWAITFD(thr)), thr);
+	break;
 #else
 #error no epoll!
 #endif
-    case Tioready:
-      /* Once the select/epoll stuff has figured out that the
-	 associated file descriptor is ready for use, we can
-	 resume the saved context, but with our state changed from
-	 Tiowait to Tready. */
-      TSTATE(thr) = Tready;
-      restoreccont(TRSC(thr));
-      break;
+      case Tioready:
+	/* Once the select/epoll stuff has figured out that the
+	   associated file descriptor is ready for use, we can
+	   resume the saved context, but with our state changed from
+	   Tiowait to Tready. */
+	TSTATE(thr) = Tready;
+	restoreccont(TRSC(thr));
+	break;
+      }
     }
 
-    /* run a garbage collection cycle */
-    c->rungc(c);
-    /* try to run next thread */
-    c->vmqueue = cdr(c->vmqueue);
+    /* We have now finished running all threads.  See if we need to
+       do some post-cleanup work */
+    if (need_select) {
+#ifdef HAVE_SYS_EPOLL_H
+      /* wait indefinitely if all threads are either blocked or
+	 waiting on I/O, otherwise do not wait, and allow the
+	 non-blocked threads to execute on the next cycle. */
+      eptimeout = (iowait == nthreads) ? -1 : 0;
+      nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
+      if (nfds < 0) {
+	int en = errno;
+	arc_err_cstrfmt(c, "error waiting for Tiowait fds (%s; errno=%d)",
+			strerror(en), en);
+	return;
+      }
+
+      for (n=0; n<nfds; n++) {
+	int fd;
+	value thr;
+
+	fd  = epevents[n].data.fd;
+	thr = arc_hash_lookup(c, c->iowaittbl, INT2FIX(fd));
+	if (thr != CUNBOUND) {
+	  TWAITFD(thr) = -1;
+	  TWAITFOR(thr) = 0;
+	  TSTATE(thr) = Tioready;
+	}
+	arc_hash_delete(c, c->iowaittbl, INT2FIX(fd));
+	epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &ev);
+      }
+#else
+#error no epoll!
+#endif
+    }
+    /* XXX - detect deadlock */
   }
 }
 
@@ -1607,7 +1589,7 @@ static int __arc_tidctr = 0;
 
 value arc_spawn(arc *c, value thunk)
 {
-  value thr;
+  value thr, tmp;
 
   TYPECHECK(thunk, T_CLOS, 1);
   thr = arc_mkthread(c, car(thunk), c->stksize, 0);
@@ -1618,7 +1600,15 @@ value arc_spawn(arc *c, value thunk)
   VINDEX(TSTDH(thr), 1) = arc_stdout(c);
   VINDEX(TSTDH(thr), 2) = arc_stderr(c);
   TTID(thr) = __arc_tidctr++;
-  /* add the new thread to vmthreads */
-  WB(&c->vmthreads, cons(c, thr, c->vmthreads));
+  /* Queue the new thread so that it gets to run just after the
+     current thread (which invoked the spawn) if any */
+  if (c->vmqueue == CNIL) {
+    /* The first thread */
+    c->vmthreads = cons(c, thr, CNIL);
+    c->vmqueue = c->vmthreads;
+  } else {
+    tmp = cons(c, thr, cdr(c->vmqueue));
+    scdr(c->vmqueue, tmp);
+  }
   return(thr);
 }
