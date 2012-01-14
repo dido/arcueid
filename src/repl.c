@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2011 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -161,12 +161,21 @@ static int readline_ready(arc *c, struct arc_port *p)
   if (retval == 0)
     return(0);
   /* yes, we are ready! */
-  return(1);
+  if (FD_ISSET(fileno(stdin), &rfds))
+    return(1);
+  return(0);
 }
 
 static int readline_fd(arc *c, struct arc_port *p)
 {
   return(fileno(stdin));
+}
+
+static arc *rlcc;
+
+static int __arc_rlgetc(FILE *fp)
+{
+  return(FIX2INT(arc_readb(rlcc, arc_stdin(rlcc))));
 }
 
 value arc_readlineport(arc *c)
@@ -196,6 +205,8 @@ value arc_readlineport(arc *c)
   rl_variable_bind("blink-matching-paren", "on");
   rl_basic_quote_characters = "\"";
   rl_basic_word_break_characters = "[]()!:~\"";
+  rlcc = c;
+  rl_getc_function = __arc_rlgetc;
   return(fd);
 }
 
