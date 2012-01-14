@@ -83,4 +83,7 @@ extern value arc_msec(arc *c);
 extern value arc_system(arc *c, value cmd);
 extern value arc_quit(arc *c, int argc, value *argv);
 
+/* threads */
+extern value arc_sleep(arc *c, value sleeptime);
+
 #endif
