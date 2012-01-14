@@ -138,7 +138,7 @@ notice and this notice are preserved.
        - [X] /
      - [X] Function applications
    - [X] Macros
-** TODO basic data types [13/15]
+** TODO basic data types [14/16]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -157,7 +157,7 @@ notice and this notice are preserved.
     - [X] Functions
     - [X] Input Ports
     - [X] Output Ports
-    - [ ] Threads
+    - [X] Threads
     - [ ] Channels
     - [ ] Regular Expressions
 ** TODO Runtime Built-In Functions [16/19]
@@ -414,13 +414,13 @@ notice and this notice are preserved.
      - [X] call-w/stdin
      - [X] call-w/stdout
      - [X] disp
-   - [ ] Threads [0/2]
-     - [ ] Creating and managing threads [0/6]
-       - [ ] new-thread (spawn)
+   - [-] Threads [0/2]
+     - [-] Creating and managing threads [2/6]
+       - [X] new-thread (spawn)
        - [ ] break-thread
        - [ ] kill-thread
        - [ ] dead
-       - [ ] sleep
+       - [X] sleep
        - [ ] atomic-invoke
      - [ ] Channels (cf. Limbo and CSP, Arcueid extension) [0/4]
        - [ ] chan
