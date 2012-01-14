@@ -248,7 +248,6 @@ int main(int argc, char **argv)
   }
   arc_close(c, initload);
 
-  setjmp(err_jmp_buf);
 #ifdef HAVE_LIBREADLINE
   {
     value readfp = arc_readlineport(c);
@@ -268,6 +267,7 @@ int main(int argc, char **argv)
   code = arc_cctx2code(c, cctx);
   code = arc_mkclosure(c, code, CNIL);
   arc_spawn(c, code);
+  setjmp(err_jmp_buf);
   arc_thread_dispatch(c);
   return(EXIT_SUCCESS);
 }
