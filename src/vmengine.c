@@ -246,7 +246,6 @@ void arc_vmengine(arc *c, value thr, int quanta)
   if (!RUNNABLE(thr))
     return;
 
-  c->curthread = thr;
   TQUANTA(thr) = quanta;
 
 #ifdef HAVE_THREADED_INTERPRETER
@@ -1484,6 +1483,7 @@ void arc_thread_dispatch(arc *c)
     for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
 	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
       thr = car(c->vmqueue);
+      c->curthread = thr;
       ++nthreads;
       switch (TSTATE(thr)) {
 	/* Remove a thread in Trelease or Tbroken state from the queue. */
@@ -1491,7 +1491,7 @@ void arc_thread_dispatch(arc *c)
       case Tbroken:
 	stoppedthreads++;
 	if (prev == CNIL)
-	  WB(&c->vmthreads, cons(c, cdr(c->vmqueue), c->vmthreads));
+	  WB(&c->vmthreads, cdr(c->vmqueue));
 	else
 	  scdr(prev, cdr(c->vmqueue));
 	break;
@@ -1546,6 +1546,9 @@ void arc_thread_dispatch(arc *c)
 	break;
       }
     }
+
+    if (nthreads == 0)
+      return;
 
     /* We have now finished running all threads.  See if we need to
        do some post-cleanup work */
