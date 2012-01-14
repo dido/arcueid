@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <setjmp.h>
 #include <errno.h>
+#include <time.h>
 #include "../config.h"
 #include "arcueid.h"
 #include "vmengine.h"
@@ -56,7 +57,15 @@ void *alloca (size_t);
 int vmtrace = 0;
 
 /* This is a kludge that effectively implements continuations in C.
-   It will actually save and restore the whole stack. */
+   It will actually save and restore the whole stack.  This code
+   is adapted from a method by Dan Piponi:
+
+   http://homepage.mac.com/sigfpe/Computing/continuations.html
+
+   It works on x86-64 at least.  I have no idea how this rather
+   unorthodox method (which courts fandango on core) will fare
+   on other architectures.
+ */
 
 static long *pbos;
 
@@ -1448,6 +1457,26 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
   return;
 }
 
+value arc_sleep(arc *c, value sleeptime)
+{
+  double timetowake;
+  value thr = c->curthread;
+
+  timetowake = arc_coerce_flonum(c, sleeptime);
+  if (timetowake < 0.0) {
+    arc_err_cstrfmt(c, "negative sleep time");
+    return(CNIL);
+  }
+  TWAKEUP(thr) = __arc_milliseconds() + (unsigned long long)(timetowake*1000.0);
+  TSTATE(thr) = Tsleep;
+  /* Return us to the head of the virtual machine.  Since we
+     have changed thread state to Tsleep, it will return immediately,
+     and will not resume until after the wakeup time has been
+     reached. */
+  longjmp(TVJMP(thr), 1);
+  return(CNIL);
+}
+
 /* Main dispatcher.  Will run each thread in the thread list for
    at most c->quanta cycles or until the thread leaves ready state.
    Also runs garbage collector threads periodically.  This should
@@ -1459,8 +1488,9 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
 void arc_thread_dispatch(arc *c)
 {
   value thr, prev;
-  int nthreads, blockedthreads, iowait;
+  int nthreads, blockedthreads, iowait, sleepthreads, runthreads;
   int stoppedthreads, need_select;
+  unsigned long long minsleep;
 #ifdef HAVE_SYS_EPOLL_H
 #define MAX_EVENTS 8192
   int epollfd;
@@ -1479,7 +1509,9 @@ void arc_thread_dispatch(arc *c)
 #endif
 
   for (;;) {
-    nthreads = blockedthreads = iowait = stoppedthreads = need_select = 0;
+    nthreads = blockedthreads = iowait = stoppedthreads
+      = sleepthreads = runthreads = need_select = 0;
+    minsleep = ULLONG_MAX;
     for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
 	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
       thr = car(c->vmqueue);
@@ -1498,15 +1530,20 @@ void arc_thread_dispatch(arc *c)
       case Talt:
       case Tsend:
       case Trecv:
-	/* increment count of threads in blocked states */
+ 	/* increment count of threads in blocked states */
 	++blockedthreads;
 	break;
       case Tsleep:
 	/* Wake up a sleeping thread if the wakeup time is reached */
-	if (__arc_milliseconds() >= FIX2INT(TWAKEUP(thr)))
+	if (__arc_milliseconds() >= TWAKEUP(thr)) {
 	  TSTATE(thr) = Tready;
-	else
+	  TVALR(thr) = CNIL;
+	} else {
+	  sleepthreads++;
+	  if (TWAKEUP(thr) < minsleep)
+	    minsleep = TWAKEUP(thr);
 	  continue;    /* keep going */
+	}
 	/* fall through and let the thread run if so */
       case Tready:
       case Texiting:
@@ -1545,6 +1582,8 @@ void arc_thread_dispatch(arc *c)
 	restoreccont(TRSC(thr));
 	break;
       }
+      if (RUNNABLE(thr))
+	runthreads++;
     }
 
     if (nthreads == 0)
@@ -1554,9 +1593,18 @@ void arc_thread_dispatch(arc *c)
        do some post-cleanup work */
     if (need_select) {
 #ifdef HAVE_SYS_EPOLL_H
-      /* wait indefinitely if all threads are either blocked or
-	 waiting on I/O, otherwise do not wait, and allow the
-	 non-blocked threads to execute on the next cycle. */
+      if (iowait == nthreads) {
+	/* If all threads are blocked on I/O, make epoll wait
+	   indefinitely. */
+	eptimeout = -1;
+      } else if ((iowait + sleepthreads) == nthreads) {
+	/* If all threads are either asleep or waiting on I/O, wait
+	   for at most the time until the first sleep expires. */
+	eptimeout = (minsleep - __arc_milliseconds())/1000;
+      } else {
+	/* do not wait if there are any threads which can run */
+	eptimeout = 0;
+      }
       eptimeout = (iowait == nthreads) ? -1 : 0;
       nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
       if (nfds < 0) {
@@ -1583,6 +1631,17 @@ void arc_thread_dispatch(arc *c)
 #else
 #error no epoll!
 #endif
+    }
+    /* If all threads are asleep, use nanosleep to wait the
+       shortest time */
+    if (sleepthreads == nthreads) {
+      unsigned long long st;
+      struct timespec req;
+
+      st = minsleep - __arc_milliseconds();
+      req.tv_sec = st / 1000;
+      req.tv_nsec = ((st % 1000) * 1000000L);
+      nanosleep(&req, NULL);
     }
     /* XXX - detect deadlock */
   }
