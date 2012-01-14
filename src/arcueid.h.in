@@ -164,7 +164,6 @@ struct vmthread {
   int waitfd;		/* file descriptor waited on */
   int waitfor;		/* wait for flag */
   struct ccont *rsc;	/* restart context */
-  jmp_buf rjmpbuf;	/* restart jump buf */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -195,7 +194,6 @@ struct vmthread {
 #define TWAITFD(t) (REP(t)._thread.waitfd)
 #define TWAITFOR(t) (REP(t)._thread.waitfor)
 #define TRSC(t) (REP(t)._thread.rsc)
-#define TRJMP(t) (REP(t)._thread.rjmpbuf)
 
 /* Cells for boxed items */
 struct cell {
