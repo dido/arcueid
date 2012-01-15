@@ -218,7 +218,6 @@ void arc_vmengine(arc *c, value thr, int quanta)
 
 	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
 	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
-	  trace(c, thr);
 	  tmpstr = arc_sym2name(c, tmp);
 	  cstr = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, tmpstr)) + 1));
 	  arc_str2cstr(c, tmpstr, cstr);
@@ -531,6 +530,7 @@ value arc_macapply(arc *c, value func, value args)
   c->in_compile = 1;
   oldthr = c->curthread;
   thr = arc_mkthread(c, func, c->stksize, 0);
+  c->curthread = thr;
   /* push the args in reverse order */
   nahd = arc_list_reverse(c, args);
   argc = 0;
