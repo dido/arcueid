@@ -46,33 +46,36 @@ void *alloca (size_t);
 
 /* make sure this corresponds to arc_types */
 const char *__arc_typenames[] = {
-  "sym",			/* T_NIL */
-  "sym",			/* T_TRUE */
-  "int",			/* T_FIXNUM */
-  "int",			/* T_BIGNUM */
-  "num",			/* T_FLONUM */
-  "num",			/* T_RATIONAL */
-  "num",			/* T_COMPLEX */
-  "char",			/* T_CHAR */
-  "string",			/* T_STRING */
-  "sym",			/* T_SYMBOL */
-  "cons",			/* T_CONS */
-  "table",			/* T_TABLE */
-  "bucket",			/* T_TBUCKET */
-  "tagged",			/* T_TAGGED */
-  "input",			/* T_INPUT */
-  "output",			/* T_OUTPUT */
-  "exception",			/* T_EXCEPTION */
-  "port",			/* T_PORT */
-  "thread",			/* T_THREAD */
-  "vector",			/* T_VECTOR */
-  "fn",				/* T_CONT */
-  "fn",				/* T_CLOS */
-  "fn",				/* T_ENV */
-  "fn",				/* T_VMCODE */
-  "fn",				/* T_CCODE */
-  "custom",			/* T_CUSTOM */
-  "fn",				/* T_XCONT */
+  "00 sym",			/* T_NIL */
+  "01 sym",			/* T_TRUE */
+  "02 int",			/* T_FIXNUM */
+  "03 int",			/* T_BIGNUM */
+  "04 num",			/* T_FLONUM */
+  "05 num",			/* T_RATIONAL */
+  "06 num",			/* T_COMPLEX */
+  "07 char",			/* T_CHAR */
+  "08 string",			/* T_STRING */
+  "09 sym",			/* T_SYMBOL */
+  "0a cons",			/* T_CONS */
+  "0b table",			/* T_TABLE */
+  "0c bucket",			/* T_TBUCKET */
+  "0d tagged",			/* T_TAGGED */
+  "0e input",			/* T_INPUT */
+  "0f output",			/* T_OUTPUT */
+  "10 exception",		/* T_EXCEPTION */
+  "11 port",			/* T_PORT */
+  "12 thread",			/* T_THREAD */
+  "13 vector",			/* T_VECTOR */
+  "14 unknown",			/* ??? */
+  "15 fn",			/* T_CONT */
+  "16 fn",			/* T_CLOS */
+  "17 fn",			/* T_CODE */
+  "18 fn",			/* T_ENV */
+  "19 fn",			/* T_VMCODE */
+  "1a fn",			/* T_CCODE */
+  "1b custom",			/* T_CUSTOM */
+  "1c fn",			/* T_XCONT */
+  "1d chan",			/* T_CHAN */
   NULL
 };
 
@@ -176,6 +179,9 @@ value arc_type(arc *c, value obj)
   case T_CUSTOM:
     return(ARC_BUILTIN(c, S_CUSTOM));
     break;
+  case T_CHAN:
+    return(ARC_BUILTIN(c, S_CHAN));
+    break;
   default:
     break;
   }
@@ -252,6 +258,9 @@ value arc_type_compat(arc *c, value obj)
     break;
   case T_CUSTOM:
     return(ARC_BUILTIN(c, S_CUSTOM));
+    break;
+  case T_CHAN:
+    return(ARC_BUILTIN(c, S_CHAN));
     break;
   default:
     break;
