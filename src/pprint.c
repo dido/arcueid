@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2009 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -13,10 +13,8 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Lesser General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  You should have received a copy of the GNU Lesser General Public License
+  along with this library; if not, see <http://www.gnu.org/licenses/>
 */
 /* This is not a very pretty pretty printer! ;)  Someday, we'll implement
    Philip Wadler's algebraic pretty printer, but that day is not today... */
@@ -308,6 +306,9 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     prettyprint(c, INT2FIX(TTID(sexpr)), ppstr);
     append_cstring(c, ">", ppstr);
     break;
+  case T_CHAN:
+    append_cstring(c, "#<channel>", ppstr);
+    break;
   case T_PORT:
   case T_CUSTOM:
     {
@@ -474,6 +475,9 @@ value arc_sdisp(arc *c, value sexpr, value port)
     arc_writecstr(c, "#<thread:", port);
     arc_sdisp(c, TTID(sexpr), port);
     arc_writec_rune(c, '>', port);
+    break;
+  case T_CHAN:
+    arc_writecstr(c, "#<channel>", port);
     break;
   case T_PORT:
   case T_CUSTOM:
