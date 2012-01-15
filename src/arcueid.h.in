@@ -111,7 +111,8 @@ enum arc_types {
   T_CCODE = 0x1a,		/* a C function */
   T_CUSTOM = 0x1b,		/* custom type */
   T_XCONT = 0x1c,		/* CC4 x-continuation */
-  T_MAX = 0x1c,
+  T_CHAN = 0x1d,		/* channel */
+  T_MAX = 0x1d,
 
   T_NONE=0xff
 };
