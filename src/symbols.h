@@ -86,6 +86,7 @@ enum builtin_syms {
   S_DIV,			/* / */
   S_AND,			/* and */
   S_APPLY,			/* apply */
+  S_CHAN,			/* chan */
 
   S_THE_END			/* end of the line */
 };
