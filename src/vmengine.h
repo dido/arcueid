@@ -118,4 +118,6 @@ extern value arc_vcptr(arc *c, value cctx);
 #define CONT_PRV(cont) (VINDEX(cont, 7))
 #define CONT_FPS(cont) (VINDEX(cont, 8))
 
+#define RUNNABLE(thr) (TSTATE(thr) == Tready || TSTATE(thr) == Texiting || TSTATE(thr) == Tcritical)
+
 #endif
