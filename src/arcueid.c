@@ -596,6 +596,9 @@ static struct {
   { "spawn", 1, arc_spawn },
   { "new-thread", 1, arc_spawn },
   { "sleep", 1, arc_sleep },
+  { "chan", 0, arc_mkchan },
+  { "<-", 1, arc_recv_channel },
+  { "<-=", 2, arc_send_channel },
 
   { NULL, 0, NULL }
 };
