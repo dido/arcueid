@@ -175,6 +175,19 @@ START_TEST(test_protect_err2)
 }
 END_TEST
 
+/* compare with the tests for protect in check_error.c */
+START_TEST(test_after)
+{
+  value ret;
+
+  TEST("(with (x nil y nil) (list (+ 1 (on-err (fn (ex) (= exc ex) (+ x y)) (fn () (after (after (err \"test\") (= y 1)) (= x (+ y 2)))))) x y exc))");
+  fail_unless(car(ret) == INT2FIX(5));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+  fail_unless(TYPE(car(cdr(cdr(cdr(ret))))) == T_EXCEPTION);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -207,6 +220,7 @@ int main(void)
   tcase_add_test(tc_err, test_protect_ccc);
   tcase_add_test(tc_err, test_protect_err1);
   tcase_add_test(tc_err, test_protect_err2);
+  tcase_add_test(tc_err, test_after);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
