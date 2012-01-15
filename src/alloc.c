@@ -346,6 +346,7 @@ static void mark(arc *c, value v, int reclevel)
     case T_VECTOR:
     case T_CODE:
     case T_CONT:
+    case T_CHAN:
       for (i=0; i<REP(v)._vector.length; i++)
 	mark(c, REP(v)._vector.data[i], reclevel+1);
       break;
