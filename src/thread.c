@@ -16,7 +16,6 @@
   You should have received a copy of the GNU Lesser General Public License
   along with this library. If not, see <http://www.gnu.org/licenses/>
 */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -374,4 +373,147 @@ value arc_spawn(arc *c, value thunk)
     scdr(c->vmqueue, tmp);
   }
   return(thr);
+}
+
+static void enqueue(arc *c, value thr, value *head, value *tail)
+{
+  value cell;
+
+  cell = cons(c, thr, CNIL);
+  if (*head == CNIL && *tail == CNIL) {
+    WB(head, cell);
+    WB(tail, cell);
+    return;
+  }
+  scdr(*tail, cell);
+  WB(tail, cell);
+}
+
+static value dequeue(arc *c, value *head, value *tail)
+{
+  value thr;
+
+  /* empty queue */
+  if (*head == CNIL && *tail == CNIL)
+    return(CNIL);
+  thr = car(*head);
+  WB(head, cdr(*head));
+  if (NIL_P(*head))
+    WB(tail, *head);
+  return(thr);
+}
+
+/* A channel is again a vector with the following entries:
+   0 - whether the channel has data or not (CTRUE or CNIL)
+   1 - Data in the channel, if any (whatever)
+   2 - Head of list of threads waiting to receive from the channel (cons)
+   3 - Tail of list of threads waiting to receive from the channel
+   4 - Head of list of threads waiting to send to the channel (cons)
+       This is actually a list of thread-value pairs.
+   5 - Tail of list of threads waiting to send to the channel
+ */
+value arc_mkchan(arc *c)
+{
+  value chan;
+
+  chan = arc_mkvector(c, 6);
+  BTYPE(chan) = T_CHAN;
+  VINDEX(chan, 0) = VINDEX(chan, 1) = VINDEX(chan, 2)  = CNIL;
+  VINDEX(chan, 3) = VINDEX(chan, 4) = VINDEX(chan, 5) = CNIL;
+  return(chan);
+}
+
+static value __recv_channel(arc *c, value curthread, value chan);
+static value __send_channel(arc *c, value curthread, value chan, value val);
+
+static value __recv_channel(arc *c, value curthread, value chan)
+{
+  value thr, val, nval;
+
+  if (NIL_P(VINDEX(chan, 0))) {
+    /* We have no value that can be received from the channel.  Enqueue
+       the thread and freeze it into Trecv state.  This should never
+       happen with a recursive call to __recv_channel. */
+    enqueue(c, curthread, &VINDEX(chan, 2), &VINDEX(chan, 3));
+    /* Change state to Trecv, which is not runnable, and toss us back
+       to the virtual machine loop, which will see we are no longer
+       runnable and return us to the dispatcher so some other thread
+       can be made to run instead. */
+    TSTATE(curthread) = Trecv;
+    longjmp(TVJMP(curthread), 1);
+  }
+
+  /* There is a value that can be received from the channel.  Read it,
+     and see if there is any thread waiting to send. */
+  VINDEX(chan, 0) = CNIL;
+  val = VINDEX(chan, 1);
+  thr = dequeue(c, &VINDEX(chan, 4), &VINDEX(chan, 5));
+  if (thr == CNIL) {
+    /* No threads waiting to send, just return */
+    return(val);
+  }
+
+  /* There is at least one thread waiting to send.  Wake it up. */
+  nval = cdr(thr);
+  thr = car(thr);
+  TSTATE(thr) = Tready;
+  /* Sets the value returned by arc_send_channel in the thread
+     we have woken up. */
+  WB(&TVALR(thr), __send_channel(c, thr, nval, chan));
+  /* restore continuation used to call arc_send_channel in the thread
+     we are waking up. */
+  arc_return(c, thr);
+  /* return the value read from the channel to our caller */
+  return(val);
+}
+
+static value __send_channel(arc *c, value curthread, value chan, value val)
+{
+  value thr;
+
+  if (VINDEX(chan, 0) == CTRUE) {
+    /* There is a value in the channel that was written that has not
+     yet been read.  Enqueue the thread and the value it wanted
+     to write. Should never happen with a recursive call to
+     __send_channel. */
+    enqueue(c, cons(c, curthread, val), &VINDEX(chan, 4), &VINDEX(chan, 5));
+    /* Change state to Tsend, which is not runnable, and toss us back
+       to the virtual machine loop, which will see we are no longer
+       runnable and return us to the dispatcher so some other thread
+       can be made to run instead. */
+    TSTATE(curthread) = Tsend;
+    longjmp(TVJMP(curthread), 1);
+  }
+
+
+  VINDEX(chan, 0) = CTRUE;
+  VINDEX(chan, 1) = val;
+  thr = dequeue(c, &VINDEX(chan, 2), &VINDEX(chan, 3));
+  if (thr == CNIL) {
+    /* no threads waiting to read */
+    return(val);
+  }
+  /* There is at least one thread waiting to receive.  Wake it up
+     and set value register of thread so it gets the value written
+     when it returns. */
+  TSTATE(thr) = Tready;
+  WB(&TVALR(thr),  __recv_channel(c, thr, chan));
+  /* this causes the thread we woke up to restore the continuation
+     created when it called arc_recv_channel. */
+  arc_return(c, thr);
+  /* This will return the value val to the thread which called
+     arc_send_channel. */
+  return(val);
+}
+
+value arc_recv_channel(arc *c, value chan)
+{
+  TYPECHECK(chan, T_CHAN, 1);
+  return(__recv_channel(c, c->curthread, chan));
+}
+
+value arc_send_channel(arc *c, value chan, value data)
+{
+  TYPECHECK(chan, T_CHAN, 1);
+  return(__send_channel(c, c->curthread, chan, data));
 }
