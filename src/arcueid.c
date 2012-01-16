@@ -598,6 +598,7 @@ static struct {
   { "<-", 1, arc_recv_channel },
   { "<-=", 2, arc_send_channel },
   { "dead", 1, arc_dead },
+  { "tjoin", 1, arc_tjoin },
 
   /* used by atomic-invoke */
   { "__acell__", -1, arc_atomic_cell },
