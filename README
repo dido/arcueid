@@ -1,5 +1,5 @@
 ARCUEID README -- Important introductory notes.
-Copyright (C) 2009,2010,2011 Rafael R. Sevilla
+Copyright (C) 2009,2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
 This is Arcueid, an implementation of Paul Graham's Arc dialect of
@@ -9,17 +9,29 @@ The main core library, libarcueid, is licensed under the GNU Lesser
 General public license.  The main REPL interpreter, arcueid is
 licensed under the GPL.
 
-See the file arcueid.org in the main directory of the distribution for
-current functionality status.  It's an Emacs org-mode file (just plain
-text), not a URL! Note: The URL arcueid.org is as of this writing a
-fan site for the anime/visual novel Tsukihime: Lunar Legend (真月譚月
-姫), which should explain where the name 'Arcueid' comes from. :)
+See NEWS for recent changes.  See the file arcueid.org in the main
+directory of the distribution for current functionality status.  It's
+an Emacs org-mode file (just plain text), not a URL! Note: The URL
+arcueid.org is as of this writing a fan site for the anime/visual
+novel Tsukihime: Lunar Legend (真月譚月姫), which should explain
+where the name 'Arcueid' comes from. :)
+
+The Git repository is available for anonymous clone at
+git://github.com/dido/arcueid.git.  Do note that it is under heavy
+development and may not always be stable!
+
+A wiki with some notes which may or may not be useful to others is
+here: https://github.com/dido/arcueid/wiki
+
+Please report any problems with Arcueid on the project's Github
+issue tracker: https://github.com/dido/arcueid/issues
 
 If you are building this from a source tarball, the usual ./configure;
 make; make install combo should work, but you will get an Arcueid REPL
 executable without Readline support if the readline development
-headers are not installed, and you may have to add --disable-bignum if
-you do not have the GMP development headers (but this is not
+headers are not installed (libreadline-dev on Debian/Ubuntu), and you
+may have to add --disable-bignum if you do not have the GMP
+development headers (libgmp-dev on Debian/Ubuntu, but this is not
 recommended: Arcueid has not been very well tested without GMP).  Add
 --enable-unit-tests to enable unit tests (requires GNU Check), and add
 --enable-tracing to build with the bytecode tracer (this causes a
@@ -38,8 +50,11 @@ prerequisites installed:
 - pkg-config (http://www.freedesktop.org/wiki/Software/pkg-config,
   pkg-config on Ubuntu/Debian)
 
-Once all these prerequisites are installed run autoreconf -i in the
-main directory.  This should generate a configure script and
+You need all of this since the process will create a complete
+configure script and all the development dependency headers are
+required for it to generate the rules for all the checks configure has
+to perform.  Once all these prerequisites are installed run autoreconf
+-i in the main directory.  This should generate a configure script and
 Makefile.in's, and from there it should be possible to do ./configure
 ; make ; make install.
 
