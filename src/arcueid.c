@@ -651,6 +651,7 @@ void arc_init_sq(arc *c, int stksize, int quanta)
   c->quantum = quanta;
   c->curthread = CNIL;
   c->vmthreads = CNIL;
+  c->vmthrtail = CNIL;
   c->vmqueue = CNIL;
   c->in_compile = 0;
   c->iowaittbl = arc_mkhash(c, 8);
