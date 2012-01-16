@@ -1178,6 +1178,7 @@ value arc_errexc_thr(arc *c, value thr, value exc)
       /* if there is nothing, just signal error and be done with it. */
       c->in_compile = 0;
       c->signal_error(c, VINDEX(exc, 0));
+      WB(&TCONR(thr), CNIL);
       return(CNIL);
     }
     /* otherwise, reverse the newconr so that the continuations get invoked
