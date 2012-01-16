@@ -77,6 +77,8 @@ typedef struct arc {
 
   value splforms;		/* special forms */
   value inlfuncs;		/* inlinable functions */
+
+  value achan;			/* atomic channel */
 } arc;
 
 
@@ -172,6 +174,8 @@ struct vmthread {
   int quanta;		/* time slice */
   unsigned long long ticks;	/* time used */
   unsigned long long wakeuptime; /* wakeup time */
+  /* for atomic-invoke */
+  int atomic_cell;		 /* atomic cell -- do we hold the channel? */
 };
 
 #define TFUNR(t) (REP(t)._thread.funr)
@@ -195,6 +199,7 @@ struct vmthread {
 #define TWAITFD(t) (REP(t)._thread.waitfd)
 #define TWAITFOR(t) (REP(t)._thread.waitfor)
 #define TRSC(t) (REP(t)._thread.rsc)
+#define TACELL(t) (REP(t)._thread.atomic_cell)
 
 /* Cells for boxed items */
 struct cell {
