@@ -595,3 +595,16 @@ value arc_kill_thread(arc *c, value thr)
   }
   return(thr);
 }
+
+/* Break a thread, making it behave as though it raised an exception
+   at whatever point it might be in. */
+value arc_break_thread(arc *c, value thr)
+{
+  value emsg;
+  value exc;
+
+  emsg = arc_mkstringc(c, "break");
+  exc = arc_mkexception(c, emsg, CODE_NAME(TFUNR(thr)), TCONR(thr));
+  arc_errexc_thr(c, thr, exc);
+  return(CNIL);
+}
