@@ -426,6 +426,7 @@ static void rootset(arc *c)
   MARKPROP(c->splforms);
   MARKPROP(c->inlfuncs);
   MARKPROP(c->iowaittbl);
+  MARKPROP(c->achan);
 }
 
 static void rungc(arc *c)
