@@ -60,7 +60,8 @@ typedef struct arc {
   /* Default signal error */
   void (*signal_error)(struct arc *, value);
 
-  value vmthreads;		/* virtual machine thread objects */
+  value vmthreads;		/* virtual machine thread objects (head) */
+  value vmthrtail;		/* virtual machine thread objects (tail) */
   value vmqueue;		/* virtual machine run queue */
   value curthread;		/* current thread */
   int tid_nonce;		/* thread id nonce */
