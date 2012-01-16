@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -14,9 +14,7 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 /* miscellaneous procedures and initialization */
 #include <stdio.h>
@@ -599,6 +597,7 @@ static struct {
   { "chan", 0, arc_mkchan },
   { "<-", 1, arc_recv_channel },
   { "<-=", 2, arc_send_channel },
+  { "dead", 1, arc_dead },
 
   /* used by atomic-invoke */
   { "__acell__", -1, arc_atomic_cell },
