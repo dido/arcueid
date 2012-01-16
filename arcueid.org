@@ -428,8 +428,9 @@ notice and this notice are preserved.
        - [X] <- (recv-channel) *
        - [X] <-= (send-channel) *
    - [ ] Networking [0/10]
-     - [ ] open-socket
-     - [ ] open-socket-dgram (Arcueid only)
+     - [ ] open-socket (TCP sockets only)
+     - [ ] socket (Arcueid extension, can be used to open datagram or
+           Unix domain sockets)
      - [ ] client-ip
      - [ ] socket-accept
      - [ ] socket-bind (Arcueid only)
