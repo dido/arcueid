@@ -138,7 +138,7 @@ notice and this notice are preserved.
        - [X] /
      - [X] Function applications
    - [X] Macros
-** TODO basic data types [14/16]
+** TODO basic data types [15/16]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -158,7 +158,7 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [X] Threads
-    - [ ] Channels
+    - [X] Channels
     - [ ] Regular Expressions
 ** TODO Runtime Built-In Functions [17/19]
    Consider whether or not to provide instructions for the asterisked
@@ -460,7 +460,7 @@ notice and this notice are preserved.
      - [X] current-process-milliseconds
      - [X] msec
      - [X] seconds
-   - [ ] Regular Expressions [0/3]
+   - [ ] Regular Expressions (Arcueid extension) [0/3]
      - [ ] rxcompile
      - [ ] rxescape
      - [ ] rxmatch (=~)
@@ -471,12 +471,12 @@ notice and this notice are preserved.
      - [X] sref *
      - [X] len
      - [X] bound
-** TODO Threading [3/6]
+** TODO Threading [4/6]
    - [X] Basic scheduling
    - [X] Suspend threads on I/O
    - [X] Synchronization
    - [ ] Deadlock detection
-   - [ ] Thread control
+   - [X] Thread control
    - [ ] alt mechanism
 ** TODO Baseline environment (arc.arc)
    We will doubtless need to customize the base environment provided in
