@@ -581,13 +581,17 @@ value arc_tjoin(arc *c, value thr)
   return(arc_recv_channel(c, TRVCH(thr)));
 }
 
-/* This will terminate a thread with extreme prejudice.  Be wary of
-   using it: a thread blocked on I/O may do strange things, and no
-   protect clauses or other cleanup associated with the thread will
-   execute!  arc_tjoin on a thread thus killed will return undefined
-   results. */
+/* This will terminate a thread with extreme prejudice.  This function is
+   VERY dangerous to use.  It will attempt to release the thread's hold
+   on the atomic channel, but no other attempt is made at cleanup.  Protect
+   and friends are NOT called. */
 value arc_kill_thread(arc *c, value thr)
 {
   TSTATE(thr) = Tbroken;
+  if (TACELL(thr)) {
+    /* release atomic cell */
+    TACELL(thr) = 0;
+    __recv_channel(c, thr, arc_atomic_chan(c));
+  }
   return(thr);
 }
