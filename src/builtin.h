@@ -92,5 +92,6 @@ extern value arc_select_channel(arc *c, value readchans, value writechans,
 				value block);
 extern value arc_atomic_cell(arc *c, int argc, value *argv);
 extern value arc_atomic_chan(arc *c);
+extern value arc_dead(arc *c, value thr);
 
 #endif
