@@ -580,3 +580,14 @@ value arc_tjoin(arc *c, value thr)
     return(TRVCH(thr));
   return(arc_recv_channel(c, TRVCH(thr)));
 }
+
+/* This will terminate a thread with extreme prejudice.  Be wary of
+   using it: a thread blocked on I/O may do strange things, and no
+   protect clauses or other cleanup associated with the thread will
+   execute!  arc_tjoin on a thread thus killed will return undefined
+   results. */
+value arc_kill_thread(arc *c, value thr)
+{
+  TSTATE(thr) = Tbroken;
+  return(thr);
+}
