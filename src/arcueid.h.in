@@ -168,6 +168,7 @@ struct vmthread {
   int waitfd;		/* file descriptor waited on */
   int waitfor;		/* wait for flag */
   struct ccont *rsc;	/* restart context */
+  value rvchan;		/* return value channel */
 
   /* thread scheduling variables */
   enum threadstate state;	/* thread state */
@@ -201,6 +202,7 @@ struct vmthread {
 #define TWAITFOR(t) (REP(t)._thread.waitfor)
 #define TRSC(t) (REP(t)._thread.rsc)
 #define TACELL(t) (REP(t)._thread.atomic_cell)
+#define TRVCH(t) (REP(t)._thread.rvchan)
 
 /* Cells for boxed items */
 struct cell {
@@ -578,10 +580,6 @@ extern value arc_len(arc *c, value obj);
 
 /* threading */
 extern value arc_spawn(arc *c, value thunk);
-extern value arc_break_thread(arc *c, value thr);
-extern value arc_kill_thread(arc *c, value thr);
-extern value arc_sleep(arc *c, value secs);
-extern value arc_thread_join(arc *c, value thr);
 extern void arc_thread_dispatch(arc *c);
 
 #endif
