@@ -52,6 +52,8 @@
 void *alloca (size_t);
 #endif
 
+static value __send_rvch(arc *c, value chan, value data);
+
 /* This is a kludge that effectively implements continuations in C.
    It will actually save and restore the whole stack.  This code
    is adapted from a method by Dan Piponi:
@@ -260,6 +262,10 @@ void arc_thread_dispatch(arc *c)
 	  scdr(prev, cdr(c->vmqueue));
 	if (c->vmthrtail == c->vmqueue)
 	  WB(&c->vmthrtail, prev);
+	if (TYPE(TRVCH(thr)) == T_CHAN) {
+	  __send_rvch(c, TRVCH(thr), TVALR(thr));
+	  WB(&TRVCH(thr), TVALR(thr));
+	}
 	break;
       case Talt:
       case Tsend:
@@ -513,6 +519,26 @@ static value __send_channel(arc *c, value curthread, value chan, value val)
   return(val);
 }
 
+/* Used for sending to the receive channel.  This channel is not
+   like normal channels, in that (1) writing to it is unrestricted
+   and (2) all receivers on the channel will wake up at the same time
+   and receive the same value when this is called. */
+static value __send_rvch(arc *c, value chan, value data)
+{
+  value thr;
+
+  VINDEX(chan, 0) = CTRUE;
+  VINDEX(chan, 1) = data;
+
+  /* dequeue and wake up */
+  while ((thr = dequeue(c, &VINDEX(chan, 2), &VINDEX(chan, 3))) != CNIL) {
+    TSTATE(thr) = Tready;
+    WB(&TVALR(thr), data);
+    arc_return(c, thr);
+  }
+  return(data);
+}
+
 value arc_recv_channel(arc *c, value chan)
 {
   TYPECHECK(chan, T_CHAN, 1);
@@ -546,4 +572,11 @@ value arc_dead(arc *c, value thr)
 {
   TYPECHECK(thr, T_THREAD, 1);
   return((TSTATE(thr) == Trelease || TSTATE(thr) == Tbroken) ? CTRUE : CNIL);
+}
+
+value arc_tjoin(arc *c, value thr)
+{
+  if (TYPE(TRVCH(thr)) != T_CHAN)
+    return(TRVCH(thr));
+  return(arc_recv_channel(c, TRVCH(thr)));
 }
