@@ -93,5 +93,9 @@ extern value arc_select_channel(arc *c, value readchans, value writechans,
 extern value arc_atomic_cell(arc *c, int argc, value *argv);
 extern value arc_atomic_chan(arc *c);
 extern value arc_dead(arc *c, value thr);
+extern value arc_break_thread(arc *c, value thr);
+extern value arc_kill_thread(arc *c, value thr);
+extern value arc_sleep(arc *c, value secs);
+extern value arc_tjoin(arc *c, value thr);
 
 #endif
