@@ -1,4 +1,5 @@
 ; Main Arc lib.  Ported to Scheme version Jul 06.
+; Updated for use with Arcueid, Jan 2012 by Rafael R. Sevilla
 
 ; don't like names of conswhen and consif
 
