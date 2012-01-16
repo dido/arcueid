@@ -116,6 +116,35 @@ static void destroyccont(struct ccont *c)
   free(c);
 }
 
+/* Utility functions for queues */
+static void enqueue(arc *c, value thr, value *head, value *tail)
+{
+  value cell;
+
+  cell = cons(c, thr, CNIL);
+  if (*head == CNIL && *tail == CNIL) {
+    WB(head, cell);
+    WB(tail, cell);
+    return;
+  }
+  scdr(*tail, cell);
+  WB(tail, cell);
+}
+
+static value dequeue(arc *c, value *head, value *tail)
+{
+  value thr;
+
+  /* empty queue */
+  if (*head == CNIL && *tail == CNIL)
+    return(CNIL);
+  thr = car(*head);
+  WB(head, cdr(*head));
+  if (NIL_P(*head))
+    WB(tail, *head);
+  return(thr);
+}
+
 /* Used when threads are waiting on file descriptors */
 void arc_thread_wait_fd(volatile arc *c, volatile int fd)
 {
@@ -229,6 +258,8 @@ void arc_thread_dispatch(arc *c)
 	  WB(&c->vmthreads, cdr(c->vmqueue));
 	else
 	  scdr(prev, cdr(c->vmqueue));
+	if (c->vmthrtail == c->vmqueue)
+	  WB(&c->vmthrtail, prev);
 	break;
       case Talt:
       case Tsend:
@@ -357,7 +388,7 @@ static int __arc_tidctr = 0;
 
 value arc_spawn(arc *c, value thunk)
 {
-  value thr, tmp;
+  value thr;
 
   TYPECHECK(thunk, T_CLOS, 1);
   thr = arc_mkthread(c, car(thunk), c->stksize, 0);
@@ -368,44 +399,8 @@ value arc_spawn(arc *c, value thunk)
   VINDEX(TSTDH(thr), 1) = arc_stdout(c);
   VINDEX(TSTDH(thr), 2) = arc_stderr(c);
   TTID(thr) = __arc_tidctr++;
-  /* Queue the new thread so that it gets to run just after the
-     current thread (which invoked the spawn) if any */
-  if (c->vmqueue == CNIL) {
-    /* The first thread */
-    c->vmthreads = cons(c, thr, CNIL);
-    c->vmqueue = c->vmthreads;
-  } else {
-    tmp = cons(c, thr, cdr(c->vmqueue));
-    scdr(c->vmqueue, tmp);
-  }
-  return(thr);
-}
-
-static void enqueue(arc *c, value thr, value *head, value *tail)
-{
-  value cell;
-
-  cell = cons(c, thr, CNIL);
-  if (*head == CNIL && *tail == CNIL) {
-    WB(head, cell);
-    WB(tail, cell);
-    return;
-  }
-  scdr(*tail, cell);
-  WB(tail, cell);
-}
-
-static value dequeue(arc *c, value *head, value *tail)
-{
-  value thr;
-
-  /* empty queue */
-  if (*head == CNIL && *tail == CNIL)
-    return(CNIL);
-  thr = car(*head);
-  WB(head, cdr(*head));
-  if (NIL_P(*head))
-    WB(tail, *head);
+  /* Queue the new thread  */
+  enqueue(c, thr, &c->vmthreads, &c->vmthrtail);
   return(thr);
 }
 
