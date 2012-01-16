@@ -1153,11 +1153,10 @@ value arc_mkexception(arc *c, value details, value lastcall, value contchain)
    handler. If the ECONT register is nil, we use the signal_error
    function as the final fallback.
 */
-value arc_errexc(arc *c, value exc)
+value arc_errexc_thr(arc *c, value thr, value exc)
 {
-  value thr, errcont, newconr, cont, pcont, endcont;
+  value errcont, newconr, cont, pcont, endcont;
 
-  thr = c->curthread;
   if (NIL_P(TECONT(thr))) {
     /* In the absence of any on-error rescue functions,
        we attempt to build up a new CONR with each of the
@@ -1195,7 +1194,7 @@ value arc_errexc(arc *c, value exc)
     TSTATE(thr) = Texiting;
     TCONR(thr) = newconr;	/* replace the continuation register */
     arc_restorecont(c, thr, cont);
-    longjmp(TVJMP(thr), 0);
+    return(CNIL);
   }
 
   errcont = car(TECONT(thr));
@@ -1224,7 +1223,7 @@ value arc_errexc(arc *c, value exc)
     CPUSH(thr, exc);
     /* jump back to the start of the virtual machine context executing
        this. */
-    longjmp(TVJMP(thr), 0);
+    return(CNIL);
   }
   /* otherwise, combine with the error continuation and reverse to make
      the new continuation register, but first put the exception into
@@ -1244,7 +1243,13 @@ value arc_errexc(arc *c, value exc)
   newconr = cdr(newconr);
   TCONR(thr) = newconr;	       /* replace the continuation register */
   arc_restorecont(c, thr, cont);
-  longjmp(TVJMP(thr), 0);
+  return(CNIL);
+}
+
+value arc_errexc(arc *c, value exc)
+{
+  arc_errexc_thr(c, c->curthread, exc);
+  longjmp(TVJMP(c->curthread), 0);
   return(CNIL);
 }
 
