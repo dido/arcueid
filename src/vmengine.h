@@ -81,6 +81,7 @@ extern value arc_mkcctx(arc *c, value vcodesize, value vlitsize);
 extern value arc_vcptr(arc *c, value cctx);
 
 extern int arc_return(arc *c, value thr);
+extern value arc_errexc_thr(arc *c, value thr, value exc);
 
 /* A code generation context (cctx) is a vector with the following
    items as indexes:
