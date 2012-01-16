@@ -487,7 +487,7 @@ value arc_sdisp(arc *c, value sexpr, value port)
     }
     break;
   }
-  return(sexpr);
+  return(CNIL);
 }
 
 value arc_disp(arc *c, int argc, value *argv)
@@ -506,7 +506,7 @@ value arc_swrite(arc *c, value sexpr, value port)
 
   prettyprint(c, sexpr, &ret);
   arc_writestr(c, ret, port);
-  return(sexpr);
+  return(CNIL);
 }
 
 value arc_write(arc *c, int argc, value *argv)
