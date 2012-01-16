@@ -29,6 +29,7 @@
 #include "arith.h"
 #include "symbols.h"
 #include "io.h"
+#include "builtin.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
