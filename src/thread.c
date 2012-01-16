@@ -323,7 +323,9 @@ void arc_thread_dispatch(arc *c)
     }
 
     /* XXX - should we print a warning message if we abort when all
-       threads are blocked? */
+       threads are blocked?  I suppose it should be up to the caller
+       to decide whether this is a bad thing or no.  It isn't an
+       issue for the REPL. */
     if (nthreads == 0 || nthreads == blockedthreads)
       return;
 
@@ -331,9 +333,12 @@ void arc_thread_dispatch(arc *c)
        do some post-cleanup work */
     if (need_select) {
 #ifdef HAVE_SYS_EPOLL_H
-      if (iowait == nthreads) {
-	/* If all threads are blocked on I/O, make epoll wait
-	   indefinitely. */
+      if ((iowait + blockedthreads) == nthreads) {
+	/* If all threads are blocked on I/O or are waiting on channels,
+	   make epoll wait indefinitely.  The only possible thing
+	   (barring deadlock conditions) that can make the threads waiting
+	   on channels resume operation is one of the I/O blocked threads
+	   resuming, so we should wait indefinitely for that. */
 	eptimeout = -1;
       } else if ((iowait + sleepthreads + blockedthreads) == nthreads) {
 	/* If all threads are either asleep, blocked, or waiting on I/O,
@@ -535,4 +540,10 @@ value arc_atomic_cell(arc *c, int argc, value *argv)
 value arc_atomic_chan(arc *c)
 {
   return(c->achan);
+}
+
+value arc_dead(arc *c, value thr)
+{
+  TYPECHECK(thr, T_THREAD, 1);
+  return((TSTATE(thr) == Trelease || TSTATE(thr) == Tbroken) ? CTRUE : CNIL);
 }
