@@ -1179,6 +1179,7 @@ value arc_errexc_thr(arc *c, value thr, value exc)
       c->in_compile = 0;
       c->signal_error(c, VINDEX(exc, 0));
       WB(&TCONR(thr), CNIL);
+      TSTATE(thr) = Tbroken;
       return(CNIL);
     }
     /* otherwise, reverse the newconr so that the continuations get invoked
