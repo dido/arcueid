@@ -469,6 +469,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TECONT(thr) = CNIL;
   TEXC(thr) = CNIL;
   TSTDH(thr) = arc_mkvector(c, 3);
+  TRVCH(thr) = arc_mkchan(c);
   /* standard handles */
   VINDEX(TSTDH(thr), 0) = VINDEX(TSTDH(thr), 1)
     = VINDEX(TSTDH(thr), 2) = CNIL;
