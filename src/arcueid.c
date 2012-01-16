@@ -600,6 +600,10 @@ static struct {
   { "<-", 1, arc_recv_channel },
   { "<-=", 2, arc_send_channel },
 
+  /* used by atomic-invoke */
+  { "__acell__", -1, arc_atomic_cell },
+  { "__achan__", 0, arc_atomic_chan },
+
   { NULL, 0, NULL }
 };
 
@@ -650,6 +654,7 @@ void arc_init_sq(arc *c, int stksize, int quanta)
   c->vmqueue = CNIL;
   c->in_compile = 0;
   c->iowaittbl = arc_mkhash(c, 8);
+  c->achan = arc_mkchan(c);
 }
 
 void arc_init(arc *c)
