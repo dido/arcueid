@@ -320,9 +320,17 @@
   (map [do (write _) (disp " ")] args)
   (disp #\newline))
 
-;; XXX - does nothing really special for now.  Once we have threads
-;; this will be defined in the core somehow.
-(def atomic-invoke (args) (args))
+;; We use the internal functions __acell__ (which retrieves the atomic
+;; cell of the current thread) and __achan__  (which retrieves the global
+;; channel used for atomic-invoke) to implement this.
+(def atomic-invoke (thunk)
+  (if (isnt (type thunk) 'fn) (err "atomic-invoke requires fn arg")
+      (__acell__) (thunk)
+      (do (__acell__ t)
+	  (<-= (__achan__) t)
+	  (protect (fn () (thunk))
+		   (fn () (<- (__achan__))
+		       (__acell__ nil))))))
 
 (mac atomic body
   `(atomic-invoke (fn () ,@body)))
