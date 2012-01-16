@@ -414,20 +414,19 @@ notice and this notice are preserved.
      - [X] call-w/stdin
      - [X] call-w/stdout
      - [X] disp
-   - [-] Threads [0/2]
-     - [-] Creating and managing threads [4/7]
+   - [-] Threads [1/2]
+     - [-] Creating and managing threads [5/7]
        - [X] new-thread (spawn)
        - [ ] break-thread
        - [ ] kill-thread
        - [X] dead
        - [X] sleep
        - [X] atomic-invoke - implemented using channels
-       - [ ] join (not in standard Arc)
-     - [-] Channels (cf. Limbo and CSP, Arcueid extension) [3/4]
+       - [X] tjoin (not in standard Arc)
+     - [X] Channels (cf. Limbo and CSP, Arcueid extension) [3/3]
        - [X] chan
        - [X] <- (recv-channel) *
        - [X] <-= (send-channel) *
-       - [ ] alt *
    - [ ] Networking [0/10]
      - [ ] open-socket
      - [ ] open-socket-dgram (Arcueid only)
@@ -472,12 +471,13 @@ notice and this notice are preserved.
      - [X] sref *
      - [X] len
      - [X] bound
-** TODO Threading [2/5]
+** TODO Threading [3/6]
    - [X] Basic scheduling
    - [X] Suspend threads on I/O
-   - [ ] Synchronization
+   - [X] Synchronization
    - [ ] Deadlock detection
    - [ ] Thread control
+   - [ ] alt mechanism
 ** TODO Baseline environment (arc.arc)
    We will doubtless need to customize the base environment provided in
    PG-Arc.
