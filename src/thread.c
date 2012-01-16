@@ -169,6 +169,9 @@ value arc_sleep(arc *c, value sleeptime)
   }
   TWAKEUP(thr) = __arc_milliseconds() + (unsigned long long)(timetowake*1000.0);
   TSTATE(thr) = Tsleep;
+  /* restore the continuation used to call arc_sleep, so when the thread
+     resumes it should continue execution after sleep was called. */
+  arc_return(c, thr);
   /* Return us to the head of the virtual machine.  Since we
      have changed thread state to Tsleep, it will return immediately,
      and will not resume until after the wakeup time has been
@@ -209,8 +212,8 @@ void arc_thread_dispatch(arc *c)
 #endif
 
   for (;;) {
-    nthreads = blockedthreads = iowait = stoppedthreads
-      = sleepthreads = runthreads = need_select = 0;
+    nthreads = blockedthreads = iowait = stoppedthreads = 0;
+    sleepthreads = runthreads = need_select = 0;
     minsleep = ULLONG_MAX;
     for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
 	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
@@ -255,6 +258,7 @@ void arc_thread_dispatch(arc *c)
 	   to keep running by itself until it leaves critical */
 	while (TSTATE(thr) == Tcritical)
 	  arc_vmengine(c, thr, c->quantum);
+	break;
       case Tiowait:
 	iowait++;
 	need_select = 1;
@@ -284,9 +288,12 @@ void arc_thread_dispatch(arc *c)
       }
       if (RUNNABLE(thr))
 	runthreads++;
+      /* printf("Thread %d completed, state %d\n", TTID(thr), TSTATE(thr)); */
     }
 
-    if (nthreads == 0)
+    /* XXX - should we print a warning message if we abort when all
+       threads are blocked? */
+    if (nthreads == 0 || nthreads == blockedthreads)
       return;
 
     /* We have now finished running all threads.  See if we need to
@@ -297,15 +304,14 @@ void arc_thread_dispatch(arc *c)
 	/* If all threads are blocked on I/O, make epoll wait
 	   indefinitely. */
 	eptimeout = -1;
-      } else if ((iowait + sleepthreads) == nthreads) {
-	/* If all threads are either asleep or waiting on I/O, wait
-	   for at most the time until the first sleep expires. */
+      } else if ((iowait + sleepthreads + blockedthreads) == nthreads) {
+	/* If all threads are either asleep, blocked, or waiting on I/O,
+	   wait for at most the time until the first sleep expires. */
 	eptimeout = (minsleep - __arc_milliseconds())/1000;
       } else {
 	/* do not wait if there are any threads which can run */
 	eptimeout = 0;
       }
-      eptimeout = (iowait == nthreads) ? -1 : 0;
       nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
       if (nfds < 0) {
 	int en = errno;
@@ -453,13 +459,14 @@ static value __recv_channel(arc *c, value curthread, value chan)
     return(val);
   }
 
-  /* There is at least one thread waiting to send.  Wake it up. */
+  /* There is at least one thread waiting to send on this channel. 
+     Wake it up. */
   nval = cdr(thr);
   thr = car(thr);
   TSTATE(thr) = Tready;
   /* Sets the value returned by arc_send_channel in the thread
      we have woken up. */
-  WB(&TVALR(thr), __send_channel(c, thr, nval, chan));
+  WB(&TVALR(thr), __send_channel(c, thr, chan, nval));
   /* restore continuation used to call arc_send_channel in the thread
      we are waking up. */
   arc_return(c, thr);
@@ -490,12 +497,12 @@ static value __send_channel(arc *c, value curthread, value chan, value val)
   VINDEX(chan, 1) = val;
   thr = dequeue(c, &VINDEX(chan, 2), &VINDEX(chan, 3));
   if (thr == CNIL) {
-    /* no threads waiting to read */
+    /* no threads waiting to receive */
     return(val);
   }
-  /* There is at least one thread waiting to receive.  Wake it up
-     and set value register of thread so it gets the value written
-     when it returns. */
+  /* There is at least one thread waiting to receive on this channel.
+     Wake it up and set value register of thread so it gets the value
+     written when it returns. */
   TSTATE(thr) = Tready;
   WB(&TVALR(thr),  __recv_channel(c, thr, chan));
   /* this causes the thread we woke up to restore the continuation
@@ -516,4 +523,21 @@ value arc_send_channel(arc *c, value chan, value data)
 {
   TYPECHECK(chan, T_CHAN, 1);
   return(__send_channel(c, c->curthread, chan, data));
+}
+
+value arc_atomic_cell(arc *c, int argc, value *argv)
+{
+  if (argc == 0)
+    return((TACELL(c->curthread) == 0) ? CNIL : CTRUE);
+  if (argc != 1) {
+    arc_err_cstrfmt(c, "__acell__: wrong number of arguments (%d for 0 or 1)\n", argc);
+    return(CNIL);
+  }
+  TACELL(c->curthread) = (argv[0] == CNIL) ? 0 : 1;
+  return(argv[0]);
+}
+
+value arc_atomic_chan(arc *c)
+{
+  return(c->achan);
 }
