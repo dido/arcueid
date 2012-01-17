@@ -202,155 +202,6 @@ static value mksocket(arc *c, int sock, int ai_family, int socktype)
   return(fd);
 }
 
-value arc_socket(arc *c, value d, value t, value p)
-{
-  int domain, stype, proto, sock;
-
-  if (TYPE(d) == T_SYMBOL) {
-    if (d == ARC_BUILTIN(c, S_AF_UNIX))
-      domain = AF_UNIX;
-    else if (d == ARC_BUILTIN(c, S_AF_INET))
-      domain = AF_INET;
-    else if (d == ARC_BUILTIN(c, S_AF_INET6))
-      domain = AF_INET6;
-    else {
-      arc_err_cstrfmt(c, "socket: unknown socket domain");
-      return(CNIL);
-    }
-  } else if (TYPE(d) == T_FIXNUM) {
-    domain = FIX2INT(d);
-  } else {
-    arc_err_cstrfmt(c, "expected argument 1 to be type %s or type %s given type %s", TYPENAME(T_SYMBOL), TYPENAME(T_FIXNUM), TYPENAME(TYPE(d)));
-    return(CNIL);
-  }
-
-  if (TYPE(t) == T_SYMBOL) {
-    if (t == ARC_BUILTIN(c, S_SOCK_STREAM))
-      stype = SOCK_STREAM;
-    else if (t == ARC_BUILTIN(c, S_SOCK_DGRAM))
-      stype = SOCK_DGRAM;
-    else if (t == ARC_BUILTIN(c, S_SOCK_RAW))
-      stype = SOCK_RAW;
-    else {
-      arc_err_cstrfmt(c, "socket: unknown socket type");
-      return(CNIL);
-    }
-  } else if (TYPE(t) == T_FIXNUM) {
-    stype = FIX2INT(t);
-  } else {
-arc_err_cstrfmt(c, "expected argument 2 to be type %s or type %s given type %s", TYPENAME(T_SYMBOL), TYPENAME(T_FIXNUM), TYPENAME(TYPE(t)));
-    return(CNIL);
-  }
-
-  TYPECHECK(p, T_FIXNUM, 3);
-  proto = FIX2INT(p);
-  sock = socket(domain, stype, proto);
-  if (sock < 0) {
-    int en = errno;
-
-    arc_err_cstrfmt(c, "error opening socket (%s; errno=%d)", strerror(en), en);
-    return(CNIL);
-  }
-  return(mksocket(c, sock, domain, stype));
-}
-
-value arc_socket_bind(arc *c, value sockfd, value family, value socktype,
-		      value flags, value node, value service)
-{
-  struct addrinfo hints, *res, *rp;
-  char *nnode, *svc;
-  int err, fd;
-
-  memset(&hints, 0, sizeof(hints));
-
-  TYPECHECK(sockfd, T_PORT, 1);
-  if (PORT(sockfd)->type != FT_SOCKET) {
-    arc_err_cstrfmt(c, "expected argument 1 to be a socket");
-    return(CNIL);
-  }
-  fd = PORT(sockfd)->u.sock.sockfd;
-  if (TYPE(family) == T_SYMBOL) {
-    if (family == ARC_BUILTIN(c, S_AF_UNIX))
-      hints.ai_family = AF_UNIX;
-    else if (family == ARC_BUILTIN(c, S_AF_INET))
-      hints.ai_family = AF_INET;
-    else if (family == ARC_BUILTIN(c, S_AF_INET6))
-      hints.ai_family = AF_INET6;
-    else {
-      arc_err_cstrfmt(c, "bind: unknown bind family");
-      return(CNIL);
-    }
-  } else if (TYPE(family) == T_FIXNUM) {
-    hints.ai_family = FIX2INT(family);
-  } else if (NIL_P(family)) {
-    hints.ai_family = AF_UNSPEC;
-  } else {
-    arc_err_cstrfmt(c, "expected argument 2 to be type %s or type %s given type %s", TYPENAME(T_SYMBOL), TYPENAME(T_FIXNUM), TYPENAME(TYPE(family)));
-    return(CNIL);
-  }
-
-  if (TYPE(socktype) == T_SYMBOL) {
-    if (socktype == ARC_BUILTIN(c, S_SOCK_STREAM))
-      hints.ai_socktype = SOCK_STREAM;
-    else if (socktype == ARC_BUILTIN(c, S_SOCK_DGRAM))
-      hints.ai_socktype = SOCK_DGRAM;
-    else if (socktype == ARC_BUILTIN(c, S_SOCK_RAW))
-      hints.ai_socktype = SOCK_RAW;
-    else {
-      arc_err_cstrfmt(c, "bind: unknown socket type");
-      return(CNIL);
-    }
-  } else if (TYPE(socktype) == T_FIXNUM) {
-    hints.ai_socktype = FIX2INT(socktype);
-  } else {
-arc_err_cstrfmt(c, "expected argument 3 to be type %s or type %s given type %s", TYPENAME(T_SYMBOL), TYPENAME(T_FIXNUM), TYPENAME(TYPE(socktype)));
-    return(CNIL);
-  }
-
-  if (NIL_P(flags)) {
-    hints.ai_flags = AI_PASSIVE;
-  } else {
-    TYPECHECK(flags, T_FIXNUM, 4);
-    hints.ai_flags = FIX2INT(flags);
-  }
-
-  if (NIL_P(node)) {
-    nnode = NULL;
-  } else {
-    TYPECHECK(node, T_STRING, 5);
-    nnode = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, node)) + 1));
-    arc_str2cstr(c, node, nnode);
-  }
-
-  if (NIL_P(service)) {
-    svc = NULL;
-  } else {
-    TYPECHECK(service, T_STRING, 6);
-    /* XXX conversions, etc */
-    svc = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, service)) + 1));
-    arc_str2cstr(c, service, svc);
-  }
-  if ((err = getaddrinfo(nnode, svc, &hints, &res)) != 0) {
-    arc_err_cstrfmt(c, "getaddrinfo error (%s; code=%d)", gai_strerror(err), err);
-    return(CNIL);
-  }
-
-  for (rp = res; rp != NULL; rp = rp->ai_next) {
-    if (bind(fd, rp->ai_addr, rp->ai_addrlen) == 0)
-      break;
-  }
-
-  if (rp == NULL) {
-    int en = errno;
-
-    freeaddrinfo(res);
-    arc_err_cstrfmt(c, "bind error (%s; errno=%d)", strerror(en), en);
-    return(CNIL);
-  }
-  freeaddrinfo(res);
-  return(CTRUE);
-}
-
 value arc_socket_listen(arc *c, value sockfd, value backlog)
 {
   TYPECHECK(sockfd, T_PORT, 1);
@@ -367,21 +218,63 @@ value arc_socket_listen(arc *c, value sockfd, value backlog)
   return(CTRUE);
 }
 
-extern value coerce_string(arc *c, value obj, value argv);
-
 value arc_open_socket(arc *c, value port)
 {
-  value portstr;
-  value sock;
+  int sockfd, rv;
+  struct addrinfo hints, *servinfo, *p;
+  int yes=1;
+  char portstr[6];
+  int family, socktype;
 
   TYPECHECK(port, T_FIXNUM, 1);
-  portstr = coerce_string(c, port, CNIL);
-  sock = arc_socket(c, ARC_BUILTIN(c, S_AF_INET),
-		    ARC_BUILTIN(c, S_SOCK_STREAM), INT2FIX(0));
-  arc_socket_bind(c, sock, ARC_BUILTIN(c, S_AF_INET),
-		  ARC_BUILTIN(c, S_SOCK_STREAM), CNIL, CNIL, portstr);
-  arc_socket_listen(c, sock, INT2FIX(10));
-  return(sock);
+  if (FIX2INT(port) < 1 || FIX2INT(port) > 65535) {
+    arc_err_cstrfmt(c, "open-socket: port number %d out of range", FIX2INT(port));
+    return(CNIL);
+  }
+  snprintf(portstr, 6, "%d", (int)FIX2INT(port));
+
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  if ((rv = getaddrinfo(NULL, portstr, &hints, &servinfo)) != 0) {
+    arc_err_cstrfmt(c, "open-socket: getaddrinfo error (%s; code=%d)", gai_strerror(rv), rv);
+    return(CNIL);
+  }
+
+  for (p = servinfo; p; p = p->ai_next) {
+    if ((sockfd = socket(p->ai_family, p->ai_socktype,
+			 p->ai_protocol)) == -1)
+      continue;
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                sizeof(int)) == -1) {
+      int en = errno;
+      arc_err_cstrfmt(c, "open-socket: setsockopt error (%s; code=%d)", strerror(en), en);
+      freeaddrinfo(servinfo);
+      return(CNIL);
+    }
+
+    if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+      close(sockfd);
+      continue;
+    }
+    family = p->ai_family;
+    socktype = p->ai_socktype;
+    break;
+  }
+  if (p == NULL) {
+    int en = errno;
+    arc_err_cstrfmt(c, "open-socket: failed to bind (last error %s; code=%d)", strerror(en), en);
+    freeaddrinfo(servinfo);
+    return(CNIL);
+  }
+
+  if (listen(sockfd, 10) < 0) {
+    int en = errno;
+    arc_err_cstrfmt(c, "open-socket: error listening (%s; errno=%d)", strerror(en), en);
+    return(CNIL);
+  }
+  return(mksocket(c, sockfd, family, socktype));
 }
 
 value arc_socket_accept(arc *c, value sock)
@@ -391,8 +284,15 @@ value arc_socket_accept(arc *c, value sock)
   int newfd;
   value asock;
   char ipstr[INET6_ADDRSTRLEN];
+  void *addr;
 
+  TYPECHECK(sock, T_PORT, 1);
+  if (PORT(sock)->type != FT_SOCKET) {
+    arc_err_cstrfmt(c, "expected argument 1 to be a socket");
+    return(CNIL);
+  }
   READ_CHECK(c, sock);
+
   their_addr = (struct sockaddr_storage *)malloc(sizeof(struct sockaddr_storage));
   addr_size = sizeof(struct sockaddr_storage);
   newfd = accept(PORT(sock)->u.sock.sockfd, (struct sockaddr *)their_addr, &addr_size);
@@ -405,7 +305,39 @@ value arc_socket_accept(arc *c, value sock)
   asock = mksocket(c, newfd, PORT(sock)->u.sock.ai_family,
 		   PORT(sock)->u.sock.socktype);
   PORT(asock)->u.sock.addr = their_addr;
-  inet_ntop(PORT(sock)->u.sock.ai_family, (void *)their_addr, ipstr, sizeof(ipstr));
-
+  if (PORT(sock)->u.sock.ai_family == AF_INET) {
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *)their_addr;
+    addr = &(ipv4->sin_addr);
+  } else {
+    struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)their_addr;
+    addr = &(ipv6->sin6_addr);
+  }
+  inet_ntop(PORT(sock)->u.sock.ai_family, addr, ipstr, sizeof(ipstr));
+  printf("%s\n", ipstr);
   return(cons(c, asock, cons(c, asock, cons(c, arc_mkstringc(c, ipstr), CNIL))));
+}
+
+value arc_client_ip(arc *c, value sock)
+{
+  char ipstr[INET6_ADDRSTRLEN];
+  void *addr;
+
+  TYPECHECK(sock, T_PORT, 1);
+  if (PORT(sock)->type != FT_SOCKET) {
+    arc_err_cstrfmt(c, "expected argument 1 to be a socket");
+    return(CNIL);
+  }
+  if (PORT(sock)->u.sock.addr == NULL) {
+    arc_err_cstrfmt(c, "client-ip: no peer associated with socket");
+    return(CNIL);
+  }
+  if (PORT(sock)->u.sock.ai_family == AF_INET) {
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *)PORT(sock)->u.sock.addr;
+    addr = &(ipv4->sin_addr);
+  } else {
+    struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)PORT(sock)->u.sock.addr;
+    addr = &(ipv6->sin6_addr);
+  }
+  inet_ntop(PORT(sock)->u.sock.ai_family, addr, ipstr, sizeof(ipstr));
+  return(arc_mkstringc(c, ipstr));
 }
