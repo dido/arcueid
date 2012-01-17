@@ -36,7 +36,12 @@ struct arc_port {
       FILE *fp;
       int open;
     } file;
-    int sock;
+    struct {
+      int sockfd;
+      int ai_family;
+      int socktype;
+      void *addr;
+    } sock;
   } u;
   int closed;
   int (*ready)(arc *, struct arc_port *);
