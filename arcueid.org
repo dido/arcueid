@@ -427,13 +427,14 @@ notice and this notice are preserved.
        - [X] chan
        - [X] <- (recv-channel) *
        - [X] <-= (send-channel) *
-   - [-] Networking [5/10]
-     - [X] open-socket (TCP sockets only)
-     - [X] socket (Arcueid extension, used to make all types of sockets)
-     - [ ] client-ip
+   - [-] Networking [3/11]
+     - [X] open-socket
+     - [ ] getaddrinfo (Arcueid only)
+     - [ ] socket (Arcueid extension)
+     - [X] client-ip
      - [X] socket-accept
-     - [X] socket-bind (Arcueid only)
-     - [X] socket-listen (Arcueid only)
+     - [ ] socket-bind (Arcueid only)
+     - [ ] socket-listen (Arcueid only)
      - [ ] socket-connect (Arcueid only)
      - [ ] socket-sendto (Arcueid only)
      - [ ] socket-recvfrom (Arcueid only)
