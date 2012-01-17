@@ -266,8 +266,8 @@ int main(int argc, char **argv)
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   code = arc_mkclosure(c, code, CNIL);
-  arc_spawn(c, code);
   setjmp(err_jmp_buf);
+  arc_spawn(c, code);
   arc_thread_dispatch(c);
   return(EXIT_SUCCESS);
 }
