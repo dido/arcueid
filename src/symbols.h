@@ -88,6 +88,13 @@ enum builtin_syms {
   S_APPLY,			/* apply */
   S_CHAN,			/* chan */
 
+  S_AF_UNIX,			/* AF_UNIX */
+  S_AF_INET,			/* AF_INET */
+  S_AF_INET6,			/* AF_INET6 */
+  S_SOCK_STREAM,		/* SOCK_STREAM */
+  S_SOCK_DGRAM,			/* SOCK_DGRAM */
+  S_SOCK_RAW,			/* SOCK_RAW */
+
   S_THE_END			/* end of the line */
 };
 
