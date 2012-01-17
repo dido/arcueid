@@ -495,7 +495,7 @@ value arc_disp(arc *c, int argc, value *argv)
   value port, val;
 
   val = (argc == 0) ? CNIL : argv[0];
-  port = (argc > 2) ? argv[1] : arc_stdout(c);
+  port = (argc > 1) ? argv[1] : arc_stdout(c);
 
   return(arc_sdisp(c, val, port));
 }
