@@ -352,7 +352,7 @@ void arc_thread_dispatch(arc *c)
 	eptimeout = (minsleep - __arc_milliseconds())/1000;
       } else {
 	/* do not wait if there are any threads which can run */
-	eptimeout = 0;
+	eptimeout = 1;
       }
       nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
       if (nfds < 0) {
