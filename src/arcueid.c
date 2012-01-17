@@ -606,6 +606,12 @@ static struct {
   { "__acell__", -1, arc_atomic_cell },
   { "__achan__", 0, arc_atomic_chan },
 
+  { "socket", 3, arc_socket },
+  { "socket-bind", 6, arc_socket_bind },
+  { "socket-listen", 2, arc_socket_listen },
+  { "open-socket", 1, arc_open_socket },
+  { "socket-accept", 1, arc_socket_accept },
+
   { NULL, 0, NULL }
 };
 
