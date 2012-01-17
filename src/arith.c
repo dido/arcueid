@@ -443,6 +443,31 @@ value __arc_add2(arc *c, value arg1, value arg2)
     return(arc_strcat(c, arg2, arg1));
   }
 
+  if (NIL_P(arg1) && TYPE(arg2) == T_CHAR) {
+    Rune data[1];
+
+    data[0] = REP(arg2)._char;
+    return(arc_mkstring(c, data, 1));
+  }
+
+  if (NIL_P(arg2) && TYPE(arg1) == T_CHAR) {
+    Rune data[1];
+
+    data[0] = REP(arg1)._char;
+    return(arc_mkstring(c, data, 1));
+  }
+
+  if (TYPE(arg1) == T_STRING && TYPE(arg2) == T_CHAR) {
+    Rune data[1];
+
+    data[0] = REP(arg2)._char;
+    return(arc_strcat(c, arc_mkstring(c, data, 1), arg1));
+  }
+
+  if (TYPE(arg1) == T_CHAR && TYPE(arg2) == T_STRING) {
+    return(arc_strcatc(c, arg2, REP(arg1)._char));
+  }
+
   TYPE_CASES(add, arg1, arg2);
 
   arc_err_cstrfmt(c, "Invalid types for addition");
