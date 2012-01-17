@@ -6,7 +6,8 @@ See the end for copying conditions.
 - Cleaned up error handling for all built-in functions now that a
   working error handling mechanism is available (ongoing)
 - Directory and file system calls
-- Threading and synchronization (ongoing)
+- Threading and synchronization
+- Networking (ongoing)
 
 * Version 0.0.6 (2012-01-10)
 - Compose, complement, and andf in a functional position are optimized
