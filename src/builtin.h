@@ -99,12 +99,8 @@ extern value arc_sleep(arc *c, value secs);
 extern value arc_tjoin(arc *c, value thr);
 
 /* networking */
-extern value arc_socket(arc *c, value d, value t, value p);
-extern value arc_socket_bind(arc *c, value sockfd, value family,
-			     value socktype, value flags, value node,
-			     value service);
-extern value arc_socket_listen(arc *c, value sockfd, value backlog);
 extern value arc_open_socket(arc *c, value port);
 extern value arc_socket_accept(arc *c, value sock);
+extern value arc_client_ip(arc *c, value sock);
 
 #endif
