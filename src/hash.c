@@ -155,13 +155,13 @@ static unsigned long hash_increment(arc *c, value v, arc_hs *s)
   } dbl;
   unsigned long length=1;
   int i;
+  value v2;
 
+  arc_hash_update(s, TYPE(v));
   switch (TYPE(v)) {
   case T_NIL:
-    arc_hash_update(s, T_NIL);
     break;
   case T_TRUE:
-    arc_hash_update(s, T_TRUE);
     break;
   case T_FIXNUM:
     arc_hash_update(s, (unsigned long)FIX2INT(v));
@@ -204,9 +204,11 @@ static unsigned long hash_increment(arc *c, value v, arc_hs *s)
     break;
 #endif
   case T_CONS:
+  case T_TAGGED:
+  case T_CLOS:
+  case T_ENV:
     /* XXX: This will recurse forever if the cons cells self-reference.
        We need to use a more sophisticated algorithm to handle cycles. */
-    arc_hash_update(s, T_CONS);
     length += hash_increment(c, car(v), s);
     length += hash_increment(c, cdr(v), s);
     break;
@@ -214,6 +216,54 @@ static unsigned long hash_increment(arc *c, value v, arc_hs *s)
     length = arc_strlen(c, v);
     for (i=0; i<length; i++)
       arc_hash_update(s, (unsigned long)arc_strindex(c, v, i));
+    break;
+  case T_CHAR:
+    length = 1;
+    arc_hash_update(s, REP(v)._char);
+    break;
+  case T_SYMBOL:
+    length = 1;
+    arc_hash_update(s, (unsigned long)v);
+    break;
+  case T_TABLE:
+    while ((v2 = arc_hash_iter(c, v, &i)) != CUNBOUND)
+      length += hash_increment(c, v2, s);
+    break;
+  case T_TBUCKET:
+    length += hash_increment(c, REP(v)._hashbucket.key, s);
+    length += hash_increment(c, REP(v)._hashbucket.val, s);
+    break;
+  case T_INPUT:
+  case T_OUTPUT:
+  case T_PORT:
+  case T_CUSTOM:
+    length = 1;
+    REP(v)._custom.hash(c, s, v);
+    break;
+  case T_THREAD:
+    length = 1;
+    arc_hash_update(s, TTID(v));
+    break;
+  case T_EXCEPTION:
+  case T_VECTOR:
+  case T_CONT:
+  case T_CODE:
+  case T_XCONT:
+  case T_CHAN:
+    for (i=0; i<VECLEN(v); i++)
+      length += hash_increment(c, VINDEX(v, i), s);
+    break;
+  case T_VMCODE:
+    length = VECLEN(v);
+    for (i=0; i<length; i++)
+      arc_hash_update(s, (unsigned long)VINDEX(v, i));
+    break;
+  case T_CCODE:
+    length += hash_increment(c, REP(v)._cfunc.name, s);
+    arc_hash_update(s, REP(v)._cfunc.argc);
+    break;
+  case T_NONE:
+    arc_err_cstrfmt(c, "hash_increment: object of undefined type encountered!");
     break;
   }
   return(length);
