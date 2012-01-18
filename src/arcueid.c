@@ -66,6 +66,10 @@ value arc_is(arc *c, value v1, value v2)
 	return(CNIL);
     }
     return(CTRUE);
+  default:
+    /* objects of other types cannot be equal to each other unless they
+       have the same reference */
+    return(CNIL);
   }
   return(CNIL);
 }
@@ -84,6 +88,11 @@ value arc_iso(arc *c, value v1, value v2)
   if (TYPE(v1) != TYPE(v2))
     return(CNIL);
   switch (TYPE(v1)) {
+  case T_NIL:
+  case T_TRUE:
+  case T_FIXNUM:
+  case T_SYMBOL:
+    return(v1 == v2);
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
     return((mpz_cmp(REP(v1)._bignum, REP(v2)._bignum) == 0) ? CTRUE : CNIL);
@@ -121,6 +130,40 @@ value arc_iso(arc *c, value v1, value v2)
     return(arc_iso(c, v1, v2));
   case T_TABLE:
     return(__arc_hash_iso(c, v1, v2));
+  case T_TBUCKET:
+    if (arc_iso(c, REP(v1)._hashbucket.key, REP(v2)._hashbucket.key) == CNIL)
+      return(CNIL);
+    if (arc_iso(c, REP(v1)._hashbucket.val, REP(v2)._hashbucket.val) == CNIL)
+      return(CNIL);
+    return(CTRUE);
+  case T_TAGGED:
+  case T_CLOS:
+  case T_ENV:
+    if (arc_iso(c, car(v1), car(v2)) == CNIL)
+      return(CNIL);
+    if (arc_iso(c, cdr(v1), cdr(v2)) == CNIL)
+      return(CNIL);
+    return(CTRUE);
+  case T_EXCEPTION:
+  case T_THREAD:
+  case T_VECTOR:
+  case T_CONT:
+  case T_CODE:
+  case T_CHAN:
+  case T_XCONT:
+    /* XXX - handle vectors */
+    if (VECLEN(v1) != VECLEN(v2))
+      return(CNIL);
+  case T_INPUT:
+  case T_OUTPUT:
+  case T_PORT:
+  case T_CUSTOM:
+    /* XXX - handle ports and custom */
+  case T_VMCODE:
+    /* XXX - handle vmcode */
+  case T_CCODE:
+  case T_NONE:
+    return(CNIL);
   }
   return(CNIL);
 }
@@ -230,6 +273,8 @@ value arc_cmp(arc *c, value v1, value v2)
     break;
   case T_STRING:
     return(arc_strcmp(c, v1, v2));
+    break;
+  default:
     break;
   }
   arc_err_cstrfmt(c, "Invalid types for comparison");
@@ -662,6 +707,7 @@ void arc_init_sq(arc *c, int stksize, int quanta)
   c->in_compile = 0;
   c->iowaittbl = arc_mkhash(c, 8);
   c->achan = arc_mkchan(c);
+  c->splforms = CNIL;
 }
 
 void arc_init(arc *c)
