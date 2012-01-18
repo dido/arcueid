@@ -202,6 +202,7 @@ value arc_readlineport(arc *c)
   PORT(fd)->ready = readline_ready;
   PORT(fd)->fd = readline_fd;
   PORT(fd)->ungetrune = -1;	/* no rune available */
+  PORT(fd)->closed = 0;
   rl_variable_bind("blink-matching-paren", "on");
   rl_basic_quote_characters = "\"";
   rl_basic_word_break_characters = "[]()!:~\"";
@@ -237,6 +238,7 @@ int main(int argc, char **argv)
   loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
+  arc_bindsym(c, arc_intern_cstr(c, "initload"), initload);
   while ((sexpr = arc_read(c, initload, CNIL)) != CNIL) {
     /*    arc_print_string(c, arc_prettyprint(c, sexpr));
 	  printf("\n"); */
