@@ -204,13 +204,13 @@ void arc_vmengine(arc *c, value thr, int quanta)
       CPUSH(thr, TVALR(thr));
       NEXT;
     INST(ipop):
-      TVALR(thr) = CPOP(thr);
+      WB(&TVALR(thr), CPOP(thr));
       NEXT;
     INST(ildi):
-      TVALR(thr) = *TIP(thr)++;
+      WB(&TVALR(thr), *TIP(thr)++);
       NEXT;
     INST(ildl):
-      TVALR(thr) = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
+      WB(&TVALR(thr), CODE_LITERAL(TFUNR(thr), *TIP(thr)++));
       NEXT;
     INST(ildg):
       {
@@ -218,13 +218,14 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	char *cstr;
 
 	tmp = CODE_LITERAL(TFUNR(thr), *TIP(thr)++);
-	if ((TVALR(thr) = arc_hash_lookup(c, c->genv, tmp)) == CUNBOUND) {
+	WB(&TVALR(thr), arc_hash_lookup(c, c->genv, tmp));
+	if (TVALR(thr) == CUNBOUND) {
 	  tmpstr = arc_sym2name(c, tmp);
 	  cstr = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, tmpstr)) + 1));
 	  arc_str2cstr(c, tmpstr, cstr);
 	  /* arc_print_string(c, arc_prettyprint(c, tmp)); printf("\n"); */
 	  arc_err_cstrfmt(c, "Unbound symbol: _%s", cstr);
-	  TVALR(thr) = CNIL;
+	  WB(&TVALR(thr), CNIL);
 	}
       }
       NEXT;
@@ -242,7 +243,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	tmp = TENVR(thr);
 	while (--ienv >= 0)
 	  tmp = cdr(tmp);
-	TVALR(thr) = ENV_VALUE(car(tmp), iindx);
+	WB(&TVALR(thr), ENV_VALUE(car(tmp), iindx));
       }
       NEXT;
     INST(iste):
@@ -345,45 +346,45 @@ void arc_vmengine(arc *c, value thr, int quanta)
       }
       NEXT;
     INST(itrue):
-      TVALR(thr) = CTRUE;
+      WB(&TVALR(thr), CTRUE);
       NEXT;
     INST(inil):
-      TVALR(thr) = CNIL;
+      WB(&TVALR(thr), CNIL);
       NEXT;
     INST(ihlt):
       TSTATE(thr) = Trelease;
       goto endquantum;
       NEXT;
     INST(iadd):
-      TVALR(thr) = __arc_add2(c, TVALR(thr), CPOP(thr));
+      WB(&TVALR(thr), __arc_add2(c, TVALR(thr), CPOP(thr)));
       NEXT;
     INST(isub):
-      TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
+      WB(&TVALR(thr), __arc_sub2(c, CPOP(thr), TVALR(thr)));
       NEXT;
     INST(imul):
-      TVALR(thr) = __arc_mul2(c, TVALR(thr), CPOP(thr));
+      WB(&TVALR(thr),  __arc_mul2(c, TVALR(thr), CPOP(thr)));
       NEXT;
     INST(idiv):
-      TVALR(thr) = __arc_div2(c, CPOP(thr), TVALR(thr));
+      WB(&TVALR(thr), __arc_div2(c, CPOP(thr), TVALR(thr)));
       NEXT;
     INST(icons):
-      TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
+      WB(&TVALR(thr), cons(c, TVALR(thr), CPOP(thr)));
       NEXT;
     INST(icar):
       if (NIL_P(TVALR(thr)))
-	TVALR(thr) = CNIL;
+	WB(&TVALR(thr), CNIL);
       else if (TYPE(TVALR(thr)) != T_CONS)
 	arc_err_cstrfmt(c, "can't take car of value with type %s", TYPENAME(TYPE(TVALR(thr))));
       else
-	TVALR(thr) = car(TVALR(thr));
+	WB(&TVALR(thr), car(TVALR(thr)));
       NEXT;
     INST(icdr):
       if (NIL_P(TVALR(thr)))
-	TVALR(thr) = CNIL;
+	WB(&TVALR(thr), CNIL);
       else if (TYPE(TVALR(thr)) != T_CONS)
 	arc_err_cstrfmt(c, "can't take cdr of value with type %s", TYPENAME(TYPE(TVALR(thr))));
       else
-	TVALR(thr) = cdr(TVALR(thr));
+	WB(&TVALR(thr), cdr(TVALR(thr)));
       NEXT;
     INST(iscar):
       scar(CPOP(thr), TVALR(thr));
@@ -397,7 +398,7 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	/* Find the first cons in list whose cdr is not itself a cons.
 	   Join the list from the stack to it. */
 	if (list == CNIL) {
-	  TVALR(thr) = nlist;
+	  WB(&TVALR(thr), nlist);
 	} else {
 	  for (;;) {
 	    if (!CONS_P(cdr(list))) {
@@ -413,27 +414,27 @@ void arc_vmengine(arc *c, value thr, int quanta)
       }
       NEXT;
     INST(iis):
-      TVALR(thr) = arc_is(c, TVALR(thr), CPOP(thr));
+      WB(&TVALR(thr), arc_is(c, TVALR(thr), CPOP(thr)));
       NEXT;
     INST(iiso):
-      TVALR(thr) = arc_iso(c, TVALR(thr), CPOP(thr));
+      WB(&TVALR(thr), arc_iso(c, TVALR(thr), CPOP(thr)));
       NEXT;
     INST(igt):
-      TVALR(thr) = (FIX2INT(arc_cmp(c, TVALR(thr), CPOP(thr))) > 0) ?
-	CTRUE : CNIL;
+      WB(&TVALR(thr), (FIX2INT(arc_cmp(c, TVALR(thr), CPOP(thr))) > 0) ?
+	 CTRUE : CNIL);
       NEXT;
     INST(ilt):
-      TVALR(thr) = (FIX2INT(arc_cmp(c, TVALR(thr), CPOP(thr))) < 0) ?
-	CTRUE : CNIL;
+      WB(&TVALR(thr), (FIX2INT(arc_cmp(c, TVALR(thr), CPOP(thr))) < 0) ?
+	 CTRUE : CNIL);
       NEXT;
     INST(idup):
-      TVALR(thr) = *(TSP(thr)+1);
+      WB(&TVALR(thr), *(TSP(thr)+1));
       NEXT;
     INST(icls):
-      TVALR(thr) = arc_mkclosure(c, TVALR(thr), TENVR(thr));
+      WB(&TVALR(thr), arc_mkclosure(c, TVALR(thr), TENVR(thr)));
       NEXT;
     INST(iconsr):
-      TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
+      WB(&TVALR(thr), cons(c, CPOP(thr), TVALR(thr)));
       NEXT;
 #ifndef HAVE_THREADED_INTERPRETER
     default:
@@ -510,7 +511,7 @@ static value c4apply(arc *c, value thr, value avec,
     }
     /* 4. Restart, with the value register pointing to the callee,
        so that it gets "called" */
-    TVALR(thr) = VINDEX(retval, 2);
+    WB(&TVALR(thr), VINDEX(retval, 2));
     TARGC(thr) = VECLEN(nargv);
     arc_apply(c, thr, VINDEX(retval, 2));
     /* when this returns, we go back to the virtual machine loop,
@@ -623,7 +624,7 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
      function finally returns, it will restore the continuation we
      provided it. */
   thr = c->curthread;
-  TCONR(thr) = cons(c, CC4V(cont), VINDEX(CC4V(cont), 4));
+  WB(&TCONR(thr), cons(c, CC4V(cont), VINDEX(CC4V(cont), 4)));
   return(CC4V(conarg));
 }
 
@@ -672,49 +673,49 @@ void arc_apply(arc *c, value thr, value fun)
       if (TYPE(retval) == T_XCONT)
 	return;			/* go back to the virtual machine loop */
       else
-	TVALR(thr) = retval;	/* normal return */
+	WB(&TVALR(thr), retval); /* normal return */
       break;
     case -2:
       avec = arc_mkvector(c, argc);
       memcpy(&VINDEX(avec, 0), argv, sizeof(value)*argc);
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, avec);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, avec));
       break;
     case -1:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argc, argv);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argc, argv));
       break;
     case 0:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c));
       break;
     case 1:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0]));
       break;
     case 2:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0], argv[1]));
       break;
     case 3:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2]));
       break;
     case 4:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
-					 argv[3]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					    argv[3]));
       break;
     case 5:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
-					 argv[3], argv[4]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					    argv[3], argv[4]));
       break;
     case 6:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
-					 argv[3], argv[4], argv[5]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					    argv[3], argv[4], argv[5]));
       break;
     case 7:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
-					 argv[3], argv[4], argv[5],
-					 argv[6]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					    argv[3], argv[4], argv[5],
+					    argv[6]));
       break;
     case 8:
-      TVALR(thr) = REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
-					 argv[3], argv[4], argv[5],
-					 argv[6], argv[7]);
+      WB(&TVALR(thr), REP(cfn)._cfunc.fnptr(c, argv[0], argv[1], argv[2],
+					    argv[3], argv[4], argv[5],
+					    argv[6], argv[7]));
       break;
     default:
       arc_err_cstrfmt(c, "too many arguments");
@@ -726,7 +727,7 @@ void arc_apply(arc *c, value thr, value fun)
     if (TARGC(thr) != 1) {
       arc_err_cstrfmt(c, "list application expects 1 argument, given %d",
 		      INT2FIX(TARGC(thr)));
-      TVALR(thr) = CNIL;
+      WB(&TVALR(thr), CNIL);
     } else {
       value count = CPOP(thr), ocount, cval;
 
@@ -745,10 +746,10 @@ void arc_apply(arc *c, value thr, value fun)
 	  list = cdr(list);
 	  count = __arc_sub2(c, count, INT2FIX(1));
 	} while ((cval = arc_cmp(c, count, INT2FIX(0))) != INT2FIX(-1));
-	TVALR(thr) = res;
+	WB(&TVALR(thr), res);
       } else {
 	arc_err_cstrfmt(c, "list application expects non-negative exact integer argument, given object of type %d", INT2FIX(TYPE(count)));
-	TVALR(thr) = CNIL;
+	WB(&TVALR(thr), CNIL);
       }
     }
     arc_return(c, thr);
@@ -757,7 +758,7 @@ void arc_apply(arc *c, value thr, value fun)
     if (TARGC(thr) != 1) {
       arc_err_cstrfmt(c, "vector application expects 1 argument, given %d",
 		      INT2FIX(TARGC(thr)));
-      TVALR(thr) = CNIL;
+      WB(&TVALR(thr), CNIL);
     } else {
       value count = CPOP(thr), ocount, cval;
 
@@ -772,11 +773,11 @@ void arc_apply(arc *c, value thr, value fun)
 	} else {
 	  res = VINDEX(vec, FIX2INT(count));
 	}
-	TVALR(thr) = res;
+	WB(&TVALR(thr), res);
       } else {
 	/* XXX - Permit negative indices?  Could be useful. */
 	arc_err_cstrfmt(c, "vector application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
-	TVALR(thr) = CNIL;
+	WB(&TVALR(thr), CNIL);
       }
     }
     arc_return(c, thr);
@@ -785,7 +786,7 @@ void arc_apply(arc *c, value thr, value fun)
     if (TARGC(thr) != 1 && TARGC(thr) != 2) {
       arc_err_cstrfmt(c, "table application expects 1 or 2 arguments, given %d",
 		      INT2FIX(TARGC(thr)));
-      TVALR(thr) = CNIL;
+      WB(&TVALR(thr), CNIL);
     } else {
       value tbl, key, dflt, bind;
 
@@ -793,7 +794,7 @@ void arc_apply(arc *c, value thr, value fun)
       key = CPOP(thr);
       dflt = (TARGC(thr) == 1) ? CNIL : CPOP(thr);
       bind = arc_hash_lookup(c, tbl, key);
-      TVALR(thr) = (bind == CUNBOUND) ? dflt : bind;
+      WB(&TVALR(thr), (bind == CUNBOUND) ? dflt : bind);
     }
     arc_return(c, thr);
     break;
@@ -801,7 +802,7 @@ void arc_apply(arc *c, value thr, value fun)
     if (TARGC(thr) != 1) {
       arc_err_cstrfmt(c, "string application expects 1 argument, given %d",
 		      INT2FIX(TARGC(thr)));
-      TVALR(thr) = CNIL;
+      WB(&TVALR(thr), CNIL);
     } else {
       value count = CPOP(thr), ocount, cval;
 
@@ -817,11 +818,11 @@ void arc_apply(arc *c, value thr, value fun)
 	} else {
 	  res = arc_mkchar(c, arc_strindex(c, str, FIX2INT(count)));
 	}
-	TVALR(thr) = res;
+	WB(&TVALR(thr), res);
       } else {
 	/* XXX - permit negative indices? Not allowed by reference Arc. */
 	arc_err_cstrfmt(c, "string application expects non-negative fixnum argument, given object of type %d", INT2FIX(TYPE(count)));
-	TVALR(thr) = CNIL;
+	WB(&TVALR(thr), CNIL);
       }
     }
     arc_return(c, thr);
@@ -835,13 +836,13 @@ void arc_apply(arc *c, value thr, value fun)
     /* simple version that does not deal with protect functions */
     retval = CPOP(thr);
     arc_restorecont(c, thr, fun);
-    TVALR(thr) = retval;
+    WB(&TVALR(thr), retval);
 #else
     /* the continuation is in the value register when we get here */
     retval = CPOP(thr);
     CPUSH(thr, TVALR(thr));
     CPUSH(thr, retval);
-    TVALR(thr) = arc_mkccode(c, -3, apply_continuation, CNIL);
+    WB(&TVALR(thr), arc_mkccode(c, -3, apply_continuation, CNIL));
     TARGC(thr) = 2;
     arc_apply(c, thr, TVALR(thr));
 #endif
@@ -897,7 +898,7 @@ void arc_restorecont(arc *c, value thr, value cont)
   }
   offset = FIX2INT(VINDEX(cont, 0));
   TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
-  TCONR(thr) = VINDEX(cont, 4);
+  WB(&TCONR(thr), VINDEX(cont, 4));
 }
 
 /* Restore an extended continuation inside a continuation */
@@ -1167,7 +1168,7 @@ value arc_errexc_thr(arc *c, value thr, value exc)
        c->signal_error. */
     newconr = CNIL;
     cont = TCONR(thr);
-    TEXC(thr) = exc;
+    WB(&TEXC(thr), exc);
     while (cont != CNIL) {
       pcont = CONT_PRT(car(cont));
       if (pcont != CNIL)
@@ -1194,7 +1195,7 @@ value arc_errexc_thr(arc *c, value thr, value exc)
     cont = car(newconr);
     newconr = cdr(newconr);
     TSTATE(thr) = Texiting;
-    TCONR(thr) = newconr;	/* replace the continuation register */
+    WB(&TCONR(thr), newconr);	/* replace the continuation register */
     arc_restorecont(c, thr, cont);
     return(CNIL);
   }
@@ -1243,7 +1244,7 @@ value arc_errexc_thr(arc *c, value thr, value exc)
   }
   cont = car(newconr);
   newconr = cdr(newconr);
-  TCONR(thr) = newconr;	       /* replace the continuation register */
+  WB(&TCONR(thr), newconr);	       /* replace the continuation register */
   arc_restorecont(c, thr, cont);
   return(CNIL);
 }
