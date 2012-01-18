@@ -90,7 +90,8 @@ static value file_pp(arc *c, value v)
 {
   value nstr = arc_mkstringc(c, "#<port:");
 
-  nstr = arc_strcat(c, nstr, PORT(v)->name);
+  
+  nstr = (PORT(v)->name == CNIL) ? arc_strcat(c, nstr, arc_mkstringc(c, "???")) : arc_strcat(c, nstr, PORT(v)->name);
   nstr = arc_strcat(c, nstr, arc_mkstringc(c, ">"));
   return(nstr);
 }
