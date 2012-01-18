@@ -258,6 +258,8 @@ value arc_coerce_fixnum(arc *c, value v)
     arc_err_cstrfmt(c, "Overflow error (this version of Arcueid does not have bignum support)");
 #endif
     break;
+  default:
+    break;
   }
   return(CNIL);
 }
@@ -1472,9 +1474,10 @@ value __arc_abs(arc *c, value v)
     val = arc_mkrationall(c, 0, 1);
     mpq_abs(REP(val)._rational, REP(v)._rational);
     return(val);
+  default:
+    arc_err_cstrfmt(c, "Invalid types for absolute value");
 #endif
   }
-    arc_err_cstrfmt(c, "Invalid types for absolute value");
   return(CNIL);
 }
 
