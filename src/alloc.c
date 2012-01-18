@@ -35,10 +35,10 @@
 static Bhdr *fl_head = NULL;
 static Hhdr *heaps = NULL;
 
-#define GC_QUANTA 50
-#define MAX_GC_QUANTA 15*GC_QUANTA
+#define GC_QUANTA 2048
+#define MAX_GC_QUANTA GC_QUANTA
 
-static int quanta = GC_QUANTA;
+static int quanta = MAX_GC_QUANTA;
 static int visit;
 static Hhdr *gchptr = NULL;
 static Bhdr *gcptr = NULL;
@@ -46,8 +46,10 @@ static int gce = 0, gct = 1;
 unsigned long long gcepochs = 0;
 static unsigned long long gccolor = 3;
 static unsigned long long gcnruns = 0;
+static unsigned long long markcount = 0;
+static unsigned long long sweepcount = 0;
 int nprop = 0;
-static int mutator = 0;
+int mutator = 0;
 static int marker = 1;
 static int sweeper = 2;
 #define propagator PROPAGATOR_COLOR
@@ -294,12 +296,14 @@ static void mark(arc *c, value v, int reclevel)
     /* avoid double-marking symbols whose buckets are already set
        to mutator color. */
     D2B(b, (void *)val);
-    if (b->color != mutator)
-      mark(c, val, reclevel);
+    b->color = mutator;
+    /* Recursively mark only the value of the rsymtable */
+    mark(c, REP(val)._hashbucket.val, reclevel+1);
     val = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
     D2B(b, (void *)val);
-    if (b->color != mutator)
-      mark(c, val, reclevel);
+    b->color = mutator;
+    /* Recursively mark only the key of the symtable */
+    mark(c, REP(val)._hashbucket.key, reclevel+1);
     return;
   }
 
@@ -313,18 +317,40 @@ static void mark(arc *c, value v, int reclevel)
   if (--visit >= 0 && reclevel < MAX_MARK_RECURSION) {
     gce--;
     b->color = mutator;
+    ++markcount;
 
     switch (TYPE(v)) {
+    case T_NIL:
+    case T_TRUE:
+    case T_FIXNUM:
+    case T_SYMBOL:
+      /* never get here as these return true for IMMEDIATE_P above */
+      break;
+    case T_BIGNUM:
+    case T_FLONUM:
+    case T_RATIONAL:
+    case T_COMPLEX:
+    case T_CHAR:
+    case T_STRING:
+    case T_VMCODE:
+      /* contain no internal pointers and are handled as is */
+      break;
     case T_CONS:
     case T_CLOS:
+    case T_TAGGED:
     case T_ENV:
       mark(c, car(v), reclevel+1);
       mark(c, cdr(v), reclevel+1);
       break;
     case T_TABLE:
       ctx = 0;
-      while ((val = arc_hash_iter(c, v, &ctx)) != CUNBOUND)
+      while ((val = arc_hash_iter(c, v, &ctx)) != CUNBOUND) {
 	mark(c, val, reclevel+1);
+      }
+      break;
+    case T_CCODE:
+      /* mark the function name */
+      mark(c, REP(v)._cfunc.name, reclevel+1);
       break;
     case T_TBUCKET:
       mark(c, REP(v)._hashbucket.key, reclevel+1);
@@ -348,9 +374,13 @@ static void mark(arc *c, value v, int reclevel)
     case T_CODE:
     case T_CONT:
     case T_CHAN:
+    case T_XCONT:
+    case T_EXCEPTION:
       for (i=0; i<REP(v)._vector.length; i++)
 	mark(c, REP(v)._vector.data[i], reclevel+1);
       break;
+    case T_INPUT:
+    case T_OUTPUT:
     case T_PORT:
     case T_CUSTOM:
       /* for custom data types (including ports), call the marker
@@ -359,9 +389,8 @@ static void mark(arc *c, value v, int reclevel)
       REP(v)._custom.marker(c, v, reclevel+1, mark);
       break;
       /* XXX fill in with other composite types as they are defined */
-    default:
-      /* The other types do not contain further pointers inside them
-	 and do not require recursion. */
+    case T_NONE:
+      arc_err_cstrfmt(c, "Object of undefined type encountered!");
       break;
     }
   }
@@ -369,6 +398,7 @@ static void mark(arc *c, value v, int reclevel)
 
 static void sweep(arc *c, value v)
 {
+  sweepcount++;
   /* The only special cases here are for those data types which point to
      immutable memory blocks which are otherwise invisible to the sweeper
      or allocate memory blocks not known to the allocator.  These include
@@ -469,17 +499,15 @@ static void rungc(arc *c)
     }
   }
 
-  quanta = (MAX_GC_QUANTA + GC_QUANTA)/2
-    + ((MAX_GC_QUANTA-GC_QUANTA)/20)*((100*gce)/gct);
-  if (quanta < GC_QUANTA)
-    quanta = GC_QUANTA;
-  if (quanta > MAX_GC_QUANTA)
-    quanta = MAX_GC_QUANTA;
+  quanta = MAX_GC_QUANTA;
 
   if (gchptr != NULL)		/* completed this iteration? */
     goto endgc;
 
   if (nprop == 0) {		/* completed the epoch? */
+    /* printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
+       markcount, sweepcount); */
+    markcount = sweepcount = 0;
     gcepochs++;
     gccolor++;
     rootset(c);
