@@ -311,11 +311,22 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     break;
   case T_PORT:
   case T_CUSTOM:
+  case T_INPUT:
+  case T_OUTPUT:
     {
       value nstr = REP(sexpr)._custom.pprint(c, sexpr);
 
       *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
     }
+    break;
+  case T_ENV:
+    append_cstring(c, "#<env>", ppstr);
+    break;
+  case T_VMCODE:
+    append_cstring(c, "#<vmcode>", ppstr);
+    break;
+  case T_NONE:
+    arc_err_cstrfmt(c, "arc_pprint: object of undefined type encountered!");
     break;
   }
   return(*ppstr);
@@ -341,6 +352,12 @@ void arc_print_string(arc *c, value str)
     for (j=0; j<nc; j++)
       putchar(buf[j]);
   }
+}
+
+void arc_print_stringn(arc *c, value str)
+{
+  arc_print_string(c, str);
+  printf("\n");
 }
 
 value arc_writestr(arc *c, value str, value port)
@@ -380,6 +397,7 @@ value arc_sdisp(arc *c, value sexpr, value port)
   case T_COMPLEX:
   case T_STRING:
   case T_SYMBOL:
+  case T_FLONUM:
     str = coerce_string(c, sexpr, CNIL);
     arc_writestr(c, str, port);
     break;
@@ -456,6 +474,12 @@ value arc_sdisp(arc *c, value sexpr, value port)
   case T_XCONT:
     arc_writecstr(c, "#<xcont>", port);
     break;
+  case T_ENV:
+    arc_writecstr(c, "#<env>", port);
+    break;
+  case T_VMCODE:
+    arc_writecstr(c, "#<vmcode>", port);
+    break;
   case T_CLOS:
     arc_sdisp(c, car(sexpr), port);
     break;
@@ -480,11 +504,28 @@ value arc_sdisp(arc *c, value sexpr, value port)
     arc_writecstr(c, "#<channel>", port);
     break;
   case T_PORT:
+  case T_INPUT:
+  case T_OUTPUT:
   case T_CUSTOM:
     {
       value nstr = REP(sexpr)._custom.pprint(c, sexpr);
       arc_writestr(c, nstr, port);
     }
+    break;
+  case T_VECTOR:
+    {
+      int i;
+
+      arc_writecstr(c, "[", port);
+      for (i=0; i<VECLEN(sexpr); i++) {
+	arc_sdisp(c, VINDEX(sexpr, i), port);
+	arc_writecstr(c, " ", port);
+      }
+      arc_writecstr(c, "]", port);
+    }
+    break;
+  case T_NONE:
+    arc_err_cstrfmt(c, "arc_sdisp: object of undefined type encountered!");
     break;
   }
   return(CNIL);
