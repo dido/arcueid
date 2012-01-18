@@ -202,6 +202,7 @@ int main(void)
   c->signal_error = error_handler;
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
+  arc_bindsym(c, arc_intern_cstr(c, "initload"), initload);
   while ((sexpr = arc_read(c, initload, CNIL)) != CNIL) {
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
