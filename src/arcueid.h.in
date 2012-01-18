@@ -37,6 +37,12 @@ typedef unsigned long value;
 /* Characters are internally stored as UCS-4 */
 typedef int32_t Rune;
 
+/* Definitions for hashing */
+typedef struct {
+  unsigned long s[3];
+  int state;
+} arc_hs;			/* hash state */
+
 typedef struct arc {
   /* High-level allocation functions (allocate a cell, allocate a block) */
   value (*get_cell)(struct arc *);
@@ -138,7 +144,7 @@ enum threadstate {
 
 
 /* default thread timeslice */
-#define PQUANTA 128
+#define PQUANTA 2048
 
 /* default thread stack size */
 #define TSTKSIZE 512
@@ -275,6 +281,7 @@ struct cell {
       value (*pprint)(arc *, value);
       void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
       void (*sweeper)(arc *, value);
+      void (*hash)(arc *, arc_hs *, value);
       value data[1];
     } _custom;
   } obj;
@@ -321,12 +328,6 @@ struct cell {
 #define VECLEN(x) (REP(x)._vector.length)
 #define VINDEX(x,i) (REP(x)._vector.data[(i)])
 
-/* Definitions for hashing */
-typedef struct {
-  unsigned long s[3];
-  int state;
-} arc_hs;			/* hash state */
-
 static inline value cons(struct arc *c, value x, value y)
 {
   value cc = c->get_cell(c);
@@ -337,7 +338,7 @@ static inline value cons(struct arc *c, value x, value y)
   return(cc);
 }
 
-static inline int TYPE(value v)
+static inline enum arc_types TYPE(value v)
 {
   if (FIXNUM_P(v))
     return(T_FIXNUM);
