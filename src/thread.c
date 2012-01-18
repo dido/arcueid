@@ -392,6 +392,7 @@ void arc_thread_dispatch(arc *c)
       nanosleep(&req, NULL);
     }
     /* XXX - detect deadlock */
+    c->rungc(c);
   }
 }
 
