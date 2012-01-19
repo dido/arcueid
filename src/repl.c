@@ -62,14 +62,17 @@ static void readline_marker(arc *c, value v, int level,
   mark(c, PORTS(v).str, level+1);
 }
 
+static char *line_read = (char *)NULL;
+
 static void readline_sweeper(arc *c, value v)
 {
-  c->free_block(c, (void *)v);
+  if (line_read != NULL)
+    free(line_read);
+  line_read = NULL;
 }
 
 static int readline_getb(arc *c, struct arc_port *p)
 {
-  static char *line_read = (char *)NULL;
   int len;
   value rlstr;
 
@@ -131,6 +134,9 @@ static int64_t readline_tell(arc *c, struct arc_port *p)
 
 static int readline_close(arc *c, struct arc_port *p)
 {
+  if (line_read != NULL)
+    free(line_read);
+  line_read = NULL;
   return(0);
 }
 
