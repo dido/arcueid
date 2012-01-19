@@ -295,6 +295,10 @@ static void rungc(arc *c)
   gcst = __arc_milliseconds();
   gcnruns++;
 
+  /* We have to keep pressing */
+  if (gcptr != NULL && nprop != 0)
+    gcptr = NULL;
+
   if (gcptr == NULL)
     gcptr = alloc_head;
 
@@ -322,12 +326,6 @@ static void rungc(arc *c)
   }
 
   quanta = MAX_GC_QUANTA;
-
-  /* We have to keep pressing */
-  if (gcptr != NULL && nprop != 0) {
-    gcptr = NULL;
-    goto endgc;
-  }
 
   if (gcptr != NULL)		/* completed this iteration? */
     goto endgc;
