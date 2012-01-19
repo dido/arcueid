@@ -1,4 +1,4 @@
-# Copyright (C) 2010 Rafael R. Sevilla
+# Copyright (C) 2012 Rafael R. Sevilla
 #
 # This file is part of Arcueid
 #
@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
-TESTS = check_arith check_alloc check_hash check_io check_pp \
+TESTS = check_arith check_hash check_io check_pp \
 	check_unicode check_vm check_ciel check_builtins check_reader \
 	check_gc check_compiler check_arc check_error
-check_PROGRAMS = check_arith check_alloc check_hash check_io \
+check_PROGRAMS = check_arith check_hash check_io \
 	check_pp check_unicode check_vm check_ciel check_builtins \
 	check_reader check_gc check_compiler check_arc check_error
 
@@ -26,9 +26,9 @@ check_arith_SOURCES = check_arith.c $(top_builddir)/src/arcueid.h
 check_arith_CFLAGS = @CHECK_CFLAGS@
 check_arith_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
-check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/arcueid.h
-check_alloc_CFLAGS = @CHECK_CFLAGS@
-check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+# check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/arcueid.h
+# check_alloc_CFLAGS = @CHECK_CFLAGS@
+# check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
 check_gc_SOURCES = check_gc.c $(top_builddir)/src/arcueid.h
 check_gc_CFLAGS = @CHECK_CFLAGS@
