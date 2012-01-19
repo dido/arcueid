@@ -41,62 +41,6 @@
 void *alloca (size_t);
 #endif
 
-
-#ifdef HAVE_SYS_MMAN_H
-#include <sys/mman.h>
-#endif
-
-#ifdef HAVE_MMAP
-
-void *__arc_aligned_mmap(size_t osize, int modulo, void **block)
-{
-  char *raw_mem;
-  static void *last_addr = NULL;
-  size_t size;
-  unsigned long aligned_mem;
-
-  ROUNDSIZE(size, osize);
-  raw_mem = (char *)mmap(last_addr, size + PAGE_SIZE, PROT_READ | PROT_WRITE,
-			 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-  if (raw_mem == MAP_FAILED)
-    return(NULL);
-  last_addr = raw_mem + size + 2*PAGE_SIZE;
-  *block = (void *)raw_mem;
-  raw_mem += modulo;
-  aligned_mem = ((((unsigned long)raw_mem / PAGE_SIZE) + 1)* PAGE_SIZE);
-  return((void *)(aligned_mem - modulo));
-}
-
-void __arc_aligned_munmap(void *addr, size_t size)
-{
-  int retcode = munmap(addr, size + PAGE_SIZE);
-  assert(retcode == 0);
-}
-
-#endif
-
-/* use malloc */
-void *__arc_aligned_malloc(size_t osize, int modulo, void **block)
-{
-  char *raw_mem;
-  unsigned long aligned_mem;
-  size_t size;
-
-  ROUNDSIZE(size, osize);
-  raw_mem = (char *)malloc(size + PAGE_SIZE);
-  if (raw_mem == NULL)
-    return(NULL);
-  *block = (void *)raw_mem;
-  raw_mem += modulo;
-  aligned_mem = ((((unsigned long)raw_mem / PAGE_SIZE) + 1)* PAGE_SIZE);
-  return((void *)(aligned_mem - modulo));
-}
-
-void __arc_aligned_free(void *addr, size_t size)
-{
-  free(addr);
-}
-
 unsigned long long __arc_milliseconds(void)
 {
 #ifdef HAVE_CLOCK_GETTIME
