@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -14,9 +14,7 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 /* This default memory allocator and garbage collector uses a simple
    free-list to manage memory blocks, and the VCGC garbage collector
@@ -32,16 +30,13 @@
 #include "arith.h"
 #include "../config.h"
 
-static Bhdr *fl_head = NULL;
-static Hhdr *heaps = NULL;
-
-#define GC_QUANTA 2048
+#define GC_QUANTA 4096
 #define MAX_GC_QUANTA GC_QUANTA
 
 static int quanta = MAX_GC_QUANTA;
 static int visit;
-static Hhdr *gchptr = NULL;
 static Bhdr *gcptr = NULL;
+static Bhdr *alloc_head = NULL;
 static int gce = 0, gct = 1;
 unsigned long long gcepochs = 0;
 static unsigned long long gccolor = 3;
@@ -49,218 +44,62 @@ static unsigned long long gcnruns = 0;
 static unsigned long long markcount = 0;
 static unsigned long long sweepcount = 0;
 int nprop = 0;
-int mutator = 0;
+int __arc_mutator = 0;
 static int marker = 1;
 static int sweeper = 2;
+#define mutator __arc_mutator
 #define propagator PROPAGATOR_COLOR
 #define MAX_MARK_RECURSION 64
 static unsigned long long gc_milliseconds = 0ULL;
 
-/* Allocate memory for the heap.  This uses the low level memory allocator
-   function specified in the arc structure.  Takes care of filling in the
-   heap header information and adding the heap to the list of heaps. */
-static void *alloc_for_heap(arc *c, size_t req)
+Bhdr *__arc_get_heap_start(void)
 {
-  char *mem;
-  void *block;
-  Hhdr *oldheaps;
-
-  mem = (char *)c->mem_alloc(req + sizeof(Hhdr), sizeof(Hhdr), &block);
-  if (mem == NULL)
-    return(NULL);
-  oldheaps = heaps;
-  heaps = (Hhdr *)mem;
-  mem += sizeof(Hhdr);
-  HHDR_SIZE(mem) = req;
-  HHDR_BLOCK(mem) = block;
-  HHDR_NEXT(mem) = oldheaps;
-  return(mem);
-}
-
-/* Add a block to the free list.  The block's header fields are filled
-   in by this function.  This also works to add a newly created block
-   from expand_heap to the free list. */
-static void fl_free_block(Bhdr *blk)
-{
-  Bhdr *prev, **prevnext, *cur;
-  int inserted;
-
-  prev = NULL;
-  prevnext = &fl_head;
-  cur = fl_head;
-  inserted = 0;
-  while (cur != NULL) {
-    if (B2NB(blk) == cur) {
-      /* end of the block itself coincides with the start of the current
-	 block.  Coalesce with the current block. */
-      FBNEXT(blk) = FBNEXT(cur);
-      *prevnext = blk;
-      blk->size += cur->size + BHDRSIZE;
-      inserted = 1;
-      cur = FBNEXT(cur);
-      continue;
-    }
-
-    if (B2NB(cur) == blk) {
-      /* end of the current block coincides with the start of the block
-	 to be freed.  Coalesce them. */
-      cur->size += blk->size + BHDRSIZE;
-      blk = cur;
-      inserted = 1;
-      cur = FBNEXT(cur);
-      continue;
-    }
-
-    if (prev < blk && cur > blk) {
-      /* Cannot coalesce, just plain insert */
-      inserted = 1;
-      *prevnext = blk;
-      FBNEXT(blk) = cur;
-      return;
-    }
-    prev = cur;
-    prevnext = &FBNEXT(prev);
-    cur = FBNEXT(cur);
-  }
-
-  if (inserted)
-    return;
-  /* If we get here, we have reached the end of the free list.  The block
-     must have a higher address than any other block already present in
-     the free list.  Tack it onto the end. */
-  assert(prev <= blk);
-  FBNEXT(blk) = *prevnext;
-  *prevnext = blk;
+  return(alloc_head);
 }
 
 static void free_block(struct arc *c, void *blk)
 {
   Bhdr *h;
 
+
   D2B(h, blk);
-  h->magic = MAGIC_F;
-  fl_free_block(h);
-}
-
-#define ALLOC_BLOCK(blk) { (blk)->magic = MAGIC_A; (blk)->color = mutator; }
-
-/* Get a block from the free list of at least [size].  Return NULL if
-   there are no suitable blocks in the free list. */
-static void *fl_alloc(size_t size)
-{
-  Bhdr *prev, *cur;
-
-  if (fl_head == NULL)
-    return(NULL);
-
-  /* If the size of the head block is the size of the block or larger by
-     at most the size of a block header, just use the block as is.  If the
-     slack is less than that of a block header, we can't use the spare
-     space since a block header can't be added to it. */
-  if (fl_head->size >= size && fl_head->size <= size + BHDRSIZE) {
-    cur = fl_head;
-    fl_head = FBNEXT(cur);
-    ALLOC_BLOCK(cur);
-    return(B2D(cur));
-  }
-
-  /* If the head block is larger than that, carve out the right
-     hand side and use that. */
-  if (fl_head->size > size + BHDRSIZE) {
-    fl_head->size -= size + BHDRSIZE;
-    cur = B2NB(fl_head);
-    cur->size = size;
-    ALLOC_BLOCK(cur);
-    return(B2D(cur));
-  }
-
-  /* The head is too small.  Traverse the free list to find the
-     first block which is suitable. */
-  prev = fl_head;
-  cur = FBNEXT(prev);
-  while (cur != NULL) {
-    if (cur->size >= size && cur->size <= size + BHDRSIZE) {
-      /* Unlink */
-      FBNEXT(prev) = FBNEXT(cur);
-      ALLOC_BLOCK(cur);
-      return(B2D(cur));
-    }
-
-    if (cur->size > size + BHDRSIZE) {
-      /* Carve */
-      cur->size -= size + BHDRSIZE;
-      cur = B2NB(cur);
-      cur->size = size;
-      ALLOC_BLOCK(cur);
-      return(B2D(cur));
-    }
-    cur = FBNEXT(cur);
-  }
-  return(NULL);
-}
-
-/* Allocate more memory using malloc/mmap.  This creates a new heap chunk,
-   links it into the heap chunk list, and creates two block headers, one
-   marking the new free block that fills the entire heap chunk and a second
-   marking the end of the heap chunk.
-
-   The heap expansion algorithm basically works by allocating
-   [c->over_percent] more space than requested, plus the size of two
-   block headers.  If the heap is smaller than the minimum expansion
-   size, clamp it to the minimum expansion size.  It then rounds
-   up the size of the chunk to the next larger multiple of the page
-   size.
- */
-static Bhdr *expand_heap(arc *c, size_t request)
-{
-  Bhdr *mem, *tail;
-  size_t over_request, rounded_request;
-
-  /* Allocate c->over_percent more beyond the requested amount plus
-     space for the two headers, one for the header of the new free block
-     and another for the tail block marking the end of the arena. */
-  over_request = request + ((request / 100) * c->over_percent) + 2*BHDRSIZE;
-  /* If less than minimum, expand to the minimum */
-  if (over_request < c->minexp)
-    over_request = c->minexp;
-  ROUNDHEAP(rounded_request, over_request);
-  mem = (Bhdr *)alloc_for_heap(c, rounded_request);
-  if (mem == NULL) {
-    arc_err_cstrfmt(c, "No room for growing heap");
-    return(NULL);
-  }
-  mem->magic = MAGIC_F;
-  mem->size = rounded_request - BHDRSIZE;
-  mem->color = mutator;
-  /* Add a tail block to this new heap chunk so that the sweeper knows
-     that it has reached the end of the heap chunk and should begin
-     sweeping the next one, if any. */
-  tail = B2NB(mem);
-  tail->magic = MAGIC_E;
-  tail->size = 0;
-  return(mem);
+  if (h->prev == NULL)
+    alloc_head = h->next;
+  else
+    h->prev->next = h->next;
+  if (h->next != NULL)
+    h->next->prev = h->prev;
+  c->mem_free(h->block);
 }
 
 static void *alloc(arc *c, size_t osize)
 {
-  void *blk;
-  size_t size;
-  Bhdr *nblk;
+  void *ptr;
+  Bhdr *h;
 
-  /* Adjust the size of the allocated block so that we maintain
-     alignment of at least 16 bytes. */
-  ROUNDSIZE(size, osize);
-  blk = fl_alloc(size);
-  if (blk == NULL) {
-    nblk = expand_heap(c, size);
-    if (nblk == NULL) {
-      arc_err_cstrfmt(c, "Fatal error: out of memory!");
-      return(NULL);
-    }
-    fl_free_block(nblk);
-    blk = fl_alloc(size);
+  ptr = c->mem_alloc(osize + BHDRSIZE + ALIGN - 1);
+  if (ptr == NULL) {
+    fprintf(stderr, "Failed to allocate memory\n");
+    exit(1);
   }
-  return(blk);
+  /* We have to position Bhdr inside the allocated memory
+     such that Bhdr->data is at an aligned address. */
+  D2B(h, (void *)(((value)ptr + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1)));
+  h->magic = MAGIC_A;
+  h->size = osize;
+  h->color = mutator;
+  h->block = ptr;
+  if (alloc_head == NULL) {
+    alloc_head = h;
+    alloc_head->prev = NULL;
+    alloc_head->next = NULL;
+  } else {
+    h->prev = NULL;
+    h->next = alloc_head;
+    alloc_head->prev = h;
+    alloc_head = h;
+  }
+  return(B2D(h));
 }
 
 static value get_cell(arc *c)
@@ -272,14 +111,6 @@ static value get_cell(arc *c)
     return(CNIL);
   return((value)cellptr);
 }
-
-Hhdr *__arc_get_heap_start(void)
-{
-  return(heaps);
-}
-
-#define SETMARK(h) if ((h)->color != mutator) { (h)->color = propagator; nprop=1; }
-
 
 static void mark(arc *c, value v, int reclevel)
 {
@@ -390,7 +221,7 @@ static void mark(arc *c, value v, int reclevel)
       break;
       /* XXX fill in with other composite types as they are defined */
     case T_NONE:
-      arc_err_cstrfmt(c, "Object of undefined type encountered!");
+      arc_err_cstrfmt(c, "GC: object of undefined type encountered!");
       break;
     }
   }
@@ -407,26 +238,21 @@ static void sweep(arc *c, value v)
   switch (TYPE(v)) {
   case T_STRING:
     c->free_block(c, REP(v)._str.str); /* a string's actual data is marked T_IMMUTABLE */
-    c->free_block(c, (void *)v);
     break;
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
     mpz_clear(REP(v)._bignum);
-    c->free_block(c, (void *)v);
     break;
   case T_RATIONAL:
     mpq_clear(REP(v)._rational);
-    c->free_block(c, (void *)v);
     break;
 #endif
   case T_TABLE:
     c->free_block(c, REP(v)._hash.table); /* free the immutable memory of the hash table */
-    c->free_block(c, (void *)v);
     break;
   case T_TBUCKET:
     /* Make the cell in the parent hash table unbound as well. */
     REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index] = CUNBOUND;
-    c->free_block(c, (void *)v);
     break;
   case T_PORT:
   case T_CUSTOM:
@@ -434,9 +260,9 @@ static void sweep(arc *c, value v)
     break;
   default:
     /* this should do for almost everything else */
-    c->free_block(c, (void *)v);
     break;
   }
+  c->free_block(c, (void *)v);
 }
 
 static void rootset(arc *c)
@@ -464,44 +290,46 @@ static void rungc(arc *c)
 {
   value h;
   unsigned long long gcst, gcet;
+  Bhdr *cur;
 
   gcst = __arc_milliseconds();
   gcnruns++;
 
+  if (gcptr == NULL)
+    gcptr = alloc_head;
+
   for (visit = quanta; visit > 0;) {
-    if (gchptr == NULL) {
-      gchptr = heaps;
-      if (gchptr == NULL)
-	return;
-    }
+
     if (gcptr == NULL)
-      gcptr = (Bhdr *)((char *)gchptr + sizeof(Hhdr));
-    if (gcptr->magic == MAGIC_A) {
+	break; 			/* stop if we finished the last heap block */
+    /* The following operations may delete cur before we advance,
+       so we advance now. */
+    cur = gcptr;
+    gcptr = B2NB(gcptr);
+    if (cur->magic == MAGIC_A) {
       visit--;
       gct++;
-      h = (value)B2D(gcptr);
-      if (gcptr->color == propagator) {
+      h = (value)B2D(cur);
+      if (cur->color == propagator) {
 	gce--;
-	gcptr->color = mutator;
+	cur->color = mutator;
 	mark(c, h, 0);
-      } else if (gcptr->color == sweeper) {
+      } else if (cur->color == sweeper) {
 	gce++;
 	sweep(c, h);
       }
-    }
-    gcptr = B2NB(gcptr);
-    if (gcptr->magic == MAGIC_E) {
-      /* reached the end of the heap block, go to the next one */
-      gchptr = (Hhdr *)gchptr->next;
-      gcptr = NULL;
-      if (gchptr == NULL)
-	break; 			/* stop if we finished the last heap block */
     }
   }
 
   quanta = MAX_GC_QUANTA;
 
-  if (gchptr != NULL)		/* completed this iteration? */
+  /* We have to keep pressing */
+  if (gcptr != NULL && nprop != 0) {
+    gcptr = NULL;
+    goto endgc;
+  }
+
+  if (gcptr != NULL)		/* completed this iteration? */
     goto endgc;
 
   if (nprop == 0) {		/* completed the epoch? */
@@ -526,13 +354,8 @@ void arc_set_memmgr(arc *c)
   c->get_cell = get_cell;
   c->get_block = alloc;
   c->free_block = free_block;
-#ifdef HAVE_MMAP
-  c->mem_alloc = __arc_aligned_mmap;
-  c->mem_free = __arc_aligned_munmap;
-#else
-  c->mem_alloc = __arc_aligned_malloc;
-  c->mem_free = __arc_aligned_free;
-#endif
+  c->mem_alloc = malloc;
+  c->mem_free = free;
   c->rungc = rungc;
 
   gcepochs = 0;
@@ -545,8 +368,8 @@ void arc_set_memmgr(arc *c)
   gct = 1;
 
   /* Set default parameters for heap expansion policy */
-  c->minexp = DFL_MIN_EXP;
-  c->over_percent = DFL_OVER_PERCENT;
+  /*  c->minexp = DFL_MIN_EXP;
+      c->over_percent = DFL_OVER_PERCENT; */
 }
 
 value arc_current_gc_milliseconds(arc *c)
