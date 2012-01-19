@@ -51,8 +51,8 @@ typedef struct arc {
 
   /* Low-level allocation functions (bypass memory management--use only
      from within an allocator or garbage collector) */
-  void *(*mem_alloc)(size_t, int, void **);
-  void (*mem_free)(void *, size_t);
+  void *(*mem_alloc)(size_t);
+  void (*mem_free)(void *);
 
   int over_percent;    /* additional free space over heap expansion */
   size_t minexp;       /* minimum expansion amount */
