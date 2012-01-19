@@ -110,9 +110,9 @@ static void dump_registers(arc *c, value thr)
 
 static inline void trace(arc *c, value thr)
 {
-  char str[256];
   static value *bpofs = NULL;		/* breakpoint offset */
   static value bp = CNIL;	/* breakpoint function */
+  char str[256];
 
   if (bp == TFUNR(thr) && bpofs == TIP(thr)) {
     bp = CNIL;
@@ -304,8 +304,8 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	int namesidx = *TIP(thr)++;
 
 	WB(&TENVR(thr), arc_mkenv(c, TENVR(thr), ienvsize));
-	ENV_NAMES(car(TENVR(thr))) = (namesidx < 0) ? CNIL
-	  : CODE_LITERAL(TFUNR(thr), namesidx);
+	WB(&ENV_NAMES(car(TENVR(thr))), (namesidx < 0) ? CNIL
+	   : CODE_LITERAL(TFUNR(thr), namesidx));
 	/* WB(&VINDEX(car(TENVR(thr)), 0), VINDEX(TFUNR(thr), 2)); */
       }
       NEXT;
@@ -533,7 +533,7 @@ value arc_macapply(arc *c, value func, value args)
   c->in_compile = 1;
   oldthr = c->curthread;
   thr = arc_mkthread(c, func, c->stksize, 0);
-  c->curthread = thr;
+  WB(&c->curthread, thr);
   /* push the args in reverse order */
   nahd = arc_list_reverse(c, args);
   argc = 0;
@@ -547,7 +547,7 @@ value arc_macapply(arc *c, value func, value args)
     /* handle C-defined functions -- CC4 functions still won't work though. */
     arc_apply(c, thr, func);
     retval = TVALR(thr);
-    c->curthread = oldthr;
+    WB(&c->curthread, oldthr);
     return(retval);
   }
 
@@ -578,7 +578,7 @@ value arc_macapply(arc *c, value func, value args)
        compiled invokes many macros. */
   }
   retval = TVALR(thr);
-  c->curthread = oldthr;
+  WB(&c->curthread, oldthr);
   c->in_compile = 0;
   return(retval);
 }
@@ -609,7 +609,7 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
 
     if (NIL_P(tcont)) {
       /* no protect section, move on */
-      CC4V(tcr) = cdr(CC4V(tcr));
+      WB(&CC4V(tcr), cdr(CC4V(tcr)));
       continue;
     }
 
@@ -617,7 +617,7 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
        execute the closure embedded inside it. */
     protclos = arc_mkclosure(c, VINDEX(tcont, 1), VINDEX(tcont, 2));
     CC4CALL(c, argv, protclos, 0, CNIL);
-    CC4V(tcr) = cdr(CC4V(tcr));
+    WB(&CC4V(tcr), cdr(CC4V(tcr)));
   }
   CC4END;
   /* Now, we have to modify the continuation register so that when this
@@ -848,7 +848,7 @@ void arc_apply(arc *c, value thr, value fun)
 #endif
     break;
   default:
-    arc_err_cstrfmt(c, "invalid function application");
+    arc_err_cstrfmt(c, "invalid function application, applying object of type %s", __arc_typenames[TYPE(fun)]);
   }
 }
 
@@ -1189,7 +1189,7 @@ value arc_errexc_thr(arc *c, value thr, value exc)
     while (cont != CNIL) {
       /* we are cooking up a new continuation register: make sure that
 	 the conr's are proper. */
-      CONT_CON(car(cont)) = cdr(cont);
+      WB(&CONT_CON(car(cont)), cdr(cont));
       cont = cdr(cont);
     }
     cont = car(newconr);
@@ -1239,7 +1239,7 @@ value arc_errexc_thr(arc *c, value thr, value exc)
   while (cont != CNIL) {
     /* we are cooking up a new continuation register: make sure that
        the conr's are proper. */
-    CONT_CON(car(cont)) = cdr(cont);
+    WB(&CONT_CON(car(cont)), cdr(cont));
     cont = cdr(cont);
   }
   cont = car(newconr);
