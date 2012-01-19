@@ -297,6 +297,7 @@ unsigned long arc_hash_cstr(arc *c, const char *str)
   arc_hs s;
 
   arc_hash_init(&s, 0);
+  arc_hash_update(&s, T_STRING);
   len = hash_increment_string(str, &s);
   return(arc_hash_final(&s, len));
 }
