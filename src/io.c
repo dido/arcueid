@@ -246,8 +246,7 @@ static void fstr_marker(arc *c, value v, int level,
 
 static void fstr_sweeper(arc *c, value v)
 {
-  /* release memory */
-  c->free_block(c, (void *)v);
+  /* no need to do anything */
 }
 
 /* NOTE: this will actually return a RUNE, not a byte! */
