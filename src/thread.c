@@ -236,7 +236,7 @@ void arc_thread_dispatch(arc *c)
   pbos = &bos;
 
 
-  c->vmqueue = c->vmthreads;
+  WB(&c->vmqueue, c->vmthreads);
   prev = CNIL;
 #ifdef HAVE_SYS_EPOLL_H
   epollfd = epoll_create(MAX_EVENTS);
@@ -246,10 +246,10 @@ void arc_thread_dispatch(arc *c)
     nthreads = blockedthreads = iowait = stoppedthreads = 0;
     sleepthreads = runthreads = need_select = 0;
     minsleep = ULLONG_MAX;
-    for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
-	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
+    for (WB(&c->vmqueue, c->vmthreads), prev = CNIL; c->vmqueue;
+	 WB(&prev, c->vmqueue), WB(&c->vmqueue, cdr(c->vmqueue))) {
       thr = car(c->vmqueue);
-      c->curthread = thr;
+      WB(&c->curthread, thr);
       ++nthreads;
       switch (TSTATE(thr)) {
 	/* Remove a thread in Trelease or Tbroken state from the queue. */
@@ -277,7 +277,7 @@ void arc_thread_dispatch(arc *c)
 	/* Wake up a sleeping thread if the wakeup time is reached */
 	if (__arc_milliseconds() >= TWAKEUP(thr)) {
 	  TSTATE(thr) = Tready;
-	  TVALR(thr) = CNIL;
+	  WB(&TVALR(thr), CNIL);
 	} else {
 	  sleepthreads++;
 	  if (TWAKEUP(thr) < minsleep)
@@ -326,6 +326,8 @@ void arc_thread_dispatch(arc *c)
       if (RUNNABLE(thr))
 	runthreads++;
       /* printf("Thread %d completed, state %d\n", TTID(thr), TSTATE(thr)); */
+      /* run garbage collection after every time slice */
+      c->rungc(c);
     }
 
     /* XXX - should we print a warning message if we abort when all
@@ -392,7 +394,6 @@ void arc_thread_dispatch(arc *c)
       nanosleep(&req, NULL);
     }
     /* XXX - detect deadlock */
-    c->rungc(c);
   }
 }
 
@@ -501,7 +502,7 @@ static value __send_channel(arc *c, value curthread, value chan, value val)
 
 
   VINDEX(chan, 0) = CTRUE;
-  VINDEX(chan, 1) = val;
+  WB(&VINDEX(chan, 1), val);
   thr = dequeue(c, &VINDEX(chan, 2), &VINDEX(chan, 3));
   if (thr == CNIL) {
     /* no threads waiting to receive */
@@ -529,7 +530,7 @@ static value __send_rvch(arc *c, value chan, value data)
   value thr;
 
   VINDEX(chan, 0) = CTRUE;
-  VINDEX(chan, 1) = data;
+  WB(&VINDEX(chan, 1), data);
 
   /* dequeue and wake up */
   while ((thr = dequeue(c, &VINDEX(chan, 2), &VINDEX(chan, 3))) != CNIL) {
