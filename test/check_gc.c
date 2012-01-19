@@ -29,8 +29,8 @@
 #include "../config.h"
 
 arc c;
-extern Hhdr *__arc_get_heap_start(void);
 extern unsigned long long gcepochs;
+extern Bhdr *__arc_get_heap_start(void);
 
 START_TEST(test_sym_gc)
 {
@@ -142,7 +142,6 @@ START_TEST(test_gc)
   value list=CNIL, list2=CNIL;
   value listsym1, listsym2, lss1, lss2, hash1, hash2, vec1, vec2;
   int i, count, startcount;
-  Hhdr *h;
   Bhdr *b;
   unsigned long long oldepoch;
 
@@ -213,17 +212,12 @@ START_TEST(test_gc)
     list2=cons(&c, INT2FIX(i), list2);
   }
 
-
   /* Count all allocated blocks */
   count = 0;
-  for (h = __arc_get_heap_start(); h; h = h->next) {
-    for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
-	 b = B2NB(b)) {
-      if (b->magic == MAGIC_A)
-	count++;
-    }
+  for (b = __arc_get_heap_start(); b; b = b->next) {
+    if (b->magic == MAGIC_A)
+      count++;
   }
-
   startcount = count;
 
   /* Mark [list] with a propagator, but not [list2] */
@@ -248,12 +242,9 @@ START_TEST(test_gc)
   /* After three epochs of the garbage collector, [list2], whose head was
      never marked as a propagator, should have been garbage collected. */
   count = 0;
-  for (h = __arc_get_heap_start(); h; h = h->next) {
-    for (b = (Bhdr *)((char *)h + sizeof(Hhdr)); b->magic != MAGIC_E;
-	 b = B2NB(b)) {
-      if (b->magic == MAGIC_A)
-	count++;
-    }
+  for (b = __arc_get_heap_start(); b; b = b->next) {
+    if (b->magic == MAGIC_A)
+      count++;
   }
 
   /*  printf("count = %d\n", startcount - count); */
