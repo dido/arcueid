@@ -708,7 +708,7 @@ void arc_init_sq(arc *c, int stksize, int quanta)
   c->iowaittbl = arc_mkhash(c, 8);
   c->achan = arc_mkchan(c);
   c->splforms = CNIL;
-  c->lastsym = 0;
+  c->inlfuncs = CNIL;
 }
 
 void arc_init(arc *c)
