@@ -1079,9 +1079,9 @@ value arc_mkenv(arc *c, value parent, int size)
 {
   value env;
 
-  env = cons(c, arc_mkvector(c, size+1), parent);
+  env = arc_mkvector(c, size+1);
   BTYPE(env) = T_ENV;
-  return(env);
+  return(cons(c, env, parent));
 }
 
 value arc_mkclosure(arc *c, value code, value env)
