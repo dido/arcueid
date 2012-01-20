@@ -223,7 +223,7 @@ static unsigned long hash_increment(arc *c, value v, arc_hs *s)
     break;
   case T_SYMBOL:
     length = 1;
-    arc_hash_update(s, (unsigned long)v);
+    arc_hash_update(s, (unsigned long)SYM2ID(v));
     break;
   case T_TABLE:
     while ((v2 = arc_hash_iter(c, v, &i)) != CUNBOUND)
