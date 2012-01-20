@@ -31,36 +31,38 @@
 #include "symbols.h"
 #include "../config.h"
 
-#define ID2SYM(x) ((value)(((long)(x))<<8|SYMBOL_FLAG))
-
 value arc_intern(arc *c, value name)
 {
-  value symval;
+  value symid, symval;
+  int symintid;
 
-  if ((symval = arc_hash_lookup(c, c->symtable, name)) != CUNBOUND) {
+  if ((symid = arc_hash_lookup(c, c->symtable, name)) != CUNBOUND) {
+    /* convert the fixnum ID into the symbol value */
+    symval = ID2SYM(FIX2INT(symid));
     /* do not allow nil to have a symbol value */
     return((symval == ARC_BUILTIN(c, S_NIL)) ? CNIL : symval);
   }
 
-  symval = ID2SYM(++c->lastsym);
-  arc_hash_insert(c, c->symtable, name, symval);
-  arc_hash_insert(c, c->rsymtable, symval, name);
+  symintid = ++c->lastsym;
+  symid = INT2FIX(symintid);
+  symval = ID2SYM(symintid);
+  arc_hash_insert(c, c->symtable, name, symid);
+  arc_hash_insert(c, c->rsymtable, symid, name);
   return(symval);
 }
 
 value arc_intern_cstr(arc *c, const char *name)
 {
-  value symval, symstr;
-
-  if ((symval = arc_hash_lookup_cstr(c, c->symtable, name)) != CUNBOUND)
-    return(symval);
-  symstr = arc_mkstringc(c, name);
+  value symstr = arc_mkstringc(c, name);
   return(arc_intern(c, symstr));
 }
 
 value arc_sym2name(arc *c, value sym)
 {
-  return(arc_hash_lookup(c, c->rsymtable, sym));
+  value symid;
+
+  symid = INT2FIX(SYM2ID(sym));
+  return(arc_hash_lookup(c, c->rsymtable, symid));
 }
 
 static Rune scan(arc *c, value src);
@@ -729,6 +731,7 @@ void arc_init_reader(arc *c)
   /* So that we don't have to add them to the rootset, we mark the
      symbol table, the builtin table, and the character escape table
      and its entries as immutable and immune from garbage collection. */
+  c->lastsym = 0;
   c->symtable = arc_mkhash(c, 10);
   BLOCK_IMM(c->symtable);
   c->rsymtable = arc_mkhash(c, 10);
