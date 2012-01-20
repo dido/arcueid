@@ -212,7 +212,7 @@ struct vmthread {
 
 /* Cells for boxed items */
 struct cell {
-  unsigned int _type;
+  enum arc_types _type;
   unsigned int _flags;
   union {
     struct {
@@ -294,6 +294,8 @@ struct cell {
 #define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
 
 #define SYMBOL_FLAG 0x0e
+#define ID2SYM(x) ((value)(((long)(x))<<8|SYMBOL_FLAG))
+#define SYM2ID(x) (((unsigned long)(x))>>8)
 #define SYMBOL_P(x) (((value)(x)&0xff)==SYMBOL_FLAG)
 
 /* Special constants -- non-zero and non-fixnum constants */
