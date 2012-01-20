@@ -996,7 +996,6 @@ END_TEST
 
 START_TEST(test_symbols)
 {
-  fail_unless(arc_hash_lookup(&c, c.genv, arc_intern_cstr(&c, "nil")) == CNIL);
   fail_unless(arc_hash_lookup(&c, c.genv, arc_intern_cstr(&c, "t")) == CTRUE);
   fail_unless(TYPE(arc_hash_lookup(&c, c.genv,
 				   arc_intern_cstr(&c, "sig"))) == T_TABLE);
