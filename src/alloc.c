@@ -123,18 +123,12 @@ static void mark(arc *c, value v, int reclevel)
      tables and mark those.  This provides symbol garbage collection,
      leaving only symbols which are actually in active use. */
   if (TYPE(v) == T_SYMBOL) {
-    val = arc_hash_lookup2(c, c->rsymtable, v);
-    /* avoid double-marking symbols whose buckets are already set
-       to mutator color. */
-    D2B(b, (void *)val);
-    b->color = mutator;
-    /* Recursively mark only the value of the rsymtable */
-    mark(c, REP(val)._hashbucket.val, reclevel+1);
+    value symid = INT2FIX(SYM2ID(v));
+
+    val = arc_hash_lookup2(c, c->rsymtable, symid);
+    mark(c, val, reclevel+1);
     val = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
-    D2B(b, (void *)val);
-    b->color = mutator;
-    /* Recursively mark only the key of the symtable */
-    mark(c, REP(val)._hashbucket.key, reclevel+1);
+    mark(c, val, reclevel+1);
     return;
   }
 
