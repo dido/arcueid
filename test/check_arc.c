@@ -1849,10 +1849,10 @@ int main(void)
 
   c = &cc;
   arc_init(c);
-  c->signal_error = error_handler;
 
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
   arc_bindsym(c, arc_intern_cstr(c, "initload"), initload);
+  c->signal_error = NULL;
   while ((sexpr = arc_read(c, initload, CNIL)) != CNIL) {
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
@@ -1862,6 +1862,7 @@ int main(void)
   }
   arc_close(c, initload);
 
+  c->signal_error = error_handler;
   tcase_add_test(tc_arc, test_do);
   tcase_add_test(tc_arc, test_safeset);
   tcase_add_test(tc_arc, test_apply);
