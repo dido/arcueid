@@ -97,7 +97,7 @@ static value file_pp(arc *c, value v)
 }
 
 static void file_marker(arc *c, value v, int level,
-			void (*markfn)(arc *, value, int))
+			void (*markfn)(arc *, value, int, value))
 {
   /* does nothing */
 }
@@ -239,9 +239,9 @@ static value fstr_pp(arc *c, value v)
 }
 
 static void fstr_marker(arc *c, value v, int level,
-			void (*mark)(arc *, value, int))
+			void (*mark)(arc *, value, int, value))
 {
-  mark(c, PORTS(v).str, level+1);
+  mark(c, PORTS(v).str, level+1, CNIL);
 }
 
 static void fstr_sweeper(arc *c, value v)
