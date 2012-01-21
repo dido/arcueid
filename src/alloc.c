@@ -25,12 +25,13 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <string.h>
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
 #include "../config.h"
 
-#define GC_QUANTA 4096
+#define GC_QUANTA 16777216
 #define MAX_GC_QUANTA GC_QUANTA
 
 static int quanta = MAX_GC_QUANTA;
@@ -57,10 +58,11 @@ Bhdr *__arc_get_heap_start(void)
   return(alloc_head);
 }
 
+#if 0
+
 static void free_block(struct arc *c, void *blk)
 {
   Bhdr *h;
-
 
   D2B(h, blk);
   if (h->prev == NULL)
@@ -71,6 +73,30 @@ static void free_block(struct arc *c, void *blk)
     h->next->prev = h->prev;
   c->mem_free(h->block);
 }
+
+#else
+
+static void free_block(struct arc *c, void *blk)
+{
+  Bhdr *h;
+  int nsize;
+  void *blk2;
+
+  D2B(h, blk);
+  if (h->prev == NULL)
+    alloc_head = h->next;
+  else
+    h->prev->next = h->next;
+  if (h->next != NULL)
+    h->next->prev = h->prev;
+  /* clear the entire block */
+  nsize = h->size + BHDRSIZE + ALIGN - 1;
+  blk2 = h->block;
+  memset(blk2, 0xff, nsize);
+  c->mem_free(blk2);
+}
+
+#endif
 
 static void *alloc(arc *c, size_t osize)
 {
@@ -122,7 +148,7 @@ static void mark(arc *c, value v, int reclevel)
   /* If we find a symbol here, find its hash buckets in the symbol
      tables and mark those.  This provides symbol garbage collection,
      leaving only symbols which are actually in active use. */
-  if (TYPE(v) == T_SYMBOL) {
+  if (SYMBOL_P(v)) {
     value symid = INT2FIX(SYM2ID(v));
 
     val = arc_hash_lookup2(c, c->rsymtable, symid);
@@ -325,8 +351,8 @@ static void rungc(arc *c)
     goto endgc;
 
   if (nprop == 0) {		/* completed the epoch? */
-    /* printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
-       markcount, sweepcount); */
+    printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
+	   markcount, sweepcount);
     markcount = sweepcount = 0;
     gcepochs++;
     gccolor++;
