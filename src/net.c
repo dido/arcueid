@@ -66,7 +66,7 @@ static value sock_pp(arc *c, value v)
 }
 
 static void sock_marker(arc *c, value v, int level,
-			void (*markfn)(arc *, value, int))
+			void (*markfn)(arc *, value, int, value))
 {
   /* does nothing */
 }
