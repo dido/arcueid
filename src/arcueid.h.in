@@ -279,7 +279,7 @@ struct cell {
        inside itself.  */
     struct {
       value (*pprint)(arc *, value);
-      void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
+      void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int, value));
       void (*sweeper)(arc *, value);
       void (*hash)(arc *, arc_hs *, value);
       value data[1];
