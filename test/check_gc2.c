@@ -52,45 +52,23 @@ START_TEST(test_nested_envs)
   ret=TEST("((fn (foo) (assign test (fn (x) (foo x))) (assign test2 (fn (x) (+ 1 (foo x))))) (fn (x) x))");
   fail_unless(TYPE(ret) == T_CLOS);
 
-  for (i=0; i<10; i++) {
+  for (i=0; i<3; i++) {
     oldepoch = gcepochs;
     while (gcepochs == oldepoch) {
       c->rungc(c);
     }
-    ret=TEST("(test 1)");
-    fail_unless(ret == INT2FIX(1));
   }
-}
-END_TEST
-
-START_TEST(test_nested_macro)
-{
-  value ret;
-  unsigned long long oldepoch;
-  int i;
-
-  ret=TEST("((fn (foo) (assign test (annotate 'mac (fn (x) (foo x)))) (assign test2 (annotate 'mac (fn (x) (foo x))))) (fn (x) x))");
-  fail_unless(TYPE(ret) == T_TAGGED);
-
-  ret=TEST("(bound 'test)");
-  fail_if(NIL_P(ret));
-
-  ret=TEST("(bound 'test2)");
-  fail_if(NIL_P(ret));
-
-  ret = TEST("((fn (x) (test x)) 1)");
+  ret=TEST("(test 1)");
   fail_unless(ret == INT2FIX(1));
-  for (i=0; i<10; i++) {
-    oldepoch = gcepochs;
-    while (gcepochs == oldepoch) {
-      c->rungc(c);
-    }
-    ret = TEST("((fn (x) (test x)) 1)");
-    fail_unless(ret == INT2FIX(1));
-  }
-
 }
 END_TEST
+
+void error_handler(struct arc *c, value exc)
+{
+  arc_print_string(c, arc_prettyprint(c, exc));
+  printf("\n");
+  fail("exception received");
+}
 
 int main(void)
 {
@@ -103,7 +81,6 @@ int main(void)
   arc_init(c);
 
   tcase_add_test(tc_gc, test_nested_envs);
-  tcase_add_test(tc_gc, test_nested_macro);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
