@@ -138,7 +138,7 @@ static value get_cell(arc *c)
   return((value)cellptr);
 }
 
-static void mark(arc *c, value v, int reclevel)
+static void mark(arc *c, value v, int reclevel, value marksym)
 {
   Bhdr *b;
   int ctx;
@@ -148,13 +148,13 @@ static void mark(arc *c, value v, int reclevel)
   /* If we find a symbol here, find its hash buckets in the symbol
      tables and mark those.  This provides symbol garbage collection,
      leaving only symbols which are actually in active use. */
-  if (SYMBOL_P(v)) {
+  if (SYMBOL_P(v) && v != marksym) {
     value symid = INT2FIX(SYM2ID(v));
 
     val = arc_hash_lookup2(c, c->rsymtable, symid);
-    mark(c, val, reclevel+1);
+    mark(c, val, reclevel+1, v);
     val = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
-    mark(c, val, reclevel+1);
+    mark(c, val, reclevel+1, v);
     return;
   }
 
@@ -190,36 +190,36 @@ static void mark(arc *c, value v, int reclevel)
     case T_CLOS:
     case T_TAGGED:
     case T_ENV:
-      mark(c, car(v), reclevel+1);
-      mark(c, cdr(v), reclevel+1);
+      mark(c, car(v), reclevel+1, CNIL);
+      mark(c, cdr(v), reclevel+1, CNIL);
       break;
     case T_TABLE:
       ctx = 0;
       while ((val = arc_hash_iter(c, v, &ctx)) != CUNBOUND) {
-	mark(c, val, reclevel+1);
+	mark(c, val, reclevel+1, CNIL);
       }
       break;
     case T_CCODE:
       /* mark the function name */
-      mark(c, REP(v)._cfunc.name, reclevel+1);
+      mark(c, REP(v)._cfunc.name, reclevel+1, CNIL);
       break;
     case T_TBUCKET:
-      mark(c, REP(v)._hashbucket.key, reclevel+1);
-      mark(c, REP(v)._hashbucket.val, reclevel+1);
+      mark(c, REP(v)._hashbucket.key, reclevel+1, CNIL);
+      mark(c, REP(v)._hashbucket.val, reclevel+1, CNIL);
       break;
     case T_THREAD:
       /* mark the registers inside of the thread */
-      mark(c, TFUNR(v), reclevel+1); /* function register */
-      mark(c, TENVR(v), reclevel+1); /* environment register */
-      mark(c, TVALR(v), reclevel+1); /* value register */
-      mark(c, TCONR(v), reclevel+1); /* continuation register */
-      mark(c, TECONT(v), reclevel+1); /* error continuation */
-      mark(c, TEXC(v), reclevel+1);   /* current exception */
-      mark(c, TSTDH(v), reclevel+1);  /* standard handles */
-      mark(c, TRVCH(v), reclevel+1);  /* return value channel */
+      mark(c, TFUNR(v), reclevel+1, CNIL); /* function register */
+      mark(c, TENVR(v), reclevel+1, CNIL); /* environment register */
+      mark(c, TVALR(v), reclevel+1, CNIL); /* value register */
+      mark(c, TCONR(v), reclevel+1, CNIL); /* continuation register */
+      mark(c, TECONT(v), reclevel+1, CNIL); /* error continuation */
+      mark(c, TEXC(v), reclevel+1, CNIL);   /* current exception */
+      mark(c, TSTDH(v), reclevel+1, CNIL);  /* standard handles */
+      mark(c, TRVCH(v), reclevel+1, CNIL);  /* return value channel */
       /* Mark the stack of this thread (used portions only) */
       for (vptr = TSP(v); vptr == TSTOP(v); vptr++)
-	mark(c, *vptr, reclevel+1);
+	mark(c, *vptr, reclevel+1, CNIL);
       break;
     case T_VECTOR:
     case T_CODE:
@@ -228,7 +228,7 @@ static void mark(arc *c, value v, int reclevel)
     case T_XCONT:
     case T_EXCEPTION:
       for (i=0; i<REP(v)._vector.length; i++)
-	mark(c, REP(v)._vector.data[i], reclevel+1);
+	mark(c, REP(v)._vector.data[i], reclevel+1, CNIL);
       break;
     case T_INPUT:
     case T_OUTPUT:
@@ -337,7 +337,7 @@ static void rungc(arc *c)
       if (cur->color == propagator) {
 	gce--;
 	cur->color = mutator;
-	mark(c, h, 0);
+	mark(c, h, 0, CNIL);
       } else if (cur->color == sweeper) {
 	gce++;
 	sweep(c, h);
