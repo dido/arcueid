@@ -57,9 +57,9 @@ static value readline_pp(arc *c, value v)
 }
 
 static void readline_marker(arc *c, value v, int level,
-			void (*mark)(arc *, value, int))
+			    void (*mark)(arc *, value, int, value))
 {
-  mark(c, PORTS(v).str, level+1);
+  mark(c, PORTS(v).str, level+1, CNIL);
 }
 
 static char *line_read = (char *)NULL;
