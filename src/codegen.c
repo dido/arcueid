@@ -255,7 +255,7 @@ static value disasm(arc *c, value code, int level)
 
   /* disassemble literal values */
   for (index = 2; index < VECLEN(code); index++) {
-    printf("Literal: %02x Type: ", index-1);
+    printf("Literal: %02x Type: ", index-2);
     arc_print_string(c, arc_prettyprint(c, arc_type(c, VINDEX(code, index))));
     printf("\n");
     if (TYPE(VINDEX(code, index)) == T_CODE) {
