@@ -2,7 +2,7 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.0.7 (2012-??-??)
+* Version 0.0.7 (2012-01-22)
 - Cleaned up error handling for all built-in functions now that a
   working error handling mechanism is available (ongoing)
 - Directory and file system calls
