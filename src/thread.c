@@ -223,7 +223,7 @@ void arc_thread_dispatch(arc *c)
 {
   value thr, prev;
   int nthreads, blockedthreads, iowait, sleepthreads, runthreads;
-  int stoppedthreads, need_select;
+  int stoppedthreads, need_select, gcstatus;
   unsigned long long minsleep;
 #ifdef HAVE_SYS_EPOLL_H
 #define MAX_EVENTS 8192
@@ -327,7 +327,7 @@ void arc_thread_dispatch(arc *c)
 	runthreads++;
       /* printf("Thread %d completed, state %d\n", TTID(thr), TSTATE(thr)); */
       /* run garbage collection after every time slice */
-      c->rungc(c);
+      gcstatus = c->rungc(c);
     }
 
     /* XXX - should we print a warning message if we abort when all
@@ -341,7 +341,13 @@ void arc_thread_dispatch(arc *c)
        do some post-cleanup work */
     if (need_select) {
 #ifdef HAVE_SYS_EPOLL_H
-      if ((iowait + blockedthreads) == nthreads) {
+      if (gcstatus == 0) {
+	/* if the garbage collector has not finished its work (for
+	   VCGC this means that it has not yet entered a new epoch),
+	   allow it to keep on running whatever other considerations
+	   apply. */
+	eptimeout = 0;
+      } else if ((iowait + blockedthreads) == nthreads) {
 	/* If all threads are blocked on I/O or are waiting on channels,
 	   make epoll wait indefinitely.  The only possible thing
 	   (barring deadlock conditions) that can make the threads waiting
@@ -353,8 +359,8 @@ void arc_thread_dispatch(arc *c)
 	   wait for at most the time until the first sleep expires. */
 	eptimeout = (minsleep - __arc_milliseconds())/1000;
       } else {
-	/* do not wait if there are any threads which can run */
-	eptimeout = 1;
+	/* do not wait if there are any other threads which can run */
+	eptimeout = 0;
       }
       nfds = epoll_wait(epollfd, epevents, MAX_EVENTS, eptimeout);
       if (nfds < 0) {
