@@ -31,7 +31,7 @@
 #include "arith.h"
 #include "../config.h"
 
-#define GC_QUANTA 16384
+#define GC_QUANTA 8192
 #define MAX_GC_QUANTA GC_QUANTA
 
 static int quanta = MAX_GC_QUANTA;
@@ -219,7 +219,10 @@ static void mark(arc *c, value v, int reclevel, value marksym)
       mark(c, TEXC(v), reclevel+1, CNIL);   /* current exception */
       mark(c, TSTDH(v), reclevel+1, CNIL);  /* standard handles */
       mark(c, TRVCH(v), reclevel+1, CNIL);  /* return value channel */
-      /* Mark the stack of this thread (used portions only) */
+      /* Mark the stack *vector* only but not all its contents */
+      D2B(b, (void *)TSTACK(v));
+      b->color = mutator;
+      /* Mark only the used portions of the stack vector */
       for (vptr = TSP(v); vptr == TSTOP(v); vptr++)
 	mark(c, *vptr, reclevel+1, CNIL);
       break;
@@ -309,18 +312,15 @@ static void rootset(arc *c)
   MARKPROP(c->achan);
 }
 
-static void rungc(arc *c)
+static int rungc(arc *c)
 {
   value h;
   unsigned long long gcst, gcet;
   Bhdr *cur;
+  int retval = 0;
 
   gcst = __arc_milliseconds();
   gcnruns++;
-
-  /* We have to keep pressing */
-  if (gcptr != NULL && nprop != 0)
-    gcptr = NULL;
 
   if (gcptr == NULL)
     gcptr = alloc_head;
@@ -354,20 +354,22 @@ static void rungc(arc *c)
     goto endgc;
 
   if (nprop == 0) {		/* completed the epoch? */
-    /* printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
-       markcount, sweepcount); */
+    printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
+	   markcount, sweepcount);
     markcount = sweepcount = 0;
     gcepochs++;
     gccolor++;
     rootset(c);
     gce = 0;
     gct = 1;
+    retval = 1;
     goto endgc;
   }
   nprop = 0;
  endgc:
   gcet = __arc_milliseconds();
   gc_milliseconds += (gcet - gcst);
+  return(retval);
 }
 
 void arc_set_memmgr(arc *c)
