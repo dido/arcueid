@@ -31,7 +31,7 @@
 #include "arith.h"
 #include "../config.h"
 
-#define GC_QUANTA 16777216
+#define GC_QUANTA 16384
 #define MAX_GC_QUANTA GC_QUANTA
 
 static int quanta = MAX_GC_QUANTA;
@@ -150,11 +150,14 @@ static void mark(arc *c, value v, int reclevel, value marksym)
      leaving only symbols which are actually in active use. */
   if (SYMBOL_P(v) && v != marksym) {
     value symid = INT2FIX(SYM2ID(v));
+    value stbucket;
 
-    val = arc_hash_lookup2(c, c->rsymtable, symid);
-    mark(c, val, reclevel+1, v);
-    val = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
-    mark(c, val, reclevel+1, v);
+    stbucket = arc_hash_lookup2(c, c->rsymtable, symid);
+    D2B(b, (void *)stbucket);  
+    mark(c, stbucket, reclevel+1, v);
+    val = stbucket;
+    stbucket = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
+    mark(c, stbucket, reclevel+1, v);
     return;
   }
 
@@ -189,7 +192,6 @@ static void mark(arc *c, value v, int reclevel, value marksym)
     case T_CONS:
     case T_CLOS:
     case T_TAGGED:
-    case T_ENV:
       mark(c, car(v), reclevel+1, CNIL);
       mark(c, cdr(v), reclevel+1, CNIL);
       break;
@@ -227,6 +229,7 @@ static void mark(arc *c, value v, int reclevel, value marksym)
     case T_CHAN:
     case T_XCONT:
     case T_EXCEPTION:
+    case T_ENV:
       for (i=0; i<REP(v)._vector.length; i++)
 	mark(c, REP(v)._vector.data[i], reclevel+1, CNIL);
       break;
@@ -351,8 +354,8 @@ static void rungc(arc *c)
     goto endgc;
 
   if (nprop == 0) {		/* completed the epoch? */
-    printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
-	   markcount, sweepcount);
+    /* printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
+       markcount, sweepcount); */
     markcount = sweepcount = 0;
     gcepochs++;
     gccolor++;
