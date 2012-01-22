@@ -354,8 +354,8 @@ static int rungc(arc *c)
     goto endgc;
 
   if (nprop == 0) {		/* completed the epoch? */
-    printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
-	   markcount, sweepcount);
+    /* printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
+       markcount, sweepcount); */
     markcount = sweepcount = 0;
     gcepochs++;
     gccolor++;
