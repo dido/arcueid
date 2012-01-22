@@ -475,6 +475,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   /* standard handles */
   VINDEX(TSTDH(thr), 0) = VINDEX(TSTDH(thr), 1)
     = VINDEX(TSTDH(thr), 2) = CNIL;
+  TACELL(thr) = 0;
   return(thr);
 }
 
