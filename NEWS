@@ -8,6 +8,7 @@ See the end for copying conditions.
 - Directory and file system calls
 - Threading and synchronization
 - Networking (ongoing)
+- Garbage collector fixes
 
 * Version 0.0.6 (2012-01-10)
 - Compose, complement, and andf in a functional position are optimized
