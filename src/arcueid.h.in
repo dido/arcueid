@@ -61,7 +61,7 @@ typedef struct arc {
   int in_compile;      /* in-compile flag */
 
   /* Garbage collector */
-  void (*rungc)(struct arc *);
+  int (*rungc)(struct arc *);
 
   /* Default signal error */
   void (*signal_error)(struct arc *, value);
