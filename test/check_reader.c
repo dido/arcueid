@@ -148,7 +148,7 @@ START_TEST(test_character)
   sexpr = arc_read(&c, fp, CNIL);
   fail_unless(TYPE(sexpr) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'a');
-
+\
   /* Issue #15 */
   str = arc_mkstringc(&c, "#\\;");
   fp = arc_instring(&c, str, CNIL);
@@ -490,6 +490,17 @@ START_TEST(test_comma)
 }
 END_TEST
 
+START_TEST(test_eof)
+{
+  value str, fp, sexpr;
+
+  str = arc_mkstringc(&c, "");
+  fp = arc_instring(&c, str, CNIL);
+  sexpr = arc_read(&c, fp, INT2FIX(1));
+  fail_unless(sexpr == INT2FIX(1));
+}
+END_TEST
+
 extern unsigned long long gcepochs;
 
 int main(void)
@@ -528,6 +539,7 @@ int main(void)
   tcase_add_test(tc_reader, test_ssyntax);
   tcase_add_test(tc_reader, test_comment);
   tcase_add_test(tc_reader, test_comma);
+  tcase_add_test(tc_reader, test_eof);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
