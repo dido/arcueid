@@ -1119,7 +1119,7 @@ static double str2flonum(arc *c, value str, int index, int imagflag)
 	state = 2;
 	break;
       default:
-	if (!isdigit(ch))
+	if (!(isdigit(ch) || ch == '.'))
 	  return(CNIL);
 	arc_strungetc(c, &index);
 	state = 2;
