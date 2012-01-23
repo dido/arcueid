@@ -470,6 +470,11 @@ value __arc_add2(arc *c, value arg1, value arg2)
     return(arc_strcatc(c, arg2, REP(arg1)._char));
   }
 
+  /* XXX - Am I the only one bothered by the fact that this is possible? */
+  if (TYPE(arg1) == T_SYMBOL && TYPE(arg2) == T_STRING) {
+    return(arc_strcat(c, arg2, arc_sym2name(c, arg1)));
+  }
+
   TYPE_CASES(add, arg1, arg2);
 
   arc_err_cstrfmt(c, "Invalid types for addition");
