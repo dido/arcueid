@@ -19,6 +19,7 @@
 #include "arcueid.h"
 #include "vmengine.h"
 #include "symbols.h"
+#include "builtin.h"
 
 /* eval */
 value arc_eval(arc *c, value argv, value rv, CC4CTX)
@@ -125,7 +126,7 @@ static int find_literal(arc *c, value ctx, value lit);
    NOTE: all macros must be fully expanded before compiling! */
 value arc_compile(arc *c, value nexpr, value ctx, value env, value cont)
 {
-  value expr;
+  value expr, ssx;
 
   expr = macex(c, nexpr, CTRUE);
   if (expr == ARC_BUILTIN(c, S_T) || expr == ARC_BUILTIN(c, S_NIL)
@@ -135,8 +136,12 @@ value arc_compile(arc *c, value nexpr, value ctx, value env, value cont)
       || TYPE(expr) == T_FLONUM || TYPE(expr) == T_RATIONAL
       || TYPE(expr) == T_RATIONAL || TYPE(expr) == T_COMPLEX)
     return(compile_literal(c, expr, ctx, cont));
-  if (SYMBOL_P(expr))
-    return(compile_ident(c, expr, ctx, env, cont));
+  if (SYMBOL_P(expr)) {
+    ssx = arc_ssexpand(c, expr);
+    if (ssx == CNIL)
+      return(compile_ident(c, expr, ctx, env, cont));
+    return(arc_compile(c, ssx, ctx, env, cont));
+  }
   if (CONS_P(expr))
     return(compile_list(c, expr, ctx, env, cont));
   arc_err_cstrfmt(c, "invalid_expression %p", expr);
