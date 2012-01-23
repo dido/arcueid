@@ -115,7 +115,7 @@ value arc_read(arc *c, value src, value eof)
       return(read_symbol(c, src));
     }
   }
-  return(CNIL);
+  return(eof);
 }
 
 static value read_list(arc *c, value src, value eof)
