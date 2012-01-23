@@ -265,9 +265,9 @@ int main(int argc, char **argv)
 
   /* read-eval-print in Arcueid! */
 #ifdef HAVE_LIBREADLINE
-  replcode = "((afn () (let sexpr (read repl-readline) (if (no sexpr) nil (do (write (eval sexpr)) (prn) (self))))))";
+  replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn))))";
 #else
-  replcode = "((afn () (disp \"arc> \") (let sexpr (read (stdin)) (if (no sexpr) nil (do (write (eval sexpr)) (prn) (self))))))";
+  replcode = "(w/uniq eof (whiler e (do (disp \"arc> \") (read (stdin) eof)) eof (do (write (eval e))) (prn)))";
 #endif
   sexpr = arc_read(c, arc_instring(c, arc_mkstringc(c, replcode), CNIL), CNIL);
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
