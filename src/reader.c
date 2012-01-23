@@ -217,7 +217,7 @@ static value getsymbol(arc *c, value src)
 /* parse a symbol name or number */
 static value read_symbol(arc *c, value str)
 {
-  value sym, num, ssx;
+  value sym, num;
 
   if ((sym = getsymbol(c, str)) == CNIL)
     arc_err_cstrfmt(c, "expecting symbol name");
@@ -225,8 +225,7 @@ static value read_symbol(arc *c, value str)
     return(ARC_BUILTIN(c, S_DOT));
   num = arc_string2num(c, sym);
   if (num == CNIL) {
-    ssx = expand_ssyntax(c, sym);
-    return((ssx == CNIL) ? arc_intern(c, sym) : ssx);    
+    return(arc_intern(c, sym));
   } else {
     return(num);
   }
