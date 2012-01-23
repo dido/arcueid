@@ -1792,6 +1792,12 @@ START_TEST(test_string2num)
   fail_unless(fabs(2.0 - REP(num)._complex.re) < 1e-6);
   fail_unless(fabs(3.0 - REP(num)._complex.im) < 1e-6);
 
+  str = arc_mkstringc(&c, ".4");
+  num = arc_string2num(&c, str);
+  fail_unless(TYPE(num) == T_FLONUM);
+  fail_unless(TYPE(num) == T_FLONUM);
+  fail_unless(fabs(0.4 - REP(num)._flonum) < 1e-6);
+
 #ifdef HAVE_GMP_H
   str = arc_mkstringc(&c, "36rzyxwvutsrqponmlkjihgfedcba9876543210");
   num = arc_string2num(&c, str);
