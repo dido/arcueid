@@ -167,7 +167,6 @@ static void mark(arc *c, value v, int reclevel, value marksym)
 
   D2B(b, (void *)v);
   SETMARK(b);
-
   if (--visit >= 0 && reclevel < MAX_MARK_RECURSION) {
     gce--;
     b->color = mutator;
@@ -353,7 +352,7 @@ static int rungc(arc *c)
   if (gcptr != NULL)		/* completed this iteration? */
     goto endgc;
 
-  if (nprop == 0) {		/* completed the epoch? */
+  if (nprop == 0) { /* completed the epoch? */
     /* printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
        markcount, sweepcount); */
     markcount = sweepcount = 0;
@@ -364,8 +363,10 @@ static int rungc(arc *c)
     gct = 1;
     retval = 1;
     goto endgc;
+  } else {
+    gcptr = alloc_head;
+    nprop = 0;
   }
-  nprop = 0;
  endgc:
   gcet = __arc_milliseconds();
   gc_milliseconds += (gcet - gcst);
