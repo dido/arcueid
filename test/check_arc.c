@@ -2126,6 +2126,9 @@ START_TEST(test_sort)
 
   TEST("(iso (sort < '(1 7 4 3 0 9 2 5 8 6)) '(0 1 2 3 4 5 6 7 8 9))");
   fail_unless(ret == CTRUE);
+
+  TEST("(iso (sort < \"thequickbrownfoxjumpsoverthelazydog\") \"abcdeeefghhijklmnoooopqrrsttuuvwxyz\")")
+  fail_unless(ret == CTRUE);
 }
 END_TEST
 
