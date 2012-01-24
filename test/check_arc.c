@@ -2132,6 +2132,15 @@ START_TEST(test_sort)
 }
 END_TEST
 
+START_TEST(test_bestn)
+{
+  value ret;
+
+  TEST("(iso (bestn 3 > '(1 7 4 3 0 9 2 5 8 6)) '(9 8 7))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2324,6 +2333,8 @@ int main(void)
   tcase_add_test(tc_arc, test_avg);
   tcase_add_test(tc_arc, test_med);
   tcase_add_test(tc_arc, test_sort);
+  /* mergesort and merge are utilities for sort */
+  tcase_add_test(tc_arc, test_bestn);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
