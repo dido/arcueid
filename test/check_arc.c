@@ -2096,6 +2096,29 @@ START_TEST(test_avg)
 }
 END_TEST
 
+START_TEST(test_med)
+{
+  value ret;
+
+  TEST("(is (med '(1 2 3 4 5 6 7 8 9 10)) 5)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (med '(1 2 3 4 5 6 7 8 9)) 5)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (med '(1 2 3 4 5 6 7 8)) 4)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (med '(1 2 3 4 5 6 7 8 9 10)) 5)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (med '(1 2 3 4 5 6 7 8 9 10 11)) 5)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (med '(1 2 3 4 5 6 7 8 9 10 11 12)) 6)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
 
 int main(void)
 {
@@ -2287,6 +2310,7 @@ int main(void)
   tcase_add_test(tc_arc, test_roundup);
   tcase_add_test(tc_arc, test_nearest);
   tcase_add_test(tc_arc, test_avg);
+  tcase_add_test(tc_arc, test_med);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
