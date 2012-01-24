@@ -164,7 +164,7 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
     return;
   if (c->in_compile)
     return;
-  if (car(c->vmthreads) == thr && cdr(c->vmthreads) == CNIL)
+  if (c->vmthreads == CNIL || (car(c->vmthreads) == thr && cdr(c->vmthreads) == CNIL))
     return;
 
   TSTATE(thr) = Tiowait;
