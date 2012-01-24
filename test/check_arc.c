@@ -1954,6 +1954,122 @@ START_TEST(test_round)
 }
 END_TEST
 
+START_TEST(test_roundup)
+{
+  value ret;
+
+  TEST("(is (roundup 1.1) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.2) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.3) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.4) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.6) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.7) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.8) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 1.9) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.1) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.2) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.3) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.4) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.5) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.6) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.7) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.8) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 2.9) 3)");
+  fail_unless(ret == CTRUE);
+
+#ifdef HAVE_GMP_H
+  TEST("(is (roundup 11/10) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 6/5) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 13/10) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 7/5) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 3/2) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 8/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 17/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 9/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 19/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 21/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 11/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 23/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 12/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 5/2) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 13/5) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 27/10) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 14/5) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (roundup 29/10) 3)");
+  fail_unless(ret == CTRUE);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2141,6 +2257,7 @@ int main(void)
   tcase_add_test(tc_arc, test_copy);
   tcase_add_test(tc_arc, test_abs);
   tcase_add_test(tc_arc, test_round);
+  tcase_add_test(tc_arc, test_roundup);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
