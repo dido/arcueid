@@ -1869,6 +1869,33 @@ START_TEST(test_round)
   TEST("(is (round 1.9) 2)");
   fail_unless(ret == CTRUE);
 
+  TEST("(is (round 2.1) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.2) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.3) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.4) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.6) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.7) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.8) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 2.9) 3)");
+  fail_unless(ret == CTRUE);
+
 #ifdef HAVE_GMP_H
   TEST("(is (round 11/10) 1)");
   fail_unless(ret == CTRUE);
@@ -1895,6 +1922,33 @@ START_TEST(test_round)
   fail_unless(ret == CTRUE);
 
   TEST("(is (round 19/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 21/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 11/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 23/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 12/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 5/2) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 13/5) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 27/10) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 14/5) 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 29/10) 3)");
   fail_unless(ret == CTRUE);
 #endif
 }
