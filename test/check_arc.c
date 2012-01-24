@@ -2120,6 +2120,15 @@ START_TEST(test_med)
 }
 END_TEST
 
+START_TEST(test_sort)
+{
+  value ret;
+
+  TEST("(iso (sort < '(1 7 4 3 0 9 2 5 8 6)) '(0 1 2 3 4 5 6 7 8 9))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2311,6 +2320,7 @@ int main(void)
   tcase_add_test(tc_arc, test_nearest);
   tcase_add_test(tc_arc, test_avg);
   tcase_add_test(tc_arc, test_med);
+  tcase_add_test(tc_arc, test_sort);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
