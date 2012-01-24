@@ -2141,6 +2141,15 @@ START_TEST(test_bestn)
 }
 END_TEST
 
+START_TEST(test_split)
+{
+  value ret;
+
+  TEST("(iso (split '(1 2 3 4 5 6 7 8 9 10) 3) '((1 2 3) (4 5 6 7 8 9 10)))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2335,6 +2344,7 @@ int main(void)
   tcase_add_test(tc_arc, test_sort);
   /* mergesort and merge are utilities for sort */
   tcase_add_test(tc_arc, test_bestn);
+  tcase_add_test(tc_arc, test_split);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
