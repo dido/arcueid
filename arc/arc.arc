@@ -1275,7 +1275,7 @@
 
 (def inst (tem . args)
   (let x (table)
-    (each (k v) (templates* tem)
+    (each (k v) (if (acons tem) tem (templates* tem))
       (unless (no v) (= (x k) (v))))
     (each (k v) (pair args)
       (= (x k) v))
@@ -1290,7 +1290,7 @@
 ; Note: discards fields not defined by the template.
 
 (def templatize (tem raw)
-  (with (x (inst tem) fields (templates* tem))
+  (with (x (inst tem) fields (if (acons tem) tem (templates* tem)))
     (each (k v) raw
       (when (assoc k fields)
         (= (x k) v)))
