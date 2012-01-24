@@ -2070,6 +2070,33 @@ START_TEST(test_roundup)
 }
 END_TEST
 
+START_TEST(test_nearest)
+{
+  value ret;
+
+  TEST("(is (nearest 36 5) 35)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (nearest 38 5) 40)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_avg)
+{
+  value ret;
+
+#ifdef HAVE_GMP_H
+  TEST("(is (avg '(1 2 3 4 5 6 7 8 9 10)) 11/2)");
+  fail_unless(ret == CTRUE);
+#else
+  TEST("(is (avg '(1 2 3 4 5 6 7 8 9 10)) 5.5)");
+  fail_unless(ret == CTRUE);
+#endif
+}
+END_TEST
+
+
 int main(void)
 {
   int number_failed;
@@ -2258,6 +2285,8 @@ int main(void)
   tcase_add_test(tc_arc, test_abs);
   tcase_add_test(tc_arc, test_round);
   tcase_add_test(tc_arc, test_roundup);
+  tcase_add_test(tc_arc, test_nearest);
+  tcase_add_test(tc_arc, test_avg);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
