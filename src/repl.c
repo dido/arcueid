@@ -239,15 +239,18 @@ int main(int argc, char **argv)
 
   c = &cc;
   arc_init(c);
-  c->signal_error = error_handler;
 
   loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
 
+  c->signal_error = error_handler;
+
+  if (setjmp(err_jmp_buf) == 1)
+    return(EXIT_FAILURE);
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
   arc_bindsym(c, arc_intern_cstr(c, "initload"), initload);
   while ((sexpr = arc_read(c, initload, CNIL)) != CNIL) {
-    /*    arc_print_string(c, arc_prettyprint(c, sexpr));
-	  printf("\n"); */
+    /* arc_print_string(c, arc_prettyprint(c, sexpr)); 
+       printf("\n"); */
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
