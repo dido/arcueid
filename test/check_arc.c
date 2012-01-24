@@ -2150,6 +2150,15 @@ START_TEST(test_split)
 }
 END_TEST
 
+START_TEST(test_union)
+{
+  value ret;
+
+  TEST("(iso (union is '(1 2 3 4) '(3 4 5 6)) '(1 2 3 4 5 6))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2345,6 +2354,8 @@ int main(void)
   /* mergesort and merge are utilities for sort */
   tcase_add_test(tc_arc, test_bestn);
   tcase_add_test(tc_arc, test_split);
+  /* no test for time, jtime, or time10 (how do we test them?) */
+  tcase_add_test(tc_arc, test_union);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
