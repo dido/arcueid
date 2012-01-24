@@ -1838,6 +1838,68 @@ START_TEST(test_abs)
 }
 END_TEST
 
+START_TEST(test_round)
+{
+  value ret;
+
+  TEST("(is (round 1.1) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.2) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.3) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.4) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.6) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.7) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.8) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 1.9) 2)");
+  fail_unless(ret == CTRUE);
+
+#ifdef HAVE_GMP_H
+  TEST("(is (round 11/10) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 6/5) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 13/10) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 7/5) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 3/2) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 8/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 17/10) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 9/5) 2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(is (round 19/10) 2)");
+  fail_unless(ret == CTRUE);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2024,6 +2086,7 @@ int main(void)
      write-table yet */
   tcase_add_test(tc_arc, test_copy);
   tcase_add_test(tc_arc, test_abs);
+  tcase_add_test(tc_arc, test_round);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
