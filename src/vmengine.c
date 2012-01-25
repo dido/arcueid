@@ -559,6 +559,7 @@ value arc_macapply(arc *c, value func, value args)
     WB(&TFUNR(thr), func);
   }
   TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
+  MARKPROP(thr);
   while (TSTATE(thr) != Trelease) {
     /* XXX - this makes macros more special and restricted than they
        have to be.  Threading primitives cannot be used in macros because
