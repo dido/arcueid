@@ -54,3 +54,4 @@ mdate-sh
 texinfo.tex
 basecomp.*
 .gdb_history
+test/tmp/*
