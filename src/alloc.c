@@ -16,11 +16,9 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
-/* This default memory allocator and garbage collector uses a simple
-   free-list to manage memory blocks, and the VCGC garbage collector
-   by Huelsbergen and Winterbottom (ISMM 1998).  Someone's been reading
-   the sources for Inferno emu and the OCaml bytecode interpreter!
-   We'll try using a more advanced memory allocator later on. */
+/* This default memory allocator and garbage collector maintains a list
+   of allocated blocks to do its work, and uses the VCGC garbage
+   collection algorithm by Huelsbergen and Winterbottom (ISMM 1998). */
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -105,7 +103,7 @@ static void *alloc(arc *c, size_t osize)
 
   ptr = c->mem_alloc(osize + BHDRSIZE + ALIGN - 1);
   if (ptr == NULL) {
-    fprintf(stderr, "Failed to allocate memory\n");
+    fprintf(stderr, "FATAL: failed to allocate memory\n");
     exit(1);
   }
   /* We have to position Bhdr inside the allocated memory
@@ -166,6 +164,13 @@ static void mark(arc *c, value v, int reclevel, value marksym)
     return;
 
   D2B(b, (void *)v);
+  /* do nothing with immutable blocks */
+  if (b->magic == MAGIC_I)
+    return;
+  if (b->magic != MAGIC_A) {
+    fprintf(stderr, "FATAL: internal error, pointer points to freed storage\n");
+    exit(1);
+  }
   SETMARK(b);
   if (--visit >= 0 && reclevel < MAX_MARK_RECURSION) {
     gce--;
@@ -276,8 +281,8 @@ static void sweep(arc *c, value v)
     c->free_block(c, REP(v)._hash.table); /* free the immutable memory of the hash table */
     break;
   case T_TBUCKET:
-    /* Make the cell in the parent hash table unbound as well. */
-    REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index] = CUNBOUND;
+    /* Make the cell in the parent hash table undef. */
+    WB(&REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index], CUNDEF);
     break;
   case T_PORT:
   case T_CUSTOM:
@@ -315,7 +320,7 @@ static int rungc(arc *c)
 {
   value h;
   unsigned long long gcst, gcet;
-  Bhdr *cur;
+  Bhdr *next;
   int retval = 0;
 
   gcst = __arc_milliseconds();
@@ -330,21 +335,20 @@ static int rungc(arc *c)
 	break; 			/* stop if we finished the last heap block */
     /* The following operations may delete cur before we advance,
        so we advance now. */
-    cur = gcptr;
-    gcptr = B2NB(gcptr);
-    if (cur->magic == MAGIC_A) {
+    next = B2NB(gcptr);
+    if (gcptr->magic == MAGIC_A) {
       visit--;
       gct++;
-      h = (value)B2D(cur);
-      if (cur->color == propagator) {
+      h = (value)B2D(gcptr);
+      if (gcptr->color == propagator) {
 	gce--;
-	cur->color = mutator;
 	mark(c, h, 0, CNIL);
-      } else if (cur->color == sweeper) {
+      } else if (gcptr->color == sweeper) {
 	gce++;
 	sweep(c, h);
       }
     }
+    gcptr = next;
   }
 
   quanta = MAX_GC_QUANTA;
@@ -353,16 +357,14 @@ static int rungc(arc *c)
     goto endgc;
 
   if (nprop == 0) { /* completed the epoch? */
-    /* printf("Epoch %lld ended:\n%lld marked, %lld swept\n", gcepochs,
-       markcount, sweepcount); */
-    markcount = sweepcount = 0;
     gcepochs++;
     gccolor++;
     rootset(c);
+    /* printf("Epoch %lld ended:\n%lld marked, %lld swept, marker=%d, mutator=%d, sweeper=%d\n", gcepochs, markcount, sweepcount, marker, mutator, sweeper); */
     gce = 0;
     gct = 1;
     retval = 1;
-    goto endgc;
+    markcount = sweepcount = 0;
   } else {
     gcptr = alloc_head;
     nprop = 0;
