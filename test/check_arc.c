@@ -2159,6 +2159,54 @@ START_TEST(test_union)
 }
 END_TEST
 
+START_TEST(test_templates)
+{
+  value ret;
+
+  TEST("(deftem circle x 0 y 0 radius nil)");
+  TEST("(= c1 (inst 'circle 'radius 10))");
+  TEST("(= c2 (inst 'circle 'x 100 'y 50 'radius 5))");
+  TEST("(is (c1 'x) 0)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c1 'y) 0)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c1 'radius) 10)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c2 'x) 100)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c2 'y) 50)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c2 'radius) 5)");
+  fail_unless(ret == CTRUE);
+#if 0
+  unlink("tmp/circles.arc");
+  TEST("(w/outfile of \"tmp/circles.arc\" (write-table c1 of) (write-table c2 of))");
+  TEST("(= c1 nil)");
+  TEST("(= c2 nil)");
+  TEST("(deftem (newcircle circle) color \"blue\")");
+  TEST("(= loaded (temloadall 'newcircle \"tmp/circles.arc\"))");
+  TEST("(= c1 (car loaded))");
+  TEST("(= c2 (cadr loaded))");
+  TEST("(is (c1 'x) 0)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c1 'y) 0)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c1 'radius) 10)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c1 'color) \"blue\")");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c2 'x) 100)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c2 'y) 50)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c2 'radius) 5)");
+  fail_unless(ret == CTRUE);
+  TEST("(is (c2 'color) \"blue\")");
+  fail_unless(ret == CTRUE);
+#endif
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2356,6 +2404,7 @@ int main(void)
   tcase_add_test(tc_arc, test_split);
   /* no test for time, jtime, or time10 (how do we test them?) */
   tcase_add_test(tc_arc, test_union);
+  tcase_add_test(tc_arc, test_templates);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
