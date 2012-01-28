@@ -2208,7 +2208,6 @@ START_TEST(test_templates)
   fail_unless(ret == CTRUE);
   TEST("(is (c2 'radius) 5)");
   fail_unless(ret == CTRUE);
-#if 0
   unlink("tmp/circles.arc");
   TEST("(w/outfile of \"tmp/circles.arc\" (write-table c1 of) (write-table c2 of))");
   TEST("(= c1 nil)");
@@ -2233,7 +2232,7 @@ START_TEST(test_templates)
   fail_unless(ret == CTRUE);
   TEST("(is (c2 'color) \"blue\")");
   fail_unless(ret == CTRUE);
-#endif
+  unlink("tmp/circles.arc");
 }
 END_TEST
 
