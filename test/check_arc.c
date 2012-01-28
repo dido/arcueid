@@ -1463,7 +1463,7 @@ END_TEST
 START_TEST(test_w_stdout)
 {
   value ret;
-  TEST("(iso (let sop (outstring) (w/stdout sop (do (writec #\\蛟) (writec #\\龍)) (inside sop))) \"蛟龍\")");
+  TEST("(iso (let sop (outstring) (w/stdout sop (prn '(1 2))) (inside sop)) \"(1 2)\n\")");
   fail_unless(ret == CTRUE);
 }
 END_TEST
