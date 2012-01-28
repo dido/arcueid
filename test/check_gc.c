@@ -268,6 +268,7 @@ int main(void)
 
   arc_set_memmgr(&c);
   arc_init_reader(&c);
+  c.gcquantum = GCQUANTA;
 
   tcase_add_test(tc_gc, test_sym_gc);
   tcase_add_test(tc_gc, test_gc);
