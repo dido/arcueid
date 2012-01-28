@@ -58,6 +58,7 @@ typedef struct arc {
   size_t minexp;       /* minimum expansion amount */
   int stksize;	       /* default stack size */
   int quantum;	       /* default execution quantum */
+  int gcquantum;       /* garbage collection quantum */
   int in_compile;      /* in-compile flag */
 
   /* Garbage collector */
@@ -145,6 +146,9 @@ enum threadstate {
 
 /* default thread timeslice */
 #define PQUANTA 2048
+
+/* default garbage collection quantum */
+#define GCQUANTA 8192
 
 /* default thread stack size */
 #define TSTKSIZE 512
@@ -453,6 +457,8 @@ extern void arc_set_memmgr(arc *c);
 extern void arc_init_reader(arc *c);
 extern void arc_init_compiler(arc *c);
 extern value arc_init_builtins(arc *c);
+extern void arc_init_sq(arc *c, int stksize, int quanta, int gcquanta);
+extern void arc_init(arc *c);
 
 /* vectors */
 extern value arc_mkvector(arc *c, int length);
@@ -463,10 +469,6 @@ extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
 extern value arc_uniq(arc *c);
-
-/* init */
-extern void arc_init_sq(arc *c, int stksize, int quanta);
-extern void arc_init(arc *c);
 
 /* error handling */
 extern value arc_mkexception(arc *c, value details, value lastcall,
