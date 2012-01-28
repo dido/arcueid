@@ -1460,6 +1460,14 @@ START_TEST(test_w_outstring)
 }
 END_TEST
 
+START_TEST(test_w_stdout)
+{
+  value ret;
+  TEST("(iso (let sop (outstring) (w/stdout sop (do (writec #\\蛟) (writec #\\龍)) (inside sop))) \"蛟龍\")");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 START_TEST(test_int)
 {
   value ret;
@@ -2397,11 +2405,10 @@ int main(void)
   tcase_add_test(tc_arc, test_w_instring);
   tcase_add_test(tc_arc, test_w_outstring);
   tcase_add_test(tc_arc, test_w_appendfile);
+  tcase_add_test(tc_arc, test_w_stdout);
 
   /* no tests for I/O functions and macros (yet?):
      w/socket
-     w/appendfile
-     w/stdout
      w/stdin
      tostring
      fromstring
