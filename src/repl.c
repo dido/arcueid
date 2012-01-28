@@ -14,7 +14,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this library; if not,  see <http://www.gnu.org/licenses/>.
+  along with this library; if not, see <http://www.gnu.org/licenses/>.
 
   Note that unlike most of the other code in src this particular one
   is licensed under GPLv3 not LGPLv3.  It contains code that links to
@@ -231,6 +231,13 @@ static void error_handler(struct arc *c, value err)
   longjmp(err_jmp_buf, 1);
 }
 
+static void banner(void)
+{
+  printf("%s REPL Copyright (c) 2012 Rafael R. Sevilla\n", PACKAGE_STRING);
+  printf("This is free software; type (about-arcueid 'copying) for copying conditions.\n");
+  printf("There is ABSOLUTELY NO WARRANTY; for details type (about-arcueid 'warranty)\n");
+}
+
 int main(int argc, char **argv)
 {
   arc *c, cc;
@@ -240,6 +247,7 @@ int main(int argc, char **argv)
   c = &cc;
   arc_init(c);
 
+  banner();
   loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
 
   c->signal_error = error_handler;
