@@ -1435,6 +1435,14 @@ START_TEST(test_w_instring)
 }
 END_TEST
 
+START_TEST(test_w_outstring)
+{
+  value ret;
+  TEST("(iso (w/outstring os (writec #\\蛟 os) (inside os)) \"蛟\")");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 START_TEST(test_int)
 {
   value ret;
@@ -2370,10 +2378,10 @@ int main(void)
   tcase_add_test(tc_arc, test_w_infile);
   tcase_add_test(tc_arc, test_w_outfile);
   tcase_add_test(tc_arc, test_w_instring);
+  tcase_add_test(tc_arc, test_w_outstring);
 
   /* no tests for I/O functions and macros (yet?):
      w/socket
-     w/outstring
      w/appendfile
      w/stdout
      w/stdin
