@@ -1415,7 +1415,7 @@ START_TEST(test_w_outfile)
 {
   value ret;
 
-  unlink("tmp/testoutfile");
+  unlink("tmp/testoutfile.txt");
   TEST("(w/outfile f \"tmp/testoutfile.txt\" (writec #\\蛟 f) f)");
   fail_unless(TYPE(ret) == T_PORT);
   fail_unless(PORT(ret)->closed);
