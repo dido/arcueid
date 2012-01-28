@@ -1412,6 +1412,21 @@ START_TEST(test_w_infile)
 }
 END_TEST
 
+START_TEST(test_w_outfile)
+{
+  value ret;
+
+  unlink("tmp/testoutfile");
+  TEST("(w/outfile f \"tmp/testoutfile.txt\" (writec #\\蛟 f) f)");
+  fail_unless(TYPE(ret) == T_PORT);
+  fail_unless(PORT(ret)->closed);
+  TEST("(w/infile f \"tmp/testoutfile.txt\" (readc f))");
+  fail_unless(TYPE(ret) == T_CHAR);
+  fail_unless(REP(ret)._char == 0x86df);
+  unlink("tmp/testoutfile.txt");
+}
+END_TEST
+
 START_TEST(test_int)
 {
   value ret;
@@ -2346,9 +2361,8 @@ int main(void)
   tcase_add_test(tc_arc, test_odd);
   tcase_add_test(tc_arc, test_after);
   tcase_add_test(tc_arc, test_w_infile);
+  tcase_add_test(tc_arc, test_w_outfile);
   /* no tests for I/O functions and macros (yet?):
-     w/infile
-     w/outfile
      w/instring
      w/socket
      w/outstring
