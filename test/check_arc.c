@@ -1435,6 +1435,23 @@ START_TEST(test_w_instring)
 }
 END_TEST
 
+START_TEST(test_w_appendfile)
+{
+  value ret;
+
+  unlink("tmp/appendfile.txt");
+  TEST("(w/outfile f \"tmp/appendfile.txt\" (writec #\\蛟 f) f)");
+  fail_unless(TYPE(ret) == T_PORT);
+  fail_unless(PORT(ret)->closed);
+  TEST("(w/appendfile f \"tmp/appendfile.txt\" (writec #\\龍 f) f)");
+  fail_unless(TYPE(ret) == T_PORT);
+  fail_unless(PORT(ret)->closed);
+
+  TEST("(iso (w/infile f \"tmp/appendfile.txt\" (+ \"\" (readc f) (readc f))) \"蛟龍\")");
+  unlink("tmp/appendfile.txt");
+}
+END_TEST
+
 START_TEST(test_w_outstring)
 {
   value ret;
@@ -2379,6 +2396,7 @@ int main(void)
   tcase_add_test(tc_arc, test_w_outfile);
   tcase_add_test(tc_arc, test_w_instring);
   tcase_add_test(tc_arc, test_w_outstring);
+  tcase_add_test(tc_arc, test_w_appendfile);
 
   /* no tests for I/O functions and macros (yet?):
      w/socket
