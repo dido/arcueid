@@ -234,8 +234,15 @@ static void error_handler(struct arc *c, value err)
 static void banner(void)
 {
   printf("%s REPL Copyright (c) 2012 Rafael R. Sevilla\n", PACKAGE_STRING);
-  printf("This is free software; type (about-arcueid 'copying) for copying conditions.\n");
-  printf("There is ABSOLUTELY NO WARRANTY; for details type (about-arcueid 'warranty)\n");
+  printf("This is free software; see the source code for copying conditions.\n");
+  printf("There is ABSOLUTELY NO WARRANTY; for details type (warranty)\n");
+}
+
+static value warranty(arc *c, int argc, value *argv)
+{
+  printf("\n%s REPL\nCopyright (c) 2012 Rafael R. Sevilla\n", PACKAGE_STRING);
+  printf("\nThis program is free software; you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation; either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>.\n\n");
+  return(CNIL);
 }
 
 int main(int argc, char **argv)
@@ -256,6 +263,7 @@ int main(int argc, char **argv)
     return(EXIT_FAILURE);
   initload = arc_infile(c, arc_mkstringc(c, loadstr));
   arc_bindsym(c, arc_intern_cstr(c, "initload"), initload);
+  arc_bindsym(c, arc_intern_cstr(c, "warranty"), arc_mkccode(c, -1, warranty, arc_intern_cstr(c, "warranty")));
   while ((sexpr = arc_read(c, initload, CNIL)) != CNIL) {
     /* arc_print_string(c, arc_prettyprint(c, sexpr)); 
        printf("\n"); */
