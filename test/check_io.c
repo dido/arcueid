@@ -121,6 +121,7 @@ int main(void)
 
   arc_set_memmgr(&c);
   arc_init_reader(&c);
+  c.gcquantum = GCQUANTA;
 
   oldepoch = gcepochs;
   while (gcepochs == oldepoch) {
