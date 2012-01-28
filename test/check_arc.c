@@ -1427,6 +1427,14 @@ START_TEST(test_w_outfile)
 }
 END_TEST
 
+START_TEST(test_w_instring)
+{
+  value ret;
+  TEST("(iso (w/instring is \"foo\" (cons (readc is) (cons (readc is) (cons (readc is) nil)))) '(#\\f #\\o #\\o))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 START_TEST(test_int)
 {
   value ret;
@@ -2361,8 +2369,9 @@ int main(void)
   tcase_add_test(tc_arc, test_after);
   tcase_add_test(tc_arc, test_w_infile);
   tcase_add_test(tc_arc, test_w_outfile);
+  tcase_add_test(tc_arc, test_w_instring);
+
   /* no tests for I/O functions and macros (yet?):
-     w/instring
      w/socket
      w/outstring
      w/appendfile
