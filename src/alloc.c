@@ -29,10 +29,6 @@
 #include "arith.h"
 #include "../config.h"
 
-#define GC_QUANTA 8192
-#define MAX_GC_QUANTA GC_QUANTA
-
-static int quanta = MAX_GC_QUANTA;
 static int visit;
 static Bhdr *gcptr = NULL;
 static Bhdr *alloc_head = NULL;
@@ -329,7 +325,7 @@ static int rungc(arc *c)
   if (gcptr == NULL)
     gcptr = alloc_head;
 
-  for (visit = quanta; visit > 0;) {
+  for (visit = c->gcquantum; visit > 0;) {
 
     if (gcptr == NULL)
 	break; 			/* stop if we finished the last heap block */
@@ -350,8 +346,6 @@ static int rungc(arc *c)
     }
     gcptr = next;
   }
-
-  quanta = MAX_GC_QUANTA;
 
   if (gcptr != NULL)		/* completed this iteration? */
     goto endgc;
