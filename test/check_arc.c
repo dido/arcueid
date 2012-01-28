@@ -1,3 +1,4 @@
+/* Do not change this comment -- the tests depend on it! */
 /* 
   Copyright (C) 2012 Rafael R. Sevilla
 
@@ -27,6 +28,7 @@
 #include "../src/builtin.h"
 #include "../src/vmengine.h"
 #include "../src/symbols.h"
+#include "../src/io.h"
 #include "../config.h"
 
 arc *c, cc;
@@ -1397,6 +1399,19 @@ START_TEST(test_after)
 }
 END_TEST
 
+START_TEST(test_w_infile)
+{
+  value ret;
+
+  TEST("(w/infile f \"check_arc.c\" (= myinfile f) (readc f))");
+  fail_unless(TYPE(ret) == T_CHAR);
+  fail_unless(REP(ret)._char == '/');
+  ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "myinfile"));
+  fail_unless(TYPE(ret) == T_PORT);
+  fail_unless(PORT(ret)->closed);
+}
+END_TEST
+
 START_TEST(test_int)
 {
   value ret;
@@ -2282,8 +2297,8 @@ int main(void)
   tcase_add_test(tc_arc, test_tuples);
   tcase_add_test(tc_arc, test_defs);
   tcase_add_test(tc_arc, test_caris);
-  /* atomic, atlet, atwith, and atwiths are meaningless until we
-     get threading, so we won't bother writing tests for them. */
+  /* atomic, atlet, atwith, and atwiths will be tested in a forthcoming
+     test module that tests threading. */
   tcase_add_test(tc_arc, test_places);
   tcase_add_test(tc_arc, test_loop);
   tcase_add_test(tc_arc, test_for);
@@ -2330,6 +2345,7 @@ int main(void)
   tcase_add_test(tc_arc, test_even);
   tcase_add_test(tc_arc, test_odd);
   tcase_add_test(tc_arc, test_after);
+  tcase_add_test(tc_arc, test_w_infile);
   /* no tests for I/O functions and macros (yet?):
      w/infile
      w/outfile
