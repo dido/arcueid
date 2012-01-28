@@ -1403,9 +1403,8 @@ START_TEST(test_w_infile)
 {
   value ret;
 
-  TEST("(w/infile f \"check_arc.c\" (= myinfile f) (readc f))");
-  fail_unless(TYPE(ret) == T_CHAR);
-  fail_unless(REP(ret)._char == '/');
+  TEST("(iso (w/infile f \"check_arc.c\" (= myinfile f) (readline f)) \"/* Do not change this comment -- the tests depend on it! */\")");
+  fail_unless(ret == CTRUE);
   ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "myinfile"));
   fail_unless(TYPE(ret) == T_PORT);
   fail_unless(PORT(ret)->closed);
