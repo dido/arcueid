@@ -1468,6 +1468,14 @@ START_TEST(test_w_stdout)
 }
 END_TEST
 
+START_TEST(test_w_stdin)
+{
+  value ret;
+  TEST("(w/instring ins \"Hello\" (w/stdin ins (iso (readline) \"Hello\")))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 START_TEST(test_int)
 {
   value ret;
@@ -2406,10 +2414,10 @@ int main(void)
   tcase_add_test(tc_arc, test_w_outstring);
   tcase_add_test(tc_arc, test_w_appendfile);
   tcase_add_test(tc_arc, test_w_stdout);
+  tcase_add_test(tc_arc, test_w_stdin);
 
   /* no tests for I/O functions and macros (yet?):
      w/socket
-     w/stdin
      tostring
      fromstring
      readstring1
