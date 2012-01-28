@@ -4,6 +4,7 @@ See the end for copying conditions.
 
 * Version 0.0.8 (2012-??-??)
 - More garbage collector bug fixes
+- Bug fixes in I/O functions
 
 * Version 0.0.7 (2012-01-22)
 - Cleaned up error handling for all built-in functions now that a
