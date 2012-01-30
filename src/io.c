@@ -113,6 +113,15 @@ static void file_sweeper(arc *c, value v)
   c->free_block(c, (void *)v);
 }
 
+static unsigned long file_hash(arc *c, arc_hs *s, value v)
+{
+  unsigned long len;
+
+  len = arc_hash_increment(c, INT2FIX(FT_FILE), s);
+  len += arc_hash_increment(c, PORT(v)->name, s);
+  return(len);
+}
+
 static int file_getb(arc *c, struct arc_port *p)
 {
   return(fgetc(p->u.file.fp));
@@ -183,6 +192,7 @@ value arc_filefp(arc *c, FILE *fp, value filename)
   REP(fd)._custom.pprint = file_pp;
   REP(fd)._custom.marker = file_marker;
   REP(fd)._custom.sweeper = file_sweeper;
+  REP(fd)._custom.hash = file_hash;
   PORT(fd)->type = FT_FILE;
   PORT(fd)->name = filename;
   PORTF(fd).fp = fp;
@@ -247,6 +257,15 @@ static void fstr_marker(arc *c, value v, int level,
 static void fstr_sweeper(arc *c, value v)
 {
   /* no need to do anything */
+}
+
+static unsigned long fstr_hash(arc *c, arc_hs *s, value v)
+{
+  unsigned long len;
+
+  len = arc_hash_increment(c, INT2FIX(FT_STRING), s);
+  len += arc_hash_increment(c, PORT(v)->name, s);
+  return(len);
 }
 
 /* NOTE: this will actually return a RUNE, not a byte! */
@@ -336,6 +355,7 @@ value arc_instring(arc *c, value str, value name)
   REP(fd)._custom.pprint = fstr_pp;
   REP(fd)._custom.marker = fstr_marker;
   REP(fd)._custom.sweeper = fstr_sweeper;
+  REP(fd)._custom.hash = fstr_hash;
   PORT(fd)->type = FT_STRING;
   PORTS(fd).idx = 0;
   PORTS(fd).str = str;
