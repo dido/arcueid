@@ -235,8 +235,7 @@ static unsigned long hash_increment(arc *c, value v, arc_hs *s)
   case T_OUTPUT:
   case T_PORT:
   case T_CUSTOM:
-    length = 1;
-    REP(v)._custom.hash(c, s, v);
+    length = REP(v)._custom.hash(c, s, v);
     break;
   case T_THREAD:
     length = 1;
@@ -266,6 +265,12 @@ static unsigned long hash_increment(arc *c, value v, arc_hs *s)
   }
   return(length);
 }
+
+unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
+{
+  return(hash_increment(c, v, s));
+}
+
 
 static unsigned long hash_increment_string(const char *s, arc_hs *hs)
 {
