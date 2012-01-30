@@ -85,6 +85,15 @@ static void sock_sweeper(arc *c, value v)
   c->free_block(c, (void *)v);
 }
 
+static unsigned long sock_hash(arc *c, arc_hs *s, value v)
+{
+  unsigned long len;
+
+  len = arc_hash_increment(c, INT2FIX(FT_SOCKET), s);
+  len += arc_hash_increment(c, INT2FIX(PORT(v)->u.sock.sockfd), s);
+  return(len);
+}
+
 static int sock_getb(arc *c, struct arc_port *p)
 {
   char ch;
@@ -184,6 +193,7 @@ static value mksocket(arc *c, int sock, int ai_family, int socktype)
   REP(fd)._custom.pprint = sock_pp;
   REP(fd)._custom.marker = sock_marker;
   REP(fd)._custom.sweeper = sock_sweeper;
+  REP(fd)._custom.hash = sock_hash;
   PORT(fd)->type = FT_SOCKET;
   PORT(fd)->u.sock.sockfd = sock;
   PORT(fd)->u.sock.addr = NULL;
@@ -313,7 +323,6 @@ value arc_socket_accept(arc *c, value sock)
     addr = &(ipv6->sin6_addr);
   }
   inet_ntop(PORT(sock)->u.sock.ai_family, addr, ipstr, sizeof(ipstr));
-  printf("%s\n", ipstr);
   return(cons(c, asock, cons(c, asock, cons(c, arc_mkstringc(c, ipstr), CNIL))));
 }
 
