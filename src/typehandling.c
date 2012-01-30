@@ -356,7 +356,7 @@ static value coerce_integer(arc *c, value obj, value argv)
     /* fall through otherwise, go to default error */
   }
   default:
-    arc_err_cstrfmt(c, "string->int cannot coerce %O to integer type", obj);
+    arc_err_cstrfmt(c, "string->int cannot coerce type %s to integer type", __arc_typenames[TYPE(obj)]);
     break;
   }
   return(CNIL);
@@ -505,14 +505,14 @@ static value coerce_flonum(arc *c, value obj, value argv)
 
       val = str2flo(c, obj, base, 0, arc_strlen(c, obj));
       if (val == CNIL) {
-	arc_err_cstrfmt(c, "string->flonum cannot convert %O to a flonum", obj);
+	arc_err_cstrfmt(c, "string->flonum cannot convert type %s to a flonum", __arc_typenames[TYPE(obj)]);
 	return(CNIL);
       }
       return(val);
     }
     break;
   default:
-    arc_err_cstrfmt(c, "cannot coerce %O to flonum type", obj);
+    arc_err_cstrfmt(c, "cannot coerce type %s to flonum type", __arc_typenames[TYPE(obj)]);
     break;
   }
   return(CNIL);
@@ -555,13 +555,13 @@ static value coerce_rational(arc *c, value obj, value argv)
       numer = str2int(c, obj, base, 0, slashpos);
       denom = str2int(c, obj, base, slashpos+1, arc_strlen(c, obj));
       if (numer == CNIL || denom == CNIL) {
-	arc_err_cstrfmt(c, "string->flonum cannot convert %O to a rational", obj);
+	arc_err_cstrfmt(c, "string->flonum cannot convert type %s to a rational", __arc_typenames[TYPE(obj)]);
 	return(CNIL);
       }
       return(__arc_div2(c, numer, denom));
     }
   default:
-    arc_err_cstrfmt(c, "cannot coerce %O to rational type", obj);
+    arc_err_cstrfmt(c, "cannot coerce type %s to rational type", __arc_typenames[TYPE(obj)]);
     break;
   }
 #endif
@@ -629,7 +629,7 @@ static value coerce_complex(arc *c, value obj, value argv)
       return(arc_mkcomplex(c, REP(re)._flonum, REP(im)._flonum));
     }
   default:
-    arc_err_cstrfmt(c, "cannot coerce %O to complex type", obj);
+    arc_err_cstrfmt(c, "cannot coerce type %s to complex type", __arc_typenames[TYPE(obj)]);
     break;
   }
   return(CNIL);
@@ -730,7 +730,7 @@ value coerce_string(arc *c, value obj, value argv)
   case T_SYMBOL:
     return(arc_sym2name(c, obj));
   default:
-    arc_err_cstrfmt(c, "cannot coerce %O to string type", obj);
+    arc_err_cstrfmt(c, "cannot coerce %s to string type", __arc_typenames[TYPE(obj)]);
     break;
   }
   return(CNIL);
@@ -783,7 +783,7 @@ value coerce_cons(arc *c, value obj, value argv)
       return(ret);
     }
   default:
-    arc_err_cstrfmt(c, "cannot coerce %O to cons type", obj);
+    arc_err_cstrfmt(c, "cannot coerce type %s to cons type", __arc_typenames[TYPE(obj)]);
     break;
   }
   return(CNIL);
@@ -808,7 +808,7 @@ value coerce_sym(arc *c, value obj, value argv)
       return(CTRUE);
     return(sym);
   default:
-    arc_err_cstrfmt(c, "cannot coerce %O to sym type", obj);
+    arc_err_cstrfmt(c, "cannot coerce %s to sym type", __arc_typenames[TYPE(obj)]);
     break;
   }
   return(CNIL);
@@ -847,7 +847,7 @@ value coerce_vector(arc *c, value obj, value argv)
       return(vec);
     }
   default:
-    arc_err_cstrfmt(c, "cannot coerce %O to vector type", obj);
+    arc_err_cstrfmt(c, "cannot coerce %s to vector type", __arc_typenames[TYPE(obj)]);
     break;
   }
   return(CNIL);
@@ -943,7 +943,7 @@ value arc_coerce(arc *c, value argv)
     int ch = FIX2INT(obj);
 
     if (ch < 0 || ch > 0x10fff || (ch >= 0xd800 && ch <=0xdfff)) {
-      arc_err_cstrfmt(c, "integer->char expects exact integer between 0-0x10FFFF, and not in 0xd800-0xdfff; given %O", obj);
+      arc_err_cstrfmt(c, "integer->char expects exact integer between 0-0x10FFFF, and not in 0xd800-0xdfff, value out of range");
       return(CNIL);
     }
     return(arc_mkchar(c, (Rune)ch));
@@ -953,7 +953,7 @@ value arc_coerce(arc *c, value argv)
   if (ntype == ARC_BUILTIN(c, S_NUM) &&  TYPE(obj) == T_STRING)
     return(coerce_num(c, obj, argv));
 
-  arc_err_cstrfmt(c, "cannot coerce %O to %O", obj, ntype);
+  arc_err_cstrfmt(c, "cannot coerce %s to %s", __arc_typenames[TYPE(obj)], __arc_typenames[TYPE(ntype)]);
   return(CNIL);
 }
 
