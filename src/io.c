@@ -761,7 +761,7 @@ value arc_dir(arc *c, value dirname)
     if (result == NULL)
       break;
     /* ignore the . and .. directories */
-    if (strcmp(entry->d_name == ".") == 0 || strcmp(entry->d_name == "..") == 0)
+    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
       continue;
     dirlist = cons(c, arc_mkstringc(c, entry->d_name), dirlist);
   }
