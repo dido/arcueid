@@ -285,7 +285,7 @@ struct cell {
       value (*pprint)(arc *, value);
       void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int, value));
       void (*sweeper)(arc *, value);
-      void (*hash)(arc *, arc_hs *, value);
+      unsigned long (*hash)(arc *, arc_hs *, value);
       value data[1];
     } _custom;
   } obj;
@@ -545,6 +545,7 @@ extern void arc_hash_update(arc_hs *s, unsigned long val);
 extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
 extern unsigned long arc_hash(arc *c, value v);
 extern unsigned long arc_hash_cstr(arc *c, const char *str);
+extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s);
 extern value arc_mkhash(arc *c, int hashbits);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
 extern value arc_hash_lookup(arc *c, value hash, value key);
