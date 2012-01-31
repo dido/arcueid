@@ -52,7 +52,7 @@ Bhdr *__arc_get_heap_start(void)
   return(alloc_head);
 }
 
-#if 0
+#if 1
 
 static void free_block(struct arc *c, void *blk)
 {
