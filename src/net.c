@@ -81,8 +81,6 @@ static void sock_sweeper(arc *c, value v)
       PORT(v)->u.sock.addr = NULL;
     }
   }
-  /* release memory */
-  c->free_block(c, (void *)v);
 }
 
 static unsigned long sock_hash(arc *c, arc_hs *s, value v)
@@ -289,7 +287,7 @@ value arc_open_socket(arc *c, value port)
 
 value arc_socket_accept(arc *c, value sock)
 {
-  struct sockaddr_storage *their_addr;
+  struct sockaddr_storage their_addr;
   socklen_t addr_size;
   int newfd;
   value asock;
@@ -303,9 +301,8 @@ value arc_socket_accept(arc *c, value sock)
   }
   READ_CHECK(c, sock);
 
-  their_addr = (struct sockaddr_storage *)malloc(sizeof(struct sockaddr_storage));
   addr_size = sizeof(struct sockaddr_storage);
-  newfd = accept(PORT(sock)->u.sock.sockfd, (struct sockaddr *)their_addr, &addr_size);
+  newfd = accept(PORT(sock)->u.sock.sockfd, (struct sockaddr *)&their_addr, &addr_size);
   if (newfd < 0) {
     int en = errno;
 
@@ -314,14 +311,15 @@ value arc_socket_accept(arc *c, value sock)
   }
   asock = mksocket(c, newfd, PORT(sock)->u.sock.ai_family,
 		   PORT(sock)->u.sock.socktype);
-  PORT(asock)->u.sock.addr = their_addr;
+  addr = malloc(addr_size);
   if (PORT(sock)->u.sock.ai_family == AF_INET) {
-    struct sockaddr_in *ipv4 = (struct sockaddr_in *)their_addr;
-    addr = &(ipv4->sin_addr);
+    struct sockaddr_in *ipv4 = (struct sockaddr_in *)&their_addr;
+    memcpy(addr, &(ipv4->sin_addr), addr_size);
   } else {
-    struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)their_addr;
-    addr = &(ipv6->sin6_addr);
+    struct sockaddr_in6 *ipv6 = (struct sockaddr_in6 *)&their_addr;
+    memcpy(addr, &(ipv6->sin6_addr), addr_size);
   }
+  PORT(asock)->u.sock.addr = addr;
   inet_ntop(PORT(sock)->u.sock.ai_family, addr, ipstr, sizeof(ipstr));
   return(cons(c, asock, cons(c, asock, cons(c, arc_mkstringc(c, ipstr), CNIL))));
 }
