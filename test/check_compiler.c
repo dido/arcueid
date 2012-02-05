@@ -537,6 +537,21 @@ START_TEST(test_compile_fn_dsb)
 }
 END_TEST
 
+START_TEST(test_compile_fn_dsb_opt)
+{
+  value str, sexpr, fp, cctx, code, ret;
+
+  str = arc_mkstringc(c, "((fn ((n o p)) o) '(1 2 3))");
+  fp = arc_instring(c, str, CNIL);
+  sexpr = arc_read(c, fp, CNIL);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(2));
+}
+END_TEST
+
 START_TEST(test_compile_quote)
 {
   value str, sexpr, fp, cctx, code, ret;
@@ -966,6 +981,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_fn_basic);
   tcase_add_test(tc_compiler, test_compile_fn_oarg);
   tcase_add_test(tc_compiler, test_compile_fn_dsb);
+  tcase_add_test(tc_compiler, test_compile_fn_dsb_opt);
 
   tcase_add_test(tc_compiler, test_compile_quote);
   tcase_add_test(tc_compiler, test_compile_qquote);
