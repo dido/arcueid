@@ -332,7 +332,7 @@ static value optarg(arc *c, value oarg, value ctx, value env, int narg)
       This causes an argument to added to the list of names and the number
       of arguments to be incremented.
 */
-static value destructuring_bind(arc *c, value args, value ctx, value env, int *nargs, value rn)
+static value destructuring_bind(arc *c, value args, value ctx, value env, int *nargs, value rn, int cflg)
 {
   if (NIL_P(args))
     return(rn);
@@ -346,16 +346,19 @@ static value destructuring_bind(arc *c, value args, value ctx, value env, int *n
     return(rn);
   }
 
-  if (CONS_P(args) && car(args) == ARC_BUILTIN(c, S_O)) {
+  if (cflg && CONS_P(args) && car(args) == ARC_BUILTIN(c, S_O)) {
     /* Optional arg.  Note that this will not enforce optional args at
-       the end. */
+       the end.  Reference Arc doesn't do this either, so neither will we.
+       We will consider a destructuring bind argument a possible optional
+       arg only if it is the car recurstion into a destructuring bind
+       expression. */
     arc_gcode(c, ctx, ipush);
     rn = cons(c, optarg(c, args, ctx, env, (*nargs)++), rn);
     return(rn);
   }
 
   if (!CONS_P(args)) {
-    arc_err_cstrfmt(c, "strange args %o", args);
+    arc_err_cstrfmt(c, "strange args %p", (void *)args);
     return(rn);
   }
 
@@ -366,23 +369,23 @@ static value destructuring_bind(arc *c, value args, value ctx, value env, int *n
   /* visit car with a car instruction */
   if (!NIL_P(car(args)) && NIL_P(cdr(args))) {
     arc_gcode(c, ctx, icar);
-    return(destructuring_bind(c, car(args), ctx, env, nargs, rn));
+    return(destructuring_bind(c, car(args), ctx, env, nargs, rn, 1));
   }
 
   /* visit cdr with a cdr instruction */
   if (NIL_P(car(args)) && !NIL_P(cdr(args))) {
     arc_gcode(c, ctx, icdr);
-    return(destructuring_bind(c, cdr(args), ctx, env, nargs, rn));
+    return(destructuring_bind(c, cdr(args), ctx, env, nargs, rn, 0));
   }
 
   /* duplicate, then visit the car */
   arc_gcode(c, ctx, ipush);
   arc_gcode(c, ctx, icar);
-  rn = destructuring_bind(c, car(args), ctx, env, nargs, rn);
+  rn = destructuring_bind(c, car(args), ctx, env, nargs, rn, 1);
   /* pop the duplicated value, then visit the cdr */
   arc_gcode(c, ctx, ipop);
   arc_gcode(c, ctx, icdr);
-  return(destructuring_bind(c, cdr(args), ctx, env, nargs, rn));
+  return(destructuring_bind(c, cdr(args), ctx, env, nargs, rn, 0));
 }
 
 static value arglist(arc *c, value args, value ctx, value env, int *nargs)
@@ -406,7 +409,7 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
 	 first.  This will allow subsequent instructions generated in
 	 destructuring_bind to do their thing. */
       arc_gcode(c, ctx, ipop);
-      rn = destructuring_bind(c, car(args), ctx, env, nargs, rn);
+      rn = destructuring_bind(c, car(args), ctx, env, nargs, rn, 0);
     }
 
     if (SYMBOL_P(cdr(args))) {
