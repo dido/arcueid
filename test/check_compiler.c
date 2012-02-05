@@ -549,6 +549,33 @@ START_TEST(test_compile_fn_dsb_opt)
   code = arc_cctx2code(c, cctx);
   ret = arc_macapply(c, code, CNIL);
   fail_unless(ret == INT2FIX(2));
+
+  str = arc_mkstringc(c, "((fn ((a (o b) c)) b) '(3 4 5))");
+  fp = arc_instring(c, str, CNIL);
+  sexpr = arc_read(c, fp, CNIL);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == INT2FIX(4));
+
+  str = arc_mkstringc(c, "(iso ((fn ((a b . c) . d) c) '(3 4 5 6) 7 8) '(5 6))");
+  fp = arc_instring(c, str, CNIL);
+  sexpr = arc_read(c, fp, CNIL);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
+
+  str = arc_mkstringc(c, "(iso ((fn ((a b . c) . d) d) '(3 4 5 6) 7 8) '(7 8))");
+  fp = arc_instring(c, str, CNIL);
+  sexpr = arc_read(c, fp, CNIL);
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
+  code = arc_cctx2code(c, cctx);
+  ret = arc_macapply(c, code, CNIL);
+  fail_unless(ret == CTRUE);
 }
 END_TEST
 
