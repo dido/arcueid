@@ -596,6 +596,7 @@ static struct {
   { "stderr", 0, arc_stderr },
   { "call-w/stdin", -3, arc_call_w_stdin },
   { "call-w/stdout", -3, arc_call_w_stdout },
+  { "flushout", -1, arc_flushout },
   { "disp", -1, arc_disp },
 
   { "cgenctx", 2, arc_mkcctx},
@@ -631,6 +632,8 @@ static struct {
 
   { "system", 1, arc_system },
   { "quit", -1, arc_quit },
+
+  { "setuid", 1, arc_setuid },
 
   { "dir", 1, arc_dir },
   { "dir-exists", 1, arc_dir_exists },
