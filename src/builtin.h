@@ -63,6 +63,8 @@ extern value arc_sclose(arc *c, int argc, value *argv);
 extern value arc_call_w_stdin(arc *c, value argv, value rv, CC4CTX);
 extern value arc_call_w_stdout(arc *c, value argv, value rv, CC4CTX);
 
+extern value arc_flushout(arc *c, int argc, value *argv);
+
 extern value arc_dir(arc *c, value dirname);
 extern value arc_dir_exists(arc *c, value dirname);
 extern value arc_mkdir(arc *c, value dirname);
@@ -84,6 +86,7 @@ extern value arc_timedate(arc *c, int argc, value *argv);
 
 extern value arc_system(arc *c, value cmd);
 extern value arc_quit(arc *c, int argc, value *argv);
+extern value arc_setuid(arc *c, value uid);
 
 /* threads */
 extern value arc_sleep(arc *c, value sleeptime);
