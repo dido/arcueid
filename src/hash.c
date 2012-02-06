@@ -547,7 +547,7 @@ value arc_hash_map(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFEND;
 
   if (VECLEN(argv) != 2) {
-    arc_err_cstrfmt(c, "wrong number of arguments (%d for 2)", VECLEN(argv));
+    arc_err_cstrfmt(c, "hashmap: wrong number of arguments (%d for 2)", VECLEN(argv));
     return(CNIL);
   }
   proc = VINDEX(argv, 0);
