@@ -982,7 +982,7 @@ START_TEST(test_vm_apply_tbl2)
   VINDEX(CCTX_VCODE(cctx), contofs) = FIX2INT(CCTX_VCPTR(cctx)) - base;
   arc_gcode(&c, cctx, ihlt);
   ITEST_FOOTER(1);
-  fail_unless(TVALR(thr) == INT2FIX(8));
+  fail_unless(TVALR(thr) == INT2FIX(4));
 }
 END_TEST
 
@@ -1000,9 +1000,9 @@ START_TEST(test_vm_apply_tbl3)
   base = FIX2INT(CCTX_VCPTR(cctx));
   arc_gcode1(&c, cctx, icont, 0);
   contofs = FIX2INT(CCTX_VCPTR(cctx)) - 1;
-  arc_gcode1(&c, cctx, ildi, INT2FIX(8));
-  arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildi, INT2FIX(1));
+  arc_gcode(&c, cctx, ipush);
+  arc_gcode1(&c, cctx, ildi, INT2FIX(8));
   arc_gcode(&c, cctx, ipush);
   arc_gcode1(&c, cctx, ildl, 0);
   arc_gcode1(&c, cctx, iapply, 2);
