@@ -1,3 +1,4 @@
+
 /* 
   Copyright (C) 2012 Rafael R. Sevilla
 
@@ -841,4 +842,10 @@ value arc_rmfile(arc *c, value filename)
     return(CNIL);
   }
   return(CNIL);
+}
+
+value arc_flushout(arc *c, int argc, value *argv)
+{
+  /* XXX - This is a no-op for now! */
+  return(CTRUE);
 }
