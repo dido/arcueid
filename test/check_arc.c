@@ -2284,6 +2284,18 @@ START_TEST(test_templates)
 }
 END_TEST
 
+START_TEST(test_hash)
+{
+  value ret;
+
+  TEST("(let h (table) (no (h 'foo)))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(let h (table) (is (h 'foo 0) 0))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -2483,6 +2495,7 @@ int main(void)
   /* no test for time, jtime, or time10 (how do we test them?) */
   tcase_add_test(tc_arc, test_union);
   tcase_add_test(tc_arc, test_templates);
+  tcase_add_test(tc_arc, test_hash);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
