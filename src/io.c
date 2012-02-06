@@ -109,8 +109,6 @@ static void file_sweeper(arc *c, value v)
     /* XXX: error handling here? */
     PORTF(v).open = 0;
   }
-  /* release memory */
-  c->free_block(c, (void *)v);
 }
 
 static unsigned long file_hash(arc *c, arc_hs *s, value v)
@@ -590,6 +588,15 @@ value arc_close(arc *c, value fd)
     arc_err_cstrfmt(c, "close: cannot close %v \"%s\", (%s; errno=%d)", fd, strerror(en), en);
   }
   PORT(fd)->closed = 1;
+  return(CNIL);
+}
+
+value arc_sclose(arc *c, int argc, value *argv)
+{
+  int i;
+
+  for (i=0; i<argc; i++)
+    arc_close(c, *argv++);
   return(CNIL);
 }
 
