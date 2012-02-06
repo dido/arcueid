@@ -785,16 +785,21 @@ void arc_apply(arc *c, value thr, value fun)
     arc_return(c, thr);
     break;
   case T_TABLE:
-    if (TARGC(thr) != 1 && TARGC(thr) != 2) {
-      arc_err_cstrfmt(c, "table application expects 1 or 2 arguments, given %d",
-		      INT2FIX(TARGC(thr)));
-      WB(&TVALR(thr), CNIL);
-    } else {
+    {
       value tbl, key, dflt, bind;
 
       tbl = fun;
-      key = CPOP(thr);
-      dflt = (TARGC(thr) == 1) ? CNIL : CPOP(thr);
+      if (TARGC(thr) == 1) {
+	key = CPOP(thr);
+	dflt = CNIL;
+      } else if (TARGC(thr) == 2) {
+	dflt = CPOP(thr);
+	key = CPOP(thr);
+      } else {
+	arc_err_cstrfmt(c, "table application expects 1 or 2 arguments, given %d",
+			INT2FIX(TARGC(thr)));
+	WB(&TVALR(thr), CNIL);
+      }
       bind = arc_hash_lookup(c, tbl, key);
       WB(&TVALR(thr), (bind == CUNBOUND) ? dflt : bind);
     }
