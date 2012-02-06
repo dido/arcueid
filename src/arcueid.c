@@ -605,6 +605,7 @@ static struct {
   { "current-process-milliseconds", 0, arc_current_process_milliseconds },
   { "msec", 0, arc_msec },
   { "seconds", 0, arc_seconds },
+  { "timedate", -1, arc_timedate },
 
   { "sref", 3, arc_sref },
   { "len", 1, arc_len },
