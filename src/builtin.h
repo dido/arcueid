@@ -80,6 +80,7 @@ extern value arc_current_gc_milliseconds(arc *c);
 extern value arc_current_process_milliseconds(arc *c);
 extern value arc_seconds(arc *c);
 extern value arc_msec(arc *c);
+extern value arc_timedate(arc *c, int argc, value *argv);
 
 extern value arc_system(arc *c, value cmd);
 extern value arc_quit(arc *c, int argc, value *argv);
