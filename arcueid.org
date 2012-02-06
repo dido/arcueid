@@ -456,11 +456,12 @@ notice and this notice are preserved.
      - [X] protect
    - [X] Strings [1/1]
      - [X] newstring
-   - [X] Time [4/4]
+   - [X] Time [5/5]
      - [X] current-gc-milliseconds
      - [X] current-process-milliseconds
      - [X] msec
      - [X] seconds
+     - [X] timedate
    - [ ] Regular Expressions (Arcueid extension) [0/3]
      - [ ] rxcompile
      - [ ] rxescape
