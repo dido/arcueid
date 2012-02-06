@@ -58,6 +58,7 @@ extern value arc_swritec(arc *c, int argc, value *argv);
 extern value arc_seek(arc *c, value fd, value ofs, value whence);
 extern value arc_tell(arc *c, value fd);
 extern value arc_close(arc *c, value fd);
+extern value arc_sclose(arc *c, int argc, value *argv);
 
 extern value arc_call_w_stdin(arc *c, value argv, value rv, CC4CTX);
 extern value arc_call_w_stdout(arc *c, value argv, value rv, CC4CTX);
