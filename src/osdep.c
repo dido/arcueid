@@ -57,7 +57,7 @@ unsigned long long __arc_milliseconds(void)
   return(t);
 #else
   /* fall back to using time(2) if clock_gettime is not available */
-  return((unsigend long long)time(NULL)*1000LL);
+  return((unsigned long long)time(NULL)*1000LL);
 #endif
 }
 
@@ -107,6 +107,31 @@ value arc_current_process_milliseconds(arc *c)
   getrusage(RUSAGE_SELF, &usage);
   return(arc_mkflonum(c, 1000.0*((double)usage.ru_utime.tv_sec
 				 + ((double)(usage.ru_utime.tv_usec))/1e6)));
+}
+
+value arc_timedate(arc *c, int argc, value *argv)
+{
+  time_t tm;
+  struct tm timep;
+
+  if (argc == 0)
+    tm = __arc_milliseconds() / 1000L;
+  else {
+    TYPECHECK(argv[0], T_FIXNUM, 1);
+    tm = FIX2INT(argv[0]);
+  }
+
+  if (gmtime_r(&tm, &timep) == NULL) {
+    arc_err_cstrfmt(c, "error in gmtime");
+    return(CNIL);
+  }
+
+  return(cons(c, INT2FIX(timep.tm_sec),
+	      cons(c, INT2FIX(timep.tm_min),
+		   cons(c, INT2FIX(timep.tm_hour),
+			cons(c, INT2FIX(timep.tm_mday),
+			     cons(c, INT2FIX(timep.tm_mon + 1),
+				  cons(c, INT2FIX(timep.tm_year + 1900), CNIL)))))));
 }
 
 value arc_system(arc *c, value cmd)
