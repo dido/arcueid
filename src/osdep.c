@@ -21,6 +21,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <sys/resource.h>
 #include "arcueid.h"
 #include "alloc.h"
@@ -113,12 +114,17 @@ value arc_timedate(arc *c, int argc, value *argv)
 {
   time_t tm;
   struct tm timep;
+  value fnv;
 
   if (argc == 0)
     tm = __arc_milliseconds() / 1000L;
   else {
-    TYPECHECK(argv[0], T_FIXNUM, 1);
-    tm = FIX2INT(argv[0]);
+    fnv = arc_coerce_fixnum(c, argv[0]);
+    if (NIL_P(fnv)) {
+      arc_err_cstrfmt(c, "timedate: value is out of range");
+      return(CNIL);
+    }
+    tm = FIX2INT(fnv);
   }
 
   if (gmtime_r(&tm, &timep) == NULL) {
@@ -158,4 +164,10 @@ value arc_quit(arc *c, int argc, value *argv)
   }
   exit(exitcode);
   return(CNIL);
+}
+
+value arc_setuid(arc *c, value uid)
+{
+  TYPECHECK(uid, T_FIXNUM, 1);
+  return(INT2FIX(setuid(FIX2INT(uid))));
 }
