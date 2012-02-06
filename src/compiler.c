@@ -30,7 +30,7 @@ value arc_eval(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFEND;
 
   if (VECLEN(argv) != 1) {
-    arc_err_cstrfmt(c, "wrong number of arguments (%d for 1)", VECLEN(argv));
+    arc_err_cstrfmt(c, "eval: wrong number of arguments (%d for 1)", VECLEN(argv));
     return(CNIL);
   }
 
