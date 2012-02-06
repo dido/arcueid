@@ -581,7 +581,7 @@ static struct {
 
   { "infile", 1, arc_infile },
   { "outfile", -1, arc_soutfile },
-  { "close", 1, arc_close },
+  { "close", -1, arc_sclose },
 
   { "instring", -1, arc_sinstring },
   { "outstring", -1, arc_soutstring },
@@ -654,6 +654,8 @@ static struct {
   { "open-socket", 1, arc_open_socket },
   { "socket-accept", 1, arc_socket_accept },
   { "client-ip", 1, arc_client_ip },
+
+  { "sym", 1, arc_intern },
 
   { NULL, 0, NULL }
 };
