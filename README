@@ -20,11 +20,17 @@ The Git repository is available for anonymous clone at
 git://github.com/dido/arcueid.git.  Do note that it is under heavy
 development and may not always be stable!
 
+A development blog is available here:
+https://arcueidarc.wordpress.com/
+
 A wiki with some notes which may or may not be useful to others is
 here: https://github.com/dido/arcueid/wiki
 
 Please report any problems with Arcueid on the project's Github
 issue tracker: https://github.com/dido/arcueid/issues
+
+For more information on the Arc dialect of Lisp, see the Arc Language
+wiki: http://sites.google.com/site/arclanguagewiki/home
 
 If you are building this from a source tarball, the usual ./configure;
 make; make install combo should work, but you will get an Arcueid REPL
