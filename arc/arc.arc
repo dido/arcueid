@@ -809,6 +809,8 @@
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
 
+;; this should be the only place where the restricted scmark and ccmark
+;; functions should EVER be directly called!
 (mac call-w/cmark (key val thunk)
   `(dynamic-wind (fn () (scmark ,key ,val)) ,thunk (fn () (ccmark ,key))))
 
