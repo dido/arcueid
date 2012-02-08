@@ -802,8 +802,15 @@
 
 (def odd (n) (no (even n)))
 
+;; protect is written in terms of Arcueid's dynamic-wind
+(def protect (during after)
+  (dynamic-wind (fn ()) during after))
+
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
+
+(mac call-w/cmark (key val thunk)
+  `(dynamic-wind (fn () (scmark ,key ,val)) ,thunk (fn () (ccmark ,key))))
 
 (let expander 
      (fn (f var name body)
@@ -834,6 +841,12 @@
      (after (do ,@body) (close ,var))))
 
 ; rename this simply "to"?  - prob not; rarely use
+
+(def call-w/stdin (inp thunk)
+  (call-w/cmark 'stdin-fd inp thunk))
+
+(def call-w/stdout (outp thunk)
+  (call-w/cmark 'stdout-fd outp thunk))
 
 (mac w/stdout (str . body)
   `(call-w/stdout ,str (fn () ,@body)))
