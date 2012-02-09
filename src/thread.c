@@ -413,10 +413,6 @@ value arc_spawn(arc *c, value thunk)
   thr = arc_mkthread(c, car(thunk), c->stksize, 0);
   TARGC(thr) = 0;
   TENVR(thr) = cdr(thunk);
-  /* inherit standard handles from calling thread */
-  VINDEX(TSTDH(thr), 0) = arc_stdin(c);
-  VINDEX(TSTDH(thr), 1) = arc_stdout(c);
-  VINDEX(TSTDH(thr), 2) = arc_stderr(c);
   TTID(thr) = __arc_tidctr++;
   /* Queue the new thread  */
   enqueue(c, thr, &c->vmthreads, &c->vmthrtail);
@@ -613,6 +609,6 @@ value arc_break_thread(arc *c, value thr)
 
   emsg = arc_mkstringc(c, "break");
   exc = arc_mkexception(c, emsg, CODE_NAME(TFUNR(thr)), TCONR(thr));
-  arc_errexc_thr(c, thr, exc);
+  TEXC(thr) = exc;
   return(CNIL);
 }
