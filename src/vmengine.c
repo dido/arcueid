@@ -595,22 +595,22 @@ value arc_macapply(arc *c, value func, value args)
   return(retval);
 }
 
-/* this function will return a list of all closures that should be called
-   after rerooting. */
+/* This function will return a list of all closures that should be called
+   after rerooting.  This is the core of the Hanson-Lamping algorithm
+   for implementing dynamic-wind.
+
+   Many thanks to Ross Angle (rocketnia) for helping me to understand
+   the Hanson-Lamping algorithm! */
 static value reroot(arc *c, value thr, value there)
 {
-  value before, after, bablk, calls;
+  value before, after, calls;
 
   if (TCH(thr) == there)
     return(CNIL);
   calls = reroot(c, thr, cdr(there));
-  before = VINDEX(car(there), 0);
-  after = VINDEX(cdr(there), 1);
-  bablk = arc_mkvector(c, 3);
-  VINDEX(bablk, 0) = after;
-  VINDEX(bablk, 1) = before;
-  VINDEX(bablk, 2) = CNIL;
-  scar(TCH(thr), bablk);
+  before = car(car(there));
+  after = cdr(car(there));
+  scar(TCH(thr), cons(c, after, before));
   scdr(TCH(thr), there);
   scar(there, INT2FIX(0xdead));
   scdr(there, CNIL);
@@ -1283,7 +1283,6 @@ value arc_dynamic_wind(arc *c, value argv, value rv, CC4CTX)
   CC4VDEFBEGIN;
   CC4VARDEF(here);
   CC4VARDEF(tcr);
-  CC4VARDEF(there);
   CC4VARDEF(before);
   CC4VARDEF(during);
   CC4VARDEF(after);
@@ -1302,12 +1301,9 @@ value arc_dynamic_wind(arc *c, value argv, value rv, CC4CTX)
   TYPECHECK(CC4V(during), T_CLOS, 2);
   TYPECHECK(CC4V(after), T_CLOS, 2);
   CC4V(here) = TCH(c->curthread);
-  CC4V(there) = arc_mkvector(c, 3);
-  VINDEX(CC4V(there), 0) = CC4V(before);
-  VINDEX(CC4V(there), 1) = CC4V(after);
-  VINDEX(CC4V(there), 2) = CNIL;
-  CC4V(there) = cons(c, CC4V(there), CC4V(here));
-  CC4V(tcr) = reroot(c, c->curthread, CC4V(there));
+  CC4V(tcr) = reroot(c, c->curthread,
+		     cons(c, cons(c, CC4V(before), CC4V(after)),
+			  CC4V(here)));
   CC4V(tcr) = arc_list_reverse(c, CC4V(tcr));
   while (CC4V(tcr) != CNIL) {
     value tcont = car(CC4V(tcr));
@@ -1316,7 +1312,7 @@ value arc_dynamic_wind(arc *c, value argv, value rv, CC4CTX)
       CC4CALL(c, argv, tcont, 0, CNIL);
     WB(&CC4V(tcr), cdr(CC4V(tcr)));
   }
-  CC4CALL(c, argv, during, 0, CNIL);
+  CC4CALL(c, argv, CC4V(during), 0, CNIL);
   CC4V(ret) = rv;
   /* execute the after clauses if the during thunk returns normally */
   CC4V(tcr) = reroot(c, c->curthread, CC4V(here));
@@ -1339,7 +1335,7 @@ value arc_cmark(arc *c, value key)
 
   cm = TCM(c->curthread);
   val = arc_hash_lookup(c, cm, key);
-  if (val == CNIL)
+  if (val == CUNBOUND)
     return(CNIL);
   return(car(val));
 }
@@ -1352,6 +1348,8 @@ value arc_scmark(arc *c, value key, value val)
 
   cm = TCM(c->curthread);
   bind = arc_hash_lookup(c, cm, key);
+  if (bind == CUNBOUND)
+    bind = CNIL;
   bind = cons(c, val, bind);
   arc_hash_insert(c, cm, key, bind);
   return(val);
@@ -1363,7 +1361,7 @@ value arc_ccmark(arc *c, value key)
 
   cm = TCM(c->curthread);
   bind = arc_hash_lookup(c, cm, key);
-  if (NIL_P(bind))
+  if (bind == CUNBOUND)
     return(CNIL);
   val = car(bind);
   bind = cdr(bind);
