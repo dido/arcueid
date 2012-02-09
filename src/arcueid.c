@@ -594,8 +594,6 @@ static struct {
   { "stdin", 0, arc_stdin },
   { "stdout", 0, arc_stdout },
   { "stderr", 0, arc_stderr },
-  { "call-w/stdin", -3, arc_call_w_stdin },
-  { "call-w/stdout", -3, arc_call_w_stdout },
   { "flushout", -1, arc_flushout },
   { "disp", -1, arc_disp },
 
@@ -624,11 +622,11 @@ static struct {
   { "trace", 0, arc_trace },
 #endif
 
-  { "err", 1, arc_err },
+  { "err", -3, arc_err },
   { "on-err", -3, arc_on_err },
   { "details", 1, arc_exc_details },
   { "ccc", -3, arc_callcc },
-  { "protect", -3, arc_protect },
+  { "dynamic-wind", -3, arc_dynamic_wind },
 
   { "system", 1, arc_system },
   { "quit", -1, arc_quit },
@@ -660,6 +658,10 @@ static struct {
   { "client-ip", 1, arc_client_ip },
 
   { "sym", 1, arc_intern },
+
+  { "cmark", 1, arc_cmark },
+  { "scmark", 2, arc_scmark },
+  { "ccmark", 1, arc_ccmark },
 
   { NULL, 0, NULL }
 };
