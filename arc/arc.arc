@@ -321,6 +321,10 @@
   (map [do (write _) (disp " ")] args)
   (disp #\newline))
 
+;; protect is written in terms of Arcueid's dynamic-wind
+(mac protect (during after)
+  `(dynamic-wind (fn ()) ,during ,after))
+
 ;; We use the internal functions __acell__ (which retrieves the atomic
 ;; cell of the current thread) and __achan__  (which retrieves the global
 ;; channel used for atomic-invoke) to implement this.
@@ -801,10 +805,6 @@
 (def even (n) (is (mod n 2) 0))
 
 (def odd (n) (no (even n)))
-
-;; protect is written in terms of Arcueid's dynamic-wind
-(mac protect (during after)
-  `(dynamic-wind (fn ()) ,during ,after))
 
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
