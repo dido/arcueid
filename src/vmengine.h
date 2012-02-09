@@ -1,3 +1,4 @@
+
 /* 
   Copyright (C) 2010 Rafael R. Sevilla
 
@@ -81,7 +82,6 @@ extern value arc_mkcctx(arc *c, value vcodesize, value vlitsize);
 extern value arc_vcptr(arc *c, value cctx);
 
 extern int arc_return(arc *c, value thr);
-extern value arc_errexc_thr(arc *c, value thr, value exc);
 
 /* A code generation context (cctx) is a vector with the following
    items as indexes:
@@ -106,20 +106,16 @@ extern value arc_errexc_thr(arc *c, value thr, value exc);
    2. Environment
    3. Saved stack
    4. Continuation register
-   5. Error continuation register
-   6. Protect continuation
-   7. Saved return value for protect
-   8. STDIN/STDOUT/STDERR for the continuation (used by call-w/stdin etc.)
+   5. Saved TCH register (null unless a reified continuation from ccc)
+   6. Saved TEXH register
  */
 #define CONT_OFS(cont) (VINDEX(cont, 0))
 #define CONT_FUN(cont) (VINDEX(cont, 1))
 #define CONT_ENV(cont) (VINDEX(cont, 2))
 #define CONT_STK(cont) (VINDEX(cont, 3))
 #define CONT_CON(cont) (VINDEX(cont, 4))
-#define CONT_ECR(cont) (VINDEX(cont, 5))
-#define CONT_PRT(cont) (VINDEX(cont, 6))
-#define CONT_PRV(cont) (VINDEX(cont, 7))
-#define CONT_FPS(cont) (VINDEX(cont, 8))
+#define CONT_TCH(cont) (VINDEX(cont, 5))
+#define CONT_EXH(cont) (VINDEX(cont, 6))
 
 #define RUNNABLE(thr) (TSTATE(thr) == Tready || TSTATE(thr) == Texiting || TSTATE(thr) == Tcritical)
 
