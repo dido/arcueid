@@ -216,7 +216,8 @@ static void mark(arc *c, value v, int reclevel, value marksym)
       mark(c, TVALR(v), reclevel+1, CNIL); /* value register */
       mark(c, TCONR(v), reclevel+1, CNIL); /* continuation register */
       mark(c, TRVCH(v), reclevel+1, CNIL);  /* return value channel */
-      mark(c, TCH(v), reclevel+1, CNIL);    /* continuation here */
+      mark(c, TCH(v), reclevel+1, CNIL);    /* dynamic-wind here */
+      mark(c, TBCH(v), reclevel+1, CNIL);    /* base dynamic-wind here */
       mark(c, TCM(v), reclevel+1, CNIL);    /* continuation marks */
       mark(c, TEXH(v), reclevel+1, CNIL);   /* exception handlers */
       mark(c, TEXC(v), reclevel+1, CNIL);   /* async exception */
