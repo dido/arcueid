@@ -882,6 +882,7 @@ void arc_apply(arc *c, value thr, value fun)
     break;
   default:
     arc_err_cstrfmt(c, "invalid function application, applying object of type %s", __arc_typenames[TYPE(fun)]);
+    arc_return(c, thr);
   }
 }
 
@@ -1264,7 +1265,7 @@ value arc_callcc(arc *c, value argv, value rv, CC4CTX)
     return(CNIL);
   }
   CC4V(func) = VINDEX(argv, 0);
-  TYPECHECK(func, T_CLOS, 1);
+  TYPECHECK(CC4V(func), T_CLOS, 1);
   CC4V(cont) = car(TCONR(c->curthread));
   /* We need to save the current TCH in the reified continuation so
      that if it is called, the before/after handlers saved by
@@ -1273,7 +1274,7 @@ value arc_callcc(arc *c, value argv, value rv, CC4CTX)
      executed by the dynamic-wind function itself when the function
      returns. */
   WB(&CONT_TCH(CC4V(cont)), TCH(c->curthread));
-  CC4CALL(c, argv, func, 1, CC4V(cont));
+  CC4CALL(c, argv, CC4V(func), 1, CC4V(cont));
   CC4END;
   return(rv);
 }
