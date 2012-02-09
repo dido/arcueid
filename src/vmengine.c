@@ -1364,6 +1364,10 @@ value arc_ccmark(arc *c, value key)
     return(CNIL);
   val = car(bind);
   bind = cdr(bind);
-  arc_hash_insert(c, cm, key, bind);
+  if (NIL_P(bind)) {
+    arc_hash_delete(c, cm, key);
+  } else {
+    arc_hash_insert(c, cm, key, bind);
+  }
   return(val);
 }
