@@ -414,6 +414,18 @@ value arc_spawn(arc *c, value thunk)
   TARGC(thr) = 0;
   TENVR(thr) = cdr(thunk);
   TTID(thr) = __arc_tidctr++;
+  /* copy continuation marks from the spawning thread to the new
+     thread if there is a parent thread. */
+  if (!NIL_P(c->curthread)) {
+    value cm = TCM(c->curthread), val, key, bind;
+    int ctx = 0;
+
+    while ((val = arc_hash_iter(c, cm, &ctx)) != CUNBOUND) {
+      key = REP(val)._hashbucket.key;
+      bind = car(REP(val)._hashbucket.val);
+      arc_hash_insert(c, TCM(thr), key, cons(c, bind, CNIL));
+    }
+  }
   /* Queue the new thread  */
   enqueue(c, thr, &c->vmthreads, &c->vmthrtail);
   return(thr);
