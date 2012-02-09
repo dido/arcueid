@@ -215,10 +215,11 @@ static void mark(arc *c, value v, int reclevel, value marksym)
       mark(c, TENVR(v), reclevel+1, CNIL); /* environment register */
       mark(c, TVALR(v), reclevel+1, CNIL); /* value register */
       mark(c, TCONR(v), reclevel+1, CNIL); /* continuation register */
-      mark(c, TECONT(v), reclevel+1, CNIL); /* error continuation */
-      mark(c, TEXC(v), reclevel+1, CNIL);   /* current exception */
-      mark(c, TSTDH(v), reclevel+1, CNIL);  /* standard handles */
       mark(c, TRVCH(v), reclevel+1, CNIL);  /* return value channel */
+      mark(c, TCH(v), reclevel+1, CNIL);    /* continuation here */
+      mark(c, TCM(v), reclevel+1, CNIL);    /* continuation marks */
+      mark(c, TEXH(v), reclevel+1, CNIL);   /* exception handlers */
+      mark(c, TEXC(v), reclevel+1, CNIL);   /* async exception */
       /* Mark the stack *vector* only but not all its contents */
       D2B(b, (void *)TSTACK(v));
       b->color = mutator;
