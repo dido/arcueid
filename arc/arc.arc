@@ -803,16 +803,20 @@
 (def odd (n) (no (even n)))
 
 ;; protect is written in terms of Arcueid's dynamic-wind
-(def protect (during after)
-  (dynamic-wind (fn ()) during after))
+(mac protect (during after)
+  `(dynamic-wind (fn ()) ,during ,after))
 
 (mac after (x . ys)
   `(protect (fn () ,x) (fn () ,@ys)))
 
-;; this should be the only place where the restricted scmark and ccmark
-;; functions should EVER be directly called!
-(mac call-w/cmark (key val thunk)
-  `(dynamic-wind (fn () (scmark ,key ,val)) ,thunk (fn () (ccmark ,key))))
+;; This should be the only place where the restricted scmark and ccmark
+;; functions should EVER be directly called!  Use of these two internal
+;; functions elsewhere could cause continuation marks to function
+;; improperly!
+(mac call-w/cmark (thunk . cmarks)
+  `(dynamic-wind (fn () ,@(map1 [list 'scmark car._ cadr._] (pair cmarks)))
+		 ,thunk
+		 (fn () @(map1 [list 'ccmark car._ cadr._] (pair cmarks)))))
 
 (let expander 
      (fn (f var name body)
@@ -845,10 +849,10 @@
 ; rename this simply "to"?  - prob not; rarely use
 
 (def call-w/stdin (inp thunk)
-  (call-w/cmark 'stdin-fd inp thunk))
+  (call-w/cmark thunk 'stdin-fd inp))
 
 (def call-w/stdout (outp thunk)
-  (call-w/cmark 'stdout-fd outp thunk))
+  (call-w/cmark thunk 'stdout-fd outp))
 
 (mac w/stdout (str . body)
   `(call-w/stdout ,str (fn () ,@body)))
