@@ -178,6 +178,7 @@ struct vmthread {
   struct ccont *rsc;	/* restart context */
   value rvchan;		/* return value channel */
   value conthere;	/* here for this thread */
+  value baseconthere;	/* base cont here */
   value contmarks;	/* base for continuation marks */
   value exh;		/* exception handlers for this thread */
   value exception;	/* asynchronous exception */
@@ -213,6 +214,7 @@ struct vmthread {
 #define TACELL(t) (REP(t)._thread.atomic_cell)
 #define TRVCH(t) (REP(t)._thread.rvchan)
 #define TCH(t) (REP(t)._thread.conthere)
+#define TBCH(t) (REP(t)._thread.baseconthere)
 #define TCM(t) (REP(t)._thread.contmarks)
 #define TEXH(t) (REP(t)._thread.exh)
 #define TEXC(t) (REP(t)._thread.exception)
