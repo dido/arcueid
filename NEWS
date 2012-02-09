@@ -2,12 +2,13 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.0.9 (2012-??-??)
+* Version 0.0.9 (2012-02-09)
 - Various bug fixes (destructuring binds, hash application)
 - Functions defined and fixed (close, setuid, flushout, etc.)
 - dynamic-wind introduced as primitive
 - Continuation mark system introduced
 - call-w/std(in|out) defined in terms of continuation marks
+- Bug fixes in file I/O with multiple running threads
 
 * Version 0.0.8 (2012-01-30)
 - More garbage collector bug fixes
