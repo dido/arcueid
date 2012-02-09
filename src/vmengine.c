@@ -985,19 +985,22 @@ int arc_return(arc *c, value thr)
 {
   value cont;
 
-  if (!CONS_P(TCONR(thr)))
-    return(1);
-  cont = car(TCONR(thr));
-  if (cont == CNIL)
-    return(1);
-  WB(&TCONR(thr), cdr(TCONR(thr)));
-  if (TYPE(VINDEX(cont, 0)) == T_XCONT) {
-    if (arc_restorexcont(c, thr, cont)) {
-      return(0);
+  for (;;) {
+    if (!CONS_P(TCONR(thr)))
+      return(1);
+    cont = car(TCONR(thr));
+    if (cont == CNIL)
+      return(1);
+    WB(&TCONR(thr), cdr(TCONR(thr)));
+    if (TYPE(VINDEX(cont, 0)) == T_XCONT) {
+      if (arc_restorexcont(c, thr, cont)) {
+	return(0);
+      }
+      continue;
     }
+    arc_restorecont(c, thr, cont);
+    return(0);
   }
-  arc_restorecont(c, thr, cont);
-  return(0);
 }
 
 value arc_mkcont(arc *c, value offset, value thr)
