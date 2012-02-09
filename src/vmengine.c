@@ -486,6 +486,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   
   TACELL(thr) = 0;
   TCH(thr) = cons(c, INT2FIX(0xdead), CNIL);
+  TBCH(thr) = TCH(thr);
   return(thr);
 }
 
@@ -1109,8 +1110,8 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
   }
 
   /* create an exception handler cons and register it in TEXH. */
-  WB(&CONT_TCH(TCONR(c->curthread)), TCH(c->curthread));
-  exh = cons(c, errfn, TCONR(c->curthread));
+  WB(&CONT_TCH(car(TCONR(c->curthread))), TCH(c->curthread));
+  exh = cons(c, errfn, car(TCONR(c->curthread)));
   WB(&TEXH(c->curthread), cons(c, exh, TEXH(c->curthread)));
 
   /* call the thunk passed to us */
@@ -1148,29 +1149,13 @@ value arc_err(arc *c, value argv, value rv, CC4CTX)
   }
   CC4V(exc) = VINDEX(argv, 0);
   if (TYPE(CC4V(exc)) == T_STRING) {
-    exc = arc_mkexception(c, CC4V(exc), CODE_NAME(TFUNR(c->curthread)),
-			  TCONR(c->curthread));
+    CC4V(exc) = arc_mkexception(c, CC4V(exc), CODE_NAME(TFUNR(c->curthread)),
+				TCONR(c->curthread));
   }
   TYPECHECK(CC4V(exc), T_EXCEPTION, 1);
 
-  if (TEXH(c->curthread) == CNIL) {
-    value tch;
-    /* If we have no exception handler, we should execute all registered
-       protect handlers down to the bottom, so we have to find the bottom
-       somehow. */
-    tch = TCH(c->curthread);
-    while (car(tch) != INT2FIX(0xdead)) {
-      tch = cdr(tch);
-      if (NIL_P(tch) || !CONS_P(tch)) {
-	/* Just in case. */
-	fprintf(stderr, "FATAL: corrupted TCH structure\n");
-	exit(1);
-      }
-    }
-    CC4V(there) = tch;
-  } else {
-    CC4V(there) = CONT_TCH(car(car(TEXH(c->curthread))));
-  }
+  CC4V(there) = (NIL_P(TEXH(c->curthread))) ? TBCH(c->curthread)
+    : CONT_TCH(cdr(car(TEXH(c->curthread))));
 
   /* Reroot and execute any protect handlers up to the point of our
      saved continuation's TCH. */
