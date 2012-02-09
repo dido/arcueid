@@ -38,6 +38,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <unistd.h>
 #include "arcueid.h"
 #include "utf.h"
@@ -163,14 +164,39 @@ static int file_close(arc *c, struct arc_port *p)
 static int file_ready(arc *c, struct arc_port *p)
 {
   FILE *fp;
+  int check, retval;
+  fd_set rfds;
+  struct timeval tv;
 
   fp = p->u.file.fp;
   /* XXX - NOT PORTABLE! */
 #ifdef _IO_fpos_t
-  return(fp->_IO_read_ptr != fp->_IO_read_end);
+  check = (fp->_IO_read_ptr != fp->_IO_read_end);
 #else
-  return(fp->_gptr < (fp)->_egptr);
+  check = (fp->_gptr < (fp)->_egptr);
 #endif
+  if (check)
+    return(1);
+  /* No buffered data available. See if the underlying file descriptor
+     is readable. */
+  FD_ZERO(&rfds);
+  FD_SET(fileno(fp), &rfds);
+    tv.tv_usec = tv.tv_sec = 0;
+  retval = select(fileno(fp)+1, &rfds, NULL, NULL, &tv);
+
+  if (retval == -1) {
+    int en = errno;
+
+    arc_err_cstrfmt(c, "error checking file descriptor (%s; errno=%d)",
+		    strerror(en), en);
+    return(0);
+  }
+
+  if (retval == 0)
+    return(0);
+  if (FD_ISSET(fileno(fp), &rfds))
+    return(1);
+  return(0);
 }
 
 static int file_fd(arc *c, struct arc_port *p)
