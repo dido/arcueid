@@ -179,7 +179,18 @@ void arc_vmengine(arc *c, value thr, int quanta)
   value curr_instr;
 #endif
 
-  setjmp(TVJMP(thr));
+  /* If the setjmp returns 2, apply whatever is in the value register. */
+  if (setjmp(TVJMP(thr)) == 2) {
+    arc_apply(c, thr, TVALR(thr));
+  }
+
+  if (!NIL_P(TEXC(thr))) {
+    value exc = TEXC(thr);
+
+    WB(&TEXC(thr), CNIL);
+    arc_errexc(c, exc);
+  }
+
   if (!RUNNABLE(thr))
     return;
 
@@ -468,14 +479,13 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TENVR(thr) = TVALR(thr) = CNIL;
   TTID(thr) = ++c->tid_nonce;
   TCONR(thr) = CNIL;
-  TECONT(thr) = CNIL;
-  TEXC(thr) = CNIL;
-  TSTDH(thr) = arc_mkvector(c, 3);
   TRVCH(thr) = arc_mkchan(c);
-  /* standard handles */
-  VINDEX(TSTDH(thr), 0) = VINDEX(TSTDH(thr), 1)
-    = VINDEX(TSTDH(thr), 2) = CNIL;
+  TCM(thr) = arc_mkhash(c, 6);
+  TEXH(thr) = CNIL;		/* no exception handlers */
+  TEXC(thr) = CNIL;
+  
   TACELL(thr) = 0;
+  TCH(thr) = cons(c, INT2FIX(0xdead), CNIL);
   return(thr);
 }
 
@@ -585,12 +595,34 @@ value arc_macapply(arc *c, value func, value args)
   return(retval);
 }
 
+/* this function will return a list of all closures that should be called
+   after rerooting. */
+static value reroot(arc *c, value thr, value there)
+{
+  value before, after, bablk, calls;
+
+  if (TCH(thr) == there)
+    return(CNIL);
+  calls = reroot(c, thr, cdr(there));
+  before = VINDEX(car(there), 0);
+  after = VINDEX(cdr(there), 1);
+  bablk = arc_mkvector(c, 3);
+  VINDEX(bablk, 0) = after;
+  VINDEX(bablk, 1) = before;
+  VINDEX(bablk, 2) = CNIL;
+  scar(TCH(thr), bablk);
+  scdr(TCH(thr), there);
+  scar(there, INT2FIX(0xdead));
+  scdr(there, CNIL);
+  WB(&TCH(thr), there);
+  return(cons(c, before, calls));
+}
+
 /* The presence of protect (dynamic-wind) in Arc means that this is
    no longer a simple matter of restoring the continuation passed
-   to it.  We now need to go down the continuation chain to look for
-   protect functions, executing them until we get to the continuation
-   that we are trying to apply, and only then can we restore the applied
-   continuation. */
+   to it.  We have to call reroot to get a list of all functions
+   that should be executed before the continuation itself
+   is restored. */
 value apply_continuation(arc *c, value argv, value rv, CC4CTX)
 {
   CC4VDEFBEGIN;
@@ -598,35 +630,29 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
   CC4VARDEF(conarg);
   CC4VARDEF(tcr);
   CC4VDEFEND;
-  value thr;
 
   CC4BEGIN(c);
   CC4V(cont) = VINDEX(argv, 0);
   CC4V(conarg) = VINDEX(argv, 1);
-  CC4V(tcr) = TCONR(c->curthread);
-  while (CC4V(tcr) != CNIL && car(CC4V(tcr)) != CC4V(cont)) {
-    /* XXX - execute the protect sections of all the continuations above
-       the chain from the continuation which we are about to restore. */
-    value tcont = VINDEX(car(CC4V(tcr)), 6), protclos;
+  /* See if we have a saved TCH in the continuation.  If so,
+     reroot to it and obtain all the befores/afters we need to
+     execute.  Otherwise, just restore the continuation. */
+  if (!NIL_P(CONT_TCH(CC4V(cont)))) {
+    CC4V(tcr) = reroot(c, c->curthread, CONT_TCH(CC4V(cont)));
+    CC4V(tcr) = arc_list_reverse(c, CC4V(tcr));
+    while (CC4V(tcr) != CNIL) {
+      value tcont = car(CC4V(tcr));
 
-    if (NIL_P(tcont)) {
-      /* no protect section, move on */
+      if (!NIL_P(tcont))
+	CC4CALL(c, argv, tcont, 0, CNIL);
       WB(&CC4V(tcr), cdr(CC4V(tcr)));
-      continue;
     }
-
-    /* We have a continuation with a protect section.  We should now
-       execute the closure embedded inside it. */
-    protclos = arc_mkclosure(c, VINDEX(tcont, 1), VINDEX(tcont, 2));
-    CC4CALL(c, argv, protclos, 0, CNIL);
-    WB(&CC4V(tcr), cdr(CC4V(tcr)));
   }
   CC4END;
   /* Now, we have to modify the continuation register so that when this
      function finally returns, it will restore the continuation we
      provided it. */
-  thr = c->curthread;
-  WB(&TCONR(thr), cons(c, CC4V(cont), VINDEX(CC4V(cont), 4)));
+  WB(&TCONR(c->curthread), cons(c, CC4V(cont), CONT_CON(CC4V(cont))));
   return(CC4V(conarg));
 }
 
@@ -905,7 +931,10 @@ void arc_restorecont(arc *c, value thr, value cont)
   }
   offset = FIX2INT(VINDEX(cont, 0));
   TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), offset);
-  WB(&TCONR(thr), VINDEX(cont, 4));
+  WB(&TCONR(thr), CONT_CON(cont));
+  /* Restore the exception handlers as they existed when the
+     continuation was created */
+  WB(&TEXH(thr), CONT_EXH(cont));
 }
 
 /* Restore an extended continuation inside a continuation */
@@ -954,77 +983,26 @@ int arc_restorexcont(arc *c, value thr, value cont)
 /* restore the continuation at the head of the continuation register */
 int arc_return(arc *c, value thr)
 {
-  value cont, tmp;
+  value cont;
 
-  for (;;) {
-    if (!CONS_P(TCONR(thr))) {
-      if (TSTATE(thr) == Texiting) {
-	c->in_compile = 0;
-	c->signal_error(c, VINDEX(TEXC(thr), 0));
-      }
-      return(1);
+  if (!CONS_P(TCONR(thr)))
+    return(1);
+  cont = car(TCONR(thr));
+  if (cont == CNIL)
+    return(1);
+  WB(&TCONR(thr), cdr(TCONR(thr)));
+  if (TYPE(VINDEX(cont, 0)) == T_XCONT) {
+    if (arc_restorexcont(c, thr, cont)) {
+      return(0);
     }
-    cont = car(TCONR(thr));
-    if (cont == CNIL) {
-      if (TSTATE(thr) == Texiting) {
-	c->in_compile = 0;
-	c->signal_error(c, VINDEX(TEXC(thr), 0));
-      }
-      return(1);
-    }
-    /* see if the continuation has a cleanup continuation created
-       by protect.  If so, restore it first and remove it from the
-       continuation at the top, so that when the cleanup continuation
-       returns, it will see this same continuation again. */
-    if (CONT_PRT(cont) != CNIL) {
-      if (CONT_PRT(cont) == CTRUE) {
-	/* restore the contents of the value register before
-	   proceeding. */
-	WB(&CONT_PRT(cont), CNIL);
-	WB(&TVALR(thr), CONT_PRV(cont));
-	WB(&CONT_PRV(cont), CNIL);
-	WB(&TCONR(thr), cdr(TCONR(thr)));
-      } else {
-	/* save the contents of the value register */
-	WB(&CONT_PRV(cont), TVALR(thr));
-	tmp = CONT_PRT(cont);
-	WB(&CONT_PRT(cont), CTRUE);
-	cont = tmp;
-      }
-    } else {
-      WB(&TCONR(thr), cdr(TCONR(thr)));
-    }
-    if (TYPE(VINDEX(cont, 0)) == T_XCONT) {
-      if (arc_restorexcont(c, thr, cont)) {
-	return(0);
-      }
-      continue;
-    }
-    arc_restorecont(c, thr, cont);
-    return(0);
   }
-}
-
-value arc_mkcontfull(arc *c, value offset, value funr, value envr,
-		     value savedstk, value conr, value econt)
-{
-  value cont = arc_mkvector(c, 9);
-
-  CONT_OFS(cont) = offset;
-  CONT_FUN(cont) = funr;
-  CONT_ENV(cont) = envr;
-  CONT_STK(cont) = savedstk;
-  CONT_CON(cont) = conr;
-  CONT_ECR(cont) = econt;
-  CONT_PRT(cont) = CNIL;	/* protect function */
-  CONT_PRV(cont) = CNIL;	/* during protect function return */
-  CONT_FPS(cont) = CNIL;
-  return(cont);
+  arc_restorecont(c, thr, cont);
+  return(0);
 }
 
 value arc_mkcont(arc *c, value offset, value thr)
 {
-  value cont = arc_mkvector(c, 9);
+  value cont = arc_mkvector(c, 7);
   value savedstk;
   int stklen, i;
   value *base = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
@@ -1048,10 +1026,8 @@ value arc_mkcont(arc *c, value offset, value thr)
   }
   WB(&CONT_STK(cont), savedstk);
   WB(&CONT_CON(cont), TCONR(thr));
-  WB(&CONT_ECR(cont), TECONT(thr));
-  WB(&CONT_PRT(cont), CNIL);	/* protect function */
-  WB(&CONT_PRV(cont), CNIL);	/* during protect function return */
-  WB(&CONT_FPS(cont), CNIL);
+  WB(&CONT_TCH(cont), CNIL);
+  WB(&CONT_EXH(cont), TEXH(thr));
   return(cont);
 }
 
@@ -1100,16 +1076,17 @@ value arc_mkclosure(arc *c, value code, value env)
   return(clos);
 }
 
-/* Exception handlers are continuations consed on top of the ECONT
+/* Exception handlers are continuations consed on top of the TEXH
    register.  It is not possible at the moment to make an error handling
    function in C.  I have to think about how to do that. */
 value arc_on_err(arc *c, value argv, value rv, CC4CTX)
 {
   CC4VDEFBEGIN;
   CC4VDEFEND;
-  value fun, env, offset, stk, errcont;
-  value errfn, fn, thr = c->curthread;
+  value exh;
+  value errfn, fn;
 
+  CC4BEGIN(c);
   if (VECLEN(argv) != 2) {
     arc_err_cstrfmt(c, "procedure on-err: expects 2 arguments, given %d",
 		    VECLEN(argv));
@@ -1127,15 +1104,12 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
     return(CNIL);
   }
 
-  fun = car(errfn);
-  env = cdr(errfn);
-  offset = INT2FIX(0);
-  stk = CNIL;
-  /* the ECONT register contains a list of all error continuations.  It's
-     essentially syntactic sugaring around call/cc. */
-  errcont = arc_mkcontfull(c, offset, fun, env, stk, TCONR(thr), TECONT(thr));
-  WB(&TECONT(thr), cons(c, errcont, TECONT(thr)));
-  CC4BEGIN(c);
+  /* create an exception handler cons and register it in TEXH. */
+  WB(&CONT_TCH(TCONR(c->curthread)), TCH(c->curthread));
+  exh = cons(c, errfn, TCONR(c->curthread));
+  WB(&TEXH(c->curthread), cons(c, exh, TEXH(c->curthread)));
+
+  /* call the thunk passed to us */
   CC4CALL(c, argv, fn, 0, CNIL);
   CC4END;
   return(rv);
@@ -1154,112 +1128,93 @@ value arc_mkexception(arc *c, value details, value lastcall, value contchain)
 
 #define ESTRMAX 1024
 
-/* When an error is raised, we first look through the ECONT register.
-   If the ECONT register is not null, we will pull the topmost entry
-   and the restore that continuation.  We will push the exception
-   object on the stack so it becomes the parameter of the error
-   handler. If the ECONT register is nil, we use the signal_error
-   function as the final fallback.
-*/
-value arc_errexc_thr(arc *c, value thr, value exc)
+value arc_err(arc *c, value argv, value rv, CC4CTX)
 {
-  value errcont, newconr, cont, pcont, endcont;
+  CC4VDEFBEGIN;
+  CC4VARDEF(tcr);
+  CC4VARDEF(exh);
+  CC4VARDEF(there);
+  CC4VARDEF(exc);
+  CC4VDEFEND;
 
-  if (NIL_P(TECONT(thr))) {
-    /* In the absence of any on-error rescue functions,
-       we attempt to build up a new CONR with each of the
-       protect functions registered.  The most recent one
-       should be restored.  The state of the virtual machine
-       is set to Texiting so that when the last such protect
-       continuation finishes execution, it will execute
-       c->signal_error. */
-    newconr = CNIL;
-    cont = TCONR(thr);
-    WB(&TEXC(thr), exc);
-    while (cont != CNIL) {
-      pcont = CONT_PRT(car(cont));
-      if (pcont != CNIL)
-	newconr = cons(c, pcont, newconr);
-      cont = cdr(cont);
-    }
-    if (newconr == CNIL) {
-      /* if there is nothing, just signal error and be done with it. */
-      c->in_compile = 0;
-      WB(&TCONR(thr), CNIL);
-      TSTATE(thr) = Tbroken;
-      c->signal_error(c, VINDEX(exc, 0));
-      return(CNIL);
-    }
-    /* otherwise, reverse the newconr so that the continuations get invoked
-       in the proper order. */
-    cont = newconr = arc_list_reverse(c, newconr);
-    while (cont != CNIL) {
-      /* we are cooking up a new continuation register: make sure that
-	 the conr's are proper. */
-      WB(&CONT_CON(car(cont)), cdr(cont));
-      cont = cdr(cont);
-    }
-    cont = car(newconr);
-    newconr = cdr(newconr);
-    TSTATE(thr) = Texiting;
-    WB(&TCONR(thr), newconr);	/* replace the continuation register */
-    arc_restorecont(c, thr, cont);
+  CC4BEGIN(c);
+  if (VECLEN(argv) != 1) {
+    arc_err_cstrfmt(c, "err expects only one argument %d passed", VECLEN(argv));
     return(CNIL);
   }
+  CC4V(exc) = VINDEX(argv, 0);
+  if (TYPE(CC4V(exc)) == T_STRING) {
+    exc = arc_mkexception(c, CC4V(exc), CODE_NAME(TFUNR(c->curthread)),
+			  TCONR(c->curthread));
+  }
+  TYPECHECK(CC4V(exc), T_EXCEPTION, 1);
 
-  errcont = car(TECONT(thr));
-  WB(&TECONT(thr), cdr(TECONT(thr)));
-
-  /* Now, we have to go through the CONR in the same way as above,
-     adding continuations with registered error handlers as we go.
-     We should stop when we reach the portion of the continuation
-     register specified in CONT_CON of the errcont (which is where
-     the error handler was inserted).
-  */
-  endcont = car(CONT_CON(errcont));
-  newconr = CNIL;
-  cont = TCONR(thr);
-  while (cont != CNIL && cont != endcont) {
-    pcont = CONT_PRT(car(cont));
-    if (pcont != CNIL)
-      newconr = cons(c, pcont, newconr);
-    cont = cdr(cont);
+  if (TEXH(c->curthread) == CNIL) {
+    value tch;
+    /* If we have no exception handler, we should execute all registered
+       protect handlers down to the bottom, so we have to find the bottom
+       somehow. */
+    tch = TCH(c->curthread);
+    while (car(tch) != INT2FIX(0xdead)) {
+      tch = cdr(tch);
+      if (NIL_P(tch) || !CONS_P(tch)) {
+	/* Just in case. */
+	fprintf(stderr, "FATAL: corrupted TCH structure\n");
+	exit(1);
+      }
+    }
+    CC4V(there) = tch;
+  } else {
+    CC4V(there) = CONT_TCH(car(car(TEXH(c->curthread))));
   }
 
-  if (newconr == CNIL) {
-    /* if there is nothing, just jump to the error continuation and be
-     done. */
-    arc_restorecont(c, thr, errcont);
-    CPUSH(thr, exc);
-    /* jump back to the start of the virtual machine context executing
-       this. */
-    return(CNIL);
+  /* Reroot and execute any protect handlers up to the point of our
+     saved continuation's TCH. */
+  CC4V(tcr) = reroot(c, c->curthread, CC4V(there));
+  CC4V(tcr) = arc_list_reverse(c, CC4V(tcr));
+  while (CC4V(tcr) != CNIL) {
+    value tcont = car(CC4V(tcr));
+
+    if (!NIL_P(tcont))
+      CC4CALL(c, argv, tcont, 0, CNIL);
+    WB(&CC4V(tcr), cdr(CC4V(tcr)));
   }
-  /* otherwise, combine with the error continuation and reverse to make
-     the new continuation register, but first put the exception into
-     the saved stack */
-  CONT_STK(errcont) = arc_mkvector(c, 1);
-  VINDEX(CONT_STK(errcont), 0) = exc;
-  errcont = cons(c, errcont, CONT_CON(errcont));
-  newconr = arc_list_reverse(c, newconr);
-  cont = newconr = arc_list_append(newconr, errcont);
-  while (cont != CNIL) {
-    /* we are cooking up a new continuation register: make sure that
-       the conr's are proper. */
-    WB(&CONT_CON(car(cont)), cdr(cont));
-    cont = cdr(cont);
+
+  if (NIL_P(TEXH(c->curthread))) {
+    /* if no exception handlers have been registered, the thread
+       should be terminated.  The default error handler is called
+       when this happens.  If the default error handler returns,
+       the thread just dies. */
+    c->in_compile = 0;
+    WB(&TCONR(c->curthread), CNIL);
+    TSTATE(c->curthread) = Tbroken;
+    c->signal_error(c, arc_exc_details(c, CC4V(exc)));
+    longjmp(TVJMP(c->curthread), 1);
   }
-  cont = car(newconr);
-  newconr = cdr(newconr);
-  WB(&TCONR(thr), newconr);	       /* replace the continuation register */
-  arc_restorecont(c, thr, cont);
-  return(CNIL);
+
+  /* If we have an exception handler, the exception handler vector
+     from the stack of exception handlers, and call it with the
+     exception passed to us. */
+  CC4V(exh) = car(TEXH(c->curthread));
+  WB(&TEXH(c->curthread), cdr(TEXH(c->curthread)));
+  CC4CALL(c, argv, car(CC4V(exh)), 1, CC4V(exc));
+  /* Now, we restore the continuation */
+  WB(&TCONR(c->curthread), cons(c, cdr(CC4V(exh)), CONT_CON(cdr(CC4V(exh)))));
+  CC4END;
+  /* When the saved continuation is restored, the value returned by the
+     exception handler is returned to the caller of on-err that created
+     the exception. */
+  return(rv);
 }
 
-value arc_errexc(arc *c, value exc)
+value arc_errexc(arc *c, value ex)
 {
-  arc_errexc_thr(c, c->curthread, exc);
-  longjmp(TVJMP(c->curthread), 0);
+  /* This is one way to "call" a CC4 function, but it can only be
+     used for tail calls. */
+  CPUSH(c->curthread, ex);
+  WB(&TVALR(c->curthread), arc_mkccode(c, -3, arc_err, CNIL));
+  TARGC(c->curthread) = 1;
+  longjmp(TVJMP(c->curthread), 2);
   return(CNIL);
 }
 
@@ -1286,15 +1241,6 @@ value arc_err_cstrfmt2(arc *c, const char *lastcall, const char *fmt, ...)
   return(arc_errexc(c, ex));
 }
 
-value arc_err(arc *c, value emsg)
-{
-  value thr = c->curthread;
-
-  TYPECHECK(emsg, T_STRING, 1);
-  return(arc_errexc(c, arc_mkexception(c, emsg, CODE_NAME(TFUNR(thr)),
-				       TCONR(thr))));
-}
-
 value arc_exc_details(arc *c, value exc)
 {
   TYPECHECK(exc, T_EXCEPTION, 1);
@@ -1304,59 +1250,120 @@ value arc_exc_details(arc *c, value exc)
 value arc_callcc(arc *c, value argv, value rv, CC4CTX)
 {
   CC4VDEFBEGIN;
+  CC4VARDEF(func);
+  CC4VARDEF(cont);
   CC4VDEFEND;
-  value thr = c->curthread, func;
+  CC4BEGIN(c);
 
   if (VECLEN(argv) != 1) {
     arc_err_cstrfmt(c, "procedure ccc: expects 1 argument, given %d",
 		    VECLEN(argv));
     return(CNIL);
   }
-  func = VINDEX(argv, 0);
+  CC4V(func) = VINDEX(argv, 0);
   TYPECHECK(func, T_CLOS, 1);
-  CC4BEGIN(c);
-  CC4CALL(c, argv, func, 1, car(TCONR(thr)));
+  CC4V(cont) = car(TCONR(c->curthread));
+  /* We need to save the current TCH in the reified continuation so
+     that if it is called, the before/after handlers saved by
+     protect/dynamic-wind can be executed.  This is not needed when
+     a dynamic-wind call returns normally: the after handlers are
+     executed by the dynamic-wind function itself when the function
+     returns. */
+  WB(&CONT_TCH(CC4V(cont)), TCH(c->curthread));
+  CC4CALL(c, argv, func, 1, CC4V(cont));
   CC4END;
   return(rv);
 }
 
-value arc_protect(arc *c, value argv, value rv, CC4CTX)
+value arc_dynamic_wind(arc *c, value argv, value rv, CC4CTX)
 {
   CC4VDEFBEGIN;
+  CC4VARDEF(here);
+  CC4VARDEF(tcr);
+  CC4VARDEF(there);
+  CC4VARDEF(before);
+  CC4VARDEF(during);
+  CC4VARDEF(after);
+  CC4VARDEF(ret);
   CC4VDEFEND;
-  value during, after, acont, thr = c->curthread;
-  value fun, env, offset, stk;
-
-  if (VECLEN(argv) != 2) {
-    arc_err_cstrfmt(c, "procedure protect: expects 2 arguments, given %d",
+  CC4BEGIN(c);
+  if (VECLEN(argv) != 3) {
+    arc_err_cstrfmt(c, "procedure dynamic-wind: expects 3 arguments, given %d",
 		    VECLEN(argv));
     return(CNIL);
   }
-  during = VINDEX(argv, 0);
-  after = VINDEX(argv, 1);
-  if (TYPE(during) != T_CLOS) {
-    arc_err_cstrfmt(c, "procedure protect: closure required for first arg");
-    return(CNIL);
-  }
+  CC4V(before) = VINDEX(argv, 0);
+  CC4V(during) = VINDEX(argv, 1);
+  CC4V(after) = VINDEX(argv, 2);
+  TYPECHECK(CC4V(before), T_CLOS, 1);
+  TYPECHECK(CC4V(during), T_CLOS, 2);
+  TYPECHECK(CC4V(after), T_CLOS, 2);
+  CC4V(here) = TCH(c->curthread);
+  CC4V(there) = arc_mkvector(c, 3);
+  VINDEX(CC4V(there), 0) = CC4V(before);
+  VINDEX(CC4V(there), 1) = CC4V(after);
+  VINDEX(CC4V(there), 2) = CNIL;
+  CC4V(there) = cons(c, CC4V(there), CC4V(here));
+  CC4V(tcr) = reroot(c, c->curthread, CC4V(there));
+  CC4V(tcr) = arc_list_reverse(c, CC4V(tcr));
+  while (CC4V(tcr) != CNIL) {
+    value tcont = car(CC4V(tcr));
 
-  if (TYPE(after) != T_CLOS) {
-    arc_err_cstrfmt(c, "procedure protect: closure required for second arg");
-    return(CNIL);
+    if (!NIL_P(tcont))
+      CC4CALL(c, argv, tcont, 0, CNIL);
+    WB(&CC4V(tcr), cdr(CC4V(tcr)));
   }
-
-  /* The continuation at the top of the stack is the continuation
-     created by the call to 'protect'.  Without the protect call,
-     it would have been created for the call to the during function.
-     Patch the slot in that continuation for the after procedure. */
-  fun = car(after);
-  env = cdr(after);
-  offset = INT2FIX(0);
-  stk = CNIL;
-  acont = arc_mkcontfull(c, offset, fun, env, stk, TCONR(thr), TECONT(thr));
-  WB(&VINDEX(car(TCONR(thr)), 6), acont);
-  CC4BEGIN(c);
   CC4CALL(c, argv, during, 0, CNIL);
+  CC4V(ret) = rv;
+  /* execute the after clauses if the during thunk returns normally */
+  CC4V(tcr) = reroot(c, c->curthread, CC4V(here));
+  CC4V(tcr) = arc_list_reverse(c, CC4V(tcr));
+  while (CC4V(tcr) != CNIL) {
+    value tcont = car(CC4V(tcr));
+
+    if (!NIL_P(tcont))
+      CC4CALL(c, argv, tcont, 0, CNIL);
+    WB(&CC4V(tcr), cdr(CC4V(tcr)));
+  }
+  return(CC4V(ret));
   CC4END;
-  return(rv);
+  return(CC4V(ret));
 }
 
+value arc_cmark(arc *c, value key)
+{
+  value cm, val;
+
+  cm = TCM(c->curthread);
+  val = arc_hash_lookup(c, cm, key);
+  if (val == CNIL)
+    return(CNIL);
+  return(car(val));
+}
+
+/* Never use these functions directly.  They should only be used within
+   the call-w/cmark macro. */
+value arc_scmark(arc *c, value key, value val)
+{
+  value cm, bind;
+
+  cm = TCM(c->curthread);
+  bind = arc_hash_lookup(c, cm, key);
+  bind = cons(c, val, bind);
+  arc_hash_insert(c, cm, key, bind);
+  return(val);
+}
+
+value arc_ccmark(arc *c, value key)
+{
+  value cm, bind, val;
+
+  cm = TCM(c->curthread);
+  bind = arc_hash_lookup(c, cm, key);
+  if (NIL_P(bind))
+    return(CNIL);
+  val = car(bind);
+  bind = cdr(bind);
+  arc_hash_insert(c, cm, key, bind);
+  return(val);
+}
