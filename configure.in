@@ -16,7 +16,7 @@
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
 AC_PREREQ(2.61)
-AC_INIT([Arcueid], [0.0.8], [dido@imperium.ph])
+AC_INIT([Arcueid], [0.0.9], [dido@imperium.ph])
 AC_CONFIG_SRCDIR([src/alloc.c])
 
 AM_INIT_AUTOMAKE([-Wall -Werror])
