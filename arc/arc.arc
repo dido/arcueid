@@ -816,7 +816,7 @@
 (mac call-w/cmark (thunk . cmarks)
   `(dynamic-wind (fn () ,@(map1 [list 'scmark car._ cadr._] (pair cmarks)))
 		 ,thunk
-		 (fn () @(map1 [list 'ccmark car._ cadr._] (pair cmarks)))))
+		 (fn () ,@(map1 [list 'ccmark car._] (pair cmarks)))))
 
 (let expander 
      (fn (f var name body)
