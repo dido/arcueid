@@ -231,6 +231,13 @@ static void error_handler(struct arc *c, value err)
   longjmp(err_jmp_buf, 1);
 }
 
+static void error_handler2(struct arc *c, value err)
+{
+  printf("Error: ");
+  arc_print_string(c, err);
+  printf("\n");
+}
+
 static void banner(void)
 {
   printf("%s REPL Copyright (c) 2012 Rafael R. Sevilla\n", PACKAGE_STRING);
@@ -282,6 +289,8 @@ int main(int argc, char **argv)
   }
 #endif
 
+  c->signal_error = error_handler2;
+
   /* read-eval-print in Arcueid! */
 #ifdef HAVE_LIBREADLINE
   replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn))))";
@@ -293,7 +302,6 @@ int main(int argc, char **argv)
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   code = arc_mkclosure(c, code, CNIL);
-  setjmp(err_jmp_buf);
   arc_spawn(c, code);
   arc_thread_dispatch(c);
   return(EXIT_SUCCESS);
