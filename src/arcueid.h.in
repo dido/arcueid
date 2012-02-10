@@ -372,7 +372,7 @@ static inline enum arc_types TYPE(value v)
 
 #define TYPECHECK(arg, expected, argno)			\
   if (TYPE(arg) != expected) {				\
-    arc_err_cstrfmt(c, "expected argument %d to be type %s given type %s", argno, TYPENAME(expected), TYPENAME(TYPE(arg))); \
+    arc_err_cstrfmt(c, "%s: expected argument %d to be type %s given type %s", __func__, argno, TYPENAME(expected), TYPENAME(TYPE(arg))); \
     return(CNIL);							\
     }
 
