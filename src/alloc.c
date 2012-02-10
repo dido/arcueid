@@ -279,8 +279,10 @@ static void sweep(arc *c, value v)
     c->free_block(c, REP(v)._hash.table); /* free the immutable memory of the hash table */
     break;
   case T_TBUCKET:
-    /* Make the cell in the parent hash table undef. */
-    WB(&REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index], CUNDEF);
+    /* Make the cell in the parent hash table undef if the table still
+       contains the binding to the cell which we are about to sweep. */
+    if (REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index] == v)
+      WB(&REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index], CUNDEF);
     break;
   case T_PORT:
   case T_CUSTOM:
