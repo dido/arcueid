@@ -2,6 +2,10 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
+* Version 0.0.10 (2012-??-??)
+- Yet another garbage collection bug fix related to the garbage collection
+  of hashes and symbols.
+
 * Version 0.0.9 (2012-02-09)
 - Various bug fixes (destructuring binds, hash application)
 - Functions defined and fixed (close, setuid, flushout, etc.)
