@@ -276,10 +276,6 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     {
       int i;
       append_cstring(c, "#<continuation: ", ppstr);
-      for (i=0; i<VECLEN(sexpr); i++) {
-	prettyprint(c, VINDEX(sexpr, i), ppstr);
-	append_cstring(c, " ", ppstr);
-      }
       append_cstring(c, ">", ppstr);
     }
     break;
@@ -464,10 +460,6 @@ value arc_sdisp(arc *c, value sexpr, value port)
     {
       int i;
       arc_writecstr(c, "#<continuation: ", port);
-      for (i=0; i<VECLEN(sexpr); i++) {
-	arc_sdisp(c, VINDEX(sexpr, i), port);
-	arc_writecstr(c, " ", port);
-      }
       arc_writec_rune(c, '>', port);
     }
     break;
