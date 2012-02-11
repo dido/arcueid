@@ -304,8 +304,17 @@ void arc_vmengine(arc *c, value thr, int quanta)
     INST(icont):
       {
 	int icofs = (int)*TIP(thr)++;
-	WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
+	value *dest;
+
+	/* A first attempt at tail call optimization.  See if icofs
+	   points to a return instruction.  Only make a new continuation
+	   if it is not a return.  We can dispense with the new 
+	   continuation in this case since it's a tail call. */
+	dest = TIP(thr) + icofs - 2;
+	if (*dest != iret) {
+	  WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
 			       TCONR(thr)));
+	}
 	TSP(thr) = TSTOP(thr);
       }
       NEXT;
@@ -1088,7 +1097,7 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
 {
   CC4VDEFBEGIN;
   CC4VDEFEND;
-  value exh;
+  value exh, cont;
   value errfn, fn;
 
   CC4BEGIN(c);
@@ -1110,8 +1119,13 @@ value arc_on_err(arc *c, value argv, value rv, CC4CTX)
   }
 
   /* create an exception handler cons and register it in TEXH. */
-  WB(&CONT_TCH(car(TCONR(c->curthread))), TCH(c->curthread));
-  exh = cons(c, errfn, car(TCONR(c->curthread)));
+  if (!NIL_P(TCONR(c->curthread))) {
+    WB(&CONT_TCH(car(TCONR(c->curthread))), TCH(c->curthread));
+    cont = car(TCONR(c->curthread));
+  } else {
+    cont = CNIL;
+  }
+  exh = cons(c, errfn, cont);
   WB(&TEXH(c->curthread), cons(c, exh, TEXH(c->curthread)));
 
   /* call the thunk passed to us */
@@ -1154,7 +1168,9 @@ value arc_err(arc *c, value argv, value rv, CC4CTX)
   }
   TYPECHECK(CC4V(exc), T_EXCEPTION, 1);
 
-  CC4V(there) = (NIL_P(TEXH(c->curthread))) ? TBCH(c->curthread)
+  CC4V(there) = (NIL_P(TEXH(c->curthread))
+		 || NIL_P(cdr(car(TEXH(c->curthread))))) ?
+    TBCH(c->curthread)
     : CONT_TCH(cdr(car(TEXH(c->curthread))));
 
   /* Reroot and execute any protect handlers up to the point of our
@@ -1181,14 +1197,15 @@ value arc_err(arc *c, value argv, value rv, CC4CTX)
     longjmp(TVJMP(c->curthread), 1);
   }
 
-  /* If we have an exception handler, the exception handler vector
+  /* If we have an exception handler, get the exception handler vector
      from the stack of exception handlers, and call it with the
      exception passed to us. */
   CC4V(exh) = car(TEXH(c->curthread));
   WB(&TEXH(c->curthread), cdr(TEXH(c->curthread)));
   CC4CALL(c, argv, car(CC4V(exh)), 1, CC4V(exc));
   /* Now, we restore the continuation */
-  WB(&TCONR(c->curthread), cons(c, cdr(CC4V(exh)), CONT_CON(cdr(CC4V(exh)))));
+  if (!NIL_P(cdr(CC4V(exh))))
+    WB(&TCONR(c->curthread), cons(c, cdr(CC4V(exh)), CONT_CON(cdr(CC4V(exh)))));
   CC4END;
   /* When the saved continuation is restored, the value returned by the
      exception handler is returned to the caller of on-err that created
