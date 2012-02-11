@@ -274,9 +274,7 @@ static value prettyprint(arc *c, value sexpr, value *ppstr)
     break;
   case T_CONT:
     {
-      int i;
-      append_cstring(c, "#<continuation: ", ppstr);
-      append_cstring(c, ">", ppstr);
+      append_cstring(c, "#<continuation>", ppstr);
     }
     break;
   case T_XCONT:
@@ -458,9 +456,7 @@ value arc_sdisp(arc *c, value sexpr, value port)
     break;
   case T_CONT:
     {
-      int i;
-      arc_writecstr(c, "#<continuation: ", port);
-      arc_writec_rune(c, '>', port);
+      arc_writecstr(c, "#<continuation>", port);
     }
     break;
   case T_XCONT:
