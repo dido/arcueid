@@ -644,6 +644,11 @@ value apply_continuation(arc *c, value argv, value rv, CC4CTX)
   CC4BEGIN(c);
   CC4V(cont) = VINDEX(argv, 0);
   CC4V(conarg) = VINDEX(argv, 1);
+  if (TTID(c->curthread) != FIX2INT(CONT_THR(CC4V(cont)))) {
+    /* XXX - should we allow this? Seems ill-defined */
+    arc_err_cstrfmt(c, "attempt to invoke continuation from other thread");
+    return(CNIL);
+  }
   /* See if we have a saved TCH in the continuation.  If so,
      reroot to it and obtain all the befores/afters we need to
      execute.  Otherwise, just restore the continuation. */
@@ -1016,7 +1021,7 @@ int arc_return(arc *c, value thr)
 
 value arc_mkcont(arc *c, value offset, value thr)
 {
-  value cont = arc_mkvector(c, 7);
+  value cont = arc_mkvector(c, 8);
   value savedstk;
   int stklen, i;
   value *base = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
@@ -1042,6 +1047,7 @@ value arc_mkcont(arc *c, value offset, value thr)
   WB(&CONT_CON(cont), TCONR(thr));
   WB(&CONT_TCH(cont), CNIL);
   WB(&CONT_EXH(cont), TEXH(thr));
+  WB(&CONT_THR(cont), (thr == CNIL) ? CNIL : INT2FIX(TTID(thr)));
   return(cont);
 }
 
@@ -1268,7 +1274,12 @@ value arc_callcc(arc *c, value argv, value rv, CC4CTX)
   }
   CC4V(func) = VINDEX(argv, 0);
   TYPECHECK(CC4V(func), T_CLOS, 1);
-  CC4V(cont) = car(TCONR(c->curthread));
+  if (TCONR(c->curthread) == CNIL) {
+    /* If we have no continuation, we should generate one */
+    CC4V(cont) = arc_mkcont(c, 2, c->curthread);
+  } else {
+    CC4V(cont) = car(TCONR(c->curthread));
+  }
   /* We need to save the current TCH in the reified continuation so
      that if it is called, the before/after handlers saved by
      protect/dynamic-wind can be executed.  This is not needed when
