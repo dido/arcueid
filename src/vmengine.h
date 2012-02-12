@@ -108,6 +108,7 @@ extern int arc_return(arc *c, value thr);
    4. Continuation register
    5. Saved TCH register (null unless a reified continuation from ccc)
    6. Saved TEXH register
+   7. The thread which created this continuation
  */
 #define CONT_OFS(cont) (VINDEX(cont, 0))
 #define CONT_FUN(cont) (VINDEX(cont, 1))
@@ -116,6 +117,7 @@ extern int arc_return(arc *c, value thr);
 #define CONT_CON(cont) (VINDEX(cont, 4))
 #define CONT_TCH(cont) (VINDEX(cont, 5))
 #define CONT_EXH(cont) (VINDEX(cont, 6))
+#define CONT_THR(cont) (VINDEX(cont, 7))
 
 #define RUNNABLE(thr) (TSTATE(thr) == Tready || TSTATE(thr) == Texiting || TSTATE(thr) == Tcritical)
 
