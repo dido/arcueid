@@ -582,6 +582,8 @@ static struct {
   { "infile", 1, arc_infile },
   { "outfile", -1, arc_soutfile },
   { "close", -1, arc_sclose },
+  /* XXX - should we treat this as something other than an alias? */
+  { "force-close", -1, arc_sclose },
 
   { "instring", -1, arc_sinstring },
   { "outstring", -1, arc_soutstring },
