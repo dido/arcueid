@@ -128,12 +128,11 @@ static unsigned long hash_bignum(arc *c, arc_hs *s, mpz_t bignum)
   int i;
 
   calc_size = (mpz_sizeinbase(bignum,  2) + numb-1) / numb;
-  rop = c->get_block(c, calc_size * numb);
-  BLOCK_IMM(rop);
+  rop = (unsigned long *)malloc(calc_size * numb);
   mpz_export(rop, &countp, 1, numb, 0, 0, bignum);
   for (i=0; i<countp; i++)
     arc_hash_update(s, rop[i]);
-  c->free_block(c, rop);
+  free(rop);
   return((unsigned long)countp);
 }
 
