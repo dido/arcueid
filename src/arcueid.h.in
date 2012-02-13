@@ -145,10 +145,10 @@ enum threadstate {
 
 
 /* default thread timeslice */
-#define PQUANTA 2048
+#define PQUANTA 128
 
 /* default garbage collection quantum */
-#define GCQUANTA 8192
+#define GCQUANTA 16777216
 
 /* default thread stack size */
 #define TSTKSIZE 512
@@ -586,7 +586,7 @@ extern value arc_mkxcont(arc *c, value cc4ctx, value argv, value func,
 			 int fargc, ...);
 extern value arc_mkenv(arc *c, value parent, int size);
 extern void arc_apply(arc *c, value thr, value fun);
-extern value arc_macapply(arc *c, value func, value args);
+extern value arc_macapply(arc *c, value func, value args, int gc);
 extern int arc_return(arc *c, value thr);
 extern value arc_compile(arc *c, value expr, value ctx, value env,
 			 value cont);
