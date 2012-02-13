@@ -546,7 +546,7 @@ static value c4apply(arc *c, value thr, value avec,
    intended for expanding macros.  This will run the thread until the
    thread reaches Trelease state, and no other threads can execute.
    Note that garbage collection cycles do not execute while this is done. */
-value arc_macapply(arc *c, value func, value args)
+value arc_macapply(arc *c, value func, value args, int gc)
 {
   value thr, oldthr, retval, arg, nahd;
   int argc;
@@ -598,6 +598,8 @@ value arc_macapply(arc *c, value func, value args)
        but only after the compiler finishes execution.  This may
        result in more memory being consumed if a function being
        compiled invokes many macros. */
+    if (gc)
+      c->rungc(c);
   }
   retval = TVALR(thr);
   WB(&c->curthread, oldthr);
