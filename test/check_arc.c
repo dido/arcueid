@@ -47,7 +47,7 @@ static void error_handler(struct arc *c, value exc)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);			\
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);		\
   code = arc_cctx2code(c, cctx);			\
-  ret = arc_macapply(c, code, CNIL); }
+  ret = arc_macapply(c, code, CNIL, 0); }
 
 START_TEST(test_do)
 {
@@ -2315,7 +2315,7 @@ int main(void)
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
-    arc_macapply(c, code, CNIL);
+    arc_macapply(c, code, CNIL, 0);
     c->rungc(c);
   }
   arc_close(c, initload);
