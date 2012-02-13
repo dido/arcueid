@@ -39,7 +39,7 @@ START_TEST(test_compile_nil)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CNIL);
 
   str = arc_mkstringc(c, "nil");
@@ -48,7 +48,7 @@ START_TEST(test_compile_nil)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CNIL);
 }
 END_TEST
@@ -63,7 +63,7 @@ START_TEST(test_compile_t)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CTRUE);
 }
 END_TEST
@@ -78,7 +78,7 @@ START_TEST(test_compile_fixnum)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(123));
 }
 END_TEST
@@ -93,7 +93,7 @@ START_TEST(test_compile_string)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_STRING);
   fail_unless(arc_is(c, arc_mkstringc(c, "foo"), ret) == CTRUE);
 }
@@ -109,7 +109,7 @@ START_TEST(test_compile_char)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_CHAR);
   fail_unless(REP(sexpr)._char == 'a');
 }
@@ -127,7 +127,7 @@ START_TEST(test_compile_bignum)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_BIGNUM);
   mpz_init(expected);
   mpz_set_str(expected, "300000000000000000000000000000", 10);
@@ -146,7 +146,7 @@ START_TEST(test_compile_rational)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_RATIONAL);
   fail_unless(mpq_cmp_si(REP(ret)._rational, 1, 2) == 0);
 }
@@ -164,7 +164,7 @@ START_TEST(test_compile_flonum)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_FLONUM);
   fail_unless(fabs(3.14159 - REP(sexpr)._flonum) < 1e-6);
 }
@@ -180,7 +180,7 @@ START_TEST(test_compile_complex)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_COMPLEX);
   fail_unless(fabs(1.1 - REP(sexpr)._complex.re) < 1e-6);
   fail_unless(fabs(2.2 - REP(sexpr)._complex.im) < 1e-6);
@@ -199,7 +199,7 @@ START_TEST(test_compile_ident)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_FIXNUM);
   fail_unless(ret == INT2FIX(31337));
 
@@ -210,7 +210,7 @@ START_TEST(test_compile_ident)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_FIXNUM);
   fail_unless(ret == INT2FIX(73313));
 }
@@ -227,7 +227,7 @@ START_TEST(test_compile_if_empty)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CNIL);
 }
 END_TEST
@@ -243,7 +243,7 @@ START_TEST(test_compile_if_x)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(4));
 }
 END_TEST
@@ -259,7 +259,7 @@ START_TEST(test_compile_if_full)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "(if nil 1 2)");
@@ -268,7 +268,7 @@ START_TEST(test_compile_if_full)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(2));
 }
 END_TEST
@@ -284,7 +284,7 @@ START_TEST(test_compile_if_partial)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "(if nil 1)");
@@ -293,7 +293,7 @@ START_TEST(test_compile_if_partial)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CNIL);
 }
 END_TEST
@@ -309,7 +309,7 @@ START_TEST(test_compile_if_compound)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "(if nil 1 t 3 t 5 6)");
@@ -318,7 +318,7 @@ START_TEST(test_compile_if_compound)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(3));
 
   str = arc_mkstringc(c, "(if nil 1 nil 3 t 5 6)");
@@ -327,7 +327,7 @@ START_TEST(test_compile_if_compound)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(5));
 
   str = arc_mkstringc(c, "(if nil 1 nil 3 nil 5 6)");
@@ -336,7 +336,7 @@ START_TEST(test_compile_if_compound)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(6));
 }
 END_TEST
@@ -351,7 +351,7 @@ START_TEST(test_compile_fn_basic)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a b c) b) 1 2 3)");
@@ -360,7 +360,7 @@ START_TEST(test_compile_fn_basic)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(2));
 
   str = arc_mkstringc(c, "((fn (a b c) c) 1 2 3)");
@@ -369,7 +369,7 @@ START_TEST(test_compile_fn_basic)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(3));
 
   str = arc_mkstringc(c, "((fn a a) 1 2 3)");
@@ -378,7 +378,7 @@ START_TEST(test_compile_fn_basic)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(1));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
@@ -390,7 +390,7 @@ START_TEST(test_compile_fn_basic)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a . b) b) 1 2 3 4)");
@@ -399,7 +399,7 @@ START_TEST(test_compile_fn_basic)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(2));
   fail_unless(car(cdr(ret)) == INT2FIX(3));
@@ -412,7 +412,7 @@ START_TEST(test_compile_fn_basic)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(2));
 }
 END_TEST
@@ -427,7 +427,7 @@ START_TEST(test_compile_fn_oarg)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a (o b)) b) 1 2)");
@@ -436,7 +436,7 @@ START_TEST(test_compile_fn_oarg)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(2));
 
   str = arc_mkstringc(c, "((fn (a (o b)) b) 1)");
@@ -445,7 +445,7 @@ START_TEST(test_compile_fn_oarg)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CNIL);
 
   str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1)");
@@ -454,7 +454,7 @@ START_TEST(test_compile_fn_oarg)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(7));
 
   str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1 2)");
@@ -463,7 +463,7 @@ START_TEST(test_compile_fn_oarg)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(2));
 }
 END_TEST
@@ -478,7 +478,7 @@ START_TEST(test_compile_fn_dsb)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) b) 1 '(2 3 (4 5) 6) 7)");
@@ -487,7 +487,7 @@ START_TEST(test_compile_fn_dsb)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(2));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) c) 1 '(2 3 (4 5) 6) 7)");
@@ -496,7 +496,7 @@ START_TEST(test_compile_fn_dsb)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(3));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) d) 1 '(2 3 (4 5) 6) 7)");
@@ -505,7 +505,7 @@ START_TEST(test_compile_fn_dsb)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(4));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) e) 1 '(2 3 (4 5) 6) 7)");
@@ -514,7 +514,7 @@ START_TEST(test_compile_fn_dsb)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(5));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) f) 1 '(2 3 (4 5) 6) 7)");
@@ -523,7 +523,7 @@ START_TEST(test_compile_fn_dsb)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(6));
 
   str = arc_mkstringc(c, "((fn (a (b c (d e) f) g) g) 1 '(2 3 (4 5) 6) 7)");
@@ -532,7 +532,7 @@ START_TEST(test_compile_fn_dsb)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(7));
 }
 END_TEST
@@ -547,7 +547,7 @@ START_TEST(test_compile_fn_dsb_opt)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(2));
 
   str = arc_mkstringc(c, "((fn ((a (o b) c)) b) '(3 4 5))");
@@ -556,7 +556,7 @@ START_TEST(test_compile_fn_dsb_opt)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(4));
 
   str = arc_mkstringc(c, "(iso ((fn ((a b . c) . d) c) '(3 4 5 6) 7 8) '(5 6))");
@@ -565,7 +565,7 @@ START_TEST(test_compile_fn_dsb_opt)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CTRUE);
 
   str = arc_mkstringc(c, "(iso ((fn ((a b . c) . d) d) '(3 4 5 6) 7 8) '(7 8))");
@@ -574,7 +574,7 @@ START_TEST(test_compile_fn_dsb_opt)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CTRUE);
 }
 END_TEST
@@ -589,7 +589,7 @@ START_TEST(test_compile_quote)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(1));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
@@ -609,7 +609,7 @@ START_TEST(test_compile_qquote)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(0));
   fail_unless(car(cdr(ret)) == INT2FIX(1));
@@ -633,7 +633,7 @@ START_TEST(test_compile_qquote2)
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   /* arc_disasm(c, code); */
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(2));
   fail_unless(car(cdr(ret)) == INT2FIX(3));
@@ -653,7 +653,7 @@ START_TEST(test_compile_qquote3)
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
   /* arc_disasm(c, code); */
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(NIL_P(ret));
 }
 END_TEST
@@ -669,7 +669,7 @@ START_TEST(test_compile_assign)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  arc_macapply(c, code, CNIL);
+  arc_macapply(c, code, CNIL, 0);
   ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "leet"));
   fail_unless(ret == INT2FIX(1337));
   ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "eleet"));
@@ -682,7 +682,7 @@ START_TEST(test_compile_assign)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(12345));
 }
 END_TEST
@@ -698,7 +698,7 @@ START_TEST(test_compile_inline_cons)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(1));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
@@ -716,7 +716,7 @@ START_TEST(test_compile_inline_car)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(1));
 }
 END_TEST
@@ -731,7 +731,7 @@ START_TEST(test_compile_inline_cdr)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(2));
   fail_unless(car(cdr(ret)) == INT2FIX(3));
@@ -748,7 +748,7 @@ START_TEST(test_compile_inline_scar)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  arc_macapply(c, code, CNIL);
+  arc_macapply(c, code, CNIL, 0);
 
   str = arc_mkstringc(c, "(scar xyzzy 4)");
   fp = arc_instring(c, str, CNIL);
@@ -756,7 +756,7 @@ START_TEST(test_compile_inline_scar)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  arc_macapply(c, code, CNIL);
+  arc_macapply(c, code, CNIL, 0);
   ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "xyzzy"));
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(4));
@@ -775,7 +775,7 @@ START_TEST(test_compile_inline_is)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CTRUE);
 
   str = arc_mkstringc(c, "(is 1 2)");
@@ -784,7 +784,7 @@ START_TEST(test_compile_inline_is)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == CNIL);
 }
 END_TEST
@@ -799,7 +799,7 @@ START_TEST(test_compile_inline_plus)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(28));
 }
 END_TEST
@@ -814,7 +814,7 @@ START_TEST(test_compile_inline_times)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(5040));
 }
 END_TEST
@@ -829,7 +829,7 @@ START_TEST(test_compile_inline_minus)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(FIX2INT(ret) == -1);
 
   str = arc_mkstringc(c, "(- 3 2 1)");
@@ -838,7 +838,7 @@ START_TEST(test_compile_inline_minus)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(FIX2INT(ret) == 0);
 
 }
@@ -854,7 +854,7 @@ START_TEST(test_compile_inline_div)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_FLONUM);
   fail_unless(fabs(REP(ret)._flonum - 0.5) < 1e-6);
 
@@ -864,7 +864,7 @@ START_TEST(test_compile_inline_div)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(FIX2INT(ret) == 2);
 
 }
@@ -881,7 +881,7 @@ START_TEST(test_compile_macro)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_TAGGED);
   fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
 
@@ -892,7 +892,7 @@ START_TEST(test_compile_macro)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(FIX2INT(ret) == 13);
 
   /* Define another few macros. The "do" macro */
@@ -902,7 +902,7 @@ START_TEST(test_compile_macro)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_TAGGED);
   fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
 
@@ -913,7 +913,7 @@ START_TEST(test_compile_macro)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(FIX2INT(ret) == 2);
 
   /* Define another macro */
@@ -923,7 +923,7 @@ START_TEST(test_compile_macro)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(TYPE(ret) == T_TAGGED);
   fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
 
@@ -933,7 +933,7 @@ START_TEST(test_compile_macro)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(FIX2INT(ret) == 3);
 }
 END_TEST
@@ -948,7 +948,7 @@ START_TEST(test_compile_if_fn)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(3));
 }
 END_TEST
@@ -963,7 +963,7 @@ START_TEST(test_compile_eval)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL);
+  ret = arc_macapply(c, code, CNIL, 0);
   fail_unless(ret == INT2FIX(3));
 }
 END_TEST
