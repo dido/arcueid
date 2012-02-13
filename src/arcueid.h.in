@@ -145,10 +145,10 @@ enum threadstate {
 
 
 /* default thread timeslice */
-#define PQUANTA 128
+#define PQUANTA 4096
 
 /* default garbage collection quantum */
-#define GCQUANTA 16777216
+#define GCQUANTA 8192
 
 /* default thread stack size */
 #define TSTKSIZE 512
