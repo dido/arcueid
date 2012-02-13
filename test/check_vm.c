@@ -1052,7 +1052,7 @@ START_TEST(test_vm_macapply)
   func = arc_mkcode(&c, CCTX_VCODE(cctx), 0);
 
   args = cons(&c, INT2FIX(31337), cons(&c, INT2FIX(7), CNIL));
-  ret = arc_macapply(&c, func, args);
+  ret = arc_macapply(&c, func, args, 0);
   fail_unless(ret == INT2FIX(31330));
 }
 END_TEST
@@ -1063,7 +1063,7 @@ START_TEST(test_vm_macapply_cc)
 
   func = arc_mkccode(&c, 1, test_cfunc, CNIL);
   args = cons(&c, INT2FIX(31337), CNIL);
-  ret = arc_macapply(&c, func, args);
+  ret = arc_macapply(&c, func, args, 0);
   fail_unless(ret == INT2FIX(31339));
 }
 END_TEST
