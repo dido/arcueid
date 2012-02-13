@@ -270,8 +270,7 @@ int main(int argc, char **argv)
     cctx = arc_mkcctx(c, INT2FIX(1), 0);
     arc_compile(c, sexpr, cctx, CNIL, CTRUE);
     code = arc_cctx2code(c, cctx);
-    arc_macapply(c, code, CNIL);
-    c->rungc(c);
+    arc_macapply(c, code, CNIL, 1);
   }
   arc_close(c, initload);
 
