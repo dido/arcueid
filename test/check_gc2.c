@@ -40,7 +40,7 @@ value TEST(const char *testexpr)
   cctx = arc_mkcctx(c, INT2FIX(1), 0);
   arc_compile(c, sexpr, cctx, CNIL, CTRUE);
   code = arc_cctx2code(c, cctx);
-  return(arc_macapply(c, code, CNIL));
+  return(arc_macapply(c, code, CNIL, 0));
 }
 
 START_TEST(test_nested_envs)
