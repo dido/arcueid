@@ -85,7 +85,7 @@ static value macex(arc *c, value e, value once)
       ;
     if (arc_type(c, op) != ARC_BUILTIN(c, S_MAC))
       return(e);			/* not a macro */
-    expansion = arc_macapply(c, arc_rep(c, op), cdr(e));
+    expansion = arc_macapply(c, arc_rep(c, op), cdr(e), 0);
     /*
     if (macdebug) {
       printf("Macro: ");
