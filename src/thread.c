@@ -158,13 +158,13 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
     return;
 
   /* Do not wait for file descriptors if we are in a critical
-     section, compiling a macro, the only thread running, or
-     are a thread that is about to be terminated. */
+     section, compiling a macro, or are a thread that is about
+     to be terminated. */
   if (TSTATE(thr) == Tcritical || TSTATE(thr) == Texiting)
     return;
   if (c->in_compile)
     return;
-  if (c->vmthreads == CNIL || (car(c->vmthreads) == thr && cdr(c->vmthreads) == CNIL))
+  if (c->vmthreads == CNIL)
     return;
 
   TSTATE(thr) = Tiowait;
@@ -341,18 +341,13 @@ void arc_thread_dispatch(arc *c)
        do some post-cleanup work */
     if (need_select) {
 #ifdef HAVE_SYS_EPOLL_H
-      if (gcstatus == 0) {
-	/* if the garbage collector has not finished its work (for
-	   VCGC this means that it has not yet entered a new epoch),
-	   allow it to keep on running whatever other considerations
-	   apply. */
+      if (!gcstatus) {
+	/* if the gc indicates it still has some work to do,
+	   do not allow epoll to wait. */
 	eptimeout = 0;
       } else if ((iowait + blockedthreads) == nthreads) {
 	/* If all threads are blocked on I/O or are waiting on channels,
-	   make epoll wait indefinitely.  The only possible thing
-	   (barring deadlock conditions) that can make the threads waiting
-	   on channels resume operation is one of the I/O blocked threads
-	   resuming, so we should wait indefinitely for that. */
+	   make epoll wait indefinitely until I/O is possible. */
 	eptimeout = -1;
       } else if ((iowait + sleepthreads + blockedthreads) == nthreads) {
 	/* If all threads are either asleep, blocked, or waiting on I/O,
