@@ -24,6 +24,7 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <string.h>
+#include <malloc.h>
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
@@ -32,12 +33,18 @@
 static int visit;
 static Bhdr *gcptr = NULL;
 static Bhdr *alloc_head = NULL;
+static Bhdr *alloc_tail = NULL;
 static int gce = 0, gct = 1;
 unsigned long long gcepochs = 0;
 static unsigned long long gccolor = 3;
 static unsigned long long gcnruns = 0;
 static unsigned long long markcount = 0;
 static unsigned long long sweepcount = 0;
+static unsigned long long allocated = 0;
+static unsigned long long freed = 0;
+static unsigned long long scannedmem = 0;
+static unsigned long long usedmem = 0;
+static unsigned long long immutable = 0;
 int nprop = 0;
 int __arc_mutator = 0;
 static int marker = 1;
@@ -52,56 +59,38 @@ Bhdr *__arc_get_heap_start(void)
   return(alloc_head);
 }
 
-#if 1
-
 static void free_block(struct arc *c, void *blk)
 {
   Bhdr *h;
+  size_t nsize;
 
   D2B(h, blk);
   if (h->prev == NULL)
     alloc_head = h->next;
   else
     h->prev->next = h->next;
-  if (h->next != NULL)
+  if (h->next == NULL)
+    alloc_tail = h->prev;
+  else
     h->next->prev = h->prev;
+  nsize = h->size + BHDRSIZE + ALIGN - 1;
+  freed += nsize;
   c->mem_free(h->block);
 }
-
-#else
-
-static void free_block(struct arc *c, void *blk)
-{
-  Bhdr *h;
-  int nsize;
-  void *blk2;
-
-  D2B(h, blk);
-  if (h->prev == NULL)
-    alloc_head = h->next;
-  else
-    h->prev->next = h->next;
-  if (h->next != NULL)
-    h->next->prev = h->prev;
-  /* clear the entire block */
-  nsize = h->size + BHDRSIZE + ALIGN - 1;
-  blk2 = h->block;
-  memset(blk2, 0xff, nsize);
-  c->mem_free(blk2);
-}
-
-#endif
 
 static void *alloc(arc *c, size_t osize)
 {
   void *ptr;
   Bhdr *h;
+  size_t actual;
 
-  ptr = c->mem_alloc(osize + BHDRSIZE + ALIGN - 1);
+  actual = osize + BHDRSIZE + ALIGN - 1;
+  ptr = c->mem_alloc(actual);
   if (ptr == NULL) {
     fprintf(stderr, "FATAL: failed to allocate memory\n");
     exit(1);
   }
+  allocated += actual;
   /* We have to position Bhdr inside the allocated memory
      such that Bhdr->data is at an aligned address. */
   D2B(h, (void *)(((value)ptr + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1)));
@@ -109,15 +98,16 @@ static void *alloc(arc *c, size_t osize)
   h->size = osize;
   h->color = mutator;
   h->block = ptr;
-  if (alloc_head == NULL) {
-    alloc_head = h;
+  if (alloc_head == NULL && alloc_tail == NULL) {
+    alloc_tail = alloc_head = h;
     alloc_head->prev = NULL;
     alloc_head->next = NULL;
   } else {
-    h->prev = NULL;
-    h->next = alloc_head;
-    alloc_head->prev = h;
-    alloc_head = h;
+    assert(alloc_head != NULL && alloc_tail != NULL);
+    h->prev = alloc_tail;
+    h->next = alloc_tail->next;
+    alloc_tail->next = h;
+    alloc_tail = h;
   }
   return(B2D(h));
 }
@@ -255,6 +245,14 @@ static void mark(arc *c, value v, int reclevel, value marksym)
   }
 }
 
+static void free_magic(arc *c, void *v)
+{
+  Bhdr *h;
+
+  D2B(h, v);
+  h->magic = MAGIC_F;
+}
+
 static void sweep(arc *c, value v)
 {
   sweepcount++;
@@ -265,7 +263,8 @@ static void sweep(arc *c, value v)
      (use malloc/free directly I believe). */
   switch (TYPE(v)) {
   case T_STRING:
-    c->free_block(c, REP(v)._str.str); /* a string's actual data is marked T_IMMUTABLE */
+    /* a string's actual data is marked T_IMMUTABLE */
+    free_magic(c, REP(v)._str.str);
     break;
 #ifdef HAVE_GMP_H
   case T_BIGNUM:
@@ -276,7 +275,7 @@ static void sweep(arc *c, value v)
     break;
 #endif
   case T_TABLE:
-    c->free_block(c, REP(v)._hash.table); /* free the immutable memory of the hash table */
+    free_magic(c, REP(v)._hash.table);
     break;
   case T_TBUCKET:
     /* Make the cell in the parent hash table undef if the table still
@@ -292,7 +291,7 @@ static void sweep(arc *c, value v)
     /* this should do for almost everything else */
     break;
   }
-  c->free_block(c, (void *)v);
+  free_magic(c, (void *)v);
 }
 
 static void rootset(arc *c)
@@ -320,35 +319,48 @@ static int rungc(arc *c)
 {
   value h;
   unsigned long long gcst, gcet;
-  Bhdr *next;
   int retval = 0;
 
   gcst = __arc_milliseconds();
   gcnruns++;
 
-  if (gcptr == NULL)
+  if (gcptr == NULL) {
+    immutable = usedmem = scannedmem = 0;
     gcptr = alloc_head;
+  }
 
   for (visit = c->gcquantum; visit > 0;) {
 
     if (gcptr == NULL)
 	break; 			/* stop if we finished the last heap block */
-    /* The following operations may delete cur before we advance,
-       so we advance now. */
-    next = B2NB(gcptr);
+    scannedmem += gcptr->size + BHDRSIZE + ALIGN - 1;
     if (gcptr->magic == MAGIC_A) {
       visit--;
       gct++;
       h = (value)B2D(gcptr);
-      if (gcptr->color == propagator) {
+      if (gcptr->color == mutator) {
+	usedmem += gcptr->size + BHDRSIZE + ALIGN - 1;
+      } else if (gcptr->color == propagator) {
 	gce--;
 	mark(c, h, 0, CNIL);
       } else if (gcptr->color == sweeper) {
 	gce++;
 	sweep(c, h);
       }
+      if (gcptr->color != sweeper)
+	gcptr = B2NB(gcptr);
+    } else if (gcptr->magic == MAGIC_I) {
+      usedmem += gcptr->size + BHDRSIZE + ALIGN - 1;
+      immutable += gcptr->size + BHDRSIZE + ALIGN - 1;
+      gcptr = B2NB(gcptr);
+    } else if (gcptr->magic == MAGIC_F) {
+      Bhdr *next = B2NB(gcptr);
+      free_block(c, (void *)B2D(gcptr));
+      gcptr = next;
+    } else {
+      fprintf(stderr, "FATAL: Invalid magic number %lx", gcptr->magic);
+      exit(1);
     }
-    gcptr = next;
   }
 
   if (gcptr != NULL)		/* completed this iteration? */
@@ -358,15 +370,15 @@ static int rungc(arc *c)
     gcepochs++;
     gccolor++;
     rootset(c);
-    /* printf("Epoch %lld ended:\n%lld marked, %lld swept, marker=%d, mutator=%d, sweeper=%d\n", gcepochs, markcount, sweepcount, marker, mutator, sweeper); */
+    /*  printf("Epoch %lld ended:\n%lld marked, %lld swept, %lld bytes allocated, %lld bytes freed\n", gcepochs, markcount, sweepcount, allocated, freed);
+	printf("%lld bytes scanned, %lld bytes used, %lld bytes immutable\n", scannedmem, usedmem, immutable); */
     gce = 0;
     gct = 1;
-    retval = 1;
+    retval = allocated == freed; /* steady state condition */
     markcount = sweepcount = 0;
-  } else {
-    gcptr = alloc_head;
-    nprop = 0;
+    freed = allocated = 0;
   }
+  nprop = 0;
  endgc:
   gcet = __arc_milliseconds();
   gc_milliseconds += (gcet - gcst);
@@ -382,6 +394,7 @@ void arc_set_memmgr(arc *c)
   c->mem_free = free;
   c->rungc = rungc;
 
+  mallopt(M_TRIM_THRESHOLD, 0);
   gcepochs = 0;
   gccolor = 3;
   mutator = 0;
