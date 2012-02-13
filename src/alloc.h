@@ -25,6 +25,7 @@
 
 #define MAGIC_A 0xa110c		      /* normal allocated block */
 #define MAGIC_I	0xabba		      /* Block is immutable (non-GC) */
+#define MAGIC_F 0xbadc0c0a	      /* Block is scheduled to be freed */
 
 typedef struct Bhdr_t {
   uint64_t magic;		/* magic number */
