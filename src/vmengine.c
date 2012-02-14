@@ -314,6 +314,9 @@ void arc_vmengine(arc *c, value thr, int quanta)
 	if (*dest != iret) {
 	  WB(&TCONR(thr), cons(c, arc_mkcont(c, INT2FIX(icofs), thr),
 			       TCONR(thr)));
+	  TCALL(thr) = 0;
+	} else {
+	  TCALL(thr) = 1;
 	}
 	TSP(thr) = TSTOP(thr);
       }
@@ -496,6 +499,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   TACELL(thr) = 0;
   TCH(thr) = cons(c, INT2FIX(0xdead), CNIL);
   TBCH(thr) = TCH(thr);
+  TCALL(thr) = 0;
   return(thr);
 }
 
@@ -504,9 +508,14 @@ static void closapply(arc *c, value thr, value fun)
   value cl;
 
   cl = fun;
-  WB(&TFUNR(thr), car(cl));
-  WB(&TENVR(thr), cdr(cl));
-  TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
+  if (car(cl) == TFUNR(thr) && TCALL(thr)) {
+    /* if we are doing tail recursion, skip over the env instruction */
+    TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 3);
+  } else {
+    WB(&TFUNR(thr), car(cl));
+    WB(&TENVR(thr), cdr(cl));
+    TIP(thr) = &VINDEX(VINDEX(TFUNR(thr), 0), 0);
+  }
 }
 
 static value c4apply(arc *c, value thr, value avec,
@@ -599,7 +608,9 @@ value arc_macapply(arc *c, value func, value args, int gc)
        result in more memory being consumed if a function being
        compiled invokes many macros. */
     if (gc)
-      c->rungc(c);
+      c->gcstatus = c->rungc(c);
+    else
+      c->gcstatus = 1;
   }
   retval = TVALR(thr);
   WB(&c->curthread, oldthr);
