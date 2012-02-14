@@ -164,7 +164,12 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
     return;
   if (c->in_compile)
     return;
-  if (c->vmthreads == CNIL)
+  /* Permit a single running thread to block on I/O only if it is
+     either blocking on stdin (in which case we're an interactive
+     system), or the garbage collector has nothing to do. */
+  if (c->vmthreads == CNIL || ((fd == fileno(stdin) || !c->gcstatus)
+			       && car(c->vmthreads) == thr
+			       && cdr(c->vmthreads) == CNIL))
     return;
 
   TSTATE(thr) = Tiowait;
@@ -223,7 +228,7 @@ void arc_thread_dispatch(arc *c)
 {
   value thr, prev;
   int nthreads, blockedthreads, iowait, sleepthreads, runthreads;
-  int stoppedthreads, need_select, gcstatus;
+  int stoppedthreads, need_select;
   unsigned long long minsleep;
 #ifdef HAVE_SYS_EPOLL_H
 #define MAX_EVENTS 8192
@@ -327,7 +332,7 @@ void arc_thread_dispatch(arc *c)
 	runthreads++;
       /* printf("Thread %d completed, state %d\n", TTID(thr), TSTATE(thr)); */
       /* run garbage collection after every time slice */
-      gcstatus = c->rungc(c);
+      c->gcstatus = c->rungc(c);
     }
 
     /* XXX - should we print a warning message if we abort when all
@@ -341,7 +346,7 @@ void arc_thread_dispatch(arc *c)
        do some post-cleanup work */
     if (need_select) {
 #ifdef HAVE_SYS_EPOLL_H
-      if (!gcstatus) {
+      if (!c->gcstatus) {
 	/* if the gc indicates it still has some work to do,
 	   do not allow epoll to wait. */
 	eptimeout = 0;
