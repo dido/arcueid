@@ -63,6 +63,7 @@ typedef struct arc {
 
   /* Garbage collector */
   int (*rungc)(struct arc *);
+  int gcstatus;
 
   /* Default signal error */
   void (*signal_error)(struct arc *, value);
@@ -191,6 +192,7 @@ struct vmthread {
   unsigned long long wakeuptime; /* wakeup time */
   /* for atomic-invoke */
   int atomic_cell;		 /* atomic cell -- do we hold the channel? */
+  int tailcall;			 /* are we doing a tail call? */
 };
 
 #define TFUNR(t) (REP(t)._thread.funr)
@@ -218,6 +220,7 @@ struct vmthread {
 #define TCM(t) (REP(t)._thread.contmarks)
 #define TEXH(t) (REP(t)._thread.exh)
 #define TEXC(t) (REP(t)._thread.exception)
+#define TCALL(t) (REP(t)._thread.tailcall)
 
 /* Cells for boxed items */
 struct cell {
