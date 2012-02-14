@@ -720,6 +720,7 @@ void arc_init_sq(arc *c, int stksize, int quanta, int gcquanta)
   c->achan = arc_mkchan(c);
   c->splforms = CNIL;
   c->inlfuncs = CNIL;
+  c->gcstatus = 0;
 }
 
 void arc_init(arc *c)
