@@ -28,6 +28,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
+#include "vmengine.h"
 #include "../config.h"
 
 static int visit;
@@ -278,9 +279,10 @@ static void sweep(arc *c, value v)
     free_magic(c, REP(v)._hash.table);
     break;
   case T_TBUCKET:
-    /* Make the cell in the parent hash table undef if the table still
-       contains the binding to the cell which we are about to sweep. */
-    if (REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index] == v)
+    /* Make the cell in the parent hash table undef if this is a symbol
+       table's bucket. */
+    if (REP(v)._hashbucket.hash == c->symtable
+	|| REP(v)._hashbucket.hash == c->rsymtable)
       WB(&REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index], CUNDEF);
     break;
   case T_PORT:
@@ -370,13 +372,14 @@ static int rungc(arc *c)
     gcepochs++;
     gccolor++;
     rootset(c);
-    /*  printf("Epoch %lld ended:\n%lld marked, %lld swept, %lld bytes allocated, %lld bytes freed\n", gcepochs, markcount, sweepcount, allocated, freed);
-	printf("%lld bytes scanned, %lld bytes used, %lld bytes immutable\n", scannedmem, usedmem, immutable); */
+    /*    printf("Epoch %lld ended:\n%lld marked, %lld swept, %lld bytes allocated, %lld bytes freed\n", gcepochs, markcount, sweepcount, allocated, freed);
+	  printf("%lld bytes scanned, %lld bytes used, %lld bytes immutable\n", scannedmem, usedmem, immutable); */
     gce = 0;
     gct = 1;
     retval = allocated == freed; /* steady state condition */
     markcount = sweepcount = 0;
     freed = allocated = 0;
+    malloc_trim(0);
   }
   nprop = 0;
  endgc:
@@ -394,7 +397,6 @@ void arc_set_memmgr(arc *c)
   c->mem_free = free;
   c->rungc = rungc;
 
-  mallopt(M_TRIM_THRESHOLD, 0);
   gcepochs = 0;
   gccolor = 3;
   mutator = 0;
