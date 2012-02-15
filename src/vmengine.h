@@ -1,6 +1,5 @@
-
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -15,9 +14,7 @@
   GNU Lesser General Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA
-  02110-1301 USA.
+  License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #ifndef _VMENGINE_H_
 
@@ -120,5 +117,87 @@ extern int arc_return(arc *c, value thr);
 #define CONT_THR(cont) (VINDEX(cont, 7))
 
 #define RUNNABLE(thr) (TSTATE(thr) == Tready || TSTATE(thr) == Texiting || TSTATE(thr) == Tcritical)
+
+struct ccont {
+  jmp_buf registers;
+  int n;
+  long *stack;
+};
+
+enum threadstate {
+  Talt,				/* blocked in alt instruction */
+  Tsend,			/* waiting to send */
+  Trecv,			/* waiting to recv */
+  Tiowait,			/* I/O wait */
+  Tioready,			/* I/O ready to resume */
+  Tready,			/* ready to be scheduled */
+  Tsleep,			/* thread sleeping */
+  Tcritical,			/* critical section */
+  Trelease,			/* interpreter released */
+  Texiting,			/* exit because of kill or error */
+  Tbroken,			/* thread crashed */
+};
+
+struct vmthread {
+  /* virtual machine registers */
+  value funr;		/* current function pointer register */
+  value envr;		/* current environment register */
+  value valr;		/* value of most recent instruction */
+  value conr;		/* continuation register */
+  value *spr;		/* stack pointer register */
+  value stack;		/* the actual stack itself (a vector) */
+  value *stkbase;	/* base pointer of the stack */
+  value *stktop;	/* top of value stack */
+  value *ip;		/* instruction pointer */
+  int argc;		/* argument count register */
+  jmp_buf vjmpbuf;	/* used on error recovery */
+  value stdh;		/* standard handles (stdin, stdout, stderr) */
+  int waitfd;		/* file descriptor waited on */
+  int waitfor;		/* wait for flag */
+  struct ccont *rsc;	/* restart context */
+  value rvchan;		/* return value channel */
+  value conthere;	/* here for this thread */
+  value baseconthere;	/* base cont here */
+  value contmarks;	/* base for continuation marks */
+  value exh;		/* exception handlers for this thread */
+  value exception;	/* asynchronous exception */
+
+  /* thread scheduling variables */
+  enum threadstate state;	/* thread state */
+  int tid;			/* unique thread id */
+  int quanta;			/* time slice */
+  unsigned long long ticks;	/* time used */
+  unsigned long long wakeuptime; /* wakeup time */
+  /* for atomic-invoke */
+  int atomic_cell;		 /* atomic cell -- do we hold the channel? */
+  int tailcall;			 /* are we doing a tail call? */
+};
+
+#define TFUNR(t) (((struct vmthread *)REP(t)._thread)->funr)
+#define TENVR(t) (((struct vmthread *)REP(t)._thread)->envr)
+#define TVALR(t) (((struct vmthread *)REP(t)._thread)->valr)
+#define TCONR(t) (((struct vmthread *)REP(t)._thread)->conr)
+#define TSP(t) (((struct vmthread *)REP(t)._thread)->spr)
+#define TSTACK(t) (((struct vmthread *)REP(t)._thread)->stack)
+#define TSBASE(t) (((struct vmthread *)REP(t)._thread)->stkbase)
+#define TSTOP(t) (((struct vmthread *)REP(t)._thread)->stktop)
+#define TIP(t) (((struct vmthread *)REP(t)._thread)->ip)
+#define TARGC(t) (((struct vmthread *)REP(t)._thread)->argc)
+#define TSTATE(t) (((struct vmthread *)REP(t)._thread)->state)
+#define TQUANTA(t) (((struct vmthread *)REP(t)._thread)->quanta)
+#define TWAKEUP(t) (((struct vmthread *)REP(t)._thread)->wakeuptime)
+#define TTID(t) (((struct vmthread *)REP(t)._thread)->tid)
+#define TVJMP(t) (((struct vmthread *)REP(t)._thread)->vjmpbuf)
+#define TWAITFD(t) (((struct vmthread *)REP(t)._thread)->waitfd)
+#define TWAITFOR(t) (((struct vmthread *)REP(t)._thread)->waitfor)
+#define TRSC(t) (((struct vmthread *)REP(t)._thread)->rsc)
+#define TACELL(t) (((struct vmthread *)REP(t)._thread)->atomic_cell)
+#define TRVCH(t) (((struct vmthread *)REP(t)._thread)->rvchan)
+#define TCH(t) (((struct vmthread *)REP(t)._thread)->conthere)
+#define TBCH(t) (((struct vmthread *)REP(t)._thread)->baseconthere)
+#define TCM(t) (((struct vmthread *)REP(t)._thread)->contmarks)
+#define TEXH(t) (((struct vmthread *)REP(t)._thread)->exh)
+#define TEXC(t) (((struct vmthread *)REP(t)._thread)->exception)
+#define TCALL(t) (((struct vmthread *)REP(t)._thread)->tailcall)
 
 #endif
