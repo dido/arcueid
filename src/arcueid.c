@@ -195,6 +195,13 @@ value arc_mkvector(arc *c, int length)
   return(vect);
 }
 
+value arc_rungc(arc *c)
+{
+  while (!c->rungc(c))
+    ;
+  return(CNIL);
+}
+
 /* Grow a vector, leaving nils where no objects are.  This will automatically
    release the space of the old vector.  If the vector is smaller than the
    original */
@@ -604,6 +611,7 @@ static struct {
 
   { "current-gc-milliseconds", 0, arc_current_gc_milliseconds },
   { "current-process-milliseconds", 0, arc_current_process_milliseconds },
+  { "gc", 0, arc_rungc },
   { "msec", 0, arc_msec },
   { "seconds", 0, arc_seconds },
   { "timedate", -1, arc_timedate },
