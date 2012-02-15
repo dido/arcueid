@@ -22,6 +22,7 @@
 #include "alloc.h"
 #include "arith.h"
 #include "utf.h"
+#include "vmengine.h"
 #include "../config.h"
 
 #if SIZEOF_LONG >= 8
