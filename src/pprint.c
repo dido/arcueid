@@ -25,6 +25,7 @@
 #include "alloc.h"
 #include "utf.h"
 #include "symbols.h"
+#include "vmengine.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
