@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include "../src/arcueid.h"
 #include "../src/builtin.h"
+#include "../src/vmengine.h"
 #include "../config.h"
 
 arc c, *cc;
