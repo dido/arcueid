@@ -479,7 +479,7 @@ value arc_mkthread(arc *c, value funptr, int stksize, int ip)
   value thr;
   value code;
 
-  thr = c->get_cell(c);
+  thr = (value)c->get_block(c, sizeof(struct cell) + sizeof(struct vmthread));
   BTYPE(thr) = T_THREAD;
   TSTACK(thr) = arc_mkvector(c, stksize);
   TSBASE(thr) = &VINDEX(TSTACK(thr), 0);
