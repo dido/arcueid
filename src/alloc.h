@@ -26,6 +26,7 @@
 #define MAGIC_A 0xa110c		      /* normal allocated block */
 #define MAGIC_I	0xabba		      /* Block is immutable (non-GC) */
 #define MAGIC_F 0xbadc0c0a	      /* Block is scheduled to be freed */
+#define MAGIC_B 0xdead		      /* BIBOP free */
 
 typedef struct Bhdr_t {
   uint64_t magic;		/* magic number */
@@ -43,7 +44,8 @@ typedef struct Bhdr_t {
 #define BHDRSIZE ((long)(((Bhdr *)0)->data))
 #define BLOCK_IMM(dp) { Bhdr *b; D2B(b, dp); b->magic = MAGIC_I; }
 /* alignment */
-#define ALIGN (1 << 4)
+#define ALIGN_BITS 4
+#define ALIGN (1 << ALIGN_BITS)
 
 #define PROPAGATOR_COLOR 3	/* propagator color */
 extern int nprop;		/* propagator flag */
