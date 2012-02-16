@@ -31,7 +31,15 @@
 #include "vmengine.h"
 #include "../config.h"
 
+/* Maximum size of objects subject to BIBOP allocation */
+#define MAX_BIBOP 512
+
+/* Number of objects in each BIBOP page */
+#define BIBOP_PAGE_SIZE 64
+
 static int visit;
+
+static Bhdr *bibop_fl[MAX_BIBOP+1];
 static Bhdr *gcptr = NULL;
 static Bhdr *alloc_head = NULL;
 static Bhdr *alloc_tail = NULL;
@@ -60,6 +68,16 @@ Bhdr *__arc_get_heap_start(void)
   return(alloc_head);
 }
 
+static void free_bibop(struct arc *c, void *blk)
+{
+  Bhdr *h;
+
+  D2B(h, blk);
+  h->magic = MAGIC_B;
+  h->next = bibop_fl[h->size];
+  bibop_fl[h->size] = h;
+}
+
 static void free_block(struct arc *c, void *blk)
 {
   Bhdr *h;
@@ -76,7 +94,63 @@ static void free_block(struct arc *c, void *blk)
     h->next->prev = h->prev;
   nsize = h->size + BHDRSIZE + ALIGN - 1;
   freed += nsize;
-  c->mem_free(h->block);
+  if (h->size <= MAX_BIBOP)
+    free_bibop(c, blk);
+  else
+    c->mem_free(h->block);
+}
+
+static void *alloc(arc *c, size_t osize);
+
+static void *bibop_alloc(arc *c, size_t osize)
+{
+  Bhdr *h;
+  size_t actual;
+  char *bpage, *bptr;
+  int i;
+
+  for (;;) {
+    if (bibop_fl[osize] != NULL) {
+      h = bibop_fl[osize];
+      bibop_fl[osize] = B2NB(bibop_fl[osize]);
+      break;
+    }
+    /* Create a new BIBOP page if the free list is empty */
+    actual = osize + BHDRSIZE;
+    /* round actual to the closest multiple of align */
+    if ((actual % ALIGN) != 0)
+      actual = ALIGN*((actual + ALIGN) / ALIGN);
+    bpage = (char *)alloc(c, actual * BIBOP_PAGE_SIZE);
+    BLOCK_IMM(bpage);
+    bptr = bpage;
+    for (i=0; i<BIBOP_PAGE_SIZE; i++) {
+      h = (Bhdr *)bptr;
+      h->magic = MAGIC_B;
+      h->color = propagator;
+      h->size = osize;
+      h->next = bibop_fl[osize];
+      bibop_fl[osize] = h;
+      bptr += actual;
+    }
+    /* after this the free list for that size should be fine */
+  }
+  /* Perform the allocation actions on the new block gotten
+     from the BIBOP list. */
+  h->magic = MAGIC_A;
+  h->size = osize;
+  h->color = mutator;
+  if (alloc_head == NULL && alloc_tail == NULL) {
+    alloc_tail = alloc_head = h;
+    alloc_head->prev = NULL;
+    alloc_head->next = NULL;
+  } else {
+    assert(alloc_head != NULL && alloc_tail != NULL);
+    h->prev = alloc_tail;
+    h->next = alloc_tail->next;
+    alloc_tail->next = h;
+    alloc_tail = h;
+  }
+  return(B2D(h));
 }
 
 static void *alloc(arc *c, size_t osize)
@@ -85,6 +159,10 @@ static void *alloc(arc *c, size_t osize)
   Bhdr *h;
   size_t actual;
 
+  if (osize <= MAX_BIBOP)
+    return(bibop_alloc(c, osize));
+
+  /* Normal allocation */
   actual = osize + BHDRSIZE + ALIGN - 1;
   ptr = c->mem_alloc(actual);
   if (ptr == NULL) {
@@ -390,6 +468,8 @@ static int rungc(arc *c)
 
 void arc_set_memmgr(arc *c)
 {
+  int i;
+
   c->get_cell = get_cell;
   c->get_block = alloc;
   c->free_block = free_block;
@@ -405,6 +485,9 @@ void arc_set_memmgr(arc *c)
 
   gce = 0;
   gct = 1;
+
+  for (i=0; i<=MAX_BIBOP; i++)
+    bibop_fl[i] = NULL;
 
   /* Set default parameters for heap expansion policy */
   /*  c->minexp = DFL_MIN_EXP;
