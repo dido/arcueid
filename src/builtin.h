@@ -67,6 +67,7 @@ extern value arc_dir_exists(arc *c, value dirname);
 extern value arc_mkdir(arc *c, value dirname);
 extern value arc_file_exists(arc *c, value filename);
 extern value arc_rmfile(arc *c, value filename);
+extern value arc_mvfile(arc *c, value oldname, value newname);
 
 /* Ciel */
 extern value arc_ciel_unmarshal(arc *c, value fd);
