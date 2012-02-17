@@ -285,9 +285,11 @@ value add_env_frame(arc *c, value names, value env)
   return(cons(c, envframe, env));
 }
 
-static value optarg(arc *c, value oarg, value ctx, value env, int narg)
+static value optarg(arc *c, value oarg, value ctx, value env, int narg,
+		    value rn)
 {
   int jumpaddr;
+  value names, frame;
 
   arc_gcode1(c, ctx, imvoarg, narg);
   /* default parameters */
@@ -299,8 +301,12 @@ static value optarg(arc *c, value oarg, value ctx, value env, int narg)
        some value is provided for the optional argument. */
     jumpaddr = FIX2INT(CCTX_VCPTR(ctx));
     arc_gcode1(c, ctx, ijt, 0);
-    /* Compile the value of the optional arg and store in the addr */
-    arc_compile(c, car(cddr(oarg)), ctx, env, CNIL);
+    /* Compile the value of the optional arg and store in the addr.
+       We have to create the partial environment so that previously
+       declared arguments can be referred to. */
+    names = arc_list_reverse(c, rn);
+    frame = add_env_frame(c, names, env);
+    arc_compile(c, car(cddr(oarg)), ctx, frame, CNIL);
     arc_gcode2(c, ctx, iste, 0, narg);
     /* The jt instruction is patched with the current address */
     VINDEX(CCTX_VCODE(ctx), jumpaddr+1) = FIX2INT(CCTX_VCPTR(ctx)) - jumpaddr;
@@ -332,7 +338,8 @@ static value optarg(arc *c, value oarg, value ctx, value env, int narg)
       This causes an argument to added to the list of names and the number
       of arguments to be incremented.
 */
-static value destructuring_bind(arc *c, value args, value ctx, value env, int *nargs, value rn, int cflg)
+static value destructuring_bind(arc *c, value args, value ctx,
+				value env, int *nargs, value rn, int cflg)
 {
   if (NIL_P(args))
     return(rn);
@@ -353,12 +360,12 @@ static value destructuring_bind(arc *c, value args, value ctx, value env, int *n
        arg only if it is the car recurstion into a destructuring bind
        expression. */
     arc_gcode(c, ctx, ipush);
-    rn = cons(c, optarg(c, args, ctx, env, (*nargs)++), rn);
+    rn = cons(c, optarg(c, args, ctx, env, (*nargs)++, rn), rn);
     return(rn);
   }
 
   if (!CONS_P(args)) {
-    arc_err_cstrfmt(c, "strange args %p", (void *)args);
+    arc_err_cstrfmt(c, "invalid fn arg %p", (void *)args);
     return(rn);
   }
 
@@ -403,13 +410,16 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
       /* Optional arg.  Note that this will not enforce optional args at
 	 the end. */
       oarg = car(args);
-      rn = cons(c, optarg(c, oarg, ctx, env, (*nargs)++), rn);
+      rn = cons(c, optarg(c, oarg, ctx, env, (*nargs)++, rn), rn);
     } else if (CONS_P(car(args))) {
       /* For a destructuring bind, pop the argument to unbind
 	 first.  This will allow subsequent instructions generated in
 	 destructuring_bind to do their thing. */
       arc_gcode(c, ctx, ipop);
       rn = destructuring_bind(c, car(args), ctx, env, nargs, rn, 0);
+    } else {
+      arc_err_cstrfmt(c, "invalid fn arg %p", args);
+      return(env);
     }
 
     if (SYMBOL_P(cdr(args))) {
@@ -441,7 +451,7 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
    XXX - This retrieves arguments from the stack in the reverse order
    from what is expected.  Another algorithm should be devised that
    binds arguments in the proper order. */
-static value compile_args(arc *c, value args, value ctx, value env)
+static value compile_args(arc *c, value args, value ctx, value env)\
 {
   value names, frame;
   int envinstaddr, nargs;
