@@ -418,7 +418,7 @@ extern value arc_cmark(arc *c, value key);
 /* strings */
 extern value arc_mkchar(arc *c, Rune r);
 extern value arc_mkstringlen(arc *c, int length);
-extern value arc_newstring(arc *c, value length);
+extern value arc_newstring(arc *c, int argc, value *argv);
 extern value arc_mkstring(arc *c, const Rune *data, int length);
 extern value arc_mkstringc(arc *c, const char *s);
 extern int arc_strlen(arc *c, value v);
