@@ -20,6 +20,8 @@
 #include <assert.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/resource.h>
@@ -140,16 +142,33 @@ value arc_timedate(arc *c, int argc, value *argv)
 				  cons(c, INT2FIX(timep.tm_year + 1900), CNIL)))))));
 }
 
+/* XXX - fix this so that we don't always return true, and
+   permit redirection of both stdin and stdout. */
 value arc_system(arc *c, value cmd)
 {
   int len;
   char *cmdstr;
+  FILE *fp;
+  int chr;
+  value so;
 
   TYPECHECK(cmd, T_STRING, 1);
   len = FIX2INT(arc_strutflen(c, cmd));
   cmdstr = (char *)alloca(sizeof(char)*len+1);
   arc_str2cstr(c, cmd, cmdstr);
-  return((system(cmdstr) == 0) ? CTRUE : CNIL);
+  fp = popen(cmdstr, "r");
+  if (fp == NULL) {
+    int en = errno;
+    arc_err_cstrfmt(c, "system: error executing command \"%s\", (%s; errno=%d)", cmdstr, strerror(en), en);
+    return(CNIL);
+  }
+  so = arc_stdout(c);
+  while ((chr = fgetc(fp)) != EOF)
+    arc_writeb(c, INT2FIX(chr), so);
+  pclose(fp);
+  /* XXX - find out a way to get the original return value of the
+     command to return it properly. */
+  return(CTRUE);
 }
 
 value arc_quit(arc *c, int argc, value *argv)
