@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2010 Rafael R. Sevilla
+  Copyright (C) 2012 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -21,6 +21,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "utf.h"
+#include "vmengine.h"
 
 value arc_mkstringlen(arc *c, int length)
 {
@@ -35,13 +36,31 @@ value arc_mkstringlen(arc *c, int length)
 
 }
 
-value arc_newstring(arc *c, value length)
+static value newstring(arc *c, value length, Rune initch)
 {
+  value str;
+  int i;
+
   if (TYPE(length) != T_FIXNUM || FIX2INT(length) < 0) {
-    arc_err_cstrfmt(c, "newstring: expects argument of type <non-negative exact integer>; given %P", length);
+    arc_err_cstrfmt(c, "newstring: expects argument of type <non-negative exact integer>; given type %s", TYPENAME(TYPE(length)));
     return(CNIL);
   }
-  return(arc_mkstringlen(c, FIX2INT(length)));
+  str = arc_mkstringlen(c, FIX2INT(length));
+  for (i=0; i<FIX2INT(length); i++)
+    arc_strsetindex(c, str, i, initch);
+  return(str);
+}
+
+value arc_newstring(arc *c, int argc, value *argv)
+{
+  if (argc == 1) {
+    return(newstring(c, argv[0], 0));
+  } else if (argc == 2) {
+    TYPECHECK(argv[1], T_CHAR, 2);
+    return(newstring(c, argv[0], REP(argv[1])._char));
+  }
+  arc_err_cstrfmt(c, "newstring: too many arguments (%d for 1 or 2)", argc);
+  return(CNIL);
 }
 
 /* Make a string based on UCS-4 data */
