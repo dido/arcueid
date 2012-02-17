@@ -6,7 +6,7 @@ See the end for copying conditions.
 - Big bag of pages memory allocator
 - Bug fixes, permit optional function arguments to refer to previously
   declared arguments, properly expand !sym ssyntax
-- mvfile defined
+- mvfile defined, newstring allowed to accept 1 or 2 args
 
 * Version 0.0.10 (2012-02-14)
 - Yet another garbage collection bug fix related to the garbage collection
