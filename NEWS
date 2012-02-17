@@ -2,7 +2,10 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.0.10 (2012-??-??)
+* Version 0.0.11 (2012-??-??)
+- Big bag of pages memory allocator
+
+* Version 0.0.10 (2012-02-14)
 - Yet another garbage collection bug fix related to the garbage collection
   of hashes and symbols.
 - Tail recursion optimization
