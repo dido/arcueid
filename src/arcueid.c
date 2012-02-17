@@ -674,6 +674,8 @@ static struct {
   { "scmark", 2, arc_scmark },
   { "ccmark", 1, arc_ccmark },
 
+  { "memory", 0, arc_memory },
+
   { NULL, 0, NULL }
 };
 
