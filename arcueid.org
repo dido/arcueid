@@ -444,11 +444,12 @@ notice and this notice are preserved.
 	   on systems that support them.  Only fall back to standard
 	   POSIX.1-2001 select(2) only if no alternatives are
 	   available.
-   - [X] File system operations [4/4]
+   - [X] File system operations [5/5]
      - [X] dir
      - [X] dir-exists
      - [X] file-exists
      - [X] rmfile
+     - [X] mvfile
    - [X] Error handling and continuations [5/5]
      - [X] details
      - [X] err
