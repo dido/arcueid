@@ -472,10 +472,11 @@ notice and this notice are preserved.
      - [X] system
      - [X] quit
      - [X] setuid
-   - [X] Miscellaneous [3/3]
+   - [X] Miscellaneous [4/4]
      - [X] sref *
      - [X] len
      - [X] bound
+     - [X] memory
 ** TODO Threading [4/6]
    - [X] Basic scheduling
    - [X] Suspend threads on I/O
