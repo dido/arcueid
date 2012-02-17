@@ -415,8 +415,8 @@ START_TEST(test_ssyntax)
   fail_unless(TYPE(sexpr) == T_CONS);
   fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
   fail_unless(car(sexpr) == ARC_BUILTIN(cc, S_GET));
-  fail_unless(car(cdr(sexpr)) == ARC_BUILTIN(cc, S_QUOTE));
-  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(&c, arc_mkstringc(&c, "a")));
+  fail_unless(car(car(cdr(sexpr))) == ARC_BUILTIN(cc, S_QUOTE));
+  fail_unless(car(cdr(car(cdr(sexpr)))) == arc_intern(&c, arc_mkstringc(&c, "a")));
 }
 END_TEST
 
