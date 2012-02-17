@@ -73,6 +73,7 @@ extern int arc_disasm_inst(arc *c, int index, value *codeptr, value code);
 extern value arc_mkvmcode(arc *c, int length);
 extern value arc_mkcode(arc *c, value vmccode, int nlits);
 extern value arc_code_setname(arc *c, value code, value codename);
+extern value arc_code_setsrc(arc *c, value code, value src);
 extern value arc_mkclosure(arc *c, value code, value env);
 extern value arc_mkccode(arc *c, int argc, value (*_cfunc)(), value name);
 extern value arc_mkcctx(arc *c, value vcodesize, value vlitsize);
@@ -199,5 +200,11 @@ struct vmthread {
 #define TEXH(t) (((struct vmthread *)REP(t)._thread)->exh)
 #define TEXC(t) (((struct vmthread *)REP(t)._thread)->exception)
 #define TCALL(t) (((struct vmthread *)REP(t)._thread)->tailcall)
+
+/* code object handling */
+#define CODE_CODE(c) (VINDEX((c), 0))
+#define CODE_NAME(c) (VINDEX((c), 1))
+#define CODE_SRC(c) (VINDEX((c), 2))
+#define CODE_LITERAL(c, idx) (VINDEX((c), 3+(idx)))
 
 #endif
