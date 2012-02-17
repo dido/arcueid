@@ -494,11 +494,8 @@ void arc_set_memmgr(arc *c)
       c->over_percent = DFL_OVER_PERCENT; */
 }
 
-value arc_current_gc_milliseconds(arc *c)
+static value ull2val(arc *c, unsigned long long ms)
 {
-  unsigned long long ms;
-
-  ms = gc_milliseconds;
   if (ms < FIXNUM_MAX) {
     return(INT2FIX(ms));
   } else {
@@ -526,4 +523,15 @@ value arc_current_gc_milliseconds(arc *c)
 #endif
   }
   return(CNIL);
+
+}
+
+value arc_current_gc_milliseconds(arc *c)
+{
+  return(ull2val(c, gc_milliseconds));
+}
+
+value arc_memory(arc *c)
+{
+  return(ull2val(c, usedmem));
 }
