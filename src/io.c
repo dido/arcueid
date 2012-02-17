@@ -665,6 +665,17 @@ value arc_stderr(arc *c)
   return(h);
 }
 
+static int pf_close(arc *c, struct arc_port *p)
+{
+  int ret = 0;
+
+  if (p->u.file.open) {
+    ret = pclose(p->u.file.fp);
+    p->u.file.open = 0;
+  }
+  return(ret);
+}
+
 /* Unlike the reference Arc implementation, this actually creates
    a piped process using popen.  The reference implementation cheats
    because MzScheme/Racket doesn't wrap popen(3). */
@@ -673,6 +684,7 @@ value arc_pipe_from(arc *c, value cmd)
   FILE *fp;
   int len;
   char *cmdstr;
+  value ffp;
 
   TYPECHECK(cmd, T_STRING, 1);
   len = FIX2INT(arc_strutflen(c, cmd));
@@ -684,7 +696,9 @@ value arc_pipe_from(arc *c, value cmd)
     int en = errno;
     arc_err_cstrfmt(c, "pipe-from: error executing command \"%s\", (%s; errno=%d)", cmdstr, strerror(en), en);
   }
-  return(arc_filefp(c, fp, cmd));
+  ffp = arc_filefp(c, fp, cmd);
+  PORT(ffp)->close = pf_close;
+  return(ffp);
 }
 
 value arc_dir(arc *c, value dirname)
