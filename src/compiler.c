@@ -510,6 +510,7 @@ static value compile_fn(arc *c, value expr, value ctx, value env,
      then create a closure using the code object and the current
      environment. */
   newcode = arc_cctx2code(c, nctx);
+  arc_code_setsrc(c, newcode, expr);
   arc_gcode1(c, ctx, ildl, find_literal(c, ctx, newcode));
   arc_gcode(c, ctx, icls);
   return(compile_continuation(c, ctx, cont));
