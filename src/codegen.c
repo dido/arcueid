@@ -155,10 +155,11 @@ value arc_mkvmcode(arc *c, int length)
 /* create code and reserve space for nlits */
 value arc_mkcode(arc *c, value vmccode, int nlits)
 {
-  value code = arc_mkvector(c, nlits+2);
+  value code = arc_mkvector(c, nlits+3);
 
   CODE_CODE(code) = vmccode;
   CODE_NAME(code) = CNIL;
+  CODE_SRC(code) = CNIL;
   BTYPE(code) = T_CODE;
   return(code);
 }
@@ -177,6 +178,16 @@ value arc_code_setname(arc *c, value code, value codename)
 
   CODE_NAME(code) = codename;
   return(codename);
+}
+
+value arc_code_setsrc(arc *c, value code, value src)
+{
+  if (TYPE(code) != T_CODE) {
+    arc_err_cstrfmt(c, "Cannot set the code source for a non-code object");
+    return(CNIL);
+  }
+  CODE_SRC(code) = src;
+  return(code);
 }
 
 value arc_cctx2code(arc *c, value cctx)
