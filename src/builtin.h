@@ -74,6 +74,7 @@ extern value arc_ciel_unmarshal(arc *c, value fd);
 
 /* misc */
 extern value arc_sref(arc *c, value com, value val, value ind);
+extern value arc_memory(arc *c);
 
 /* time */
 extern value arc_current_gc_milliseconds(arc *c);
