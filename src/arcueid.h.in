@@ -367,11 +367,6 @@ extern value arc_lt(arc *c, int argc, value *argv);
 extern void arc_vmengine(arc *c, value thr, int quanta);
 extern value arc_mkthread(arc *c, value funptr, int stksize, int ip);
 
-/* code object handling */
-#define CODE_CODE(c) (VINDEX((c), 0))
-#define CODE_NAME(c) (VINDEX((c), 1))
-#define CODE_LITERAL(c, idx) (VINDEX((c), 2+(idx)))
-
 /* environment handling */
 #define ENV_NAMES(e) (VINDEX((e), 0))
 #define ENV_VALUE(e, idx) (VINDEX((e), (idx)+1))
