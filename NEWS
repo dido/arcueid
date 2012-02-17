@@ -4,8 +4,8 @@ See the end for copying conditions.
 
 * Version 0.0.11 (2012-??-??)
 - Big bag of pages memory allocator
-- Bug fix, permit optional function arguments to refer to previously
-  declared arguments
+- Bug fixes, permit optional function arguments to refer to previously
+  declared arguments, properly expand !sym ssyntax
 
 * Version 0.0.10 (2012-02-14)
 - Yet another garbage collection bug fix related to the garbage collection
