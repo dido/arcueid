@@ -29,6 +29,16 @@
 
 arc *c, cc;
 
+#define TEST(testexpr) {				\
+  value str, sexpr, fp, cctx, code;			\
+  str = arc_mkstringc(c, testexpr);			\
+  fp = arc_instring(c, str, CNIL);			\
+  sexpr = arc_read(c, fp, CNIL);			\
+  cctx = arc_mkcctx(c, INT2FIX(1), 0);			\
+  arc_compile(c, sexpr, cctx, CNIL, CTRUE);		\
+  code = arc_cctx2code(c, cctx);			\
+  ret = arc_macapply(c, code, CNIL, 0); }
+
 START_TEST(test_compile_nil)
 {
   value str, sexpr, fp, cctx, code, ret;
@@ -419,52 +429,25 @@ END_TEST
 
 START_TEST(test_compile_fn_oarg)
 {
-  value str, sexpr, fp, cctx, code, ret;
+  value ret;
 
-  str = arc_mkstringc(c, "((fn (a (o b)) a) 1 2)");
-  fp = arc_instring(c, str, CNIL);
-  sexpr = arc_read(c, fp, CNIL);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL, 0);
+  TEST("((fn (a (o b)) a) 1 2)");
   fail_unless(ret == INT2FIX(1));
 
-  str = arc_mkstringc(c, "((fn (a (o b)) b) 1 2)");
-  fp = arc_instring(c, str, CNIL);
-  sexpr = arc_read(c, fp, CNIL);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL, 0);
+  TEST("((fn (a (o b)) b) 1 2)");
   fail_unless(ret == INT2FIX(2));
 
-  str = arc_mkstringc(c, "((fn (a (o b)) b) 1)");
-  fp = arc_instring(c, str, CNIL);
-  sexpr = arc_read(c, fp, CNIL);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL, 0);
+  TEST("((fn (a (o b)) b) 1)");
   fail_unless(ret == CNIL);
 
-  str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1)");
-  fp = arc_instring(c, str, CNIL);
-  sexpr = arc_read(c, fp, CNIL);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL, 0);
+  TEST("((fn (a (o b 7)) b) 1)");
   fail_unless(ret == INT2FIX(7));
 
-  str = arc_mkstringc(c, "((fn (a (o b 7)) b) 1 2)");
-  fp = arc_instring(c, str, CNIL);
-  sexpr = arc_read(c, fp, CNIL);
-  cctx = arc_mkcctx(c, INT2FIX(1), 0);
-  arc_compile(c, sexpr, cctx, CNIL, CTRUE);
-  code = arc_cctx2code(c, cctx);
-  ret = arc_macapply(c, code, CNIL, 0);
+  TEST("((fn (a (o b 7)) b) 1 2)");
   fail_unless(ret == INT2FIX(2));
+
+  TEST("((fn (a (o b a)) b) 1)");
+  fail_unless(ret == INT2FIX(1));
 }
 END_TEST
 
