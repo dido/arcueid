@@ -775,6 +775,25 @@ value arc_rmfile(arc *c, value filename)
   return(CNIL);
 }
 
+value arc_mvfile(arc *c, value oldname, value newname)
+{
+  char *utf_oldname, *utf_newname;
+  int en;
+
+  TYPECHECK(oldname, T_STRING, 1);
+  TYPECHECK(newname, T_STRING, 1);
+  utf_oldname = alloca(FIX2INT(arc_strutflen(c, oldname)) + 1);
+  arc_str2cstr(c, oldname, utf_oldname);
+  utf_newname = alloca(FIX2INT(arc_strutflen(c, newname)) + 1);
+  arc_str2cstr(c, newname, utf_newname);
+  if (rename(utf_oldname, utf_newname) != 0) {
+    en = errno;
+    arc_err_cstrfmt(c, "mvfile: cannot move file \"%s\" to \"%s\", (%s; errno=%d)", utf_oldname, utf_newname, strerror(en), en);
+    return(CNIL);
+  }
+  return(CNIL);
+}
+
 value arc_flushout(arc *c, int argc, value *argv)
 {
   /* XXX - This is a no-op for now! */
