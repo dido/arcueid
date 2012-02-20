@@ -154,6 +154,7 @@ struct vmthread {
   jmp_buf vjmpbuf;	/* used on error recovery */
   value stdh;		/* standard handles (stdin, stdout, stderr) */
   int waitfd;		/* file descriptor waited on */
+  int waitrw;		/* waiting on read (0) or write (1) */
   int waitfor;		/* wait for flag */
   struct ccont *rsc;	/* restart context */
   value rvchan;		/* return value channel */
@@ -190,6 +191,7 @@ struct vmthread {
 #define TTID(t) (((struct vmthread *)REP(t)._thread)->tid)
 #define TVJMP(t) (((struct vmthread *)REP(t)._thread)->vjmpbuf)
 #define TWAITFD(t) (((struct vmthread *)REP(t)._thread)->waitfd)
+#define TWAITRW(t) (((struct vmthread *)REP(t)._thread)->waitrw)
 #define TWAITFOR(t) (((struct vmthread *)REP(t)._thread)->waitfor)
 #define TRSC(t) (((struct vmthread *)REP(t)._thread)->rsc)
 #define TACELL(t) (((struct vmthread *)REP(t)._thread)->atomic_cell)
