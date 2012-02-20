@@ -199,6 +199,12 @@ static int file_ready(arc *c, struct arc_port *p)
   return(0);
 }
 
+static int file_wready(arc *c, struct arc_port *p)
+{
+  /* XXX - make this do something reasonable */
+  return(1);
+}
+
 static int file_fd(arc *c, struct arc_port *p)
 {
   return(fileno(p->u.file.fp));
@@ -228,6 +234,7 @@ value arc_filefp(arc *c, FILE *fp, value filename)
   PORT(fd)->tell = file_tell;
   PORT(fd)->close = file_close;
   PORT(fd)->ready = file_ready;
+  PORT(fd)->wready = file_wready;
   PORT(fd)->fd = file_fd;
   PORT(fd)->closed = 0;
   PORT(fd)->ungetrune = -1;	/* no rune available */
@@ -391,6 +398,7 @@ value arc_instring(arc *c, value str, value name)
   PORT(fd)->tell = fstr_tell;
   PORT(fd)->close = fstr_close;
   PORT(fd)->ready = fstr_ready;
+  PORT(fd)->wready = fstr_ready;
   PORT(fd)->fd = fstr_fd;
   PORT(fd)->closed = 0;
   PORT(fd)->ungetrune = -1;	/* no rune available */
@@ -435,8 +443,8 @@ value arc_readb(arc *c, value fd)
     return(INT2FIX(ch));
   }
 
-  READ_CHECK(c, fd);
   CHECK_CLOSED(fd);
+  READ_CHECK(c, fd);
   ch = PORT(fd)->getb(c, PORT(fd));
   if (ch == EOF)
     ch = -1;
@@ -452,6 +460,7 @@ value arc_writeb(arc *c, value byte, value fd)
 
   TYPECHECK(fd, T_PORT, 2);
   CHECK_CLOSED(fd);
+  WRITE_CHECK(c, fd);
   PORT(fd)->putb(c, PORT(fd), ch);
   if (ch == EOF)
     ch = -1;
@@ -479,8 +488,8 @@ Rune arc_readc_rune(arc *c, value fd)
     return(FIX2INT(arc_readb(c, fd)));
 
   for (i=0; i<UTFmax; i++) {
-    READ_CHECK(c, fd);
     CHECK_CLOSED(fd);
+    READ_CHECK(c, fd);
     ch = PORT(fd)->getb(c, PORT(fd));
     if (ch == EOF)
       return(-1);
@@ -515,8 +524,9 @@ Rune arc_writec_rune(arc *c, Rune r, value fd)
   int nbytes, i;
 
   TYPECHECK(fd, T_PORT, 1);
-  CHECK_CLOSED(fd);
   if (PORT(fd)->type == FT_STRING) {
+    CHECK_CLOSED(fd);
+    WRITE_CHECK(c, fd);
     PORT(fd)->putb(c, PORT(fd), r);
     return(r);
   }
