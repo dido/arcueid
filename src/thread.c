@@ -148,7 +148,7 @@ static value dequeue(arc *c, value *head, value *tail)
 }
 
 /* Used when threads are waiting on file descriptors */
-void arc_thread_wait_fd(volatile arc *c, volatile int fd)
+void arc_thread_wait_fd(volatile arc *c, volatile int fd, int rw)
 {
   volatile value thr = c->curthread;
   struct ccont *cc;
@@ -174,6 +174,7 @@ void arc_thread_wait_fd(volatile arc *c, volatile int fd)
 
   TSTATE(thr) = Tiowait;
   TWAITFD(thr) = fd;
+  TWAITRW(thr) = rw;
   /* save our current context so when Tiowait becomes Tioready,
      the dispatcher can bring us back to this point. */
   if ((cc = saveccont()) != NULL) {
@@ -305,7 +306,7 @@ void arc_thread_dispatch(arc *c)
 	iowait++;
 	need_select = 1;
 #ifdef HAVE_SYS_EPOLL_H
-	ev.events = EPOLLIN;
+	ev.events = (TWAITRW(thr)) ? EPOLLOUT : EPOLLIN;
 	ev.data.fd = TWAITFD(thr);
 	if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(thr), &ev) < 0) {
 	  int en = errno;
@@ -314,7 +315,8 @@ void arc_thread_dispatch(arc *c)
 	    return;
 	  }
 	}
-	arc_hash_insert(c, c->iowaittbl, INT2FIX(TWAITFD(thr)), thr);
+	if (arc_hash_lookup(c, c->iowaittbl, INT2FIX(TWAITFD(thr))) == CUNBOUND)
+	  arc_hash_insert(c, c->iowaittbl, INT2FIX(TWAITFD(thr)), thr);
 	break;
 #else
 #error no epoll!
@@ -346,9 +348,9 @@ void arc_thread_dispatch(arc *c)
        do some post-cleanup work */
     if (need_select) {
 #ifdef HAVE_SYS_EPOLL_H
+      /* if the gc indicates it still has some work to do,
+	 do not allow epoll to wait. */
       if (!c->gcstatus) {
-	/* if the gc indicates it still has some work to do,
-	   do not allow epoll to wait. */
 	eptimeout = 0;
       } else if ((iowait + blockedthreads) == nthreads) {
 	/* If all threads are blocked on I/O or are waiting on channels,
@@ -357,7 +359,7 @@ void arc_thread_dispatch(arc *c)
       } else if ((iowait + sleepthreads + blockedthreads) == nthreads) {
 	/* If all threads are either asleep, blocked, or waiting on I/O,
 	   wait for at most the time until the first sleep expires. */
-	eptimeout = (minsleep - __arc_milliseconds())/1000;
+	eptimeout = (minsleep - __arc_milliseconds());
       } else {
 	/* do not wait if there are any other threads which can run */
 	eptimeout = 0;
