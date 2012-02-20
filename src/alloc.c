@@ -216,11 +216,14 @@ static void mark(arc *c, value v, int reclevel, value marksym)
     value stbucket;
 
     stbucket = arc_hash_lookup2(c, c->rsymtable, symid);
-    D2B(b, (void *)stbucket);  
-    mark(c, stbucket, reclevel+1, v);
+    D2B(b, (void *)stbucket);
+    if (b->color != mutator && b->color != propagator)
+      mark(c, stbucket, reclevel+1, v);
     val = stbucket;
     stbucket = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
-    mark(c, stbucket, reclevel+1, v);
+    D2B(b, (void *)stbucket);
+    if (b->color != mutator && b->color != propagator)
+      mark(c, stbucket, reclevel+1, v);
     return;
   }
 
@@ -454,7 +457,7 @@ static int rungc(arc *c)
 	  printf("%lld bytes scanned, %lld bytes used, %lld bytes immutable\n", scannedmem, usedmem, immutable); */
     gce = 0;
     gct = 1;
-    retval = allocated == freed; /* steady state condition */
+    retval = 1;
     markcount = sweepcount = 0;
     freed = allocated = 0;
     malloc_trim(0);
