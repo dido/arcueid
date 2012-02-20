@@ -173,6 +173,31 @@ static int sock_ready(arc *c, struct arc_port *p)
   return(0);
 }
 
+static int sock_wready(arc *c, struct arc_port *p)
+{
+  fd_set wfds;
+  struct timeval tv;
+  int retval;
+
+  FD_ZERO(&wfds);
+  FD_SET(p->u.sock.sockfd, &wfds);
+  tv.tv_usec = tv.tv_sec = 0;
+  retval = select(p->u.sock.sockfd+1, NULL, &wfds, NULL, &tv);
+
+  if (retval == -1) {
+    int en = errno;
+
+    arc_err_cstrfmt(c, "error selecting for socket (%s; errno=%d)", strerror(en), en);
+    return(0);
+  }
+
+  if (retval == 0)
+    return(0);
+  if (FD_ISSET(p->u.sock.sockfd, &wfds))
+    return(1);
+  return(0);
+}
+
 static int sock_fd(arc *c, struct arc_port *p)
 {
   return(p->u.sock.sockfd);
@@ -204,6 +229,7 @@ static value mksocket(arc *c, int sock, int ai_family, int socktype)
   PORT(fd)->tell = sock_tell;
   PORT(fd)->close = sock_close;
   PORT(fd)->ready = sock_ready;
+  PORT(fd)->wready = sock_wready;
   PORT(fd)->fd = sock_fd;
   PORT(fd)->closed = 0;
   PORT(fd)->ungetrune = -1;	/* no rune available */
