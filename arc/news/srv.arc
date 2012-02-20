@@ -46,17 +46,22 @@
       (errsafe (handle-request-1 s))))
 
 (def handle-request-1 (s)
-  (let (i o ip) (socket-accept s)
+  (prn "accepting requests")
+  (with ((i o ip) (socket-accept s) ruuid (uuid))
+    (prn "accepted request " ruuid " from " ip)
     (if (and (or (ignore-ips* ip) (abusive-ip ip))
              (++ (spurned* ip 0)))
         (force-close i o)
         (do (++ requests*)
             (++ (requests/ip* ip 0))
+	    (prn "starting to process " ruuid)
             (with (th1 nil th2 nil)
               (= th1 (thread
-                       (after (handle-request-thread i o ip)
+                       (after (do (prn "handling request " ruuid)
+				  (handle-request-thread i o ip ruuid)
+				  (prn "finished handling request " ruuid))
                               (close i o)
-                              (kill-thread th2))))
+			      (kill-thread th2))))
               (= th2 (thread
                        (sleep threadlife*)
                        (unless (dead th1)
@@ -88,7 +93,7 @@
                       nil))
               (enq now (req-times* ip))))))
 
-(def handle-request-thread (i o ip)
+(def handle-request-thread (i o ip ruuid)
   (with (nls 0 lines nil line nil responded nil t0 (msec))
     (after
       (whilet c (unless responded (readc i))
@@ -98,7 +103,7 @@
                 (let (type op args n cooks) (parseheader (rev lines))
                   (let t1 (msec)
                     (case type
-                      get  (respond o op args cooks ip)
+                      get  (respond o op args cooks ip ruuid)
                       post (handle-post i o op args n cooks ip)
                            (respond-err o "Unknown request: " (car lines)))
                     (log-request type op args cooks ip t0 t1)
@@ -206,7 +211,8 @@ Connection: close"))
 
 (= unknown-msg* "Unknown." max-age* (table) static-max-age* nil)
 
-(def respond (str op args cooks ip)
+(def respond (str op args cooks ip (o uuid))
+  (w/stdout (stderr) (prn "handling request " op " uuid " uuid))
   (w/stdout str
     (iflet f (srvops* op)
            (let req (inst 'request 'args args 'cooks cooks 'ip ip)
