@@ -451,7 +451,7 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
    XXX - This retrieves arguments from the stack in the reverse order
    from what is expected.  Another algorithm should be devised that
    binds arguments in the proper order. */
-static value compile_args(arc *c, value args, value ctx, value env)\
+static value compile_args(arc *c, value args, value ctx, value env)
 {
   value names, frame;
   int envinstaddr, nargs;
