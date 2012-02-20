@@ -933,6 +933,21 @@
                (++ i)))))
       s)))
 
+;; Simple random UUID generator
+(def uuid ()
+  (with (i 0 hexdigits "0123456789abcdef" s (newstring 36))
+    (w/infile str "/dev/urandom"
+      (while (< i 36)
+	     (if (or (is i 8) (is i 13) (is i 18) (is i 23))
+		 (do (= (s i) #\-)
+		     (++ i))
+		 (let x (readb str)
+		   (= (s i) (hexdigits (mod x 16)))
+		   (++ i)
+		   (= (s i) (hexdigits (trunc (idiv x 16))))
+		   (++ i)))))
+    s))
+
 (mac forlen (var s . body)
   `(for ,var 0 (- (len ,s) 1) ,@body))
 
