@@ -528,7 +528,7 @@ static struct {
   { "real", 1, __arc_real },
   { "imag", 1, __arc_imag },
   { "conj", 1, __arc_conj },
-  { "arg", 1, __arc_arg },
+  { "carg", 1, __arc_arg },
 
   { "acos", 1, __arc_acos },
   { "acosh", 1, __arc_acosh },
