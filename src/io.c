@@ -451,7 +451,17 @@ value arc_readb(arc *c, value fd)
   return(INT2FIX(ch));
 }
 
-SDEF(readb, arc_stdin(c));
+/* Read a byte.  Returns nil on failure. */
+value arc_creadb(arc *c, value fd)
+{
+  value v = arc_readb(c, fd);
+
+  if (FIX2INT(v) < 0)
+    return(CNIL);
+  return(v);
+}
+
+SDEF(creadb, arc_stdin(c));
 
 /* Write a byte.  Returns -1 on failure. */
 value arc_writeb(arc *c, value byte, value fd)
