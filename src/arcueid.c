@@ -576,7 +576,7 @@ static struct {
   { "macex1", 1, arc_macex1 },
   { "uniq", 0, arc_uniq },
 
-  { "readb", -1, arc_sreadb },
+  { "readb", -1, arc_screadb },
   { "readc", -1, arc_sreadc },
   { "ungetc", -1, arc_sungetc },
   { "peekc", -1, arc_speekc },
