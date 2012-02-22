@@ -97,7 +97,7 @@ static int sock_getb(arc *c, struct arc_port *p)
   char ch;
   int rb;
 
-  rb = read(p->u.sock.sockfd, (void *)&ch, sizeof(ch));
+  rb = recv(p->u.sock.sockfd, (void *)&ch, sizeof(ch), 0);
   if (rb == 0)
     return(EOF);
   if (rb < 0) {
@@ -115,7 +115,7 @@ static int sock_putb(arc *c, struct arc_port *p, int byte)
   int wb;
 
   ch = (char)byte&0xff;
-  wb = write(p->u.sock.sockfd, (void *)&ch, sizeof(ch));
+  wb = send(p->u.sock.sockfd, (void *)&ch, sizeof(ch), 0);
   if (wb < 0) {
     int en = errno;
 
