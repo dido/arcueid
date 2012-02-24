@@ -547,10 +547,10 @@ START_TEST(test_builtin_coerce_string)
   fail_unless(strcmp(resstr, "-31337") == 0);
 
   val = test_builtin("coerce", 3, INT2FIX(16), arc_intern_cstr(&c, "string"),
-		     INT2FIX(0xdeadbeef));
+		     INT2FIX(0xdeadbee));
   fail_unless(TYPE(val) == T_STRING);
   arc_str2cstr(&c, val, resstr);
-  fail_unless(strcmp(resstr, "deadbeef") == 0);
+  fail_unless(strcmp(resstr, "deadbee") == 0);
 
   val = test_builtin("coerce", 2, arc_intern_cstr(&c, "string"),
 		     arc_mkflonum(&c, 3.1416));
