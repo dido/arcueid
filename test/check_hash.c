@@ -175,7 +175,11 @@ START_TEST(test_hash_nonatomic_value)
   for (i=0; i<10; i++)
     list = cons(&c, INT2FIX(i), list);
   hash = arc_hash(&c, list);
+#if SIZEOF_LONG >= 8
   fail_unless(hash == 0x12b1009768733515);
+#else
+  fail_unless(hash == 0);
+#endif
   /*  printf("%lx\n", hash); */
 }
 END_TEST
