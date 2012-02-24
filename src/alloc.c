@@ -124,9 +124,11 @@ static void *bibop_alloc(arc *c, size_t osize)
     BLOCK_IMM(bpage);
     bptr = bpage;
     for (i=0; i<BIBOP_PAGE_SIZE; i++) {
-      h = (Bhdr *)bptr;
+      /* We have to position Bhdr inside the allocated memory such
+	 that Bhdr->data is at an aligned address. */
+      D2B(h, (void *)(((value)bptr + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1)));
       h->magic = MAGIC_B;
-      h->color = propagator;
+      h->color = propagator+1;
       h->size = osize;
       h->next = bibop_fl[osize];
       bibop_fl[osize] = h;
