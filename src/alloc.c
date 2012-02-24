@@ -115,11 +115,9 @@ static void *bibop_alloc(arc *c, size_t osize)
       bibop_fl[osize] = B2NB(bibop_fl[osize]);
       break;
     }
-    /* Create a new BIBOP page if the free list is empty */
-    actual = osize + BHDRSIZE;
-    /* round actual to the closest multiple of align */
-    if ((actual % ALIGN) != 0)
-      actual = ALIGN*((actual + ALIGN) / ALIGN);
+    /* Create a new BIBOP page if the free list is empty, rounding to the
+       closest multiple of align */
+    actual = (osize + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1);
     bpage = (char *)alloc(c, actual * BIBOP_PAGE_SIZE);
     BLOCK_IMM(bpage);
     bptr = bpage;
@@ -164,8 +162,9 @@ static void *alloc(arc *c, size_t osize)
   if (osize <= MAX_BIBOP)
     return(bibop_alloc(c, osize));
 
-  /* Normal allocation */
-  actual = osize + BHDRSIZE + ALIGN - 1;
+  /* Normal allocation.  We have to allocate enough data such that
+     it is possible to align the data portion of the Bhdr. */
+  actual = (osize + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1);
   ptr = c->mem_alloc(actual);
   if (ptr == NULL) {
     fprintf(stderr, "FATAL: failed to allocate memory\n");
