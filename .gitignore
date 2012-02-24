@@ -56,4 +56,3 @@ basecomp.*
 .gdb_history
 test/tmp/*
 arc/news/arc
-arc/news/static
