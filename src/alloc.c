@@ -115,16 +115,22 @@ static void *bibop_alloc(arc *c, size_t osize)
       bibop_fl[osize] = B2NB(bibop_fl[osize]);
       break;
     }
-    /* Create a new BIBOP page if the free list is empty, rounding to the
-       closest multiple of align */
-    actual = (osize + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1);
+    /* Create a new BIBOP page if the free list is empty. */
+
+    /* Each BIBOP object must be a multiple of the alignment, so that
+       all BiBOP objects will be at aligned addresses. */
+    actual = ALIGN_SIZE(osize) + BHDR_ALIGN_SIZE;
     bpage = (char *)alloc(c, actual * BIBOP_PAGE_SIZE);
     BLOCK_IMM(bpage);
     bptr = bpage;
     for (i=0; i<BIBOP_PAGE_SIZE; i++) {
-      /* We have to position Bhdr inside the allocated memory such
-	 that Bhdr->data is at an aligned address. */
-      D2B(h, (void *)(((value)bptr + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1)));
+      /* Situate the Bhdr inside the BiBOP object in such a way that
+	 the actual data pointer is at an aligned address.  Since bptr
+	 is always at an aligned address (bpage is at an aligned address
+	 since alloc always gives aligned addresses, and actual is an
+	 exact multiple of ALIGN), setting the address to BHDR_ALIGN_SIZE
+	 bytes from bptr should suffice. */
+      D2B(h, bptr + BHDR_ALIGN_SIZE);
       h->magic = MAGIC_B;
       h->color = propagator+1;
       h->size = osize;
@@ -155,7 +161,7 @@ static void *bibop_alloc(arc *c, size_t osize)
 
 static void *alloc(arc *c, size_t osize)
 {
-  void *ptr;
+  void *ptr, *alignedptr;
   Bhdr *h;
   size_t actual;
 
@@ -164,16 +170,18 @@ static void *alloc(arc *c, size_t osize)
 
   /* Normal allocation.  We have to allocate enough data such that
      it is possible to align the data portion of the Bhdr. */
-  actual = (osize + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1);
+  actual = (osize + BHDR_ALIGN_SIZE) + ALIGN - 1;
   ptr = c->mem_alloc(actual);
   if (ptr == NULL) {
     fprintf(stderr, "FATAL: failed to allocate memory\n");
     exit(1);
   }
   allocated += actual;
-  /* We have to position Bhdr inside the allocated memory
-     such that Bhdr->data is at an aligned address. */
-  D2B(h, (void *)(((value)ptr + BHDRSIZE + ALIGN - 1) & ~(ALIGN - 1)));
+  /* Make sure the base pointer we are aligning against is also aligned */
+  alignedptr = ALIGN_PTR(ptr);
+  /* Now, we have to position the Bhdr in such a way that
+     Bhdr->data is also at an aligned address. */
+  D2B(h, (void *)((value)alignedptr + BHDR_ALIGN_SIZE));
   h->magic = MAGIC_A;
   h->size = osize;
   h->color = mutator;
