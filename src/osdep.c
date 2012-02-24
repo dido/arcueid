@@ -122,13 +122,8 @@ value arc_timedate(arc *c, int argc, value *argv)
     tm = __arc_milliseconds() / 1000L;
   else {
     fnv = arc_coerce_fixnum(c, argv[0]);
-    if (NIL_P(fnv)) {
-      /* XXX - this may introduce error */
-      fnv = arc_coerce_flonum(c, argv[0]);
-      tm = (time_t)REP(fnv)._flonum;
-    } else {
-      tm = (time_t)FIX2INT(fnv);
-    }
+    /* XXX - this may introduce error due to floating-point conversion */
+    tm = (time_t)((NIL_P(fnv)) ? arc_coerce_flonum(c, argv[0]) : FIX2INT(fnv));
   }
 
   if (gmtime_r(&tm, &timep) == NULL) {
