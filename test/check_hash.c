@@ -91,6 +91,7 @@ START_TEST(test_hash_atomic_value)
   value v;
   char *ucstr;
 
+#if SIZEOF_LONG >= 8
   hash = arc_hash(&c, CNIL);
   fail_unless(hash == 0xc2503378028494d6);
   hash = arc_hash(&c, CTRUE);
@@ -124,6 +125,44 @@ START_TEST(test_hash_atomic_value)
 
   hash = arc_hash_cstr(&c, ucstr);
   fail_unless(hash == 0x57f9c9fa351f092e);
+
+#else
+
+  hash = arc_hash(&c, CNIL);
+  fail_unless(hash == 0);
+  hash = arc_hash(&c, CTRUE);
+  fail_unless(hash == 0);
+  hash = arc_hash(&c, INT2FIX(1234));
+  fail_unless(hash == 0);
+
+  v = arc_mkflonum(&c, 3.14159);
+  hash = arc_hash(&c, v);
+  fail_unless(hash == 0);
+
+  v = arc_mkcomplex(&c, 3.14159, 2.71828);
+  hash = arc_hash(&c, v);
+  fail_unless(hash == 0);
+
+#ifdef HAVE_GMP_H
+  v = arc_mkbignuml(&c, 0);
+  mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
+  hash = arc_hash(&c, v);
+  fail_unless(hash == 0);
+
+  v = arc_mkrationall(&c, 1, 2);
+  hash = arc_hash(&c, v);
+  fail_unless(hash == 0);
+#endif
+
+  ucstr = "unicode string \343\201\235\343\201\256\347\233\256\343\200\201\350\252\260\343\201\256\347\233\256\343\200\202\343\200\202\343\200\202";
+  v = arc_mkstringc(&c, ucstr);
+  hash = arc_hash(&c, v);
+  fail_unless(hash == 0);
+
+  hash = arc_hash_cstr(&c, ucstr);
+  fail_unless(hash == 0);
+
+#endif
 }
 END_TEST
 
