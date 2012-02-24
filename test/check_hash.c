@@ -58,7 +58,7 @@ START_TEST(test_hash)
 #if SIZEOF_LONG >= 8
   fail_unless(val == 0x88d7a582ec392ac7LL);
 #else
-  fail_unless(val == 0x5d482818L);
+  fail_unless(val == 0x1dce7c2eL);
 #endif
 
   arc_hash_init(&hs, 0);
@@ -69,7 +69,7 @@ START_TEST(test_hash)
 #if SIZEOF_LONG >= 8
   fail_unless(val == 0x2e58f2b17158ae78LL);
 #else
-  fail_unless(val == 0xe7433410L);
+  fail_unless(val == 0x1c589bd8L);
 #endif
 
   arc_hash_init(&hs, 0);
@@ -79,7 +79,7 @@ START_TEST(test_hash)
 #if SIZEOF_LONG >= 8
   fail_unless(val == 0x6d0b4a891c9c3e8aLL);
 #else
-  fail_unless(val == 0x2a6f52dbL);
+  fail_unless(val == 0x62df41c5L);
 #endif
 
 }
@@ -129,38 +129,38 @@ START_TEST(test_hash_atomic_value)
 #else
 
   hash = arc_hash(&c, CNIL);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0x92a7b4a0);
   hash = arc_hash(&c, CTRUE);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0xd347820f);
   hash = arc_hash(&c, INT2FIX(1234));
-  fail_unless(hash == 0);
+  fail_unless(hash == 0x37442eae);
 
   v = arc_mkflonum(&c, 3.14159);
   hash = arc_hash(&c, v);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0xd861946a);
 
   v = arc_mkcomplex(&c, 3.14159, 2.71828);
   hash = arc_hash(&c, v);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0x6f0a91f9);
 
 #ifdef HAVE_GMP_H
   v = arc_mkbignuml(&c, 0);
   mpz_set_str(REP(v)._bignum, "100000000000000000000000000000", 10);
   hash = arc_hash(&c, v);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0x645cc484);
 
   v = arc_mkrationall(&c, 1, 2);
   hash = arc_hash(&c, v);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0x94b78e1e);
 #endif
 
   ucstr = "unicode string \343\201\235\343\201\256\347\233\256\343\200\201\350\252\260\343\201\256\347\233\256\343\200\202\343\200\202\343\200\202";
   v = arc_mkstringc(&c, ucstr);
   hash = arc_hash(&c, v);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0xa7d5cbfb);
 
   hash = arc_hash_cstr(&c, ucstr);
-  fail_unless(hash == 0);
+  fail_unless(hash == 0xa7d5cbfb);
 
 #endif
 }
@@ -178,7 +178,7 @@ START_TEST(test_hash_nonatomic_value)
 #if SIZEOF_LONG >= 8
   fail_unless(hash == 0x12b1009768733515);
 #else
-  fail_unless(hash == 0);
+  fail_unless(hash == 0x1b0ae776);
 #endif
   /*  printf("%lx\n", hash); */
 }
