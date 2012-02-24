@@ -123,10 +123,12 @@ value arc_timedate(arc *c, int argc, value *argv)
   else {
     fnv = arc_coerce_fixnum(c, argv[0]);
     if (NIL_P(fnv)) {
-      arc_err_cstrfmt(c, "timedate: value is out of range");
-      return(CNIL);
+      /* XXX - this may introduce error */
+      fnv = arc_coerce_flonum(c, argv[0]);
+      tm = (time_t)REP(fnv)._flonum;
+    } else {
+      tm = (time_t)FIX2INT(fnv);
     }
-    tm = FIX2INT(fnv);
   }
 
   if (gmtime_r(&tm, &timep) == NULL) {
