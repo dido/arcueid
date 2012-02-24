@@ -47,6 +47,10 @@ typedef struct Bhdr_t {
 #define ALIGN_BITS 4
 #define ALIGN (1 << ALIGN_BITS)
 
+#define ALIGN_SIZE(size) ((size + ALIGN - 1) & ~(ALIGN - 1))
+#define BHDR_ALIGN_SIZE ALIGN_SIZE(BHDRSIZE)
+#define ALIGN_PTR(ptr) ((void *)(((value)ptr + ALIGN - 1) & ~(ALIGN - 1)))
+
 #define PROPAGATOR_COLOR 3	/* propagator color */
 extern int nprop;		/* propagator flag */
 extern int __arc_mutator;	/* mutator color */
