@@ -441,7 +441,7 @@ static int rungc(arc *c)
       free_block(c, (void *)B2D(gcptr));
       gcptr = next;
     } else {
-      fprintf(stderr, "FATAL: Invalid magic number %lx", gcptr->magic);
+      fprintf(stderr, "FATAL: Invalid magic number %" PRId64, gcptr->magic);
       exit(1);
     }
   }
