@@ -618,8 +618,8 @@ static value compile_inline(arc *c, value inst, int narg, value expr, value ctx,
       arc_gcode(c, ctx, ipush);
   }
   if (count != narg) {
-    arc_err_cstrfmt(c, "procedure %O expects %d arguments (%d passed)",
-		    car(expr), narg, count);
+    arc_err_cstrfmt(c, "inline procedure expects %d arguments (%d passed)",
+		    narg, count);
   } else {
     arc_gcode(c, ctx, inst);
   }
@@ -637,7 +637,6 @@ INLINE_FUNC(car, icar, 1);
 INLINE_FUNC(cdr, icdr, 1);
 INLINE_FUNC(scar, iscar, 2);
 INLINE_FUNC(scdr, iscdr, 2);
-INLINE_FUNC(is, iis, 2);
 
 /* XXX - this trades efficiency for simplicity and generality.  There is no
    need for a base value if we have an even number of arguments. */
@@ -709,8 +708,6 @@ static value (*inline_func(arc *c, value ident))(arc *, value,
     return(inline_scar);
   } else if (ident == ARC_BUILTIN(c, S_SCDR)) {
     return(inline_scdr);
-  } else if (ident == ARC_BUILTIN(c, S_IS)) {
-    return(inline_is);
   } else if (ident == ARC_BUILTIN(c, S_PLUS)) {
     return(inline_plus);
   } else if (ident == ARC_BUILTIN(c, S_TIMES)) {
