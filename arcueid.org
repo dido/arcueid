@@ -160,7 +160,7 @@ notice and this notice are preserved.
     - [X] Threads
     - [X] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [16/19]
+** TODO Runtime Built-In Functions [15/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -415,11 +415,12 @@ notice and this notice are preserved.
      - [X] call-w/stdout
      - [X] disp
      - [ ] flushout
-   - [X] Threads [2/2]
-     - [X] Creating and managing threads [7/7]
+   - [-] Threads [1/2]
+     - [-] Creating and managing threads [7/8]
        - [X] new-thread (spawn)
        - [X] break-thread
        - [X] kill-thread
+       - [ ] current-thread
        - [X] dead
        - [X] sleep
        - [X] atomic-invoke - implemented using channels
