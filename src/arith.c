@@ -1607,7 +1607,7 @@ value __arc_itoa(arc *c, value onum, value base,
   sign = FIX2INT(arc_numcmp(c, onum, INT2FIX(0)));
   /* special case for 0 */
   if (sign == 0) {
-    str = arc_mkstringc(c, "0");
+    return(arc_mkstringc(c, "0"));
   } else {
     str = arc_mkstringc(c, "");
     while (arc_numcmp(c, num, INT2FIX(0)) > INT2FIX(0)) {
