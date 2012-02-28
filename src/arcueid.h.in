@@ -88,6 +88,9 @@ typedef struct arc {
   value inlfuncs;		/* inlinable functions */
 
   value achan;			/* atomic channel */
+
+  /* declarables */
+  int atstrings;		/* atstrings */
 } arc;
 
 
