@@ -541,6 +541,12 @@ START_TEST(test_builtin_coerce_string)
   fail_unless(strcmp(resstr, "31337") == 0);
 
   val = test_builtin("coerce", 2, arc_intern_cstr(&c, "string"),
+		     INT2FIX(0));
+  fail_unless(TYPE(val) == T_STRING);
+  arc_str2cstr(&c, val, resstr);
+  fail_unless(strcmp(resstr, "0") == 0);
+
+  val = test_builtin("coerce", 2, arc_intern_cstr(&c, "string"),
 		     INT2FIX(-31337));
   fail_unless(TYPE(val) == T_STRING);
   arc_str2cstr(&c, val, resstr);
