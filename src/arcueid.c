@@ -676,6 +676,8 @@ static struct {
 
   { "memory", 0, arc_memory },
 
+  { "declare", 2, arc_declare },
+
   { NULL, 0, NULL }
 };
 
@@ -732,9 +734,26 @@ void arc_init_sq(arc *c, int stksize, int quanta, int gcquanta)
   c->splforms = CNIL;
   c->inlfuncs = CNIL;
   c->gcstatus = 0;
+  c->atstrings = 0;
 }
 
 void arc_init(arc *c)
 {
   arc_init_sq(c, TSTKSIZE, PQUANTA, GCQUANTA);
+}
+
+value arc_declare(arc *c, value key, value val)
+{
+  if (key == arc_intern_cstr(c, "atstrings")) {
+    c->atstrings = (NIL_P(val)) ? 0 : 1;
+    return((c->atstrings) ? CTRUE : CNIL);
+  }
+
+  /* XXX - These declarations have no effect. */
+  if (key == arc_intern_cstr(c, "direct-calls")
+      || key == arc_intern_cstr(c, "explicit-flush")) {
+    return((NIL_P(val)) ? CNIL : CTRUE);
+  }
+  arc_err_cstrfmt(c, "Unknown declaration");
+  return(CNIL);
 }
