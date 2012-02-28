@@ -208,6 +208,8 @@
 
 	     (it "coerce should be a fn"
 		 (is (type coerce) 'fn))
+	     (it "coerce should coerce 0 to a string"
+		 (is (coerce 0 'string) "0"))
 
 	     (it "open-socket should be a fn"
 		 (is (type open-socket) 'fn))
@@ -248,8 +250,8 @@
 	     (it "maptable should be a fn"
 		 (is (type maptable) 'fn))
 
-	     (it "protect should be a fn"
-		 (is (type protect) 'fn))
+	     (it "protect should be a mac or fn"
+		 (or (is (type protect) 'fn) (is (type protect) 'mac)))
 
 	     (it "rand should be a fn"
 		 (is (type rand) 'fn))
@@ -374,7 +376,6 @@
 
 	     (it "log should be a fn"
 		 (is (type log) 'fn))))
-
 
 
 (print-results (test-builtins) t)
