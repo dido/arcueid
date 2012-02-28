@@ -107,4 +107,7 @@ extern value arc_open_socket(arc *c, value port);
 extern value arc_socket_accept(arc *c, value sock);
 extern value arc_client_ip(arc *c, value sock);
 
+/* declare */
+extern value arc_declare(arc *c, value key, value val);
+
 #endif
