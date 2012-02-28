@@ -245,16 +245,16 @@ value arc_type_compat(arc *c, value obj)
     return(ARC_BUILTIN(c, S_FN));
     break;
   case T_CODE:
-    return(ARC_BUILTIN(c, S_CODE));
+    return(ARC_BUILTIN(c, S_FN));
     break;
   case T_ENV:
     return(ARC_BUILTIN(c, S_ENVIRONMENT));
     break;
   case T_VMCODE:
-    return(ARC_BUILTIN(c, S_VMCODE));
+    return(ARC_BUILTIN(c, S_FN));
     break;
   case T_CCODE:
-    return(ARC_BUILTIN(c, S_CCODE));
+    return(ARC_BUILTIN(c, S_FN));
     break;
   case T_CUSTOM:
     return(ARC_BUILTIN(c, S_CUSTOM));
