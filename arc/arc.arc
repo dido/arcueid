@@ -1726,11 +1726,6 @@
       0
       (/ (count test xs) (len xs))))
 
-
-
-;; XXX - declare is a no-op for now
-(def declare (key val))
-
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
 ; idea: implicit tables of tables; setf empty field, becomes table
