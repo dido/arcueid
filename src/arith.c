@@ -1599,16 +1599,22 @@ value __arc_itoa(arc *c, value onum, value base,
 {
   const char *digits = (uc) ? _itoa_upper_digits : _itoa_lower_digits;
   value dig, num;
-  value str = arc_mkstringc(c, "");
+  value str;
   int p, q, sign;
   Rune t;
 
   num = __arc_abs(c, onum);
   sign = FIX2INT(arc_numcmp(c, onum, INT2FIX(0)));
-  while (arc_numcmp(c, num, INT2FIX(0)) > INT2FIX(0)) {
-    dig = __arc_mod2(c, num, base);
-    str = arc_strcatc(c, str, (Rune)digits[FIX2INT(dig)]);
-    num = __arc_idiv2(c, num, base);
+  /* special case for 0 */
+  if (sign == 0) {
+    str = arc_mkstringc(c, "0");
+  } else {
+    str = arc_mkstringc(c, "");
+    while (arc_numcmp(c, num, INT2FIX(0)) > INT2FIX(0)) {
+      dig = __arc_mod2(c, num, base);
+      str = arc_strcatc(c, str, (Rune)digits[FIX2INT(dig)]);
+      num = __arc_idiv2(c, num, base);
+    }
   }
   /* sign goes at the end if it's present, since the digits come in
      reversed. */
