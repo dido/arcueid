@@ -101,6 +101,7 @@ extern value arc_break_thread(arc *c, value thr);
 extern value arc_kill_thread(arc *c, value thr);
 extern value arc_sleep(arc *c, value secs);
 extern value arc_tjoin(arc *c, value thr);
+extern value arc_current_thread(arc *c);
 
 /* networking */
 extern value arc_open_socket(arc *c, value port);
