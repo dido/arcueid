@@ -74,6 +74,22 @@ value arc_is(arc *c, value v1, value v2)
   return(CNIL);
 }
 
+value arc_is_multi(arc *c, int argc, value *argv)
+{
+  value ret=CTRUE, first;
+  int i;
+
+  if (argc < 2)
+    return(ret);
+  first = argv[0];
+  for (i=1; i<argc; i++) {
+    ret = arc_is(c, first, argv[i]);
+    if (ret == CNIL)
+      break;
+  }
+  return(ret);
+}
+
 extern value __arc_hash_iso(arc *c, value v1, value v2);
 
 value arc_iso(arc *c, value v1, value v2)
@@ -166,6 +182,22 @@ value arc_iso(arc *c, value v1, value v2)
     return(CNIL);
   }
   return(CNIL);
+}
+
+value arc_iso_multi(arc *c, int argc, value *argv)
+{
+  value ret=CTRUE, first;
+  int i;
+
+  if (argc < 2)
+    return(ret);
+  first = argv[0];
+  for (i=1; i<argc; i++) {
+    ret = arc_iso(c, first, argv[i]);
+    if (ret == CNIL)
+      break;
+  }
+  return(ret);
 }
 
 value scar(value x, value y)
@@ -512,8 +544,8 @@ static struct {
   { "<=>", 2, arc_cmp },
   { "bound", 1, arc_bound },
   { "exact", 1, arc_exact },
-  { "is", 2, arc_is },
-  { "iso", 2, arc_iso },
+  { "is", -1, arc_is_multi },
+  { "iso", -1, arc_iso_multi },
   { "fixnump", 1, arc_fixnump },
 
   { "idiv", 2, __arc_idiv2 },
