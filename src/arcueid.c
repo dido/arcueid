@@ -691,6 +691,7 @@ static struct {
   { "join-thread", 1, arc_tjoin },
   { "kill-thread", 1, arc_kill_thread },
   { "break-thread", 1, arc_break_thread },
+  { "current-thread", 0, arc_current_thread },
 
   /* used by atomic-invoke */
   { "__acell__", -1, arc_atomic_cell },
