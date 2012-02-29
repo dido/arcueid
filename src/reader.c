@@ -29,6 +29,7 @@
 #include "utf.h"
 #include "arith.h"
 #include "symbols.h"
+#include "builtin.h"
 #include "../config.h"
 
 value arc_intern(arc *c, value name)
@@ -293,6 +294,75 @@ static value read_comma(arc *c, value src, value eof)
   return(read_quote(c, src, ARC_BUILTIN(c, S_UNQUOTE), eof));
 }
 
+/* First unescaped @ in s, if any.  Escape by doubling. */
+static int atpos(arc *c, value str, int i)
+{
+  int len;
+
+  len = arc_strlen(c, str);
+  while (i < len) {
+    if (arc_strindex(c, str, i) == '@') {
+      if (i+1 < len && arc_strindex(c, str, i+1) != '@')
+	return(i);
+      i++;
+    }
+    i++;
+  }
+  return(-1);
+}
+
+static value unescape_ats(arc *c, value s)
+{
+  value ns;
+  int i, len;
+  Rune ch;
+
+  ns = arc_mkstringlen(c, 0);
+  len = arc_strlen(c, s);
+  for (i=0; i<len;) {
+    ch = arc_strindex(c, s, i);
+    if (i+1 < len && ch == '@' && arc_strindex(c, s, i+1) == '@')
+      i++;
+    ns = arc_strcatc(c, ns, ch);
+    i++;
+  }
+  return(ns);
+}
+
+/* XXX - try to make this tail recursive somehow, destructive if need be */
+static value codestring(arc *c, value s)
+{
+  int i, len, rlen;
+  value ss, rest, in, expr, i2;
+
+  i = atpos(c, s, 0);
+  len = arc_strlen(c, s);
+  if (i < 0)
+    return(cons(c, s, CNIL));
+  ss = arc_substr(c, s, 0, i);
+  rest = arc_substr(c, s, i+1, len);
+  in = arc_instring(c, rest, CNIL);
+  expr = arc_read(c, in, CNIL);
+  i2 = FIX2INT(arc_tell(c, in));
+  rlen = arc_strlen(c, rest);
+  return(cons(c, ss, cons(c, expr, codestring(c, arc_substr(c, rest, i2, rlen)))));
+}
+
+static value read_atstring(arc *c, value s)
+{
+  value cs, p;
+
+  if (atpos(c, s, 0) >= 0) {
+    cs = codestring(c, s);
+    for (p=cs; p; p = cdr(p)) {
+      if (TYPE(car(p)) == T_STRING)
+	scar(p, unescape_ats(c, car(p)));
+    }
+    return(cons(c, ARC_BUILTIN(c, S_STRING), cs));
+  }
+  return(unescape_ats(c, s));
+}
+
 /* XXX - we need to add support for octal and hexadecimal escapes as well */
 static value read_string(arc *c, value src)
 {
@@ -308,7 +378,7 @@ static value read_string(arc *c, value src)
 	/* end of string */
 	nstr = arc_mkstring(c, buf, i);
 	str = (str == CNIL) ? nstr : arc_strcat(c, str, nstr);
-	return(str);		/* proper termination */
+	return((c->atstrings) ? read_atstring(c, str) : str);
 	break;
       case '\\':
 	/* escape character */
