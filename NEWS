@@ -6,6 +6,7 @@ See the end for copying conditions.
 - 32-bit compatibility fixes (allocation alignment issues mostly)
 - Other bug fixes (getb returns nil on eof, etc., string coercions)
 - is and iso can now accept any number of arguments
+- current-thread function provided
 - atstring support
 
 * Version 0.0.11 (2012-02-20)
