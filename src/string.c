@@ -123,7 +123,7 @@ Rune arc_strsetindex(arc *c, value v, int index, Rune ch)
   return(ch);
 }
 
-/* XXX - this is extremelly inefficient! */
+/* XXX - this is extremely inefficient! */
 value arc_strcatc(arc *c, value v1, Rune ch)
 {
   Rune *runeptr;
@@ -135,6 +135,20 @@ value arc_strcatc(arc *c, value v1, Rune ch)
   runeptr += REP(v1)._str.length;
   *runeptr = ch;
   return(newstr);
+}
+
+value arc_substr(arc *c, value s, int sidx, int eidx)
+{
+  int len, nlen;
+  value ns;
+
+  len = arc_strlen(c, s);
+  if (eidx > len)
+    eidx = len;
+  nlen = eidx - sidx;
+  ns = arc_mkstringlen(c, nlen);
+  memcpy(REP(ns)._str.str, REP(s)._str.str + sidx, nlen*sizeof(Rune));
+  return(ns);
 }
 
 value arc_strcat(arc *c, value v1, value v2)
