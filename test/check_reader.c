@@ -483,6 +483,26 @@ START_TEST(test_eof)
 }
 END_TEST
 
+START_TEST(test_atstring)
+{
+  value str, sexpr, fp;
+
+  c.atstrings = 1;
+  str = arc_mkstringc(&c, "\"now @@ escaped at-signs\"");
+  fp = arc_instring(&c, str, CNIL);
+  sexpr = arc_read(&c, fp, CNIL);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  fail_unless(arc_is(&c, arc_mkstringc(&c, "now @ escaped at-signs"), sexpr) == CTRUE);
+
+  str = arc_mkstringc(&c, "\"and @(+ 1 1) from (+ 1 1)\"");
+  fp = arc_instring(&c, str, CNIL);
+  sexpr = arc_read(&c, fp, CNIL);
+  fail_unless(TYPE(sexpr) == T_CONS);
+
+  c.atstrings = 0;
+}
+END_TEST
+
 extern unsigned long long gcepochs;
 
 int main(void)
@@ -523,6 +543,7 @@ int main(void)
   tcase_add_test(tc_reader, test_comment);
   tcase_add_test(tc_reader, test_comma);
   tcase_add_test(tc_reader, test_eof);
+  tcase_add_test(tc_reader, test_atstring);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
