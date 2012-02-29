@@ -2,7 +2,7 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.0.12 (2012-??-??)
+* Version 0.0.12 (2012-02-29)
 - 32-bit compatibility fixes (allocation alignment issues mostly)
 - Other bug fixes (getb returns nil on eof, etc., string coercions)
 - is and iso can now accept any number of arguments
