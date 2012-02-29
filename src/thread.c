@@ -626,3 +626,8 @@ value arc_break_thread(arc *c, value thr)
   TEXC(thr) = exc;
   return(CNIL);
 }
+
+value arc_current_thread(arc *c)
+{
+  return(c->curthread);
+}
