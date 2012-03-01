@@ -601,7 +601,7 @@ static value expand_compose(arc *c, value sym)
       nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
       elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
       if (elt != CNIL)
-	elt = arc_intern(c, elt);
+	elt = arc_read(c, arc_instring(c, elt, CNIL), CNIL);
       i=0;
       if (negate) {
 	elt = (elt == CNIL) ? ARC_BUILTIN(c, S_NO) 
@@ -661,7 +661,7 @@ static value expand_sexpr(arc *c, value sym)
       i=0;
       if (elt == CNIL)
 	continue;
-      elt = arc_intern(c, elt);
+      elt = arc_read(c, arc_instring(c, elt, CNIL), CNIL);
       if (last == CNIL)
 	last = elt;
       else if (prevchar == '!')
@@ -683,7 +683,7 @@ static value expand_sexpr(arc *c, value sym)
 
   nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
   elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
-  elt = arc_intern(c, elt);
+  elt = arc_read(c, arc_instring(c, elt, CNIL), CNIL);
   if (elt == CNIL) {
     arc_err_cstrfmt(c, "Bad ssyntax %s", sym);
     return(CNIL);
@@ -714,7 +714,7 @@ static value expand_and(arc *c, value sym)
       nelt = (i > 0) ? arc_mkstring(c, buf, i) : CNIL;
       elt = (elt == CNIL) ? nelt : arc_strcat(c, elt, nelt);
       if (elt != CNIL)
-	elt = arc_intern(c, elt);
+	elt = arc_read(c, arc_instring(c, elt, CNIL), CNIL);
       i=0;
       if (elt == CNIL) {
 	if (ch == -1)
