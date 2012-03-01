@@ -2,6 +2,9 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
+* Version 0.0.13 (2012-??-??)
+- Include Conan Dalton's Arc unit tests from Rainbow
+
 * Version 0.0.12 (2012-02-29)
 - 32-bit compatibility fixes (allocation alignment issues mostly)
 - Other bug fixes (getb returns nil on eof, etc., string coercions)
