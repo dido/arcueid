@@ -575,9 +575,20 @@ value arc_hash_map(arc *c, value argv, value rv, CC4CTX)
 
 #define DEFAULT_TABLE_BITS 8
 
-value arc_table(arc *c)
+value arc_table(arc *c, value argv, value rv, CC4CTX)
 {
-  return(arc_mkhash(c, DEFAULT_TABLE_BITS));
+  CC4VDEFBEGIN;
+  CC4VARDEF(newhash);
+  CC4VDEFEND;
+  CC4BEGIN(c);
+  CC4V(newhash) = arc_mkhash(c, DEFAULT_TABLE_BITS);
+  if (VECLEN(argv) == 0)
+    return(CC4V(newhash));
+  /* XXX - should it be possible to call other types of functions? */
+  TYPECHECK(VINDEX(argv, 0), T_CLOS, 1);
+  CC4CALL(c, argv, VINDEX(argv, 0), 1, CC4V(newhash));
+  CC4END;
+  return(CC4V(newhash));
 }
 
 /* This should be called only on hashes */
