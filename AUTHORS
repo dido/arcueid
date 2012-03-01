@@ -33,11 +33,11 @@ information on the technique.
 The autoconf readline testing code in m4/ax_lib_readline.m4 is
 Copyright (c) 2008 Ville Laurikari.
 
-The Arc unit testing code in arc/test/spec.arc is Copyright (c) 2008
-Will Fitzgerald.
-
 The Arc core code in arc/arc.arc is Copyright (c) 2009 Paul Graham and
 Robert Morris.
+
+The test suite in arc/tests comes from Rainbow and is Copyright (c)
+2008 Conan Dalton.
 
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
