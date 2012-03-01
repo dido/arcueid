@@ -850,13 +850,16 @@ Public License instead of this License.  But first, please read
 
 ==============================
 
-The Arc foundation code in arc/arc.arc and the News.arc code in
-arc/news is available under the following license:
+The Arc foundation code in arc/arc.arc, the libraries in arc/news, and
+the test suite in arc/tests is available under this license.
 
 ==============================
 
 The core Arc package and subsidiary libraries are Copyright (c) 2009
 Paul Graham and Robert Morris and are provided under these terms.
+
+The Arc testsuite from Rainbow is Copyright (c) 2008 Conan Dalton and
+is also provided under these terms.
 
 Copyright (c) 2000-2006, The Perl Foundation.
 
