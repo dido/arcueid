@@ -40,8 +40,12 @@ value arc_intern(arc *c, value name)
   if ((symid = arc_hash_lookup(c, c->symtable, name)) != CUNBOUND) {
     /* convert the fixnum ID into the symbol value */
     symval = ID2SYM(FIX2INT(symid));
-    /* do not allow nil to have a symbol value */
-    return((symval == ARC_BUILTIN(c, S_NIL)) ? CNIL : symval);
+    /* do not allow nil or t to have a symbol value */
+    if (symval == ARC_BUILTIN(c, S_NIL))
+      symval = CNIL;
+    else if (symval == ARC_BUILTIN(c, S_T))
+      symval = CTRUE;
+    return(symval);
   }
 
   symintid = ++c->lastsym;
