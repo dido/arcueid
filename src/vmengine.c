@@ -794,7 +794,7 @@ void arc_apply(arc *c, value thr, value fun)
 	/* We now have a non-negative exact integer for the count */
 	do {
 	  if (!CONS_P(list)) {
-	    arc_err_cstrfmt(c, "index %d too large for list", ocount);
+	    arc_err_cstrfmt(c, "index %d too large for list", FIX2INT(ocount));
 	    res = CNIL;
 	    break;
 	  }
