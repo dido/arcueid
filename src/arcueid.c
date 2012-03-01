@@ -597,7 +597,7 @@ static struct {
   { "tgamma", 1, __arc_tgamma },
 
   { "maptable", -3, arc_hash_map },
-  { "table", 0, arc_table },
+  { "table", -3, arc_table },
 
   { "apply", -3, arc_apply2 },
   { "eval", -3, arc_eval },
