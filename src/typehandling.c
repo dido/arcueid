@@ -79,6 +79,8 @@ const char *__arc_typenames[] = {
   NULL
 };
 
+value coerce_num(arc *c, value obj, value argv);
+
 /* Determine numeric base from argument 2 of a coerce */
 static value numeric_base(arc *c, value argv, const char *caller)
 {
@@ -348,12 +350,8 @@ static value coerce_integer(arc *c, value obj, value argv)
     return(res);
 #endif
   case T_STRING: {
-    value base = numeric_base(c, argv, "string->int");
-
-    res = str2int(c, obj, base, 0, arc_strlen(c, obj));
-    if (res != CNIL)
-      return(res);
-    /* fall through otherwise, go to default error */
+    res = coerce_num(c, obj, argv);
+    return(coerce_integer(c, res, argv));
   }
   default:
     arc_err_cstrfmt(c, "string->int cannot coerce type %s to integer type", __arc_typenames[TYPE(obj)]);
@@ -856,6 +854,7 @@ value coerce_vector(arc *c, value obj, value argv)
 value coerce_num(arc *c, value obj, value argv)
 {
   int len, base;
+  value res;
 
   len = arc_strlen(c, obj);
 
@@ -890,7 +889,12 @@ value coerce_num(arc *c, value obj, value argv)
     return(coerce_rational(c, obj, argv));
 
   /* 7. Otherwise, consider string as representing an integer */
-  return(coerce_integer(c, obj, argv));
+  res = str2int(c, obj, INT2FIX(base), 0, len);
+  if (res != CNIL)
+    return(res);
+  arc_err_cstrfmt(c, "cannot coerce type %s to numeric type", __arc_typenames[TYPE(obj)]);
+  return(CNIL);
+
 }
 
 value arc_coerce(arc *c, value argv)
