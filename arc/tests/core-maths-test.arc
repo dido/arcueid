@@ -145,16 +145,16 @@
 
     (suite "expt"
       ("simple integer exponents"
-        (expt 2.5 3)
-        15.625 )
+        (< (abs (- (expt 2.5 3) 15.625)) 1e-6)
+	t )
 
       ("double exponents"
-        (expt 100 0.5)
-        10.0 )
+        (< (abs (- (expt 100 0.5) 10.0)) 1e-6)
+        t )
 
       ("more double exponents"
-        (expt 1000 0.5)
-        31.622776601683793 ))
+        (< (abs (- (expt 1000 0.5) 31.622776601683793)) 1e-6)
+	t ))
 
     (suite "sqrt"
       ("simple square root"
@@ -166,8 +166,8 @@
         1.4142135623730951)
 
       ("root of double"
-        (sqrt 3.14)
-        1.772004514666935 ))
+        (< (abs (- (sqrt 3.14) 1.772004514666935)) 1e-6)
+	t ))
 
     (suite "mod"
       ("for positive integers"
