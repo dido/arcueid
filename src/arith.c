@@ -171,6 +171,9 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
 	       mpq_denref(REP(v)._rational));
     break;
   case T_FLONUM:
+    if (!isfinite(REP(v)._flonum) || isnan(REP(v)._flonum)) {
+      arc_err_cstrfmt(c, "Cannot convert infinity or nan into a bignum");
+    }
     mpz_set_d(*bignum, REP(v)._flonum);
     break;
   case T_FIXNUM:
