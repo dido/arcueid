@@ -1265,9 +1265,10 @@ static double str2flonum(arc *c, value str, int index, int imagflag)
 
 static value string2numindex(arc *c, value str, int index, int rational)
 {
-  int state = 1, sign=1, radsel = 0;
+  int state = 1, sign=1, radsel = 0, i;
   Rune ch;
   value nval = INT2FIX(0), digitval, radix = INT2FIX(10), denom;
+  Rune chs[4];
 
   while ((ch = arc_strgetc(c, str, &index)) != Runeerror) {
     switch (state) {
@@ -1304,6 +1305,26 @@ static value string2numindex(arc *c, value str, int index, int rational)
 	return(str2flonum(c, str, 0, 0));
 	break;
       default:
+	if (tolower(ch) == 'i') {
+	  for (i=0; i<4; i++) {
+	    chs[i] = arc_strgetc(c, str, &index);
+	    if (chs[i] == Runeerror)
+	      return(CNIL);
+	  }
+	  if (chs[0] == 'n' && chs[1] == 'f' && chs[2] == '.' && chs[3] == '0')
+	    return(arc_mkflonum(c, sign*INFINITY));
+	  return(CNIL);
+	}
+	if (tolower(ch) == 'n') {
+	  for (i=0; i<4; i++) {
+	    chs[i] = arc_strgetc(c, str, &index);
+	    if (chs[i] == Runeerror)
+	      return(CNIL);
+	  }
+	  if (chs[0] == 'a' && chs[1] == 'n' && chs[2] == '.' && chs[3] == '0')
+	    return(arc_mkflonum(c, NAN));
+	  return(CNIL);
+	}
 	if (!isdigit(ch))
 	  return(CNIL);
 	/* more digits */
@@ -1395,6 +1416,8 @@ static value string2numindex(arc *c, value str, int index, int rational)
       if (digitval == CNIL)
 	return(CNIL);
       nval = __arc_add2(c, __arc_mul2(c, nval, radix), digitval);
+      break;
+    case 6:
       break;
     }
   }
