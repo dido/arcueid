@@ -726,21 +726,12 @@ static inline value div2r_complex(arc *c, value arg1, double re, double im)
 
 static inline value div2_flonum(arc *c, value arg1, double arg2)
 {
-  if (arg2 == 0.0) {
-    arc_err_cstrfmt(c, "Division by zero");
-    return(CNIL);
-  }
   arg2 = REP(arg1)._flonum / arg2;
   return(arc_mkflonum(c, arg2));
 }
 
 static inline value div2r_flonum(arc *c, value arg1, double arg2)
 {
-  if (REP(arg1)._flonum == 0.0) {
-    arc_err_cstrfmt(c, "Division by zero");
-    return(CNIL);
-  }
-
   arg2 /= REP(arg1)._flonum;
   return(arc_mkflonum(c, arg2));
 }
