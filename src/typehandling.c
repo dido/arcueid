@@ -694,6 +694,11 @@ value coerce_string(arc *c, value obj, value argv)
       char *buf;
       int bufsize = 32, n;
 
+      if (isnan(REP(obj)._flonum))
+	return(arc_mkstringc(c, "+nan.0"));
+      if (!isfinite(REP(obj)._flonum))
+	return(arc_mkstringc(c, (REP(obj)._flonum > 0) ? "+inf.0" : "-inf.0"));
+
       for (;;) {
 	buf = (char *)alloca(bufsize*sizeof(char));
 	n = snprintf(buf, bufsize, "%lf", REP(obj)._flonum);
