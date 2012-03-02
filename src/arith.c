@@ -161,7 +161,7 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
 #ifdef HAVE_GMP_H
   mpz_t *bignum = (mpz_t *)bptr;
   mpq_t rem;
-  double drem;
+  double drem, base;
 
   switch (TYPE(v)) {
   case T_BIGNUM:
@@ -184,7 +184,12 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
     if (!isfinite(REP(v)._flonum) || isnan(REP(v)._flonum)) {
       arc_err_cstrfmt(c, "Cannot convert infinity or nan into a bignum");
     }
+    /* see if we need to round */
+    base = floor(REP(v)._flonum);
+    drem = REP(v)._flonum - base;
     mpz_set_d(*bignum, REP(v)._flonum);
+    if (drem > 0.5)
+      mpz_add_ui(*bignum, *bignum, 1);
     break;
   case T_FIXNUM:
     mpz_set_si(*bignum, FIX2INT(v));
