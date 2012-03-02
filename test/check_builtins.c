@@ -562,7 +562,7 @@ START_TEST(test_builtin_coerce_string)
 		     arc_mkflonum(&c, 3.1416));
   fail_unless(TYPE(val) == T_STRING);
   arc_str2cstr(&c, val, resstr);
-  fail_unless(strcmp(resstr, "3.141600") == 0);
+  fail_unless(strcmp(resstr, "3.1416") == 0);
 
   val = test_builtin("coerce", 2, arc_intern_cstr(&c, "string"),
 		     arc_mkcomplex(&c, 3.1416, 2.718));
