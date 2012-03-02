@@ -958,6 +958,13 @@ value arc_coerce(arc *c, value argv)
     return(arc_mkchar(c, (Rune)ch));
   }
 
+  /* null conversion of numeric types */
+  if (ntype == ARC_BUILTIN(c, S_NUM)
+      && (TYPE(obj) == T_FIXNUM || TYPE(obj) == T_FLONUM
+	  || TYPE(obj) == T_BIGNUM || TYPE(obj) == T_COMPLEX 
+	  || TYPE(obj) == T_RATIONAL))
+    return(obj);
+
   /* numeric coercions */
   if (ntype == ARC_BUILTIN(c, S_NUM) &&  TYPE(obj) == T_STRING)
     return(coerce_num(c, obj, argv));
