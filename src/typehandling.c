@@ -405,13 +405,13 @@ static value str2flo(arc *c, value obj, value b, int strptr, int limit)
   exponent = INT2FIX(0);
 
   /* Check special cases of INF and NAN */
-  if (limit - strptr == 3) {
+  if (limit - strptr == 3 || limit - strptr == 5) {
     int i;
 
     for (i=0; i<3; i++)
       str[i] = (char)arc_strindex(c, obj, strptr + i);
     str[3] = 0;
-    if (strcasecmp(str, "INF") == 0)
+    if (strcasecmp(str, "INF") == 0 || strcasecmp(str, "inf.0") == 0)
       return(arc_mkflonum(c, sign*INFINITY));
     if (strcasecmp(str, "NAN") == 0)
       return(arc_mkflonum(c, sign*NAN));
