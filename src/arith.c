@@ -160,15 +160,25 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
 {
 #ifdef HAVE_GMP_H
   mpz_t *bignum = (mpz_t *)bptr;
+  mpq_t rem;
+  double drem;
 
   switch (TYPE(v)) {
   case T_BIGNUM:
     mpz_set(*bignum, REP(v)._bignum);
     break;
   case T_RATIONAL:
-    mpz_tdiv_q(*bignum,
+    /* do rounding */
+    mpq_init(rem);
+    mpz_tdiv_qr(*bignum, mpq_numref(rem),
 	       mpq_numref(REP(v)._rational),
 	       mpq_denref(REP(v)._rational));
+    mpz_set(mpq_denref(rem), mpq_denref(REP(v)._rational));
+    mpq_canonicalize(rem);
+    drem = mpq_get_d(rem);
+    mpq_clear(rem);
+    if (drem > 0.5)
+      mpz_add_ui(*bignum, *bignum, 1);
     break;
   case T_FLONUM:
     if (!isfinite(REP(v)._flonum) || isnan(REP(v)._flonum)) {
