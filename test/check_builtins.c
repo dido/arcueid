@@ -303,7 +303,7 @@ START_TEST(test_builtin_coerce_int)
     val = test_builtin("coerce", 2, arc_intern_cstr(&c, "int"), val);
     fail_unless(TYPE(val) == T_BIGNUM);
     mpz_init(expected);
-    mpz_set_str(expected, "100000000000000000000000000001", 10);
+    mpz_set_str(expected, "100000000000000000000000000002", 10);
     fail_unless(mpz_cmp(expected, REP(val)._bignum) == 0);
     mpz_clear(expected);
   }
