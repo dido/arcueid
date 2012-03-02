@@ -194,8 +194,8 @@
 	    t)
 
           ("string->num from float in another base with exponent (simpler case)"
-            (coerce "101E100" 'num 2)
-            80.0)
+            (< (abs (- (coerce "101E100" 'num 2) 80.0)) 1e-6)
+	    t)
 
           ("type of 80.0 is num"
             (type (coerce "80.0" 'num))
