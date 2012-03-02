@@ -278,7 +278,7 @@ START_TEST(test_builtin_coerce_int)
 		     arc_intern_cstr(&c, "int"),
 		     arc_mkcomplex(&c, 3.1416, 2.718));
   fail_unless(TYPE(val) == T_FIXNUM);
-  fail_unless(val == INT2FIX(2));
+  fail_unless(val == INT2FIX(3));
 
   val = test_builtin("coerce", 3, arc_intern_cstr(&c, "re"),
 		     arc_intern_cstr(&c, "int"),
