@@ -179,6 +179,8 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
     mpq_clear(rem);
     if (drem > 0.5)
       mpz_add_ui(*bignum, *bignum, 1);
+    else if (drem == 0.5 && mpz_odd_p(*bignum))
+      mpz_add_ui(*bignum, *bignum, 1);
     break;
   case T_FLONUM:
     if (!isfinite(REP(v)._flonum) || isnan(REP(v)._flonum)) {
@@ -190,6 +192,41 @@ void arc_coerce_bignum(arc *c, value v, void *bptr)
     mpz_set_d(*bignum, REP(v)._flonum);
     if (drem > 0.5)
       mpz_add_ui(*bignum, *bignum, 1);
+    else if (drem == 0.5 && (((int)base)&0x1) == 1)
+      mpz_add_ui(*bignum, *bignum, 1);
+    break;
+  case T_FIXNUM:
+    mpz_set_si(*bignum, FIX2INT(v));
+    break;
+  default:
+    arc_err_cstrfmt(c, "Cannot convert operand of type %d into a bignum", TYPE(v));
+    break;
+  }
+#else
+  arc_err_cstrfmt(c, "Overflow error (no bignum support)");
+#endif
+}
+
+void arc_coerce_bignum_no_round(arc *c, value v, void *bptr)
+{
+#ifdef HAVE_GMP_H
+  mpz_t *bignum = (mpz_t *)bptr;
+
+  switch (TYPE(v)) {
+  case T_BIGNUM:
+    mpz_set(*bignum, REP(v)._bignum);
+    break;
+  case T_RATIONAL:
+    /* do rounding */
+    mpz_tdiv_q(*bignum,
+	       mpq_numref(REP(v)._rational),
+	       mpq_denref(REP(v)._rational));
+    break;
+  case T_FLONUM:
+    if (!isfinite(REP(v)._flonum) || isnan(REP(v)._flonum)) {
+      arc_err_cstrfmt(c, "Cannot convert infinity or nan into a bignum");
+    }
+    mpz_set_d(*bignum, REP(v)._flonum);
     break;
   case T_FIXNUM:
     mpz_set_si(*bignum, FIX2INT(v));
@@ -1829,7 +1866,7 @@ value arc_trunc(arc *c, value v)
 #ifdef HAVE_GMP_H
       result = arc_mkbignuml(c, 0);
 
-      arc_coerce_bignum(c, v, &REP(result)._bignum);
+      arc_coerce_bignum_no_round(c, v, &REP(result)._bignum);
 #else
       arc_err_cstrfmt(c, "flonum->fixnum conversion overflow (this version of Arcueid does not have bignum support)");
 #endif
@@ -1841,7 +1878,7 @@ value arc_trunc(arc *c, value v)
       value v2;
 
       result = arc_mkbignuml(c, 0);
-      arc_coerce_bignum(c, v, &REP(result)._bignum);
+      arc_coerce_bignum_no_round(c, v, &REP(result)._bignum);
       result = NIL_P(v2 = arc_coerce_fixnum(c, result)) ? result : v2;
     }
     break;
