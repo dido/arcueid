@@ -701,7 +701,7 @@ value coerce_string(arc *c, value obj, value argv)
 
       for (;;) {
 	buf = (char *)alloca(bufsize*sizeof(char));
-	n = snprintf(buf, bufsize, "%lf", REP(obj)._flonum);
+	n = snprintf(buf, bufsize, "%g", REP(obj)._flonum);
 	if (n > 1 && n < bufsize)
 	  break;
 	if (n > -1)		/* glibc 2.1 */
