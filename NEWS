@@ -5,6 +5,8 @@ See the end for copying conditions.
 * Version 0.0.13 (2012-??-??)
 - Include Conan Dalton's Arc unit tests from Rainbow
 - Bug fixes in ssyntax handling (a.1 now works instead of passing a symbol)
+- Annotate will not annotate an object more than once against the same type
+- nil now accepted as a parameter (which ignores its param)
 
 * Version 0.0.12 (2012-02-29)
 - 32-bit compatibility fixes (allocation alignment issues mostly)
