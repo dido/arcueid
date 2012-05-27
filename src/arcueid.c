@@ -313,6 +313,8 @@ value arc_cmp(arc *c, value v1, value v2)
   case T_STRING:
     return(arc_strcmp(c, v1, v2));
     break;
+  case T_SYMBOL:
+    return(arc_strcmp(c, arc_sym2name(c, v1), arc_sym2name(c, v2)));
   default:
     break;
   }
@@ -346,18 +348,6 @@ value arc_gt(arc *c, int argc, value *argv)
   return(CTRUE);
 }
 
-/* utility function */
-value arc_list_reverse(arc *c, value xs)
-{
-  value acc = CNIL;
-
-  while (xs != CNIL) {
-    acc = cons(c, car(xs), acc);
-    xs = cdr(xs);
-  }
-  return(acc);
-}
-
 value arc_lt(arc *c, int argc, value *argv)
 {
   value prev;
@@ -372,6 +362,18 @@ value arc_lt(arc *c, int argc, value *argv)
     prev = argv[i];
   }
   return(CTRUE);
+}
+
+/* utility function */
+value arc_list_reverse(arc *c, value xs)
+{
+  value acc = CNIL;
+
+  while (xs != CNIL) {
+    acc = cons(c, car(xs), acc);
+    xs = cdr(xs);
+  }
+  return(acc);
 }
 
 value arc_bound(arc *c, value sym)
@@ -491,8 +493,14 @@ value arc_cons(arc *c, value ca, value cd)
 
 value arc_scar(arc *c, value x, value y)
 {
+  if (TYPE(x) == T_CONS)
+    return(scar(x, y));
+  if (TYPE(x) == T_STRING && TYPE(y) == T_CHAR) {
+    arc_strsetindex(c, x, 0, REP(y)._char);
+    return(x);
+  }
   TYPECHECK(x, T_CONS, 1);
-  return(scar(x, y));
+  return(CNIL);
 }
 
 value arc_scdr(arc *c, value x, value y)
