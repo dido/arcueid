@@ -190,7 +190,7 @@
 	  ;; Who the hell uses floating point numbers in a base other than
 	  ;; 10 anyway?!
           ("string->num from float in base 3 with exponent"
-            (< (abs (- (coerce "10.11E1010" 'num 3) 709180566103791.0)) 1.5)
+            (< (abs (- (coerce "10.11E1010" 'num 3) 709180566103791.0)) 1e-6)
 	    t)
 
           ("string->num from float in another base with exponent (simpler case)"
