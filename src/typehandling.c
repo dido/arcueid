@@ -977,6 +977,10 @@ value arc_annotate(arc *c, value typesym, value obj)
 {
   value ann;
 
+  /* Do not re-tag something with the same typesym */
+  if (TYPE(obj) == T_TAGGED && arc_is(c, car(obj), typesym) == CTRUE)
+    return(obj);
+
   ann = cons(c, typesym, obj);
   BTYPE(ann) = T_TAGGED;
   return(ann);
