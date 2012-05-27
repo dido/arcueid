@@ -543,7 +543,9 @@ static value c4apply(arc *c, value thr, value avec,
        so that it gets "called" */
     WB(&TVALR(thr), VINDEX(retval, 2));
     TARGC(thr) = VECLEN(nargv);
-    arc_apply(c, thr, VINDEX(retval, 2));
+    /* longjmp back to the virtual machine using the 2 return for TVJMP
+       so that the contents of the value register are applied. */
+    longjmp(TVJMP(thr), 2);
     /* when this returns, we go back to the virtual machine loop,
        resuming execution at the address of the called virtual machine
        function. */
