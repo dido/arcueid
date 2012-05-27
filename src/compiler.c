@@ -365,7 +365,7 @@ static value destructuring_bind(arc *c, value args, value ctx,
   }
 
   if (!CONS_P(args)) {
-    arc_err_cstrfmt(c, "invalid fn arg %p", (void *)args);
+    arc_err_cstrfmt(c, "invalid fn arg (1) %p", (void *)args);
     return(rn);
   }
 
@@ -417,8 +417,14 @@ static value arglist(arc *c, value args, value ctx, value env, int *nargs)
 	 destructuring_bind to do their thing. */
       arc_gcode(c, ctx, ipop);
       rn = destructuring_bind(c, car(args), ctx, env, nargs, rn, 0);
+    } else if (NIL_P(car(args))) {
+      /* XXX - this should probably done in another way, but this is the
+	 easiest solution.  This will create a uniquely-named invisible
+	 parameter that absorbs the value of the nil parameter. */
+      rn = cons(c, arc_uniq(c), rn);
+      arc_gcode1(c, ctx, imvarg, (*nargs)++);
     } else {
-      arc_err_cstrfmt(c, "invalid fn arg %p", args);
+      arc_err_cstrfmt(c, "invalid fn arg (2) %p", args);
       return(env);
     }
 
@@ -635,8 +641,6 @@ static value compile_inline(arc *c, value inst, int narg, value expr, value ctx,
 INLINE_FUNC(cons, iconsr, 2);
 INLINE_FUNC(car, icar, 1);
 INLINE_FUNC(cdr, icdr, 1);
-INLINE_FUNC(scar, iscar, 2);
-INLINE_FUNC(scdr, iscdr, 2);
 
 /* XXX - this trades efficiency for simplicity and generality.  There is no
    need for a base value if we have an even number of arguments. */
@@ -704,10 +708,6 @@ static value (*inline_func(arc *c, value ident))(arc *, value,
     return(inline_car);
   } else if (ident == ARC_BUILTIN(c, S_CDR)) {
     return(inline_cdr);
-  } else if (ident == ARC_BUILTIN(c, S_SCAR)) {
-    return(inline_scar);
-  } else if (ident == ARC_BUILTIN(c, S_SCDR)) {
-    return(inline_scdr);
   } else if (ident == ARC_BUILTIN(c, S_PLUS)) {
     return(inline_plus);
   } else if (ident == ARC_BUILTIN(c, S_TIMES)) {
