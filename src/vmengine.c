@@ -1288,7 +1288,11 @@ value arc_callcc(arc *c, value argv, value rv, CC4CTX)
     return(CNIL);
   }
   CC4V(func) = VINDEX(argv, 0);
-  TYPECHECK(CC4V(func), T_CLOS, 1);
+  if (!(TYPE(CC4V(func)) == T_CLOS || TYPE(CC4V(func)) == T_CONT)) {
+    arc_err_cstrfmt(c, "procedure ccc: expects argument 1 to be type fn given %s", TYPENAME(TYPE(CC4V(func))));
+    return(CNIL);
+  }
+  /* TYPECHECK(CC4V(func), T_CLOS, 1); */
   if (TCONR(c->curthread) == CNIL) {
     /* If we have no continuation, we should generate one */
     CC4V(cont) = arc_mkcont(c, 2, c->curthread);
@@ -1302,7 +1306,15 @@ value arc_callcc(arc *c, value argv, value rv, CC4CTX)
      executed by the dynamic-wind function itself when the function
      returns. */
   WB(&CONT_TCH(CC4V(cont)), TCH(c->curthread));
-  CC4CALL(c, argv, CC4V(func), 1, CC4V(cont));
+  if (TYPE(CC4V(func)) == T_CLOS)
+    CC4CALL(c, argv, CC4V(func), 1, CC4V(cont));
+  else if (TYPE(CC4V(func)) == T_CONT) {
+    CPUSH(c->curthread, CC4V(func));
+    CPUSH(c->curthread, CC4V(cont));
+    WB(&TVALR(c->curthread), arc_mkccode(c, -3, apply_continuation, CNIL));
+    TARGC(c->curthread) = 2;
+    longjmp(TVJMP(c->curthread), 2);
+  }
   CC4END;
   return(rv);
 }
