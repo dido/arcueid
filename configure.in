@@ -108,7 +108,7 @@ if test "x$enable_threaded_interpreter" != xno; then
    fi
 fi
 
-AC_ARG_ENABLE([tracing], [AS_HELP_STRING([--enable-tracing], [disable bytecode tracer])], [], [enable_tracing=no])
+AC_ARG_ENABLE([tracing], [AS_HELP_STRING([--enable-tracing], [enable bytecode tracer])], [], [enable_tracing=no])
 if test "x$enable_tracing" != xno; then
   AC_DEFINE(HAVE_TRACING, [1], [Define to 1 if bytecode tracing is to be enabled.])
 fi
@@ -119,6 +119,8 @@ AC_CHECK_FUNCS(clock_gettime, [], [
     EXTRA_LIBS="$EXTRA_LIBS -lrt"
   ])
 ])
+
+AC_CHECK_FUNCS(posix_memalign)
 
 AC_ARG_ENABLE([mmap], [AS_HELP_STRING([--disable-mmap], [disable usage of mmap for memory allocation (fallback to malloc)])], [], [enable_mmap=yes])
 if test "x$enable_mmap" != xno; then
@@ -142,5 +144,5 @@ AC_CHECK_HEADERS(poll.h sys/select.h sys/socket.h string.h strings.h)
 LIBARCUEID_LIBS="-L${libdir} -larcueid $GMP_LIBS $MATH_LIBS $EXTRA_LIBS"
 AC_SUBST(LIBARCUEID_LIBS)
 AC_CONFIG_HEADERS([config.h])
-AC_CONFIG_FILES([arcueid.pc Makefile src/Makefile test/Makefile src/arcueid.h arc/Makefile])
+AC_CONFIG_FILES([arcueid.pc Makefile src/Makefile test/Makefile arc/Makefile])
 AC_OUTPUT
