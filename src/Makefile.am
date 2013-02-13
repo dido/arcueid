@@ -18,10 +18,10 @@
 lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -version-info 0:0:0
-libarcueid_la_SOURCES = alloc.c
+libarcueid_la_SOURCES = alloc.c arcueid.c utf.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h
+noinst_HEADERS = alloc.h utf.h
 #bin_PROGRAMS = arcueid
 #arcueid_SOURCES = repl.c
 #arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
