@@ -25,7 +25,8 @@
 #include <inttypes.h>
 #include "arcueid.h"
 
-void __arc_null_marker(arc *c, value v)
+void __arc_null_marker(arc *c, value v, int depth,
+			void (*markfn)(arc *, value, int))
 {
   /* Does nothing */
 }
