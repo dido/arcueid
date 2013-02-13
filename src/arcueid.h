@@ -37,15 +37,19 @@ typedef struct {
 } arc_hs;			/* hash state */
 
 typedef struct arc {
-  /* High-level allocation functions (allocate a cell, allocate a block) */
-  value (*get_cell)(struct arc *);
-  void *(*get_block)(struct arc *, size_t);
-  void (*free_block)(struct arc *, void *); /* should be used only by gc */
-
   /* Low-level allocation functions (bypass memory management--use only
-     from within an allocator or garbage collector) */
+     from within an allocator or garbage collector).  The mem_alloc function
+     should always return addresses aligned to at least 4 bits/16 bytes. */
   void *(*mem_alloc)(size_t);
   void (*mem_free)(void *);
+
+  /* Higher-level allocation */
+  void *(*alloc)(struct arc *, size_t);
+  void (*free)(struct arc *, void *, void *); /* should be used only by gc */
+
+  /* Garbage collector entry point */
+  void (*gc)(struct arc *);
+  void (*markroots)(struct arc *);
 
   int over_percent;    /* additional free space over heap expansion */
   size_t minexp;       /* minimum expansion amount */
@@ -91,7 +95,7 @@ struct cell {
   /* the top two bits of the _type are used for garbage collection purposes. */
   unsigned char _type;
   value (*pprint)(value);
-  void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int, value));
+  void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
   void (*sweeper)(arc *, value);
   unsigned long (*hash)(arc *, arc_hs *, value);
   value _obj[1];
@@ -113,7 +117,7 @@ struct cell {
 #define IMMEDIATE_MASK 0x07
 #define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
 
-#define BTYPE(v) (((struct cell *)(v))->_type)
+#define BTYPE(v) (((struct cell *)(v))->_type & 0x3f)
 #define REP(v) (((struct cell *)(v))->_obj)
 
 #define NIL_P(v) ((v) == CNIL)
