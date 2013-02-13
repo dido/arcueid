@@ -94,7 +94,7 @@ enum arc_types {
 struct cell {
   /* the top two bits of the _type are used for garbage collection purposes. */
   unsigned char _type;
-  value (*pprint)(value);
+  value (*pprint)(arc *, value);
   void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
   void (*sweeper)(arc *, value);
   unsigned long (*hash)(arc *, arc_hs *, value);
@@ -118,6 +118,7 @@ struct cell {
 #define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
 
 #define BTYPE(v) (((struct cell *)(v))->_type & 0x3f)
+#define STYPE(v, t) (((struct cell *)(v))->_type = (t))
 #define REP(v) (((struct cell *)(v))->_obj)
 
 #define NIL_P(v) ((v) == CNIL)
@@ -138,5 +139,7 @@ struct cell {
 #define cadr(x) (car(cdr(x)))
 #define cddr(x) (cdr(cdr(x)))
 #define caddr(x) (car(cddr(x)))
+
+extern value cons(arc *c, value x, value y);
 
 #endif
