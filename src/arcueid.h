@@ -104,6 +104,8 @@ struct cell {
   value _obj[1];
 };
 
+#define CELLSIZE ((long)(((struct cell *)0)->_obj))
+
 /* Immediate values */
 /* Symbols */
 #define SYMBOL_FLAG 0x0e
