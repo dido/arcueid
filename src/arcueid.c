@@ -46,13 +46,16 @@ static void cons_sweeper(arc *c, value v)
 
 value cons(arc *c, value x, value y)
 {
-  value cc = (value)c->alloc(c, sizeof(struct cell) + sizeof(value));
+  struct cell *cc;
+  value ccv;
 
-  STYPE(cc, T_CONS);
-  ((struct cell *)cc)->pprint = cons_pprint;
-  ((struct cell *)cc)->marker = cons_marker;
-  ((struct cell *)cc)->sweeper = cons_sweeper;
-  car(cc) = x;
-  cdr(cc) = y;
-  return(cc);
+  cc = (struct cell *)c->alloc(c, sizeof(struct cell) + sizeof(value));
+  cc->_type = T_CONS;
+  cc->pprint = cons_pprint;
+  cc->marker = cons_marker;
+  cc->sweeper = cons_sweeper;
+  ccv = (value)cc;
+  car(ccv) = x;
+  cdr(ccv) = y;
+  return(ccv);
 }
