@@ -94,6 +94,8 @@ enum arc_types {
   T_NONE=64
 };
 
+extern const char *__arc_typenames[];
+
 struct cell {
   /* the top two bits of the _type are used for garbage collection purposes. */
   unsigned char _type;
@@ -103,6 +105,10 @@ struct cell {
   unsigned long (*hash)(arc *, arc_hs *, value);
   value _obj[1];
 };
+
+extern void __arc_null_marker(arc *c, value v, int depth,
+			      void (*markfn)(arc *, value, int));
+extern void __arc_null_sweeper(arc *c, value v);
 
 #define CELLSIZE ((long)(((struct cell *)0)->_obj))
 
@@ -121,12 +127,11 @@ struct cell {
 
 #define IMMEDIATE_MASK 0x07
 #define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
+#define NIL_P(v) ((v) == CNIL)
 
 #define BTYPE(v) (((struct cell *)(v))->_type & 0x3f)
 #define STYPE(v, t) (((struct cell *)(v))->_type = (t))
 #define REP(v) (((struct cell *)(v))->_obj)
-
-#define NIL_P(v) ((v) == CNIL)
 
 /* Definitions for Fixnums */
 #define FIXNUM_MAX (LONG_MAX >> 1)
@@ -138,6 +143,27 @@ struct cell {
 #define FIX2INT(x) ((long)(x) >> 1)
 #define FIXNUM_P(f) (((long)(f))&FIXNUM_FLAG)
 
+static inline enum arc_types TYPE(value v)
+{
+  if (FIXNUM_P(v))
+    return(T_FIXNUM);
+  if (SYMBOL_P(v))
+    return(T_SYMBOL);
+  if (v == CNIL)
+    return(T_NIL);
+  if (v == CTRUE)
+    return(T_TRUE);
+  if (v == CUNDEF || v == CUNBOUND)
+    return(T_NONE);
+  if (!IMMEDIATE_P(v))
+    return(BTYPE(v));
+
+  /* Add more type values here */
+  return(T_NONE);		/* unrecognized immediate type */
+}
+
+#define TYPENAME(tnum) (((tnum) >= 0 && (tnum) <= T_MAX) ? (__arc_typenames[tnum]) : "unknown")
+
 /* Definitions for conses */
 #define car(x) (REP(x)[0])
 #define cdr(x) (REP(x)[1])
@@ -146,5 +172,8 @@ struct cell {
 #define caddr(x) (car(cddr(x)))
 
 extern value cons(arc *c, value x, value y);
+
+/* Definitions for strings */
+value arc_mkstringlen(arc *c, int length);
 
 #endif
