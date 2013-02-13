@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2012 Rafael R. Sevilla
+  Copyright (C) 2013 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -16,9 +16,32 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
-/* This default memory allocator and garbage collector maintains a list
-   of allocated blocks to do its work, and uses the VCGC garbage
-   collection algorithm by Huelsbergen and Winterbottom (ISMM 1998). */
+/* TODO:
+
+   1. Find a way to allow memory allocated for BiBOP pages to be returned
+      to the operating system.  As it is, only memory not allocated by the
+      BiBOP scheme (i.e. objects larger than MAX_BIBOP bytes) can be
+      returned to the OS.  A few schemes for doing this are possible,
+      but extra overhead is a concern.  Obvious ways of doing this add
+      unacceptable levels of space and/or time overhead.
+
+   2. Make BiBOP page sizes adaptive based on their size and adjust
+      dynamically.
+
+   3. Think up better conditions of when to implicitly invoke the
+      garbage collector.
+      As it is, the garbage collector is invoked whenever:
+
+      (a) A BiBOP allocation fails to find a free element in the pages
+          that have already been allocated.  A garbage collection cycle
+	  may free up more space.
+      (b) a large (i.e. non-BiBOP) object has to be allocated.  A
+          garbage cycle may free up additional system memory where
+	  hopefully a new large object will not fragment memory.
+   4. A better garbage collector of some kind... Good question on what
+      to use.  Current algorithm is just a simple mark and sweep
+      collector.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -27,523 +50,260 @@
 #include <malloc.h>
 #include "arcueid.h"
 #include "alloc.h"
-#include "arith.h"
-#include "vmengine.h"
 #include "../config.h"
 
-/* Maximum size of objects subject to BIBOP allocation */
+/* Maximum size of objects subject to BiBOP allocation */
 #define MAX_BIBOP 512
 
-/* Number of objects in each BIBOP page */
+/* Number of objects in each BiBOP page */
 #define BIBOP_PAGE_SIZE 64
 
-static int visit;
-
+/* The BiBOP free list */
 static Bhdr *bibop_fl[MAX_BIBOP+1];
-static Bhdr *gcptr = NULL;
-static Bhdr *alloc_head = NULL;
-static Bhdr *alloc_tail = NULL;
-static int gce = 0, gct = 1;
-unsigned long long gcepochs = 0;
-static unsigned long long gccolor = 3;
-static unsigned long long gcnruns = 0;
-static unsigned long long markcount = 0;
-static unsigned long long sweepcount = 0;
-static unsigned long long allocated = 0;
-static unsigned long long freed = 0;
-static unsigned long long scannedmem = 0;
-static unsigned long long usedmem = 0;
-static unsigned long long immutable = 0;
-int nprop = 0;
-int __arc_mutator = 0;
-static int marker = 1;
-static int sweeper = 2;
-#define mutator __arc_mutator
-#define propagator PROPAGATOR_COLOR
-#define MAX_MARK_RECURSION 64
-static unsigned long long gc_milliseconds = 0ULL;
 
-Bhdr *__arc_get_heap_start(void)
-{
-  return(alloc_head);
-}
-
-static void free_bibop(struct arc *c, void *blk)
-{
-  Bhdr *h;
-
-  D2B(h, blk);
-  h->magic = MAGIC_B;
-  h->next = bibop_fl[h->size];
-  bibop_fl[h->size] = h;
-}
-
-static void free_block(struct arc *c, void *blk)
-{
-  Bhdr *h;
-  size_t nsize;
-
-  D2B(h, blk);
-  if (h->prev == NULL)
-    alloc_head = h->next;
-  else
-    h->prev->next = h->next;
-  if (h->next == NULL)
-    alloc_tail = h->prev;
-  else
-    h->next->prev = h->prev;
-  nsize = h->size + BHDRSIZE + ALIGN - 1;
-  freed += nsize;
-  if (h->size <= MAX_BIBOP)
-    free_bibop(c, blk);
-  else
-    c->mem_free(h->block);
-}
-
-static void *alloc(arc *c, size_t osize);
+/* The allocated list */
+static Bhdr *alloc_head;
 
 static void *bibop_alloc(arc *c, size_t osize)
 {
   Bhdr *h;
   size_t actual;
   char *bpage, *bptr;
-  int i;
+  int i, dogc = 1;
 
   for (;;) {
+    /* Pull off an object from the BiBOP free list if there is an
+       available object of that size. */
     if (bibop_fl[osize] != NULL) {
       h = bibop_fl[osize];
       bibop_fl[osize] = B2NB(bibop_fl[osize]);
       break;
     }
-    /* Create a new BIBOP page if the free list is empty. */
 
-    /* Each BIBOP object must be a multiple of the alignment, so that
-       all BiBOP objects will be at aligned addresses. */
+    /* No more free objects in pages allocated so far?  Try to gc
+       before making a new page. */
+    if (dogc) {
+      c->gc(c);
+      dogc = 0;
+      continue;
+    }
+
+    /* Create a new BiBOP page if the free list for that size is
+       empty.  The page base address is properly aligned since
+       c->mem_alloc is guaranteed to return aligned addresses, and
+       since BiBOP objects inside the page are padded to a multiple
+       of the alignment, all objects inside will also by definition
+       be aligned. */
     actual = ALIGN_SIZE(osize) + BHDR_ALIGN_SIZE;
-    bpage = (char *)alloc(c, actual * BIBOP_PAGE_SIZE);
-    BLOCK_IMM(bpage);
+    bpage = c->mem_alloc(actual * BIBOP_PAGE_SIZE);
+    if (bpage == NULL) {
+      fprintf(stderr, "FATAL: failed to allocate memory for BiBOP page\n");
+      exit(1);
+    }
     bptr = bpage;
     for (i=0; i<BIBOP_PAGE_SIZE; i++) {
-      /* Situate the Bhdr inside the BiBOP object in such a way that
-	 the actual data pointer is at an aligned address.  Since bptr
-	 is always at an aligned address (bpage is at an aligned address
-	 since alloc always gives aligned addresses, and actual is an
-	 exact multiple of ALIGN), setting the address to BHDR_ALIGN_SIZE
-	 bytes from bptr should suffice. */
-      D2B(h, bptr + BHDR_ALIGN_SIZE);
-      h->magic = MAGIC_B;
-      h->color = propagator+1;
-      h->size = osize;
-      h->next = bibop_fl[osize];
+      h = (Bhdr *)bptr;
+      BSSIZE(h, osize);
+      BFREE(h);
+      h->_next = bibop_fl[osize];
       bibop_fl[osize] = h;
       bptr += actual;
     }
-    /* after this the free list for that size should be fine */
   }
-  /* Perform the allocation actions on the new block gotten
-     from the BIBOP list. */
-  h->magic = MAGIC_A;
-  h->size = osize;
-  h->color = mutator;
-  if (alloc_head == NULL && alloc_tail == NULL) {
-    alloc_tail = alloc_head = h;
-    alloc_head->prev = NULL;
-    alloc_head->next = NULL;
-  } else {
-    assert(alloc_head != NULL && alloc_tail != NULL);
-    h->prev = alloc_tail;
-    h->next = alloc_tail->next;
-    alloc_tail->next = h;
-    alloc_tail = h;
-  }
+  BALLOC(h);
+  h->_next = alloc_head;
+  alloc_head = h;
   return(B2D(h));
 }
 
 static void *alloc(arc *c, size_t osize)
 {
-  void *ptr, *alignedptr;
   Bhdr *h;
   size_t actual;
 
   if (osize <= MAX_BIBOP)
     return(bibop_alloc(c, osize));
 
-  /* Normal allocation.  We have to allocate enough data such that
-     it is possible to align the data portion of the Bhdr. */
-  actual = (osize + BHDR_ALIGN_SIZE) + ALIGN - 1;
-  ptr = c->mem_alloc(actual);
-  if (ptr == NULL) {
+  /* Obligatory GC.  XXX - Consider whether a better approach is
+     warranted */
+  c->gc(c);
+  /* Normal allocation.  Just append the block header size with
+     proper alignment padding. */
+  actual = osize + BHDR_ALIGN_SIZE;
+  h = (Bhdr *)c->mem_alloc(actual);
+  if (h == NULL) {
     fprintf(stderr, "FATAL: failed to allocate memory\n");
     exit(1);
   }
-  allocated += actual;
-  /* Make sure the base pointer we are aligning against is also aligned */
-  alignedptr = ALIGN_PTR(ptr);
-  /* Now, we have to position the Bhdr in such a way that
-     Bhdr->data is also at an aligned address. */
-  D2B(h, (void *)((value)alignedptr + BHDR_ALIGN_SIZE));
-  h->magic = MAGIC_A;
-  h->size = osize;
-  h->color = mutator;
-  h->block = ptr;
-  if (alloc_head == NULL && alloc_tail == NULL) {
-    alloc_tail = alloc_head = h;
-    alloc_head->prev = NULL;
-    alloc_head->next = NULL;
-  } else {
-    assert(alloc_head != NULL && alloc_tail != NULL);
-    h->prev = alloc_tail;
-    h->next = alloc_tail->next;
-    alloc_tail->next = h;
-    alloc_tail = h;
-  }
+  BALLOC(h);
+  h->_next = alloc_head;
+  alloc_head = h;
   return(B2D(h));
 }
 
-static value get_cell(arc *c)
+/* Freeing a block requires one know the previous block in the alloc
+   list.  Probably only feasible to use for the garbage collector's
+   sweeper, which already traverses the allocated list. */
+static void free_block(arc *c, void *blk, void *prevblk)
 {
-  void *cellptr;
+  Bhdr *h, *p;
 
-  cellptr = alloc(c, sizeof(struct cell));
-  if (cellptr == NULL)
-    return(CNIL);
-  return((value)cellptr);
-}
-
-static void mark(arc *c, value v, int reclevel, value marksym)
-{
-  Bhdr *b;
-  int ctx;
-  value val, *vptr;
-  int i;
-
-  /* If we find a symbol here, find its hash buckets in the symbol
-     tables and mark those.  This provides symbol garbage collection,
-     leaving only symbols which are actually in active use. */
-  if (SYMBOL_P(v) && v != marksym) {
-    value symid = INT2FIX(SYM2ID(v));
-    value stbucket;
-
-    stbucket = arc_hash_lookup2(c, c->rsymtable, symid);
-    D2B(b, (void *)stbucket);
-    if (b->color != mutator && b->color != propagator)
-      mark(c, stbucket, reclevel+1, v);
-    val = stbucket;
-    stbucket = arc_hash_lookup2(c, c->symtable, REP(val)._hashbucket.val);
-    D2B(b, (void *)stbucket);
-    if (b->color != mutator && b->color != propagator)
-      mark(c, stbucket, reclevel+1, v);
-    return;
+  D2B(h, blk);
+  /* Unlink the block from the alloc list. */
+  if (prevblk == NULL) {
+    /* When prevblk is NULL, that implies that h == alloc_head */
+    alloc_head = B2NB(h);
+  } else {
+    D2B(p, prevblk);
+    p->_next = B2NB(h);
   }
 
-  /* Do not try to mark an immediate value! */
+  if (BSIZE(h) <= MAX_BIBOP) {
+    /* For BiBOP allocated objects, freeing them just means putting the
+       object back into the free list for the object size. */
+    BFREE(h);
+    h->_next = bibop_fl[BSIZE(h)];
+    bibop_fl[BSIZE(h)] = h;
+  } else
+    c->mem_free(h);
+}
+
+#ifdef HAVE_POSIX_MEMALIGN
+
+static void *sysalloc(size_t size)
+{
+  void *memptr;
+
+  if (posix_memalign(&memptr, ALIGN, size) == 0)
+    return(memptr);
+  return(NULL);
+}
+
+static void sysfree(void *ptr)
+{
+  free(ptr);
+}
+
+#else
+
+/* Used on systems that don't provide posix_memalign.  Based on a
+   solution found here:
+
+   http://stackoverflow.com/questions/196329/osx-lacks-memalign
+ */
+static void *sysalloc(size_t size)
+{
+  void *mem;
+  char *amem;
+
+  mem = malloc(size + (ALIGN-1) + sizeof(void *));
+  if (mem == NULL)
+    return(NULL);
+  amem = ((char *)mem) + sizeof(void *);
+  amem += ALIGN - ((value)amem & (ALIGN - 1));
+
+  ((void **)amem)[-1] = mem;
+  return((void *)amem);
+}
+
+static void sysfree(void *ptr)
+{
+  if (ptr == NULL)
+    return(NULL);
+  free(((void **)ptr)[-1]);
+}
+
+#endif
+
+/* The actual garbage collector */
+
+static int nprop;
+
+/* Mark a value with the propagator flag */
+void __arc_markprop(value p)
+{
+  struct cell *cp;
+
+  if (IMMEDIATE_P(p))
+    return;
+
+  cp = (struct cell *)p;
+  cp->_type = (cp->_type & FLAGMASK) | PROPFLAG;
+  nprop = 1;
+}
+
+/* Maximum recursion depth for marking */
+#define MAX_MARK_RECURSION_DEPTH 16
+
+static void mark(arc *c, value v, int depth)
+{
+  struct cell *cp;
+
+  /* Immediate values obviously cannot be marked */
   if (IMMEDIATE_P(v))
     return;
 
-  D2B(b, (void *)v);
-  /* do nothing with immutable blocks */
-  if (b->magic == MAGIC_I)
+  if (depth > MAX_MARK_RECURSION_DEPTH) {
+    /* Stop recursion, and mark the object with the propagator flag
+       so that the next iteration scan can pick it up. */
+    __arc_markprop(v);
     return;
-  if (b->magic != MAGIC_A) {
-    fprintf(stderr, "FATAL: internal error, pointer points to freed storage\n");
-    exit(1);
   }
-  SETMARK(b);
-  if (--visit >= 0 && reclevel < MAX_MARK_RECURSION) {
-    gce--;
-    b->color = mutator;
-    ++markcount;
+  cp = (struct cell *)v;
+  /* Mark the object */
+  cp->_type = (cp->_type & FLAGMASK) | MARKFLAG;
+  /* Recurse into the object's structure at increased depth */
+  cp->marker(c, v, depth+1, mark);
+}
 
-    switch (TYPE(v)) {
-    case T_NIL:
-    case T_TRUE:
-    case T_FIXNUM:
-    case T_SYMBOL:
-      /* never get here as these return true for IMMEDIATE_P above */
-      break;
-    case T_BIGNUM:
-    case T_FLONUM:
-    case T_RATIONAL:
-    case T_COMPLEX:
-    case T_CHAR:
-    case T_STRING:
-    case T_VMCODE:
-      /* contain no internal pointers and are handled as is */
-      break;
-    case T_CONS:
-    case T_CLOS:
-    case T_TAGGED:
-      mark(c, car(v), reclevel+1, CNIL);
-      mark(c, cdr(v), reclevel+1, CNIL);
-      break;
-    case T_TABLE:
-      ctx = 0;
-      while ((val = arc_hash_iter(c, v, &ctx)) != CUNBOUND) {
-	mark(c, val, reclevel+1, CNIL);
-      }
-      break;
-    case T_CCODE:
-      /* mark the function name */
-      mark(c, REP(v)._cfunc.name, reclevel+1, CNIL);
-      break;
-    case T_TBUCKET:
-      mark(c, REP(v)._hashbucket.key, reclevel+1, CNIL);
-      mark(c, REP(v)._hashbucket.val, reclevel+1, CNIL);
-      break;
-    case T_THREAD:
-      /* mark the registers inside of the thread */
-      mark(c, TFUNR(v), reclevel+1, CNIL); /* function register */
-      mark(c, TENVR(v), reclevel+1, CNIL); /* environment register */
-      mark(c, TVALR(v), reclevel+1, CNIL); /* value register */
-      mark(c, TCONR(v), reclevel+1, CNIL); /* continuation register */
-      mark(c, TRVCH(v), reclevel+1, CNIL);  /* return value channel */
-      mark(c, TCH(v), reclevel+1, CNIL);    /* dynamic-wind here */
-      mark(c, TBCH(v), reclevel+1, CNIL);    /* base dynamic-wind here */
-      mark(c, TCM(v), reclevel+1, CNIL);    /* continuation marks */
-      mark(c, TEXH(v), reclevel+1, CNIL);   /* exception handlers */
-      mark(c, TEXC(v), reclevel+1, CNIL);   /* async exception */
-      /* Mark the stack *vector* only but not all its contents */
-      D2B(b, (void *)TSTACK(v));
-      b->color = mutator;
-      /* Mark only the used portions of the stack vector */
-      for (vptr = TSP(v); vptr == TSTOP(v); vptr++)
-	mark(c, *vptr, reclevel+1, CNIL);
-      break;
-    case T_VECTOR:
-    case T_CODE:
-    case T_CONT:
-    case T_CHAN:
-    case T_XCONT:
-    case T_EXCEPTION:
-    case T_ENV:
-      for (i=0; i<REP(v)._vector.length; i++)
-	mark(c, REP(v)._vector.data[i], reclevel+1, CNIL);
-      break;
-    case T_INPUT:
-    case T_OUTPUT:
-    case T_PORT:
-    case T_CUSTOM:
-      /* for custom data types (including ports), call the marker
-	 function defined for it, and pass ourselves as the next
-	 level mark. */
-      REP(v)._custom.marker(c, v, reclevel+1, mark);
-      break;
-      /* XXX fill in with other composite types as they are defined */
-    case T_NONE:
-      arc_err_cstrfmt(c, "GC: object of undefined type encountered!");
-      break;
+/* Basic mark/sweep garbage collector */
+static void gc(arc *c)
+{
+  Bhdr *ptr;
+  struct cell *cp;
+  void *pptr;
+
+  c->markroots(c);
+  /* Mark phase */
+  while (nprop) {
+    /* Look for objects marked with propagator */
+    nprop = 0;
+    for (ptr = alloc_head; ptr; ptr = B2NB(ptr)) {
+      cp = (struct cell *)B2D(ptr);
+      if ((cp->_type & PROPFLAG) == PROPFLAG)
+	mark(c, (value)cp, 0);
     }
   }
-}
 
-static void free_magic(arc *c, void *v)
-{
-  Bhdr *h;
-
-  D2B(h, v);
-  h->magic = MAGIC_F;
-}
-
-static void sweep(arc *c, value v)
-{
-  sweepcount++;
-  /* The only special cases here are for those data types which point to
-     immutable memory blocks which are otherwise invisible to the sweeper
-     or allocate memory blocks not known to the allocator.  These include
-     strings and hash tables (immutable memory) and bignums and rationals
-     (use malloc/free directly I believe). */
-  switch (TYPE(v)) {
-  case T_STRING:
-    /* a string's actual data is marked T_IMMUTABLE */
-    free_magic(c, REP(v)._str.str);
-    break;
-#ifdef HAVE_GMP_H
-  case T_BIGNUM:
-    mpz_clear(REP(v)._bignum);
-    break;
-  case T_RATIONAL:
-    mpq_clear(REP(v)._rational);
-    break;
-#endif
-  case T_TABLE:
-    free_magic(c, REP(v)._hash.table);
-    break;
-  case T_TBUCKET:
-    /* Make the cell in the parent hash table undef if this is a symbol
-       table's bucket. */
-    if (REP(v)._hashbucket.hash == c->symtable
-	|| REP(v)._hashbucket.hash == c->rsymtable)
-      WB(&REP(REP(v)._hashbucket.hash)._hash.table[REP(v)._hashbucket.index], CUNDEF);
-    break;
-  case T_PORT:
-  case T_CUSTOM:
-    REP(v)._custom.sweeper(c, v);
-    break;
-  default:
-    /* this should do for almost everything else */
-    break;
-  }
-  free_magic(c, (void *)v);
-}
-
-static void rootset(arc *c)
-{
-  mutator = gccolor % 3;
-  marker = (gccolor-1)%3;
-  sweeper = (gccolor-2)%3;
-
-  /* Mark the threads and global environment with propagators so that
-     the virtual machine considers them part of the rootset.  Note that
-     the symbol tables are *not* part of the rootset.  The symbol tables
-     themselves are marked as immutable, so they are not subject to
-     garbage collection, but the symbols inside them must be referenced
-     elsewhere to prevent their being GCed. */
-  MARKPROP(c->vmthreads);
-  MARKPROP(c->genv);
-  MARKPROP(c->builtin);
-  MARKPROP(c->splforms);
-  MARKPROP(c->inlfuncs);
-  MARKPROP(c->iowaittbl);
-  MARKPROP(c->achan);
-}
-
-static int rungc(arc *c)
-{
-  value h;
-  unsigned long long gcst, gcet;
-  int retval = 0;
-
-  gcst = __arc_milliseconds();
-  gcnruns++;
-
-  if (gcptr == NULL) {
-    immutable = usedmem = scannedmem = 0;
-    gcptr = alloc_head;
-  }
-
-  for (visit = c->gcquantum; visit > 0;) {
-
-    if (gcptr == NULL)
-	break; 			/* stop if we finished the last heap block */
-    scannedmem += gcptr->size + BHDRSIZE + ALIGN - 1;
-    if (gcptr->magic == MAGIC_A) {
-      visit--;
-      gct++;
-      h = (value)B2D(gcptr);
-      if (gcptr->color == mutator) {
-	usedmem += gcptr->size + BHDRSIZE + ALIGN - 1;
-      } else if (gcptr->color == propagator) {
-	gce--;
-	mark(c, h, 0, CNIL);
-      } else if (gcptr->color == sweeper) {
-	gce++;
-	sweep(c, h);
-      }
-      if (gcptr->color != sweeper)
-	gcptr = B2NB(gcptr);
-    } else if (gcptr->magic == MAGIC_I) {
-      usedmem += gcptr->size + BHDRSIZE + ALIGN - 1;
-      immutable += gcptr->size + BHDRSIZE + ALIGN - 1;
-      gcptr = B2NB(gcptr);
-    } else if (gcptr->magic == MAGIC_F) {
-      Bhdr *next = B2NB(gcptr);
-      free_block(c, (void *)B2D(gcptr));
-      gcptr = next;
+  /* Sweep phase */
+  for (ptr = alloc_head, pptr = NULL; ptr;) {
+    cp = (struct cell *)B2D(ptr);
+    if ((cp->_type & MARKFLAG) == MARKFLAG) {
+      /* Marked object.  Previous pointer moves to this one. */
+      pptr = (void *)cp;
+      /* clear the mark flag */
+      cp->_type &= FLAGMASK;
     } else {
-      fprintf(stderr, "FATAL: Invalid magic number %" PRId64, gcptr->magic);
-      exit(1);
+      /* Was not marked during the marking phase. Sweep it away! */
+      cp->sweeper(c, (value)cp);
+      c->free(c, (void *)cp, pptr);
+      /* We don't update pptr in this case, it remains the same */
     }
+    ptr = B2NB(ptr);
   }
-
-  if (gcptr != NULL)		/* completed this iteration? */
-    goto endgc;
-
-  if (nprop == 0) { /* completed the epoch? */
-    gcepochs++;
-    gccolor++;
-    rootset(c);
-    /*    printf("Epoch %lld ended:\n%lld marked, %lld swept, %lld bytes allocated, %lld bytes freed\n", gcepochs, markcount, sweepcount, allocated, freed);
-	  printf("%lld bytes scanned, %lld bytes used, %lld bytes immutable\n", scannedmem, usedmem, immutable); */
-    gce = 0;
-    gct = 1;
-    retval = 1;
-    markcount = sweepcount = 0;
-    freed = allocated = 0;
-    malloc_trim(0);
-  }
-  nprop = 0;
- endgc:
-  gcet = __arc_milliseconds();
-  gc_milliseconds += (gcet - gcst);
-  return(retval);
 }
 
 void arc_set_memmgr(arc *c)
 {
   int i;
 
-  c->get_cell = get_cell;
-  c->get_block = alloc;
-  c->free_block = free_block;
-  c->mem_alloc = malloc;
-  c->mem_free = free;
-  c->rungc = rungc;
-
-  gcepochs = 0;
-  gccolor = 3;
-  mutator = 0;
-  marker = 1;
-  sweeper = 2;
-
-  gce = 0;
-  gct = 1;
+  c->mem_alloc = sysalloc;
+  c->mem_free = sysfree;
+  c->gc = gc;
+  c->alloc = alloc;
+  c->free = free_block;
 
   for (i=0; i<=MAX_BIBOP; i++)
     bibop_fl[i] = NULL;
-
-  /* Set default parameters for heap expansion policy */
-  /*  c->minexp = DFL_MIN_EXP;
-      c->over_percent = DFL_OVER_PERCENT; */
-}
-
-static value ull2val(arc *c, unsigned long long ms)
-{
-  if (ms < FIXNUM_MAX) {
-    return(INT2FIX(ms));
-  } else {
-#ifdef HAVE_GMP_H
-    value msbn;
-
-#if SIZEOF_UNSIGNED_LONG_LONG == 8
-    /* feed value into the bignum 32 bits at a time */
-    msbn = arc_mkbignuml(c, (ms >> 32)&0xffffffff);
-    mpz_mul_2exp(REP(msbn)._bignum, REP(msbn)._bignum, 32);
-    mpz_add_ui(REP(msbn)._bignum, REP(msbn)._bignum, ms & 0xffffffff);
-#else
-    int i;
-
-    msbn = arc_mkbignuml(c, 0);
-    for (i=SIZEOF_UNSIGNED_LONG_LONG-1; i>=0; i--) {
-      mpz_mul_2exp(REP(msbn)._bignum, REP(msbn)._bignum, 8);
-      mpz_add_ui(REP(msbn)._bignum, REP(msbn)._bignum, (ms >> (i*8)) & 0xff);
-    }
-#endif
-    return(msbn);
-#else
-    /* floating point */
-    return(arc_mkflonum(c, (double)ms));
-#endif
-  }
-  return(CNIL);
-
-}
-
-value arc_current_gc_milliseconds(arc *c)
-{
-  return(ull2val(c, gc_milliseconds));
-}
-
-value arc_memory(arc *c)
-{
-  return(ull2val(c, usedmem));
+  alloc_head = NULL;
 }
