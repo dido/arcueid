@@ -18,7 +18,7 @@
 lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -version-info 0:0:0
-libarcueid_la_SOURCES = alloc.c arcueid.c utf.c
+libarcueid_la_SOURCES = alloc.c arcueid.c string.c utf.c
 
 include_HEADERS = arcueid.h
 noinst_HEADERS = alloc.h utf.h
