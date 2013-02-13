@@ -25,6 +25,16 @@
 #include <inttypes.h>
 #include "arcueid.h"
 
+void __arc_null_marker(arc *c, value v)
+{
+  /* Does nothing */
+}
+
+void __arc_null_sweeper(arc *c, value v)
+{
+  /* Does nothing */
+}
+
 static value cons_pprint(arc *c, value v)
 {
   /* XXX fill this in */
@@ -39,11 +49,6 @@ static void cons_marker(arc *c, value v, int depth,
   markfn(c, cdr(v), depth);
 }
 
-static void cons_sweeper(arc *c, value v)
-{
-  /* Does nothing */
-}
-
 value cons(arc *c, value x, value y)
 {
   struct cell *cc;
@@ -53,7 +58,7 @@ value cons(arc *c, value x, value y)
   cc->_type = T_CONS;
   cc->pprint = cons_pprint;
   cc->marker = cons_marker;
-  cc->sweeper = cons_sweeper;
+  cc->sweeper = __arc_null_sweeper;
   ccv = (value)cc;
   car(ccv) = x;
   cdr(ccv) = y;
