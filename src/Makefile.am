@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Rafael R. Sevilla
+# Copyright (C) 2013 Rafael R. Sevilla
 #
 # This file is part of Arcueid
 #
@@ -18,13 +18,11 @@
 lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -version-info 0:0:0
-libarcueid_la_SOURCES = arcueid.c ciel.c arith.c alloc.c \
-	codegen.c hash.c io.c osdep.c pprint.c reader.c string.c \
-	typehandling.c utf.c vmengine.c compiler.c thread.c net.c
+libarcueid_la_SOURCES = alloc.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = arith.h alloc.h utf.h symbols.h vmengine.h
-bin_PROGRAMS = arcueid
-arcueid_SOURCES = repl.c
-arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
-arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@
+noinst_HEADERS = alloc.h
+#bin_PROGRAMS = arcueid
+#arcueid_SOURCES = repl.c
+#arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
+#arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@
