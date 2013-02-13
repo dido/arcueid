@@ -30,6 +30,9 @@
 
 typedef unsigned long value;
 
+/* UCS-4 runes */
+typedef int32_t Rune;
+
 /* Definitions for hashing */
 typedef struct {
   unsigned long s[3];
