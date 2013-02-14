@@ -34,3 +34,10 @@ void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
     __arc_append_buffer_close(c, buf, idx, str);
   buf[(*idx)++] = ch;
 }
+
+void __arc_append_buffer_cstring(arc *c, char *buf, value *ppstr)
+{
+  value nstr = arc_mkstringc(c, buf);
+
+  *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
+}
