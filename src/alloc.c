@@ -42,6 +42,12 @@
       to use.  Current algorithm is just a simple mark and sweep
       collector.
  */
+
+#include "../config.h"
+#ifdef HAVE_POSIX_MEMALIGN
+#define _XOPEN_SOURCE 600
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -50,7 +56,6 @@
 #include <malloc.h>
 #include "arcueid.h"
 #include "alloc.h"
-#include "../config.h"
 
 /* Maximum size of objects subject to BiBOP allocation */
 #define MAX_BIBOP 512
