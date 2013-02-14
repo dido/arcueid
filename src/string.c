@@ -28,9 +28,30 @@ typedef struct {
 
 #define STRREP(v) ((string *)REP(v))
 
-static value string_pprint(arc *c, value v)
+#define PSTRMAX __ARCUEID_PSTRMAX
+
+static value string_pprint(arc *c, value sexpr, value *ppstr)
 {
-  return(CNIL);
+  Rune buf[PSTRMAX], ch;
+  int idx=0, i;
+  char outstr[4];
+
+  __arc_append_buffer(c, buf, &idx, PSTRMAX, '\"', ppstr);
+  for (i=0; i<arc_strlen(c, sexpr); i++) {
+    ch = arc_strindex(c, sexpr, i);
+    if (ch < 32) {
+      snprintf(outstr, 4, "%.3o", ch);
+      __arc_append_buffer(c, buf, &idx, PSTRMAX, '\\', ppstr);
+      __arc_append_buffer(c, buf, &idx, PSTRMAX, outstr[0], ppstr);
+      __arc_append_buffer(c, buf, &idx, PSTRMAX, outstr[1], ppstr);
+      __arc_append_buffer(c, buf, &idx, PSTRMAX, outstr[2], ppstr);
+    } else {
+      __arc_append_buffer(c, buf, &idx, PSTRMAX, ch, ppstr);
+    }
+  }
+  __arc_append_buffer(c, buf, &idx, PSTRMAX, '\"', ppstr);
+  __arc_append_buffer_close(c, buf, &idx, ppstr);
+  return(*ppstr);
 }
 
 value arc_mkstringlen(arc *c, int length)
@@ -80,7 +101,7 @@ value arc_mkstringc(arc *c, const char *s)
   return(str);
 }
 
-static value char_pprint(arc *c, value v)
+static value char_pprint(arc *c, value v, value *ppstr)
 {
   /* XXX fill this in */
   return(CNIL);
