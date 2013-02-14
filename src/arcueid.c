@@ -25,6 +25,23 @@
 #include <inttypes.h>
 #include "arcueid.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
+
 void __arc_null_marker(arc *c, value v, int depth,
 			void (*markfn)(arc *, value, int))
 {
@@ -36,10 +53,57 @@ void __arc_null_sweeper(arc *c, value v)
   /* Does nothing */
 }
 
-static value cons_pprint(arc *c, value v)
+value arc_prettyprint(arc *c, value sexpr, value *ppstr)
 {
-  /* XXX fill this in */
-  return(CNIL);
+  switch (TYPE(sexpr)) {
+  case T_NIL:
+    __arc_append_cstring(c, "nil", ppstr);
+    break;
+  case T_TRUE:
+    __arc_append_cstring(c, "t", ppstr);
+    break;
+  case T_FIXNUM:
+    {
+      long val = FIX2INT(sexpr);
+      int len;
+      char *outstr;
+
+      len = snprintf(NULL, 0, "%ld", val) + 1;
+      outstr = (char *)alloca(sizeof(char)*len);
+      snprintf(outstr, len+1, "%ld", val);
+      __arc_append_cstring(c, outstr, ppstr);
+    }
+    break;
+  case T_SYMBOL:
+    /* XXX - handle this case */
+    break;
+  case T_NONE:
+    /* XXX - this is an error case that needs handling */
+    break;
+  default:
+    /* non-immediate type */
+    ((struct cell *)(sexpr))->pprint(c, sexpr, ppstr);
+    break;
+  }
+  return(*ppstr);
+}
+
+static value cons_pprint(arc *c, value sexpr, value *ppstr)
+{
+  __arc_append_cstring(c, "(", ppstr);
+  while (TYPE(sexpr) == T_CONS) {
+    arc_prettyprint(c, car(sexpr), ppstr);
+    sexpr = cdr(sexpr);
+    if (!NIL_P(sexpr))
+      __arc_append_cstring(c,  " ", ppstr);
+  }
+
+  if (sexpr != CNIL) {
+    __arc_append_cstring(c,  ". ", ppstr);
+    arc_prettyprint(c, sexpr, ppstr);
+  }
+  __arc_append_cstring(c, ")", ppstr);
+  return(*ppstr);
 }
 
 /* Mark the car and cdr */
