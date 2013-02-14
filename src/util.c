@@ -35,7 +35,7 @@ void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
   buf[(*idx)++] = ch;
 }
 
-void __arc_append_buffer_cstring(arc *c, char *buf, value *ppstr)
+void __arc_append_cstring(arc *c, char *buf, value *ppstr)
 {
   value nstr = arc_mkstringc(c, buf);
 
