@@ -110,8 +110,6 @@ extern void __arc_null_marker(arc *c, value v, int depth,
 			      void (*markfn)(arc *, value, int));
 extern void __arc_null_sweeper(arc *c, value v);
 
-#define CELLSIZE ((long)(((struct cell *)0)->_obj))
-
 /* Immediate values */
 /* Symbols */
 #define SYMBOL_FLAG 0x0e
@@ -173,7 +171,16 @@ static inline enum arc_types TYPE(value v)
 
 extern value cons(arc *c, value x, value y);
 
-/* Definitions for strings */
-value arc_mkstringlen(arc *c, int length);
+/* Definitions for strings and characters */
+extern value arc_mkstringlen(arc *c, int length);
+extern value arc_mkstring(arc *c, const Rune *data, int length);
+extern value arc_mkstringc(arc *c, const char *s);
+extern value arc_mkchar(arc *c, Rune r);
+extern int arc_strlen(arc *c, value v);
+extern Rune arc_strindex(arc *c, value v, int index);
+extern Rune arc_strsetindex(arc *c, value v, int index, Rune ch);
+extern value arc_strcatc(arc *c, value v1, Rune ch);
+extern value arc_substr(arc *c, value s, int sidx, int eidx);
+extern value arc_strcat(arc *c, value v1, value v2);
 
 #endif
