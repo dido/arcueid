@@ -55,7 +55,7 @@ value cons(arc *c, value x, value y)
   struct cell *cc;
   value ccv;
 
-  cc = (struct cell *)c->alloc(c, CELLSIZE + 2*sizeof(value));
+  cc = (struct cell *)c->alloc(c, sizeof(struct cell) + sizeof(value));
   cc->_type = T_CONS;
   cc->pprint = cons_pprint;
   cc->marker = cons_marker;
