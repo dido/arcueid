@@ -99,7 +99,7 @@ extern const char *__arc_typenames[];
 struct cell {
   /* the top two bits of the _type are used for garbage collection purposes. */
   unsigned char _type;
-  value (*pprint)(arc *, value);
+  value (*pprint)(arc *, value, value *);
   void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
   void (*sweeper)(arc *, value);
   unsigned long (*hash)(arc *, arc_hs *, value);
@@ -182,5 +182,12 @@ extern Rune arc_strsetindex(arc *c, value v, int index, Rune ch);
 extern value arc_strcatc(arc *c, value v1, Rune ch);
 extern value arc_substr(arc *c, value s, int sidx, int eidx);
 extern value arc_strcat(arc *c, value v1, value v2);
+
+/* Utility functions */
+extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
+				      value *str);
+extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
+				Rune ch, value *str);
+extern void __arc_append_buffer_cstring(arc *c, char *buf, value *ppstr);
 
 #endif
