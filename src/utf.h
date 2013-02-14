@@ -39,7 +39,7 @@ enum
   UTFmax = 6,	     /* maximum bytes per rune, as per RFC 2279 */
   Runesync = 0x80,   /* cannot represent part of a UTF sequence (<) */
   Runeself = 0x80,   /* rune and UTF sequences are the same (<) */
-  Runeerror = 0x80,  /* decoding error in UTF */
+  Runeerror = 0x80   /* decoding error in UTF */
 };
 
 extern int chartorune(Rune *rune, const char *str);
