@@ -28,7 +28,7 @@ typedef struct {
 
 #define STRREP(v) ((string *)REP(v))
 
-#define PSTRMAX __ARCUEID_PSTRMAX
+#define PSTRMAX 1024
 
 static value string_pprint(arc *c, value sexpr, value *ppstr)
 {
@@ -54,6 +54,17 @@ static value string_pprint(arc *c, value sexpr, value *ppstr)
   return(*ppstr);
 }
 
+static unsigned long string_hash(arc *c, value v, arc_hs *s)
+{
+  int i;
+  unsigned long len;
+
+  len = arc_strlen(c, v);
+  for (i=0; i<len; i++)
+    arc_hash_update(s, (unsigned long)arc_strindex(c, v, i));
+  return(len);
+}
+
 value arc_mkstringlen(arc *c, int length)
 {
   struct cell *ss;
@@ -65,6 +76,7 @@ value arc_mkstringlen(arc *c, int length)
   ss->pprint = string_pprint;
   ss->marker = __arc_null_marker;
   ss->sweeper = __arc_null_sweeper;
+  ss->hash = string_hash;
   strdata = (string *)ss->_obj;
   strdata->len = length;
   return((value)ss);
@@ -107,6 +119,12 @@ static value char_pprint(arc *c, value v, value *ppstr)
   return(CNIL);
 }
 
+static unsigned long char_hash(arc *c, value v, arc_hs *s)
+{
+  arc_hash_update(s, *((unsigned long *)REP(v)));
+  return(1);
+}
+
 value arc_mkchar(arc *c, Rune r)
 {
   struct cell *ss;
@@ -117,6 +135,7 @@ value arc_mkchar(arc *c, Rune r)
   ss->pprint = char_pprint;
   ss->marker = __arc_null_marker;
   ss->sweeper = __arc_null_sweeper;
+  ss->hash = char_hash;
   *((Rune *)ss->_obj) = r;
   return((value)ss);
 }
