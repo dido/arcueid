@@ -101,7 +101,7 @@ struct cell {
   value (*pprint)(arc *, value, value *);
   void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
   void (*sweeper)(arc *, value);
-  unsigned long (*hash)(arc *, arc_hs *, value);
+  unsigned long (*hash)(arc *, value, arc_hs *);
   value _obj[1];
 };
 
@@ -183,7 +183,6 @@ extern value arc_substr(arc *c, value s, int sidx, int eidx);
 extern value arc_strcat(arc *c, value v1, value v2);
 
 /* Utility functions */
-#define __ARCUEID_PSTRMAX 256
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
 				      value *str);
 extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
@@ -191,6 +190,12 @@ extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
 extern void __arc_append_cstring(arc *c, char *buf, value *ppstr);
 
 extern value arc_prettyprint(arc *c, value sexpr, value *ppstr);
+
+/* Hashing functions */
+extern void arc_hash_init(arc_hs *s, unsigned long level);
+extern void arc_hash_update(arc_hs *s, unsigned long val);
+extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
+extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s);
 
 
 #endif
