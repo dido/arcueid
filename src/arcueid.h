@@ -54,8 +54,7 @@ typedef struct arc {
   void (*gc)(struct arc *);
   void (*markroots)(struct arc *);
 
-  int over_percent;    /* additional free space over heap expansion */
-  size_t minexp;       /* minimum expansion amount */
+  void *alloc_ctx;			      /* allocation/gc context */
 } arc;
 
 enum arc_types {
