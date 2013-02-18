@@ -63,12 +63,18 @@
 /* Number of objects in each BiBOP page */
 #define BIBOP_PAGE_SIZE 64
 
-/* The BiBOP free list */
-static Bhdr *bibop_fl[MAX_BIBOP+1];
+struct mm_ctx {
+  /* The BiBOP free list */
+  Bhdr *bibop_fl[MAX_BIBOP+1];
 
-/* The allocated list */
-static Bhdr *alloc_head;
+  /* The allocated list */
+  Bhdr *alloc_head;
+  int nprop;
+};
 
+#define BIBOPFL(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_fl)
+#define ALLOCHEAD(c) (((struct mm_ctx *)c->alloc_ctx)->alloc_head)
+#define NPROP(c) (((struct mm_ctx *)c->alloc_ctx)->nprop)
 static void *bibop_alloc(arc *c, size_t osize)
 {
   Bhdr *h;
@@ -79,9 +85,9 @@ static void *bibop_alloc(arc *c, size_t osize)
   for (;;) {
     /* Pull off an object from the BiBOP free list if there is an
        available object of that size. */
-    if (bibop_fl[osize] != NULL) {
-      h = bibop_fl[osize];
-      bibop_fl[osize] = B2NB(bibop_fl[osize]);
+    if (BIBOPFL(c)[osize] != NULL) {
+      h = BIBOPFL(c)[osize];
+      BIBOPFL(c)[osize] = B2NB(BIBOPFL(c)[osize]);
       break;
     }
 
@@ -110,14 +116,14 @@ static void *bibop_alloc(arc *c, size_t osize)
       h = (Bhdr *)bptr;
       BSSIZE(h, osize);
       BFREE(h);
-      h->_next = bibop_fl[osize];
-      bibop_fl[osize] = h;
+      h->_next = BIBOPFL(c)[osize];
+      BIBOPFL(c)[osize] = h;
       bptr += actual;
     }
   }
   BALLOC(h);
-  h->_next = alloc_head;
-  alloc_head = h;
+  h->_next = ALLOCHEAD(c);
+  ALLOCHEAD(c) = h;
   return(B2D(h));
 }
 
@@ -141,8 +147,8 @@ static void *alloc(arc *c, size_t osize)
     exit(1);
   }
   BALLOC(h);
-  h->_next = alloc_head;
-  alloc_head = h;
+  h->_next = ALLOCHEAD(c);
+  ALLOCHEAD(c) = h;
   return(B2D(h));
 }
 
@@ -156,8 +162,8 @@ static void free_block(arc *c, void *blk, void *prevblk)
   D2B(h, blk);
   /* Unlink the block from the alloc list. */
   if (prevblk == NULL) {
-    /* When prevblk is NULL, that implies that h == alloc_head */
-    alloc_head = B2NB(h);
+    /* When prevblk is NULL, that implies that h == ALLOC_HEAD(c) */
+    ALLOCHEAD(c) = B2NB(h);
   } else {
     D2B(p, prevblk);
     p->_next = B2NB(h);
@@ -167,8 +173,8 @@ static void free_block(arc *c, void *blk, void *prevblk)
     /* For BiBOP allocated objects, freeing them just means putting the
        object back into the free list for the object size. */
     BFREE(h);
-    h->_next = bibop_fl[BSIZE(h)];
-    bibop_fl[BSIZE(h)] = h;
+    h->_next = BIBOPFL(c)[BSIZE(h)];
+    BIBOPFL(c)[BSIZE(h)] = h;
   } else
     c->mem_free(h);
 }
@@ -222,10 +228,8 @@ static void sysfree(void *ptr)
 
 /* The actual garbage collector */
 
-static int nprop;
-
 /* Mark a value with the propagator flag */
-void __arc_markprop(value p)
+void __arc_markprop(arc *c, value p)
 {
   struct cell *cp;
 
@@ -234,7 +238,7 @@ void __arc_markprop(value p)
 
   cp = (struct cell *)p;
   cp->_type = (cp->_type & FLAGMASK) | PROPFLAG;
-  nprop = 1;
+  NPROP(c) = 1;
 }
 
 /* Maximum recursion depth for marking */
@@ -251,7 +255,7 @@ static void mark(arc *c, value v, int depth)
   if (depth > MAX_MARK_RECURSION_DEPTH) {
     /* Stop recursion, and mark the object with the propagator flag
        so that the next iteration scan can pick it up. */
-    __arc_markprop(v);
+    __arc_markprop(c, v);
     return;
   }
   cp = (struct cell *)v;
@@ -270,10 +274,10 @@ static void gc(arc *c)
 
   c->markroots(c);
   /* Mark phase */
-  while (nprop) {
+  while (NPROP(c)) {
     /* Look for objects marked with propagator */
-    nprop = 0;
-    for (ptr = alloc_head; ptr; ptr = B2NB(ptr)) {
+    NPROP(c) = 0;
+    for (ptr = ALLOCHEAD(c); ptr; ptr = B2NB(ptr)) {
       cp = (struct cell *)B2D(ptr);
       if ((cp->_type & PROPFLAG) == PROPFLAG)
 	mark(c, (value)cp, 0);
@@ -281,7 +285,7 @@ static void gc(arc *c)
   }
 
   /* Sweep phase */
-  for (ptr = alloc_head, pptr = NULL; ptr;) {
+  for (ptr = ALLOCHEAD(c), pptr = NULL; ptr;) {
     cp = (struct cell *)B2D(ptr);
     if ((cp->_type & MARKFLAG) == MARKFLAG) {
       /* Marked object.  Previous pointer moves to this one. */
@@ -307,8 +311,9 @@ void arc_set_memmgr(arc *c)
   c->gc = gc;
   c->alloc = alloc;
   c->free = free_block;
+  c->alloc_ctx = (struct mm_ctx *)malloc(sizeof(struct mm_ctx));
 
   for (i=0; i<=MAX_BIBOP; i++)
-    bibop_fl[i] = NULL;
-  alloc_head = NULL;
+    BIBOPFL(c)[i] = NULL;
+  ALLOCHEAD(c) = NULL;
 }
