@@ -1,4 +1,4 @@
-# Copyright (C) 2012 Rafael R. Sevilla
+# Copyright (C) 2013 Rafael R. Sevilla
 #
 # This file is part of Arcueid
 #
@@ -15,69 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
-TESTS = check_arith check_hash check_io check_pp \
-	check_unicode check_vm check_ciel check_builtins check_reader \
-	check_gc check_gc2 check_compiler check_arc check_error
-check_PROGRAMS = check_arith check_hash check_io \
-	check_pp check_unicode check_vm check_ciel check_builtins \
-	check_reader check_gc check_gc2 check_compiler check_arc check_error
-
-check_arith_SOURCES = check_arith.c $(top_builddir)/src/arcueid.h
-check_arith_CFLAGS = @CHECK_CFLAGS@
-check_arith_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-# check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/arcueid.h
-# check_alloc_CFLAGS = @CHECK_CFLAGS@
-# check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+TESTS = check_gc
+check_PROGRAMS = check_gc
 
 check_gc_SOURCES = check_gc.c $(top_builddir)/src/arcueid.h
 check_gc_CFLAGS = @CHECK_CFLAGS@
 check_gc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_gc2_SOURCES = check_gc2.c $(top_builddir)/src/arcueid.h
-check_gc2_CFLAGS = @CHECK_CFLAGS@
-check_gc2_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_hash_SOURCES = check_hash.c $(top_builddir)/src/arcueid.h
-check_hash_CFLAGS = @CHECK_CFLAGS@
-check_hash_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_pp_SOURCES = check_pp.c $(top_builddir)/src/arcueid.h
-check_pp_CFLAGS = @CHECK_CFLAGS@
-check_pp_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_reader_SOURCES = check_reader.c $(top_builddir)/src/arcueid.h
-check_reader_CFLAGS = @CHECK_CFLAGS@
-check_reader_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_unicode_SOURCES = check_unicode.c $(top_builddir)/src/utf.h
-check_unicode_CFLAGS = @CHECK_CFLAGS@
-check_unicode_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_vm_SOURCES = check_vm.c $(top_builddir)/src/vmengine.h
-check_vm_CFLAGS = @CHECK_CFLAGS@
-check_vm_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_io_SOURCES = check_io.c $(top_builddir)/src/arcueid.h
-check_io_CFLAGS = @CHECK_CFLAGS@
-check_io_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_ciel_SOURCES = check_ciel.c $(top_builddir)/src/arcueid.h
-check_ciel_CFLAGS = @CHECK_CFLAGS@
-check_ciel_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_builtins_SOURCES = check_builtins.c $(top_builddir)/src/arcueid.h
-check_builtins_CFLAGS = @CHECK_CFLAGS@
-check_builtins_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_compiler_SOURCES = check_compiler.c $(top_builddir)/src/arcueid.h
-check_compiler_CFLAGS = @CHECK_CFLAGS@
-check_compiler_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_arc_SOURCES = check_arc.c $(top_builddir)/src/arcueid.h
-check_arc_CFLAGS = @CHECK_CFLAGS@
-check_arc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
-
-check_error_SOURCES = check_error.c $(top_builddir)/src/arcueid.h
-check_error_CFLAGS = @CHECK_CFLAGS@
-check_error_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
