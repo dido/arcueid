@@ -47,7 +47,7 @@ static void markroots(arc *c)
 
 START_TEST(test_gc_cons)
 {
-  value list=CNIL;
+  value list=CNIL, list2=CNIL, list3=CNIL, tlist;
   int i, count;
   struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
   Bhdr *ptr;
@@ -66,12 +66,62 @@ START_TEST(test_gc_cons)
     count++;
   fail_unless(count == 4);
 
+  count = 0;
+  for (tlist=list; tlist; tlist = cdr(tlist)) {
+    count++;
+    D2B(ptr, tlist);
+    fail_unless(BALLOCP(ptr));
+  }
+  fail_unless(count == 4);
+
   c->gc(c);
   count = 0;
   for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
     count++;
   fail_unless(count == 0);
 
+  list = CNIL;
+  for (i=0; i<4; i++)
+    list=cons(c, INT2FIX(i), list);
+
+  for (i=0; i<4; i++)
+    list2=cons(c, INT2FIX(i+4), list2);
+
+  for (i=0; i<4; i++)
+    list3=cons(c, INT2FIX(i+8), list3);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 12);
+
+  __arc_markprop(c, list2);
+  c->gc(c);
+
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 4);
+
+  list = list3 = CNIL;
+  for (i=0; i<4; i++)
+    list=cons(c, INT2FIX(i), list);
+
+  for (i=0; i<4; i++)
+    list3=cons(c, INT2FIX(i+8), list3);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 12);
+
+  __arc_markprop(c, list);
+  __arc_markprop(c, list3);
+  c->gc(c);
+
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 8);
+  
 }
 END_TEST
 
