@@ -98,10 +98,12 @@ extern const char *__arc_typenames[];
 struct cell {
   /* the top two bits of the _type are used for garbage collection purposes. */
   unsigned char _type;
-  value (*pprint)(arc *, value, value *);
+  value (*pprint)(arc *, value, value *, value);
   void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
   void (*sweeper)(arc *, value);
-  unsigned long (*hash)(arc *, value, arc_hs *);
+  unsigned long (*hash)(arc *, value, arc_hs *, value);
+  value (*iscmp)(arc *c, value, value);
+  value (*isocmp)(arc *c, value, value, value, value);
   value _obj[1];
 };
 
@@ -181,6 +183,28 @@ extern Rune arc_strsetindex(arc *c, value v, int index, Rune ch);
 extern value arc_strcatc(arc *c, value v1, Rune ch);
 extern value arc_substr(arc *c, value s, int sidx, int eidx);
 extern value arc_strcat(arc *c, value v1, value v2);
+extern int arc_strcmp(arc *c, value v1, value v2);
+
+/* Definitions for vectors */
+#define VECLEN(x) (FIX2INT(REP(x)[0]))
+#define VINDEX(x, i) (REP(x)[i+1])
+
+extern value arc_mkvector(arc *c, int length);
+
+
+/* Definitions for hash tables */
+/* Default initial number of bits for hashes */
+#define ARC_HASHBITS 6
+extern void arc_hash_init(arc_hs *s, unsigned long level);
+extern void arc_hash_update(arc_hs *s, unsigned long val);
+extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
+extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s,
+					value visithash);
+extern unsigned long arc_hash(arc *c, value v, value visithash);
+extern value arc_mkhash(arc *c, int hashbits);
+extern value arc_hash_lookup(arc *c, value tbl, value key);
+extern value arc_hash_insert(arc *c, value hash, value key, value val);
+
 
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
@@ -189,13 +213,25 @@ extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
 				Rune ch, value *str);
 extern void __arc_append_cstring(arc *c, char *buf, value *ppstr);
 
-extern value arc_prettyprint(arc *c, value sexpr, value *ppstr);
+extern value arc_prettyprint(arc *c, value sexpr, value *ppstr,
+			     value visithash);
+extern value __arc_visit(arc *c, value v, value hash);
 
-/* Hashing functions */
-extern void arc_hash_init(arc_hs *s, unsigned long level);
-extern void arc_hash_update(arc_hs *s, unsigned long val);
-extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
-extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s);
+extern value arc_mkobject(arc *c, size_t size, int type,
+			  value (*pprint)(arc *, value, value *, value),
+			  void (*marker)(arc *, value, int,
+					 void (*markfn)(arc *, value, int)),
+			  void (*sweeper)(arc *, value),
+			  unsigned long (*hash)(arc *, value, arc_hs *,
+						value),
+			  value (*iscmp)(arc *c, value, value),
+			  value (*isocmp)(arc *c, value, value, value, value));
+extern value arc_is(arc *c, value v1, value v2);
+extern value arc_iso(arc *c, value v1, value v2, value vh1, value vh2);
+extern value __arc_visit(arc *c, value v, value hash);
+extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
+
+
 
 
 #endif
