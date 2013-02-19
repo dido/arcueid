@@ -30,7 +30,7 @@ typedef struct {
 
 #define PSTRMAX 1024
 
-static value string_pprint(arc *c, value sexpr, value *ppstr)
+static value string_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   Rune buf[PSTRMAX], ch;
   int idx=0, i;
@@ -54,7 +54,7 @@ static value string_pprint(arc *c, value sexpr, value *ppstr)
   return(*ppstr);
 }
 
-static unsigned long string_hash(arc *c, value v, arc_hs *s)
+static unsigned long string_hash(arc *c, value v, arc_hs *s, value visithash)
 {
   int i;
   unsigned long len;
@@ -65,21 +65,28 @@ static unsigned long string_hash(arc *c, value v, arc_hs *s)
   return(len);
 }
 
+static value string_iscmp(arc *c, value v1, value v2)
+{
+  return((arc_strcmp(c, v1, v2) == 0) ? CTRUE : CNIL);
+}
+
+static value string_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
+{
+  return(string_iscmp(c, v1, v2));
+}
+
 value arc_mkstringlen(arc *c, int length)
 {
-  struct cell *ss;
+  value str;
   string *strdata;
 
-  ss = (struct cell *)c->alloc(c, sizeof(struct cell) - sizeof(value) +
-			       sizeof(string) + (length-1)*sizeof(Rune));
-  ss->_type = T_STRING;
-  ss->pprint = string_pprint;
-  ss->marker = __arc_null_marker;
-  ss->sweeper = __arc_null_sweeper;
-  ss->hash = string_hash;
-  strdata = (string *)ss->_obj;
+
+  str = arc_mkobject(c, sizeof(string) + (length-1)*sizeof(Rune), T_STRING,
+		     string_pprint, __arc_null_marker, __arc_null_sweeper,
+		     string_hash, string_iscmp, string_isocmp);
+  strdata = (string *)REP(str);
   strdata->len = length;
-  return((value)ss);
+  return(str);
 }
 
 /* Make string from UCS-4 Runes */
@@ -113,31 +120,36 @@ value arc_mkstringc(arc *c, const char *s)
   return(str);
 }
 
-static value char_pprint(arc *c, value v, value *ppstr)
+static value char_pprint(arc *c, value v, value *ppstr, value visithash)
 {
   /* XXX fill this in */
   return(CNIL);
 }
 
-static unsigned long char_hash(arc *c, value v, arc_hs *s)
+static unsigned long char_hash(arc *c, value v, arc_hs *s, value visithash)
 {
   arc_hash_update(s, *((unsigned long *)REP(v)));
   return(1);
 }
 
+static value char_iscmp(arc *c, value v1, value v2)
+{
+  return((*(Rune *)REP(v1)) == (*(Rune *)REP(v2)) ? CTRUE : CNIL);
+}
+
+static value char_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
+{
+  return(char_iscmp(c, v1, v2));
+}
+
 value arc_mkchar(arc *c, Rune r)
 {
-  struct cell *ss;
-
-  ss = (struct cell *)c->alloc(c, sizeof(struct cell) - sizeof(value) +
-			       sizeof(Rune));
-  ss->_type = T_STRING;
-  ss->pprint = char_pprint;
-  ss->marker = __arc_null_marker;
-  ss->sweeper = __arc_null_sweeper;
-  ss->hash = char_hash;
-  *((Rune *)ss->_obj) = r;
-  return((value)ss);
+  value ch;
+  ch = arc_mkobject(c, sizeof(Rune), T_CHAR,
+		    char_pprint, __arc_null_marker, __arc_null_sweeper,
+		    char_hash, char_iscmp, char_isocmp);
+  *((Rune *)REP(ch)) = r;
+  return(ch);
 }
 
 /* Most of these trivial and inefficient functions should
@@ -201,4 +213,35 @@ value arc_strcat(arc *c, value v1, value v2)
   runeptr += STRREP(v1)->len;
   memcpy(runeptr, STRREP(v2)->str, STRREP(v2)->len*sizeof(Rune));
   return(newstr);
+}
+
+/* This is a simple binary comparison of strings, giving a
+   lexicographic ordering of the input strings based on the Unicode
+   code point ordering.
+
+   XXX: We should eventually implement UTS #10 (Unicode Collation
+   algorithm) for this function someday and a parser for Unicode
+   collation element tables. */
+int arc_strcmp(arc *c, value v1, value v2)
+{
+  int len1, len2, len;
+  int i;
+
+  len1 = arc_strlen(c, v1);
+  len2 = arc_strlen(c, v2);
+  len = (len1 > len2) ? len2 : len1;
+  for (i=0; i<len; i++) {
+    int r1, r2;
+    r1 = arc_strindex(c, v1, i);
+    r2 = arc_strindex(c, v2, i);
+    if (r1 > r2)
+      return(1);
+    if (r1 < r2)
+      return(-1);
+  }
+  if (len1 > len2)
+    return(1);
+  if (len1 < len2)
+    return(-1);
+  return(0);
 }
