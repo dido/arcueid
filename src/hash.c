@@ -116,7 +116,7 @@ unsigned long arc_hash_final(arc_hs *s, unsigned long len)
   return(s->s[2]);
 }
 
-unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
+unsigned long arc_hash_increment(arc *c, value v, arc_hs *s, value visithash)
 {
   unsigned long length=1;
 
@@ -136,18 +136,292 @@ unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
     /* XXX - to be implemented */
     /*    arc_hash_update(s, (unsigned long)SYM2ID(v)); */
   default:
-    length = ((struct cell *)v)->hash(c, v, s);
+    length = ((struct cell *)v)->hash(c, v, s, visithash);
     break;
   }
   return(length);
 }
 
-unsigned long arc_hash(arc *c, value v)
+unsigned long arc_hash_level(arc *c, value v, value visithash,
+			     unsigned long level)
 {
   unsigned long len;
   arc_hs s;
 
-  arc_hash_init(&s, 0);
-  len = arc_hash_increment(c, v, &s);
+  arc_hash_init(&s, level);
+  len = arc_hash_increment(c, v, &s, visithash);
   return(arc_hash_final(&s, len));
+}
+
+unsigned long arc_hash(arc *c, value v, value visithash)
+{
+  return(arc_hash_level(c, v, visithash, 0));
+}
+
+/* Arcueid's hash table data type.  A hash table is simply a four-tuple,
+   with the elements as follows:
+
+   0 - The actual table itself (a vector)
+   1 - Number of hash bits (a fixnum)
+   2 - Number of entries total (a fixnum)
+   3 - Load limit (a fixnum)
+
+   Hash buckets are triples with the elements as follows:
+
+   0 - The index of the element in the current hash table (fixnum)
+   1 - The key of this element
+   2 - The value of this element
+*/
+
+#define HASH_SIZE (4)
+#define HASH_TABLE(t) (REP(t)[0])
+#define HASH_BITS(t) (FIX2INT(REP(t)[1]))
+#define HASH_NENTRIES(t) (FIX2INT(REP(t)[2]))
+#define HASH_LLIMIT(t) (FIX2INT(REP(t)[3]))
+#define SET_HASHBITS(t, n) (REP(t)[1] = INT2FIX(n))
+#define SET_NENTRIES(t, n) (REP(t)[2] = INT2FIX(n))
+#define SET_LLIMIT(t, n) (REP(t)[3] = INT2FIX(n))
+
+#define BUCKET_SIZE (3)
+#define BINDEX(t) (FIX2INT(REP(t)[0]))
+#define SBINDEX(t, idx) (REP(t)[0] = INT2FIX(idx))
+#define BKEY(t) (REP(t)[1])
+#define BVALUE(t) (REP(t)[2])
+
+#define HASHSIZE(n) ((unsigned long)1 << (n))
+#define HASHMASK(n) (HASHSIZE(n)-1)
+#define MAX_LOAD_FACTOR 70	/* percentage */
+/* linear probing */
+#define PROBE(i, k) (i)
+
+#define TABLESIZE(t) (HASHSIZE(HASH_BITS(t)))
+#define TABLEMASK(t) (HASHMASK(HASH_BITS(t)))
+
+/* An empty slot is either CUNBOUND or CUNDEF.  CUNDEF is used as a
+   'tombstone' value for deleted elements.  If this is found, one may have
+   to keep probing until either the actual element is found or one runs into
+   a CUNBOUND, meaning the element is definitely not in the table.
+   Since we enforce load factor, there will definitely be some table
+   elements which remain unused. */
+#define EMPTYP(x) (((x) == CUNBOUND) || ((x) == CUNDEF))
+
+static value hash_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+{
+  /* XXX - fill this in */
+  return(CNIL);
+}
+
+static void hash_marker(arc *c, value v, int depth,
+			void (*markfn)(arc *, value, int))
+{
+  /* Just mark the table--that should be enough. It's just a vector. */
+  markfn(c, HASH_TABLE(v), depth);
+}
+
+static unsigned long hash_hasher(arc *c, value v, arc_hs *s, value visithash)
+{
+  unsigned long len;
+  value tbl, e;
+  int i;
+
+  if (visithash == CNIL)
+    visithash = arc_mkhash(c, ARC_HASHBITS);
+  if (__arc_visit(c, v, visithash) != CNIL) {
+    /* Already visited at some point.  Do not recurse further.  An already
+       visited node will still contribute 1 to the length though. */
+    return(1);
+  }
+  tbl = HASH_TABLE(v);
+  len = 0;
+  for (i=0; i<VECLEN(tbl); i++) {
+    e = VINDEX(tbl, i);
+    if (EMPTYP(e))
+      continue;
+    len += arc_hash(c, BKEY(e), visithash);
+    len += arc_hash(c, BVALUE(e), visithash);
+  }
+  return(len);
+}
+
+static value hash_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
+{
+  value vhh1, vhh2;
+  value v2val, tbl, e;
+  int i;
+
+  if (vh1 == CNIL) {
+    vh1 = arc_mkhash(c, ARC_HASHBITS);
+    vh2 = arc_mkhash(c, ARC_HASHBITS);
+  }
+
+  if ((vhh1 = __arc_visit(c, v1, vh1)) != CNIL) {
+    /* If we find a visited object, see if v2 is also visited in vh2.
+       If not, they are not the same. */
+    vhh2 = __arc_visit(c, v2, vh2);
+    /* We see if the same value was produced on visiting. */
+    return((vhh2 == vhh1) ? CTRUE : CNIL);
+  }
+
+  /* Get value assigned by __arc_visit to v1. */
+  vhh1 = __arc_visit(c, v1, vh1);
+  /* If we somehow already visited v2 when v1 was not visited in the
+     same way, they cannot be the same. */
+  if (__arc_visit2(c, v2, vh2, vhh1) != CNIL)
+    return(CNIL);
+
+  /* Two hash tables must have identical numbers of entries to be isomorphic */
+  if (HASH_NENTRIES(v1) != HASH_NENTRIES(v2))
+    return(CNIL);
+  /* Two hash tables must have identical key-value pair mappings to be
+     isomorphic */
+  tbl = HASH_TABLE(v1);
+  for (i=0; i<VECLEN(tbl); i++) {
+    e = VINDEX(tbl, i);
+    if (EMPTYP(e))
+      continue;
+    v2val = arc_hash_lookup(c, v2, BKEY(e));
+    if (arc_iso(c, BVALUE(e), v2val, vh1, vh2) == CNIL)
+      return(CNIL);
+  }
+  return(CTRUE);
+}
+
+value arc_mkhash(arc *c, int hashbits)
+{
+  value hash;
+  int i;
+
+  hash = arc_mkobject(c, sizeof(value)*HASH_SIZE, T_TABLE,
+		      hash_pprint, hash_marker, __arc_null_sweeper,
+		      hash_hasher, NULL, hash_isocmp);
+  SET_HASHBITS(hash, hashbits);
+  SET_NENTRIES(hash, 0);
+  SET_LLIMIT(hash, (HASHSIZE(hashbits)*MAX_LOAD_FACTOR) / 100);
+  HASH_TABLE(hash) = arc_mkvector(c, HASHSIZE(hashbits));
+  for (i=0; i<HASHSIZE(hashbits); i++)
+    VINDEX(HASH_TABLE(hash), i) = CUNBOUND;
+  return(hash);
+}
+
+static void hashtable_expand(arc *c, value hash)
+{
+  unsigned int hv, index, i, j, nhashbits;
+  value oldtbl, newtbl, e;
+
+  nhashbits = HASH_BITS(hash) + 1;
+  newtbl = arc_mkvector(c, HASHSIZE(nhashbits));
+  for (i=0; i<HASHSIZE(nhashbits); i++)
+    VINDEX(newtbl, i) = CUNBOUND;
+  oldtbl = HASH_TABLE(hash);
+  /* Search for active keys and copy them into the new table */
+  for (i=0; i<VECLEN(oldtbl); i++) {
+    e = VINDEX(oldtbl, i);
+    if (EMPTYP(e))
+      continue;
+    /* insert the old key into the new table */
+    hv = arc_hash(c, BKEY(e), CNIL);
+    index = hv & HASHMASK(nhashbits);
+    for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
+      index = (index + PROBE(j, k)) & HASHMASK(nhashbits);
+    VINDEX(newtbl, index) = e;
+    SBINDEX(e, index);		/* change index */
+    VINDEX(oldtbl, i) = CUNBOUND;
+  }
+  SET_HASHBITS(hash, nhashbits);
+  SET_LLIMIT(hash, (HASHSIZE(nhashbits)*MAX_LOAD_FACTOR) / 100);
+  HASH_TABLE(hash) = newtbl;
+}
+
+static void hb_marker(arc *c, value v, int depth,
+		      void (*markfn)(arc *, value, int))
+{
+  /* Mark the key/value pair */
+  markfn(c, BKEY(v), depth);
+  markfn(c, BVALUE(v), depth);
+}
+
+/* Create a hash bucket.  Hash buckets are objects that should never be
+   directly visble, just as the tombstone values CUNDEF and CUNBOUND should
+   never be seen directly by user code. */
+static value mkhashbucket(arc *c, value key, value val, int index)
+{
+  value bucket;
+  struct cell *cc;
+
+  cc = (struct cell *)c->alloc(c, sizeof(struct cell) + BUCKET_SIZE*sizeof(value));
+  cc->pprint = NULL;		/* this should NEVER be pprinted directly! */
+  cc->marker = hb_marker;
+  cc->sweeper = __arc_null_sweeper;
+  cc->hash = NULL;		/* this should NEVER be hashed directly! */
+  bucket = (value)cc;
+  BKEY(bucket) = key;
+  BVALUE(bucket) = val;
+  SBINDEX(bucket, index);
+  return(bucket);
+}
+
+value arc_hash_insert(arc *c, value hash, value key, value val)
+{
+  unsigned int hv, index, i;
+  value e;
+
+  if (HASH_NENTRIES(hash)+1 > HASH_LLIMIT(hash))
+    hashtable_expand(c, hash);
+  SET_NENTRIES(hash, HASH_NENTRIES(hash)+1);
+  hv = arc_hash(c, key, CNIL);
+  index = hv & TABLEMASK(hash);
+  /* Collision resolution with open addressing */
+  for (i=0;; i++) {
+    e = VINDEX(HASH_TABLE(hash), index);
+    /* If we see an empty bucket in our search, or if we see a bucket
+       whose key is the same as the key specified, we have found the
+       place where the element should go. */
+    if (EMPTYP(e) || arc_is(c, BKEY(e), key) == CTRUE)
+      break;
+    /* We found a bucket, but it is occupied by some other key. Continue
+       probing. */
+    index = (index + PROBE(i, k)) & TABLEMASK(hash);
+  }
+
+  if (EMPTYP(e)) {
+    /* No such key in the hash table yet.  Create a bucket and
+       assign it to the table. */
+    e = mkhashbucket(c, key, val, index);
+    VINDEX(HASH_TABLE(hash), index) = e;
+  } else {
+    /* The key already exists.  Use the current bucket but change the
+       value to the value specified. */
+    BVALUE(e) = val;
+  }
+  return(val);
+}
+
+static value hash_lookup(arc *c, value hash, value key, unsigned int *index)
+{
+  unsigned int hv, i;
+  value e;
+
+  hv = arc_hash(c, key, CNIL);
+  *index = hv & TABLEMASK(hash);
+  for (i=0;; i++) {
+    *index = (*index + PROBE(i, key)) & TABLEMASK(hash);
+    e = VINDEX(HASH_TABLE(hash), *index);
+    /* CUNBOUND means there was never any element at that index, so we
+       can stop. */
+    if (e == CUNBOUND)
+      return(CUNBOUND);
+    /* CUNDEF means that there was an element at that index, but it was
+       deleted at some point, so we may need to continue probing. */
+    if (e == CUNDEF)
+      continue;
+    if (arc_iso(c, BKEY(e), key, CNIL, CNIL) == CTRUE)
+      return(BVALUE(e));
+  }
+}
+
+value arc_hash_lookup(arc *c, value tbl, value key)
+{
+  unsigned int index;
+
+  return(hash_lookup(c, tbl, key, &index));
 }
