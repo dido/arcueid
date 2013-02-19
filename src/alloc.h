@@ -59,4 +59,6 @@ typedef struct Bhdr_t {
 #define PROPFLAG 0xc0
 #define MARKFLAG 0x40
 
+extern void __arc_markprop(arc *c, value p);
+
 #endif
