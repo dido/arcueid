@@ -292,13 +292,14 @@ static void gc(arc *c)
       pptr = (void *)cp;
       /* clear the mark flag */
       cp->_type &= FLAGMASK;
+      ptr = B2NB(ptr);
     } else {
       /* Was not marked during the marking phase. Sweep it away! */
       cp->sweeper(c, (value)cp);
+      ptr = B2NB(ptr);
       c->free(c, (void *)cp, pptr);
       /* We don't update pptr in this case, it remains the same */
     }
-    ptr = B2NB(ptr);
   }
 }
 
