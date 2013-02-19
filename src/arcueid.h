@@ -231,7 +231,7 @@ extern value arc_iso(arc *c, value v1, value v2, value vh1, value vh2);
 extern value __arc_visit(arc *c, value v, value hash);
 extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
 
-
-
+/* Initialization functions */
+extern void arc_set_memmgr(arc *c);
 
 #endif
