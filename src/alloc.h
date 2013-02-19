@@ -53,6 +53,7 @@ typedef struct Bhdr_t {
 #define BSIZE(bp) ((bp)->_size >> 1)
 #define BALLOC(bp) ((bp)->_size |= (0x1))
 #define BFREE(bp) ((bp)->_size &= ~(0x1))
+#define BALLOCP(bp) ((bp->_size & 0x1) == 0x1)
 
 /* Garbage collector */
 #define FLAGMASK 0x3f
