@@ -41,3 +41,35 @@ void __arc_append_cstring(arc *c, char *buf, value *ppstr)
 
   *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
 }
+
+/* This function is used for recursive visits in data structures which
+   may be cyclic.  It uses v as an actual unsigned long, which is then
+   converted into a fixnum after hashing, and that is used as the key for
+   the hash table.  If the key is not already present, it returns CNIL
+   and adds the key.  If the key is present, it returns whatever
+   other value has been set for it in the hash. */
+value __arc_visit2(arc *c, value v, value hash, value mykeyval)
+{
+  value keyval, val;
+  unsigned long myhash;
+  arc_hs s;
+
+  arc_hash_init(&s, 0);
+  arc_hash_update(&s, (unsigned long)v);
+  myhash = arc_hash_final(&s, 1);
+  keyval = INT2FIX((long)myhash);
+
+  if (mykeyval == CNIL)
+    mykeyval = keyval;
+
+  if ((val = arc_hash_lookup(c, hash, keyval)) == CUNBOUND) {
+    arc_hash_insert(c, hash, keyval, mykeyval);
+    return(CNIL);
+  }
+  return(val);
+}
+
+value __arc_visit(arc *c, value v, value hash)
+{
+  return(__arc_visit2(c, v, hash, CNIL));
+}
