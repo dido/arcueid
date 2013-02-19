@@ -41,7 +41,6 @@
 void *alloca (size_t);
 #endif
 
-
 void __arc_null_marker(arc *c, value v, int depth,
 			void (*markfn)(arc *, value, int))
 {
@@ -53,7 +52,7 @@ void __arc_null_sweeper(arc *c, value v)
   /* Does nothing */
 }
 
-value arc_prettyprint(arc *c, value sexpr, value *ppstr)
+value arc_prettyprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   switch (TYPE(sexpr)) {
   case T_NIL:
@@ -82,17 +81,68 @@ value arc_prettyprint(arc *c, value sexpr, value *ppstr)
     break;
   default:
     /* non-immediate type */
-    ((struct cell *)(sexpr))->pprint(c, sexpr, ppstr);
+    ((struct cell *)(sexpr))->pprint(c, sexpr, ppstr, visithash);
     break;
   }
   return(*ppstr);
 }
 
-static value cons_pprint(arc *c, value sexpr, value *ppstr)
+value arc_mkobject(arc *c, size_t size, int type,
+		   value (*pprint)(arc *, value, value *, value),
+		   void (*marker)(arc *, value, int,
+				  void (*markfn)(arc *, value, int)),
+		   void (*sweeper)(arc *, value),
+		   unsigned long (*hash)(arc *, value, arc_hs *,
+					 value),
+		   value (*iscmp)(arc *c, value, value),
+		   value (*isocmp)(arc *c, value, value, value, value))
 {
+  struct cell *cc;
+
+  cc = (struct cell *)c->alloc(c, sizeof(struct cell) + size - sizeof(value));
+  cc->_type = type;
+  cc->pprint = pprint;
+  cc->marker = marker;
+  cc->sweeper = sweeper;
+  cc->hash = hash;
+  cc->iscmp = iscmp;
+  cc->isocmp = isocmp;
+  return((value)cc);
+}
+
+static value cons_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+{
+  /* XXX - we should do something a bit more sophisticated here, e.g.
+     arc> (= x '(1 2))
+     arc> (scdr x x)
+     arc> a
+
+     should print something like:
+
+     #0=(1 . #0#)
+
+     The current algorithm already produces:
+
+     (1 . (...))
+
+     which is already a fair sight better than what arc3 does when faced
+     with the same problem!
+
+     Doing the former requires us to traverse the conses twice.  We'll
+     implement it someday.
+  */
+  /* Create a visithash if we don't already have one */
+  if (visithash == CNIL)
+    visithash = arc_mkhash(c, ARC_HASHBITS);
+
+  if (__arc_visit(c, sexpr, visithash) != CNIL) {
+    /* Already visited at some point.  Do not recurse further. */
+    __arc_append_cstring(c, "(...)", ppstr);
+    return(*ppstr);
+  }
   __arc_append_cstring(c, "(", ppstr);
   while (TYPE(sexpr) == T_CONS) {
-    arc_prettyprint(c, car(sexpr), ppstr);
+    arc_prettyprint(c, car(sexpr), ppstr, visithash);
     sexpr = cdr(sexpr);
     if (!NIL_P(sexpr))
       __arc_append_cstring(c,  " ", ppstr);
@@ -100,7 +150,7 @@ static value cons_pprint(arc *c, value sexpr, value *ppstr)
 
   if (sexpr != CNIL) {
     __arc_append_cstring(c,  ". ", ppstr);
-    arc_prettyprint(c, sexpr, ppstr);
+    arc_prettyprint(c, sexpr, ppstr, visithash);
   }
   __arc_append_cstring(c, ")", ppstr);
   return(*ppstr);
@@ -114,18 +164,187 @@ static void cons_marker(arc *c, value v, int depth,
   markfn(c, cdr(v), depth);
 }
 
+static unsigned long cons_hash(arc *c, value sexpr, arc_hs *s, value visithash)
+{
+  unsigned long len;
+
+  if (visithash == CNIL)
+    visithash = arc_mkhash(c, ARC_HASHBITS);
+  if (__arc_visit(c, sexpr, visithash) != CNIL) {
+    /* Already visited at some point.  Do not recurse further.  An already
+       visited node will still contribute 1 to the length though. */
+    return(1);
+  }
+  len = arc_hash(c, car(sexpr), visithash);
+  len += arc_hash(c, cdr(sexpr), visithash);
+  return(len);
+}
+
+static value cons_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
+{
+  value vhh1, vhh2;
+
+  if (vh1 == CNIL) {
+    vh1 = arc_mkhash(c, ARC_HASHBITS);
+    vh2 = arc_mkhash(c, ARC_HASHBITS);
+  }
+
+  if ((vhh1 = __arc_visit(c, v1, vh1)) != CNIL) {
+    /* If we find a visited object, see if v2 is also visited in vh2.
+       If not, they are not the same. */
+    vhh2 = __arc_visit(c, v2, vh2);
+    /* We see if the same value was produced on visiting. */
+    return((vhh2 == vhh1) ? CTRUE : CNIL);
+  }
+
+  /* Get value assigned by __arc_visit to v1. */
+  vhh1 = __arc_visit(c, v1, vh1);
+  /* If we somehow already visited v2 when v1 was not visited in the
+     same way, they cannot be the same. */
+  if (__arc_visit2(c, v2, vh2, vhh1) != CNIL)
+    return(CNIL);
+  /* Recursive comparisons */
+  if (arc_iso(c, car(v1), car(v2), vh1, vh2) != CTRUE)
+    return(CNIL);
+  if (arc_iso(c, cdr(v1), cdr(v2), vh1, vh2) != CTRUE)
+    return(CNIL);
+  return(CTRUE);
+}
+
 value cons(arc *c, value x, value y)
 {
-  struct cell *cc;
-  value ccv;
+  value cv;
 
-  cc = (struct cell *)c->alloc(c, sizeof(struct cell) + sizeof(value));
-  cc->_type = T_CONS;
-  cc->pprint = cons_pprint;
-  cc->marker = cons_marker;
-  cc->sweeper = __arc_null_sweeper;
-  ccv = (value)cc;
-  car(ccv) = x;
-  cdr(ccv) = y;
-  return(ccv);
+  cv = arc_mkobject(c, 2*sizeof(value), T_CONS,
+		    cons_pprint, cons_marker, __arc_null_sweeper,
+		    cons_hash, NULL, cons_isocmp);
+  car(cv) = x;
+  cdr(cv) = y;
+  return(cv);
+}
+
+static value vector_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+{
+  /* XXX fill this in */
+  return(CNIL);
+}
+
+static void vector_marker(arc *c, value v, int depth,
+			  void (*markfn)(arc *, value, int))
+{
+  int i;
+
+  for (i=0; i<VECLEN(v); i++)
+    markfn(c, VINDEX(v, i), depth);
+}
+
+static value vector_hash(arc *c, value v, arc_hs *s, value visithash)
+{
+  unsigned long len;
+  int i;
+
+  if (visithash == CNIL)
+    visithash = arc_mkhash(c, ARC_HASHBITS);
+  if (__arc_visit(c, v, visithash) != CNIL) {
+    /* Already visited at some point.  Do not recurse further.  An already
+       visited node will still contribute 1 to the length though. */
+    return(1);
+  }
+  len = 0;
+  for (i=0; i<VECLEN(v); i++)
+    len += arc_hash(c, VINDEX(v, i), visithash);
+  return(len);
+}
+
+static value vector_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
+{
+  value vhh1, vhh2;
+  int i;
+
+  if (vh1 == CNIL) {
+    vh1 = arc_mkhash(c, ARC_HASHBITS);
+    vh2 = arc_mkhash(c, ARC_HASHBITS);
+  }
+
+  if ((vhh1 = __arc_visit(c, v1, vh1)) != CNIL) {
+    /* If we find a visited object, see if v2 is also visited in vh2.
+       If not, they are not the same. */
+    vhh2 = __arc_visit(c, v2, vh2);
+    /* We see if the same value was produced on visiting. */
+    return((vhh2 == vhh1) ? CTRUE : CNIL);
+  }
+
+  /* Get value assigned by __arc_visit to v1. */
+  vhh1 = __arc_visit(c, v1, vh1);
+  /* If we somehow already visited v2 when v1 was not visited in the
+     same way, they cannot be the same. */
+  if (__arc_visit2(c, v2, vh2, vhh1) != CNIL)
+    return(CNIL);
+  /* Vectors must be identical in length to be the same */
+  if (VECLEN(v1) != VECLEN(v2))
+    return(CNIL);
+  /* Recursive comparisons */
+  for (i=0; i<VECLEN(v1); i++) {
+    if (arc_iso(c, VINDEX(v1, i), VINDEX(v2, i), vh1, vh2) != CTRUE)
+      return(CNIL);
+  }
+  return(CTRUE);
+}
+
+value arc_mkvector(arc *c, int length)
+{
+  value vec;
+  int i;
+
+  vec = arc_mkobject(c, (length+1)*sizeof(value), T_VECTOR,
+		     vector_pprint, vector_marker, __arc_null_sweeper,
+		     vector_hash, NULL, vector_isocmp);
+  VINDEX(vec, -1) = INT2FIX(length);
+  for (i=0; i<length; i++)
+    VINDEX(vec, i) = CNIL;
+  return(vec);
+}
+
+value arc_is(arc *c, value v1, value v2)
+{
+  struct cell *cc;
+
+  /* An object is definitely the same as itself */
+  if (v1 == v2)
+    return(CTRUE);
+  /* Two objects with different types are definitely not the same */
+  if (TYPE(v1) != TYPE(v2))
+    return(CNIL);
+
+  /* v1 == v2 check should have covered this, but just in case */
+  if (IMMEDIATE_P(v1))
+    return(CNIL);
+
+  cc = (struct cell *)v1;
+  /* If no iscmp is defined, two objects of that type can be equal if and
+     only if their references are equal. */
+  if (cc->iscmp == NULL)
+    return(CNIL);
+  return(cc->iscmp(c, v1, v2));
+}
+
+value arc_iso(arc *c, value v1, value v2, value vh1, value vh2)
+{
+  struct cell *cc;
+
+  /* An object is definitely the same as itself */
+  if (v1 == v2)
+    return(CTRUE);
+  /* Two objects with different types are definitely not the same */
+  if (TYPE(v1) != TYPE(v2))
+    return(CNIL);
+  /* v1 == v2 check should have covered this, but just in case */
+  if (IMMEDIATE_P(v1))
+    return(CNIL);
+
+  cc = (struct cell *)v1;
+  if (cc->isocmp == NULL)
+    return(CNIL);
+  return(cc->isocmp(c, v1, v2, vh1, vh2));
+
 }
