@@ -22,7 +22,6 @@
 #include <float.h>
 #include <complex.h>
 #include "arcueid.h"
-#include "arith.h"
 #include "../config.h"
 #include "utf.h"
 
