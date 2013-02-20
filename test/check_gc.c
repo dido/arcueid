@@ -135,6 +135,7 @@ int main(void)
 
   c = &cc;
   arc_set_memmgr(c);
+  arc_init_datatypes(c);
   c->markroots = markroots;
 
   tcase_add_test(tc_gc, test_gc_cons);
