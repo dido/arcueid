@@ -119,6 +119,7 @@ unsigned long arc_hash_final(arc_hs *s, unsigned long len)
 unsigned long arc_hash_increment(arc *c, value v, arc_hs *s, value visithash)
 {
   unsigned long length=1;
+  typefn_t *tfn;
 
   arc_hash_update(s, TYPE(v));
   switch (TYPE(v)) {
@@ -136,7 +137,8 @@ unsigned long arc_hash_increment(arc *c, value v, arc_hs *s, value visithash)
     /* XXX - to be implemented */
     /*    arc_hash_update(s, (unsigned long)SYM2ID(v)); */
   default:
-    length = ((struct cell *)v)->hash(c, v, s, visithash);
+    tfn = __arc_typefn(c, v);
+    length = tfn->hash(c, v, s, visithash);
     break;
   }
   return(length);
@@ -291,9 +293,7 @@ value arc_mkhash(arc *c, int hashbits)
   value hash;
   int i;
 
-  hash = arc_mkobject(c, sizeof(value)*HASH_SIZE, T_TABLE,
-		      hash_pprint, hash_marker, __arc_null_sweeper,
-		      hash_hasher, NULL, hash_isocmp);
+  hash = arc_mkobject(c, sizeof(value)*HASH_SIZE, T_TABLE);
   SET_HASHBITS(hash, hashbits);
   SET_NENTRIES(hash, 0);
   SET_LLIMIT(hash, (HASHSIZE(hashbits)*MAX_LOAD_FACTOR) / 100);
@@ -302,6 +302,15 @@ value arc_mkhash(arc *c, int hashbits)
     VINDEX(HASH_TABLE(hash), i) = CUNBOUND;
   return(hash);
 }
+
+typefn_t __arc_table_typefn__ = {
+  hash_marker,
+  __arc_null_sweeper,
+  hash_pprint,
+  hash_hasher,
+  NULL,
+  hash_isocmp
+};
 
 static void hashtable_expand(arc *c, value hash)
 {
@@ -346,19 +355,23 @@ static void hb_marker(arc *c, value v, int depth,
 static value mkhashbucket(arc *c, value key, value val, int index)
 {
   value bucket;
-  struct cell *cc;
 
-  cc = (struct cell *)c->alloc(c, sizeof(struct cell) + BUCKET_SIZE*sizeof(value));
-  cc->pprint = NULL;		/* this should NEVER be pprinted directly! */
-  cc->marker = hb_marker;
-  cc->sweeper = __arc_null_sweeper;
-  cc->hash = NULL;		/* this should NEVER be hashed directly! */
-  bucket = (value)cc;
+  bucket = arc_mkobject(c, BUCKET_SIZE*sizeof(value), T_TBUCKET);
   BKEY(bucket) = key;
   BVALUE(bucket) = val;
   SBINDEX(bucket, index);
   return(bucket);
 }
+
+typefn_t __arc_hb_typefn__ = {
+  hb_marker,
+  __arc_null_sweeper,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
 
 value arc_hash_insert(arc *c, value hash, value key, value val)
 {
