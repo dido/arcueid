@@ -247,6 +247,7 @@ void __arc_markprop(arc *c, value p)
 static void mark(arc *c, value v, int depth)
 {
   struct cell *cp;
+  typefn_t *tfn;
 
   /* Immediate values obviously cannot be marked */
   if (IMMEDIATE_P(v))
@@ -258,11 +259,13 @@ static void mark(arc *c, value v, int depth)
     __arc_markprop(c, v);
     return;
   }
+
+  tfn = __arc_typefn(c, v);
   cp = (struct cell *)v;
   /* Mark the object */
   cp->_type = (cp->_type & FLAGMASK) | MARKFLAG;
   /* Recurse into the object's structure at increased depth */
-  cp->marker(c, v, depth+1, mark);
+  tfn->marker(c, v, depth+1, mark);
 }
 
 /* Basic mark/sweep garbage collector */
@@ -271,6 +274,7 @@ static void gc(arc *c)
   Bhdr *ptr;
   struct cell *cp;
   void *pptr;
+  typefn_t *tfn;
 
   c->markroots(c);
   /* Mark phase */
@@ -295,7 +299,8 @@ static void gc(arc *c)
       ptr = B2NB(ptr);
     } else {
       /* Was not marked during the marking phase. Sweep it away! */
-      cp->sweeper(c, (value)cp);
+      tfn = __arc_typefn(c, (value)cp);
+      tfn->sweeper(c, (value)cp);
       ptr = B2NB(ptr);
       c->free(c, (void *)cp, pptr);
       /* We don't update pptr in this case, it remains the same */
