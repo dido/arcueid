@@ -81,9 +81,7 @@ value arc_mkstringlen(arc *c, int length)
   string *strdata;
 
 
-  str = arc_mkobject(c, sizeof(string) + (length-1)*sizeof(Rune), T_STRING,
-		     string_pprint, __arc_null_marker, __arc_null_sweeper,
-		     string_hash, string_iscmp, string_isocmp);
+  str = arc_mkobject(c, sizeof(string) + (length-1)*sizeof(Rune), T_STRING);
   strdata = (string *)REP(str);
   strdata->len = length;
   return(str);
@@ -99,6 +97,15 @@ value arc_mkstring(arc *c, const Rune *data, int length)
   STRREP(str)->len = length;
   return(str);
 }
+
+typefn_t __arc_string_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  string_pprint,
+  string_hash,
+  string_iscmp,
+  string_isocmp
+};
 
 /* Make string from a UTF-8 C string */
 value arc_mkstringc(arc *c, const char *s)
@@ -145,12 +152,19 @@ static value char_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
 value arc_mkchar(arc *c, Rune r)
 {
   value ch;
-  ch = arc_mkobject(c, sizeof(Rune), T_CHAR,
-		    char_pprint, __arc_null_marker, __arc_null_sweeper,
-		    char_hash, char_iscmp, char_isocmp);
+  ch = arc_mkobject(c, sizeof(Rune), T_CHAR);
   *((Rune *)REP(ch)) = r;
   return(ch);
 }
+
+typefn_t __arc_char_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  char_pprint,
+  char_hash,
+  char_iscmp,
+  char_isocmp
+};
 
 /* Most of these trivial and inefficient functions should
    become more complex and efficient later--they'll become
