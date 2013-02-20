@@ -208,6 +208,9 @@ extern value arc_strcatc(arc *c, value v1, Rune ch);
 extern value arc_substr(arc *c, value s, int sidx, int eidx);
 extern value arc_strcat(arc *c, value v1, value v2);
 extern int arc_strcmp(arc *c, value v1, value v2);
+extern void arc_str2cstr(arc *c, value str, char *ptr);
+extern value arc_strutflen(arc *c, value str);
+
 
 /* Definitions for vectors */
 #define VECLEN(x) (FIX2INT(REP(x)[0]))
