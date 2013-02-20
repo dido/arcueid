@@ -96,13 +96,19 @@ value arc_mkflonum(arc *c, double val)
 {
   value cv;
 
-  cv = arc_mkobject(c, sizeof(double), T_FLONUM,
-		    flonum_pprint, __arc_null_marker,
-		    __arc_null_sweeper,
-		    flonum_hash, flonum_iscmp, flonum_isocmp);
+  cv = arc_mkobject(c, sizeof(double), T_FLONUM);
   *((double *)REP(cv)) = val;
   return(cv);
 }
+
+typefn_t __arc_flonum_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  flonum_pprint,
+  flonum_hash,
+  flonum_iscmp,
+  flonum_isocmp
+};
 
 static value complex_pprint(arc *c, value z, value *ppstr, value visithash)
 {
@@ -143,15 +149,26 @@ value arc_mkcomplex(arc *c, double complex z)
 {
   value cv;
 
-  cv = arc_mkobject(c, sizeof(double complex), T_COMPLEX,
-		    complex_pprint, __arc_null_marker,
-		    __arc_null_sweeper,
-		    complex_hash, complex_iscmp, complex_isocmp);
+  cv = arc_mkobject(c, sizeof(double complex), T_COMPLEX);
   *((double complex *)REP(cv)) = z;
   return(cv);
 }
 
+typefn_t __arc_complex_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  complex_pprint,
+  complex_hash,
+  complex_iscmp,
+  complex_isocmp
+};
+
 #ifdef HAVE_GMP_H
+
+static void bignum_sweep(arc *c, value v)
+{
+  mpz_clear(REPBNUM(v));
+}
 
 static value bignum_pprint(arc *c, value n, value *ppstr, value visithash)
 {
@@ -198,13 +215,19 @@ value arc_mkbignuml(arc *c, long val)
 {
   value cv;
 
-  cv = arc_mkobject(c, sizeof(mpz_t), T_BIGNUM,
-		    bignum_pprint, __arc_null_marker,
-		    __arc_null_sweeper,
-		    bignum_hash, bignum_iscmp, bignum_isocmp);
+  cv = arc_mkobject(c, sizeof(mpz_t), T_BIGNUM);
   mpz_init(REPBNUM(cv));
   mpz_set_si(REPBNUM(cv), val);
   return(cv);
 }
+
+typefn_t __arc_bignum_typefn__ = {
+  __arc_null_marker,
+  bignum_sweep,
+  bignum_pprint,
+  bignum_hash,
+  bignum_iscmp,
+  bignum_isocmp
+};
 
 #endif
