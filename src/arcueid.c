@@ -54,6 +54,8 @@ void __arc_null_sweeper(arc *c, value v)
 
 value arc_prettyprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
+  typefn_t *tfn;
+
   switch (TYPE(sexpr)) {
   case T_NIL:
     __arc_append_cstring(c, "nil", ppstr);
@@ -68,7 +70,7 @@ value arc_prettyprint(arc *c, value sexpr, value *ppstr, value visithash)
       char *outstr;
 
       len = snprintf(NULL, 0, "%ld", val) + 1;
-      outstr = (char *)alloca(sizeof(char)*len);
+      outstr = (char *)alloca(sizeof(char)*(len+2));
       snprintf(outstr, len+1, "%ld", val);
       __arc_append_cstring(c, outstr, ppstr);
     }
@@ -81,32 +83,19 @@ value arc_prettyprint(arc *c, value sexpr, value *ppstr, value visithash)
     break;
   default:
     /* non-immediate type */
-    ((struct cell *)(sexpr))->pprint(c, sexpr, ppstr, visithash);
+    tfn = __arc_typefn(c, sexpr);
+    tfn->pprint(c, sexpr, ppstr, visithash);
     break;
   }
   return(*ppstr);
 }
 
-value arc_mkobject(arc *c, size_t size, int type,
-		   value (*pprint)(arc *, value, value *, value),
-		   void (*marker)(arc *, value, int,
-				  void (*markfn)(arc *, value, int)),
-		   void (*sweeper)(arc *, value),
-		   unsigned long (*hash)(arc *, value, arc_hs *,
-					 value),
-		   value (*iscmp)(arc *c, value, value),
-		   value (*isocmp)(arc *c, value, value, value, value))
+value arc_mkobject(arc *c, size_t size, int type)
 {
   struct cell *cc;
 
   cc = (struct cell *)c->alloc(c, sizeof(struct cell) + size - sizeof(value));
   cc->_type = type;
-  cc->pprint = pprint;
-  cc->marker = marker;
-  cc->sweeper = sweeper;
-  cc->hash = hash;
-  cc->iscmp = iscmp;
-  cc->isocmp = isocmp;
   return((value)cc);
 }
 
@@ -215,9 +204,7 @@ value cons(arc *c, value x, value y)
 {
   value cv;
 
-  cv = arc_mkobject(c, 2*sizeof(value), T_CONS,
-		    cons_pprint, cons_marker, __arc_null_sweeper,
-		    cons_hash, NULL, cons_isocmp);
+  cv = arc_mkobject(c, 2*sizeof(value), T_CONS);
   car(cv) = x;
   cdr(cv) = y;
   return(cv);
@@ -296,9 +283,7 @@ value arc_mkvector(arc *c, int length)
   value vec;
   int i;
 
-  vec = arc_mkobject(c, (length+1)*sizeof(value), T_VECTOR,
-		     vector_pprint, vector_marker, __arc_null_sweeper,
-		     vector_hash, NULL, vector_isocmp);
+  vec = arc_mkobject(c, (length+1)*sizeof(value), T_VECTOR);
   VINDEX(vec, -1) = INT2FIX(length);
   for (i=0; i<length; i++)
     VINDEX(vec, i) = CNIL;
@@ -307,7 +292,7 @@ value arc_mkvector(arc *c, int length)
 
 value arc_is(arc *c, value v1, value v2)
 {
-  struct cell *cc;
+  typefn_t *tfn;
 
   /* An object is definitely the same as itself */
   if (v1 == v2)
@@ -320,17 +305,17 @@ value arc_is(arc *c, value v1, value v2)
   if (IMMEDIATE_P(v1))
     return(CNIL);
 
-  cc = (struct cell *)v1;
+  tfn = __arc_typefn(c, v1);
   /* If no iscmp is defined, two objects of that type can be equal if and
-     only if their references are equal. */
-  if (cc->iscmp == NULL)
+     only if their references are equal (and they weren't from above). */
+  if (tfn->iscmp == NULL)
     return(CNIL);
-  return(cc->iscmp(c, v1, v2));
+  return(tfn->iscmp(c, v1, v2));
 }
 
 value arc_iso(arc *c, value v1, value v2, value vh1, value vh2)
 {
-  struct cell *cc;
+  typefn_t *tfn;
 
   /* An object is definitely the same as itself */
   if (v1 == v2)
@@ -342,9 +327,68 @@ value arc_iso(arc *c, value v1, value v2, value vh1, value vh2)
   if (IMMEDIATE_P(v1))
     return(CNIL);
 
-  cc = (struct cell *)v1;
-  if (cc->isocmp == NULL)
+  tfn = __arc_typefn(c, v1);
+  if (tfn->isocmp == NULL)
     return(CNIL);
-  return(cc->isocmp(c, v1, v2, vh1, vh2));
+  return(tfn->isocmp(c, v1, v2, vh1, vh2));
+}
 
+typefn_t __arc_cons_typefn__ = {
+  cons_marker,
+  __arc_null_sweeper,
+  cons_pprint,
+  cons_hash,
+  NULL,
+  cons_isocmp
+};
+
+typefn_t __arc_vector_typefn__ = {
+  vector_marker,
+  __arc_null_sweeper,
+  vector_pprint,
+  vector_hash,
+  NULL,
+  vector_isocmp
+};
+
+typefn_t *__arc_typefn(arc *c, value v)
+{
+  value typedesc;
+
+  if (TYPE(v) != T_TAGGED)
+    return(c->typefns[TYPE(v)]);
+  /* For tagged types (custom types), the type descriptor hash should*/
+  typedesc = arc_hash_lookup(c, c->typedesc, car(v));
+  if (typedesc == CNIL)
+    return(NULL);		/* XXX should this be an error? */
+  return((typefn_t *)REP(typedesc));
+}
+
+extern typefn_t __arc_flonum_typefn__;
+extern typefn_t __arc_complex_typefn__;
+extern typefn_t __arc_string_typefn__;
+extern typefn_t __arc_char_typefn__;
+
+#ifdef HAVE_GMP_H
+extern typefn_t __arc_bignum_typefn__;
+#endif
+
+extern typefn_t __arc_table_typefn__;
+extern typefn_t __arc_hb_typefn__;
+
+void arc_init_datatypes(arc *c)
+{
+  c->typefns[T_FLONUM] = &__arc_flonum_typefn__;
+  c->typefns[T_COMPLEX] = &__arc_complex_typefn__;
+  c->typefns[T_STRING] = &__arc_string_typefn__;
+  c->typefns[T_CHAR] = &__arc_char_typefn__;
+
+#ifdef HAVE_GMP_H
+  c->typefns[T_BIGNUM] = &__arc_bignum_typefn__;
+#endif
+
+  c->typefns[T_CONS] = &__arc_cons_typefn__;
+  c->typefns[T_VECTOR] = &__arc_vector_typefn__;
+  c->typefns[T_TABLE] = &__arc_table_typefn__;
+  c->typefns[T_TBUCKET] = &__arc_hb_typefn__;
 }
