@@ -39,24 +39,6 @@ typedef struct {
   int state;
 } arc_hs;			/* hash state */
 
-typedef struct arc {
-  /* Low-level allocation functions (bypass memory management--use only
-     from within an allocator or garbage collector).  The mem_alloc function
-     should always return addresses aligned to at least 4 bits/16 bytes. */
-  void *(*mem_alloc)(size_t);
-  void (*mem_free)(void *);
-
-  /* Higher-level allocation */
-  void *(*alloc)(struct arc *, size_t);
-  void (*free)(struct arc *, void *, void *); /* should be used only by gc */
-
-  /* Garbage collector entry point */
-  void (*gc)(struct arc *);
-  void (*markroots)(struct arc *);
-
-  void *alloc_ctx;			      /* allocation/gc context */
-} arc;
-
 enum arc_types {
   T_NIL=0,
   T_TRUE=1,
@@ -88,22 +70,64 @@ enum arc_types {
   T_CUSTOM = 26,		/* custom type */
   T_XCONT = 27,			/* CC4 x-continuation */
   T_CHAN = 28,			/* channel */
-  T_MAX = 28,
+  T_TYPEDESC = 29,		/* type descriptor */
+  T_MAX = 29,
 
   T_NONE=64
 };
+
+struct arc;
+
+/* Type functions */
+struct typefn_t {
+  /* Marker */
+  void (*marker)(struct arc *c, value, int, void (*)(struct arc *, value, int));
+  /* Sweeper */
+  void (*sweeper)(struct arc *c, value);
+  /* Pretty printer */
+  value (*pprint)(struct arc *c, value, value *, value);
+  /* Hasher */
+  unsigned long (*hash)(struct arc *c, value, arc_hs *, value);
+  /* shallow compare */
+  value (*iscmp)(struct arc *c, value, value);
+  /* deep compare (isomorphism) */
+  value (*isocmp)(struct arc *c, value, value, value, value);
+#if 0
+  value (*marshal)(struct arc *c, value, value);
+  value (*unmarshal)(struct arc *c, value);
+#endif
+};
+
+typedef struct typefn_t typefn_t;
+
+struct arc {
+  /* Low-level allocation functions (bypass memory management--use only
+     from within an allocator or garbage collector).  The mem_alloc function
+     should always return addresses aligned to at least 4 bits/16 bytes. */
+  void *(*mem_alloc)(size_t);
+  void (*mem_free)(void *);
+
+  /* Higher-level allocation */
+  void *(*alloc)(struct arc *, size_t);
+  void (*free)(struct arc *, void *, void *); /* should be used only by gc */
+
+  /* Garbage collector entry point */
+  void (*gc)(struct arc *);
+  void (*markroots)(struct arc *);
+
+  typefn_t *typefns[T_MAX+1];	/* type functions */
+  value typedesc;		/* type descriptor hash */
+
+  void *alloc_ctx;			      /* allocation/gc context */
+};
+
+typedef struct arc arc;
 
 extern const char *__arc_typenames[];
 
 struct cell {
   /* the top two bits of the _type are used for garbage collection purposes. */
   unsigned char _type;
-  value (*pprint)(arc *, value, value *, value);
-  void (*marker)(arc *, value, int, void (*markfn)(arc *, value, int));
-  void (*sweeper)(arc *, value);
-  unsigned long (*hash)(arc *, value, arc_hs *, value);
-  value (*iscmp)(arc *c, value, value);
-  value (*isocmp)(arc *c, value, value, value, value);
   value _obj[1];
 };
 
@@ -206,6 +230,10 @@ extern value arc_hash_lookup(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
 
 
+/* Type handling functions */
+typefn_t *__arc_typefn(arc *c, value v);
+void __arc_register_typefn(arc *c, enum arc_types type, typefn_t *tfn);
+
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
 				      value *str);
@@ -217,15 +245,7 @@ extern value arc_prettyprint(arc *c, value sexpr, value *ppstr,
 			     value visithash);
 extern value __arc_visit(arc *c, value v, value hash);
 
-extern value arc_mkobject(arc *c, size_t size, int type,
-			  value (*pprint)(arc *, value, value *, value),
-			  void (*marker)(arc *, value, int,
-					 void (*markfn)(arc *, value, int)),
-			  void (*sweeper)(arc *, value),
-			  unsigned long (*hash)(arc *, value, arc_hs *,
-						value),
-			  value (*iscmp)(arc *c, value, value),
-			  value (*isocmp)(arc *c, value, value, value, value));
+extern value arc_mkobject(arc *c, size_t size, int type);
 extern value arc_is(arc *c, value v1, value v2);
 extern value arc_iso(arc *c, value v1, value v2, value vh1, value vh2);
 extern value __arc_visit(arc *c, value v, value hash);
@@ -233,5 +253,6 @@ extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
 
 /* Initialization functions */
 extern void arc_set_memmgr(arc *c);
+extern void arc_init_datatypes(arc *c);
 
 #endif
