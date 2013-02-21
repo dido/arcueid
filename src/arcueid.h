@@ -231,7 +231,7 @@ extern unsigned long arc_hash(arc *c, value v, value visithash);
 extern value arc_mkhash(arc *c, int hashbits);
 extern value arc_hash_lookup(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
-
+extern value arc_hash_delete(arc *c, value hash, value key);
 
 /* Type handling functions */
 typefn_t *__arc_typefn(arc *c, value v);
@@ -246,13 +246,14 @@ extern void __arc_append_cstring(arc *c, char *buf, value *ppstr);
 
 extern value arc_prettyprint(arc *c, value sexpr, value *ppstr,
 			     value visithash);
-extern value __arc_visit(arc *c, value v, value hash);
 
 extern value arc_mkobject(arc *c, size_t size, int type);
 extern value arc_is(arc *c, value v1, value v2);
 extern value arc_iso(arc *c, value v1, value v2, value vh1, value vh2);
 extern value __arc_visit(arc *c, value v, value hash);
 extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
+extern value __arc_visitp(arc *c, value v, value hash);
+extern void __arc_unvisit(arc *c, value v, value hash);
 
 /* Initialization functions */
 extern void arc_set_memmgr(arc *c);
