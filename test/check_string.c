@@ -68,6 +68,27 @@ START_TEST(test_make_strings)
 }
 END_TEST
 
+START_TEST(test_compare_strings)
+{
+  value str1, str2, str3;
+
+  str1 = arc_mkstringc(c, "abc");
+  str2 = arc_mkstringc(c, "bcd");
+  str3 = arc_mkstringc(c, "abc");
+  fail_unless(arc_strcmp(c, str1, str1) == 0);
+  fail_unless(arc_strcmp(c, str2, str2) == 0);
+  fail_unless(arc_strcmp(c, str1, str2) < 0);
+  fail_unless(arc_strcmp(c, str2, str1) > 0);
+  fail_unless(arc_strcmp(c, str1, str3) == 0);
+  fail_unless(arc_is(c, str1, str1) == CTRUE);
+  fail_unless(arc_is(c, str1, str3) == CTRUE);
+  fail_unless(arc_iso(c, str1, str1, CNIL, CNIL) == CTRUE);
+  fail_unless(arc_iso(c, str1, str3, CNIL, CNIL) == CTRUE);
+  fail_unless(arc_is(c, str1, str2) == CNIL);
+  fail_unless(arc_iso(c, str1, str2, CNIL, CNIL) == CNIL);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -81,6 +102,7 @@ int main(void)
   c->markroots = markroots;
 
   tcase_add_test(tc_str, test_make_strings);
+  tcase_add_test(tc_str, test_compare_strings);
 
   suite_add_tcase(s, tc_str);
   sr = srunner_create(s);
