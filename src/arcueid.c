@@ -101,6 +101,8 @@ value arc_mkobject(arc *c, size_t size, int type)
 
 static value cons_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
+  value osexpr = sexpr;
+
   /* XXX - we should do something a bit more sophisticated here, e.g.
      arc> (= x '(1 2))
      arc> (scdr x x)
@@ -117,7 +119,7 @@ static value cons_pprint(arc *c, value sexpr, value *ppstr, value visithash)
      which is already a fair sight better than what arc3 does when faced
      with the same problem!
 
-     Doing the former requires us to traverse the conses twice.  We'll
+     Doing the former may require us to traverse the conses twice.  We'll
      implement it someday.
   */
   /* Create a visithash if we don't already have one */
@@ -129,19 +131,29 @@ static value cons_pprint(arc *c, value sexpr, value *ppstr, value visithash)
     __arc_append_cstring(c, "(...)", ppstr);
     return(*ppstr);
   }
+
   __arc_append_cstring(c, "(", ppstr);
   while (TYPE(sexpr) == T_CONS) {
-    arc_prettyprint(c, car(sexpr), ppstr, visithash);
+    if (__arc_visitp(c, car(sexpr), visithash) != CNIL) {
+      /* Already visited at some point.  Do not recurse further. */
+      __arc_append_cstring(c, "(...)", ppstr);
+    } else {
+      arc_prettyprint(c, car(sexpr), ppstr, visithash);
+    }
+
     sexpr = cdr(sexpr);
+    if (__arc_visitp(c, sexpr, visithash) != CNIL)
+      break;
     if (!NIL_P(sexpr))
       __arc_append_cstring(c,  " ", ppstr);
   }
 
   if (sexpr != CNIL) {
-    __arc_append_cstring(c,  ". ", ppstr);
+    __arc_append_cstring(c,  " . ", ppstr);
     arc_prettyprint(c, sexpr, ppstr, visithash);
   }
   __arc_append_cstring(c, ")", ppstr);
+  __arc_unvisit(c, osexpr, visithash);
   return(*ppstr);
 }
 
