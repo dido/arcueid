@@ -49,7 +49,7 @@ static void markroots(arc *c)
 
 START_TEST(test_cons)
 {
-  value list1, list2, list3, list4, list5;
+  value list1, list2, list3, list4, list5, list6;
   value ppstr=CNIL;
   char *str;
 
@@ -92,6 +92,13 @@ START_TEST(test_cons)
   str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
   arc_str2cstr(c, ppstr, str);
   fail_unless(strcmp(str, "(1 2 3 . (...))") == 0);
+
+  list6 = cons(c, list1, cons(c, list1, CNIL));
+  ppstr = CNIL;
+  arc_prettyprint(c, list6, &ppstr, CNIL);
+  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
+  arc_str2cstr(c, ppstr, str);
+  fail_unless(strcmp(str, "((1 2 3) (1 2 3))") == 0);
 }
 END_TEST
 
