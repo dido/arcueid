@@ -438,3 +438,14 @@ value arc_hash_lookup(arc *c, value tbl, value key)
 
   return(hash_lookup(c, tbl, key, &index));
 }
+
+value arc_hash_delete(arc *c, value hash, value key)
+{
+  unsigned int index;
+  value v;
+
+  v = hash_lookup(c, hash, key, &index);
+  if (v != CUNBOUND)
+    VINDEX(HASH_TABLE(hash), index) = CUNDEF;
+  return(v);
+}
