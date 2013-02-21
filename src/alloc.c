@@ -27,18 +27,7 @@
 
    2. Make BiBOP page sizes adaptive based on their size and adjust
       dynamically.
-
-   3. Think up better conditions of when to implicitly invoke the
-      garbage collector.
-      As it is, the garbage collector is invoked whenever:
-
-      (a) A BiBOP allocation fails to find a free element in the pages
-          that have already been allocated.  A garbage collection cycle
-	  may free up more space.
-      (b) a large (i.e. non-BiBOP) object has to be allocated.  A
-          garbage cycle may free up additional system memory where
-	  hopefully a new large object will not fragment memory.
-   4. A better garbage collector of some kind... Good question on what
+   3. A better garbage collector of some kind... Good question on what
       to use.  Current algorithm is just a simple mark and sweep
       collector.
  */
@@ -80,7 +69,7 @@ static void *bibop_alloc(arc *c, size_t osize)
   Bhdr *h;
   size_t actual;
   char *bpage, *bptr;
-  int i, dogc = 1;
+  int i;
 
   for (;;) {
     /* Pull off an object from the BiBOP free list if there is an
@@ -89,14 +78,6 @@ static void *bibop_alloc(arc *c, size_t osize)
       h = BIBOPFL(c)[osize];
       BIBOPFL(c)[osize] = B2NB(BIBOPFL(c)[osize]);
       break;
-    }
-
-    /* No more free objects in pages allocated so far?  Try to gc
-       before making a new page. */
-    if (dogc) {
-      c->gc(c);
-      dogc = 0;
-      continue;
     }
 
     /* Create a new BiBOP page if the free list for that size is
@@ -135,9 +116,6 @@ static void *alloc(arc *c, size_t osize)
   if (osize <= MAX_BIBOP)
     return(bibop_alloc(c, osize));
 
-  /* Obligatory GC.  XXX - Consider whether a better approach is
-     warranted */
-  c->gc(c);
   /* Normal allocation.  Just append the block header size with
      proper alignment padding. */
   actual = osize + BHDR_ALIGN_SIZE;
