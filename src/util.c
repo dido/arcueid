@@ -18,6 +18,22 @@
 */
 #include "arcueid.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 void __arc_append_buffer_close(arc *c, Rune *buf, int *idx, value *str)
 {
   value nstr;
@@ -42,6 +58,17 @@ void __arc_append_cstring(arc *c, char *buf, value *ppstr)
   *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
 }
 
+static value visitkey(value v)
+{
+  unsigned long myhash;
+  arc_hs s;
+
+  arc_hash_init(&s, 0);
+  arc_hash_update(&s, (unsigned long)v);
+  myhash = arc_hash_final(&s, 1);
+  return(INT2FIX((long)myhash));
+}
+
 /* This function is used for recursive visits in data structures which
    may be cyclic.  It uses v as an actual unsigned long, which is then
    converted into a fixnum after hashing, and that is used as the key for
@@ -51,14 +78,8 @@ void __arc_append_cstring(arc *c, char *buf, value *ppstr)
 value __arc_visit2(arc *c, value v, value hash, value mykeyval)
 {
   value keyval, val;
-  unsigned long myhash;
-  arc_hs s;
 
-  arc_hash_init(&s, 0);
-  arc_hash_update(&s, (unsigned long)v);
-  myhash = arc_hash_final(&s, 1);
-  keyval = INT2FIX((long)myhash);
-
+  keyval = visitkey(v);
   if (mykeyval == CNIL)
     mykeyval = keyval;
 
@@ -72,4 +93,27 @@ value __arc_visit2(arc *c, value v, value hash, value mykeyval)
 value __arc_visit(arc *c, value v, value hash)
 {
   return(__arc_visit2(c, v, hash, CNIL));
+}
+
+value __arc_visitp(arc *c, value v, value hash)
+{
+  value keyval;
+
+  keyval = visitkey(v);
+  return((arc_hash_lookup(c, hash, keyval) == CUNBOUND) ? CNIL : CTRUE);
+}
+
+void __arc_unvisit(arc *c, value v, value hash)
+{
+  arc_hash_delete(c, hash, visitkey(v));
+}
+
+
+void __arc_print_string(arc *c, value ppstr)
+{
+  char *str;
+
+  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
+  arc_str2cstr(c, ppstr, str);
+  printf("%s\n", str);
 }
