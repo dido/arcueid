@@ -224,7 +224,6 @@ void __arc_markprop(arc *c, value p)
 
 static void mark(arc *c, value v, int depth)
 {
-  struct cell *cp;
   typefn_t *tfn;
 
   /* Immediate values obviously cannot be marked */
@@ -239,9 +238,7 @@ static void mark(arc *c, value v, int depth)
   }
 
   tfn = __arc_typefn(c, v);
-  cp = (struct cell *)v;
-  /* Mark the object */
-  cp->_type = (cp->_type & FLAGMASK) | MARKFLAG;
+  MARK(v);
   /* Recurse into the object's structure at increased depth */
   tfn->marker(c, v, depth+1, mark);
 }
