@@ -226,7 +226,23 @@ static void mark(arc *c, value v, int depth)
 {
   typefn_t *tfn;
 
-  /* Immediate values obviously cannot be marked */
+  if (TYPE(v) == T_SYMBOL) {
+    value symid, name, bucket;
+
+    /* Symbol marking is done by marking the hash buckets in the
+       forward and reverse symbol tables.  Since the symbol tables
+       are weak hashes, this prevents that particular symbol from
+       becoming swept. */
+    symid = INT2FIX(SYM2ID(v));
+    bucket = arc_hash_lookup2(c, c->rsymtable, symid);
+    mark(c, bucket, depth);
+    name = REP(bucket)[2];	/* XXX - this is problematic */
+    bucket = arc_hash_lookup2(c, c->symtable, name);
+    mark(c, bucket, depth);
+    return;
+  }
+
+  /* Other types of immediate values obviously cannot be marked */
   if (IMMEDIATE_P(v))
     return;
 
