@@ -71,7 +71,8 @@ enum arc_types {
   T_XCONT = 27,			/* CC4 x-continuation */
   T_CHAN = 28,			/* channel */
   T_TYPEDESC = 29,		/* type descriptor */
-  T_MAX = 29,
+  T_WTABLE = 30,		/* weak table */
+  T_MAX = 30,
 
   T_NONE=64
 };
@@ -233,7 +234,9 @@ extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s,
 					value visithash);
 extern unsigned long arc_hash(arc *c, value v, value visithash);
 extern value arc_mkhash(arc *c, int hashbits);
+extern value ark_mkwtable(arc *c, int hashbits);
 extern value arc_hash_lookup(arc *c, value tbl, value key);
+extern value arc_hash_lookup2(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
 extern value arc_hash_delete(arc *c, value hash, value key);
 
