@@ -234,7 +234,7 @@ extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s,
 					value visithash);
 extern unsigned long arc_hash(arc *c, value v, value visithash);
 extern value arc_mkhash(arc *c, int hashbits);
-extern value ark_mkwtable(arc *c, int hashbits);
+extern value arc_mkwtable(arc *c, int hashbits);
 extern value arc_hash_lookup(arc *c, value tbl, value key);
 extern value arc_hash_lookup2(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
@@ -265,5 +265,6 @@ extern void __arc_unvisit(arc *c, value v, value hash);
 /* Initialization functions */
 extern void arc_set_memmgr(arc *c);
 extern void arc_init_datatypes(arc *c);
+extern void arc_init_symtable(arc *c);
 
 #endif
