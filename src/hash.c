@@ -173,10 +173,12 @@ unsigned long arc_hash(arc *c, value v, value visithash)
    0 - The index of the element in the current hash table (fixnum)
    1 - The key of this element
    2 - The value of this element
+   3 - The table to which this element belongs
 */
 
 #define HASH_SIZE (4)
 #define HASH_TABLE(t) (REP(t)[0])
+#define HASH_INDEX(t, i) (VINDEX(HASH_TABLE(t), (i)))
 #define HASH_BITS(t) (FIX2INT(REP(t)[1]))
 #define HASH_NENTRIES(t) (FIX2INT(REP(t)[2]))
 #define HASH_LLIMIT(t) (FIX2INT(REP(t)[3]))
@@ -184,11 +186,12 @@ unsigned long arc_hash(arc *c, value v, value visithash)
 #define SET_NENTRIES(t, n) (REP(t)[2] = INT2FIX(n))
 #define SET_LLIMIT(t, n) (REP(t)[3] = INT2FIX(n))
 
-#define BUCKET_SIZE (3)
+#define BUCKET_SIZE (4)
 #define BINDEX(t) (FIX2INT(REP(t)[0]))
 #define SBINDEX(t, idx) (REP(t)[0] = INT2FIX(idx))
 #define BKEY(t) (REP(t)[1])
 #define BVALUE(t) (REP(t)[2])
+#define BTABLE(t) (REP(t)[3])
 
 #define HASHSIZE(n) ((unsigned long)1 << (n))
 #define HASHMASK(n) (HASHSIZE(n)-1)
@@ -218,6 +221,20 @@ static void hash_marker(arc *c, value v, int depth,
 {
   /* Just mark the table--that should be enough. It's just a vector. */
   markfn(c, HASH_TABLE(v), depth);
+}
+
+static void hash_sweeper(arc *c, value v)
+{
+  int i;
+  value tbl = HASH_TABLE(v);
+
+  /* Clear the BTABLE links for any active buckets within this hash
+     before fully sweeping it away. */
+  for (i=0; i<VECLEN(tbl); i++) {
+    if (EMPTYP(VINDEX(tbl, i)))
+      continue;
+    BTABLE(VINDEX(tbl, i)) = CNIL;
+  }
 }
 
 static unsigned long hash_hasher(arc *c, value v, arc_hs *s, value visithash)
@@ -305,7 +322,7 @@ value arc_mkhash(arc *c, int hashbits)
 
 typefn_t __arc_table_typefn__ = {
   hash_marker,
-  __arc_null_sweeper,
+  hash_sweeper,
   hash_pprint,
   hash_hasher,
   NULL,
@@ -349,10 +366,22 @@ static void hb_marker(arc *c, value v, int depth,
   markfn(c, BVALUE(v), depth);
 }
 
+static void hb_sweeper(arc *c, value v)
+{
+  /* If the table has not been collected yet, clear
+     its entry in the parent table, setting it to undef. */
+  if (BTABLE(v) != CNIL) {
+    value t = BTABLE(v);
+
+    VINDEX(HASH_TABLE(t), BINDEX(v)) = CUNDEF;
+    SET_NENTRIES(t, HASH_NENTRIES(t)-1);
+  }
+}
+
 /* Create a hash bucket.  Hash buckets are objects that should never be
    directly visble, just as the tombstone values CUNDEF and CUNBOUND should
-   never be seen directly by user code. */
-static value mkhashbucket(arc *c, value key, value val, int index)
+   never be seen directly by the interpreter. */
+static value mkhashbucket(arc *c, value key, value val, int index, value table)
 {
   value bucket;
 
@@ -360,12 +389,13 @@ static value mkhashbucket(arc *c, value key, value val, int index)
   BKEY(bucket) = key;
   BVALUE(bucket) = val;
   SBINDEX(bucket, index);
+  BTABLE(bucket) = table;
   return(bucket);
 }
 
 typefn_t __arc_hb_typefn__ = {
   hb_marker,
-  __arc_null_sweeper,
+  hb_sweeper,
   NULL,
   NULL,
   NULL,
@@ -399,7 +429,7 @@ value arc_hash_insert(arc *c, value hash, value key, value val)
   if (EMPTYP(e)) {
     /* No such key in the hash table yet.  Create a bucket and
        assign it to the table. */
-    e = mkhashbucket(c, key, val, index);
+    e = mkhashbucket(c, key, val, index, hash);
     VINDEX(HASH_TABLE(hash), index) = e;
   } else {
     /* The key already exists.  Use the current bucket but change the
@@ -418,7 +448,7 @@ static value hash_lookup(arc *c, value hash, value key, unsigned int *index)
   *index = hv & TABLEMASK(hash);
   for (i=0;; i++) {
     *index = (*index + PROBE(i, key)) & TABLEMASK(hash);
-    e = VINDEX(HASH_TABLE(hash), *index);
+    e = HASH_INDEX(hash, *index);
     /* CUNBOUND means there was never any element at that index, so we
        can stop. */
     if (e == CUNBOUND)
@@ -439,13 +469,30 @@ value arc_hash_lookup(arc *c, value tbl, value key)
   return(hash_lookup(c, tbl, key, &index));
 }
 
+/* Slightly different version which returns the actual hash bucket
+   with the key and value if a binding is available. */
+value arc_hash_lookup2(arc *c, value hash, value key)
+{
+  unsigned int index;
+  value val;
+
+  val = hash_lookup(c, hash, key, &index);
+  if (val == CUNBOUND)
+    return(CUNBOUND);
+  return(HASH_INDEX(hash, index));
+}
+
 value arc_hash_delete(arc *c, value hash, value key)
 {
   unsigned int index;
-  value v;
+  value v, e;
 
   v = hash_lookup(c, hash, key, &index);
-  if (v != CUNBOUND)
+  if (v != CUNBOUND) {
+    e = VINDEX(HASH_TABLE(hash), index);
+    BTABLE(e) = CNIL;
     VINDEX(HASH_TABLE(hash), index) = CUNDEF;
+    SET_NENTRIES(hash, HASH_NENTRIES(hash)-1);
+  }
   return(v);
 }
