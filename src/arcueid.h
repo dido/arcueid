@@ -115,10 +115,14 @@ struct arc {
   void (*gc)(struct arc *);
   void (*markroots)(struct arc *);
 
+  void *alloc_ctx;		/* allocation/gc context */
+
   typefn_t *typefns[T_MAX+1];	/* type functions */
   value typedesc;		/* type descriptor hash */
 
-  void *alloc_ctx;			      /* allocation/gc context */
+  value symtable;		/* global symbol table */
+  value rsymtable;		/* reverse global symbol table */
+  int lastsym;			/* last symbol index created */
 };
 
 typedef struct arc arc;
