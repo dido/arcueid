@@ -16,8 +16,6 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
-#include <inttypes.h>
-#include <string.h>
 #include "arcueid.h"
 #include "alloc.h"
 #include "../config.h"
@@ -320,15 +318,6 @@ value arc_mkhash(arc *c, int hashbits)
   return(hash);
 }
 
-typefn_t __arc_table_typefn__ = {
-  hash_marker,
-  hash_sweeper,
-  hash_pprint,
-  hash_hasher,
-  NULL,
-  hash_isocmp
-};
-
 static void hashtable_expand(arc *c, value hash)
 {
   unsigned int hv, index, i, j, nhashbits;
@@ -392,16 +381,6 @@ static value mkhashbucket(arc *c, value key, value val, int index, value table)
   BTABLE(bucket) = table;
   return(bucket);
 }
-
-typefn_t __arc_hb_typefn__ = {
-  hb_marker,
-  hb_sweeper,
-  NULL,
-  NULL,
-  NULL,
-  NULL
-};
-
 
 value arc_hash_insert(arc *c, value hash, value key, value val)
 {
@@ -496,3 +475,52 @@ value arc_hash_delete(arc *c, value hash, value key)
   }
   return(v);
 }
+
+/* This is the only difference between a weak table and a normal
+   hash table.  A weak table will only mark the table vector itself,
+   and will NOT propagate the mark to any of the table buckets. */
+static void wtable_marker(arc *c, value v, int depth,
+			  void (*markfn)(arc *, value, int))
+{
+  value tbl = HASH_TABLE(v);
+
+  MARK(tbl);
+}
+
+/* Make a weak table */
+value arc_mkwtable(arc *c, int hashbits)
+{
+  value tbl = arc_mkhash(c, hashbits);
+
+  ((struct cell *)tbl)->_type = T_WTABLE;
+  return(tbl);
+}
+
+/* Type function tables */
+
+typefn_t __arc_table_typefn__ = {
+  hash_marker,
+  hash_sweeper,
+  hash_pprint,
+  hash_hasher,
+  NULL,
+  hash_isocmp
+};
+
+typefn_t __arc_hb_typefn__ = {
+  hb_marker,
+  hb_sweeper,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
+typefn_t __arc_wtable_typefn__ = {
+  wtable_marker,
+  hash_sweeper,
+  hash_pprint,
+  hash_hasher,
+  NULL,
+  hash_isocmp
+};
