@@ -237,7 +237,8 @@ typefn_t *__arc_typefn(arc *c, value v)
 
   if (TYPE(v) != T_TAGGED)
     return(c->typefns[TYPE(v)]);
-  /* For tagged types (custom types), the type descriptor hash should*/
+  /* For tagged types (custom types), the type descriptor hash should
+     contain a type descriptor wrapped in a table. */
   typedesc = arc_hash_lookup(c, c->typedesc, car(v));
   if (typedesc == CNIL)
     return(NULL);		/* XXX should this be an error? */
@@ -256,6 +257,7 @@ extern typefn_t __arc_bignum_typefn__;
 extern typefn_t __arc_cons_typefn__;
 extern typefn_t __arc_table_typefn__;
 extern typefn_t __arc_hb_typefn__;
+extern typefn_t __arc_wtable_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -272,4 +274,5 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_VECTOR] = &__arc_vector_typefn__;
   c->typefns[T_TABLE] = &__arc_table_typefn__;
   c->typefns[T_TBUCKET] = &__arc_hb_typefn__;
+  c->typefns[T_WTABLE] = &__arc_wtable_typefn__;
 }
