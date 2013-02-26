@@ -123,6 +123,9 @@ struct arc {
   value symtable;		/* global symbol table */
   value rsymtable;		/* reverse global symbol table */
   int lastsym;			/* last symbol index created */
+
+  int tid_nonce;		/* nonce for thread IDs */
+  int stksize;			/* stack size for threads */
 };
 
 typedef struct arc arc;
