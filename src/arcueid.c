@@ -105,8 +105,8 @@ static value vector_pprint(arc *c, value sexpr, value *ppstr, value visithash)
   return(CNIL);
 }
 
-static void vector_marker(arc *c, value v, int depth,
-			  void (*markfn)(arc *, value, int))
+void __arc_vector_marker(arc *c, value v, int depth,
+			 void (*markfn)(arc *, value, int))
 {
   int i;
 
@@ -114,7 +114,7 @@ static void vector_marker(arc *c, value v, int depth,
     markfn(c, VINDEX(v, i), depth);
 }
 
-static value vector_hash(arc *c, value v, arc_hs *s, value visithash)
+value __arc_vector_hash(arc *c, value v, arc_hs *s, value visithash)
 {
   unsigned long len;
   int i;
@@ -132,7 +132,7 @@ static value vector_hash(arc *c, value v, arc_hs *s, value visithash)
   return(len);
 }
 
-static value vector_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
+value __arc_vector_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
 {
   value vhh1, vhh2;
   int i;
@@ -223,12 +223,12 @@ value arc_iso(arc *c, value v1, value v2, value vh1, value vh2)
 }
 
 typefn_t __arc_vector_typefn__ = {
-  vector_marker,
+  __arc_vector_marker,
   __arc_null_sweeper,
   vector_pprint,
-  vector_hash,
+  __arc_vector_hash,
   NULL,
-  vector_isocmp
+  __arc_vector_isocmp
 };
 
 typefn_t *__arc_typefn(arc *c, value v)
@@ -258,6 +258,7 @@ extern typefn_t __arc_cons_typefn__;
 extern typefn_t __arc_table_typefn__;
 extern typefn_t __arc_hb_typefn__;
 extern typefn_t __arc_wtable_typefn__;
+extern typefn_t __arc_code_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -275,4 +276,5 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_TABLE] = &__arc_table_typefn__;
   c->typefns[T_TBUCKET] = &__arc_hb_typefn__;
   c->typefns[T_WTABLE] = &__arc_wtable_typefn__;
+  c->typefns[T_CODE] = &__arc_code_typefn__;
 }
