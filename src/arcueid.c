@@ -259,6 +259,7 @@ extern typefn_t __arc_table_typefn__;
 extern typefn_t __arc_hb_typefn__;
 extern typefn_t __arc_wtable_typefn__;
 extern typefn_t __arc_code_typefn__;
+extern typefn_t __arc_thread_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -272,9 +273,10 @@ void arc_init_datatypes(arc *c)
 #endif
 
   c->typefns[T_CONS] = &__arc_cons_typefn__;
-  c->typefns[T_VECTOR] = &__arc_vector_typefn__;
   c->typefns[T_TABLE] = &__arc_table_typefn__;
   c->typefns[T_TBUCKET] = &__arc_hb_typefn__;
+  c->typefns[T_THREAD] = &__arc_thread_typefn__;
+  c->typefns[T_VECTOR] = &__arc_vector_typefn__;
+
   c->typefns[T_WTABLE] = &__arc_wtable_typefn__;
-  c->typefns[T_CODE] = &__arc_code_typefn__;
 }
