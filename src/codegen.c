@@ -53,7 +53,7 @@ static value __resize_vmcode(arc *c, value cctx)
 
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
-  size = 2*VECLEN(vcode);
+  size = (vcode == CNIL) ? 16 : (2*VECLEN(vcode));
   nvcode = arc_mkvector(c, size);
   memcpy(&VINDEX(nvcode, 0), &(VINDEX(vcode, 0)), vptr*sizeof(value));
   CCTX_VCODE(cctx) = nvcode;
@@ -69,7 +69,7 @@ static value __resize_literals(arc *c, value cctx)
 
   lptr = FIX2INT(CCTX_LPTR(cctx));
   lit = CCTX_LITS(cctx);
-  size = (lit == CNIL) ? 1 : (2*VECLEN(lit));
+  size = (lit == CNIL) ? 16 : (2*VECLEN(lit));
   if (size == 0)
     return(CNIL);
   nlit = arc_mkvector(c, size);
