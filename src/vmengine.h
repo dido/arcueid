@@ -66,4 +66,12 @@ enum vminst {
 #define CODE_SRC(c) (VINDEX((c), 1))
 #define CODE_LITERAL(c, idx) (VINDEX((c), 2+(idx)))
 
+/* The source information is a hash table, whose keys are code offsets
+   into the function and whose values are line numbers.  The following
+   special negative indexes are used for metadata. */
+/* File name of the compiled file */
+#define SRC_FILENAME (-1)
+/* Function name */
+#define SRC_FUNCNAME (-2)
+
 #endif
