@@ -65,13 +65,12 @@ enum arc_types {
   T_CLOS = 21,			/* closure */
   T_CODE = 22,			/* actual compiled code */
   T_ENV = 23,			/* environment */
-  T_VMCODE = 24,		/* a VM code block */
-  T_CCODE = 25,			/* a C function */
-  T_CUSTOM = 26,		/* custom type */
-  T_XCONT = 27,			/* CC4 x-continuation */
-  T_CHAN = 28,			/* channel */
-  T_TYPEDESC = 29,		/* type descriptor */
-  T_WTABLE = 30,		/* weak table */
+  T_CCODE = 24,			/* a C function */
+  T_CUSTOM = 25,		/* custom type */
+  T_CHAN = 26,			/* channel */
+  T_TYPEDESC = 27,		/* type descriptor */
+  T_WTABLE = 28,		/* weak table */
+  T_FNAPP = 29,			/* function application */
   T_MAX = 30,
 
   T_NONE=64
@@ -223,6 +222,12 @@ extern value arc_strutflen(arc *c, value str);
 
 extern value arc_mkvector(arc *c, int length);
 
+extern void __arc_vector_marker(arc *c, value v, int depth,
+				void (*markfn)(arc *, value, int));
+extern void __arc_vector_sweeper(arc *c, value v);
+extern value __arc_vector_hash(arc *c, value v, arc_hs *s, value visithash);
+extern value __arc_vector_isocmp(arc *c, value v1, value v2, value vh1,
+				 value vh2);
 
 /* Definitions for hash tables */
 /* Default initial number of bits for hashes */
@@ -266,5 +271,59 @@ extern void __arc_unvisit(arc *c, value v, value hash);
 extern void arc_set_memmgr(arc *c);
 extern void arc_init_datatypes(arc *c);
 extern void arc_init_symtable(arc *c);
+
+#if 0
+
+/* C functions
+
+   The most general C function interface is as follows:
+
+   value func(arc *c, int argc, value thr, CCONT);
+
+   The arguments to the function are passed in the thread stack as one
+   might expect.
+
+   The macros below are inspired by Simon Tatham's C coroutines, and
+   they've been warped to provide continuations in C.  A function of
+   this kind can only call other functions by means of the CCALL or
+   CCALLV macros defined below (and they, perversely, *return* an
+   object of T_FNAPP to make the caller perform a function call!)
+*/
+
+#define CCONT value __ccont__
+#define CVBEGIN int __vidx__ = 0
+#define CVDEF(x) int x = __vidx__++
+#define CV(x) (VINDEX(CONT_CLOS(__ccont__), x))
+#define CVEND(c)						\
+  if (NIL_P(__ccont__)) {					\
+    __ccont__ = arc_mkccont(c, __vidx__, (void *)__func__);	\
+  }
+#define CBEGIN					\
+  if (!NIL_P(__ccont__)) {			\
+  switch (FIX2INT(CONT_OFS(__ccont__))) {	\
+ case 0:;
+#define CEND } }
+
+#define CCALL(c, thr, func, fargc, ...)					\
+  do {									\
+    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkapply(c, thr, __cont__, func, fargc, __VA_ARGS__)); case __LINE__:; \
+  } while (0)
+
+#define CCALLV(c, thr, func, fargv)					\
+  do {									\
+    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkapplyv(c, thr, __cont__, func, fargc, __VA_ARGS__)); case __LINE__:; \
+  } while (0)
+
+#define CYIELD(c, thr)							\
+  do {									\
+    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkyield(c, thr, __cont__, CNIL)); case __LINE__:; \
+  } while (0)
+
+#define CYIELDFD(c, thr, fd)						\
+  do {									\
+    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkyield(c, thr, __cont__, INT2FIX(fd))); case __LINE__:; \
+  } while (0)
+
+#endif
 
 #endif
