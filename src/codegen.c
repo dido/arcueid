@@ -44,6 +44,17 @@
 #define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
 #define CCTX_LITS(cctx) (VINDEX(cctx, 3))
 
+/* Create an empty code generation context. This is just a plain vector */
+value arc_mkcctx(arc *c)
+{
+  value cctx;
+
+  cctx = arc_mkvector(c, 4);
+  CCTX_VCPTR(cctx) = CCTX_LITS(cctx) = INT2FIX(0);
+  CCTX_VCODE(cctx) = CCTX_LITS(cctx) = CNIL;
+  return(cctx);
+}
+
 /* Expand the vmcode object of a code object, doubling it in size.  All
    entries are copied. */
 static value __resize_vmcode(arc *c, value cctx)
