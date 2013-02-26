@@ -152,7 +152,7 @@ int arc_literal(arc *c, value cctx, value literal)
 static value code_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   value src;
-  __arc_append_cstring(c, "#<procedure: >", ppstr);
+  __arc_append_cstring(c, "#<procedure: ", ppstr);
 
   src = CODE_SRC(sexpr);
   if (NIL_P(src)) {
