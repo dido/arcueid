@@ -74,4 +74,14 @@ enum vminst {
 /* Function name */
 #define SRC_FUNCNAME (-2)
 
+extern void arc_emit(arc *c, value cctx, enum vminst inst);
+extern void arc_emit1(arc *c, value cctx, enum vminst inst, value arg);
+extern void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1,
+		      value arg2);
+extern int arc_literal(arc *c, value cctx, value literal);
+extern value arc_mkcode(arc *c, int ncodes, int nlits);
+extern value arc_code_setsrc(arc *c, value code, value src);
+extern value arc_cctx2code(arc *c, value cctx);
+extern value arc_mkcctx(arc *c);
+
 #endif
