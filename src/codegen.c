@@ -138,6 +138,23 @@ int arc_literal(arc *c, value cctx, value literal)
   return(lidx);
 }
 
+static value code_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+{
+  value src;
+  __arc_append_cstring(c, "#<procedure: >", ppstr);
+
+  src = CODE_SRC(sexpr);
+  if (NIL_P(src)) {
+    __arc_append_cstring(c, "(anonymous)", ppstr);
+  } else {
+    value fname = arc_hash_lookup(c, src, INT2FIX(SRC_FUNCNAME));
+
+    arc_prettyprint(c, fname, ppstr, visithash);
+  }
+  __arc_append_cstring(c, ">", ppstr);
+  return(*ppstr);
+}
+
 value arc_mkcode(arc *c, int ncodes, int nlits)
 {
   value code = arc_mkvector(c, nlits+2);
@@ -165,3 +182,12 @@ value arc_cctx2code(arc *c, value cctx)
 	 FIX2INT(CCTX_LPTR(cctx))*sizeof(value));
   return(func);
 }
+
+typefn_t __arc_code_typefn__ = {
+  __arc_vector_marker,
+  __arc_null_sweeper,
+  code_pprint,
+  __arc_vector_hash,
+  NULL,
+  __arc_vector_isocmp
+};
