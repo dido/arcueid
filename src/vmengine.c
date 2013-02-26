@@ -19,6 +19,48 @@
 #include "arcueid.h"
 #include "vmengine.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
+static value thread_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+{
+  char *outstr;
+  int len;
+
+  __arc_append_cstring(c, "#<thread: ", ppstr);
+  len = snprintf(NULL, 0, "%d>", TTID(sexpr));
+  outstr = (char *)alloca(sizeof(char)*(len+2));
+  snprintf(outstr, len+1, "%d>", TTID(sexpr));
+  __arc_append_cstring(c, outstr, ppstr);
+  return(*ppstr);  
+}
+
+static void thread_marker(arc *c, value thr, int depth,
+			  void (*mark)(struct arc *, value, int))
+{
+  value *p;
+
+  mark(c, TFUNR(thr), depth);
+  mark(c, TENVR(thr), depth);
+  mark(c, TVALR(thr), depth);
+  mark(c, TCONR(thr), depth);
+  for (p = TSTOP(thr); p == TSP(thr); p--)
+    mark(c, *p, depth);
+}
+
 value arc_mkthread(arc *c)
 {
   value thr;
@@ -41,3 +83,12 @@ value arc_mkthread(arc *c)
   TWAKEUP(thr) = 0LL;
   return(thr);
 }
+
+typefn_t __arc_thread_typefn__ = {
+  thread_marker,
+  __arc_null_sweeper,
+  thread_pprint,
+  NULL,
+  NULL,
+  NULL
+};
