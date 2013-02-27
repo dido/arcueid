@@ -84,6 +84,16 @@ value arc_mkthread(arc *c)
   return(thr);
 }
 
+void arc_init_threads(arc *c)
+{
+  c->vmthreads = CNIL;
+  c->vmthrtail = CNIL;
+  c->vmqueue = CNIL;
+  c->curthread = CNIL;
+  c->tid_nonce = 0;
+  c->stksize = TSTKSIZE;
+}
+
 typefn_t __arc_thread_typefn__ = {
   thread_marker,
   __arc_null_sweeper,
