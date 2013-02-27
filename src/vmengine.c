@@ -35,9 +35,17 @@
 void *alloca (size_t);
 #endif
 
-int __arc_return(arc *c, value thr)
+value __arc_return(arc *c, value thr)
 {
-  return(1);
+  value cont;
+
+  if (NIL_P(TCONR(thr)))
+    return(CNIL);
+  cont = car(TCONR(thr));
+  TCONR(thr) = cdr(TCONR(thr));
+  /*  if (TYPE(CONT_FUN(cont) != T_CCODE))
+      arc_restorecont(c, thr, cont); */
+  return(cont);
 }
 
 /* Perform a function application of the function in thr's value register. 
@@ -46,6 +54,7 @@ void __arc_apply(arc *c, value thr)
 {
   typefn_t *tfn;
   enum avals_t result;
+  value cont;
 
   for (;;) {
     tfn = __arc_typefn(c, TVALR(thr));
@@ -55,26 +64,42 @@ void __arc_apply(arc *c, value thr)
     }
     result = tfn->apply(c, thr, TVALR(thr));
     switch (result) {
-    case APP_OK:
-      if (__arc_return(c, thr))
-	return;
-      break;
     case APP_FNAPP:
       /* If an Arcueid Foreign Function returns APP_FNAPP, it will have
 	 created a continuation to allow us to restore it, pushed arguments
 	 on the stack, and set the value register to the function to be
 	 called.  Looping back will thus take care of what we need to do
-	 nicely!*/
+	 nicely! */
       break;
     case APP_YIELD:
+      /* Yield interpreter */
       TQUANTA(thr) = 0;
       TSTATE(thr) = Tyield;
-      /* XXX - this actually performs the yield */
-      /* longjmp(c->yield_jump, 1); */
-      break;
+      return;
+    case APP_RET:
+      /* Just return to the virtual machine core */
+      return;
+    case APP_RC:
     default:
-      if (__arc_return(c, thr))
+      /* Restore the last continuation on the continuation register.  Just
+	 return to the virtual machine if the last continuation was a normal
+	 continuation. */
+      cont = __arc_return(c, thr);
+      if (NIL_P(cont)) {
+	/* There was no available continuation on the continuation
+	   register.  If this happens, the current thread should
+	   terminate. */
+	TQUANTA(thr) = 0;
+	TSTATE(thr) = Trelease;
 	return;
+      }
+      /* If the continuation is a normal one, just return.  It was already
+	 restored by the call to __arc_return */
+      if (TYPE(CONT_FUN(cont) != T_CCODE))
+	return;
+      /* If we have an AFF's continuation, we apply it to itself, returning
+	 to where it left off before it made a call. */
+      result = (int)__arc_apply_aff(c, thr, CONT_FUN(cont), cont);
       break;
     }
   }
