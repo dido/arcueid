@@ -84,6 +84,58 @@ extern value arc_code_setsrc(arc *c, value code, value src);
 extern value arc_cctx2code(arc *c, value cctx);
 extern value arc_mkcctx(arc *c);
 
+enum threadstate {
+  Talt,				/* blocked in alt instruction */
+  Tsend,			/* waiting to send */
+  Trecv,			/* waiting to recv */
+  Tiowait,			/* I/O wait */
+  Tioready,			/* I/O ready to resume */
+  Tready,			/* ready to be scheduled */
+  Tsleep,			/* thread sleeping */
+  Tcritical,			/* critical section */
+  Trelease,			/* interpreter released */
+  Texiting,			/* exit because of kill or error */
+  Tbroken,			/* thread crashed */
+};
+
+struct vmthread_t {
+  value funr;			/* function pointer register */
+  value envr;			/* environment register */
+  value valr;			/* value of most recent instruction */
+  value conr;			/* continuation register */
+  value *spr;			/* stack pointer */
+  value stack;			/* actual stack (a vector) */
+  value *stkbase;		/* base pointer of the stack */
+  value *stktop;		/* top of value stack */
+  value *ip;			/* instruction point */
+  int argc;			/* argument count register */
+
+  enum threadstate state;	/* thread state */
+  int tid;			/* thread ID */
+  int quanta;			/* time slice */
+  unsigned long long ticks;	/* time used */
+  unsigned long long wakeuptime; /* wakeup time */
+};
+
+#define TFUNR(t) (((struct vmthread_t *)REP(t))->funr)
+#define TENVR(t) (((struct vmthread_t *)REP(t))->envr)
+#define TVALR(t) (((struct vmthread_t *)REP(t))->valr)
+#define TCONR(t) (((struct vmthread_t *)REP(t))->conr)
+#define TSP(t) (((struct vmthread_t *)REP(t))->spr)
+#define TSTACK(t) (((struct vmthread_t *)REP(t))->stack)
+#define TSBASE(t) (((struct vmthread_t *)REP(t))->stkbase)
+#define TSTOP(t) (((struct vmthread_t *)REP(t))->stktop)
+#define TIP(t) (((struct vmthread_t *)REP(t))->ip)
+#define TARGC(t) (((struct vmthread_t *)REP(t))->argc)
+
+#define TSTATE(t) (((struct vmthread_t *)REP(t))->state)
+#define TTID(t) (((struct vmthread_t *)REP(t))->tid)
+#define TQUANTA(t) (((struct vmthread_t *)REP(t))->quanta)
+#define TTICKS(t) (((struct vmthread_t *)REP(t))->ticks)
+#define TWAKEUP(t) (((struct vmthread_t *)REP(t))->wakeuptime)
+
+#define CPUSH(thr, val) (*(TSP(thr)--) = (val))
+#define CPOP(thr) (*(++TSP(thr)))
 /* Default thread stack size */
 #define TSTKSIZE 512
 
