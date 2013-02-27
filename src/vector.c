@@ -87,7 +87,7 @@ value __arc_vector_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
 }
 
 /* A vector can be applied to a fixnum value */
-static value vector_apply(arc *c, value thr, value vec)
+static int vector_apply(arc *c, value thr, value vec)
 {
   value fidx;
   int index;
@@ -95,27 +95,27 @@ static value vector_apply(arc *c, value thr, value vec)
   if (arc_thr_argc(c, thr) != 1) {
     arc_err_cstrfmt(c, "application of a vector expects 1 argument, given %d",
 		    arc_thr_argc(c, thr));
-    return(CNIL);
+    return(APP_OK);
   }
   fidx = arc_thr_pop(c, thr);
   if (TYPE(fidx) != T_FIXNUM) {
     arc_err_cstrfmt(c, "application of a vector expects type <non-negative exact integer> as argument");
-    return(CNIL);
+    return(APP_OK);
   }
   index = FIX2INT(fidx);
 
   if (index < 0) {
     arc_err_cstrfmt(c, "application of a vector expects type <non-negative exact integer> as argument");
-    return(CNIL);
+    return(APP_OK);
   }
 
   if (index >= VECLEN(vec)) {
     arc_err_cstrfmt(c, "index %d out of range [0, %d] for vector",
 		    index, VECLEN(vec)-1);
-    return(CNIL);
+    return(APP_OK);
   }
   arc_thr_set_valr(c, thr, VINDEX(vec, index));
-  return(CNIL);
+  return(APP_OK);
 }
 
 value arc_mkvector(arc *c, int length)
