@@ -75,6 +75,40 @@ static value string_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
   return(string_iscmp(c, v1, v2));
 }
 
+/* A string can be applied to a fixnum value */
+static value string_apply(arc *c, value thr, value str)
+{
+  value fidx;
+  Rune r;
+  int index;
+
+  if (arc_thr_argc(c, thr) != 1) {
+    arc_err_cstrfmt(c, "application of a string expects 1 argument, given %d",
+		    arc_thr_argc(c, thr));
+    return(CNIL);
+  }
+  fidx = arc_thr_pop(c, thr);
+  if (TYPE(fidx) != T_FIXNUM) {
+    arc_err_cstrfmt(c, "application of a string expects type <non-negative exact integer> as argument");
+    return(CNIL);
+  }
+  index = FIX2INT(fidx);
+
+  if (index < 0) {
+    arc_err_cstrfmt(c, "application of a string expects type <non-negative exact integer> as argument");
+    return(CNIL);
+  }
+
+  if (index >= arc_strlen(c, str)) {
+    arc_err_cstrfmt(c, "string index %d out of range [0, %d] for string",
+		    index, arc_strlen(c, str)-1);
+    return(CNIL);
+  }
+  r = arc_strindex(c, str, index);
+  arc_thr_set_valr(c, thr, arc_mkchar(c, r));
+  return(CNIL);
+}
+
 value arc_mkstringlen(arc *c, int length)
 {
   value str;
@@ -97,15 +131,6 @@ value arc_mkstring(arc *c, const Rune *data, int length)
   STRREP(str)->len = length;
   return(str);
 }
-
-typefn_t __arc_string_typefn__ = {
-  __arc_null_marker,
-  __arc_null_sweeper,
-  string_pprint,
-  string_hash,
-  string_iscmp,
-  string_isocmp
-};
 
 /* Make string from a UTF-8 C string */
 value arc_mkstringc(arc *c, const char *s)
@@ -291,3 +316,13 @@ void arc_str2cstr(arc *c, value str, char *ptr)
   }
   *p = 0;			/* null terminator */
 }
+
+typefn_t __arc_string_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  string_pprint,
+  string_hash,
+  string_iscmp,
+  string_isocmp,
+  string_apply
+};
