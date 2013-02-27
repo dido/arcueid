@@ -91,7 +91,8 @@ enum threadstate {
   Tiowait,			/* I/O wait */
   Tioready,			/* I/O ready to resume */
   Tready,			/* ready to be scheduled */
-  Tyield			/* thread yielded */
+  Tyield,			/* thread yielded */
+  Trelease			/* thread released */
 };
 
 struct vmthread_t {
@@ -134,5 +135,19 @@ struct vmthread_t {
 #define CPOP(thr) (*(++TSP(thr)))
 /* Default thread stack size */
 #define TSTKSIZE 512
+
+/* Continuations are vectors with the following items as indexes:
+
+   0. Offset into the code object (or internal label in an AFF)
+   1. Function
+   2. Environment
+   3. Saved stack
+
+   CONT_OFS and CONT_ENV are defined in arcueid.h
+ */
+#define CONT_FUN(cont) (VINDEX(cont, 1))
+#define CONT_STK(cont) (VINDEX(cont, 3))
+
+extern int __arc_apply_aff(arc *c, value thr, value aff, value cont);
 
 #endif
