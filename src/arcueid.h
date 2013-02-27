@@ -70,13 +70,18 @@ enum arc_types {
   T_CHAN = 26,			/* channel */
   T_TYPEDESC = 27,		/* type descriptor */
   T_WTABLE = 28,		/* weak table */
-  T_FNAPP = 29,			/* function application */
-  T_MAX = 30,
+  T_MAX = 28,
 
   T_NONE=64
 };
 
 struct arc;
+
+enum avals_t {
+  APP_OK=0,			/* Normal result */
+  APP_FNAPP=1,			/* Apply value register */
+  APP_YIELD=2			/* Yield interpreter */
+};
 
 /* Type functions */
 struct typefn_t {
@@ -93,7 +98,7 @@ struct typefn_t {
   /* deep compare (isomorphism) */
   value (*isocmp)(struct arc *c, value, value, value, value);
   /* applicator */
-  value (*apply)(struct arc *c, value, value);
+  int (*apply)(struct arc *c, value, value);
 #if 0
   value (*marshal)(struct arc *c, value, value);
   value (*unmarshal)(struct arc *c, value);
