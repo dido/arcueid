@@ -117,15 +117,23 @@ struct arc {
 
   void *alloc_ctx;		/* allocation/gc context */
 
+  /* Type functions and type descriptors */
   typefn_t *typefns[T_MAX+1];	/* type functions */
   value typedesc;		/* type descriptor hash */
 
+  /* Symbol table and global environment */
   value symtable;		/* global symbol table */
   value rsymtable;		/* reverse global symbol table */
   int lastsym;			/* last symbol index created */
+  value genv;			/* global environment */
 
+  /* Threading and scheduler */
+  value vmthreads;		/* virtual machine thread objects (head) */
+  value vmthrtail;		/* virtual machine thread objects (tail) */
+  value vmqueue;		/* virtual machine run queue */
+  value curthread;		/* current thread */
   int tid_nonce;		/* nonce for thread IDs */
-  int stksize;			/* stack size for threads */
+  int stksize;			/* default stack size for threads */
 };
 
 typedef struct arc arc;
@@ -327,9 +335,12 @@ struct vmthread_t {
 extern value arc_mkthread(arc *c);
 
 /* Initialization functions */
-extern void arc_set_memmgr(arc *c);
+extern void arc_init_memmgr(arc *c);
 extern void arc_init_datatypes(arc *c);
 extern void arc_init_symtable(arc *c);
+extern void arc_init_threads(arc *c);
+extern void arc_init(arc *c);
+
 
 #if 0
 
