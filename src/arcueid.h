@@ -269,6 +269,7 @@ extern void arc_thr_push(arc *c, value thr, value v);
 extern value arc_thr_pop(arc *c, value thr);
 extern value arc_thr_valr(arc *c, value thr);
 extern value arc_thr_set_valr(arc *c, value thr, value v);
+extern int arc_thr_argc(arc *c, value thr);
 
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
@@ -297,7 +298,6 @@ extern void arc_init(arc *c);
 
 /* Error handling */
 extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
-
 #if 0
 
 /* Arcueid Foreign Functions */
