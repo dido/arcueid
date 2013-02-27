@@ -304,7 +304,7 @@ static value hash_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
 }
 
 /* A hash can be applied with an index and an optional default value */
-static value hash_apply(arc *c, value thr, value tbl)
+static int hash_apply(arc *c, value thr, value tbl)
 {
   value key, dflt = CNIL, val;
 
@@ -313,13 +313,13 @@ static value hash_apply(arc *c, value thr, value tbl)
   } else if (arc_thr_argc(c, thr) != 1) {
     arc_err_cstrfmt(c, "application of a table expects 1 or 2 arguments, given %d",
 		    arc_thr_argc(c, thr));
-    return(CNIL);
+    return(APP_OK);
   }
   key = arc_thr_pop(c, thr);
   val = arc_hash_lookup(c, tbl, key);
   val = (NIL_P(val)) ? dflt : val;
   arc_thr_set_valr(c, thr, val);
-  return(CNIL);
+  return(APP_OK);
 }
 
 value arc_mkhash(arc *c, int hashbits)
