@@ -279,4 +279,17 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_VECTOR] = &__arc_vector_typefn__;
 
   c->typefns[T_WTABLE] = &__arc_wtable_typefn__;
+
+}
+
+void arc_init(arc *c)
+{
+  arc_init_memmgr(c);
+  arc_init_datatypes(c);
+  arc_init_symtable(c);
+  arc_init_threads(c);
+
+  /* Create global environment and type descriptor table */
+  c->genv = arc_mkhash(c, ARC_HASHBITS);
+  c->typedesc = arc_mkhash(c, ARC_HASHBITS);
 }
