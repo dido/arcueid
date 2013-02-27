@@ -86,6 +86,14 @@ value arc_mkccode(arc *c, int argc, value (*cfunc)(), value name)
   return(cfn);
 }
 
+int __arc_apply_aff(arc *c, value thr, value cfn, value cont)
+{
+  struct cfunc_t *rcfn;
+
+  rcfn = (struct cfunc_t *)REP(cfn);
+  return((int)rcfn->fnptr(c, thr, CNIL));
+}
+
 static int cfunc_apply(arc *c, value thr, value cfn)
 {
   int argc, i;
@@ -98,56 +106,58 @@ static int cfunc_apply(arc *c, value thr, value cfn)
     /* XXX - error handling */
     arc_err_cstrfmt(c, "wrong number of arguments (%d for %d)", argc,
 		    rcfn->argc);
-    return(CNIL);
+    return(APP_RET);
   }
   if (argc == -2) {
     /* The initial call of a ACFF.  The continuation is initially nil. */
-    return(FIX2INT(rcfn->fnptr(c, thr, CNIL)));
-  } else {
-    argv = alloca(sizeof(value)*argc);
-    for (i=argc-1; i>=0; i--)
-      argv[i] = CPOP(thr);
-    switch (rcfn->argc) {
-    case -1:
-      TVALR(thr) = rcfn->fnptr(c, argc, argv);
-      break;
-    case 0:
-      TVALR(thr) = rcfn->fnptr(c);
-      break;
-    case 1:
-      TVALR(thr) = rcfn->fnptr(c, argv[0]);
-      break;
-    case 2:
-      TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1]);
-      break;
-    case 3:
-      TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2]);
-      break;
-    case 4:
-      TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3]);
-      break;
-    case 5:
-      TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
-			       argv[4]);
-      break;
-    case 6:
-      TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
-			       argv[4], argv[5]);
-      break;
-    case 7:
-      TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
-			       argv[4], argv[5], argv[6]);
-      break;
-    case 8:
-      TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
-			       argv[4], argv[5], argv[6], argv[7]);
-      break;
-    default:
-      arc_err_cstrfmt(c, "too many arguments");
-      return(APP_OK);
-    }
+    return((int)rcfn->fnptr(c, thr, CNIL));
   }
-  return(APP_OK);
+
+  /* Simple Foreign Functions */
+  argv = alloca(sizeof(value)*argc);
+  for (i=argc-1; i>=0; i--)
+    argv[i] = CPOP(thr);
+  switch (rcfn->argc) {
+  case -1:
+    TVALR(thr) = rcfn->fnptr(c, argc, argv);
+    break;
+  case 0:
+    TVALR(thr) = rcfn->fnptr(c);
+    break;
+  case 1:
+    TVALR(thr) = rcfn->fnptr(c, argv[0]);
+    break;
+  case 2:
+    TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1]);
+    break;
+  case 3:
+    TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2]);
+    break;
+  case 4:
+    TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3]);
+    break;
+  case 5:
+    TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
+			     argv[4]);
+    break;
+  case 6:
+    TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
+			     argv[4], argv[5]);
+    break;
+  case 7:
+    TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
+			     argv[4], argv[5], argv[6]);
+    break;
+  case 8:
+    TVALR(thr) = rcfn->fnptr(c, argv[0], argv[1], argv[2], argv[3],
+			     argv[4], argv[5], argv[6], argv[7]);
+    break;
+    /* XXX - extend this to perhaps 17 arguments just like Ruby */
+  default:
+    arc_err_cstrfmt(c, "too many arguments");
+    break;
+  }
+  return(APP_RET);
 }
 
 typefn_t __arc_cfunc_typefn__ = {
