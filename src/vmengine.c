@@ -35,8 +35,9 @@
 void *alloca (size_t);
 #endif
 
-void __arc_return(arc *c, value thr)
+int __arc_return(arc *c, value thr)
 {
+  return(1);
 }
 
 /* Perform a function application of the function in thr's value register. 
@@ -55,8 +56,8 @@ void __arc_apply(arc *c, value thr)
     result = tfn->apply(c, thr, TVALR(thr));
     switch (result) {
     case APP_OK:
-      __arc_return(c, thr);
-      return;
+      if (__arc_return(c, thr))
+	return;
       break;
     case APP_FNAPP:
       /* If an Arcueid Foreign Function returns APP_FNAPP, it will have
@@ -72,8 +73,8 @@ void __arc_apply(arc *c, value thr)
       /* longjmp(c->yield_jump, 1); */
       break;
     default:
-      __arc_return(c, thr);
-      return;
+      if (__arc_return(c, thr))
+	return;
       break;
     }
   }
