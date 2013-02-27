@@ -76,7 +76,7 @@ static value string_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
 }
 
 /* A string can be applied to a fixnum value */
-static value string_apply(arc *c, value thr, value str)
+static int string_apply(arc *c, value thr, value str)
 {
   value fidx;
   Rune r;
@@ -85,28 +85,28 @@ static value string_apply(arc *c, value thr, value str)
   if (arc_thr_argc(c, thr) != 1) {
     arc_err_cstrfmt(c, "application of a string expects 1 argument, given %d",
 		    arc_thr_argc(c, thr));
-    return(CNIL);
+    return(APP_OK);
   }
   fidx = arc_thr_pop(c, thr);
   if (TYPE(fidx) != T_FIXNUM) {
     arc_err_cstrfmt(c, "application of a string expects type <non-negative exact integer> as argument");
-    return(CNIL);
+    return(APP_OK);
   }
   index = FIX2INT(fidx);
 
   if (index < 0) {
     arc_err_cstrfmt(c, "application of a string expects type <non-negative exact integer> as argument");
-    return(CNIL);
+    return(APP_OK);
   }
 
   if (index >= arc_strlen(c, str)) {
     arc_err_cstrfmt(c, "string index %d out of range [0, %d] for string",
 		    index, arc_strlen(c, str)-1);
-    return(CNIL);
+    return(APP_OK);
   }
   r = arc_strindex(c, str, index);
   arc_thr_set_valr(c, thr, arc_mkchar(c, r));
-  return(CNIL);
+  return(APP_OK);
 }
 
 value arc_mkstringlen(arc *c, int length)
