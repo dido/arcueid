@@ -35,3 +35,46 @@
 void *alloca (size_t);
 #endif
 
+void __arc_return(arc *c, value thr)
+{
+}
+
+/* Perform a function application of the function in thr's value register. 
+   Should work for any type that has an applicator. */
+void __arc_apply(arc *c, value thr)
+{
+  typefn_t *tfn;
+  enum avals_t result;
+
+  for (;;) {
+    tfn = __arc_typefn(c, TVALR(thr));
+    if (tfn == NULL) {
+      arc_err_cstrfmt(c, "cannot apply value");
+      return;
+    }
+    result = tfn->apply(c, thr, TVALR(thr));
+    switch (result) {
+    case APP_OK:
+      __arc_return(c, thr);
+      return;
+      break;
+    case APP_FNAPP:
+      /* If an Arcueid Foreign Function returns APP_FNAPP, it will have
+	 created a continuation to allow us to restore it, pushed arguments
+	 on the stack, and set the value register to the function to be
+	 called.  Looping back will thus take care of what we need to do
+	 nicely!*/
+      break;
+    case APP_YIELD:
+      TQUANTA(thr) = 0;
+      TSTATE(thr) = Tyield;
+      /* XXX - this actually performs the yield */
+      /* longjmp(c->yield_jump, 1); */
+      break;
+    default:
+      __arc_return(c, thr);
+      return;
+      break;
+    }
+  }
+}
