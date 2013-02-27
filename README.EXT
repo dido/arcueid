@@ -1,0 +1,85 @@
+This document explains how to make extension libraries for Arcueid.
+
+Basic concepts
+==============
+
+Data in Arcueid are represented by the c type 'value'. Each value data
+has its own data type.
+
+Function definition
+===================
+
+To define an Arc function, the following function may be used:
+
+arc_mkccode(arc *c, int argc, value (*func)())
+
+The argc represents the number of arguments to the C function (a
+Simple Foreign Function), which must be at most 8.  For example, with
+an argc of 3, the function will be called as:
+
+value func(arc *c, arg1, arg2, arg3)
+
+where c is the Arcueid interpreter handle.
+
+If argc is negative, it specifies the calling sequence, not the number
+of arguments.
+
+If argc is -1, the function will be called as:
+
+value func(arc *c, int argc, value *argv)
+
+where c is the Arcueid interpreter handle, argc is the actual number
+of arguments, and argv is a C array of the arguments.
+
+Simple foreign functions (with argc of -1 or higher) are recommended
+only for simple functions that do not need to call other Arcueid
+functions, are not long running, and will not perform long-running
+I/O.  Such a function has the potential to unboundedly block the
+interpreter and any garbage it produces will not be collected until
+after the function terminates.
+
+If argc is -2, the function is called an Arcueid Foreign Function and
+will be called as:
+
+value func(arc *c, value thr, ACONT)
+
+An Arcueid foreign function has special conventions for use.
+
+Arcueid Foreign Functions
+=========================
+
+Arcueid foreign functions (AFFs) are the most general foreign function
+interface available for Arcueid.  Simple foreign functions (SFFs) have
+limitations in that they are unable to call native Arcueid functions,
+yield control, or provide non-blocking I/O.  Variables in AFFs can
+also be handled by the garbage collector.
+
+AFFs have the following basic structure:
+
+value aff_func(arc *c, value thr, ACONT)
+{
+  CVBEGIN;
+  CVDEF(var1);
+  CVDEF(var2);
+  CVEND;
+
+  AFBEGIN
+  /* function body */
+  AFEND
+}
+
+Variables, which must be Arcueid values, must be declared with the
+CVDEF macro within the CVBEGIN and CVEND sections. These variables
+must be accessed with the CV macro, which may be used as a normal C
+lvalue.  Variables declared outside of the CVBEGIN/CVEND section are
+not guaranteed to be preserved after use of an AFCALL, AYIELD, or
+AYIELDFD macro.  When an AFF wants to return normally it must use the
+ARETURN macro.
+
+It is possible for an AFF to call another Arcueid function of any type
+by using the AFCALL macro:
+
+AFCALL(c, thr, func, fargc, ...)
+
+The return value of the called function is available through the
+AFCVAL macro.
