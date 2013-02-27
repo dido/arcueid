@@ -86,7 +86,7 @@ value arc_mkccode(arc *c, int argc, value (*cfunc)(), value name)
   return(cfn);
 }
 
-static value cfunc_apply(arc *c, value thr, value cfn)
+static int cfunc_apply(arc *c, value thr, value cfn)
 {
   int argc, i;
   struct cfunc_t *rcfn;
@@ -102,7 +102,7 @@ static value cfunc_apply(arc *c, value thr, value cfn)
   }
   if (argc == -2) {
     /* The initial call of a ACFF.  The continuation is initially nil. */
-    return(rcfn->fnptr(c, thr, CNIL));
+    return(FIX2INT(rcfn->fnptr(c, thr, CNIL)));
   } else {
     argv = alloca(sizeof(value)*argc);
     for (i=argc-1; i>=0; i--)
@@ -144,10 +144,10 @@ static value cfunc_apply(arc *c, value thr, value cfn)
       break;
     default:
       arc_err_cstrfmt(c, "too many arguments");
-      return(CNIL);
+      return(APP_OK);
     }
   }
-  return(CNIL);
+  return(APP_OK);
 }
 
 typefn_t __arc_cfunc_typefn__ = {
