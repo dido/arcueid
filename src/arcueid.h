@@ -92,6 +92,8 @@ struct typefn_t {
   value (*iscmp)(struct arc *c, value, value);
   /* deep compare (isomorphism) */
   value (*isocmp)(struct arc *c, value, value, value, value);
+  /* applicator */
+  value (*apply)(struct arc *c, value, value);
 #if 0
   value (*marshal)(struct arc *c, value, value);
   value (*unmarshal)(struct arc *c, value);
@@ -260,6 +262,14 @@ extern value arc_hash_delete(arc *c, value hash, value key);
 typefn_t *__arc_typefn(arc *c, value v);
 void __arc_register_typefn(arc *c, enum arc_types type, typefn_t *tfn);
 
+/* Thread definitions and functions */
+
+extern value arc_mkthread(arc *c);
+extern void arc_thr_push(arc *c, value thr, value v);
+extern value arc_thr_pop(arc *c, value thr);
+extern value arc_thr_valr(arc *c, value thr);
+extern value arc_thr_set_valr(arc *c, value thr, value v);
+
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
 				      value *str);
@@ -278,62 +288,6 @@ extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
 extern value __arc_visitp(arc *c, value v, value hash);
 extern void __arc_unvisit(arc *c, value v, value hash);
 
-/* Thread definitions and functions */
-enum threadstate {
-  Talt,				/* blocked in alt instruction */
-  Tsend,			/* waiting to send */
-  Trecv,			/* waiting to recv */
-  Tiowait,			/* I/O wait */
-  Tioready,			/* I/O ready to resume */
-  Tready,			/* ready to be scheduled */
-  Tsleep,			/* thread sleeping */
-  Tcritical,			/* critical section */
-  Trelease,			/* interpreter released */
-  Texiting,			/* exit because of kill or error */
-  Tbroken,			/* thread crashed */
-};
-
-struct vmthread_t {
-  value funr;			/* function pointer register */
-  value envr;			/* environment register */
-  value valr;			/* value of most recent instruction */
-  value conr;			/* continuation register */
-  value *spr;			/* stack pointer */
-  value stack;			/* actual stack (a vector) */
-  value *stkbase;		/* base pointer of the stack */
-  value *stktop;		/* top of value stack */
-  value *ip;			/* instruction point */
-  int argc;			/* argument count register */
-
-  enum threadstate state;	/* thread state */
-  int tid;			/* thread ID */
-  int quanta;			/* time slice */
-  unsigned long long ticks;	/* time used */
-  unsigned long long wakeuptime; /* wakeup time */
-};
-
-#define TFUNR(t) (((struct vmthread_t *)REP(t))->funr)
-#define TENVR(t) (((struct vmthread_t *)REP(t))->envr)
-#define TVALR(t) (((struct vmthread_t *)REP(t))->valr)
-#define TCONR(t) (((struct vmthread_t *)REP(t))->conr)
-#define TSP(t) (((struct vmthread_t *)REP(t))->spr)
-#define TSTACK(t) (((struct vmthread_t *)REP(t))->stack)
-#define TSBASE(t) (((struct vmthread_t *)REP(t))->stkbase)
-#define TSTOP(t) (((struct vmthread_t *)REP(t))->stktop)
-#define TIP(t) (((struct vmthread_t *)REP(t))->ip)
-#define TARGC(t) (((struct vmthread_t *)REP(t))->argc)
-
-#define TSTATE(t) (((struct vmthread_t *)REP(t))->state)
-#define TTID(t) (((struct vmthread_t *)REP(t))->tid)
-#define TQUANTA(t) (((struct vmthread_t *)REP(t))->quanta)
-#define TTICKS(t) (((struct vmthread_t *)REP(t))->ticks)
-#define TWAKEUP(t) (((struct vmthread_t *)REP(t))->wakeuptime)
-
-#define CPUSH(thr, val) (*(TSP(thr)--) = (val))
-#define CPOP(thr) (*(++TSP(thr)))
-
-extern value arc_mkthread(arc *c);
-
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
 extern void arc_init_datatypes(arc *c);
@@ -341,26 +295,14 @@ extern void arc_init_symtable(arc *c);
 extern void arc_init_threads(arc *c);
 extern void arc_init(arc *c);
 
+/* Error handling */
+extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 
 #if 0
 
-/* C functions
+/* Arcueid Foreign Functions */
 
-   The most general C function interface is as follows:
-
-   value func(arc *c, int argc, value thr, CCONT);
-
-   The arguments to the function are passed in the thread stack as one
-   might expect.
-
-   The macros below are inspired by Simon Tatham's C coroutines, and
-   they've been warped to provide continuations in C.  A function of
-   this kind can only call other functions by means of the CCALL or
-   CCALLV macros defined below (and they, perversely, *return* an
-   object of T_FNAPP to make the caller perform a function call!)
-*/
-
-#define CCONT value __ccont__
+#define ACONT value __acont__
 #define CVBEGIN int __vidx__ = 0
 #define CVDEF(x) int x = __vidx__++
 #define CV(x) (VINDEX(CONT_CLOS(__ccont__), x))
@@ -368,30 +310,34 @@ extern void arc_init(arc *c);
   if (NIL_P(__ccont__)) {					\
     __ccont__ = arc_mkccont(c, __vidx__, (void *)__func__);	\
   }
-#define CBEGIN					\
+#define AFBEGIN					\
   if (!NIL_P(__ccont__)) {			\
   switch (FIX2INT(CONT_OFS(__ccont__))) {	\
  case 0:;
-#define CEND } }
+#define AFEND } }				\
+    return(CNIL)
 
-#define CCALL(c, thr, func, fargc, ...)					\
+#define AFCALL(c, thr, func, fargc, ...)				\
   do {									\
-    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkapply(c, thr, __cont__, func, fargc, __VA_ARGS__)); case __LINE__:; \
+    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkapply(c, thr, __ccont__, func, fargc, __VA_ARGS__)); case __LINE__:; \
   } while (0)
 
-#define CCALLV(c, thr, func, fargv)					\
+#define AFCVAL(c, thr) (arc_thr_valr(c, thr))
+
+#define AYIELD(c, thr)							\
   do {									\
-    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkapplyv(c, thr, __cont__, func, fargc, __VA_ARGS__)); case __LINE__:; \
+    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkyield(c, thr, __ccont__, CNIL)); case __LINE__:; \
   } while (0)
 
-#define CYIELD(c, thr)							\
+#define AYIELDFD(c, thr, fd)						\
   do {									\
-    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkyield(c, thr, __cont__, CNIL)); case __LINE__:; \
+    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkyield(c, thr, __ccont__, INT2FIX(fd))); case __LINE__:; \
   } while (0)
 
-#define CYIELDFD(c, thr, fd)						\
-  do {									\
-    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_mkyield(c, thr, __cont__, INT2FIX(fd))); case __LINE__:; \
+#define ARETURN(c, thr, val)			\
+  do {						\
+    arc_thr_set_valr(c, thr, val);		\
+    return(CNIL);				\
   } while (0)
 
 #endif
