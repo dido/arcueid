@@ -200,5 +200,8 @@ typefn_t __arc_code_typefn__ = {
   code_pprint,
   __arc_vector_hash,
   NULL,
-  __arc_vector_isocmp
+  __arc_vector_isocmp,
+  /* Note a T_CODE object cannot be directly applied.  It has to be
+     turned into a closure first. */
+  NULL
 };
