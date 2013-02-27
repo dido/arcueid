@@ -18,6 +18,7 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
@@ -140,6 +141,18 @@ value arc_iso(arc *c, value v1, value v2, value vh1, value vh2)
   if (tfn->isocmp == NULL)
     return(CNIL);
   return(tfn->isocmp(c, v1, v2, vh1, vh2));
+}
+
+void arc_err_cstrfmt(arc *c, const char *fmt, ...)
+{
+  va_list ap;
+
+  /* XXX - should do something more */
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  va_end(ap);
+  abort();
 }
 
 typefn_t *__arc_typefn(arc *c, value v)
