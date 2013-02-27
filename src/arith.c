@@ -100,15 +100,6 @@ value arc_mkflonum(arc *c, double val)
   return(cv);
 }
 
-typefn_t __arc_flonum_typefn__ = {
-  __arc_null_marker,
-  __arc_null_sweeper,
-  flonum_pprint,
-  flonum_hash,
-  flonum_iscmp,
-  flonum_isocmp
-};
-
 static value complex_pprint(arc *c, value z, value *ppstr, value visithash)
 {
   double complex val = *((double complex *)REP(z));
@@ -152,15 +143,6 @@ value arc_mkcomplex(arc *c, double complex z)
   *((double complex *)REP(cv)) = z;
   return(cv);
 }
-
-typefn_t __arc_complex_typefn__ = {
-  __arc_null_marker,
-  __arc_null_sweeper,
-  complex_pprint,
-  complex_hash,
-  complex_iscmp,
-  complex_isocmp
-};
 
 #ifdef HAVE_GMP_H
 
@@ -220,13 +202,38 @@ value arc_mkbignuml(arc *c, long val)
   return(cv);
 }
 
+#endif
+
+typefn_t __arc_complex_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  complex_pprint,
+  complex_hash,
+  complex_iscmp,
+  complex_isocmp,
+  NULL
+};
+
+typefn_t __arc_flonum_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  flonum_pprint,
+  flonum_hash,
+  flonum_iscmp,
+  flonum_isocmp,
+  NULL
+};
+
+#ifdef HAVE_GMP_H
+
 typefn_t __arc_bignum_typefn__ = {
   __arc_null_marker,
   bignum_sweep,
   bignum_pprint,
   bignum_hash,
   bignum_iscmp,
-  bignum_isocmp
+  bignum_isocmp,
+  NULL
 };
 
 #endif
