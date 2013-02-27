@@ -313,13 +313,13 @@ static int hash_apply(arc *c, value thr, value tbl)
   } else if (arc_thr_argc(c, thr) != 1) {
     arc_err_cstrfmt(c, "application of a table expects 1 or 2 arguments, given %d",
 		    arc_thr_argc(c, thr));
-    return(APP_OK);
+    return(APP_RC);
   }
   key = arc_thr_pop(c, thr);
   val = arc_hash_lookup(c, tbl, key);
   val = (NIL_P(val)) ? dflt : val;
   arc_thr_set_valr(c, thr, val);
-  return(APP_OK);
+  return(APP_RC);
 }
 
 value arc_mkhash(arc *c, int hashbits)
