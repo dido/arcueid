@@ -73,8 +73,10 @@ CVDEF macro within the CVBEGIN and CVEND sections. These variables
 must be accessed with the CV macro, which may be used as a normal C
 lvalue.  Variables declared outside of the CVBEGIN/CVEND section are
 not guaranteed to be preserved after use of an AFCALL, AYIELD, or
-AYIELDFD macro.  When an AFF wants to return normally it must use the
-ARETURN macro.
+AIOWAIT macro unless they are static (and you probably shouldn't be
+using those either, especially if they are Arcueid values: they'll get
+garbage collected!).  When an AFF wants to return normally it must use
+the ARETURN macro.
 
 It is possible for an AFF to call another Arcueid function of any type
 by using the AFCALL macro:
@@ -83,3 +85,15 @@ AFCALL(c, thr, func, fargc, ...)
 
 The return value of the called function is available through the
 AFCVAL macro.
+
+Because of the way the AFF macros are built (the actual innards of the
+AFF macros are inspired by Simon Tatham's C coroutines [1]), some
+ground rules are needed in order to avoid problems:
+
+1. You cannot use AFCALL, AYIELD, or AIOWAIT inside of a switch
+   statement.  Doing so will result in a cryptic syntax error.
+2. AFCALL, AYIELD, and AIOWAIT should never appear together on the
+   same line. 
+
+[1] Simon Tatham. "Coroutines in C".
+    http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
