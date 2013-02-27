@@ -91,11 +91,7 @@ enum threadstate {
   Tiowait,			/* I/O wait */
   Tioready,			/* I/O ready to resume */
   Tready,			/* ready to be scheduled */
-  Tsleep,			/* thread sleeping */
-  Tcritical,			/* critical section */
-  Trelease,			/* interpreter released */
-  Texiting,			/* exit because of kill or error */
-  Tbroken,			/* thread crashed */
+  Tyield			/* thread yielded */
 };
 
 struct vmthread_t {
