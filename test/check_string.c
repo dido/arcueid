@@ -97,7 +97,7 @@ int main(void)
   SRunner *sr;
 
   c = &cc;
-  arc_set_memmgr(c);
+  arc_init_memmgr(c);
   arc_init_datatypes(c);
   c->markroots = markroots;
 
