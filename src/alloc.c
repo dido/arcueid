@@ -299,12 +299,23 @@ static void gc(arc *c)
   }
 }
 
-void arc_set_memmgr(arc *c)
+/* Default root marker */
+static void markroots(arc *c)
+{
+  __arc_markprop(c, c->symtable);
+  __arc_markprop(c, c->rsymtable);
+  __arc_markprop(c, c->genv);
+  __arc_markprop(c, c->vmthreads);
+  __arc_markprop(c, c->typedesc);
+}
+
+void arc_init_memmgr(arc *c)
 {
   int i;
 
   c->mem_alloc = sysalloc;
   c->mem_free = sysfree;
+  c->markroots = markroots;
   c->gc = gc;
   c->alloc = alloc;
   c->free = free_block;
