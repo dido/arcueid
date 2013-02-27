@@ -106,6 +106,11 @@ value arc_thr_set_valr(arc *c, value thr, value val)
   return(val);
 }
 
+int arc_thr_argc(arc *c, value thr)
+{
+  return(TARGC(thr));
+}
+
 void arc_init_threads(arc *c)
 {
   c->vmthreads = CNIL;
@@ -120,6 +125,7 @@ typefn_t __arc_thread_typefn__ = {
   thread_marker,
   __arc_null_sweeper,
   thread_pprint,
+  NULL,
   NULL,
   NULL,
   NULL
