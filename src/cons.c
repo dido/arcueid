@@ -147,6 +147,45 @@ static value cons_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
   return(CTRUE);
 }
 
+/* A cons can be applied to a fixnum value */
+static value cons_apply(arc *c, value thr, value list)
+{
+  value fidx;
+  int index, i;
+
+  if (arc_thr_argc(c, thr) != 1) {
+    arc_err_cstrfmt(c, "application of a cons expects 1 argument, given %d",
+		    arc_thr_argc(c, thr));
+    return(CNIL);
+  }
+
+  fidx = arc_thr_pop(c, thr);
+  if (TYPE(fidx) != T_FIXNUM) {
+    arc_err_cstrfmt(c, "application of a cons expects type <non-negative exact integer> as argument");
+    return(CNIL);
+  }
+  index = FIX2INT(fidx);
+
+  if (index < 0) {
+    arc_err_cstrfmt(c, "application of a cons expects type <non-negative exact integer> as argument");
+    return(CNIL);
+  }
+
+  for (i=0;; i++) {
+    if (i==index) {
+      arc_thr_set_valr(c, thr, car(list));
+      return(CNIL);
+    }
+    list = cdr(list);
+    if (NIL_P(list) || TYPE(list) != T_CONS) {
+      arc_err_cstrfmt(c, "index %d too large for list", index);
+      return(CNIL);
+    }
+  }
+  /* never get here */
+  return(CNIL);
+}
+
 value cons(arc *c, value x, value y)
 {
   value cv;
@@ -163,5 +202,6 @@ typefn_t __arc_cons_typefn__ = {
   cons_pprint,
   cons_hash,
   NULL,
-  cons_isocmp
+  cons_isocmp,
+  cons_apply
 };
