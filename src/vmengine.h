@@ -84,4 +84,7 @@ extern value arc_code_setsrc(arc *c, value code, value src);
 extern value arc_cctx2code(arc *c, value cctx);
 extern value arc_mkcctx(arc *c);
 
+/* Default thread stack size */
+#define TSTKSIZE 512
+
 #endif
