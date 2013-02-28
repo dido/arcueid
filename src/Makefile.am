@@ -19,8 +19,8 @@ lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -version-info 0:0:0
 libarcueid_la_SOURCES = alloc.c arith.c arcueid.c ccode.c codegen.c \
-	cons.c hash.c string.c symbol.c thread.c util.c utf.c vector.c \
-	vmengine.c
+	cons.c cont.c hash.c string.c symbol.c thread.c util.c utf.c \
+	vector.c vmengine.c
 
 include_HEADERS = arcueid.h
 noinst_HEADERS = alloc.h utf.h vmengine.h
