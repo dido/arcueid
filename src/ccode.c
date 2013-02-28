@@ -86,12 +86,12 @@ value arc_mkccode(arc *c, int argc, value (*cfunc)(), value name)
   return(cfn);
 }
 
-int __arc_apply_aff(arc *c, value thr, value cfn, value cont)
+int __arc_resume_aff(arc *c, value thr)
 {
   struct cfunc_t *rcfn;
 
-  rcfn = (struct cfunc_t *)REP(cfn);
-  return((int)rcfn->fnptr(c, thr, CNIL));
+  rcfn = (struct cfunc_t *)REP(TFUNR(thr));
+  return((int)rcfn->fnptr(c, thr));
 }
 
 static int cfunc_apply(arc *c, value thr, value cfn)
@@ -106,11 +106,14 @@ static int cfunc_apply(arc *c, value thr, value cfn)
     /* XXX - error handling */
     arc_err_cstrfmt(c, "wrong number of arguments (%d for %d)", argc,
 		    rcfn->argc);
-    return(APP_RET);
+    return(APP_RC);
   }
   if (argc == -2) {
-    /* The initial call of a ACFF.  The continuation is initially nil. */
-    return((int)rcfn->fnptr(c, thr, CNIL));
+    /* Set up the thread with the initial information for AFFs */
+    TIP(thr).aff_line = 0;	/* start at line 0 (start of function body) */
+    TENVR(thr) = CNIL;	/* will be filled in later by the function */
+    TFUNR(thr) = cfn;
+    return((int)rcfn->fnptr(c, thr));
   }
 
   /* Simple Foreign Functions */
@@ -157,7 +160,7 @@ static int cfunc_apply(arc *c, value thr, value cfn)
     arc_err_cstrfmt(c, "too many arguments");
     break;
   }
-  return(APP_RET);
+  return(APP_RC);
 }
 
 typefn_t __arc_cfunc_typefn__ = {
