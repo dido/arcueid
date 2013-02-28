@@ -78,7 +78,7 @@ enum arc_types {
 struct arc;
 
 enum avals_t {
-  APP_RET=1,			/* Return to interpreter */
+  APP_RET=1,			/* Return straight to virtual machine */
   APP_RC=3,			/* Restore continuation */
   APP_FNAPP=5,			/* Apply value register */
   APP_YIELD=7			/* Yield interpreter */
@@ -275,16 +275,18 @@ extern value arc_thr_pop(arc *c, value thr);
 extern value arc_thr_valr(arc *c, value thr);
 extern value arc_thr_set_valr(arc *c, value thr, value v);
 extern int arc_thr_argc(arc *c, value thr);
+extern void arc_thr_addcont(arc *c, value thr, value cont);
+extern value arc_thr_envr(arc *c, value thr);
 
 /* Support for Arcueid Foreign Functions */
-#define CONT_OFS(cont) (VINDEX(cont, 0))
-#define CONT_ENV(cont) (VINDEX(cont, 2))
-
-extern value __arc_mkccont(arc *c, int __vidx__,
-			   value (*aff)(arc *c, value thr, value __acont__));
 extern value __arc_affapply(arc *c, value thr, value ccont, value func, ...);
 extern value __arc_affyield(arc *c, value thr, value ccont);
 extern value __arc_affiowait(arc *c, value thr, value ccont, int fd);
+extern void __arc_thr_affinit(arc *c, value thr, int __vidx__);
+extern int __arc_thr_affip(arc *c, value thr);
+
+/* Continuations */
+extern value arc_mkcont(arc *c, value thr, int offset);
 
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
@@ -313,48 +315,40 @@ extern void arc_init(arc *c);
 
 /* Error handling */
 extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
-#if 0
 
 /* Arcueid Foreign Functions */
 
-#define ACONT value __acont__
-#define CVBEGIN int __vidx__ = 0
-#define CVDEF(x) int x = __vidx__++
-#define CV(x) (VINDEX(CONT_ENV(__ccont__), x))
-#define CVEND(c)						\
-  if (NIL_P(__ccont__)) {					\
-    __ccont__ = __arc_mkccont(c, __vidx__, (void *)__func__);	\
-  }
+#define AVBEGIN int __vidx__ = 0
+#define AVDEF(x) int x = __vidx__++
+#define AVEND(c, thr) (__arc_thr_affinit(c, thr, __vidx__));
+#define AV(x) (VINDEX(arc_thr_envr(c, thr), x))
 #define AFBEGIN					\
-  if (!NIL_P(__ccont__)) {			\
-  switch (FIX2INT(CONT_OFS(__ccont__))) {	\
+  switch (__arc_thr_affip(c, thr)) {		\
  case 0:;
 #define AFEND } }				\
     return(CNIL)
 
 #define AFCALL(c, thr, func, fargc, ...)				\
   do {									\
-    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(__arc_affapply(c, thr, __ccont__, func, fargc, __VA_ARGS__)); case __LINE__:; \
+    return(__arc_affapply(c, thr, arc_mkcont(c, thr, __LINE__), func, fargc, __VA_ARGS__)); case __LINE__:; \
   } while (0)
 
 #define AFCVAL(c, thr) (arc_thr_valr(c, thr))
 
 #define AYIELD(c, thr)							\
   do {									\
-    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(__arc_affyield(c, thr, __ccont__, CNIL)); case __LINE__:; \
+    return(__arc_affyield(c, thr, arc_mkcont(c, thr, __LINE__))); case __LINE__:; \
   } while (0)
 
 #define AIOWAIT(c, thr, fd)						\
   do {									\
-    CONT_OFS(__ccont__) = INT2FIX(__LINE__); return(arc_affiowait(c, thr, __ccont__, fd)); case __LINE__:; \
+    return(__arc_affiowait(c, thr, arc_mkcont(c, thr, __LINE__), fd)); case __LINE__:; \
   } while (0)
 
 #define ARETURN(c, thr, val)			\
   do {						\
     arc_thr_set_valr(c, thr, val);		\
-    return(APP_RET);				\
+    return(APP_RC);				\
   } while (0)
-
-#endif
 
 #endif
