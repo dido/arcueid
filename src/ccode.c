@@ -159,7 +159,7 @@ int __arc_affyield(arc *c, value thr, value cont)
 {
   /* add the continuation to the continuation register */
   TCONR(thr) = cons(c, cont, TCONR(thr));
-  return(APP_YIELD);
+  return(APP_RET);
 }
 
 int __arc_affiowait(arc *c, value thr, value cont, int fd)
@@ -167,7 +167,7 @@ int __arc_affiowait(arc *c, value thr, value cont, int fd)
   TCONR(thr) = cons(c, cont, TCONR(thr));
   TWAITFD(thr) = INT2FIX(fd);
   TSTATE(thr) = Tiowait;
-  return(APP_YIELD);
+  return(APP_RET);
 }
 
 int __arc_resume_aff(arc *c, value thr)
