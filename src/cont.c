@@ -48,11 +48,7 @@ value __arc_mkcont(arc *c, value thr, int offset)
 {
   value cont = mkcont(c);
 
-  if (TYPE(TFUNR(thr)) == T_CCODE)
-    CONT_OFS(cont) = INT2FIX(offset);
-  else {
-    /* CONT_OFS is calculated differently for other types of conts. */
-  }
+  CONT_OFS(cont) = INT2FIX(offset);
   CONT_ENV(cont) = TENVR(thr);
   CONT_FUN(cont) = TFUNR(thr);
   save_stack(c, thr, cont);
