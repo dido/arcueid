@@ -73,7 +73,7 @@ value arc_mkthread(arc *c)
   TSTACK(thr) = arc_mkvector(c, c->stksize);
   TSBASE(thr) = &VINDEX(TSTACK(thr), 0);
   TSP(thr) = TSTOP(thr) = &VINDEX(TSTACK(thr), c->stksize-1);
-  TIP(thr) = NULL;
+  TIP(thr).ipptr = NULL;
   TARGC(thr) = 0;
 
   TSTATE(thr) = Tready;
@@ -81,6 +81,7 @@ value arc_mkthread(arc *c)
   TQUANTA(thr) = 0;
   TTICKS(thr) = 0LL;
   TWAKEUP(thr) = 0LL;
+  TWAITFD(thr) = CNIL;
   return(thr);
 }
 
@@ -109,6 +110,11 @@ value arc_thr_set_valr(arc *c, value thr, value val)
 int arc_thr_argc(arc *c, value thr)
 {
   return(TARGC(thr));
+}
+
+value arc_thr_envr(arc *c, value thr)
+{
+  return(TENVR(thr));
 }
 
 void arc_init_threads(arc *c)
