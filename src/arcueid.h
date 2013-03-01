@@ -78,10 +78,9 @@ enum arc_types {
 struct arc;
 
 enum avals_t {
-  APP_RET=1,			/* Return straight to virtual machine */
+  APP_RET=1,			/* Return to thread dispatcher */
   APP_RC=3,			/* Restore continuation */
   APP_FNAPP=5,			/* Apply value register */
-  APP_YIELD=7			/* Yield interpreter */
 };
 
 /* Type functions */
@@ -367,7 +366,7 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 
 #define AFFDEF0(fname) int fname(arc *c, value thr) { int __vidx__ = 0; int __nparams__ = 0; do
 
-#define AFFEND while (0); return(APP_RET); }
+#define AFFEND while (0); return(APP_RC); }
 
 #define ADEFVAR(x) int x = __vidx__++
 
