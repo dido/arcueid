@@ -157,5 +157,6 @@ struct vmthread_t {
 extern void __arc_thr_trampoline(arc *c, value thr);
 extern int __arc_resume_aff(arc *c, value thr);
 extern void arc_restorecont(arc *c, value thr, value cont);
+extern int __arc_vmengine(arc *c, value thr);
 
 #endif
