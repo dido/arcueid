@@ -41,17 +41,17 @@ static void save_stack(arc *c, value thr, value cont)
     for (i=0; i<stklen; i++)
       VINDEX(savedstk, i) = *(TSP(thr) + i + 1);
   }
-  CONT_STK(thr) = savedstk;
+  CONT_STK(cont) = savedstk;
 }
 
-value __arc_mkcont(arc *c, value thr)
+value __arc_mkcont(arc *c, value thr, int offset)
 {
   value cont = mkcont(c);
 
-  if (TYPE(TENVR(thr)) == T_CCODE)
-    CONT_OFS(cont) = INT2FIX(TIP(thr).aff_line);
+  if (TYPE(TFUNR(thr)) == T_CCODE)
+    CONT_OFS(cont) = INT2FIX(offset);
   else {
-    /* CONT_OFS is calculated differently for other types of conts */
+    /* CONT_OFS is calculated differently for other types of conts. */
   }
   CONT_ENV(cont) = TENVR(thr);
   CONT_FUN(cont) = TFUNR(thr);
