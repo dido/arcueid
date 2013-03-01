@@ -91,7 +91,6 @@ enum threadstate {
   Tiowait,			/* I/O wait */
   Tioready,			/* I/O ready to resume */
   Tready,			/* ready to be scheduled */
-  Tyield,			/* thread yielded */
   Trelease			/* thread released */
 };
 
@@ -104,7 +103,10 @@ struct vmthread_t {
   value stack;			/* actual stack (a vector) */
   value *stkbase;		/* base pointer of the stack */
   value *stktop;		/* top of value stack */
-  value *ip;			/* instruction point */
+  union {
+    value *ipptr;		/* instruction pointer */
+    int aff_line;		/* line number in an AFF */
+  } ip;
   int argc;			/* argument count register */
 
   enum threadstate state;	/* thread state */
@@ -112,6 +114,7 @@ struct vmthread_t {
   int quanta;			/* time slice */
   unsigned long long ticks;	/* time used */
   unsigned long long wakeuptime; /* wakeup time */
+  value waitfd;			 /* file descriptor to wait on */
 };
 
 #define TFUNR(t) (((struct vmthread_t *)REP(t))->funr)
@@ -130,6 +133,7 @@ struct vmthread_t {
 #define TQUANTA(t) (((struct vmthread_t *)REP(t))->quanta)
 #define TTICKS(t) (((struct vmthread_t *)REP(t))->ticks)
 #define TWAKEUP(t) (((struct vmthread_t *)REP(t))->wakeuptime)
+#define TWAITFD(t) (((struct vmthread_t *)REP(t))->waitfd)
 
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
 #define CPOP(thr) (*(++TSP(thr)))
@@ -142,12 +146,16 @@ struct vmthread_t {
    1. Function
    2. Environment
    3. Saved stack
-
-   CONT_OFS and CONT_ENV are defined in arcueid.h
  */
+#define CONT_OFS(cont) (VINDEX(cont, 0))
 #define CONT_FUN(cont) (VINDEX(cont, 1))
+#define CONT_ENV(cont) (VINDEX(cont, 2))
 #define CONT_STK(cont) (VINDEX(cont, 3))
 
-extern int __arc_apply_aff(arc *c, value thr, value aff, value cont);
+#define CONT_SIZE 4
+
+extern void __arc_apply(arc *c, value thr);
+extern int __arc_resume_aff(arc *c, value thr);
+extern void arc_restorecont(arc *c, value thr, value cont);
 
 #endif
