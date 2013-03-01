@@ -57,9 +57,9 @@ static value apply_return(arc *c, value thr)
       in reverse order.
    3. The function to be called must be in the thread's value register.
 
-   It is intended to be called from within the virtual machine.
-*/
-void __arc_apply(arc *c, value thr)
+   This function is meant to be used from the thread dispatcher.
+ */
+void __arc_thr_trampoline(arc *c, value thr)
 {
   typefn_t *tfn;
   enum avals_t result;
