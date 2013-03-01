@@ -83,10 +83,10 @@ assign them to variables.
 Local variables are declared using the AVAR(...) macro.  All variables
 defined with this macro are Arcueid values.  Up to eight variables may
 be declared in this way: if more are required, just use additional
-AVAR declarations.  Locale variables and parameters are accessed using
-the AV() macro.  This macro is a valid C lvalue and so may be used as
-the target of an assignment.  The AVAR macro may only be used before
-the AFBEGIN macro: using it outside of AFBEGIN has no effect.
+AVAR declarations.  Local variables and parameters are accessed using
+the AV() macro.  This macro expands to a valid C lvalue and so may be
+used as the target of an assignment.  The AVAR macro may only be used
+before the AFBEGIN macro: using it outside of AFBEGIN has no effect.
 
 The actual code of the function should appear between an AFBEGIN/AFEND
 pair.  It is once again a mistake to leave off the AFEND, and doing so
@@ -101,7 +101,8 @@ the application of any value for which this makes sense to do.
 It is also possible to yield execution using the AYIELD macro.  This
 will end the current time slice and make other threads run instead.
 
-To make the current thread wait on I/O, the AIOWAIT macro is used.
+To make the current thread wait on I/O, the AIOWAIT macro is used.  It
+takes the file descriptor to wait on.
 
 A small number of ground rules must also be observed by such a
 function:
