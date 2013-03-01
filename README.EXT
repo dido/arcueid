@@ -41,9 +41,10 @@ after the function terminates.
 If argc is -2, the function is called an Arcueid Foreign Function and
 will be called as:
 
-value func(arc *c, value thr, ACONT)
+int func(arc *c, value thr)
 
-An Arcueid foreign function has special conventions for use.
+See the section on Arcueid foreign functions for how they are supposed
+to be used.
 
 Arcueid Foreign Functions
 =========================
@@ -51,51 +52,73 @@ Arcueid Foreign Functions
 Arcueid foreign functions (AFFs) are the most general foreign function
 interface available for Arcueid.  Simple foreign functions (SFFs) have
 limitations in that they are unable to call native Arcueid functions,
-yield control, or provide non-blocking I/O.  Variables in AFFs can
-also be handled by the garbage collector.
+yield control, provide non-blocking I/O.  The AFF mechanism has all
+these facilities and more: locally scoped variables and parameter
+lists are also preserved across garbage collections, and it is
+possible to create continuations from them!
 
-AFFs have the following basic structure:
+An AFF is declared as follows:
 
-value aff_func(arc *c, value thr, ACONT)
+AFFDEF(test, arg1, arg2)
 {
-  CVBEGIN;
-  CVDEF(var1);
-  CVDEF(var2);
-  CVEND(c, thr);
-
-  AFBEGIN
-  /* function body */
-  AFEND
+  AVAR(lvar);
+  AFBEGIN;
+  AV(lvar) = INT2FIX(FIX2INT(AV(arg1)) - FIX2INT(AV(arg2)));
+  ARETURN(INT2FIX(AV(lvar)));
+  AFEND;
 }
+AFFEND
 
-Variables, which must be Arcueid values, must be declared with the
-CVDEF macro within the CVBEGIN and CVEND sections. These variables
-must be accessed with the CV macro, which may be used as a normal C
-lvalue.  Variables declared outside of the CVBEGIN/CVEND section are
-not guaranteed to be preserved after use of an AFCALL, AYIELD, or
-AIOWAIT macro unless they are static (and you probably shouldn't be
-using those either, especially if they are Arcueid values: they'll get
-garbage collected!).  When an AFF wants to return normally it must use
-the ARETURN macro.
+The AFFDEF / AFFEND pair are macros that set up the foreign function.
+It is a mistake to leave off the AFFEND marker; doing so produces all
+sorts of strange errors when the code is compiled.  The AFFDEF macro
+can only be used when one has from one to eight arguments.  If the
+function has no arguments, the AFFDEF0 macro should be used instead.
+The AFFDEF0 macro is also used if one requires more than eight
+arguments, or a variable number of arguments: it will be necessary
+then to extract arguments manually from the thread stack rather than
+using these built-in macros to automatically create arguments and
+assign them to variables.
 
-It is possible for an AFF to call another Arcueid function of any type
-by using the AFCALL macro:
+Local variables are declared using the AVAR(...) macro.  All variables
+defined with this macro are Arcueid values.  Up to eight variables may
+be declared in this way: if more are required, just use additional
+AVAR declarations.  Locale variables and parameters are accessed using
+the AV() macro.  This macro is a valid C lvalue and so may be used as
+the target of an assignment.  The AVAR macro may only be used before
+the AFBEGIN macro: using it outside of AFBEGIN has no effect.
 
-AFCALL(c, thr, func, fargc, ...)
+The actual code of the function should appear between an AFBEGIN/AFEND
+pair.  It is once again a mistake to leave off the AFEND, and doing so
+will result in all sorts of strange errors on compilation.
 
-The return value of the called function is available through the
-AFCVAL macro.
+Values may be applied using the AFCALL macro.  This macro takes a
+value that may be applied as its first argument, and any arguments
+that the function takes (this is, unlike the other macros,
+unlimited).  It should in principle be possible to get the results of
+the application of any value for which this makes sense to do.
 
-Because of the way the AFF macros are built (the actual innards of the
-AFF macros are inspired by Simon Tatham's C coroutines [1]), some
-ground rules are needed in order to avoid problems:
+It is also possible to yield execution using the AYIELD macro.  This
+will end the current time slice and make other threads run instead.
+
+To make the current thread wait on I/O, the AIOWAIT macro is used.
+
+A small number of ground rules must also be observed by such a
+function:
 
 1. You cannot use AFCALL, AYIELD, or AIOWAIT inside of a switch
    statement.  Doing so will result in a cryptic syntax error.
 2. AFCALL, AYIELD, and AIOWAIT should never appear together on the
    same line. 
-3. Do not define local variables named __vidx__ or __ccont__.  They
-   will conflict with 
+3. Do not define local variables named c, thr, __vidx__, or
+   __nparams__.  These will conflict with the variables used by the
+   AFF macros.
+
+For a function that needs more than eight parameters or a variable
+number of parameters, the number of parameters actually passed may be
+obtained by arc_thr_argc(c, thr).  A parameter may be obtained from
+the stack using arc_thr_pop(c, thr), and this can be assigned to a
+local variable if required.
 
 [1] Simon Tatham. "Coroutines in C".
     http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
