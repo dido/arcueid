@@ -185,6 +185,7 @@ extern typefn_t __arc_wtable_typefn__;
 extern typefn_t __arc_code_typefn__;
 extern typefn_t __arc_thread_typefn__;
 extern typefn_t __arc_vector_typefn__;
+extern typefn_t __arc_cfunc_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -204,7 +205,7 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_VECTOR] = &__arc_vector_typefn__;
 
   c->typefns[T_WTABLE] = &__arc_wtable_typefn__;
-
+  c->typefns[T_CCODE] = &__arc_cfunc_typefn__;
 }
 
 void arc_init(arc *c)
