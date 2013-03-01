@@ -136,15 +136,20 @@ int __arc_affapply(arc *c, value thr, value cont, value func, ...)
 {
   va_list ap;
   value arg;
+  int argc=0;
 
   /* add the continuation to the continuation register */
   TCONR(thr) = cons(c, cont, TCONR(thr));
   va_start(ap, func);
   /* Push the arguments onto the stack. Look for the CLASTARG sentinel
      value. */
-  while ((arg = va_arg(ap, value)) != CLASTARG)
+  while ((arg = va_arg(ap, value)) != CLASTARG) {
+    argc++;
     CPUSH(thr, arg);
+  }
   va_end(ap);
+  /* set the argument count */
+  TARGC(thr) = argc;
   /* set the value register to the function to be called */
   TVALR(thr) = func;
   return(APP_FNAPP);
