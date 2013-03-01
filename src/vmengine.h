@@ -154,7 +154,7 @@ struct vmthread_t {
 
 #define CONT_SIZE 4
 
-extern void __arc_apply(arc *c, value thr);
+extern void __arc_thr_trampoline(arc *c, value thr);
 extern int __arc_resume_aff(arc *c, value thr);
 extern void arc_restorecont(arc *c, value thr, value cont);
 
