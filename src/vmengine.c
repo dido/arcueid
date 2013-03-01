@@ -78,10 +78,11 @@ void __arc_thr_trampoline(arc *c, value thr)
 	 re-invocation of an AFF. */
       switch (result) {
       case APP_RET:
-	/* This case is used on the application of a closure, which contains
-	   virtual machine code.  Running the apply function would have set
-	   up the thread registers to the proper values for it to begin
-	   execution when we return. */
+	/* This case is used for returning to the thread dispatcher. Used
+	   when either the thread quantum expires, the function yields, or
+	   the thread becomes blocked for whatever reason.  If the thread
+	   is to resume execution, a continuation must have been set up
+	   prior to entering this state. */
 	return;
       case APP_FNAPP:
 	/* If an Arcueid Foreign Function returns APP_FNAPP, it will have
@@ -91,11 +92,6 @@ void __arc_thr_trampoline(arc *c, value thr)
 	   called.  Looping back will thus take care of what we need to do
 	   nicely! */
 	break;
-      case APP_YIELD:
-	/* Yield interpreter.  By reducing the quantum to 0, we end the
-	   thread's time slice. */
-	TQUANTA(thr) = 0;
-	return;
       case APP_RC:
       default:
 	/* Restore the last continuation on the continuation register.  Just
@@ -112,14 +108,31 @@ void __arc_thr_trampoline(arc *c, value thr)
 	}
 	/* If the continuation is a normal one, just return.  It was already
 	   restored by the call to __arc_return */
-	if (TYPE(CONT_FUN(cont)) != T_CCODE)
-	  return;
-	/* If we get an AFF's continuation, the thread state should have been
-	   restored to a state suitable for resuming the function. */
-	result = __arc_resume_aff(c, thr);
+	if (TYPE(CONT_FUN(cont)) == T_CCODE) {
+	  /* If we get an AFF's continuation, the thread state should have been
+	     restored to a state suitable for resuming the function. */
+	  result = __arc_resume_aff(c, thr);
+	}
 	continue;
       }
       break;
     }
   }
+}
+
+/* The actual virtual machine engine.  Fits into the trampoline just
+   like a normal function. */
+int __arc_vmengine(arc *c, value thr)
+{
+  int offset;
+  value *base;
+
+  goto endquantum;
+
+ endquantum:
+  /* Save a continuation to restore later on the next context switch */
+  base = &VINDEX(CODE_CODE(TFUNR(thr)), 0);
+  offset = TIP(thr).ipptr - base;
+  TCONR(thr) = cons(c, __arc_mkcont(c, thr, offset), TCONR(thr));
+  return(APP_RET);
 }
