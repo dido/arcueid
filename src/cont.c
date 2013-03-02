@@ -60,9 +60,10 @@ void arc_restorecont(arc *c, value thr, value cont)
   value savedstk;
   int offset, stklen, i;
 
-  /* First, restore the saved stack */
+  /* restore function and environment */
   TFUNR(thr) = CONT_FUN(cont);
   TENVR(thr) = CONT_ENV(cont);
+  /* restore the saved stack */
   savedstk = VINDEX(cont, 3);
   stklen = (savedstk == CNIL) ? 0 : VECLEN(savedstk);
   TSP(thr) = TSTOP(thr) - stklen;
@@ -73,5 +74,29 @@ void arc_restorecont(arc *c, value thr, value cont)
     TIP(thr).aff_line = offset;
     return;
   }
-  /* XXX - work out what to do for other types of continuations */
+  /* XXX - work out what to do for a closure-based continuation */
 }
+
+static value cont_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+{
+  __arc_append_cstring(c, "#<continuation>", ppstr);
+  return(*ppstr);
+}
+
+static int cont_apply(arc *c, value thr, value cont)
+{
+  /* Applying a continuation just means it goes on the continuation
+     register and we make it go. */
+  TCONR(thr) = cons(c, cont, TCONR(thr));
+  return(APP_RC);
+}
+
+typefn_t __arc_cont_typefn__ = {
+  __arc_vector_marker,
+  __arc_null_sweeper,
+  cont_pprint,
+  __arc_vector_hash,
+  NULL,
+  __arc_vector_isocmp,
+  cont_apply
+};
