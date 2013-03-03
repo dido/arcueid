@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** DONE base virtual machine [7/7]
+** TODO base virtual machine [5/7]
    We need to rethink the structure of the virtual machine.  It now
    seems that vmgen might not have been such a good idea, and we
    should probably write our own interpreter core directly.
@@ -18,52 +18,51 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [X] Implement virtual machine instructions [39/39]
-      - [X] nop
-      - [X] push
-      - [X] pop
-      - [X] ldl
-      - [X] ldi
-      - [X] ldg
-      - [X] stg
-      - [X] lde
-      - [X] ste
-      - [X] mvarg
-      - [X] mvoarg
-      - [X] mvrarg
-      - [X] cont
-      - [X] env
-      - [X] apply
-      - [X] ret
-      - [X] jmp
-      - [X] jt
-      - [X] jf
-      - [X] true
-      - [X] nil
-      - [X] hlt
-      - [X] add
-      - [X] sub
-      - [X] mul
-      - [X] div
-      - [X] cons
-      - [X] car
-      - [X] cdr
-      - [X] scar
-      - [X] scdr
-      - [X] spl
-      - [X] is
-      - [X] iso
-      - [X] gt
-      - [X] lt
-      - [X] dup
-      - [X] cls
-      - [X] consr
-    - [X] Build a foreign function interface [4/4]
+    - [ ] Implement virtual machine instructions [0/39]
+      - [ ] nop
+      - [ ] push
+      - [ ] pop
+      - [ ] ldl
+      - [ ] ldi
+      - [ ] ldg
+      - [ ] stg
+      - [ ] lde
+      - [ ] ste
+      - [ ] mvarg
+      - [ ] mvoarg
+      - [ ] mvrarg
+      - [ ] cont
+      - [ ] env
+      - [ ] apply
+      - [ ] ret
+      - [ ] jmp
+      - [ ] jt
+      - [ ] jf
+      - [ ] true
+      - [ ] nil
+      - [ ] hlt
+      - [ ] add
+      - [ ] sub
+      - [ ] mul
+      - [ ] div
+      - [ ] cons
+      - [ ] car
+      - [ ] cdr
+      - [ ] scar
+      - [ ] scdr
+      - [ ] spl
+      - [ ] is
+      - [ ] iso
+      - [ ] gt
+      - [ ] lt
+      - [ ] dup
+      - [ ] cls
+      - [ ] consr
+    - [X] Build a foreign function interface [3/3]
       - [X] Calling convention 1 (straight args)
       - [X] Calling convention 2 (args as a C array)
-      - [X] Calling convention 3 (args as an Arcueid vector)
-      - [X] Calling convention 4 - functions that can call Arc functions
-    - [X] Enable GCC's labels as values for doing interpreter threading
+      - [X] Arcueid Foreign Functions (AFF)
+    - [ ] Enable GCC's labels as values for doing interpreter threading
 	  The macro structure is already in place.  We only need to fill
 	  in some of the conditional compilation stuff and defines.
     - [X] Type invocations [5/5]
@@ -76,113 +75,106 @@ notice and this notice are preserved.
       - [X] string
 ** DONE memory management [2/2]
    - [X] memory allocator
-	 A very simple free-list based memory allocator.  There might be
-	 better algorithms out there but let's get a simple one out
-	 the door first and then worry about making it more efficient
-	 later.
+	 A BiBOP-based memory allocator. Keep things simple first.
    - [X] garbage collector
-	 We use the Huelsbergen-Winterbottom VCGC algorithm.  We use
-	 it single-threaded exactly the way Inferno uses it, with
-	 interpretation interleaved with garbage collection.  Later on
-	 when we have real threads in the language we'll make it into
-	 a real threaded implementation with a real OS-level thread to
-	 do the marking and sweeping.
-** DONE Arc reader [11/11]
-   - [X] Lists
-   - [X] Improper lists
-   - [X] Bracketed functions
-   - [X] Quotes
-   - [X] Quasiquotes
-   - [X] Comma expressions
-   - [X] Strings
-   - [X] Characters
-   - [X] Comments
-   - [X] Atoms and Symbols
-   - [X] Special syntax
-** DONE Arc compiler [4/4]
-   - [X] Literal expressions [9/9]
-     - [X] nil
-     - [X] true (t)
-     - [X] character
-     - [X] string
-     - [X] fixnum
-     - [X] bignum
-     - [X] flonum
-     - [X] rational
-     - [X] complex
-   - [X] Symbols [2/2]
-     - [X] Environment symbols
-     - [X] Global symbols
-   - [X] Lists [3/3]
-     - [X] Special forms [5/5]
-       - [X] if
-       - [X] fn [5/5]
-	 - [X] single symbol arguments
-	 - [X] simple argument lists
-	 - [X] optional arguments
-         - [X] rest arguments
-	 - [X] destructuring binds
-       - [X] quote
-       - [X] quasiquote
-       - [X] assign
-     - [X] Inline functions [10/10]
-       - [X] cons
-       - [X] car
-       - [X] cdr
-       - [X] scar
-       - [X] scdr
-       - [X] is
-       - [X] +
-       - [X] -
-       - [X] *
-       - [X] /
-     - [X] Function applications
-   - [X] Macros
-** TODO basic data types [15/16]
+	 A simple mark and sweep garbage collector for now. Keep things
+	 simple first.
+** TODO Arc reader [0/11]
+   - [ ] Lists
+   - [ ] Improper lists
+   - [ ] Bracketed functions
+   - [ ] Quotes
+   - [ ] Quasiquotes
+   - [ ] Comma expressions
+   - [ ] Strings
+   - [ ] Characters
+   - [ ] Comments
+   - [ ] Atoms and Symbols
+   - [ ] Special syntax
+** TODO Arc compiler [0/4]
+   - [ ] Literal expressions [0/9]
+     - [ ] nil
+     - [ ] true (t)
+     - [ ] character
+     - [ ] string
+     - [ ] fixnum
+     - [ ] bignum
+     - [ ] flonum
+     - [ ] rational
+     - [ ] complex
+   - [ ] Symbols [0/2]
+     - [ ] Environment symbols
+     - [ ] Global symbols
+   - [ ] Lists [0/3]
+     - [ ] Special forms [0/5]
+       - [ ] if
+       - [ ] fn [0/5]
+	 - [ ] single symbol arguments
+	 - [ ] simple argument lists
+	 - [ ] optional arguments
+         - [ ] rest arguments
+	 - [ ] destructuring binds
+       - [ ] quote
+       - [ ] quasiquote
+       - [ ] assign
+     - [ ] Inline functions [0/10]
+       - [ ] cons
+       - [ ] car
+       - [ ] cdr
+       - [ ] scar
+       - [ ] scdr
+       - [ ] is
+       - [ ] +
+       - [ ] -
+       - [ ] *
+       - [ ] /
+     - [ ] Function applications
+   - [ ] Macros
+** TODO basic data types [9/16]
     - [X] Nil
     - [X] True
-    - [X] Numeric Types [5/5]
-      - [X] fixnum
-      - [X] bignum
-      - [X] flonum
-      - [X] complex
-      - [X] rational
+    - [ ] Numeric Types [0/5]
+      - [ ] fixnum
+      - [ ] bignum
+      - [ ] flonum
+      - [ ] complex
+      - [ ] rational
     - [X] Characters
     - [X] Strings
     - [X] Symbols
     - [X] Conses
     - [X] Tables
     - [X] Vectors
-    - [X] Tagged
-    - [X] Functions
-    - [X] Input Ports
-    - [X] Output Ports
+    - [ ] Tagged
+    - [ ] Functions
+    - [ ] Input Ports
+    - [ ] Output Ports
     - [X] Threads
-    - [X] Channels
+    - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [17/19]
+** TODO Runtime Built-In Functions [2/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
-   - [X] Initialization for binding runtime primitives to global symbols
-   - [X] Type handling [5/5]
-     - [X] coerce [10/10]
-       - [X] Integer conversions [5/5]
+   - [ ] Initialization for binding runtime primitives to global symbols
+   - [ ] Type handling [0/5]
+     - [ ] coerce [0/10]
+       - [ ] Integer conversions [0/5]
 	     Note that fixnum and bignum may be used as aliases for int
-         - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
-         - [X] flonum -> int
+         - [ ] char -> int (results in a fixnum from 0 - 0x10FFFF)
+         - [ ] flonum -> int
 	       Either fixnum or bignum as needed.
-         - [X] complex -> int
+         - [ ] complex -> int
 	       optional argument for imaginary, use 'im
-         - [X] rational -> int
+         - [ ] rational -> int
 	       May return fixnum or bignum as needed
-         - [X] string -> int, base specified as optional arg
-       - [X] Flonum conversions [5/5]
-         - [X] fixnum -> flonum
-         - [X] bignum -> flonum
-         - [X] rational -> flonum
-         - [X] complex -> flonum
+         - [ ] string -> int, base specified as optional arg
+       - [ ] Flonum conversions [0/5]
+         - [ ] fixnum -> flonum
+         - [ ] bignum -> flonum
+         - [ ] rational -> flonum
+         - [ ] complex -> flonum
 	       Extra argument for Im(z)
-         - [X] string -> flonum
+         - [ ] string -> flonum
 	       A base may be specified here as well.  Arc3 does not allow
 	       specification of an exponent for bases greater than 14, but
 	       Arcueid allows alternate use of an '&' character to denote
@@ -190,61 +182,61 @@ notice and this notice are preserved.
                less than 25 (as per strtod).  The strings '±inf' and 'nan'
                with any capitalization, with or without a trailing .0, will
                create an infinity or a NaN respectively.
-       - [X] Rational conversions [5/5]
-         - [X] fixnum -> rational
+       - [ ] Rational conversions [0/5]
+         - [ ] fixnum -> rational
 	       This has no real effect.  It will still return the original
 	       fixnum, without error.         
-         - [X] bignum -> rational
+         - [ ] bignum -> rational
 	       Also has no effect, returning the original bignum without
 	       error.
-         - [X] flonum -> rational
-         - [X] complex -> rational
+         - [ ] flonum -> rational
+         - [ ] complex -> rational
 	       Extra argument for Im(z)
-         - [X] string -> rational, base specified as optional arg
+         - [ ] string -> rational, base specified as optional arg
 	       May return a fixnum or a bignum instead depending on the
 	       value therein.
-       - [X] Complex conversions [5/5]
-         - [X] fixnum -> complex
+       - [ ] Complex conversions [0/5]
+         - [ ] fixnum -> complex
 	       Works the same as fixnum -> flonum
-         - [X] bignum -> complex
+         - [ ] bignum -> complex
 	       Works the same as bignum -> flonum
-         - [X] flonum -> complex
+         - [ ] flonum -> complex
 	       Has no effect, returning the original flonum
-         - [X] string -> complex
+         - [ ] string -> complex
 	       May return a flonum if no imaginary part is specified.
-	 - [X] cons -> complex
-       - [X] String conversions [10/10]
-	 - [X] nil -> string
-         - [X] char -> string
-         - [X] fixnum -> string
+	 - [ ] cons -> complex
+       - [ ] String conversions [0/10]
+	 - [ ] nil -> string
+         - [ ] char -> string
+         - [ ] fixnum -> string
 	       Has extra argument specifying base
-         - [X] bignum -> string
+         - [ ] bignum -> string
 	       Has extra argument specifying base
-         - [X] rational -> string
+         - [ ] rational -> string
 	       Has extra argument specifying base
-         - [X] flonum -> string
-         - [X] complex -> string
-         - [X] cons -> string
-         - [X] vector -> string
-         - [X] symbol -> string
-       - [X] Cons conversions [4/4]
-         - [X] rational -> cons
+         - [ ] flonum -> string
+         - [ ] complex -> string
+         - [ ] cons -> string
+         - [ ] vector -> string
+         - [ ] symbol -> string
+       - [ ] Cons conversions [0/4]
+         - [ ] rational -> cons
 	       car = numerator, cdr = denominator, could be fixnums or
 	       bignums as needed.
-         - [X] complex -> cons
+         - [ ] complex -> cons
 	       car = Re(z), cdr = Im(z)
-         - [X] vector -> cons
-         - [X] string -> cons (char list)
-       - [X] Symbol conversions [2/2]
-         - [X] char -> sym
-         - [X] string -> sym
-       - [X] Vector conversions [2/2]
-         - [X] string -> vector (char vector)
-         - [X] cons -> vector
-       - [X] fixnum -> char
+         - [ ] vector -> cons
+         - [ ] string -> cons (char list)
+       - [ ] Symbol conversions [0/2]
+         - [ ] char -> sym
+         - [ ] string -> sym
+       - [ ] Vector conversions [0/2]
+         - [ ] string -> vector (char vector)
+         - [ ] cons -> vector
+       - [ ] fixnum -> char
              limit to 0 - 0x10FFFF, also exclude 0xd800-0xdfff, invalid
 	     Unicode block.
-       - [X] string -> num
+       - [ ] string -> num
 	     Converts any string into a number of the appropriate
 	     type.  This should use the best available numeric type
 	     that is able to most accurately represent the value
@@ -262,117 +254,117 @@ notice and this notice are preserved.
 	 5. If string contains '&', convert as floating point.
 	 6. If string contains '/', convert as rational.
 	 7. Otherwise, consider string as representing an integer
-     - [X] type
-     - [X] annotate
-     - [X] rep
-     - [X] sym
-   - [X] Predicates [10/10]
-     - [X] Less-than (<) *
-     - [X] Greater-than (>) *
-     - [X] Less-than or equal (<=) *
-     - [X] Greater-than or equal (>=) *
-     - [X] spaceship operator (<=>) * (Arcueid extension)
-     - [X] bound
-     - [X] exact
+     - [ ] type
+     - [ ] annotate
+     - [ ] rep
+     - [ ] sym
+   - [-] Predicates [2/10]
+     - [ ] Less-than (<) *
+     - [ ] Greater-than (>) *
+     - [ ] Less-than or equal (<=) *
+     - [ ] Greater-than or equal (>=) *
+     - [ ] spaceship operator (<=>) * (Arcueid extension)
+     - [ ] bound
+     - [ ] exact
      - [X] is
      - [X] iso
-     - [X] fixnump
+     - [ ] fixnump
    - [X] List operations [5/5]
      - [X] car (implemented as a virtual machine instruction)
      - [X] cdr (implemented as a virtual machine instruction)
      - [X] cons (implemented as a virtual machine instruction)
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
-   - [X] Math operations [4/4]
-     - [X] Arithmetic [5/5]
-       - [X] * Multiplication (virtual machine instruction)
-       - [X] + Addition (virtual machine instruction)
-       - [X] - Subtraction (virtual machine instruction)
-       - [X] / Division (virtual machine instruction)
-       - [X] idiv integer division
-     - [X] Complex arithmetic [4/4]
+   - [ ] Math operations [0/4]
+     - [ ] Arithmetic [0/5]
+       - [ ] * Multiplication (virtual machine instruction)
+       - [ ] + Addition (virtual machine instruction)
+       - [ ] - Subtraction (virtual machine instruction)
+       - [ ] / Division (virtual machine instruction)
+       - [ ] idiv integer division
+     - [ ] Complex arithmetic [0/4]
 	   This is again an Arcueid extension.  It's rather annoying
 	   to have support for complex numbers but no functions to
 	   manipulate them.
-       - [X] real
-       - [X] imag
-       - [X] conj
-       - [X] arg -- complex argument
-     - [X] Arc3-current functions [6/6]
-       - [X] expt
-       - [X] mod
-       - [X] rand
-       - [X] srand
-       - [X] sqrt
-       - [X] trunc
-     - [X] C99 math.h functions (Arcueid only) [37/37]
+       - [ ] real
+       - [ ] imag
+       - [ ] conj
+       - [ ] arg -- complex argument
+     - [ ] Arc3-current functions [0/6]
+       - [ ] expt
+       - [ ] mod
+       - [ ] rand
+       - [ ] srand
+       - [ ] sqrt
+       - [ ] trunc
+     - [ ] C99 math.h functions (Arcueid only) [0/37]
 	   These functions should support complex arguments in as far
 	   as it makes sense to do so.
-       - [X] abs -- works for all numeric types
-       - [X] acos
-       - [X] acosh
-       - [X] asin
-       - [X] asinh
-       - [X] atan
-       - [X] atan2
-       - [X] atanh
-       - [X] cbrt
-       - [X] ceil
-       - [X] cos
-       - [X] cosh
-       - [X] erf
-       - [X] erfc
-       - [X] exp
-       - [X] expm1
-       - [X] floor
-       - [X] fmod
-       - [X] frexp
-       - [X] hypot
-       - [X] ldexp
-       - [X] lgamma
-       - [X] log
-       - [X] log10
-       - [X] log2
-       - [X] logb
-       - [X] modf
-       - [X] nan
-       - [X] nearbyint
-       - [X] pow (alias for expt)
-       - [X] sin
-       - [X] sinh
-       - [X] sqrt (also in arc3)
-       - [X] tan
-       - [X] tanh
-       - [X] tgamma
-       - [X] trunc (also in arc3)
-   - [X] Table operations [2/2]
-     - [X] maptable
+       - [ ] abs -- works for all numeric types
+       - [ ] acos
+       - [ ] acosh
+       - [ ] asin
+       - [ ] asinh
+       - [ ] atan
+       - [ ] atan2
+       - [ ] atanh
+       - [ ] cbrt
+       - [ ] ceil
+       - [ ] cos
+       - [ ] cosh
+       - [ ] erf
+       - [ ] erfc
+       - [ ] exp
+       - [ ] expm1
+       - [ ] floor
+       - [ ] fmod
+       - [ ] frexp
+       - [ ] hypot
+       - [ ] ldexp
+       - [ ] lgamma
+       - [ ] log
+       - [ ] log10
+       - [ ] log2
+       - [ ] logb
+       - [ ] modf
+       - [ ] nan
+       - [ ] nearbyint
+       - [ ] pow (alias for expt)
+       - [ ] sin
+       - [ ] sinh
+       - [ ] sqrt (also in arc3)
+       - [ ] tan
+       - [ ] tanh
+       - [ ] tgamma
+       - [ ] trunc (also in arc3)
+   - [-] Table operations [1/2]
+     - [ ] maptable
      - [X] table
-   - [X] Evaluation [4/4]
-     - [X] eval
+   - [-] Evaluation [1/4]
+     - [ ] eval
 	   We will implement eval by calling the compiler on the
 	   expression to be evaluated.  The output of the compiler
 	   is a T_CODE object which we can convert into a closure by
 	   combining it with the caller's environment.
      - [X] apply
-     - [X] ssexpand
-     - [X] ssyntax
-   - [X] Macros [4/4]
-     - [X] macex
-     - [X] macex1
-     - [X] sig
+     - [ ] ssexpand
+     - [ ] ssyntax
+   - [ ] Macros [0/4]
+     - [ ] macex
+     - [ ] macex1
+     - [ ] sig
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
-     - [X] uniq
-   - [X] Basic I/O primitives (src/io.c) [5/5]
+     - [ ] uniq
+   - [ ] Basic I/O primitives (src/io.c) [0/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
-     - [X] Input [5/5]
-       - [X] readb
-       - [X] readc
-       - [X] peekc
+     - [ ] Input [0/5]
+       - [ ] readb
+       - [ ] readc
+       - [ ] peekc
 	     Implemented in terms of ungetc
-       - [X] ungetc - this is not part of standard Arc
+       - [ ] ungetc - this is not part of standard Arc
 	   Note that there is no ungetb function.  This is proving a
 	   little tricky to implement.  Maybe what we should do is
 	   simplify the semantics of ungetc so that it requires a
@@ -381,60 +373,60 @@ notice and this notice are preserved.
 	   CHARACTER.  This saves us the trouble of decoding Unicode
 	   all over again, and reinforces the maxim of never mixing
 	   the b functions with the c functions.
-       - [X] sread
-     - [X] Output [3/3]
-       - [X] writeb
-       - [X] writec
-       - [X] write
-     - [X] File I/O [3/3]
-       - [X] infile
-       - [X] outfile
-       - [X] close
-     - [X] String port I/O [3/3]
+       - [ ] sread
+     - [ ] Output [0/3]
+       - [ ] writeb
+       - [ ] writec
+       - [ ] write
+     - [ ] File I/O [0/3]
+       - [ ] infile
+       - [ ] outfile
+       - [ ] close
+     - [ ] String port I/O [0/3]
 	     Note that doing readb/writeb or readc/writec on a string
 	     port have the same effect.  Strings are made up of Unicode
 	     characters so it would be quite messy to implement a
 	     separate 'byte index' into what is made up of characters.
-       - [X] instring
-       - [X] outstring
-       - [X] inside
-     - [X] Seeking / telling [2/2]
+       - [ ] instring
+       - [ ] outstring
+       - [ ] inside
+     - [ ] Seeking / telling [0/2]
              Note that these essential functions are not available in
              PG-Arc for some reason but will probably be necessary to
              implement CIEL.
-       - [X] seek
-       - [X] tell
-   - [X] Additional I/O functions (src/io.c) [8/8]
+       - [ ] seek
+       - [ ] tell
+   - [ ] Additional I/O functions (src/io.c) [0/8]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
-     - [X] pipe-from
-     - [X] stdin
-     - [X] stdout
-     - [X] stderr
-     - [X] call-w/stdin
-     - [X] call-w/stdout
-     - [X] disp
-     - [X] flushout -- XXX this is a no-op
-   - [X] Threads [2/2]
-     - [X] Creating and managing threads [8/8]
-       - [X] new-thread (spawn)
-       - [X] break-thread
-       - [X] kill-thread
-       - [X] current-thread
-       - [X] dead
-       - [X] sleep
-       - [X] atomic-invoke - implemented using channels
-       - [X] tjoin (not in standard Arc)
-     - [X] Channels (cf. Limbo and CSP, Arcueid extension) [3/3]
-       - [X] chan
-       - [X] <- (recv-channel) *
-       - [X] <-= (send-channel) *
-   - [-] Networking [3/11]
-     - [X] open-socket
+     - [ ] pipe-from
+     - [ ] stdin
+     - [ ] stdout
+     - [ ] stderr
+     - [ ] call-w/stdin
+     - [ ] call-w/stdout
+     - [ ] disp
+     - [ ] flushout -- XXX this is a no-op
+   - [ ] Threads [0/2]
+     - [ ] Creating and managing threads [0/8]
+       - [ ] new-thread (spawn)
+       - [ ] break-thread
+       - [ ] kill-thread
+       - [ ] current-thread
+       - [ ] dead
+       - [ ] sleep
+       - [ ] atomic-invoke - implemented using channels
+       - [ ] tjoin (not in standard Arc)
+     - [ ] Channels (cf. Limbo and CSP, Arcueid extension) [0/3]
+       - [ ] chan
+       - [ ] <- (recv-channel) *
+       - [ ] <-= (send-channel) *
+   - [ ] Networking [0/11]
+     - [ ] open-socket
      - [ ] getaddrinfo (Arcueid only)
      - [ ] socket (Arcueid extension)
-     - [X] client-ip
-     - [X] socket-accept
+     - [ ] client-ip
+     - [ ] socket-accept
      - [ ] socket-bind (Arcueid only)
      - [ ] socket-listen (Arcueid only)
      - [ ] socket-connect (Arcueid only)
@@ -445,54 +437,54 @@ notice and this notice are preserved.
 	   on systems that support them.  Only fall back to standard
 	   POSIX.1-2001 select(2) only if no alternatives are
 	   available.
-   - [X] File system operations [5/5]
-     - [X] dir
-     - [X] dir-exists
-     - [X] file-exists
-     - [X] rmfile
-     - [X] mvfile
-   - [X] Error handling and continuations [5/5]
-     - [X] details
-     - [X] err
-     - [X] on-err
-     - [X] ccc
-     - [X] protect
+   - [ ] File system operations [0/5]
+     - [ ] dir
+     - [ ] dir-exists
+     - [ ] file-exists
+     - [ ] rmfile
+     - [ ] mvfile
+   - [ ] Error handling and continuations [0/5]
+     - [ ] details
+     - [ ] err
+     - [ ] on-err
+     - [ ] ccc
+     - [ ] protect
    - [X] Strings [1/1]
      - [X] newstring
-   - [X] Time [5/5]
-     - [X] current-gc-milliseconds
-     - [X] current-process-milliseconds
-     - [X] msec
-     - [X] seconds
-     - [X] timedate
+   - [ ] Time [0/5]
+     - [ ] current-gc-milliseconds
+     - [ ] current-process-milliseconds
+     - [ ] msec
+     - [ ] seconds
+     - [ ] timedate
    - [ ] Regular Expressions (Arcueid extension) [0/3]
      - [ ] rxcompile
      - [ ] rxescape
      - [ ] rxmatch (=~)
-   - [X] Miscellaneous OS operations [3/3]
-     - [X] system
-     - [X] quit
-     - [X] setuid
-   - [X] Miscellaneous [4/4]
-     - [X] sref *
-     - [X] len
-     - [X] bound
-     - [X] memory
-** TODO Threading [4/6]
-   - [X] Basic scheduling
-   - [X] Suspend threads on I/O
-   - [X] Synchronization
+   - [ ] Miscellaneous OS operations [0/3]
+     - [ ] system
+     - [ ] quit
+     - [ ] setuid
+   - [ ] Miscellaneous [0/4]
+     - [ ] sref *
+     - [ ] len
+     - [ ] bound
+     - [ ] memory
+** TODO Threading [0/6]
+   - [ ] Basic scheduling
+   - [ ] Suspend threads on I/O
+   - [ ] Synchronization
    - [ ] Deadlock detection
-   - [X] Thread control
+   - [ ] Thread control
    - [ ] alt mechanism
 ** TODO Baseline environment (arc.arc)
    We will doubtless need to customize the base environment provided in
    PG-Arc.
 ** TODO pretty printer
-** DONE REPL [3/3]
-   - [X] Simple non-readline REPL
-   - [X] Read in an initial file for REPL
-   - [X] Readline support
+** TODO REPL [0/3]
+   - [ ] Simple non-readline REPL
+   - [ ] Read in an initial file for REPL
+   - [ ] Readline support
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
    function which can be used to output strings according to a format
@@ -506,27 +498,27 @@ notice and this notice are preserved.
    handler function signal_error.
 
 ** TODO Dynamic Loader for external C functions
-** TODO CIEL (src/ciel.c) [15/18]
+** TODO CIEL (src/ciel.c) [0/18]
    The CIEL dump/restore functionality allows Arcueid to save and load
    workspaces by tracing the global symbol table and threads and dumping
    those to a file.
-   - [X] gnil
-   - [X] gtrue
-   - [X] gint
-   - [X] gflo
-   - [X] gchar
-   - [X] gstr
-   - [X] gsym
-   - [X] gbstr - binary strings
-   - [X] crat
-   - [X] ccomplex
-   - [X] ccons
-   - [X] cannotate - this is for the moment limited to creating T_CODE
+   - [ ] gnil
+   - [ ] gtrue
+   - [ ] gint
+   - [ ] gflo
+   - [ ] gchar
+   - [ ] gstr
+   - [ ] gsym
+   - [ ] gbstr - binary strings
+   - [ ] crat
+   - [ ] ccomplex
+   - [ ] ccons
+   - [ ] cannotate - this is for the moment limited to creating T_CODE
          objects from a cons consisting of the binary bytecode string
          and literals
-   - [X] xdup
-   - [X] xmst
-   - [X] xmld
+   - [ ] xdup
+   - [ ] xmst
+   - [ ] xmld
    - [ ] gtab
    - [ ] ctadd
    - [ ] additional functionality for cannotate, so that it can, you
