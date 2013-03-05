@@ -35,11 +35,12 @@
 
 /* Make a bare I/O object.  Note that one must populate the io_ops structure
    to be able to use it. */
-value __arc_allocio(arc *c, value type, struct typefn_t *tfn, size_t xdsize)
+value __arc_allocio(arc *c, value type, struct typefn_t *tfn, size_t xdsize,
+		    int itype)
 {
   value io;
 
-  io = arc_mkobject(c, sizeof(struct io_t) - sizeof(char) + xdsize, T_PORT);
+  io = arc_mkobject(c, sizeof(struct io_t) - sizeof(char) + xdsize, itype);
   IO(io)->type = type;
   IO(io)->io_tfn = tfn;
   return(io);
