@@ -54,22 +54,21 @@ enum arc_types {
   T_TABLE=11,
   T_TBUCKET=12,
   T_TAGGED=13,
-  T_INPUT=14,
-  T_OUTPUT=15,
-  T_EXCEPTION=16,
-  T_PORT=17,
-  T_THREAD=18,
-  T_VECTOR=19,
+  T_EXCEPTION=14,
+  T_INPORT=15,
+  T_OUTPORT=16,
+  T_THREAD=17,
+  T_VECTOR=18,
 
-  T_CONT = 20,			/* continuation */
-  T_CLOS = 21,			/* closure */
-  T_CODE = 22,			/* actual compiled code */
-  T_ENV = 23,			/* environment */
-  T_CCODE = 24,			/* a C function */
-  T_CUSTOM = 25,		/* custom type */
-  T_CHAN = 26,			/* channel */
-  T_TYPEDESC = 27,		/* type descriptor */
-  T_WTABLE = 28,		/* weak table */
+  T_CONT = 19,			/* continuation */
+  T_CLOS = 20,			/* closure */
+  T_CODE = 21,			/* actual compiled code */
+  T_ENV = 22,			/* environment */
+  T_CCODE = 23,			/* a C function */
+  T_CUSTOM = 24,		/* custom type */
+  T_CHAN = 25,			/* channel */
+  T_TYPEDESC = 26,		/* type descriptor */
+  T_WTABLE = 27,		/* weak table */
   T_MAX = 28,
 
   T_NONE=64
@@ -133,6 +132,7 @@ struct arc {
   value rsymtable;		/* reverse global symbol table */
   int lastsym;			/* last symbol index created */
   value genv;			/* global environment */
+  value builtins;		/* built-in data */
 
   /* Threading and scheduler */
   value vmthreads;		/* virtual machine thread objects (head) */
