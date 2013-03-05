@@ -25,6 +25,8 @@
 #include <float.h>
 #include <inttypes.h>
 #include "arcueid.h"
+#include "builtins.h"
+#include "io.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -220,4 +222,9 @@ void arc_init(arc *c)
   /* Create global environment and type descriptor table */
   c->genv = arc_mkhash(c, ARC_HASHBITS);
   c->typedesc = arc_mkhash(c, ARC_HASHBITS);
+
+  /* Create builtins table */
+  c->builtins = arc_mkvector(c, BI_last+1);
+  /* Initialise I/O subsystem */
+  arc_init_io(c);
 }
