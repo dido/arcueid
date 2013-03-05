@@ -307,6 +307,7 @@ static void markroots(arc *c)
   __arc_markprop(c, c->genv);
   __arc_markprop(c, c->vmthreads);
   __arc_markprop(c, c->typedesc);
+  __arc_markprop(c, c->builtins);
 }
 
 void arc_init_memmgr(arc *c)
