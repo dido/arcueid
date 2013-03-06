@@ -182,6 +182,11 @@ value arc_mkchar(arc *c, Rune r)
   return(ch);
 }
 
+Rune arc_char2rune(arc *c, value ch)
+{
+  return(*((Rune *)REP(ch)));;
+}
+
 typefn_t __arc_char_typefn__ = {
   __arc_null_marker,
   __arc_null_sweeper,
