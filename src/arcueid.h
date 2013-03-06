@@ -288,6 +288,11 @@ extern int __arc_affiowait(arc *c, value thr, value ccont, int fd);
 extern void __arc_affenv(arc *c, value thr, int __vidx__, int nparams);
 extern int __arc_affip(arc *c, value thr);
 
+/* String Port I/O */
+extern value arc_instring(arc *c, value str, value name);
+extern value arc_outstring(arc *c, value name);
+extern value arc_inside(arc *c, value sio);
+
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
 
