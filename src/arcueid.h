@@ -276,6 +276,9 @@ extern value arc_thr_valr(arc *c, value thr);
 extern value arc_thr_set_valr(arc *c, value thr, value v);
 extern int arc_thr_argc(arc *c, value thr);
 extern value arc_thr_envr(arc *c, value thr);
+extern int arc_cmark(arc *c, value thr);
+extern int arc_scmark(arc *c, value thr);
+extern int arc_ccmark(arc *c, value thr);
 
 /* Foreign function API */
 
@@ -292,6 +295,12 @@ extern int __arc_affip(arc *c, value thr);
 extern value arc_instring(arc *c, value str, value name);
 extern value arc_outstring(arc *c, value name);
 extern value arc_inside(arc *c, value sio);
+
+/* General I/O functions */
+extern int arc_readb(arc *c, value thr);
+extern int arc_readc(arc *c, value thr);
+extern int arc_writeb(arc *c, value thr);
+extern int arc_writec(arc *c, value thr);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
