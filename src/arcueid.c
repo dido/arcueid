@@ -217,10 +217,10 @@ void arc_init_datatypes(arc *c)
 
 void arc_init(arc *c)
 {
+  /* Initialise memory manager first */
   arc_init_memmgr(c);
+  /* Initialise built-in data type definitions */
   arc_init_datatypes(c);
-  arc_init_symtable(c);
-  arc_init_threads(c);
 
   /* Create global environment and type descriptor table */
   c->genv = arc_mkhash(c, ARC_HASHBITS);
@@ -228,6 +228,13 @@ void arc_init(arc *c)
 
   /* Create builtins table */
   c->builtins = arc_mkvector(c, BI_last+1);
+
+  /* Initialise symbol table and built-in symbols*/
+  arc_init_symtable(c);
+
+  /* Initialise thread system */
+  arc_init_threads(c);
+
   /* Initialise I/O subsystem */
   arc_init_io(c);
 }
