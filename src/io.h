@@ -38,7 +38,6 @@ enum {
 /* A basic I/O structure. */
 struct io_t {
   value name;
-  value type;
   Rune ungetrune;
   struct typefn_t *io_tfn;
   value io_ops;
@@ -49,9 +48,10 @@ struct io_t {
 #define IODATA(v,t) ((t)((IO(v))->data))
 #define IO_OP(op) (IO(v)->io_ops)
 
-extern value __arc_allocio(arc *c, value type, struct typefn_t *tfn,
-			   size_t xdsize, int itype);
+extern value __arc_allocio(arc *c, int type, struct typefn_t *tfn,
+			   size_t xdsize);
 
+extern void __arc_init_sio(arc *c);
 extern void arc_init_io(arc *c);
 
 enum {
