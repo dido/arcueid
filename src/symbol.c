@@ -17,6 +17,7 @@
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #include "arcueid.h"
+#include "builtins.h"
 
 value arc_intern(arc *c, value name)
 {
@@ -65,8 +66,33 @@ value arc_unintern(arc *c, value sym)
   return(CTRUE);
 }
 
+/* We must synchronize this against builtin_syms in builtins.h as necessary! */
+static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
+			"unquote-splicing", "compose", "complement",
+			"t", "nil", "no", "andf", "get", "sym",
+			"fixnum", "bignum", "flonum", "rational",
+			"complex", "char", "string", "cons", "table",
+			"input", "output", "exception", "port",
+			"thread", "vector", "continuation", "closure",
+			"code", "environment", "vmcode", "ccode",
+			"custom", "int", "unknown", "re", "im", "num",
+			"sig", "stdin-fd", "stdout-fd", "stderr-fd",
+			"mac", "if", "assign", "o", ".", "car", "cdr",
+			"scar", "scdr", "is", "+", "-", "*", "/",
+			"and", "apply", "chan", "AF_UNIX", "AF_INET",
+			"AF_INET6", "SOCK_STREAM", "SOCK_DGRAM",
+			"SOCK_RAW" };
+
 void arc_init_symtable(arc *c)
 {
+  int i;
+
   c->symtable = arc_mkwtable(c, ARC_HASHBITS);
   c->rsymtable = arc_mkwtable(c, ARC_HASHBITS);
+  c->lastsym = 0;
+
+  /* Set up builtin symbols */
+  VINDEX(c->builtins, BI_syms) = arc_mkvector(c, S_THE_END);
+  for (i=0; i<S_THE_END; i++)
+    ARC_BUILTIN(c, i) = arc_intern(c, arc_mkstringc(c, syms[i]));
 }
