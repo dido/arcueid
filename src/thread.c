@@ -59,6 +59,9 @@ static void thread_marker(arc *c, value thr, int depth,
   mark(c, TCONR(thr), depth);
   for (p = TSTOP(thr); p == TSP(thr); p--)
     mark(c, *p, depth);
+
+  mark(c, TWAITFD(thr), depth);
+  mark(c, TCM(thr), depth);
 }
 
 value arc_mkthread(arc *c)
@@ -82,6 +85,7 @@ value arc_mkthread(arc *c)
   TTICKS(thr) = 0LL;
   TWAKEUP(thr) = 0LL;
   TWAITFD(thr) = CNIL;
+  TCM(thr) = arc_mkhash(c, ARC_HASHBITS);
   return(thr);
 }
 
@@ -116,6 +120,55 @@ value arc_thr_envr(arc *c, value thr)
 {
   return(TENVR(thr));
 }
+
+AFFDEF(arc_cmark, key)
+{
+  AVAR(cm, val);
+  AFBEGIN;
+  AV(cm) = TCM(thr);
+  val = arc_hash_lookup(c, AV(cm), AV(key));
+  if (AV(val) == CUNBOUND)
+    ARETURN(CNIL);
+  ARETURN(car(AV(val)));
+  AFEND;
+}
+AFFEND
+
+/* Do not use these functions outside the call-w/cmark macro */
+AFFDEF(arc_scmark, key, val)
+{
+  AVAR(cm, bind);
+  AFBEGIN;
+  AV(cm) = TCM(thr);
+  AV(bind) = arc_hash_lookup(c, AV(cm), AV(key));
+  if (AV(bind) == CUNBOUND)
+    AV(bind) = CNIL;
+  bind = cons(c, val, bind);
+  arc_hash_insert(c, AV(cm), AV(key), AV(bind));
+  ARETURN(val);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_ccmark, key)
+{
+  AVAR(cm, bind, val);
+  AFBEGIN;
+  AV(cm) = TCM(thr);
+  AV(bind) = arc_hash_lookup(c, AV(cm), AV(key));
+  if (AV(bind) == CUNBOUND)
+    ARETURN(CNIL);
+  AV(val) = car(AV(bind));
+  AV(bind) = cdr(AV(bind));
+  if (NIL_P(bind)) {
+    arc_hash_delete(c, AV(cm), AV(key));
+  } else {
+    arc_hash_insert(c, AV(cm), AV(key), AV(bind));
+  }
+  ARETURN(AV(val));
+  AFEND;
+}
+AFFEND
 
 void arc_init_threads(arc *c)
 {
