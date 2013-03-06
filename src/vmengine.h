@@ -115,6 +115,8 @@ struct vmthread_t {
   unsigned long long ticks;	/* time used */
   unsigned long long wakeuptime; /* wakeup time */
   value waitfd;			 /* file descriptor to wait on */
+
+  value cmarks;			/* continuation marks */
 };
 
 #define TFUNR(t) (((struct vmthread_t *)REP(t))->funr)
@@ -134,6 +136,7 @@ struct vmthread_t {
 #define TTICKS(t) (((struct vmthread_t *)REP(t))->ticks)
 #define TWAKEUP(t) (((struct vmthread_t *)REP(t))->wakeuptime)
 #define TWAITFD(t) (((struct vmthread_t *)REP(t))->waitfd)
+#define TCM(t) (((struct vmthread_t *)REP(t))->cmarks)
 
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
 #define CPOP(thr) (*(++TSP(thr)))
