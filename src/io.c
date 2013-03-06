@@ -122,6 +122,7 @@ AFFDEF0(arc_readb)
     return(CNIL);
   }
   IO_TYPECHECK(AV(fd));
+  CHECK_CLOSED(AV(fd));
   /* Note that if there is an unget value available, it will return
      the whole *CHARACTER*, not a possible byte within the character!
      As before, one isn't really supposed to mix the 'c' functions
@@ -132,7 +133,6 @@ AFFDEF0(arc_readb)
     return(INT2FIX(ch));
   }
 
-  CHECK_CLOSED(AV(fd));
   AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_ready), AV(fd));
   if (AFCRV == CNIL) {
     arc_err_cstrfmt(c, "port is not ready for reading");
@@ -147,7 +147,7 @@ AFFEND
 AFFDEF0(arc_readc)
 {
   AVAR(fd, chr, buf, i, readb);
-  char cbuf[UTFmax];    /* this is always destroyed after every read */
+  char cbuf[UTFmax];    /* this is always destroyed */
   Rune ch;
   int j;
   AFBEGIN;
@@ -160,18 +160,19 @@ AFFDEF0(arc_readc)
     arc_err_cstrfmt(c, "readc: too many arguments");
     return(CNIL);
   }
-  AV(buf) = arc_mkvector(c, UTFmax);
+
   IO_TYPECHECK(AV(fd));
+  CHECK_CLOSED(AV(fd));
   if (IO(AV(fd))->ungetrune >= 0) {
     ch = IO(AV(fd))->ungetrune;
     IO(AV(fd))->ungetrune = -1;
     ARETURN(arc_mkchar(c, ch));
   }
-  CHECK_CLOSED(AV(fd));
   if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
     AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), fd);
     ARETURN(AFCRV);
   }
+  AV(buf) = arc_mkvector(c, UTFmax);
   /* XXX - should put this in builtins */
   AV(readb) = arc_mkaff(c, arc_readb, CNIL);
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(i) + 1)) {
@@ -180,7 +181,7 @@ AFFDEF0(arc_readc)
     if (AV(chr) == CNIL)
       return(CNIL);
     VINDEX(AV(buf), FIX2INT(AV(i))) = AV(chr);
-    /* Fixnum to C array of ints */
+    /* Arcueid fixnum vector to C array of chars */
     for (j=0; j<=FIX2INT(AV(i)); j++)
       cbuf[j] = FIX2INT(VINDEX(AV(buf), j));
     if (fullrune(cbuf, FIX2INT(AV(i)) + 1)) {
@@ -221,6 +222,52 @@ AFFDEF0(arc_writeb)
   }
   AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd), AV(byte));
   ARETURN(AFCRV);
+  AFEND;
+}
+AFFEND
+
+AFFDEF0(arc_writec)
+{
+  AVAR(fd, chr, buf, i, writeb, nbytes);
+  char cbuf[UTFmax];
+  Rune ch;
+  int j;
+  AFBEGIN;
+
+  if (arc_thr_argc(c, thr) == 0) {
+    arc_err_cstrfmt(c, "writec: too few arguments");
+    return(CNIL);
+  }
+
+  if (arc_thr_argc(c, thr) == 1) {
+    STDOUT(AV(fd));
+  } else if (arc_thr_argc(c, thr) == 2) {
+    AV(fd) = arc_thr_pop(c, thr);
+  } else {
+    arc_err_cstrfmt(c, "writec: too many arguments");
+    return(CNIL);
+  }
+
+  AV(chr) = arc_thr_pop(c, thr);
+  IOW_TYPECHECK(AV(fd));
+  CHECK_CLOSED(AV(fd));
+  if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
+    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), fd,
+	   INT2FIX(arc_char2rune(c, AV(chr))));
+    ARETURN(AFCRV);
+  }
+  /* XXX - should put this in builtins */
+  AV(writeb) = arc_mkaff(c, arc_writeb, CNIL);
+  ch = arc_char2rune(c, AV(chr));
+  AV(nbytes) = INT2FIX(runetochar(cbuf, &ch));
+  /* Convert C char array into Arcueid vector of fixnums */
+  AV(buf) = arc_mkvector(c, FIX2INT(AV(nbytes)));
+  for (j=0; j<FIX2INT(AV(nbytes)); j++)
+    VINDEX(AV(buf), j) = INT2FIX(cbuf[j]);
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nbytes)); AV(i) = INT2FIX(FIX2INT(i) + 1)) {
+    AFCALL(AV(writeb), AV(fd), VINDEX(AV(buf), AV(i)));
+  }
+  ARETURN(AV(chr));
   AFEND;
 }
 AFFEND
