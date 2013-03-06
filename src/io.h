@@ -23,6 +23,22 @@
 #include "arcueid.h"
 #include "utf.h"
 
+/* These are the basic functions that all I/O derived objects should
+   make available.  All of these should be AFFs.
+
+   * IO_closed_p - true or false based on whether the I/O object is closed
+     or not.
+   * IO_ready - should always return true.  If an I/O source is not ready,
+     for reading, it should use the AIOWAIT mechanism to wait, make the
+     trampoline wait until it is, and then return when it is ready.  If it
+     returns CNIL, that results in an error.
+   * IO_wready - Same as IO_ready, but for write operations.
+   * IO_getb - get a byte from the I/O source. Return CNIL on end of file
+   * IO_putb - put a byte to the I/O source
+   * IO_seek - seek in the I/O source
+   * IO_tell - get the offset in the I/O source
+   * IO_close - close the I/O source
+*/
 enum {
   IO_closed_p=0,
   IO_ready=1,
@@ -35,8 +51,12 @@ enum {
   IO_last=7
 };
 
+/* getb actually returns a Unicode character rather than a byte */
+#define IO_FLAG_GETB_IS_GETC 1
+
 /* A basic I/O structure. */
 struct io_t {
+  unsigned int flags;
   value name;
   Rune ungetrune;
   struct typefn_t *io_tfn;
