@@ -52,6 +52,7 @@ value __arc_allocio(arc *c, int type, struct typefn_t *tfn, size_t xdsize)
 
   io = arc_mkobject(c, sizeof(struct io_t) - sizeof(char) + xdsize, type);
   IO(io)->name = CNIL;
+  IO(io)->flags = 0;
   IO(io)->io_tfn = tfn;
   IO(io)->ungetrune = -1;
   IO(io)->io_ops = CNIL;
