@@ -224,6 +224,7 @@ extern value arc_mkstringlen(arc *c, int length);
 extern value arc_mkstring(arc *c, const Rune *data, int length);
 extern value arc_mkstringc(arc *c, const char *s);
 extern value arc_mkchar(arc *c, Rune r);
+extern Rune arc_char2rune(arc *c, value ch);
 extern int arc_strlen(arc *c, value v);
 extern Rune arc_strindex(arc *c, value v, int index);
 extern Rune arc_strsetindex(arc *c, value v, int index, Rune ch);
