@@ -44,6 +44,12 @@
     return(CNIL);							\
   }
 
+#define IOW_TYPECHECK(fd)						\
+  if (TYPE(fd) != T_OUTPORT) {			\
+    arc_err_cstrfmt(c, "argument is not an output port");		\
+    return(CNIL);							\
+  }
+
 /* Make a bare I/O object.  Note that one must populate the io_ops structure
    to be able to use it. */
 value __arc_allocio(arc *c, int type, struct typefn_t *tfn, size_t xdsize)
@@ -57,11 +63,6 @@ value __arc_allocio(arc *c, int type, struct typefn_t *tfn, size_t xdsize)
   IO(io)->ungetrune = -1;
   IO(io)->io_ops = CNIL;
   return(io);
-}
-
-void arc_init_io(arc *c)
-{
-  __arc_init_sio(c);
 }
 
 static void io_marker(arc *c, value v, int depth,
@@ -93,11 +94,34 @@ static unsigned long io_hash(arc *c, value v, arc_hs *s, value vh)
   return(IO(v)->io_tfn->hash(c, v, s, vh));
 }
 
-AFFDEF(arc_readb, fd)
+#define STDIN(fd)							\
+  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDIN_FD));	\
+  fd = AFCRV;								\
+  if (NIL_P(fd))							\
+    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD));
+
+#define STDOUT(fd)							\
+  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDOUT_FD));	\
+  fd = AFCRV;								\
+  if (NIL_P(fd))							\
+    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD));
+
+AFFDEF0(arc_readb)
 {
+  AVAR(fd);
+
   Rune ch;
   AFBEGIN;
-  IO_TYPECHECK(fd);
+
+  if (arc_thr_argc(c, thr) == 0) {
+    STDIN(AV(fd));
+  } else if (arc_thr_argc(c, thr) == 1) {
+    AV(fd) = arc_thr_pop(c, thr);
+  } else {
+    arc_err_cstrfmt(c, "readb: too many arguments");
+    return(CNIL);
+  }
+  IO_TYPECHECK(AV(fd));
   /* Note that if there is an unget value available, it will return
      the whole *CHARACTER*, not a possible byte within the character!
      As before, one isn't really supposed to mix the 'c' functions
@@ -120,15 +144,24 @@ AFFDEF(arc_readb, fd)
 }
 AFFEND
 
-AFFDEF(arc_readc, fd)
+AFFDEF0(arc_readc)
 {
-  AVAR(chr, buf, i, readb);
+  AVAR(fd, chr, buf, i, readb);
   char cbuf[UTFmax];    /* this is always destroyed after every read */
   Rune ch;
   int j;
   AFBEGIN;
+
+  if (arc_thr_argc(c, thr) == 0) {
+    STDIN(AV(fd));
+  } else if (arc_thr_argc(c, thr) == 1) {
+    AV(fd) = arc_thr_pop(c, thr);
+  } else {
+    arc_err_cstrfmt(c, "readc: too many arguments");
+    return(CNIL);
+  }
   AV(buf) = arc_mkvector(c, UTFmax);
-  IO_TYPECHECK(fd);
+  IO_TYPECHECK(AV(fd));
   if (IO(AV(fd))->ungetrune >= 0) {
     ch = IO(AV(fd))->ungetrune;
     IO(AV(fd))->ungetrune = -1;
@@ -142,7 +175,7 @@ AFFDEF(arc_readc, fd)
   /* XXX - should put this in builtins */
   AV(readb) = arc_mkaff(c, arc_readb, CNIL);
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(i) + 1)) {
-    AFCALL(readb, fd);
+    AFCALL(AV(readb), fd);
     AV(chr) = AFCRV;
     if (AV(chr) == CNIL)
       return(CNIL);
@@ -159,6 +192,11 @@ AFFDEF(arc_readc, fd)
   AFEND;
 }
 AFFEND
+
+void arc_init_io(arc *c)
+{
+  __arc_init_sio(c);
+}
 
 typefn_t __arc_io_typefn__ = {
   io_marker,
