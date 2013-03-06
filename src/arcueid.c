@@ -185,6 +185,7 @@ extern typefn_t __arc_table_typefn__;
 extern typefn_t __arc_hb_typefn__;
 extern typefn_t __arc_wtable_typefn__;
 extern typefn_t __arc_code_typefn__;
+extern typefn_t __arc_io_typefn__; /* used for both T_INPORT and T_OUTPORT */
 extern typefn_t __arc_thread_typefn__;
 extern typefn_t __arc_vector_typefn__;
 extern typefn_t __arc_cfunc_typefn__;
@@ -204,6 +205,8 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_CONS] = &__arc_cons_typefn__;
   c->typefns[T_TABLE] = &__arc_table_typefn__;
   c->typefns[T_TBUCKET] = &__arc_hb_typefn__;
+  c->typefns[T_INPORT] = &__arc_io_typefn__;
+  c->typefns[T_OUTPORT] = &__arc_io_typefn__;
   c->typefns[T_THREAD] = &__arc_thread_typefn__;
   c->typefns[T_VECTOR] = &__arc_vector_typefn__;
 
