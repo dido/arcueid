@@ -31,6 +31,19 @@
 #include "builtins.h"
 #include "io.h"
 
+#define CHECK_CLOSED(fd)				\
+  AFCALL(VINDEX(IO(fd)->io_ops, IO_closed_p), fd);	\
+  if (AFCRV == CTRUE) {					\
+    arc_err_cstrfmt(c, "port is closed");		\
+    return(CNIL);					\
+  }
+
+#define IO_TYPECHECK(fd)						\
+  if (TYPE(fd) != T_INPORT && TYPE(fd) != T_OUTPORT) {			\
+    arc_err_cstrfmt(c, "argument is not an input or output port");	\
+    return(CNIL);							\
+  }
+
 /* Make a bare I/O object.  Note that one must populate the io_ops structure
    to be able to use it. */
 value __arc_allocio(arc *c, int type, struct typefn_t *tfn, size_t xdsize)
@@ -78,6 +91,73 @@ static unsigned long io_hash(arc *c, value v, arc_hs *s, value vh)
 {
   return(IO(v)->io_tfn->hash(c, v, s, vh));
 }
+
+AFFDEF(arc_readb, fd)
+{
+  Rune ch;
+  AFBEGIN;
+  IO_TYPECHECK(fd);
+  /* Note that if there is an unget value available, it will return
+     the whole *CHARACTER*, not a possible byte within the character!
+     As before, one isn't really supposed to mix the 'c' functions
+     with the 'b' functions.  Do so at your own risk! */
+  if (IO(AV(fd))->ungetrune >= 0) {
+    ch = IO(AV(fd))->ungetrune;
+    IO(AV(fd))->ungetrune = -1;
+    return(INT2FIX(ch));
+  }
+
+  CHECK_CLOSED(AV(fd));
+  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_ready), fd);
+  if (AFCRV == CNIL) {
+    arc_err_cstrfmt(c, "port is not ready");
+    return(CNIL);
+  }
+  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), fd);
+  ARETURN(AFCRV);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_readc, fd)
+{
+  AVAR(chr, buf, i, readb);
+  char cbuf[UTFmax];    /* this is always destroyed after every read */
+  Rune ch;
+  int j;
+  AFBEGIN;
+  AV(buf) = arc_mkvector(c, UTFmax);
+  IO_TYPECHECK(fd);
+  if (IO(AV(fd))->ungetrune >= 0) {
+    ch = IO(AV(fd))->ungetrune;
+    IO(AV(fd))->ungetrune = -1;
+    ARETURN(arc_mkchar(c, ch));
+  }
+  CHECK_CLOSED(AV(fd));
+  if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
+    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), fd);
+    ARETURN(AFCRV);
+  }
+  /* XXX - should put this in builtins */
+  AV(readb) = arc_mkaff(c, arc_readb, CNIL);
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(i) + 1)) {
+    AFCALL(readb, fd);
+    AV(chr) = AFCRV;
+    if (AV(chr) == CNIL)
+      return(CNIL);
+    VINDEX(AV(buf), FIX2INT(AV(i))) = AV(chr);
+    /* Fixnum to C array of ints */
+    for (j=0; j<=FIX2INT(AV(i)); j++)
+      cbuf[j] = FIX2INT(VINDEX(AV(buf), j));
+    if (fullrune(cbuf, FIX2INT(AV(i)) + 1)) {
+      chartorune(&ch, cbuf);
+      ARETURN(arc_mkchar(c, ch));
+    }
+  }
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
 
 typefn_t __arc_io_typefn__ = {
   io_marker,
