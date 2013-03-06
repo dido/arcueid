@@ -190,6 +190,11 @@ value arc_outstring(arc *c, value name)
   return(mkstringio(c, T_OUTPORT, CNIL, name));
 }
 
+value arc_inside(arc *c, value sio)
+{
+  return(SIODATA(sio)->str);
+}
+
 void __arc_init_sio(arc *c)
 {
   value io_ops;
