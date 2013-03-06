@@ -133,12 +133,12 @@ AFFDEF0(arc_readb)
   }
 
   CHECK_CLOSED(AV(fd));
-  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_ready), fd);
+  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_ready), AV(fd));
   if (AFCRV == CNIL) {
-    arc_err_cstrfmt(c, "port is not ready");
+    arc_err_cstrfmt(c, "port is not ready for reading");
     return(CNIL);
   }
-  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), fd);
+  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), AV(fd));
   ARETURN(AFCRV);
   AFEND;
 }
@@ -175,7 +175,7 @@ AFFDEF0(arc_readc)
   /* XXX - should put this in builtins */
   AV(readb) = arc_mkaff(c, arc_readb, CNIL);
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(i) + 1)) {
-    AFCALL(AV(readb), fd);
+    AFCALL(AV(readb), AV(fd));
     AV(chr) = AFCRV;
     if (AV(chr) == CNIL)
       return(CNIL);
@@ -189,6 +189,38 @@ AFFDEF0(arc_readc)
     }
   }
   ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+AFFDEF0(arc_writeb)
+{
+  AVAR(byte, fd);
+  AFBEGIN;
+
+  if (arc_thr_argc(c, thr) == 0) {
+    arc_err_cstrfmt(c, "writeb: too few arguments");
+    return(CNIL);
+  }
+
+  if (arc_thr_argc(c, thr) == 1) {
+    STDOUT(AV(fd));
+  } else if (arc_thr_argc(c, thr) == 1) {
+    AV(fd) = arc_thr_pop(c, thr);
+  } else {
+    arc_err_cstrfmt(c, "writeb: too many arguments");
+    return(CNIL);
+  }
+  AV(byte) = arc_thr_pop(c, thr);
+  IOW_TYPECHECK(AV(fd));
+  CHECK_CLOSED(AV(fd));
+  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_wready), AV(fd));
+  if (AFCRV == CNIL) {
+    arc_err_cstrfmt(c, "port is not ready for writing");
+    return(CNIL);
+  }
+  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd), AV(byte));
+  ARETURN(AFCRV);
   AFEND;
 }
 AFFEND
