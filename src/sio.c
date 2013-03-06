@@ -65,11 +65,12 @@ static typefn_t stringio_tfn = {
 static AFFDEF(sio_closed_p, sio)
 {
   AFBEGIN;
-  return((SIODATA(AV(sio))->closed) ? CTRUE : CNIL);
+  ARETURN((SIODATA(AV(sio))->closed) ? CTRUE : CNIL);
   AFEND;
 }
 AFFEND
 
+/* This essentially always returns true */
 static AFFDEF(sio_ready, sio)
 {
   AFBEGIN;
@@ -171,6 +172,7 @@ static value mkstringio(arc *c, int type, value string, value name)
   value sio;
 
   sio = __arc_allocio(c, type, &stringio_tfn, sizeof(struct stringio_t));
+  IO(sio)->flags = IO_FLAG_GETB_IS_GETC;
   IO(sio)->io_ops = VINDEX(VINDEX(c->builtins, BI_io), BI_io_strio);
   IO(sio)->name = name;
   SIODATA(sio)->closed = 0;
@@ -192,6 +194,7 @@ value arc_outstring(arc *c, value name)
 
 value arc_inside(arc *c, value sio)
 {
+  /* XXX type checks */
   return(SIODATA(sio)->str);
 }
 
