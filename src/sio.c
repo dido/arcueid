@@ -40,7 +40,6 @@ static void sio_marker(arc *c, value v, int depth,
 
 static value sio_pprint(arc *c, value v, value *ppstr, value visithash)
 {
-  __arc_append_cstring(c, "string", ppstr);
   return(*ppstr);
 }
 
@@ -174,7 +173,8 @@ static value mkstringio(arc *c, int type, value string, value name)
   sio = __arc_allocio(c, type, &stringio_tfn, sizeof(struct stringio_t));
   IO(sio)->flags = IO_FLAG_GETB_IS_GETC;
   IO(sio)->io_ops = VINDEX(VINDEX(c->builtins, BI_io), BI_io_strio);
-  IO(sio)->name = name;
+  IO(sio)->name = (NIL_P(name)) ? ARC_BUILTIN(c, S_STRING) : name;
+
   SIODATA(sio)->closed = 0;
   SIODATA(sio)->idx = 0;
   SIODATA(sio)->str = string;
