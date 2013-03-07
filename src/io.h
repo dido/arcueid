@@ -80,4 +80,22 @@ enum {
   BI_io_last=1
 };
 
+#define STDIN(fd)							\
+  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDIN_FD));	\
+  fd = AFCRV;								\
+  if (NIL_P(fd))							\
+    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD));
+
+#define STDOUT(fd)							\
+  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDOUT_FD));	\
+  fd = AFCRV;								\
+  if (NIL_P(fd))							\
+    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD));
+
+#define STDERR(fd)							\
+  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDERR_FD));	\
+  fd = AFCRV;								\
+  if (NIL_P(fd))							\
+    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD));
+
 #endif
