@@ -206,3 +206,13 @@ static AFFDEF(read_quote, fp, eof)
   AFEND;
 }
 AFFEND
+
+static AFFDEF(read_qquote, fp, eof)
+{
+  AVAR(val, fn);
+  AFBEGIN;
+  READ(AV(fn), AV(fp), AV(eof), AV(val));
+  ARETURN(cons(c, ARC_BUILTIN(c, S_QQUOTE), cons(c, AV(val), CNIL)));
+  AFEND;
+}
+AFFEND
