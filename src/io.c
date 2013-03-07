@@ -169,8 +169,10 @@ AFFDEF0(arc_readc)
     ARETURN(arc_mkchar(c, ch));
   }
   if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
-    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), fd);
-    ARETURN(AFCRV);
+    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), AV(fd));
+    if (NIL_P(AFCRV))
+      ARETURN(CNIL);
+    ARETURN(arc_mkchar(c, FIX2INT(AFCRV)));
   }
   AV(buf) = arc_mkvector(c, UTFmax);
   /* XXX - should put this in builtins */
