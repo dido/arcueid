@@ -40,6 +40,10 @@ static int read_symbol(arc *c, value thr);
   AFCALL(fn, fp, eof);				\
   val = AFCRV;
 
+#define READ_COMMENT(func, fd)			\
+  func = arc_mkaff(c, read_comment, CNIL);	\
+  AFCALL(func, fd);
+
 
 AFFDEF(arc_sread, fp, eof)
 {
@@ -75,8 +79,7 @@ AFFDEF(arc_sread, fp, eof)
     } else if (r == '#') {
       AV(func) = arc_mkaff(c, read_char, CNIL);
     } else if (r == ';') {
-      AV(func) = arc_mkaff(c, read_comment, CNIL);
-      AFCALL(AV(func), AV(fd));
+      READ_COMMENT(AV(func), AV(fd));
       continue;
     } else {
       arc_ungetc_rune(c, r, AV(fd));
@@ -122,37 +125,36 @@ static AFFDEF(read_list, fp, eof)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
     if (r == ';') {
-      AV(func) = arc_mkaff(c, read_comment, CNIL);
-      AFCALL(AV(func), AV(fd));
+      READ_COMMENT(AV(fn), AV(fd));
       continue;
     } else if (r == ')') {
       ARETURN(AV(top));
-    } else {
-      if (!NIL_P(AV(indot))) {
+    }
+    if (!NIL_P(AV(indot))) {
+      arc_err_cstrfmt(c, "illegal use of .");
+      return(CNIL);
+    }
+    arc_ungetc_rune(c, r, AV(fd));
+    READ(AV(fn), AV(fp), AV(eof), AV(val));
+    if (AV(val) == ARC_BUILTIN(c, S_DOT)) {
+      READ(AV(fn), AV(fp), AV(eof), AV(val));
+      if (!NIL_P(AV(last))) {
+	scdr(AV(last), AV(val));
+      } else {
 	arc_err_cstrfmt(c, "illegal use of .");
 	return(CNIL);
       }
-      arc_ungetc_rune(c, r, AV(fd));
-      READ(AV(fn), AV(fp), AV(eof), AV(val));
-      if (AV(val) == ARC_BUILTIN(c, S_DOT)) {
-	READ(AV(fn), AV(fp), AV(eof), AV(val));
-	if (!NIL_P(AV(last))) {
-	  scdr(AV(last), AV(val));
-	} else {
-	  arc_err_cstrfmt(c, "illegal use of .");
-	  return(CNIL);
-	}
-	AV(indot) = CTRUE;
-      } else {
-	AV(val) = cons(c, AV(val), CNIL);
-	if (!NIL_P(AV(last))) {
-	  scdr(AV(last), AV(val));
-	} else {
-	  AV(top) = AV(val);
-	}
-	AV(last) = AV(val);
-      }
+      AV(indot) = CTRUE;
+      continue;
     }
+
+    AV(val) = cons(c, AV(val), CNIL);
+    if (!NIL_P(AV(last))) {
+      scdr(AV(last), AV(val));
+    } else {
+      AV(top) = AV(val);
+    }
+    AV(last) = AV(val);
   }
   AFEND;
 }
