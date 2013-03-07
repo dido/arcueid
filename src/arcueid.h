@@ -314,6 +314,7 @@ extern int arc_writec(arc *c, value thr);
 extern int arc_close(arc *c, value thr);
 extern int arc_peekc(arc *c, value thr);
 extern int arc_ungetc(arc *c, value thr);
+extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
