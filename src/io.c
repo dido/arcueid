@@ -317,6 +317,12 @@ void arc_init_io(arc *c)
   __arc_init_sio(c); 
 }
 
+Rune arc_ungetc_rune(arc *c, Rune r, value fd)
+{
+  IO(fd)->ungetrune = r;
+  return(r);
+}
+
 
 typefn_t __arc_io_typefn__ = {
   io_marker,
