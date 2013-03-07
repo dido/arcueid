@@ -302,9 +302,9 @@ extern value arc_infile(arc *c, value thr);
 extern value arc_outfile(arc *c, value thr);
 
 /* stdin/stdout/stderr */
-extern value arc_stdin(arc *c, value thr);
-extern value arc_stdout(arc *c, value thr);
-extern value arc_stderr(arc *c, value thr);
+extern int arc_stdin(arc *c, value thr);
+extern int arc_stdout(arc *c, value thr);
+extern int arc_stderr(arc *c, value thr);
 
 /* General I/O functions */
 extern int arc_readb(arc *c, value thr);
