@@ -84,6 +84,8 @@ static value io_pprint(arc *c, value v, value *ppstr, value visithash)
     __arc_append_cstring(c, "#<output-port:", ppstr);
   else
     __arc_append_cstring(c, "#<unknown-port:", ppstr);
+  if (!NIL_P(IO(v)->name))
+    arc_prettyprint(c, IO(v)->name, ppstr, visithash);
   IO(v)->io_tfn->pprint(c, v, ppstr, visithash);
   __arc_append_cstring(c, ">", ppstr);
   return(*ppstr);
