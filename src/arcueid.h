@@ -302,6 +302,7 @@ extern int arc_readb(arc *c, value thr);
 extern int arc_readc(arc *c, value thr);
 extern int arc_writeb(arc *c, value thr);
 extern int arc_writec(arc *c, value thr);
+extern int arc_close(arc *c, value thr);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
