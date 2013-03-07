@@ -90,7 +90,7 @@ AFFDEF(arc_sread, fp, eof)
   }
   AFEND;
 }
-AFFEND;
+AFFEND
 
 /* Scan for the first non-blank character */
 static AFFDEF(scan, fp)
@@ -158,7 +158,7 @@ static AFFDEF(read_list, fp, eof)
   }
   AFEND;
 }
-AFFEND;
+AFFEND
 
 /* Read an Arc square bracketed anonymous function.  This expands
    [ ... _ ... ] to (fn (_) ... _ ...) */
@@ -195,4 +195,14 @@ static AFFDEF(read_anonf, fp, eof)
   ARETURN(CNIL);
   AFEND;
 }
-AFFEND;
+AFFEND
+
+static AFFDEF(read_quote, fp, eof)
+{
+  AVAR(val, fn);
+  AFBEGIN;
+  READ(AV(fn), AV(fp), AV(eof), AV(val));
+  ARETURN(cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, AV(val), CNIL)));
+  AFEND;
+}
+AFFEND
