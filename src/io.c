@@ -274,6 +274,24 @@ AFFDEF0(arc_writec)
 }
 AFFEND
 
+AFFDEF0(arc_close)
+{
+  AVAR(fd, nargs, i);
+  AFBEGIN;
+  if (arc_thr_argc(c, thr) == 0) {
+    arc_err_cstrfmt(c, "close: too few arguments");
+    return(CNIL);
+  }
+  AV(nargs) = INT2FIX(arc_thr_argc(c, thr));
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nargs)); AV(i) = INT2FIX(FIX2INT(i) + 1)) {
+    AV(fd) = arc_thr_pop(c, thr);
+    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_close), AV(fd));
+  }
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 void arc_init_io(arc *c)
 {
   __arc_init_sio(c);
