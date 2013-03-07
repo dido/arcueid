@@ -96,18 +96,6 @@ static unsigned long io_hash(arc *c, value v, arc_hs *s, value vh)
   return(IO(v)->io_tfn->hash(c, v, s, vh));
 }
 
-#define STDIN(fd)							\
-  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDIN_FD));	\
-  fd = AFCRV;								\
-  if (NIL_P(fd))							\
-    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD));
-
-#define STDOUT(fd)							\
-  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDOUT_FD));	\
-  fd = AFCRV;								\
-  if (NIL_P(fd))							\
-    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD));
-
 AFFDEF0(arc_readb)
 {
   AVAR(fd);
@@ -294,10 +282,41 @@ AFFDEF0(arc_close)
 }
 AFFEND
 
+AFFDEF0(arc_stdin)
+{
+  AVAR(fd);
+  AFBEGIN;
+  STDIN(AV(fd));
+  ARETURN(AV(fd));
+  AFEND;
+}
+AFFEND
+
+AFFDEF0(arc_stdout)
+{
+  AVAR(fd);
+  AFBEGIN;
+  STDOUT(AV(fd));
+  ARETURN(AV(fd));
+  AFEND;
+}
+AFFEND
+
+AFFDEF0(arc_stderr)
+{
+  AVAR(fd);
+  AFBEGIN;
+  STDERR(AV(fd));
+  ARETURN(AV(fd));
+  AFEND;
+}
+AFFEND
+
 void arc_init_io(arc *c)
 {
-  __arc_init_sio(c);
+  __arc_init_sio(c); 
 }
+
 
 typefn_t __arc_io_typefn__ = {
   io_marker,
