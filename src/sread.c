@@ -159,3 +159,40 @@ static AFFDEF(read_list, fp, eof)
   AFEND;
 }
 AFFEND;
+
+/* Read an Arc square bracketed anonymous function.  This expands
+   [ ... _ ... ] to (fn (_) ... _ ...) */
+static AFFDEF(read_anonf, fp, eof)
+{
+  AVAL(top, val ,last);
+  Rune ch;
+  AFBEGIN;
+  AV(top) = AV(val) = AV(last) = CNIL;
+  for (;;) {
+    SCAN(AV(func), AV(ch), AV(fp));
+    if (AV(ch) == CNIL)
+      ARETURN(AV(eof));
+    r = arc_char2rune(c, AV(ch));
+    if (r == ';') {
+      READ_COMMENT(AV(fn), AV(fd));
+      continue;
+    } else if (r == ']') {
+      /* Complete the fn */
+      ARETURN(cons(c, ARC_BUILTIN(c, S_FN),
+		   cons(c, cons(c, ARC_BUILTIN(c, S_US), CNIL),
+			cons(c, AV(top), CNIL))));
+    }
+    arc_ungetc_rune(c, r, AV(fd));
+    READ(AV(fn), AV(fp), AV(eof), AV(val));
+    AV(val) = cons(c, AV(val), CNIL);
+    if (!NIL_P(AV(last)))
+      scdr(AV(last), AV(val));
+    else
+      AV(top) = AV(val);
+    AV(last) = AV(val);
+  }
+  arc_err_cstrfmt(c, "unexpected end of source");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND;
