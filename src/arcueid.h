@@ -297,12 +297,23 @@ extern value arc_instring(arc *c, value str, value name);
 extern value arc_outstring(arc *c, value name);
 extern value arc_inside(arc *c, value sio);
 
+/* File I/O */
+extern value arc_infile(arc *c, value thr);
+extern value arc_outfile(arc *c, value thr);
+
+/* stdin/stdout/stderr */
+extern value arc_stdin(arc *c, value thr);
+extern value arc_stdout(arc *c, value thr);
+extern value arc_stderr(arc *c, value thr);
+
 /* General I/O functions */
 extern int arc_readb(arc *c, value thr);
 extern int arc_readc(arc *c, value thr);
 extern int arc_writeb(arc *c, value thr);
 extern int arc_writec(arc *c, value thr);
 extern int arc_close(arc *c, value thr);
+extern int arc_peekc(arc *c, value thr);
+extern int arc_ungetc(arc *c, value thr);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
