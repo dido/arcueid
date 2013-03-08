@@ -91,16 +91,20 @@ struct typefn_t {
   /* Pretty printer */
   value (*pprint)(struct arc *c, value, value *, value);
   /* Hasher */
-  unsigned long (*hash)(struct arc *c, value, arc_hs *, value);
-  /* shallow compare */
+  unsigned long (*hash)(struct arc *c, value, arc_hs *);
+  /* Shallow compare.  This is a normal function. */
   value (*iscmp)(struct arc *c, value, value);
-  /* deep compare (isomorphism) */
-  value (*isocmp)(struct arc *c, value, value, value, value);
+  /* deep compare (isomorphism). This is an AFF. */
+  int (*isocmp)(struct arc *c, value);
   /* applicator */
   int (*apply)(struct arc *c, value, value);
 #if 0
-  value (*marshal)(struct arc *c, value, value);
-  value (*unmarshal)(struct arc *c, value);
+  /* Recursive hasher.  This is used for computing possibly recursive
+     hashes and is an AFF. */
+  int (*rhash)(struct arc *c, value);
+  /* Marshaller and unmarshaller. Also AFFs. */
+  int (*marshal)(struct arc *c, value);
+  int (*unmarshal)(struct arc *c, value);
 #endif
 };
 
@@ -245,9 +249,7 @@ extern value arc_mkvector(arc *c, int length);
 extern void __arc_vector_marker(arc *c, value v, int depth,
 				void (*markfn)(arc *, value, int));
 extern void __arc_vector_sweeper(arc *c, value v);
-extern value __arc_vector_hash(arc *c, value v, arc_hs *s, value visithash);
-extern value __arc_vector_isocmp(arc *c, value v1, value v2, value vh1,
-				 value vh2);
+extern int __arc_vector_isocmp(arc *c, value thr);
 
 /* Definitions for hash tables */
 /* Default initial number of bits for hashes */
@@ -255,9 +257,8 @@ extern value __arc_vector_isocmp(arc *c, value v1, value v2, value vh1,
 extern void arc_hash_init(arc_hs *s, unsigned long level);
 extern void arc_hash_update(arc_hs *s, unsigned long val);
 extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
-extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s,
-					value visithash);
-extern unsigned long arc_hash(arc *c, value v, value visithash);
+extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s);
+extern unsigned long arc_hash(arc *c, value v);
 extern value arc_mkhash(arc *c, int hashbits);
 extern value arc_mkwtable(arc *c, int hashbits);
 extern value arc_hash_lookup(arc *c, value tbl, value key);
@@ -330,8 +331,9 @@ extern value arc_prettyprint(arc *c, value sexpr, value *ppstr,
 			     value visithash);
 
 extern value arc_mkobject(arc *c, size_t size, int type);
-extern value arc_is(arc *c, value v1, value v2);
-extern value arc_iso(arc *c, value v1, value v2, value vh1, value vh2);
+extern value arc_is2(arc *c, value a, value b);
+extern int arc_is(arc *c, value thr);
+extern int arc_iso(arc *c, value thr);
 extern value __arc_visit(arc *c, value v, value hash);
 extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
 extern value __arc_visitp(arc *c, value v, value hash);
