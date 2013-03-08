@@ -33,58 +33,41 @@ void __arc_vector_marker(arc *c, value v, int depth,
     markfn(c, VINDEX(v, i), depth);
 }
 
-value __arc_vector_hash(arc *c, value v, arc_hs *s, value visithash)
+AFFDEF(__arc_vector_isocmp, v1, v2, vh1, vh2)
 {
-  unsigned long len;
-  int i;
+  value vhh1, vhh2;		/* not required after calls */
+  AVAR(iso, i);
+  AFBEGIN;
 
-  if (visithash == CNIL)
-    visithash = arc_mkhash(c, ARC_HASHBITS);
-  if (__arc_visit(c, v, visithash) != CNIL) {
-    /* Already visited at some point.  Do not recurse further.  An already
-       visited node will still contribute 1 to the length though. */
-    return(1);
-  }
-  len = 0;
-  for (i=0; i<VECLEN(v); i++)
-    len += arc_hash(c, VINDEX(v, i), visithash);
-  return(len);
-}
-
-value __arc_vector_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  value vhh1, vhh2;
-  int i;
-
-  if (vh1 == CNIL) {
-    vh1 = arc_mkhash(c, ARC_HASHBITS);
-    vh2 = arc_mkhash(c, ARC_HASHBITS);
-  }
-
-  if ((vhh1 = __arc_visit(c, v1, vh1)) != CNIL) {
+  if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) {
     /* If we find a visited object, see if v2 is also visited in vh2.
        If not, they are not the same. */
-    vhh2 = __arc_visit(c, v2, vh2);
+    vhh2 = __arc_visit(c, AV(v2), AV(vh2));
     /* We see if the same value was produced on visiting. */
-    return((vhh2 == vhh1) ? CTRUE : CNIL);
+    ARETURN((vhh2 == vhh1) ? CTRUE : CNIL);
   }
 
   /* Get value assigned by __arc_visit to v1. */
-  vhh1 = __arc_visit(c, v1, vh1);
+  vhh1 = __arc_visit(c, AV(v1), AV(vh1));
   /* If we somehow already visited v2 when v1 was not visited in the
      same way, they cannot be the same. */
-  if (__arc_visit2(c, v2, vh2, vhh1) != CNIL)
-    return(CNIL);
+  if (__arc_visit2(c, AV(v2), AV(vh2), AV(vhh1)) != CNIL)
+    ARETURN(CNIL);
   /* Vectors must be identical in length to be the same */
-  if (VECLEN(v1) != VECLEN(v2))
-    return(CNIL);
+  if (VECLEN(AV(v1)) != VECLEN(AV(v2)))
+    ARETURN(CNIL);
   /* Recursive comparisons */
-  for (i=0; i<VECLEN(v1); i++) {
-    if (arc_iso(c, VINDEX(v1, i), VINDEX(v2, i), vh1, vh2) != CTRUE)
-      return(CNIL);
+  AV(iso) = arc_mkaff(c, arc_iso, CNIL);
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(v1));
+       AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+    AFCALL(AV(iso), VINDEX(AV(v1), AV(i)), VINDEX(AV(v2), AV(i)));
+    if (NIL_P(AFCRV))
+      ARETURN(CNIL);
   }
-  return(CTRUE);
+  ARETURN(CTRUE);
+  AFEND;
 }
+AFFEND
 
 /* A vector can be applied to a fixnum value */
 static int vector_apply(arc *c, value thr, value vec)
@@ -134,7 +117,7 @@ typefn_t __arc_vector_typefn__ = {
   __arc_vector_marker,
   __arc_null_sweeper,
   vector_pprint,
-  __arc_vector_hash,
+  NULL,
   NULL,
   __arc_vector_isocmp,
   vector_apply
