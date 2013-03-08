@@ -91,9 +91,9 @@ static value io_pprint(arc *c, value v, value *ppstr, value visithash)
   return(*ppstr);
 }
 
-static unsigned long io_hash(arc *c, value v, arc_hs *s, value vh)
+static unsigned long io_hash(arc *c, value v, arc_hs *s)
 {
-  return(IO(v)->io_tfn->hash(c, v, s, vh));
+  return(IO(v)->io_tfn->hash(c, v, s));
 }
 
 AFFDEF0(arc_readb)
