@@ -54,7 +54,7 @@ static value string_pprint(arc *c, value sexpr, value *ppstr, value visithash)
   return(*ppstr);
 }
 
-static unsigned long string_hash(arc *c, value v, arc_hs *s, value visithash)
+static unsigned long string_hash(arc *c, value v, arc_hs *s)
 {
   int i;
   unsigned long len;
@@ -68,11 +68,6 @@ static unsigned long string_hash(arc *c, value v, arc_hs *s, value visithash)
 static value string_iscmp(arc *c, value v1, value v2)
 {
   return((arc_strcmp(c, v1, v2) == 0) ? CTRUE : CNIL);
-}
-
-static value string_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  return(string_iscmp(c, v1, v2));
 }
 
 /* A string can be applied to a fixnum value */
@@ -158,7 +153,7 @@ static value char_pprint(arc *c, value v, value *ppstr, value visithash)
   return(CNIL);
 }
 
-static unsigned long char_hash(arc *c, value v, arc_hs *s, value visithash)
+static unsigned long char_hash(arc *c, value v, arc_hs *s)
 {
   arc_hash_update(s, *((unsigned long *)REP(v)));
   return(1);
@@ -167,11 +162,6 @@ static unsigned long char_hash(arc *c, value v, arc_hs *s, value visithash)
 static value char_iscmp(arc *c, value v1, value v2)
 {
   return((*(Rune *)REP(v1)) == (*(Rune *)REP(v2)) ? CTRUE : CNIL);
-}
-
-static value char_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  return(char_iscmp(c, v1, v2));
 }
 
 value arc_mkchar(arc *c, Rune r)
@@ -193,7 +183,8 @@ typefn_t __arc_char_typefn__ = {
   char_pprint,
   char_hash,
   char_iscmp,
-  char_isocmp
+  NULL,
+  NULL
 };
 
 /* Most of these trivial and inefficient functions should
@@ -328,6 +319,6 @@ typefn_t __arc_string_typefn__ = {
   string_pprint,
   string_hash,
   string_iscmp,
-  string_isocmp,
+  NULL,
   string_apply
 };
