@@ -95,7 +95,7 @@ typefn_t __arc_cont_typefn__ = {
   __arc_vector_marker,
   __arc_null_sweeper,
   cont_pprint,
-  __arc_vector_hash,
+  NULL,
   NULL,
   __arc_vector_isocmp,
   cont_apply
