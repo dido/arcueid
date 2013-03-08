@@ -103,7 +103,7 @@ static void cons_marker(arc *c, value v, int depth,
 static AFFDEF(cons_isocmp, v1, v2, vh1, vh2)
 {
   value vhh1, vhh2;		/* not required after calls */
-  AVAR(iso);
+  AVAR(iso2);
   AFBEGIN;
 
   if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) {
@@ -118,14 +118,14 @@ static AFFDEF(cons_isocmp, v1, v2, vh1, vh2)
   vhh1 = __arc_visit(c, AV(v1), AV(vh1));
   /* If we somehow already visited v2 when v1 was not visited in the
      same way, they cannot be the same. */
-  if (__arc_visit2(c, AV(v2), AV(vh2), AV(vhh1)) != CNIL)
+  if (__arc_visit2(c, AV(v2), AV(vh2), vhh1) != CNIL)
     ARETURN(CNIL);
   /* Recursive comparisons */
-  AV(iso) = arc_mkaff(c, arc_iso, CNIL);
-  AFCALL(AV(iso), car(AV(v1)), car(AV(v2)), AV(vh1), AV(vh2));
+  AV(iso2) = arc_mkaff(c, arc_iso2, CNIL);
+  AFCALL(AV(iso2), car(AV(v1)), car(AV(v2)), AV(vh1), AV(vh2));
   if (NIL_P(AFCRV))
     ARETURN(CNIL);
-  AFCALL(AV(iso), cdr(AV(v1)), cdr(AV(v2)), AV(vh1), AV(vh2));
+  AFCALL(AV(iso2), cdr(AV(v1)), cdr(AV(v2)), AV(vh1), AV(vh2));
   if (NIL_P(AFCRV))
     ARETURN(CNIL);
   ARETURN(CTRUE);
