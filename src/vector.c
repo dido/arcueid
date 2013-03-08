@@ -36,7 +36,7 @@ void __arc_vector_marker(arc *c, value v, int depth,
 AFFDEF(__arc_vector_isocmp, v1, v2, vh1, vh2)
 {
   value vhh1, vhh2;		/* not required after calls */
-  AVAR(iso, i);
+  AVAR(iso2, i);
   AFBEGIN;
 
   if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) {
@@ -57,10 +57,11 @@ AFFDEF(__arc_vector_isocmp, v1, v2, vh1, vh2)
   if (VECLEN(AV(v1)) != VECLEN(AV(v2)))
     ARETURN(CNIL);
   /* Recursive comparisons */
-  AV(iso) = arc_mkaff(c, arc_iso, CNIL);
+  AV(iso2) = arc_mkaff(c, arc_iso2, CNIL);
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(v1));
        AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
-    AFCALL(AV(iso), VINDEX(AV(v1), AV(i)), VINDEX(AV(v2), AV(i)));
+    AFCALL(AV(iso2), VINDEX(AV(v1), AV(i)), VINDEX(AV(v2), AV(i)),
+	   AV(vh1), AV(vh2));
     if (NIL_P(AFCRV))
       ARETURN(CNIL);
   }
