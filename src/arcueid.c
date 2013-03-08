@@ -102,48 +102,135 @@ value arc_mkobject(arc *c, size_t size, int type)
   return((value)cc);
 }
 
-value arc_is(arc *c, value v1, value v2)
+/* compare with def of pairwise in ac.scm */
+static AFFDEF(pairwise, pred, lst, vh1, vh2)
+{
+  AVAR(self);
+  AFBEGIN;
+
+  AV(self) = arc_mkaff(c, pairwise, CNIL);
+  if (NIL_P(AV(lst)))
+    ARETURN(CTRUE);
+  if (NIL_P(cdr(AV(lst))))
+    ARETURN(CTRUE);
+  AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)), vh1, vh2);
+  if (NIL_P(AFCRV))
+    ARETURN(CNIL);
+  AFCALL(AV(self), AV(pred), cdr(AV(lst)));
+  ARETURN(AFCRV);
+  AFEND;
+}
+AFFEND
+
+value arc_is2(arc *c, value a, value b)
 {
   typefn_t *tfn;
 
-  /* An object is definitely the same as itself */
-  if (v1 == v2)
+  /* An object is definitely equivalent to itself */
+  if (a == b)
     return(CTRUE);
-  /* Two objects with different types are definitely not the same */
-  if (TYPE(v1) != TYPE(v2))
+  /* Two objects of different types cannot be equivalent */
+  if (TYPE(a) != TYPE(b))
     return(CNIL);
-
-  /* v1 == v2 check should have covered this, but just in case */
-  if (IMMEDIATE_P(v1))
+  /* a == b check should have covered this, but just in case */
+  if (IMMEDIATE_P(a))
     return(CNIL);
-
-  tfn = __arc_typefn(c, v1);
-  /* If no iscmp is defined, two objects of that type can be equal if and
-     only if their references are equal (and they weren't from above). */
-  if (tfn->iscmp == NULL)
+  /* Look for a type-specific shallow compare. If there is none,
+     two objects of that type cannot be equivalent unless they
+     are the same object. */
+  tfn = __arc_typefn(c, a);
+  if (tfn == NULL || tfn->iscmp == NULL)
     return(CNIL);
-  return(tfn->iscmp(c, v1, v2));
+  /* Use the result given by iscmp */
+  return(tfn->iscmp(c, a, b));
 }
 
-value arc_iso(arc *c, value v1, value v2, value vh1, value vh2)
+/* two-argument wrapper to arc_is2. vh1 and vh2 are not used. */
+static AFFDEF(is2, a, b, vh1, vh2)
+{
+  AFBEGIN;
+  ((void)vh1);
+  ((void)vh2);
+  ARETURN(arc_is2(c, AV(a), AV(b)));
+  AFEND;
+}
+AFFEND
+
+
+AFFDEF0(arc_is)
+{
+  int argc;
+  AVAR(list, fis2, pw);
+  AFBEGIN;
+  AV(list) = CNIL;
+  argc = arc_thr_argc(c, thr);
+  while (--argc >= 0)
+    AV(list) = cons(c, arc_thr_pop(c, thr), AV(list));
+  AV(fis2) = arc_mkaff(c, is2, CNIL);
+  AV(pw) = arc_mkaff(c, pairwise, CNIL);
+  AFCALL(AV(pw), AV(fis2), AV(list), CNIL, CNIL);
+  ARETURN(AFCRV);
+  AFEND;
+}
+AFFEND
+
+/* Two-argment iso. */
+static AFFDEF(iso2, a, b, vh1, vh2)
 {
   typefn_t *tfn;
-
-  /* An object is definitely the same as itself */
-  if (v1 == v2)
+  AVAR(isop);
+  AFBEGIN;
+  /* An object is isomorphic to itself */
+  if (AV(a) == AV(b))
     return(CTRUE);
-  /* Two objects with different types are definitely not the same */
-  if (TYPE(v1) != TYPE(v2))
-    return(CNIL);
-  /* v1 == v2 check should have covered this, but just in case */
-  if (IMMEDIATE_P(v1))
-    return(CNIL);
 
-  tfn = __arc_typefn(c, v1);
-  if (tfn->isocmp == NULL)
-    return(CNIL);
-  return(tfn->isocmp(c, v1, v2, vh1, vh2));
+  /* Objects with different types cannot be isomorphic */
+  if (TYPE(AV(a)) != TYPE(AV(b)))
+    ARETURN(CNIL);
+
+  /* a == b check should have covered this, but just in case */
+  if (IMMEDIATE_P(AV(a)))
+    ARETURN(CNIL);
+
+  /* Go to the type-specific iso.  If there is none, they cannot
+     be isomorphic. */
+  tfn = __arc_typefn(c, AV(a));
+  if (tfn == NULL)
+    ARETURN(CNIL);
+  /* Use a type-specific iso if available.  Use a type-specific
+     iscmp if available.  If neither is available, then they cannot
+     be compared.  */
+  if (tfn->isocmp != NULL) {
+    AV(isop) = arc_mkaff(c, tfn->isocmp, CNIL);
+    AFCALL(AV(isop), AV(a), AV(b), AV(vh1), AV(vh2));
+    ARETURN(AFCRV);
+  } else if (tfn->iscmp != NULL) {
+    ARETURN(tfn->iscmp(c, AV(a), AV(b)));
+  }
+  ARETURN(CNIL);
+  AFEND;
 }
+AFFEND
+
+AFFDEF0(arc_iso)
+{
+  int argc;
+  AVAR(list, fiso2, pw);
+  AFBEGIN;
+  AV(list) = CNIL;
+  argc = arc_thr_argc(c, thr);
+  while (--argc >= 0)
+    AV(list) = cons(c, arc_thr_pop(c, thr), AV(list));
+  AV(fiso2) = arc_mkaff(c, iso2, CNIL);
+  AV(pw) = arc_mkaff(c, pairwise, CNIL);
+  /* Call pairwise with new visithashes */
+  AFCALL(AV(pw), AV(fiso2), AV(list),
+	 arc_mkhash(c, ARC_HASHBITS),
+	 arc_mkhash(c, ARC_HASHBITS));
+  ARETURN(AFCRV);
+  AFEND;
+}
+AFFEND
 
 void arc_err_cstrfmt(arc *c, const char *fmt, ...)
 {
