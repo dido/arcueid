@@ -43,12 +43,12 @@ static value sio_pprint(arc *c, value v, value *ppstr, value visithash)
   return(*ppstr);
 }
 
-static unsigned long sio_hash(arc *c, value v, arc_hs *s, value vh)
+static unsigned long sio_hash(arc *c, value v, arc_hs *s)
 {
   unsigned long len;
 
-  len = arc_hash(c, SIODATA(v)->str, vh);
-  len += arc_hash(c, INT2FIX(SIODATA(v)->idx), vh);
+  len = arc_hash(c, SIODATA(v)->str);
+  len += arc_hash(c, INT2FIX(SIODATA(v)->idx));
   return(len);
 }
 
