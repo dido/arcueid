@@ -69,14 +69,12 @@ static value flonum_pprint(arc *c, value f, value *ppstr, value visithash)
   return(*ppstr);
 }
 
-/* XXX - this may not work properly if sizeof(double) does not precisely
-   divide sizeof(unsigned long). */
-static value flonum_hash(arc *c, value f, arc_hs *s, value visithash)
+static value flonum_hash(arc *c, value f, arc_hs *s)
 {
-  unsigned long *ptr = (unsigned long *)REP(f);
+  char *ptr = (char *)REP(f);
   int i;
 
-  for (i=0; i<sizeof(double)/sizeof(unsigned long); i++)
+  for (i=0; i<sizeof(double)/sizeof(char); i++)
     arc_hash_update(s, *ptr++);
   return(1);
 }
@@ -84,11 +82,6 @@ static value flonum_hash(arc *c, value f, arc_hs *s, value visithash)
 static value flonum_iscmp(arc *c, value v1, value v2)
 {
   return((*((double *)REP(v1)) == *((double *)REP(v2))) ? CTRUE : CNIL);
-}
-
-static value flonum_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  return(flonum_iscmp(c, v1, v2));
 }
 
 value arc_mkflonum(arc *c, double val)
@@ -113,14 +106,12 @@ static value complex_pprint(arc *c, value z, value *ppstr, value visithash)
   return(*ppstr);
 }
 
-/* XXX - this may not work properly if sizeof(double) does not precisely
-   divide sizeof(unsigned long). */
-static value complex_hash(arc *c, value f, arc_hs *s, value visithash)
+static value complex_hash(arc *c, value f, arc_hs *s)
 {
-  unsigned long *ptr = (unsigned long *)REP(f);
+  char *ptr = (char *)REP(f);
   int i;
 
-  for (i=0; i<sizeof(double complex)/sizeof(unsigned long); i++)
+  for (i=0; i<sizeof(double complex)/sizeof(char); i++)
     arc_hash_update(s, *ptr++);
   return(1);
 }
@@ -128,11 +119,6 @@ static value complex_hash(arc *c, value f, arc_hs *s, value visithash)
 static value complex_iscmp(arc *c, value v1, value v2)
 {
   return((*((double complex *)REP(v1)) == *((double complex *)REP(v2))) ? CTRUE : CNIL);
-}
-
-static value complex_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  return(complex_iscmp(c, v1, v2));
 }
 
 value arc_mkcomplex(arc *c, double complex z)
@@ -165,7 +151,7 @@ static value bignum_pprint(arc *c, value n, value *ppstr, value visithash)
   return(*ppstr);
 }
 
-static value bignum_hash(arc *c, value n, arc_hs *s, value visithash)
+static value bignum_hash(arc *c, value n, arc_hs *s)
 {
   unsigned long *rop;
   size_t numb = sizeof(unsigned long);
@@ -187,11 +173,6 @@ static value bignum_iscmp(arc *c, value v1, value v2)
 	 CTRUE : CNIL);
 }
 
-static value bignum_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  return(bignum_iscmp(c, v1, v2));
-}
-
 value arc_mkbignuml(arc *c, long val)
 {
   value cv;
@@ -210,7 +191,7 @@ typefn_t __arc_complex_typefn__ = {
   complex_pprint,
   complex_hash,
   complex_iscmp,
-  complex_isocmp,
+  NULL,
   NULL
 };
 
@@ -220,7 +201,7 @@ typefn_t __arc_flonum_typefn__ = {
   flonum_pprint,
   flonum_hash,
   flonum_iscmp,
-  flonum_isocmp,
+  NULL,
   NULL
 };
 
@@ -232,7 +213,7 @@ typefn_t __arc_bignum_typefn__ = {
   bignum_pprint,
   bignum_hash,
   bignum_iscmp,
-  bignum_isocmp,
+  NULL,
   NULL
 };
 
