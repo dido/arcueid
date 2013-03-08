@@ -334,6 +334,7 @@ extern value arc_mkobject(arc *c, size_t size, int type);
 extern value arc_is2(arc *c, value a, value b);
 extern int arc_is(arc *c, value thr);
 extern int arc_iso(arc *c, value thr);
+extern int arc_iso2(arc *c, value thr);
 extern value __arc_visit(arc *c, value v, value hash);
 extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
 extern value __arc_visitp(arc *c, value v, value hash);
