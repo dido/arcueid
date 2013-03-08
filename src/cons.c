@@ -100,52 +100,38 @@ static void cons_marker(arc *c, value v, int depth,
   markfn(c, cdr(v), depth);
 }
 
-static unsigned long cons_hash(arc *c, value sexpr, arc_hs *s, value visithash)
+static AFFDEF(cons_isocmp, v1, v2, vh1, vh2)
 {
-  unsigned long len;
+  value vhh1, vhh2;		/* not required after calls */
+  AVAR(iso);
+  AFBEGIN;
 
-  if (visithash == CNIL)
-    visithash = arc_mkhash(c, ARC_HASHBITS);
-  if (__arc_visit(c, sexpr, visithash) != CNIL) {
-    /* Already visited at some point.  Do not recurse further.  An already
-       visited node will still contribute 1 to the length though. */
-    return(1);
-  }
-  len = arc_hash(c, car(sexpr), visithash);
-  len += arc_hash(c, cdr(sexpr), visithash);
-  return(len);
-}
-
-static value cons_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  value vhh1, vhh2;
-
-  if (vh1 == CNIL) {
-    vh1 = arc_mkhash(c, ARC_HASHBITS);
-    vh2 = arc_mkhash(c, ARC_HASHBITS);
-  }
-
-  if ((vhh1 = __arc_visit(c, v1, vh1)) != CNIL) {
+  if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) {
     /* If we find a visited object, see if v2 is also visited in vh2.
        If not, they are not the same. */
-    vhh2 = __arc_visit(c, v2, vh2);
+    vhh2 = __arc_visit(c, AV(v2), AV(vh2));
     /* We see if the same value was produced on visiting. */
-    return((vhh2 == vhh1) ? CTRUE : CNIL);
+    ARETURN((vhh2 == vhh1) ? CTRUE : CNIL);
   }
 
   /* Get value assigned by __arc_visit to v1. */
-  vhh1 = __arc_visit(c, v1, vh1);
+  vhh1 = __arc_visit(c, AV(v1), AV(vh1));
   /* If we somehow already visited v2 when v1 was not visited in the
      same way, they cannot be the same. */
-  if (__arc_visit2(c, v2, vh2, vhh1) != CNIL)
-    return(CNIL);
+  if (__arc_visit2(c, AV(v2), AV(vh2), AV(vhh1)) != CNIL)
+    ARETURN(CNIL);
   /* Recursive comparisons */
-  if (arc_iso(c, car(v1), car(v2), vh1, vh2) != CTRUE)
-    return(CNIL);
-  if (arc_iso(c, cdr(v1), cdr(v2), vh1, vh2) != CTRUE)
-    return(CNIL);
-  return(CTRUE);
+  AV(iso) = arc_mkaff(c, arc_iso, CNIL);
+  AFCALL(AV(iso), car(AV(v1)), car(AV(v2)), AV(vh1), AV(vh2));
+  if (NIL_P(AFCRV))
+    ARETURN(CNIL);
+  AFCALL(AV(iso), cdr(AV(v1)), cdr(AV(v2)), AV(vh1), AV(vh2));
+  if (NIL_P(AFCRV))
+    ARETURN(CNIL);
+  ARETURN(CTRUE);
+  AFEND;
 }
+AFFEND
 
 /* A cons can be applied to a fixnum value */
 static int cons_apply(arc *c, value thr, value list)
@@ -200,7 +186,7 @@ typefn_t __arc_cons_typefn__ = {
   cons_marker,
   __arc_null_sweeper,
   cons_pprint,
-  cons_hash,
+  NULL,
   NULL,
   cons_isocmp,
   cons_apply
