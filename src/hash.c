@@ -15,6 +15,10 @@
 
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
+
+  NOTE: Non-atom keys will not work with the current set of hash table
+  support functions. There will be another set of hash table functions
+  that will not have this limitation.
 */
 #include "arcueid.h"
 #include "alloc.h"
@@ -259,7 +263,7 @@ static unsigned long hash_hasher(arc *c, value v, arc_hs *s)
 static AFFDEF(hash_isocmp, v1, v2, vh1, vh2)
 {
   value vhh1, vhh2;		/* not required after calls */
-  AVAR(iso, tbl, e, v2val, i);
+  AVAR(iso2, tbl, e, v2val, i);
 
   AFBEGIN;
 
@@ -282,14 +286,14 @@ static AFFDEF(hash_isocmp, v1, v2, vh1, vh2)
   if (HASH_NENTRIES(AV(v1)) != HASH_NENTRIES(AV(v2)))
     ARETURN(CNIL);
   AV(tbl) = HASH_TABLE(AV(v1));
-  AV(iso) = arc_mkaff(c, arc_iso, CNIL);
+  AV(iso2) = arc_mkaff(c, arc_iso2, CNIL);
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(tbl));
        AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
     AV(e) = VINDEX(AV(tbl), FIX2INT(AV(i)));
     if (EMPTYP(AV(e)))
       continue;
     AV(v2val) = arc_hash_lookup(c, AV(v2), BKEY(AV(e)));
-    AFCALL(AV(iso), BVALUE(AV(e)), AV(v2val), AV(vh1), AV(vh2));
+    AFCALL(AV(iso2), BVALUE(AV(e)), AV(v2val), AV(vh1), AV(vh2));
     if (NIL_P(AFCRV))
       ARETURN(CNIL);
   }
