@@ -58,23 +58,9 @@ static void cfunc_marker(arc *c, value v, int depth,
   mark(c, ((struct cfunc_t *)REP(v))->name, depth);
 }
 
-static unsigned long cfunc_hash(arc *c, value v, arc_hs *s, value visithash)
+static unsigned long cfunc_hash(arc *c, value v, arc_hs *s)
 {
-  return(arc_hash(c, ((struct cfunc_t *)REP(v))->name, visithash));
-}
-
-static value cfunc_isocmp(arc *c, value v1, value v2, value h1, value h2)
-{
-  struct cfunc_t *f1, *f2;
-
-  f1 = (struct cfunc_t *)REP(v1);
-  f2 = (struct cfunc_t *)REP(v2);
-
-  if (arc_iso(c, f1->name, f2->name, h1, h2) == CNIL)
-    return(CNIL);
-  if (f1->argc != f2->argc)
-    return(CNIL);
-  return(CTRUE);
+  return(arc_hash(c, ((struct cfunc_t *)REP(v))->name));
 }
 
 value arc_mkccode(arc *c, int argc, value (*cfunc)(arc *, ...), value name)
@@ -255,6 +241,6 @@ typefn_t __arc_cfunc_typefn__ = {
   cfunc_pprint,
   cfunc_hash,
   NULL,
-  cfunc_isocmp,
+  NULL,
   cfunc_apply
 };
