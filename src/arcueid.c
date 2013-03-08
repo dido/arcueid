@@ -113,10 +113,10 @@ static AFFDEF(pairwise, pred, lst, vh1, vh2)
     ARETURN(CTRUE);
   if (NIL_P(cdr(AV(lst))))
     ARETURN(CTRUE);
-  AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)), vh1, vh2);
+  AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)), AV(vh1), AV(vh2));
   if (NIL_P(AFCRV))
     ARETURN(CNIL);
-  AFCALL(AV(self), AV(pred), cdr(AV(lst)));
+  AFCALL(AV(self), AV(pred), cddr(AV(lst)));
   ARETURN(AFCRV);
   AFEND;
 }
@@ -175,7 +175,7 @@ AFFDEF0(arc_is)
 AFFEND
 
 /* Two-argment iso. */
-static AFFDEF(iso2, a, b, vh1, vh2)
+AFFDEF(arc_iso2, a, b, vh1, vh2)
 {
   typefn_t *tfn;
   AVAR(isop);
@@ -221,7 +221,7 @@ AFFDEF0(arc_iso)
   argc = arc_thr_argc(c, thr);
   while (--argc >= 0)
     AV(list) = cons(c, arc_thr_pop(c, thr), AV(list));
-  AV(fiso2) = arc_mkaff(c, iso2, CNIL);
+  AV(fiso2) = arc_mkaff(c, arc_iso2, CNIL);
   AV(pw) = arc_mkaff(c, pairwise, CNIL);
   /* Call pairwise with new visithashes */
   AFCALL(AV(pw), AV(fiso2), AV(list),
