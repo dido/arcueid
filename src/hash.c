@@ -114,7 +114,7 @@ unsigned long arc_hash_final(arc_hs *s, unsigned long len)
   return(s->s[2]);
 }
 
-unsigned long arc_hash_increment(arc *c, value v, arc_hs *s, value visithash)
+unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
 {
   unsigned long length=1;
   typefn_t *tfn;
@@ -136,26 +136,29 @@ unsigned long arc_hash_increment(arc *c, value v, arc_hs *s, value visithash)
     /*    arc_hash_update(s, (unsigned long)SYM2ID(v)); */
   default:
     tfn = __arc_typefn(c, v);
-    length = tfn->hash(c, v, s, visithash);
+    if (tfn->hash == CNIL) {
+      arc_err_cstrfmt(c, "no type-specific hasher found for type %d", TYPE(v));
+      return(length);
+    }
+    length = tfn->hash(c, v, s);
     break;
   }
   return(length);
 }
 
-unsigned long arc_hash_level(arc *c, value v, value visithash,
-			     unsigned long level)
+unsigned long arc_hash_level(arc *c, value v, unsigned long level)
 {
   unsigned long len;
   arc_hs s;
 
   arc_hash_init(&s, level);
-  len = arc_hash_increment(c, v, &s, visithash);
+  len = arc_hash_increment(c, v, &s);
   return(arc_hash_final(&s, len));
 }
 
-unsigned long arc_hash(arc *c, value v, value visithash)
+unsigned long arc_hash(arc *c, value v)
 {
-  return(arc_hash_level(c, v, visithash, 0));
+  return(arc_hash_level(c, v, 0));
 }
 
 /* Arcueid's hash table data type.  A hash table is simply a four-tuple,
@@ -235,73 +238,65 @@ static void hash_sweeper(arc *c, value v)
   }
 }
 
-static unsigned long hash_hasher(arc *c, value v, arc_hs *s, value visithash)
+static unsigned long hash_hasher(arc *c, value v, arc_hs *s)
 {
   unsigned long len;
   value tbl, e;
   int i;
 
-  if (visithash == CNIL)
-    visithash = arc_mkhash(c, ARC_HASHBITS);
-  if (__arc_visit(c, v, visithash) != CNIL) {
-    /* Already visited at some point.  Do not recurse further.  An already
-       visited node will still contribute 1 to the length though. */
-    return(1);
-  }
   tbl = HASH_TABLE(v);
   len = 0;
   for (i=0; i<VECLEN(tbl); i++) {
     e = VINDEX(tbl, i);
     if (EMPTYP(e))
       continue;
-    len += arc_hash(c, BKEY(e), visithash);
-    len += arc_hash(c, BVALUE(e), visithash);
+    len += arc_hash(c, BKEY(e));
+    len += arc_hash(c, BVALUE(e));
   }
   return(len);
 }
 
-static value hash_isocmp(arc *c, value v1, value v2, value vh1, value vh2)
+static AFFDEF(hash_isocmp, v1, v2, vh1, vh2)
 {
-  value vhh1, vhh2;
-  value v2val, tbl, e;
-  int i;
+  value vhh1, vhh2;		/* not required after calls */
+  AVAR(iso, tbl, e, v2val, i);
 
-  if (vh1 == CNIL) {
-    vh1 = arc_mkhash(c, ARC_HASHBITS);
-    vh2 = arc_mkhash(c, ARC_HASHBITS);
-  }
+  AFBEGIN;
 
-  if ((vhh1 = __arc_visit(c, v1, vh1)) != CNIL) {
+  if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) {
     /* If we find a visited object, see if v2 is also visited in vh2.
        If not, they are not the same. */
-    vhh2 = __arc_visit(c, v2, vh2);
+    vhh2 = __arc_visit(c, AV(v2), AV(vh2));
     /* We see if the same value was produced on visiting. */
-    return((vhh2 == vhh1) ? CTRUE : CNIL);
+    ARETURN((vhh2 == vhh1) ? CTRUE : CNIL);
   }
 
   /* Get value assigned by __arc_visit to v1. */
-  vhh1 = __arc_visit(c, v1, vh1);
+  vhh1 = __arc_visit(c, AV(v1), AV(vh1));
   /* If we somehow already visited v2 when v1 was not visited in the
      same way, they cannot be the same. */
-  if (__arc_visit2(c, v2, vh2, vhh1) != CNIL)
-    return(CNIL);
+  if (__arc_visit2(c, AV(v2), AV(vh2), AV(vhh1)) != CNIL)
+    ARETURN(CNIL);
 
   /* Two hash tables must have identical numbers of entries to be isomorphic */
-  if (HASH_NENTRIES(v1) != HASH_NENTRIES(v2))
-    return(CNIL);
-  /* Two hash tables must have identical key-value pair mappings to be
-     isomorphic */
-  tbl = HASH_TABLE(v1);
-  for (i=0; i<VECLEN(tbl); i++) {
-    e = VINDEX(tbl, i);
-    if (EMPTYP(e))
+  if (HASH_NENTRIES(AV(v1)) != HASH_NENTRIES(AV(v2)))
+    ARETURN(CNIL);
+  AV(tbl) = HASH_TABLE(AV(v1));
+  AV(iso) = arc_mkaff(c, arc_iso, CNIL);
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(tbl));
+       AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+    AV(e) = VINDEX(AV(tbl), FIX2INT(AV(i)));
+    if (EMPTYP(AV(e)))
       continue;
-    v2val = arc_hash_lookup(c, v2, BKEY(e));
-    if (arc_iso(c, BVALUE(e), v2val, vh1, vh2) == CNIL)
-      return(CNIL);
+    AV(v2val) = arc_hash_lookup(c, AV(v2), BKEY(AV(e)));
+    AFCALL(AV(iso), BVALUE(AV(e)), AV(v2val), AV(vh1), AV(vh2));
+    if (NIL_P(AFCRV))
+      ARETURN(CNIL);
   }
-  return(CTRUE);
+  ARETURN(CTRUE);
+  AFEND;
 }
+AFFEND
 
 /* A hash can be applied with an index and an optional default value */
 static int hash_apply(arc *c, value thr, value tbl)
@@ -353,7 +348,7 @@ static void hashtable_expand(arc *c, value hash)
     if (EMPTYP(e))
       continue;
     /* insert the old key into the new table */
-    hv = arc_hash(c, BKEY(e), CNIL);
+    hv = arc_hash(c, BKEY(e));
     index = hv & HASHMASK(nhashbits);
     for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
       index = (index + PROBE(j, k)) & HASHMASK(nhashbits);
@@ -409,7 +404,7 @@ value arc_hash_insert(arc *c, value hash, value key, value val)
   if (HASH_NENTRIES(hash)+1 > HASH_LLIMIT(hash))
     hashtable_expand(c, hash);
   SET_NENTRIES(hash, HASH_NENTRIES(hash)+1);
-  hv = arc_hash(c, key, CNIL);
+  hv = arc_hash(c, key);
   index = hv & TABLEMASK(hash);
   /* Collision resolution with open addressing */
   for (i=0;; i++) {
@@ -417,7 +412,7 @@ value arc_hash_insert(arc *c, value hash, value key, value val)
     /* If we see an empty bucket in our search, or if we see a bucket
        whose key is the same as the key specified, we have found the
        place where the element should go. */
-    if (EMPTYP(e) || arc_is(c, BKEY(e), key) == CTRUE)
+    if (EMPTYP(e) || arc_is2(c, BKEY(e), key) == CTRUE)
       break;
     /* We found a bucket, but it is occupied by some other key. Continue
        probing. */
@@ -442,7 +437,7 @@ static value hash_lookup(arc *c, value hash, value key, unsigned int *index)
   unsigned int hv, i;
   value e;
 
-  hv = arc_hash(c, key, CNIL);
+  hv = arc_hash(c, key);
   *index = hv & TABLEMASK(hash);
   for (i=0;; i++) {
     *index = (*index + PROBE(i, key)) & TABLEMASK(hash);
@@ -455,7 +450,7 @@ static value hash_lookup(arc *c, value hash, value key, unsigned int *index)
        deleted at some point, so we may need to continue probing. */
     if (e == CUNDEF)
       continue;
-    if (arc_iso(c, BKEY(e), key, CNIL, CNIL) == CTRUE)
+    if (arc_is2(c, BKEY(e), key) == CTRUE)
       return(BVALUE(e));
   }
 }
