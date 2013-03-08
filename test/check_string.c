@@ -80,12 +80,9 @@ START_TEST(test_compare_strings)
   fail_unless(arc_strcmp(c, str1, str2) < 0);
   fail_unless(arc_strcmp(c, str2, str1) > 0);
   fail_unless(arc_strcmp(c, str1, str3) == 0);
-  fail_unless(arc_is(c, str1, str1) == CTRUE);
-  fail_unless(arc_is(c, str1, str3) == CTRUE);
-  fail_unless(arc_iso(c, str1, str1, CNIL, CNIL) == CTRUE);
-  fail_unless(arc_iso(c, str1, str3, CNIL, CNIL) == CTRUE);
-  fail_unless(arc_is(c, str1, str2) == CNIL);
-  fail_unless(arc_iso(c, str1, str2, CNIL, CNIL) == CNIL);
+  fail_unless(arc_is2(c, str1, str1) == CTRUE);
+  fail_unless(arc_is2(c, str1, str3) == CTRUE);
+  fail_unless(arc_is2(c, str1, str2) == CNIL);
 }
 END_TEST
 
