@@ -34,6 +34,8 @@
 void *alloca (size_t);
 #endif
 
+#if 0
+
 static value cons_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   value osexpr = sexpr;
@@ -91,6 +93,8 @@ static value cons_pprint(arc *c, value sexpr, value *ppstr, value visithash)
   __arc_unvisit(c, osexpr, visithash);
   return(*ppstr);
 }
+
+#endif
 
 /* Mark the car and cdr */
 static void cons_marker(arc *c, value v, int depth,
@@ -185,7 +189,7 @@ value cons(arc *c, value x, value y)
 typefn_t __arc_cons_typefn__ = {
   cons_marker,
   __arc_null_sweeper,
-  cons_pprint,
+  NULL,
   NULL,
   NULL,
   cons_isocmp,
