@@ -210,7 +210,7 @@ value arc_strcatc(arc *c, value v1, Rune ch)
   newstr = arc_mkstringlen(c, STRREP(v1)->len + 1);
   runeptr = STRREP(newstr)->str;
   memcpy(runeptr, STRREP(v1)->str, STRREP(v1)->len*sizeof(Rune));
-  runeptr += STRREP(v1)->len*sizeof(Rune);
+  runeptr += STRREP(v1)->len;
   *runeptr = ch;
   return(newstr);
 }
