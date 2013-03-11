@@ -149,6 +149,7 @@ int arc_literal(arc *c, value cctx, value literal)
   return(lidx);
 }
 
+#if 0
 static value code_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   value src;
@@ -165,6 +166,7 @@ static value code_pprint(arc *c, value sexpr, value *ppstr, value visithash)
   __arc_append_cstring(c, ">", ppstr);
   return(*ppstr);
 }
+#endif
 
 value arc_mkcode(arc *c, int ncodes, int nlits)
 {
@@ -197,7 +199,7 @@ value arc_cctx2code(arc *c, value cctx)
 typefn_t __arc_code_typefn__ = {
   __arc_vector_marker,
   __arc_null_sweeper,
-  code_pprint,
+  NULL,
   NULL,
   NULL,
   __arc_vector_isocmp,
