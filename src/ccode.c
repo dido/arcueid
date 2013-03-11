@@ -45,6 +45,8 @@ struct cfunc_t {
   int argc;
 };
 
+#if 0
+
 static value cfunc_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   __arc_append_cstring(c, "#<cprocedure: ", ppstr);
@@ -52,6 +54,9 @@ static value cfunc_pprint(arc *c, value sexpr, value *ppstr, value visithash)
   __arc_append_cstring(c, ">", ppstr);
   return(*ppstr);
 }
+
+#endif
+
 static void cfunc_marker(arc *c, value v, int depth,
 			  void (*mark)(struct arc *, value, int))
 {
