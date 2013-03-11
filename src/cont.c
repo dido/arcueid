@@ -77,11 +77,13 @@ void arc_restorecont(arc *c, value thr, value cont)
   /* XXX - work out what to do for a closure-based continuation */
 }
 
+#if 0
 static value cont_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   __arc_append_cstring(c, "#<continuation>", ppstr);
   return(*ppstr);
 }
+#endif
 
 static int cont_apply(arc *c, value thr, value cont)
 {
@@ -94,7 +96,7 @@ static int cont_apply(arc *c, value thr, value cont)
 typefn_t __arc_cont_typefn__ = {
   __arc_vector_marker,
   __arc_null_sweeper,
-  cont_pprint,
+  NULL,
   NULL,
   NULL,
   __arc_vector_isocmp,
