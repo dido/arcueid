@@ -88,8 +88,8 @@ struct typefn_t {
   void (*marker)(struct arc *c, value, int, void (*)(struct arc *, value, int));
   /* Sweeper */
   void (*sweeper)(struct arc *c, value);
-  /* Pretty printer */
-  value (*pprint)(struct arc *c, value, value *, value);
+  /* Pretty printer.  This is an AFF. */
+  int (*pprint)(struct arc *c, value);
   /* Hasher */
   unsigned long (*hash)(struct arc *c, value, arc_hs *);
   /* Shallow compare.  This is a normal function. */
@@ -145,6 +145,9 @@ struct arc {
   value curthread;		/* current thread */
   int tid_nonce;		/* nonce for thread IDs */
   int stksize;			/* default stack size for threads */
+
+  /* declarations */
+  int atstrings;		/* allow atstrings or not */
 };
 
 typedef struct arc arc;
@@ -327,8 +330,9 @@ extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
 				Rune ch, value *str);
 extern void __arc_append_cstring(arc *c, char *buf, value *ppstr);
 
-extern value arc_prettyprint(arc *c, value sexpr, value *ppstr,
-			     value visithash);
+/* Output */
+extern int arc_write(arc *c, value thr);
+extern int arc_disp(arc *c, value thr);
 
 extern value arc_mkobject(arc *c, size_t size, int type);
 extern value arc_is2(arc *c, value a, value b);
@@ -339,6 +343,12 @@ extern value __arc_visit(arc *c, value v, value hash);
 extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
 extern value __arc_visitp(arc *c, value v, value hash);
 extern void __arc_unvisit(arc *c, value v, value hash);
+
+/* Symbols */
+extern value arc_intern(arc *c, value name);
+extern value arc_intern_cstr(arc *c, const char *name);
+extern value arc_sym2name(arc *c, value sym);
+extern value arc_unintern(arc *c, value sym);
 
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
