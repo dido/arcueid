@@ -224,6 +224,9 @@ static inline enum arc_types TYPE(value v)
 #define cddr(x) (cdr(cdr(x)))
 #define caddr(x) (car(cddr(x)))
 
+#define scar(x, y) ((car(x)) = (y))
+#define scdr(x, y) ((cdr(x)) = (y))
+
 extern value cons(arc *c, value x, value y);
 
 /* Definitions for strings and characters */
@@ -318,6 +321,8 @@ extern int arc_writec(arc *c, value thr);
 extern int arc_close(arc *c, value thr);
 extern int arc_peekc(arc *c, value thr);
 extern int arc_ungetc(arc *c, value thr);
+extern int arc_seek(arc *c, value thr);
+extern int arc_tell(arc *c, value thr);
 extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 
 /* Continuations */
