@@ -243,7 +243,7 @@ static int cfunc_apply(arc *c, value thr, value cfn)
 typefn_t __arc_cfunc_typefn__ = {
   cfunc_marker,
   __arc_null_sweeper,
-  cfunc_pprint,
+  NULL,
   cfunc_hash,
   NULL,
   NULL,
