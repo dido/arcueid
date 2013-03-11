@@ -55,44 +55,6 @@ void __arc_null_sweeper(arc *c, value v)
   /* Does nothing */
 }
 
-value arc_prettyprint(arc *c, value sexpr, value *ppstr, value visithash)
-{
-  typefn_t *tfn;
-
-  switch (TYPE(sexpr)) {
-  case T_NIL:
-    __arc_append_cstring(c, "nil", ppstr);
-    break;
-  case T_TRUE:
-    __arc_append_cstring(c, "t", ppstr);
-    break;
-  case T_FIXNUM:
-    {
-      long val = FIX2INT(sexpr);
-      int len;
-      char *outstr;
-
-      len = snprintf(NULL, 0, "%ld", val) + 1;
-      outstr = (char *)alloca(sizeof(char)*(len+2));
-      snprintf(outstr, len+1, "%ld", val);
-      __arc_append_cstring(c, outstr, ppstr);
-    }
-    break;
-  case T_SYMBOL:
-    /* XXX - handle this case */
-    break;
-  case T_NONE:
-    /* XXX - this is an error case that needs handling */
-    break;
-  default:
-    /* non-immediate type */
-    tfn = __arc_typefn(c, sexpr);
-    tfn->pprint(c, sexpr, ppstr, visithash);
-    break;
-  }
-  return(*ppstr);
-}
-
 value arc_mkobject(arc *c, size_t size, int type)
 {
   struct cell *cc;
