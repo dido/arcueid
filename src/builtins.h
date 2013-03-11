@@ -24,7 +24,8 @@
 enum {
   BI_io=0,			/* builtin I/O data */
   BI_syms=1,			/* builtin symbols */
-  BI_last=1
+  BI_charesc=2,			/* character escapes */
+  BI_last=2
 };
 
 enum builtin_syms {
