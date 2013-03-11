@@ -300,6 +300,15 @@ AFFDEF0(arc_close)
 }
 AFFEND
 
+AFFDEF(arc_tell, fp)
+{
+  AFBEGIN;
+  AFCALL(VINDEX(IO(AV(fp))->io_ops, IO_tell), AV(fp));
+  ARETURN(AFCRV);
+  AFEND;
+}
+AFFEND
+
 AFFDEF0(arc_stdin)
 {
   AVAR(fd);
