@@ -328,6 +328,9 @@ extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
 
+/* The reader */
+extern int arc_sread(arc *c, value thr);
+
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
 				      value *str);
