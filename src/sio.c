@@ -38,11 +38,6 @@ static void sio_marker(arc *c, value v, int depth,
   markfn(c, SIODATA(v)->str, depth);
 }
 
-static value sio_pprint(arc *c, value v, value *ppstr, value visithash)
-{
-  return(*ppstr);
-}
-
 static unsigned long sio_hash(arc *c, value v, arc_hs *s)
 {
   unsigned long len;
@@ -55,7 +50,7 @@ static unsigned long sio_hash(arc *c, value v, arc_hs *s)
 static typefn_t stringio_tfn = {
   sio_marker,
   __arc_null_sweeper,
-  sio_pprint,
+  NULL,
   sio_hash,
   NULL,
   NULL
