@@ -35,6 +35,7 @@
 void *alloca (size_t);
 #endif
 
+#if 0
 static value thread_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   char *outstr;
@@ -47,6 +48,8 @@ static value thread_pprint(arc *c, value sexpr, value *ppstr, value visithash)
   __arc_append_cstring(c, outstr, ppstr);
   return(*ppstr);  
 }
+
+#endif
 
 static void thread_marker(arc *c, value thr, int depth,
 			  void (*mark)(struct arc *, value, int))
@@ -183,7 +186,7 @@ void arc_init_threads(arc *c)
 typefn_t __arc_thread_typefn__ = {
   thread_marker,
   __arc_null_sweeper,
-  thread_pprint,
+  NULL,
   NULL,
   NULL,
   NULL,
