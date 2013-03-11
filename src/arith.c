@@ -56,18 +56,20 @@ void *alloca (size_t);
 #define REPRAT(q) *((mpq_t *)REP(q))
 #endif
 
-static value flonum_pprint(arc *c, value f, value *ppstr, value visithash)
+AFFDEF(flonum_pprint, f)
 {
-  double val = *((double *)REP(f));
+  AFBEGIN;
+  double val = *((double *)REP(AV(f)));
   int len;
   char *outstr;
 
   len = snprintf(NULL, 0, "%g", val);
   outstr = (char *)alloca(sizeof(char)*(len+2));
   snprintf(outstr, len+1, "%g", val);
-  __arc_append_cstring(c, outstr, ppstr);
-  return(*ppstr);
+  ARETURN(arc_mkstringc(c, outstr));
+  AFEND;
 }
+AFFEND
 
 static value flonum_hash(arc *c, value f, arc_hs *s)
 {
@@ -93,18 +95,20 @@ value arc_mkflonum(arc *c, double val)
   return(cv);
 }
 
-static value complex_pprint(arc *c, value z, value *ppstr, value visithash)
+AFFDEF(complex_pprint, z)
 {
-  double complex val = *((double complex *)REP(z));
+  AFBEGIN;
+  double complex val = *((double *)REP(AV(z)));
   int len;
   char *outstr;
 
   len = snprintf(NULL, 0, "%g%+gi", creal(val), cimag(val));
   outstr = (char *)alloca(sizeof(char)*(len+2));
   snprintf(outstr, len+1, "%g%+gi", creal(val), cimag(val));
-  __arc_append_cstring(c, outstr, ppstr);
-  return(*ppstr);
+  ARETURN(arc_mkstringc(c, outstr));
+  AFEND;
 }
+AFFEND
 
 static value complex_hash(arc *c, value f, arc_hs *s)
 {
@@ -137,19 +141,23 @@ static void bignum_sweep(arc *c, value v)
   mpz_clear(REPBNUM(v));
 }
 
-static value bignum_pprint(arc *c, value n, value *ppstr, value visithash)
+AFFDEF(bignum_pprint, n)
 {
+  AFBEGIN;
   char *outstr;
   int len;
+  value psv;
 
-  len = mpz_sizeinbase(REPBNUM(n), 10) + 1;
-  /* XXX should we use a real malloc for this? */
+  len = mpz_sizeinbase(REPBNUM(AV(n)), 10) + 1;
+  /* XXX should we be using a real malloc for this? */
   outstr = (char *)malloc(sizeof(char)*len);
-  mpz_get_str(outstr, 10, REPBNUM(n));
-  __arc_append_cstring(c, outstr, ppstr);
+  mpz_get_str(outstr, 10, REPBNUM(AV(n)));
+  psv = arc_mkstringc(c, outstr);
   free(outstr);
-  return(*ppstr);
+  ARETURN(psv);
+  AFEND;
 }
+AFFEND
 
 static value bignum_hash(arc *c, value n, arc_hs *s)
 {
