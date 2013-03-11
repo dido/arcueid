@@ -30,6 +30,7 @@ typedef struct {
 
 #define PSTRMAX 1024
 
+#if 0
 static value string_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
   Rune buf[PSTRMAX], ch;
@@ -53,6 +54,7 @@ static value string_pprint(arc *c, value sexpr, value *ppstr, value visithash)
   __arc_append_buffer_close(c, buf, &idx, ppstr);
   return(*ppstr);
 }
+#endif
 
 static unsigned long string_hash(arc *c, value v, arc_hs *s)
 {
@@ -147,11 +149,13 @@ value arc_mkstringc(arc *c, const char *s)
   return(str);
 }
 
+#if 0
 static value char_pprint(arc *c, value v, value *ppstr, value visithash)
 {
   /* XXX fill this in */
   return(CNIL);
 }
+#endif
 
 static unsigned long char_hash(arc *c, value v, arc_hs *s)
 {
@@ -176,16 +180,6 @@ Rune arc_char2rune(arc *c, value ch)
 {
   return(*((Rune *)REP(ch)));;
 }
-
-typefn_t __arc_char_typefn__ = {
-  __arc_null_marker,
-  __arc_null_sweeper,
-  char_pprint,
-  char_hash,
-  char_iscmp,
-  NULL,
-  NULL
-};
 
 /* Most of these trivial and inefficient functions should
    become more complex and efficient later--they'll become
@@ -313,10 +307,20 @@ void arc_str2cstr(arc *c, value str, char *ptr)
   *p = 0;			/* null terminator */
 }
 
+typefn_t __arc_char_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  NULL,
+  char_hash,
+  char_iscmp,
+  NULL,
+  NULL
+};
+
 typefn_t __arc_string_typefn__ = {
   __arc_null_marker,
   __arc_null_sweeper,
-  string_pprint,
+  NULL,
   string_hash,
   string_iscmp,
   NULL,
