@@ -16,8 +16,23 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
+#include <ctype.h>
 #include "arcueid.h"
 #include "builtins.h"
+
+/* Is ch a valid character in a symbol? */
+static int issym(Rune ch)
+{
+  char *p;
+
+  if (ucisspace(ch)) 
+    return(0);
+  for (p = "()';[]"; *p != '\0';) {
+    if ((Rune)*p++ == ch)
+      return(0);
+  }
+  return(1);
+}
 
 static int scan(arc *c, value thr);
 static int read_list(arc *c, value thr);
@@ -38,8 +53,42 @@ static int read_symbol(arc *c, value thr);
   AFCALL(arc_mkaff(c, arc_sread, CNIL), fp, eof);	\
   val = AFCRV
 
+#define READC(fp, val)					\
+  AFCALL(arc_mkaff(c, arc_readc, CNIL), fp);		\
+  val = AFCRV;						\
+  if (NIL_P(val)) {					\
+    arc_err_cstrfmt(c, "unexpected end of source");	\
+    ARETURN(CNIL);					\
+  }
+
+#define READC2(fp, val, r)					\
+  AFCALL(arc_mkaff(c, arc_readc, CNIL), (fp));			\
+  (val) = AFCRV;						\
+  (r) = (NIL_P(val)) ? Runeerror : arc_char2rune(c, (val))	\
+
 #define READ_COMMENT(func, fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd)
 
+/* Read up to the first non-symbol character from fp */
+static AFFDEF(getsymbol, fp)
+{
+  AVAR(buf, ch);
+  Rune r;
+  AFBEGIN;
+  AV(buf) = arc_outstring(c, CNIL);
+  for (;;) {
+    READC2(AV(fp), AV(ch), r);
+    if (r == Runeerror)
+      break;
+    if (!issym(r)) {
+      arc_ungetc_rune(c, r, AV(fd));
+      break;
+    }
+    AFCALL(mkaff(c, arc_writec, CNIL), AV(ch), AV(buf));
+  }
+  ARETURN(arc_inside(c, AV(buf)));
+  AFEND;
+}
+AFFEND
 
 AFFDEF(arc_sread, fp, eof)
 {
@@ -92,14 +141,10 @@ AFFEND
 static AFFDEF(scan, fp)
 {
   Rune r;
-  AVAR(ch, readc);  
+  AVAR(ch);
   AFBEGIN;
-  AV(readc) = arc_mkaff(c, arc_readc, CNIL);
   for (;;) {
-    AFCALL(AV(readc), AV(fp));
-    AV(ch) = AFCRV;
-    if (NIL_P(AV(ch)))
-      return(CNIL);
+    READC(AV(fp), AV(ch));
     r = arc_char2rune(c, AV(ch));
     if (ucisspace(r))
       continue;
@@ -128,7 +173,7 @@ static AFFDEF(read_list, fp, eof)
     }
     if (!NIL_P(AV(indot))) {
       arc_err_cstrfmt(c, "illegal use of .");
-      return(CNIL);
+      ARETURN(CNIL);
     }
     arc_ungetc_rune(c, r, AV(fd));
     READ(AV(fp), AV(eof), AV(val));
@@ -138,7 +183,7 @@ static AFFDEF(read_list, fp, eof)
 	scdr(AV(last), AV(val));
       } else {
 	arc_err_cstrfmt(c, "illegal use of .");
-	return(CNIL);
+	ARETURN(CNIL);
       }
       AV(indot) = CTRUE;
       continue;
@@ -226,16 +271,10 @@ AFFEND
 static AFFDEF(read_comma, fp, eof)
 {
   Rune r;
-  AVAR(ch, readc);  
+  AVAR(ch);
   AFBEGIN;
 
-  AV(readc) = arc_mkaff(c, arc_readc, CNIL);
-  AFCALL(AV(readc), AV(fp));
-  AV(ch) = AFCRV;
-  if (AV(ch) == CNIL) {
-    arc_err_cstrfmt(c, "unexpected end of source");
-    ARETURN(CNIL);
-  }
+  READC(AV(fp), AV(ch))
   r = arc_char2rune(c, AV(ch));
   /* unquote-splicing */
   if (r == '@') {
@@ -295,7 +334,7 @@ static AFFDEF(codestring, s)
      no @ sign, just return a list with just that string. */
   i = atpos(c, AV(s), 0);
   if (i < 0)
-    return(cons(c, AV(s), CNIL));
+    ARETURN(cons(c, AV(s), CNIL));
   /* If we have an @ sign somewhere, break the string up at that point,
      into the first half (ss) and the rest (rest).  Read the rest portion
      as though it were not part of the string. */
@@ -342,21 +381,15 @@ AFFEND
 
 AFFDEF(read_string, fp, eof)
 {
-  Rune r, escrune;
-  int digcount;
-  AVAR(ch, readc, state, buf);
+  Rune r;
+  int digval;
+  AVAR(ch, state, buf, escrune, digcount);
   AFBEGIN;
-  AV(readc) = arc_mkaff(c, arc_readc, CNIL);
   AV(state) = INT2FIX(1);
   AV(buf) = arc_outstring(c, CNIL);
 
   for (;;) {
-    AFCALL(AV(readc), AV(fp));
-    AV(ch) = AFCRV;
-    if (NIL_P(AV(ch))) {
-      arc_err_cstrfmt(c, "unterminated string reaches end of input");
-      ARETURN(CNIL);
-    }
+    READC(AV(fp), AV(ch));
     r = arc_char2rune(c, AV(ch));
     if (AV(state) == INT2FIX(1)) {
       /* State 1: normal reading */
@@ -376,7 +409,7 @@ AFFDEF(read_string, fp, eof)
       }
 
       /* Otherwise, just add the character to our string buffer */
-      AFCALL(mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), buf);
+      AFCALL(mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), AV(buf));
       continue;
     }
 
@@ -403,7 +436,7 @@ AFFDEF(read_string, fp, eof)
 	break;
       } else if (r == 'U' || r == 'u') {
 	/* unicode escape */
-	escrune = digcount = INT2FIX(0);
+	AV(escrune) = AV(digcount) = INT2FIX(0);
 	AV(state) = INT2FIX(3);
 	continue;
       } else {
@@ -416,15 +449,17 @@ AFFDEF(read_string, fp, eof)
 
     if (AV(state) == INT2FIX(3)) {
       /* Unicode escape */
-      if (digcount >= 5) {
+      if (FIX2INT(AV(digcount)) >= 5) {
 	arc_ungetc_rune(c, r, AV(fd));
-	AFCALL(mkaff(c, arc_writec, CNIL), arc_mkchar(c, escrune), buf);
+	AFCALL(mkaff(c, arc_writec, CNIL),
+	       arc_mkchar(c, FIX2INT(AV(escrune))),
+	       AV(buf));
 	AV(state) = INT2FIX(1);
 	continue;
       }
 
       if (r >= '0' && r <= '9')
-	digval = r - '0';
+	digval = INT2FIX(r - '0');
       else if (r >= 'A' && r <= 'F')
 	digval = r - 'A' + 10;
       else if (r >= 'a' && r <= 'f')
@@ -433,8 +468,8 @@ AFFDEF(read_string, fp, eof)
 	arc_err_cstrfmt(c, "invalid character in Unicode escape");
 	ARETURN(CNIL);
       }
-      escrune = escrune * 16 + digval;
-      digcount++;
+      AV(escrune) = INT2FIX(FIX2INT(AV(escrune)) * 16 + digval);
+      AV(digcount) = INT2FIX(FIX2INT(AV(digcount)) + 1);
       continue;
     }
 
@@ -442,6 +477,103 @@ AFFDEF(read_string, fp, eof)
     arc_err_cstrfmt(c, "internal error sread string invalid state");
     ARETURN(CNIL);
   }
+  AFEND;.
+}
+AFFEND
+
+/* These character constants are inherited by Arc from MzScheme/Racket.
+   Frankly, I think they're stupid, and one would be better off using
+   the same character escape sequences as for strings.  But well,
+   we have to live with these types of complications for the sake of
+   compatibility--maybe later on we can add a declaration (like atstrings)
+   that modifies this reader behavior to something more rational (such as
+   sharp followed by the actual character, with slash for escapes).  Arc
+   does not otherwise use the #-sign for anything else. */
+static AFFDEF(read_char, fp, eof)
+{
+  int alldigits, val, i, digit;
+  Rune r;
+  value tok, symch;
+  AFBEGIN;
+
+  READC(AV(fp), AV(ch));
+  r = arc_char2rune(c, AV(ch));
+  if (r != '\\') {
+    arc_err_cstrfmt(c, "invalid character constant");
+    ARETURN(CNIL);
+  }
+
+  /* Special case for any special characters that are not valid symbols. */
+  READC(AV(fp), AV(ch));
+  r = arc_char2rune(c, AV(ch));
+  if (!issym(r)) {
+    ARETURN(arc_mkchar(c, r));
+  }
+  arc_ungetc_rune(c, r, AV(fd));
+  AFCALL(arc_mkaff(c, getsymbol, CNIL), AV(fp));
+  tok = AFCRV;
+  /* no AFCALLs after this point? */
+  if (arc_strlen(c, tok) == 1)	/* single character */
+    ARETURN(arc_mkchar(c, arc_strindex(c, AV(tok), 0)));
+  if (arc_strlen(c, tok) == 3) {
+    /* Possible octal escape */
+    alldigits = 1;
+    val = 0;
+    for (i=0; i<3; i++) {
+      digit = arc_strindex(c,tok, i);
+      if (!isdigit(digit)) {
+	alldigits = 0;
+	break;
+      }
+      val = val * 8 + (digit - '0');
+    }
+    if (alldigits)
+      ARETURN(arc_mkchar(c, val));
+    /* Possible hexadecimal escape */
+    if (arc_strindex(c, tok, 0) == 'x') {
+      alldigits = 1;
+      val = 0;
+      for (i=1; i<3; i++) {
+	digit = arc_strindex(c, tok, i);
+	if (!isxdigit(digit)) {
+	  alldigits = 0;
+	  break;
+	}
+	digit = tolower(digit);
+	digit = (digit >= '0' && digit <= '9') ?
+	  (digit - '0') : (digit - 'a' + 10);
+	val = val * 16 + digit;
+      }
+      if (alldigits)
+	ARETURN(arc_mkchar(c, val));
+    }
+    /* Not an octal or hexadecimal escape */
+  }
+
+  /* Possible Unicode escape? */
+  if (tolower(arc_strindex(c, tok, 0)) == 'u') {
+    alldigits = 1;
+    val = 0;
+    for (i=1; i<arc_strlen(c, tok); i++) {
+      digit = arc_strindex(c, tok, i);
+      if (!isxdigit(digit)) {
+	alldigits = 0;
+	break;
+      }
+      digit = tolower(digit);
+      digit = (digit >= '0' && digit <= '9') ? (digit - '0') : (digit - 'a' + 10);
+      val = val * 16 + digit;
+    }
+    if (alldigits)
+      ARETURN(arc_mkchar(c, val));
+  }
+
+  symch = arc_hash_lookup(c, VINDEX(c->builtins, BI_charesc), tok);
+  if (symch == CUNBOUND) {
+    arc_err_cstrfmt(c, "invalid character constant");
+    ARETURN(CNIL);
+  }
+  ARETURN(symch);
   AFEND;
 }
 AFFEND
