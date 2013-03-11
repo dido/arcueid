@@ -18,12 +18,6 @@
 */
 #include "arcueid.h"
 
-static value vector_pprint(arc *c, value sexpr, value *ppstr, value visithash)
-{
-  /* XXX fill this in */
-  return(CNIL);
-}
-
 void __arc_vector_marker(arc *c, value v, int depth,
 			 void (*markfn)(arc *, value, int))
 {
@@ -117,7 +111,7 @@ value arc_mkvector(arc *c, int length)
 typefn_t __arc_vector_typefn__ = {
   __arc_vector_marker,
   __arc_null_sweeper,
-  vector_pprint,
+  NULL,
   NULL,
   NULL,
   __arc_vector_isocmp,
