@@ -87,6 +87,15 @@ static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
 			"AF_INET6", "SOCK_STREAM", "SOCK_DGRAM",
 			"SOCK_RAW" };
 
+static struct {
+  char *str;
+  Rune val;
+} chartbl[] = {
+  { "null", 0 }, { "nul", 0 }, { "backspace", 8 }, { "tab", 9 },
+  { "newline", 10 }, { "vtab", 11 }, { "page", 12 }, { "return", 13 },
+  { "space", 32 }, { "rubout", 127 }, { NULL, -1 }
+};
+
 void arc_init_symtable(arc *c)
 {
   int i;
@@ -99,4 +108,14 @@ void arc_init_symtable(arc *c)
   VINDEX(c->builtins, BI_syms) = arc_mkvector(c, S_THE_END);
   for (i=0; i<S_THE_END; i++)
     ARC_BUILTIN(c, i) = arc_intern(c, arc_mkstringc(c, syms[i]));
+
+  /* Set up character escape table */
+  VINDEX(c->builtins, BI_charesc) = arc_mkhash(c, ARC_HASHBITS);
+  for (i=0; chartbl[i].str; i++) {
+    value str = arc_mkstringc(c, chartbl[i].str);
+    value chr = arc_mkchar(c, chartbl[i].val);
+
+    arc_hash_insert(c, VINDEX(c->builtins, BI_charesc), str, chr);
+    arc_hash_insert(c, VINDEX(c->builtins, BI_charesc), chr, str);
+  }
 }
