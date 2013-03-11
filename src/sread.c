@@ -19,6 +19,18 @@
 #include <ctype.h>
 #include "arcueid.h"
 #include "builtins.h"
+#include "utf.h"
+
+static int scan(arc *c, value thr);
+static int read_list(arc *c, value thr);
+static int read_anonf(arc *c, value thr);
+static int read_quote(arc *c, value thr);
+static int read_qquote(arc *c, value thr);
+static int read_comma(arc *c, value thr);
+static int read_string(arc *c, value thr);
+static int read_char(arc *c, value thr);
+static int read_comment(arc *c, value thr);
+static int read_symbol(arc *c, value thr);
 
 /* Is ch a valid character in a symbol? */
 static int issym(Rune ch)
@@ -33,17 +45,6 @@ static int issym(Rune ch)
   }
   return(1);
 }
-
-static int scan(arc *c, value thr);
-static int read_list(arc *c, value thr);
-static int read_anonf(arc *c, value thr);
-static int read_quote(arc *c, value thr);
-static int read_qquote(arc *c, value thr);
-static int read_comma(arc *c, value thr);
-static int read_string(arc *c, value thr);
-static int read_char(arc *c, value thr);
-static int read_comment(arc *c, value thr)
-static int read_symbol(arc *c, value thr);
 
 #define SCAN(fp, ch)				\
   AFCALL(arc_mkaff(c, scan, CNIL), fp);		\
@@ -66,7 +67,7 @@ static int read_symbol(arc *c, value thr);
   (val) = AFCRV;						\
   (r) = (NIL_P(val)) ? Runeerror : arc_char2rune(c, (val))	\
 
-#define READ_COMMENT(func, fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd)
+#define READ_COMMENT(fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd)
 
 /* Read up to the first non-symbol character from fp */
 static AFFDEF(getsymbol, fp)
@@ -80,10 +81,10 @@ static AFFDEF(getsymbol, fp)
     if (r == Runeerror)
       break;
     if (!issym(r)) {
-      arc_ungetc_rune(c, r, AV(fd));
+      arc_ungetc_rune(c, r, AV(fp));
       break;
     }
-    AFCALL(mkaff(c, arc_writec, CNIL), AV(ch), AV(buf));
+    AFCALL(arc_mkaff(c, arc_writec, CNIL), AV(ch), AV(buf));
   }
   ARETURN(arc_inside(c, AV(buf)));
   AFEND;
@@ -124,13 +125,13 @@ AFFDEF(arc_sread, fp, eof)
     } else if (r == '#') {
       AV(func) = arc_mkaff(c, read_char, CNIL);
     } else if (r == ';') {
-      READ_COMMENT(AV(fd));
+      READ_COMMENT(AV(fp));
       continue;
     } else {
-      arc_ungetc_rune(c, r, AV(fd));
+      arc_ungetc_rune(c, r, AV(fp));
       AV(func) = arc_mkaff(c, read_symbol, CNIL);
     }
-    AFCALL(AV(func), AV(fd), AV(eof));
+    AFCALL(AV(func), AV(fp), AV(eof));
     ARETURN(AFCRV);
   }
   AFEND;
@@ -156,7 +157,8 @@ AFFEND
 
 static AFFDEF(read_list, fp, eof)
 {
-  AVAR(top, val, last, fn, ch, indot);
+  AVAR(top, val, last, ch, indot);
+  Rune r;
   AFBEGIN;
 
   AV(top) = AV(val) = AV(last) = AV(indot) = CNIL;
@@ -166,7 +168,7 @@ static AFFDEF(read_list, fp, eof)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
     if (r == ';') {
-      READ_COMMENT(AV(fd));
+      READ_COMMENT(AV(fp));
       continue;
     } else if (r == ')') {
       ARETURN(AV(top));
@@ -175,7 +177,7 @@ static AFFDEF(read_list, fp, eof)
       arc_err_cstrfmt(c, "illegal use of .");
       ARETURN(CNIL);
     }
-    arc_ungetc_rune(c, r, AV(fd));
+    arc_ungetc_rune(c, r, AV(fp));
     READ(AV(fp), AV(eof), AV(val));
     if (AV(val) == ARC_BUILTIN(c, S_DOT)) {
       READ(AV(fp), AV(eof), AV(val));
@@ -205,8 +207,8 @@ AFFEND
    [ ... _ ... ] to (fn (_) ... _ ...) */
 static AFFDEF(read_anonf, fp, eof)
 {
-  AVAR(top, val ,last);
-  Rune ch;
+  AVAR(top, val, last, ch);
+  Rune r;
   AFBEGIN;
   AV(top) = AV(val) = AV(last) = CNIL;
   for (;;) {
@@ -215,7 +217,7 @@ static AFFDEF(read_anonf, fp, eof)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
     if (r == ';') {
-      READ_COMMENT(AV(fd));
+      READ_COMMENT(AV(fp));
       continue;
     } else if (r == ']') {
       /* Complete the fn */
@@ -223,7 +225,7 @@ static AFFDEF(read_anonf, fp, eof)
 		   cons(c, cons(c, ARC_BUILTIN(c, S_US), CNIL),
 			cons(c, AV(top), CNIL))));
     }
-    arc_ungetc_rune(c, r, AV(fd));
+    arc_ungetc_rune(c, r, AV(fp));
     READ(AV(fp), AV(eof), AV(val));
     AV(val) = cons(c, AV(val), CNIL);
     if (!NIL_P(AV(last)))
@@ -242,7 +244,7 @@ AFFEND
    form covered by the provided qsym. */
 static AFFDEF(readq, fp, qsym, eof)
 {
-  AVAR(val, fn);
+  AVAR(val);
   AFBEGIN;
   READ(AV(fp), AV(eof), AV(val));
   ARETURN(cons(c, AV(qsym), cons(c, AV(val), CNIL)));
@@ -252,19 +254,19 @@ AFFEND
 
 static AFFDEF(read_quote, fp, eof)
 {
-  ABEGIN;
+  AFBEGIN;
   AFCALL(arc_mkaff(c, readq, CNIL), fp, ARC_BUILTIN(c, S_QUOTE), eof);
   ARETURN(AFCRV);
-  AEND;
+  AFEND;
 }
 AFFEND
 
 static AFFDEF(read_qquote, fp, eof)
 {
-  ABEGIN;
+  AFBEGIN;
   AFCALL(arc_mkaff(c, readq, CNIL), fp, ARC_BUILTIN(c, S_QQUOTE), eof);
   ARETURN(AFCRV);
-  AEND;
+  AFEND;
 }
 AFFEND
 
@@ -282,10 +284,10 @@ static AFFDEF(read_comma, fp, eof)
     ARETURN(AFCRV);
   }
   /* normal unquote. */
-  arc_ungetc_rune(c, r, AV(fd));
+  arc_ungetc_rune(c, r, AV(fp));
   AFCALL(arc_mkaff(c, readq, CNIL), fp, ARC_BUILTIN(c, S_UNQUOTE), eof);
   ARETURN(AFCRV);
-  AEND;
+  AFEND;
 }
 AFFEND
 
@@ -348,9 +350,9 @@ static AFFDEF(codestring, s)
      again at that point, and pass the remainder of the string back
      to codestring recursively. */
   i = arc_tell(c, AV(in));
-  AV(rlen) = arc_strlen(c, AV(rest));
+  rlen = arc_strlen(c, AV(rest));
   AFCALL(arc_mkaff(c, codestring, CNIL),
-	 arc_substr(c, AV(rest), i, AV(rlen)));
+	 arc_substr(c, AV(rest), i, rlen));
   /* We then combine the pre-@-sign portion of the string (ss),
      the post-@-sign portion (that became sexpr after reading), and the
      results of the recursive call to codestring on the portion of the
@@ -388,6 +390,7 @@ AFFDEF(read_string, fp, eof)
   AV(state) = INT2FIX(1);
   AV(buf) = arc_outstring(c, CNIL);
 
+  ((void)eof);
   for (;;) {
     READC(AV(fp), AV(ch));
     r = arc_char2rune(c, AV(ch));
@@ -396,7 +399,7 @@ AFFDEF(read_string, fp, eof)
       if (r == '\"') {
 	/* end of string */
 	if (c->atstrings) {
-	  AFCALL(mkaff(c, read_atstring, CNIL), arc_inside(c, AV(buf)));
+	  AFCALL(arc_mkaff(c, read_atstring, CNIL), arc_inside(c, AV(buf)));
 	  ARETURN(AFCRV);
 	}
 	ARETURN(arc_inside(c, AV(buf)));
@@ -409,7 +412,7 @@ AFFDEF(read_string, fp, eof)
       }
 
       /* Otherwise, just add the character to our string buffer */
-      AFCALL(mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), AV(buf));
+      AFCALL(arc_mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), AV(buf));
       continue;
     }
 
@@ -443,15 +446,15 @@ AFFDEF(read_string, fp, eof)
 	arc_err_cstrfmt(c, "unknown escape code");
 	ARETURN(CNIL);
       }
-      AFCALL(mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), buf);
+      AFCALL(arc_mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), buf);
       continue;
     }
 
     if (AV(state) == INT2FIX(3)) {
       /* Unicode escape */
       if (FIX2INT(AV(digcount)) >= 5) {
-	arc_ungetc_rune(c, r, AV(fd));
-	AFCALL(mkaff(c, arc_writec, CNIL),
+	arc_ungetc_rune(c, r, AV(fp));
+	AFCALL(arc_mkaff(c, arc_writec, CNIL),
 	       arc_mkchar(c, FIX2INT(AV(escrune))),
 	       AV(buf));
 	AV(state) = INT2FIX(1);
@@ -477,7 +480,7 @@ AFFDEF(read_string, fp, eof)
     arc_err_cstrfmt(c, "internal error sread string invalid state");
     ARETURN(CNIL);
   }
-  AFEND;.
+  AFEND;
 }
 AFFEND
 
@@ -491,11 +494,13 @@ AFFEND
    does not otherwise use the #-sign for anything else. */
 static AFFDEF(read_char, fp, eof)
 {
+  AVAR(ch);
   int alldigits, val, i, digit;
   Rune r;
   value tok, symch;
   AFBEGIN;
 
+  ((void)eof);
   READC(AV(fp), AV(ch));
   r = arc_char2rune(c, AV(ch));
   if (r != '\\') {
@@ -509,7 +514,7 @@ static AFFDEF(read_char, fp, eof)
   if (!issym(r)) {
     ARETURN(arc_mkchar(c, r));
   }
-  arc_ungetc_rune(c, r, AV(fd));
+  arc_ungetc_rune(c, r, AV(fp));
   AFCALL(arc_mkaff(c, getsymbol, CNIL), AV(fp));
   tok = AFCRV;
   /* no AFCALLs after this point? */
@@ -584,11 +589,32 @@ static AFFDEF(read_comment, fp, eof)
   AVAR(ch);
   Rune r;
   AFBEGIN;
+  ((void)eof);
   for (;;) {
     READC2(AV(fp), AV(ch), r);
     if (r == Runeerror || ucisnl(r))
       break;
   }
   ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+/* parse a symbol name or number */
+static AFFDEF(read_symbol, fp, eof)
+{
+  AVAR(sym);
+  AFBEGIN;
+  (void)eof;
+  AFCALL(arc_mkaff(c, getsymbol, CNIL), AV(fp));
+  AV(sym) = AFCRV;
+  if (arc_strcmp(c, AV(sym), arc_mkstringc(c, ".")) == 0)
+    ARETURN(ARC_BUILTIN(c, S_DOT));
+  /*  AFCALL(arc_mkaff(c, arc_string2num, CNIL), AV(sym));
+  if (NIL_P(AFCRV))
+    ARETURN(arc_intern(c, AV(sym)));
+    ARETURN(AFCRV); */
+  ARETURN(arc_intern(c, AV(sym)));  
+  AFEND;
 }
 AFFEND
