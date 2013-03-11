@@ -31,6 +31,22 @@
 #include "builtins.h"
 #include "io.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 #define CHECK_CLOSED(fd)				\
   AFCALL(VINDEX(IO(fd)->io_ops, IO_closed_p), fd);	\
   if (AFCRV == CTRUE) {					\
