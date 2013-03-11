@@ -223,216 +223,216 @@ static value hash_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 }
 #endif
 
-/* static void hash_marker(arc *c, value v, int depth, */
-/* 			void (*markfn)(arc *, value, int)) */
-/* { */
-/*   /\* Just mark the table--that should be enough. It's just a vector. *\/ */
-/*   markfn(c, HASH_TABLE(v), depth); */
-/* } */
+static void hash_marker(arc *c, value v, int depth,
+			void (*markfn)(arc *, value, int))
+{
+  /* Just mark the table--that should be enough. It's just a vector. */
+  markfn(c, HASH_TABLE(v), depth);
+}
 
-/* static void hash_sweeper(arc *c, value v) */
-/* { */
-/*   int i; */
-/*   value tbl = HASH_TABLE(v); */
+static void hash_sweeper(arc *c, value v)
+{
+  int i;
+  value tbl = HASH_TABLE(v);
 
-/*   /\* Clear the BTABLE links for any active buckets within this hash */
-/*      before fully sweeping it away. *\/ */
-/*   for (i=0; i<VECLEN(tbl); i++) { */
-/*     if (EMPTYP(VINDEX(tbl, i))) */
-/*       continue; */
-/*     BTABLE(VINDEX(tbl, i)) = CNIL; */
-/*   } */
-/* } */
+  /* Clear the BTABLE links for any active buckets within this hash
+     before fully sweeping it away. */
+  for (i=0; i<VECLEN(tbl); i++) {
+    if (EMPTYP(VINDEX(tbl, i)))
+      continue;
+    BTABLE(VINDEX(tbl, i)) = CNIL;
+  }
+}
 
-/* static unsigned long hash_hasher(arc *c, value v, arc_hs *s) */
-/* { */
-/*   unsigned long len; */
-/*   value tbl, e; */
-/*   int i; */
+static unsigned long hash_hasher(arc *c, value v, arc_hs *s)
+{
+  unsigned long len;
+  value tbl, e;
+  int i;
 
-/*   tbl = HASH_TABLE(v); */
-/*   len = 0; */
-/*   for (i=0; i<VECLEN(tbl); i++) { */
-/*     e = VINDEX(tbl, i); */
-/*     if (EMPTYP(e)) */
-/*       continue; */
-/*     len += arc_hash(c, BKEY(e)); */
-/*     len += arc_hash(c, BVALUE(e)); */
-/*   } */
-/*   return(len); */
-/* } */
+  tbl = HASH_TABLE(v);
+  len = 0;
+  for (i=0; i<VECLEN(tbl); i++) {
+    e = VINDEX(tbl, i);
+    if (EMPTYP(e))
+      continue;
+    len += arc_hash(c, BKEY(e));
+    len += arc_hash(c, BVALUE(e));
+  }
+  return(len);
+}
 
-/* static AFFDEF(hash_isocmp, v1, v2, vh1, vh2) */
-/* { */
-/*   value vhh1, vhh2;		/\* not required after calls *\/ */
-/*   AVAR(iso2, tbl, e, v2val, i); */
+static AFFDEF(hash_isocmp, v1, v2, vh1, vh2)
+{
+  value vhh1, vhh2;		/* not required after calls */
+  AVAR(iso2, tbl, e, v2val, i);
 
-/*   AFBEGIN; */
+  AFBEGIN;
 
-/*   if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) { */
-/*     /\* If we find a visited object, see if v2 is also visited in vh2. */
-/*        If not, they are not the same. *\/ */
-/*     vhh2 = __arc_visit(c, AV(v2), AV(vh2)); */
-/*     /\* We see if the same value was produced on visiting. *\/ */
-/*     ARETURN((vhh2 == vhh1) ? CTRUE : CNIL); */
-/*   } */
+  if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) {
+    /* If we find a visited object, see if v2 is also visited in vh2.
+       If not, they are not the same. */
+    vhh2 = __arc_visit(c, AV(v2), AV(vh2));
+    /* We see if the same value was produced on visiting. */
+    ARETURN((vhh2 == vhh1) ? CTRUE : CNIL);
+  }
 
-/*   /\* Get value assigned by __arc_visit to v1. *\/ */
-/*   vhh1 = __arc_visit(c, AV(v1), AV(vh1)); */
-/*   /\* If we somehow already visited v2 when v1 was not visited in the */
-/*      same way, they cannot be the same. *\/ */
-/*   if (__arc_visit2(c, AV(v2), AV(vh2), AV(vhh1)) != CNIL) */
-/*     ARETURN(CNIL); */
+  /* Get value assigned by __arc_visit to v1. */
+  vhh1 = __arc_visit(c, AV(v1), AV(vh1));
+  /* If we somehow already visited v2 when v1 was not visited in the
+     same way, they cannot be the same. */
+  if (__arc_visit2(c, AV(v2), AV(vh2), AV(vhh1)) != CNIL)
+    ARETURN(CNIL);
 
-/*   /\* Two hash tables must have identical numbers of entries to be isomorphic *\/ */
-/*   if (HASH_NENTRIES(AV(v1)) != HASH_NENTRIES(AV(v2))) */
-/*     ARETURN(CNIL); */
-/*   AV(tbl) = HASH_TABLE(AV(v1)); */
-/*   AV(iso2) = arc_mkaff(c, arc_iso2, CNIL); */
-/*   for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(tbl)); */
-/*        AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) { */
-/*     AV(e) = VINDEX(AV(tbl), FIX2INT(AV(i))); */
-/*     if (EMPTYP(AV(e))) */
-/*       continue; */
-/*     AV(v2val) = arc_hash_lookup(c, AV(v2), BKEY(AV(e))); */
-/*     AFCALL(AV(iso2), BVALUE(AV(e)), AV(v2val), AV(vh1), AV(vh2)); */
-/*     if (NIL_P(AFCRV)) */
-/*       ARETURN(CNIL); */
-/*   } */
-/*   ARETURN(CTRUE); */
-/*   AFEND; */
-/* } */
-/* AFFEND */
+  /* Two hash tables must have identical numbers of entries to be isomorphic */
+  if (HASH_NENTRIES(AV(v1)) != HASH_NENTRIES(AV(v2)))
+    ARETURN(CNIL);
+  AV(tbl) = HASH_TABLE(AV(v1));
+  AV(iso2) = arc_mkaff(c, arc_iso2, CNIL);
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(tbl));
+       AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+    AV(e) = VINDEX(AV(tbl), FIX2INT(AV(i)));
+    if (EMPTYP(AV(e)))
+      continue;
+    AV(v2val) = arc_hash_lookup(c, AV(v2), BKEY(AV(e)));
+    AFCALL(AV(iso2), BVALUE(AV(e)), AV(v2val), AV(vh1), AV(vh2));
+    if (NIL_P(AFCRV))
+      ARETURN(CNIL);
+  }
+  ARETURN(CTRUE);
+  AFEND;
+}
+AFFEND
 
-/* /\* A hash can be applied with an index and an optional default value *\/ */
-/* static int hash_apply(arc *c, value thr, value tbl) */
-/* { */
-/*   value key, dflt = CNIL, val; */
+/* A hash can be applied with an index and an optional default value */
+static int hash_apply(arc *c, value thr, value tbl)
+{
+  value key, dflt = CNIL, val;
 
-/*   if (arc_thr_argc(c, thr) == 2) { */
-/*     dflt = arc_thr_pop(c, thr); */
-/*   } else if (arc_thr_argc(c, thr) != 1) { */
-/*     arc_err_cstrfmt(c, "application of a table expects 1 or 2 arguments, given %d", */
-/* 		    arc_thr_argc(c, thr)); */
-/*     return(APP_RC); */
-/*   } */
-/*   key = arc_thr_pop(c, thr); */
-/*   val = arc_hash_lookup(c, tbl, key); */
-/*   val = (NIL_P(val)) ? dflt : val; */
-/*   arc_thr_set_valr(c, thr, val); */
-/*   return(APP_RC); */
-/* } */
+  if (arc_thr_argc(c, thr) == 2) {
+    dflt = arc_thr_pop(c, thr);
+  } else if (arc_thr_argc(c, thr) != 1) {
+    arc_err_cstrfmt(c, "application of a table expects 1 or 2 arguments, given %d",
+		    arc_thr_argc(c, thr));
+    return(APP_RC);
+  }
+  key = arc_thr_pop(c, thr);
+  val = arc_hash_lookup(c, tbl, key);
+  val = (NIL_P(val)) ? dflt : val;
+  arc_thr_set_valr(c, thr, val);
+  return(APP_RC);
+}
 
-/* value arc_mkhash(arc *c, int hashbits) */
-/* { */
-/*   value hash; */
-/*   int i; */
+value arc_mkhash(arc *c, int hashbits)
+{
+  value hash;
+  int i;
 
-/*   hash = arc_mkobject(c, sizeof(value)*HASH_SIZE, T_TABLE); */
-/*   SET_HASHBITS(hash, hashbits); */
-/*   SET_NENTRIES(hash, 0); */
-/*   SET_LLIMIT(hash, (HASHSIZE(hashbits)*MAX_LOAD_FACTOR) / 100); */
-/*   HASH_TABLE(hash) = arc_mkvector(c, HASHSIZE(hashbits)); */
-/*   for (i=0; i<HASHSIZE(hashbits); i++) */
-/*     VINDEX(HASH_TABLE(hash), i) = CUNBOUND; */
-/*   return(hash); */
-/* } */
+  hash = arc_mkobject(c, sizeof(value)*HASH_SIZE, T_TABLE);
+  SET_HASHBITS(hash, hashbits);
+  SET_NENTRIES(hash, 0);
+  SET_LLIMIT(hash, (HASHSIZE(hashbits)*MAX_LOAD_FACTOR) / 100);
+  HASH_TABLE(hash) = arc_mkvector(c, HASHSIZE(hashbits));
+  for (i=0; i<HASHSIZE(hashbits); i++)
+    VINDEX(HASH_TABLE(hash), i) = CUNBOUND;
+  return(hash);
+}
 
-/* static void hashtable_expand(arc *c, value hash) */
-/* { */
-/*   unsigned int hv, index, i, j, nhashbits; */
-/*   value oldtbl, newtbl, e; */
+static void hashtable_expand(arc *c, value hash)
+{
+  unsigned int hv, index, i, j, nhashbits;
+  value oldtbl, newtbl, e;
 
-/*   nhashbits = HASH_BITS(hash) + 1; */
-/*   newtbl = arc_mkvector(c, HASHSIZE(nhashbits)); */
-/*   for (i=0; i<HASHSIZE(nhashbits); i++) */
-/*     VINDEX(newtbl, i) = CUNBOUND; */
-/*   oldtbl = HASH_TABLE(hash); */
-/*   /\* Search for active keys and copy them into the new table *\/ */
-/*   for (i=0; i<VECLEN(oldtbl); i++) { */
-/*     e = VINDEX(oldtbl, i); */
-/*     if (EMPTYP(e)) */
-/*       continue; */
-/*     /\* insert the old key into the new table *\/ */
-/*     hv = arc_hash(c, BKEY(e)); */
-/*     index = hv & HASHMASK(nhashbits); */
-/*     for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++) */
-/*       index = (index + PROBE(j, k)) & HASHMASK(nhashbits); */
-/*     VINDEX(newtbl, index) = e; */
-/*     SBINDEX(e, index);		/\* change index *\/ */
-/*     VINDEX(oldtbl, i) = CUNBOUND; */
-/*   } */
-/*   SET_HASHBITS(hash, nhashbits); */
-/*   SET_LLIMIT(hash, (HASHSIZE(nhashbits)*MAX_LOAD_FACTOR) / 100); */
-/*   HASH_TABLE(hash) = newtbl; */
-/* } */
+  nhashbits = HASH_BITS(hash) + 1;
+  newtbl = arc_mkvector(c, HASHSIZE(nhashbits));
+  for (i=0; i<HASHSIZE(nhashbits); i++)
+    VINDEX(newtbl, i) = CUNBOUND;
+  oldtbl = HASH_TABLE(hash);
+  /* Search for active keys and copy them into the new table */
+  for (i=0; i<VECLEN(oldtbl); i++) {
+    e = VINDEX(oldtbl, i);
+    if (EMPTYP(e))
+      continue;
+    /* insert the old key into the new table */
+    hv = arc_hash(c, BKEY(e));
+    index = hv & HASHMASK(nhashbits);
+    for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
+      index = (index + PROBE(j, k)) & HASHMASK(nhashbits);
+    VINDEX(newtbl, index) = e;
+    SBINDEX(e, index);		/* change index */
+    VINDEX(oldtbl, i) = CUNBOUND;
+  }
+  SET_HASHBITS(hash, nhashbits);
+  SET_LLIMIT(hash, (HASHSIZE(nhashbits)*MAX_LOAD_FACTOR) / 100);
+  HASH_TABLE(hash) = newtbl;
+}
 
-/* static void hb_marker(arc *c, value v, int depth, */
-/* 		      void (*markfn)(arc *, value, int)) */
-/* { */
-/*   /\* Mark the key/value pair *\/ */
-/*   markfn(c, BKEY(v), depth); */
-/*   markfn(c, BVALUE(v), depth); */
-/* } */
+static void hb_marker(arc *c, value v, int depth,
+		      void (*markfn)(arc *, value, int))
+{
+  /* Mark the key/value pair */
+  markfn(c, BKEY(v), depth);
+  markfn(c, BVALUE(v), depth);
+}
 
-/* static void hb_sweeper(arc *c, value v) */
-/* { */
-/*   /\* If the table has not been collected yet, clear */
-/*      its entry in the parent table, setting it to undef. *\/ */
-/*   if (BTABLE(v) != CNIL) { */
-/*     value t = BTABLE(v); */
+static void hb_sweeper(arc *c, value v)
+{
+  /* If the table has not been collected yet, clear
+     its entry in the parent table, setting it to undef. */
+  if (BTABLE(v) != CNIL) {
+    value t = BTABLE(v);
 
-/*     VINDEX(HASH_TABLE(t), BINDEX(v)) = CUNDEF; */
-/*     SET_NENTRIES(t, HASH_NENTRIES(t)-1); */
-/*   } */
-/* } */
+    VINDEX(HASH_TABLE(t), BINDEX(v)) = CUNDEF;
+    SET_NENTRIES(t, HASH_NENTRIES(t)-1);
+  }
+}
 
-/* /\* Create a hash bucket.  Hash buckets are objects that should never be */
-/*    directly visble, just as the tombstone values CUNDEF and CUNBOUND should */
-/*    never be seen directly by the interpreter. *\/ */
-/* static value mkhashbucket(arc *c, value key, value val, int index, value table) */
-/* { */
-/*   value bucket; */
+/* Create a hash bucket.  Hash buckets are objects that should never be
+   directly visble, just as the tombstone values CUNDEF and CUNBOUND should
+   never be seen directly by the interpreter. */
+static value mkhashbucket(arc *c, value key, value val, int index, value table)
+{
+  value bucket;
 
-/*   bucket = arc_mkobject(c, BUCKET_SIZE*sizeof(value), T_TBUCKET); */
-/*   BKEY(bucket) = key; */
-/*   BVALUE(bucket) = val; */
-/*   SBINDEX(bucket, index); */
-/*   BTABLE(bucket) = table; */
-/*   return(bucket); */
-/* } */
+  bucket = arc_mkobject(c, BUCKET_SIZE*sizeof(value), T_TBUCKET);
+  BKEY(bucket) = key;
+  BVALUE(bucket) = val;
+  SBINDEX(bucket, index);
+  BTABLE(bucket) = table;
+  return(bucket);
+}
 
-/* value arc_hash_insert(arc *c, value hash, value key, value val) */
-/* { */
-/*   unsigned int hv, index, i; */
-/*   value e; */
+value arc_hash_insert(arc *c, value hash, value key, value val)
+{
+  unsigned int hv, index, i;
+  value e;
 
-/*   if (HASH_NENTRIES(hash)+1 > HASH_LLIMIT(hash)) */
-/*     hashtable_expand(c, hash); */
-/*   SET_NENTRIES(hash, HASH_NENTRIES(hash)+1); */
-/*   hv = arc_hash(c, key); */
-/*   index = hv & TABLEMASK(hash);
-  /\* Collision resolution with open addressing *\/
+  if (HASH_NENTRIES(hash)+1 > HASH_LLIMIT(hash))
+    hashtable_expand(c, hash);
+  SET_NENTRIES(hash, HASH_NENTRIES(hash)+1);
+  hv = arc_hash(c, key);
+  index = hv & TABLEMASK(hash);
+  /* Collision resolution with open addressing */
   for (i=0;; i++) {
     e = VINDEX(HASH_TABLE(hash), index);
-    /\* If we see an empty bucket in our search, or if we see a bucket
+    /* If we see an empty bucket in our search, or if we see a bucket
        whose key is the same as the key specified, we have found the
-       place where the element should go. *\/
+       place where the element should go. */
     if (EMPTYP(e) || arc_is2(c, BKEY(e), key) == CTRUE)
       break;
-    /\* We found a bucket, but it is occupied by some other key. Continue
-       probing. *\/
+    /* We found a bucket, but it is occupied by some other key. Continue
+       probing. */
     index = (index + PROBE(i, k)) & TABLEMASK(hash);
   }
 
   if (EMPTYP(e)) {
-    /\* No such key in the hash table yet.  Create a bucket and
-       assign it to the table. *\/
+    /* No such key in the hash table yet.  Create a bucket and
+       assign it to the table. */
     e = mkhashbucket(c, key, val, index, hash);
     VINDEX(HASH_TABLE(hash), index) = e;
   } else {
-    /\* The key already exists.  Use the current bucket but change the
-       value to the value specified. *\/
+    /* The key already exists.  Use the current bucket but change the
+       value to the value specified. */
     BVALUE(e) = val;
   }
   return(val);
@@ -448,12 +448,12 @@ static value hash_lookup(arc *c, value hash, value key, unsigned int *index)
   for (i=0;; i++) {
     *index = (*index + PROBE(i, key)) & TABLEMASK(hash);
     e = HASH_INDEX(hash, *index);
-    /\* CUNBOUND means there was never any element at that index, so we
-       can stop. *\/
+    /* CUNBOUND means there was never any element at that index, so we
+       can stop. */
     if (e == CUNBOUND)
       return(CUNBOUND);
-    /\* CUNDEF means that there was an element at that index, but it was
-       deleted at some point, so we may need to continue probing. *\/
+    /* CUNDEF means that there was an element at that index, but it was
+       deleted at some point, so we may need to continue probing. */
     if (e == CUNDEF)
       continue;
     if (arc_is2(c, BKEY(e), key) == CTRUE)
@@ -468,8 +468,8 @@ value arc_hash_lookup(arc *c, value tbl, value key)
   return(hash_lookup(c, tbl, key, &index));
 }
 
-/\* Slightly different version which returns the actual hash bucket
-   with the key and value if a binding is available. *\/
+/* Slightly different version which returns the actual hash bucket
+   with the key and value if a binding is available. */
 value arc_hash_lookup2(arc *c, value hash, value key)
 {
   unsigned int index;
@@ -496,9 +496,9 @@ value arc_hash_delete(arc *c, value hash, value key)
   return(v);
 }
 
-/\* This is the only difference between a weak table and a normal
+/* This is the only difference between a weak table and a normal
    hash table.  A weak table will only mark the table vector itself,
-   and will NOT propagate the mark to any of the table buckets. *\/
+   and will NOT propagate the mark to any of the table buckets. */
 static void wtable_marker(arc *c, value v, int depth,
 			  void (*markfn)(arc *, value, int))
 {
@@ -507,7 +507,7 @@ static void wtable_marker(arc *c, value v, int depth,
   MARK(tbl);
 }
 
-/\* Make a weak table *\/
+/* Make a weak table */
 value arc_mkwtable(arc *c, int hashbits)
 {
   value tbl = arc_mkhash(c, hashbits);
@@ -516,7 +516,7 @@ value arc_mkwtable(arc *c, int hashbits)
   return(tbl);
 }
 
-/\* Type function tables *\/
+/* Type function tables */
 
 typefn_t __arc_table_typefn__ = {
   hash_marker,
