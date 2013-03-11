@@ -76,6 +76,7 @@ static void io_sweeper(arc *c, value v)
   IO(v)->io_tfn->sweeper(c, v);
 }
 
+#if 0
 static value io_pprint(arc *c, value v, value *ppstr, value visithash)
 {
   if (TYPE(v) == T_INPORT)
@@ -90,6 +91,7 @@ static value io_pprint(arc *c, value v, value *ppstr, value visithash)
   __arc_append_cstring(c, ">", ppstr);
   return(*ppstr);
 }
+#endif
 
 static unsigned long io_hash(arc *c, value v, arc_hs *s)
 {
@@ -327,7 +329,7 @@ Rune arc_ungetc_rune(arc *c, Rune r, value fd)
 typefn_t __arc_io_typefn__ = {
   io_marker,
   io_sweeper,
-  io_pprint,
+  NULL,
   io_hash,
   /* XXX - this means that applying is or iso to any I/O port values
      will only return true if and only if they are the same object.
