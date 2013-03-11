@@ -577,3 +577,18 @@ static AFFDEF(read_char, fp, eof)
   AFEND;
 }
 AFFEND
+
+/* Just basically keep reading until we reach end of line or end of file */
+static AFFDEF(read_comment, fp, eof)
+{
+  AVAR(ch);
+  Rune r;
+  AFBEGIN;
+  for (;;) {
+    READC2(AV(fp), AV(ch), r);
+    if (r == Runeerror || ucisnl(r))
+      break;
+  }
+  ARETURN(CNIL);
+}
+AFFEND
