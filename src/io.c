@@ -262,7 +262,7 @@ AFFDEF0(arc_writec)
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
-    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), fd,
+    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd),
 	   INT2FIX(arc_char2rune(c, AV(chr))));
     ARETURN(AFCRV);
   }
