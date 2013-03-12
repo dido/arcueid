@@ -58,6 +58,20 @@ START_TEST(test_read_list)
 }
 END_TEST
 
+START_TEST(test_read_imp_list)
+{
+  value thr, sio;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "(a b . c)"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_CONS);
+  fail_unless(car(TVALR(thr)) == arc_intern_cstr(c, "a"));
+  fail_unless(cadr(TVALR(thr)) == arc_intern_cstr(c, "b"));
+  fail_unless(cddr(TVALR(thr)) == arc_intern_cstr(c, "c"));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -70,6 +84,7 @@ int main(void)
 
   tcase_add_test(tc_reader, test_read_symbol);
   tcase_add_test(tc_reader, test_read_list);
+  tcase_add_test(tc_reader, test_read_imp_list);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
