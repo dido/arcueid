@@ -23,19 +23,38 @@
 arc cc;
 arc *c;
 
+#define CPUSH_(val) CPUSH(thr, val)
+
+#define XCALL(fname, ...) do {			\
+    TVALR(thr) = arc_mkaff(c, fname, CNIL);	\
+    TARGC(thr) = NARGS(__VA_ARGS__);		\
+    FOR_EACH(CPUSH_, __VA_ARGS__);		\
+    __arc_thr_trampoline(c, thr);		\
+  } while (0)
+
 START_TEST(test_read_symbol)
 {
   value thr, sio;
 
   thr = arc_mkthread(c);
   sio = arc_instring(c, arc_mkstringc(c, "foo"), CNIL);
-  TVALR(thr) = arc_mkaff(c, arc_sread, arc_mkstringc(c, "sread"));
-  TARGC(thr) = 2;
-  CPUSH(thr, sio);
-  CPUSH(thr, CNIL);
-  __arc_thr_trampoline(c, thr);
+  XCALL(arc_sread, sio, CNIL);
   fail_unless(TYPE(TVALR(thr)) == T_SYMBOL);
   fail_unless(TVALR(thr) == arc_intern_cstr(c, "foo"));
+}
+END_TEST
+
+START_TEST(test_read_list)
+{
+  value thr, sio;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "(a b c)"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_CONS);
+  fail_unless(car(TVALR(thr)) == arc_intern_cstr(c, "a"));
+  fail_unless(cadr(TVALR(thr)) == arc_intern_cstr(c, "b"));
+  fail_unless(car(cddr(TVALR(thr))) == arc_intern_cstr(c, "c"));
 }
 END_TEST
 
@@ -50,6 +69,7 @@ int main(void)
   arc_init(c);
 
   tcase_add_test(tc_reader, test_read_symbol);
+  tcase_add_test(tc_reader, test_read_list);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
