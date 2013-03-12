@@ -72,6 +72,27 @@ START_TEST(test_read_imp_list)
 }
 END_TEST
 
+START_TEST(test_read_bracket_fn)
+{
+  value thr, sio;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "[cons _ nil]"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_CONS);
+  fail_unless(car(TVALR(thr)) == arc_intern_cstr(c, "fn"));
+  fail_unless(TYPE(cdr(TVALR(thr))) == T_CONS);
+  fail_unless(TYPE(cadr(TVALR(thr))) == T_CONS);
+  fail_unless(car(cadr(TVALR(thr))) == arc_intern_cstr(c, "_"));
+  fail_unless(NIL_P(cdr(cadr(TVALR(thr)))));
+  fail_unless(TYPE(cddr(TVALR(thr))) == T_CONS);
+  fail_unless(TYPE(car(cddr(TVALR(thr)))) == T_CONS);
+  fail_unless(car(car(cddr(TVALR(thr)))) == arc_intern_cstr(c, "cons"));
+  fail_unless(NIL_P(car(cddr(car(cddr(TVALR(thr)))))));
+  fail_unless(NIL_P(cdr((cddr(TVALR(thr))))));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -85,6 +106,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_symbol);
   tcase_add_test(tc_reader, test_read_list);
   tcase_add_test(tc_reader, test_read_imp_list);
+  tcase_add_test(tc_reader, test_read_bracket_fn);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
