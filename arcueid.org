@@ -79,9 +79,9 @@ notice and this notice are preserved.
    - [X] garbage collector
 	 A simple mark and sweep garbage collector for now. Keep things
 	 simple first.
-** TODO Arc reader [2/12]
+** TODO Arc reader [3/12]
    - [X] Lists
-   - [ ] Improper lists
+   - [X] Improper lists
    - [ ] Bracketed functions
    - [ ] Quotes
    - [ ] Quasiquotes
