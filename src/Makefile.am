@@ -23,7 +23,7 @@ libarcueid_la_SOURCES = alloc.c arith.c arcueid.c ccode.c codegen.c \
 	thread.c util.c utf.c vector.c vmengine.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h builtins.h io.h utf.h vmengine.h
+noinst_HEADERS = alloc.h arith.h builtins.h io.h utf.h vmengine.h
 #bin_PROGRAMS = arcueid
 #arcueid_SOURCES = repl.c
 #arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
