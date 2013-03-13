@@ -545,5 +545,6 @@ typefn_t __arc_wtable_typefn__ = {
   hash_hasher,
   NULL,
   hash_isocmp,
-  hash_apply
+  hash_apply,
+  NULL
 };
