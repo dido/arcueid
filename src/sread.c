@@ -255,7 +255,7 @@ AFFEND
 static AFFDEF(read_quote, fp, eof)
 {
   AFBEGIN;
-  AFCALL(arc_mkaff(c, readq, CNIL), fp, ARC_BUILTIN(c, S_QUOTE), eof);
+  AFCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QUOTE), AV(eof));
   ARETURN(AFCRV);
   AFEND;
 }
@@ -264,7 +264,7 @@ AFFEND
 static AFFDEF(read_qquote, fp, eof)
 {
   AFBEGIN;
-  AFCALL(arc_mkaff(c, readq, CNIL), fp, ARC_BUILTIN(c, S_QQUOTE), eof);
+  AFCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QQUOTE), AV(eof));
   ARETURN(AFCRV);
   AFEND;
 }
@@ -280,12 +280,13 @@ static AFFDEF(read_comma, fp, eof)
   r = arc_char2rune(c, AV(ch));
   /* unquote-splicing */
   if (r == '@') {
-    AFCALL(arc_mkaff(c, readq, CNIL), fp, ARC_BUILTIN(c, S_UNQUOTESP), eof);
+    AFCALL(arc_mkaff(c, readq, CNIL), AV(fp),
+	   ARC_BUILTIN(c, S_UNQUOTESP), AV(eof));
     ARETURN(AFCRV);
   }
   /* normal unquote. */
   arc_ungetc_rune(c, r, AV(fp));
-  AFCALL(arc_mkaff(c, readq, CNIL), fp, ARC_BUILTIN(c, S_UNQUOTE), eof);
+  AFCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_UNQUOTE), AV(eof));
   ARETURN(AFCRV);
   AFEND;
 }
