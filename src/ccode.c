@@ -247,5 +247,6 @@ typefn_t __arc_cfunc_typefn__ = {
   cfunc_hash,
   NULL,
   NULL,
-  cfunc_apply
+  cfunc_apply,
+  NULL
 };
