@@ -79,7 +79,7 @@ notice and this notice are preserved.
    - [X] garbage collector
 	 A simple mark and sweep garbage collector for now. Keep things
 	 simple first.
-** TODO Arc reader [8/12]
+** TODO Arc reader [10/12]
    - [X] Lists
    - [X] Improper lists
    - [X] Bracketed functions
@@ -87,8 +87,8 @@ notice and this notice are preserved.
    - [X] Quasiquotes
    - [X] Comma expressions
    - [X] Strings
-   - [ ] Characters
-   - [ ] Comments
+   - [X] Characters
+   - [X] Comments
    - [X] Symbols
    - [ ] Numbers [0/4]
 	 - [ ] Integer
