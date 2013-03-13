@@ -520,13 +520,13 @@ static AFFDEF(read_char, fp, eof)
   tok = AFCRV;
   /* no AFCALLs after this point? */
   if (arc_strlen(c, tok) == 1)	/* single character */
-    ARETURN(arc_mkchar(c, arc_strindex(c, AV(tok), 0)));
+    ARETURN(arc_mkchar(c, arc_strindex(c, tok, 0)));
   if (arc_strlen(c, tok) == 3) {
     /* Possible octal escape */
     alldigits = 1;
     val = 0;
     for (i=0; i<3; i++) {
-      digit = arc_strindex(c,tok, i);
+      digit = arc_strindex(c, tok, i);
       if (!isdigit(digit)) {
 	alldigits = 0;
 	break;
