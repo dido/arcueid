@@ -186,6 +186,21 @@ value cons(arc *c, value x, value y)
   return(cv);
 }
 
+value arc_list_append(value list1, value val)
+{
+  value list;
+
+  if (val == CNIL)
+    return(list1);
+  if (list1 == CNIL)
+    return(val);
+  list = list1;
+  while (cdr(list) != CNIL)
+    list = cdr(list);
+  scdr(list, val);
+  return(list1);
+}
+
 typefn_t __arc_cons_typefn__ = {
   cons_marker,
   __arc_null_sweeper,
@@ -193,5 +208,6 @@ typefn_t __arc_cons_typefn__ = {
   NULL,
   NULL,
   cons_isocmp,
-  cons_apply
+  cons_apply,
+  NULL
 };
