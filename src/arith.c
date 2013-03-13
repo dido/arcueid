@@ -56,7 +56,7 @@ void *alloca (size_t);
 
 /*================================= Flonums */
 
-AFFDEF(flonum_pprint, f)
+static AFFDEF(flonum_pprint, f)
 {
   AFBEGIN;
   double val = *((double *)REP(AV(f)));
@@ -86,8 +86,38 @@ static value flonum_iscmp(arc *c, value v1, value v2)
   return((*((double *)REP(v1)) == *((double *)REP(v2))) ? CTRUE : CNIL);
 }
 
-static value flonum_coerce(arc *c, value v1, enum arc_types t)
+static value flonum_coerce(arc *c, value v, enum arc_types t)
 {
+  switch(t) {
+  case T_FIXNUM:
+    if (ABS(REPFLO(v)) > FIXNUM_MAX)
+      return(CNIL);
+    return(INT2FIX((long)REPFLO(v)));
+    break;
+  case T_COMPLEX:
+  case T_FLONUM:
+    /* trivial case */
+    return(v);
+#ifdef HAVE_GMP_H
+  case T_BIGNUM: {
+    double base, drem;
+    value bignum = arc_mkbignuml(c, 0L);
+
+    if (!isfinite(REPFLO(v)) || isnan(REPFLO(v)))
+      return(CNIL);
+    /* see if we need to round */
+    base = floor(REPFLO(v));
+    drem = REPFLO(v) - base;
+    mpz_set_d(REPBNUM(bignum), REPFLO(v));
+    if (drem > 0.5 || (drem == 0.5 && (((int)base)&0x1) == 1))
+      mpz_add_ui(REPBNUM(bignum), REPBNUM(bignum), 1);
+    return(bignum);
+  }
+  case T_RATIONAL:
+#endif
+  default:
+    break;
+  }
   return(CNIL);
 }
 
@@ -109,7 +139,7 @@ value arc_mkflonum(arc *c, double val)
 
 /*================================= Complex */
 
-AFFDEF(complex_pprint, z)
+static AFFDEF(complex_pprint, z)
 {
   AFBEGIN;
   double complex val = *((double *)REP(AV(z)));
@@ -169,7 +199,7 @@ static void bignum_sweep(arc *c, value v)
   mpz_clear(REPBNUM(v));
 }
 
-AFFDEF(bignum_pprint, n)
+static AFFDEF(bignum_pprint, n)
 {
   AFBEGIN;
   char *outstr;
@@ -216,7 +246,11 @@ static value bignum_iscmp(arc *c, value v1, value v2)
 
 static value add_bignum(arc *c, value v1, value v2)
 {
-  return(CNIL);
+  value sum;
+
+  sum = arc_mkbignuml(c, 0L);
+  mpz_add(REPBNUM(sum), REPBNUM(v1), REPBNUM(v2));
+  return(sum);
 }
 
 value arc_mkbignuml(arc *c, long val)
@@ -233,7 +267,41 @@ value arc_mkbignuml(arc *c, long val)
 
 /*================================= Rational */
 
+static void rational_sweep(arc *c, value v)
+{
+  mpq_clear(REPRAT(v));
+}
+
+static AFFDEF(rational_pprint, q)
+{
+  AFBEGIN;
+  (void)q;
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+static value rational_coerce(arc *c, value v1, enum arc_types t)
+{
+  return(CNIL);
+}
+
+static value rational_hash(arc *c, value n, arc_hs *s)
+{
+  return(CNIL);
+}
+
+static value rational_iscmp(arc *c, value v1, value v2)
+{
+  return(CNIL);
+}
+
 static value add_rational(arc *c, value v1, value v2)
+{
+  return(CNIL);
+}
+
+value arc_mkrationall(arc *c, long num, long den)
 {
   return(CNIL);
 }
@@ -809,6 +877,17 @@ typefn_t __arc_bignum_typefn__ = {
   NULL,
   NULL,
   bignum_coerce
+};
+
+typefn_t __arc_rational_typefn__ = {
+  __arc_null_marker,
+  rational_sweep,
+  rational_pprint,
+  rational_hash,
+  rational_iscmp,
+  NULL,
+  NULL,
+  rational_coerce
 };
 
 #endif
