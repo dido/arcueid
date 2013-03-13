@@ -190,5 +190,6 @@ typefn_t __arc_thread_typefn__ = {
   NULL,
   NULL,
   NULL,
+  NULL,
   NULL
 };
