@@ -227,6 +227,7 @@ extern typefn_t __arc_char_typefn__;
 
 #ifdef HAVE_GMP_H
 extern typefn_t __arc_bignum_typefn__;
+extern typefn_t __arc_rational_typefn__;
 #endif
 
 extern typefn_t __arc_cons_typefn__;
@@ -249,6 +250,7 @@ void arc_init_datatypes(arc *c)
 
 #ifdef HAVE_GMP_H
   c->typefns[T_BIGNUM] = &__arc_bignum_typefn__;
+  c->typefns[T_RATIONAL] = &__arc_rational_typefn__;
 #endif
 
   c->typefns[T_CONS] = &__arc_cons_typefn__;
