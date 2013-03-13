@@ -192,6 +192,8 @@ int arc_strlen(arc *c, value v)
 
 Rune arc_strindex(arc *c, value v, int index)
 {
+  if (index > STRREP(v)->len)
+    return(Runeerror);
   return(STRREP(v)->str[index]);
 }
 
@@ -324,5 +326,6 @@ typefn_t __arc_string_typefn__ = {
   string_hash,
   string_iscmp,
   NULL,
-  string_apply
+  string_apply,
+  NULL
 };
