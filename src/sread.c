@@ -605,16 +605,19 @@ AFFEND
 static AFFDEF(read_symbol, fp, eof)
 {
   AVAR(sym);
+  value num;
   AFBEGIN;
   (void)eof;
   AFCALL(arc_mkaff(c, getsymbol, CNIL), AV(fp));
   AV(sym) = AFCRV;
   if (arc_strcmp(c, AV(sym), arc_mkstringc(c, ".")) == 0)
     ARETURN(ARC_BUILTIN(c, S_DOT));
-  /*  AFCALL(arc_mkaff(c, arc_string2num, CNIL), AV(sym));
-  if (NIL_P(AFCRV))
-    ARETURN(arc_intern(c, AV(sym)));
-    ARETURN(AFCRV); */
+  /* Try to convert the symbol to a number */
+  num = arc_string2num(c, AV(sym), 0, 0);
+  if (!NIL_P(num))
+    ARETURN(num);
+  /* If that doesn't work, well, just intern the symbol and toss it
+     out there. */
   ARETURN(arc_intern(c, AV(sym)));  
   AFEND;
 }
