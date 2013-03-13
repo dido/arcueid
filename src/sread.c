@@ -67,7 +67,7 @@ static int issym(Rune ch)
   (val) = AFCRV;						\
   (r) = (NIL_P(val)) ? Runeerror : arc_char2rune(c, (val))	\
 
-#define READ_COMMENT(fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd)
+#define READ_COMMENT(fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd, CNIL)
 
 /* Read up to the first non-symbol character from fp */
 static AFFDEF(getsymbol, fp)
