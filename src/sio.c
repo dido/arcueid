@@ -30,6 +30,8 @@ struct stringio_t {
   int idx;
 };
 
+static typefn_t stringio_tfn;
+
 #define SIODATA(sio) (IODATA(sio, struct stringio_t *))
 
 static void sio_marker(arc *c, value v, int depth,
@@ -46,15 +48,6 @@ static unsigned long sio_hash(arc *c, value v, arc_hs *s)
   len += arc_hash(c, INT2FIX(SIODATA(v)->idx));
   return(len);
 }
-
-static typefn_t stringio_tfn = {
-  sio_marker,
-  __arc_null_sweeper,
-  NULL,
-  sio_hash,
-  NULL,
-  NULL
-};
 
 static AFFDEF(sio_closed_p, sio)
 {
@@ -209,3 +202,12 @@ void __arc_init_sio(arc *c)
   VINDEX(io_ops, IO_close) = arc_mkaff(c, sio_close, CNIL);
   VINDEX(VINDEX(c->builtins, BI_io), BI_io_strio) = io_ops;
 }
+
+static typefn_t stringio_tfn = {
+  sio_marker,
+  __arc_null_sweeper,
+  NULL,
+  sio_hash,
+  NULL,
+  NULL
+};
