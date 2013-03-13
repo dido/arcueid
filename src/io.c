@@ -411,5 +411,6 @@ typefn_t __arc_io_typefn__ = {
   */
 
   NULL,
+  NULL,
   NULL
 };
