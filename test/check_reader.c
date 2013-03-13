@@ -124,6 +124,30 @@ START_TEST(test_read_qquote)
 }
 END_TEST
 
+START_TEST(test_read_comma)
+{
+  value thr, sio, sexpr;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, ",a"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_UNQUOTE));
+  fail_unless(car(cdr(sexpr)) == arc_intern_cstr(c, "a"));
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, ",@b"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_UNQUOTESP));
+  fail_unless(car(cdr(sexpr)) == arc_intern_cstr(c, "b"));
+}
+END_TEST
+
 START_TEST(test_read_symbol)
 {
   value thr, sio;
@@ -152,6 +176,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_bracket_fn);
   tcase_add_test(tc_reader, test_read_quote);
   tcase_add_test(tc_reader, test_read_qquote);
+  tcase_add_test(tc_reader, test_read_comma);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
