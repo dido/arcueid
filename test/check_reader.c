@@ -19,6 +19,7 @@
 #include <check.h>
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
+#include "../src/builtins.h"
 
 arc cc;
 arc *c;
@@ -31,18 +32,6 @@ arc *c;
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
     __arc_thr_trampoline(c, thr);		\
   } while (0)
-
-START_TEST(test_read_symbol)
-{
-  value thr, sio;
-
-  thr = arc_mkthread(c);
-  sio = arc_instring(c, arc_mkstringc(c, "foo"), CNIL);
-  XCALL(arc_sread, sio, CNIL);
-  fail_unless(TYPE(TVALR(thr)) == T_SYMBOL);
-  fail_unless(TVALR(thr) == arc_intern_cstr(c, "foo"));
-}
-END_TEST
 
 START_TEST(test_read_list)
 {
@@ -93,6 +82,39 @@ START_TEST(test_read_bracket_fn)
 }
 END_TEST
 
+START_TEST(test_read_quote)
+{
+  value thr, sio, sexpr, qexpr;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "'(+ a b)"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_QUOTE));
+  qexpr = cadr(sexpr);
+  fail_unless(TYPE(qexpr) == T_CONS);
+  fail_unless(TYPE(car(qexpr)) == T_SYMBOL);
+  fail_unless(car(qexpr) == arc_intern_cstr(c, "+"));
+  fail_unless(TYPE(car(cdr(qexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(qexpr)) == arc_intern_cstr(c, "a"));
+  fail_unless(TYPE(car(cdr(cdr(qexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(qexpr))) == arc_intern_cstr(c, "b"));
+}
+END_TEST
+
+START_TEST(test_read_symbol)
+{
+  value thr, sio;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "foo"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_SYMBOL);
+  fail_unless(TVALR(thr) == arc_intern_cstr(c, "foo"));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -107,6 +129,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_list);
   tcase_add_test(tc_reader, test_read_imp_list);
   tcase_add_test(tc_reader, test_read_bracket_fn);
+  tcase_add_test(tc_reader, test_read_quote);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
