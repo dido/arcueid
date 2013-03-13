@@ -29,6 +29,7 @@
 extern value arc_mkflonum(arc *c, double val);
 extern value arc_mkcomplex(arc *c, double complex z);
 extern value arc_mkbignuml(arc *c, long val);
+extern value arc_mkrationall(arc *c, long num, long den);
 
 extern value __arc_add2(arc *c, value arg1, value arg2);
 
