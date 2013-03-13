@@ -113,7 +113,13 @@ static value flonum_coerce(arc *c, value v, enum arc_types t)
       mpz_add_ui(REPBNUM(bignum), REPBNUM(bignum), 1);
     return(bignum);
   }
-  case T_RATIONAL:
+  case T_RATIONAL: {
+    value rat;
+
+    rat = arc_mkrationall(c, 0, 1);
+    mpq_set_d(REPRAT(rat), REPFLO(v));
+    return(rat);
+  }
 #endif
   default:
     break;
@@ -244,12 +250,24 @@ static value bignum_iscmp(arc *c, value v1, value v2)
 	 CTRUE : CNIL);
 }
 
+/* If a bignum can fit in a fixnum, return the fixnum result */
+static value bignum_fixnum(arc *c, value n)
+{
+  if ((mpz_cmp_si(REPBNUM(n), 0) >= 0 &&
+       mpz_cmp_si(REPBNUM(n), FIXNUM_MAX) < 0) ||
+      (mpz_cmp_si(REPBNUM(n), 0) < 0 &&
+       mpz_cmp_si(REPBNUM(n), -FIXNUM_MAX) > 0))
+    return(INT2FIX(mpz_get_si(REPBNUM(n))));
+  return(n);
+}
+
 static value add_bignum(arc *c, value v1, value v2)
 {
   value sum;
 
   sum = arc_mkbignuml(c, 0L);
   mpz_add(REPBNUM(sum), REPBNUM(v1), REPBNUM(v2));
+  sum = bignum_fixnum(c, sum);
   return(sum);
 }
 
@@ -276,6 +294,7 @@ static AFFDEF(rational_pprint, q)
 {
   AFBEGIN;
   (void)q;
+  /* XXX fill this in */
   ARETURN(CNIL);
   AFEND;
 }
@@ -288,6 +307,7 @@ static value rational_coerce(arc *c, value v1, enum arc_types t)
 
 static value rational_hash(arc *c, value n, arc_hs *s)
 {
+  /* XXX fill this in */
   return(CNIL);
 }
 
@@ -303,7 +323,13 @@ static value add_rational(arc *c, value v1, value v2)
 
 value arc_mkrationall(arc *c, long num, long den)
 {
-  return(CNIL);
+  value cv;
+
+  cv = arc_mkobject(c, sizeof(mpq_t), T_RATIONAL);
+  mpq_init(REPRAT(cv));
+  mpq_set_si(REPRAT(cv), num, den);
+  mpq_canonicalize(REPRAT(cv));
+  return(cv);
 }
 
 /*================================= End Rational */
