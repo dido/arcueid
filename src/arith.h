@@ -21,6 +21,8 @@
 
 #define __ARITH_H__
 
+#include "arcueid.h"
+
 #define REPFLO(f) *((double *)REP(f))
 #define REPCPX(z) *((double complex *)REP(z))
 
