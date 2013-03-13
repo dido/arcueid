@@ -115,5 +115,6 @@ typefn_t __arc_vector_typefn__ = {
   NULL,
   NULL,
   __arc_vector_isocmp,
-  vector_apply
+  vector_apply,
+  NULL
 };
