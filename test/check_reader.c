@@ -103,6 +103,27 @@ START_TEST(test_read_quote)
 }
 END_TEST
 
+START_TEST(test_read_qquote)
+{
+  value thr, sio, sexpr, qexpr;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "`(* c d)"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_QQUOTE));
+  qexpr = cadr(sexpr);
+  fail_unless(TYPE(qexpr) == T_CONS);
+  fail_unless(TYPE(car(qexpr)) == T_SYMBOL);
+  fail_unless(car(qexpr) == arc_intern_cstr(c, "*"));
+  fail_unless(TYPE(car(cdr(qexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(qexpr)) == arc_intern_cstr(c, "c"));
+  fail_unless(TYPE(car(cdr(cdr(qexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(qexpr))) == arc_intern_cstr(c, "d"));
+}
+END_TEST
+
 START_TEST(test_read_symbol)
 {
   value thr, sio;
@@ -130,6 +151,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_imp_list);
   tcase_add_test(tc_reader, test_read_bracket_fn);
   tcase_add_test(tc_reader, test_read_quote);
+  tcase_add_test(tc_reader, test_read_qquote);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
