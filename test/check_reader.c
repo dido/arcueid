@@ -148,6 +148,40 @@ START_TEST(test_read_comma)
 }
 END_TEST
 
+START_TEST(test_read_string)
+{
+  value thr, sio, sexpr;
+  char *teststr;
+
+#if 0
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "\"foo\""), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  fail_unless(arc_is2(c, arc_mkstringc(c, "foo"), sexpr) == CTRUE);
+#endif
+
+  /* escapes */
+  teststr = "\b\t\n\v\f\r\\\'\"\a";
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "\"\\b\\t\\n\\v\\f\\r\\\\\'\\\"\\a\""), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  fail_unless(arc_is2(c, arc_mkstringc(c, teststr), sexpr) == CTRUE);
+
+  /* Unicode */
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "\"\\U086dF\351\276\215\""), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  fail_unless(arc_strindex(c, sexpr, 0) == 0x86df);
+  fail_unless(arc_strindex(c, sexpr, 1) == 0x9f8d);
+}
+END_TEST
+
 START_TEST(test_read_symbol)
 {
   value thr, sio;
@@ -177,6 +211,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_quote);
   tcase_add_test(tc_reader, test_read_qquote);
   tcase_add_test(tc_reader, test_read_comma);
+  tcase_add_test(tc_reader, test_read_string);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
