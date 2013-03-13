@@ -153,14 +153,12 @@ START_TEST(test_read_string)
   value thr, sio, sexpr;
   char *teststr;
 
-#if 0
   thr = arc_mkthread(c);
   sio = arc_instring(c, arc_mkstringc(c, "\"foo\""), CNIL);
   XCALL(arc_sread, sio, CNIL);
   sexpr = TVALR(thr);
   fail_unless(TYPE(sexpr) == T_STRING);
   fail_unless(arc_is2(c, arc_mkstringc(c, "foo"), sexpr) == CTRUE);
-#endif
 
   /* escapes */
   teststr = "\b\t\n\v\f\r\\\'\"\a";
@@ -179,6 +177,89 @@ START_TEST(test_read_string)
   fail_unless(TYPE(sexpr) == T_STRING);
   fail_unless(arc_strindex(c, sexpr, 0) == 0x86df);
   fail_unless(arc_strindex(c, sexpr, 1) == 0x9f8d);
+}
+END_TEST
+
+START_TEST(test_read_char)
+{
+  value thr, sio, sexpr;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\a"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 'a');
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\;"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == ';');
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\\351\276\215"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 0x9f8d);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\102"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 'B');
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\newline"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == '\n');
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\null"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 0);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\u5a"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 0x5a);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\x5a"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 0x5a);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\u4e9c"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 0x4e9c);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\U12031"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 0x12031);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "#\\\346\227\245"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CHAR);
+  fail_unless(arc_char2rune(c, sexpr) == 0x65e5);
 }
 END_TEST
 
@@ -212,6 +293,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_qquote);
   tcase_add_test(tc_reader, test_read_comma);
   tcase_add_test(tc_reader, test_read_string);
+  tcase_add_test(tc_reader, test_read_char);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
