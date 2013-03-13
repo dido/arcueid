@@ -263,6 +263,47 @@ START_TEST(test_read_char)
 }
 END_TEST
 
+START_TEST(test_read_comment)
+{
+  value thr, sio, sexpr;
+
+  /* inline comments */
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "(foo ; Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\nbar)"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == arc_intern_cstr(c, "foo"));
+  fail_unless(cadr(sexpr) == arc_intern_cstr(c, "bar"));
+
+  /* inline comments in an bracketed function */
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "[cons ; Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\t  _ nil]"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_CONS);
+  fail_unless(car(TVALR(thr)) == arc_intern_cstr(c, "fn"));
+  fail_unless(TYPE(cdr(TVALR(thr))) == T_CONS);
+  fail_unless(TYPE(cadr(TVALR(thr))) == T_CONS);
+  fail_unless(car(cadr(TVALR(thr))) == arc_intern_cstr(c, "_"));
+  fail_unless(NIL_P(cdr(cadr(TVALR(thr)))));
+  fail_unless(TYPE(cddr(TVALR(thr))) == T_CONS);
+  fail_unless(TYPE(car(cddr(TVALR(thr)))) == T_CONS);
+  fail_unless(car(car(cddr(TVALR(thr)))) == arc_intern_cstr(c, "cons"));
+  fail_unless(NIL_P(car(cddr(car(cddr(TVALR(thr)))))));
+  fail_unless(NIL_P(cdr((cddr(TVALR(thr))))));
+
+  /* long comments */
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "; Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed\n; do eiusmod tempor incididunt ut labore et dolore magna aliqua.\n; Ut enim ad minim veniam, quis nostrud exercitation ullamco\n; laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure\n; dolor in reprehenderit in voluptate velit esse cillum dolore eu\n; fugiat nulla pariatur. Excepteur sint occaecat cupidatat non\n; proident, sunt in culpa qui officia deserunt mollit anim id\n; est laborum.\n(baz buzz))"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == arc_intern_cstr(c, "baz"));
+  fail_unless(cadr(sexpr) == arc_intern_cstr(c, "buzz"));
+
+}
+END_TEST
+
 START_TEST(test_read_symbol)
 {
   value thr, sio;
@@ -294,6 +335,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_comma);
   tcase_add_test(tc_reader, test_read_string);
   tcase_add_test(tc_reader, test_read_char);
+  tcase_add_test(tc_reader, test_read_comment);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
