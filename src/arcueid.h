@@ -98,6 +98,9 @@ struct typefn_t {
   int (*isocmp)(struct arc *c, value);
   /* applicator */
   int (*apply)(struct arc *c, value, value);
+  /* Coerce.  This can in general only be used to convert something
+     to a numeric type. */
+  value (*coerce)(struct arc *c, value, enum arc_types);
 #if 0
   /* Recursive hasher.  This is used for computing possibly recursive
      hashes and is an AFF. */
@@ -228,6 +231,7 @@ static inline enum arc_types TYPE(value v)
 #define scdr(x, y) ((cdr(x)) = (y))
 
 extern value cons(arc *c, value x, value y);
+extern value arc_list_append(value list1, value val);
 
 /* Definitions for strings and characters */
 extern value arc_mkstringlen(arc *c, int length);
@@ -357,6 +361,9 @@ extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
 extern value arc_unintern(arc *c, value sym);
+
+/* Numbers and arithmetic */
+extern value arc_string2num(arc *c, value str, int index, int rational);
 
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
