@@ -437,7 +437,6 @@ AFFDEF(read_string, fp, eof)
 	r = 0x000c;
       } else if (r == 'r') {
 	r = 0x000d;
-	break;
       } else if (r == 'U' || r == 'u') {
 	/* unicode escape */
 	AV(escrune) = AV(digcount) = INT2FIX(0);
@@ -447,7 +446,8 @@ AFFDEF(read_string, fp, eof)
 	arc_err_cstrfmt(c, "unknown escape code");
 	ARETURN(CNIL);
       }
-      AFCALL(arc_mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), buf);
+      AFCALL(arc_mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), AV(buf));
+      AV(state) = INT2FIX(1);
       continue;
     }
 
@@ -463,7 +463,7 @@ AFFDEF(read_string, fp, eof)
       }
 
       if (r >= '0' && r <= '9')
-	digval = INT2FIX(r - '0');
+	digval = r - '0';
       else if (r >= 'A' && r <= 'F')
 	digval = r - 'A' + 10;
       else if (r >= 'a' && r <= 'f')
