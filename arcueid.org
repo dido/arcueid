@@ -79,20 +79,24 @@ notice and this notice are preserved.
    - [X] garbage collector
 	 A simple mark and sweep garbage collector for now. Keep things
 	 simple first.
-** TODO Arc reader [5/12]
+** TODO Arc reader [8/12]
    - [X] Lists
    - [X] Improper lists
    - [X] Bracketed functions
    - [X] Quotes
-   - [ ] Quasiquotes
-   - [ ] Comma expressions
-   - [ ] Strings
+   - [X] Quasiquotes
+   - [X] Comma expressions
+   - [X] Strings
    - [ ] Characters
    - [ ] Comments
    - [X] Symbols
-   - [ ] Other Atoms
-   - [ ] Special syntax
-** TODO Arc compiler [0/4]
+   - [ ] Numbers [0/4]
+	 - [ ] Integer
+	 - [ ] Flonum
+         - [ ] Rational
+         - [ ] Complex
+   - [ ] Atstrings
+** TODO Arc compiler [0/5]
    - [ ] Literal expressions [0/9]
      - [ ] nil
      - [ ] true (t)
@@ -131,6 +135,7 @@ notice and this notice are preserved.
        - [ ] /
      - [ ] Function applications
    - [ ] Macros
+   - [ ] Special Syntax
 ** TODO basic data types [9/16]
     - [X] Nil
     - [X] True
