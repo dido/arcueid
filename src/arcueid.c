@@ -27,6 +27,7 @@
 #include "arcueid.h"
 #include "builtins.h"
 #include "io.h"
+#include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
