@@ -625,11 +625,11 @@ value __arc_add2(arc *c, value arg1, value arg2)
     Rune data[1];
 
     data[0] = *((Rune *)REP(arg1));
-    return(arc_strcat(c, arc_mkstring(c, data, 1), arg2);
+    return(arc_strcat(c, arc_mkstring(c, data, 1), arg2));
   }
 
   if (TYPE(arg1) == T_STRING) {
-    value carg1;
+    value carg2;
     typefn_t *tfn;
 
     tfn = __arc_typefn(c, arg2);
@@ -637,7 +637,7 @@ value __arc_add2(arc *c, value arg1, value arg2)
       arc_err_cstrfmt(c, "cannot coerce to string");
       return(CNIL);
     }
-    carg1 = tfn->coerce(c, arg2, T_STRING);
+    carg2 = tfn->coerce(c, arg2, T_STRING);
     return(arc_strcat(c, arg1, carg2));
   }
 
