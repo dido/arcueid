@@ -282,8 +282,8 @@ notice and this notice are preserved.
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
    - [ ] Math operations [0/4]
-     - [-] Arithmetic [1/5]
-       - [ ] * Multiplication (virtual machine instruction)
+     - [-] Arithmetic [2/5]
+       - [X] * Multiplication (virtual machine instruction)
        - [X] + Addition (virtual machine instruction)
        - [ ] - Subtraction (virtual machine instruction)
        - [ ] / Division (virtual machine instruction)
