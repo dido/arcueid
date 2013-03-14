@@ -520,6 +520,98 @@ START_TEST(test_mul_fixnum)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+START_TEST(test_mul_fixnum2bignum)
+{
+  value factorial;
+  mpz_t expected;
+  int i;
+
+  factorial = INT2FIX(1);
+  for (i=1; i<=100; i++)
+    factorial = __arc_mul2(c, INT2FIX(i), factorial);
+
+  mpz_init(expected);
+  mpz_set_str(expected, "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(factorial)) == 0);
+  mpz_clear(expected);
+
+  factorial = INT2FIX(1);
+  for (i=1; i<=100; i++)
+    factorial = __arc_mul2(c, factorial, INT2FIX(i));
+
+  /* multiply from the other side */
+  mpz_init(expected);
+  mpz_set_str(expected, "93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(factorial)) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_mul_fixnum2rational)
+{
+  value v1, v2, prod;
+
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = INT2FIX(3);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(prod), 3, 2) == 0);
+
+  v1 = INT2FIX(3);
+  v2 = arc_mkrationall(c, 1, 2);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(prod), 3, 2) == 0);
+
+  v1 = INT2FIX(2);
+  v2 = arc_mkrationall(c, 1, 2);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 1);
+}
+END_TEST
+
+#endif
+
+START_TEST(test_mul_fixnum2flonum)
+{
+  value val1, val2, prod;
+
+  val1 = INT2FIX(2);
+  val2 = arc_mkflonum(c, 3.14159);
+
+  prod = __arc_mul2(c, val1, val2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(6.28318 - REPFLO(prod)) < 1e-6);
+
+  val1 = INT2FIX(3);
+  prod = __arc_mul2(c, prod, val1);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(18.84954 - REPFLO(prod)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_mul_fixnum2complex)
+{
+  value v1, v2, prod;
+
+  v1 = arc_mkcomplex(c, 1.0 + I*2.0);
+  v2 = INT2FIX(3);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_COMPLEX);
+  fail_unless(fabs(3.0 - creal(REPCPX(prod))) < 1e-6);
+  fail_unless(fabs(6.0 - cimag(REPCPX(prod))) < 1e-6);
+
+  v1 = INT2FIX(3);
+  v1 = arc_mkcomplex(c, 1.0 + I*2.0);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(fabs(3.0 - creal(REPCPX(prod))) < 1e-6);
+  fail_unless(fabs(6.0 - cimag(REPCPX(prod))) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -572,7 +664,6 @@ int main(void)
 
   /* Multiplication of fixnums */
   tcase_add_test(tc_arith, test_mul_fixnum);
-#if 0
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_arith, test_mul_fixnum2bignum);
   tcase_add_test(tc_arith, test_mul_fixnum2rational);
@@ -580,6 +671,7 @@ int main(void)
   tcase_add_test(tc_arith, test_mul_fixnum2flonum);
   tcase_add_test(tc_arith, test_mul_fixnum2complex);
 
+#if 0
 
 #ifdef HAVE_GMP_H
   /* Multiplication of bignums */
