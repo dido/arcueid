@@ -149,10 +149,16 @@ static value flonum_coerce(arc *c, value v, enum arc_types t)
   return(CNIL);
 }
 
+static value mul_flonum(arc *c, value v1, value v2)
+{
+  return(arc_mkflonum(c, REPFLO(v1) * REPFLO(v2)));
+}
+
 static value add_flonum(arc *c, value v1, value v2)
 {
   return(arc_mkflonum(c, REPFLO(v1) + REPFLO(v2)));
 }
+
 
 value arc_mkflonum(arc *c, double val)
 {
@@ -242,6 +248,11 @@ static value complex_coerce(arc *c, value z, enum arc_types t)
     break;
   }
   return(CNIL);
+}
+
+static value mul_complex(arc *c, value v1, value v2)
+{
+  return(arc_mkcomplex(c, REPCPX(v1) * REPCPX(v2)));
 }
 
 static value add_complex(arc *c, value v1, value v2)
@@ -346,6 +357,16 @@ static value bignum_fixnum(arc *c, value n)
        mpz_cmp_si(REPBNUM(n), -FIXNUM_MAX) >= 0))
     return(INT2FIX(mpz_get_si(REPBNUM(n))));
   return(n);
+}
+
+static value mul_bignum(arc *c, value v1, value v2)
+{
+  value prod;
+
+  prod = arc_mkbignuml(c, 0L);
+  mpz_mul(REPBNUM(prod), REPBNUM(v1), REPBNUM(v2));
+  prod = bignum_fixnum(c, prod);
+  return(prod);
 }
 
 static value add_bignum(arc *c, value v1, value v2)
@@ -455,6 +476,16 @@ value rational_int(arc *c, value q)
 
   /* Coerce to bignum */
   return(rational_coerce(c, q, T_BIGNUM));
+}
+
+static value mul_rational(arc *c, value v1, value v2)
+{
+  value prod;
+
+  prod = arc_mkrationall(c, 0, 1);
+  mpq_mul(REPRAT(prod), REPRAT(v1), REPRAT(v2));
+  prod = rational_int(c, prod);
+  return(prod);
 }
 
 static value add_rational(arc *c, value v1, value v2)
@@ -653,6 +684,50 @@ value __arc_add2(arc *c, value arg1, value arg2)
   TYPE_CASES(add, arg1, arg2);
 
   arc_err_cstrfmt(c, "Invalid types for addition");
+  return(CNIL);
+}
+
+value __arc_mul2(arc *c, value arg1, value arg2)
+{
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    long varg1, varg2;
+
+    varg1 = FIX2INT(arg1);
+    varg2 = FIX2INT(arg2);
+#if SIZEOF_LONG == 8
+    /* 64-bit platform.  We can mask against the high bits of the
+       absolute value to determine whether or not bignum arithmetic
+       is necessary. */
+    if ((ABS(varg1) | ABS(varg2)) & 0xffffffff80000000)
+#elif SIZEOF_LONG == 4
+      /* 32-bit platform.  Similarly. */
+    if ((ABS(varg1) | ABS(varg2)) & 0xffff8000)
+#else
+    /* This rather complicated test is a (sorta) portable check for
+       multiplication overflow.  If the product would overflow, we need to
+       use bignum arithmetic.  This should work on any oddball platform
+       no matter what the actual size of a value is. */
+    if ((varg1 > 0 && varg2 > 0 && varg1 > (FIXNUM_MAX / varg2))
+	|| (varg1 > 0 && varg2 <= 0 && (varg2 < (FIXNUM_MIN / varg1)))
+	|| (varg1 <= 0 && varg2 > 0 && (varg1 < (FIXNUM_MIN / varg2)))
+	|| (varg1 != 0 && (varg2 < (FIXNUM_MAX / varg1))))
+#endif
+    {
+#ifdef HAVE_GMP_H
+      return(mul_bignum(c, arc_mkbignuml(c, varg1),
+			arc_mkbignuml(c, varg2)));
+#else
+      /* Multiply as flonums in this case */
+      return(mul_flonum(c, arc_mkflonum(c, (double)varg1),
+			arc_mkflonum(c, (double)varg2)));
+#endif
+    }
+    return(INT2FIX(varg1 * varg2));
+  }
+
+  TYPE_CASES(mul, arg1, arg2);
+
+  arc_err_cstrfmt(c, "Invalid types for multiplication");
   return(CNIL);
 }
 
