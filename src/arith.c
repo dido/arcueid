@@ -617,6 +617,15 @@ value __arc_add2(arc *c, value arg1, value arg2)
     return(arc_mkstring(c, data, 1));
   }
 
+  if (TYPE(arg1) == T_CHAR && TYPE(arg2) == T_CHAR) {
+    Rune data1, data2;
+
+    data1 = *((Rune *)REP(arg1));
+    data2 = *((Rune *)REP(arg2));
+    return(arc_strcat(c, arc_mkstring(c, &data1, 1), 
+		      arc_mkstring(c, &data2, 1)));
+  }
+
   if (TYPE(arg1) == T_STRING && TYPE(arg2) == T_CHAR) {
     return(arc_strcatc(c, arg1, *((Rune *)REP(arg2))));
   }
