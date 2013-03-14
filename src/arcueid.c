@@ -220,6 +220,8 @@ typefn_t *__arc_typefn(arc *c, value v)
   return((typefn_t *)REP(typedesc));
 }
 
+
+extern typefn_t __arc_fixnum_typefn__;
 extern typefn_t __arc_flonum_typefn__;
 extern typefn_t __arc_complex_typefn__;
 extern typefn_t __arc_string_typefn__;
@@ -243,6 +245,7 @@ extern typefn_t __arc_cont_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
+  c->typefns[T_FIXNUM] = &__arc_fixnum_typefn__;
   c->typefns[T_FLONUM] = &__arc_flonum_typefn__;
   c->typefns[T_COMPLEX] = &__arc_complex_typefn__;
   c->typefns[T_STRING] = &__arc_string_typefn__;
