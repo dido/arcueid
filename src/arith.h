@@ -41,5 +41,8 @@ extern value arc_mkbignuml(arc *c, long val);
 extern value arc_mkrationall(arc *c, long num, long den);
 
 extern value __arc_add2(arc *c, value arg1, value arg2);
+extern value __arc_sub2(arc *c, value arg1, value arg2);
+extern value __arc_mul2(arc *c, value arg1, value arg2);
+extern value __arc_div2(arc *c, value arg1, value arg2);
 
 #endif
