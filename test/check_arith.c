@@ -48,18 +48,52 @@ END_TEST
 
 START_TEST(test_add_limit)
 {
-  value maxfixnum, one, sum;
+  value maxfixnum, one, negone, sum;
 
   maxfixnum = INT2FIX(FIXNUM_MAX);
   one = INT2FIX(1);
+  negone = INT2FIX(-1);
   sum = __arc_add2(c, maxfixnum, one);
 #ifdef HAVE_GMP_H
   fail_unless(TYPE(sum) == T_BIGNUM);
   fail_unless(mpz_get_si(REPBNUM(sum)) == FIXNUM_MAX + 1);
+
+  sum = __arc_add2(c, negone, sum);
+  fail_unless(TYPE(sum) == T_FIXNUM);
+  fail_unless(FIX2INT(sum) == FIXNUM_MAX);
 #else
   fail_unless(TYPE(sum) == T_FLONUM);
   fail_unless(REPFLO(sum) - (FIXNUM_MAX + 1) < 1e-6);
 #endif
+  /* Negative side */
+  maxfixnum = INT2FIX(-FIXNUM_MAX);
+  sum = __arc_add2(c, maxfixnum, negone);
+
+#ifdef HAVE_GMP_H
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  fail_unless(mpz_get_si(REPBNUM(sum)) == -FIXNUM_MAX - 1);
+#else
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(REPFLO(sum) - (-FIXNUM_MAX - 1) < 1e-6);
+#endif
+}
+END_TEST
+
+START_TEST(test_add_fixnum2flonum)
+{
+  value val1, val2, sum;
+
+  val1 = INT2FIX(1);
+  val2 = arc_mkflonum(c, 3.14159);
+
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(4.14159 - REPFLO(sum)) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  sum = __arc_add2(c, sum, val1);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(3.14159 - REPFLO(sum)) < 1e-6);
 }
 END_TEST
 
@@ -75,6 +109,7 @@ int main(void)
 
   tcase_add_test(tc_arith, test_add_fixnum);
   tcase_add_test(tc_arith, test_add_limit);
+  tcase_add_test(tc_arith, test_add_fixnum2flonum);
 
   suite_add_tcase(s, tc_arith);
   sr = srunner_create(s);
