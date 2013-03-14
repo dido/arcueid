@@ -159,6 +159,10 @@ static value add_flonum(arc *c, value v1, value v2)
   return(arc_mkflonum(c, REPFLO(v1) + REPFLO(v2)));
 }
 
+static value sub_flonum(arc *c, value v1, value v2)
+{
+  return(arc_mkflonum(c, REPFLO(v1) - REPFLO(v2)));
+}
 
 value arc_mkflonum(arc *c, double val)
 {
@@ -258,6 +262,11 @@ static value mul_complex(arc *c, value v1, value v2)
 static value add_complex(arc *c, value v1, value v2)
 {
   return(arc_mkcomplex(c, REPCPX(v1) + REPCPX(v2)));
+}
+
+static value sub_complex(arc *c, value v1, value v2)
+{
+  return(arc_mkcomplex(c, REPCPX(v1) - REPCPX(v2)));
 }
 
 value arc_mkcomplex(arc *c, double complex z)
@@ -379,6 +388,16 @@ static value add_bignum(arc *c, value v1, value v2)
   return(sum);
 }
 
+static value sub_bignum(arc *c, value v1, value v2)
+{
+  value diff;
+
+  diff = arc_mkbignuml(c, 0L);
+  mpz_sub(REPBNUM(diff), REPBNUM(v1), REPBNUM(v2));
+  diff = bignum_fixnum(c, diff);
+  return(diff);
+}
+
 value arc_mkbignuml(arc *c, long val)
 {
   value cv;
@@ -496,6 +515,16 @@ static value add_rational(arc *c, value v1, value v2)
   mpq_add(REPRAT(sum), REPRAT(v1), REPRAT(v2));
   sum = rational_int(c, sum);
   return(sum);
+}
+
+static value sub_rational(arc *c, value v1, value v2)
+{
+  value diff;
+
+  diff = arc_mkrationall(c, 0, 1);
+  mpq_sub(REPRAT(diff), REPRAT(v1), REPRAT(v2));
+  diff = rational_int(c, diff);
+  return(diff);
 }
 
 value arc_mkrationall(arc *c, long num, long den)
@@ -728,6 +757,29 @@ value __arc_mul2(arc *c, value arg1, value arg2)
   TYPE_CASES(mul, arg1, arg2);
 
   arc_err_cstrfmt(c, "Invalid types for multiplication");
+  return(CNIL);
+}
+
+value __arc_sub2(arc *c, value arg1, value arg2)
+{
+  long fixnum_diff;
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    fixnum_diff = FIX2INT(arg1) - FIX2INT(arg2);
+    if (ABS(fixnum_diff) > FIXNUM_MAX) {
+#ifdef HAVE_GMP_H
+      return(arc_mkbignuml(c, fixnum_diff));
+#else
+      /* promote to flonum */
+      return(arc_mkflonum(c, (double)fixnum_diff));
+#endif
+    }
+    return(INT2FIX(fixnum_diff));
+  } 
+
+  TYPE_CASES(sub, arg1, arg2);
+
+  arc_err_cstrfmt(c, "Invalid types for subtraction");
   return(CNIL);
 }
 
