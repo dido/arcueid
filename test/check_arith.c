@@ -56,17 +56,12 @@ START_TEST(test_add_fixnum)
 {
   int i;
   value v = INT2FIX(0);
+  value maxfixnum, one, negone, sum;
 
   for (i=1; i<=100; i++)
     v = __arc_add2(c, v, INT2FIX(i));
   fail_unless(TYPE(v) == T_FIXNUM);
   fail_unless(FIX2INT(v) == 5050);  
-}
-END_TEST
-
-START_TEST(test_add_limit)
-{
-  value maxfixnum, one, negone, sum;
 
   maxfixnum = INT2FIX(FIXNUM_MAX);
   one = INT2FIX(1);
@@ -458,6 +453,73 @@ START_TEST(test_add_string2char)
 }
 END_TEST
 
+START_TEST(test_mul_fixnum)
+{
+  value prod;
+#ifdef HAVE_GMP_H
+  mpz_t expected;
+#endif
+
+  prod = __arc_mul2(c, INT2FIX(8), INT2FIX(21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 168);
+
+  prod = __arc_mul2(c, INT2FIX(-8), INT2FIX(-21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 168);
+
+  prod = __arc_mul2(c, INT2FIX(-8), INT2FIX(21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == -168);
+
+  prod = __arc_mul2(c, INT2FIX(8), INT2FIX(-21));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == -168);
+
+#ifdef HAVE_GMP_H
+  prod = __arc_mul2(c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_si(expected, 2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REPBNUM(prod)) == 0);
+
+  prod = __arc_mul2(c, INT2FIX(-2), INT2FIX(-FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpz_set_si(expected, 2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REPBNUM(prod)) == 0);
+
+  prod = __arc_mul2(c, INT2FIX(-2), INT2FIX(FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpz_set_si(expected, -2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REPBNUM(prod)) == 0);
+
+  prod = __arc_mul2(c, INT2FIX(2), INT2FIX(-FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpz_set_si(expected, -2*FIXNUM_MAX);
+  fail_unless(mpz_cmp(expected, REPBNUM(prod)) == 0);
+  mpz_clear(expected);
+#else
+
+  prod = __arc_mul2(c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(REPFLO(prod) - 2*FIXNUM_MAX < 1e-6);
+
+  prod = __arc_mul2(c, INT2FIX(-2), INT2FIX(-FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(REPFLO(prod) - 2*FIXNUM_MAX < 1e-6);
+
+  prod = __arc_mul2(c, INT2FIX(-2), INT2FIX(FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(REPFLO(prod) - -2*FIXNUM_MAX < 1e-6);
+
+  prod = __arc_mul2(c, INT2FIX(2), INT2FIX(-FIXNUM_MAX));
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(REPFLO(prod) - -2*FIXNUM_MAX < 1e-6);
+#endif
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -470,7 +532,6 @@ int main(void)
 
   /* Additions of fixnums */
   tcase_add_test(tc_arith, test_add_fixnum);
-  tcase_add_test(tc_arith, test_add_limit);
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_arith, test_add_fixnum2bignum);
   tcase_add_test(tc_arith, test_add_fixnum2rational);
@@ -507,6 +568,42 @@ int main(void)
   tcase_add_test(tc_arith, test_add_cons);
   tcase_add_test(tc_arith, test_add_string);
   tcase_add_test(tc_arith, test_add_string2char);
+
+
+  /* Multiplication of fixnums */
+  tcase_add_test(tc_arith, test_mul_fixnum);
+#if 0
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_arith, test_mul_fixnum2bignum);
+  tcase_add_test(tc_arith, test_mul_fixnum2rational);
+#endif
+  tcase_add_test(tc_arith, test_mul_fixnum2flonum);
+  tcase_add_test(tc_arith, test_mul_fixnum2complex);
+
+
+#ifdef HAVE_GMP_H
+  /* Multiplication of bignums */
+  tcase_add_test(tc_arith, test_mul_bignum);
+
+  tcase_add_test(tc_arith, test_mul_bignum2rational);
+  tcase_add_test(tc_arith, test_mul_bignum2flonum);
+  tcase_add_test(tc_arith, test_mul_bignum2complex);
+
+  /* Multiplication of rationals */
+  tcase_add_test(tc_arith, test_mul_rational);
+  tcase_add_test(tc_arith, test_mul_rational2flonum);
+  tcase_add_test(tc_arith, test_mul_rational2complex);
+
+#endif
+
+  /* Multiplication of flonums */
+  tcase_add_test(tc_arith, test_mul_flonum);
+  tcase_add_test(tc_arith, test_mul_flonum2complex);
+
+  /* Multiplication of complexes */
+  tcase_add_test(tc_arith, test_mul_complex);
+
+#endif
 
   suite_add_tcase(s, tc_arith);
   sr = srunner_create(s);
