@@ -612,6 +612,116 @@ START_TEST(test_mul_fixnum2complex)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+START_TEST(test_mul_bignum)
+{
+  value val1, val2, sum;
+  mpz_t expected;
+
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "400000000000000000000000000000", 10);
+  val2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val2), "300000000000000000000000000000", 10);
+  sum = __arc_mul2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "120000000000000000000000000000000000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(sum)) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_mul_bignum2rational)
+{
+  value v1, v2, prod;
+  mpq_t expected;
+  mpz_t zexpected;
+
+  v1 = arc_mkrationall(c, 1, 3);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "100000000000000000000000000000", 10);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "100000000000000000000000000000/3", 10);
+  fail_unless(mpq_cmp(expected, REPRAT(prod)) == 0);
+  mpq_clear(expected);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "100000000000000000000000000000", 10);
+  v2 = arc_mkrationall(c, 1, 3);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "100000000000000000000000000000/3", 10);
+  fail_unless(mpq_cmp(expected, REPRAT(prod)) == 0);
+  mpq_clear(expected);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "100000000000000000000000000000", 10);
+  v2 = arc_mkrationall(c, 1, 2);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_BIGNUM);
+  mpz_init(zexpected);
+  mpz_set_str(zexpected, "50000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(zexpected, REPBNUM(prod)) == 0);
+  mpz_clear(zexpected);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "100000000000000000000000000000", 10);
+  v2 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(v2), "1/100000000000000000000000000000", 10);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 1);
+}
+END_TEST
+
+START_TEST(test_mul_bignum2flonum)
+{
+  value v1, v2, prod;
+
+  v1 = arc_mkflonum(c, 2.0);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "100000000000000000000000000000", 10);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(REPFLO(prod) - 2e29) < 1e-6);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "100000000000000000000000000000", 10);
+  v2 = arc_mkflonum(c, 2.0);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(REPFLO(prod) - 2e29) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_mul_bignum2complex)
+{
+  value v1, v2, prod;
+
+  v1 = arc_mkcomplex(c, 1.0 + I*1.0);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "10000000000000000000000", 10);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(prod)) - 1e22) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(prod)) - 1e22) < 1e-6);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "10000000000000000000000", 10);
+  v2 = arc_mkcomplex(c, 1.0 + I*1.0);
+  prod = __arc_mul2(c, v1, v2);
+  fail_unless(TYPE(prod) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(prod)) - 1e22) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(prod)) - 1e22) < 1e-6);
+}
+END_TEST
+
+#endif
+
 int main(void)
 {
   int number_failed;
@@ -671,8 +781,6 @@ int main(void)
   tcase_add_test(tc_arith, test_mul_fixnum2flonum);
   tcase_add_test(tc_arith, test_mul_fixnum2complex);
 
-#if 0
-
 #ifdef HAVE_GMP_H
   /* Multiplication of bignums */
   tcase_add_test(tc_arith, test_mul_bignum);
@@ -681,12 +789,17 @@ int main(void)
   tcase_add_test(tc_arith, test_mul_bignum2flonum);
   tcase_add_test(tc_arith, test_mul_bignum2complex);
 
+#if 0
+
   /* Multiplication of rationals */
   tcase_add_test(tc_arith, test_mul_rational);
   tcase_add_test(tc_arith, test_mul_rational2flonum);
   tcase_add_test(tc_arith, test_mul_rational2complex);
+#endif
 
 #endif
+
+#if 0
 
   /* Multiplication of flonums */
   tcase_add_test(tc_arith, test_mul_flonum);
