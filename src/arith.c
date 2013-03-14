@@ -341,9 +341,9 @@ static value bignum_iscmp(arc *c, value v1, value v2)
 static value bignum_fixnum(arc *c, value n)
 {
   if ((mpz_cmp_si(REPBNUM(n), 0) >= 0 &&
-       mpz_cmp_si(REPBNUM(n), FIXNUM_MAX) < 0) ||
+       mpz_cmp_si(REPBNUM(n), FIXNUM_MAX) <= 0) ||
       (mpz_cmp_si(REPBNUM(n), 0) < 0 &&
-       mpz_cmp_si(REPBNUM(n), -FIXNUM_MAX) > 0))
+       mpz_cmp_si(REPBNUM(n), -FIXNUM_MAX) >= 0))
     return(INT2FIX(mpz_get_si(REPBNUM(n))));
   return(n);
 }
@@ -489,7 +489,7 @@ value arc_mkrationall(arc *c, long num, long den)
       *tfn2 = __arc_typefn(c, arg2);					\
     if (tfn == NULL || tfn->coerce == NULL ||				\
 	tfn2 == NULL || tfn2->coerce == NULL) {				\
-      arc_err_cstrfmt(c, "cannot coerce");				\
+      arc_err_cstrfmt(c, "cannot coerce %d %d", TYPE(arg1), TYPE(arg2)); \
       return(CNIL);							\
     }									\
     if (TYPE(arg1) == T_COMPLEX || TYPE(arg2) == T_COMPLEX) {		\
@@ -546,8 +546,8 @@ value __arc_add2(arc *c, value arg1, value arg2)
 #else
 /* without bignum support, we extend to flonum */
       return(arc_mkflonum(c, (double)fixnum_sum));
-    }
 #endif
+    }
     return(INT2FIX(fixnum_sum));
   } 
 
