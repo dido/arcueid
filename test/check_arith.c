@@ -428,6 +428,36 @@ START_TEST(test_add_string)
 }
 END_TEST
 
+START_TEST(test_add_string2char)
+{
+  value ch1, ch2, str, sum;
+
+  ch1 = arc_mkchar(c, 0x9060);
+  ch2 = arc_mkchar(c, 0x91ce);
+  sum = __arc_add2(c, ch1, CNIL);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, arc_mkstringc(c, "遠")) == 0);
+
+  sum = __arc_add2(c, CNIL, ch2);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, arc_mkstringc(c, "野")) == 0);
+
+  sum = __arc_add2(c, ch1, ch2);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, arc_mkstringc(c, "遠野")) == 0);
+
+  str = arc_mkstringc(c, "遠");
+  sum = __arc_add2(c, str, ch2);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, arc_mkstringc(c, "遠野")) == 0);
+
+  str = arc_mkstringc(c, "野");
+  sum = __arc_add2(c, ch1, str);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, arc_mkstringc(c, "遠野")) == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -476,11 +506,7 @@ int main(void)
      strings) */
   tcase_add_test(tc_arith, test_add_cons);
   tcase_add_test(tc_arith, test_add_string);
-
-#if 0
   tcase_add_test(tc_arith, test_add_string2char);
-
-#endif
 
   suite_add_tcase(s, tc_arith);
   sr = srunner_create(s);
