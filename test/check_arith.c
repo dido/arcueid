@@ -795,6 +795,53 @@ END_TEST
 
 #endif
 
+START_TEST(test_mul_flonum)
+{
+  value val1, val2, prod;
+
+  val1 = arc_mkflonum(c, 1.20257);
+  val2 = arc_mkflonum(c, 0.57721);
+
+  prod = __arc_mul2(c, val1, val2);
+  fail_unless(TYPE(prod) == T_FLONUM);
+  fail_unless(fabs(0.694135 - REPFLO(prod)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_mul_flonum2complex)
+{
+  value val1, val2, prod;
+
+  val1 = arc_mkflonum(c, 0.5);
+  val2 = arc_mkcomplex(c, 3 - I*4);
+  prod = __arc_mul2(c, val1, val2);
+  fail_unless(TYPE(prod) == T_COMPLEX);
+  fail_unless(fabs(1.5 - creal(REPCPX(prod))) < 1e-6);
+  fail_unless(fabs(-2.0 - cimag(REPCPX(prod))) < 1e-6);
+
+  val1 = arc_mkcomplex(c, 3 - I*4);
+  val2 = arc_mkflonum(c, 0.5);
+  prod = __arc_mul2(c, val1, val2);
+  fail_unless(TYPE(prod) == T_COMPLEX);
+  fail_unless(fabs(1.5 - creal(REPCPX(prod))) < 1e-6);
+  fail_unless(fabs(-2.0 - cimag(REPCPX(prod))) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_mul_complex)
+{
+  value val1, val2, prod;
+
+  val1 = arc_mkcomplex(c, 2.0 + I*1.0);
+  val2 = arc_mkcomplex(c, 3.0 + I*2.0);
+
+  prod = __arc_mul2(c, val1, val2);
+  fail_unless(TYPE(prod) == T_COMPLEX);
+  fail_unless(fabs(4.0 - creal(REPCPX(prod))) < 1e-6);
+  fail_unless(fabs(7.0 - cimag(REPCPX(prod))) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -869,15 +916,12 @@ int main(void)
 
 #endif
 
-#if 0
   /* Multiplication of flonums */
   tcase_add_test(tc_arith, test_mul_flonum);
   tcase_add_test(tc_arith, test_mul_flonum2complex);
 
   /* Multiplication of complexes */
   tcase_add_test(tc_arith, test_mul_complex);
-
-#endif
 
   suite_add_tcase(s, tc_arith);
   sr = srunner_create(s);
