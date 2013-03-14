@@ -170,6 +170,99 @@ END_TEST
 
 #endif
 
+#ifdef HAVE_GMP_H
+
+/*================================= Additions involving bignums */
+
+START_TEST(test_add_bignum)
+{
+  value val1, val2, sum;
+  mpz_t expected;
+
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "100000000000000000000000000000", 10);
+  val2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val2), "200000000000000000000000000000", 10);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "300000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(sum)) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_add_bignum2rational)
+{
+  value v1, v2, sum;
+  mpq_t expected;
+
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "100000000000000000000000000000", 10);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "200000000000000000000000000001/2", 10);
+  fail_unless(mpq_cmp(expected, REPRAT(sum)) == 0);
+  mpq_clear(expected);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "100000000000000000000000000000", 10);
+  v2 = arc_mkrationall(c, 1, 2);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "200000000000000000000000000001/2", 10);
+  fail_unless(mpq_cmp(expected, REPRAT(sum)) == 0);
+  mpq_clear(expected);
+}
+END_TEST
+
+START_TEST(test_add_bignum2flonum)
+{
+  value v1, v2, sum;
+
+  v1 = arc_mkflonum(c, 0.0);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "10000000000000000000000", 10);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(REPFLO(sum) - 1e22) < 1e-6);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "10000000000000000000000", 10);
+  v2 = arc_mkflonum(c, 0.0);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(REPFLO(sum) - 1e22) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_add_bignum2complex)
+{
+  value v1, v2, sum;
+
+  v1 = arc_mkcomplex(c, 0.0 + I*1.1);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "10000000000000000000000", 10);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(sum)) - 1e22) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(sum)) - 1.1) < 1e-6);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "10000000000000000000000", 10);
+  v2 = arc_mkcomplex(c, 0.0 + I*1.1);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(sum)) - 1e22) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(sum)) - 1.1) < 1e-6);
+}
+END_TEST
+
+#endif
+
 int main(void)
 {
   int number_failed;
@@ -180,13 +273,41 @@ int main(void)
   c = &cc;
   arc_init(c);
 
+  /* Additions of fixnums */
   tcase_add_test(tc_arith, test_add_fixnum);
   tcase_add_test(tc_arith, test_add_limit);
-  tcase_add_test(tc_arith, test_add_fixnum2flonum);
-  tcase_add_test(tc_arith, test_add_fixnum2complex);
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_arith, test_add_fixnum2bignum);
   tcase_add_test(tc_arith, test_add_fixnum2rational);
+#endif
+  tcase_add_test(tc_arith, test_add_fixnum2flonum);
+  tcase_add_test(tc_arith, test_add_fixnum2complex);
+
+
+#ifdef HAVE_GMP_H
+  /* Additions of bignums */
+  tcase_add_test(tc_arith, test_add_bignum);
+
+  tcase_add_test(tc_arith, test_add_bignum2rational);
+  tcase_add_test(tc_arith, test_add_bignum2flonum);
+  tcase_add_test(tc_arith, test_add_bignum2complex);
+
+#if 0
+  /* Additions of rationals */
+  tcase_add_test(tc_arith, test_add_rational);
+  tcase_add_test(tc_arith, test_add_rational2flonum);
+  tcase_add_test(tc_arith, test_add_rational2complex);
+#endif
+
+#endif
+
+#if 0
+  /* Additions of flonums */
+  tcase_add_test(tc_arith, test_add_flonum);
+  tcase_add_test(tc_arith, test_add_flonum2complex);
+
+  /* Additions of complexes */
+  tcase_add_test(tc_arith, test_add_complex);
 #endif
 
   suite_add_tcase(s, tc_arith);
