@@ -453,6 +453,122 @@ START_TEST(test_add_string2char)
 }
 END_TEST
 
+/*================================= End of Addition Tests */
+
+/*================================= Subtractions involving fixnums */
+
+START_TEST(test_sub_fixnum)
+{
+  int i;
+  value v = INT2FIX(0);
+  value maxfixnum, one, negone, diff;
+
+  for (i=1; i<=100; i++)
+    v = __arc_sub2(c, v, INT2FIX(i));
+  fail_unless(TYPE(v) == T_FIXNUM);
+  fail_unless(FIX2INT(v) == -5050);
+
+  maxfixnum = INT2FIX(-FIXNUM_MAX);
+  one = INT2FIX(1);
+  negone = INT2FIX(-1);
+  diff = __arc_sub2(c, maxfixnum, one);
+#ifdef HAVE_GMP_H
+  fail_unless(TYPE(diff) == T_BIGNUM);
+  fail_unless(mpz_get_si(REPBNUM(diff)) == -FIXNUM_MAX - 1);
+#else
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(REPFLO(diff) - ((double)(-FIXNUM_MAX - 1)) < 1e-6);
+#endif
+
+  diff = __arc_sub2(c, negone, diff);
+
+#ifdef HAVE_GMP_H
+  fail_unless(TYPE(diff) == T_FIXNUM);
+  fail_unless(FIX2INT(diff) == FIXNUM_MAX);
+#else
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(REPFLO(diff) - ((double)FIXNUM_MAX) < 1e-6);
+#endif
+}
+END_TEST
+
+#ifdef HAVE_GMP_H
+
+START_TEST(test_sub_fixnum2bignum)
+{
+  value bn, sum;
+  char *str;
+
+  bn = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(bn), "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001", 10);
+  sum = __arc_sub2(c, bn, INT2FIX(1));
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  str = alloca(mpz_sizeinbase(REPBNUM(bn), 10) + 2);
+  mpz_get_str(str, 10, REPBNUM(sum));
+  fail_unless(strcmp(str, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000") == 0);
+}
+END_TEST
+
+START_TEST(test_sub_fixnum2rational)
+{
+  value v1, v2, diff;
+
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = INT2FIX(1);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(diff), -1, 2) == 0);
+
+  v1 = INT2FIX(1);
+  v2 = arc_mkrationall(c, 1, 2);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(diff), 1, 2) == 0);
+}
+END_TEST
+
+#endif
+
+START_TEST(test_sub_fixnum2flonum)
+{
+  value val1, val2, diff;
+
+  val1 = INT2FIX(1);
+  val2 = arc_mkflonum(c, 4.14159);
+
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(-3.14159 - REPFLO(diff)) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  diff = __arc_sub2(c, diff, val1);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(-2.14159 - REPFLO(diff)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_sub_fixnum2complex)
+{
+  value val1, val2, diff;
+
+  val1 = INT2FIX(1);
+  val2 = arc_mkcomplex(c, 1.1 + I*2.2);
+
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(-0.1 - creal(REPCPX(diff))) < 1e-6);
+  fail_unless(fabs(-2.2 - cimag(REPCPX(diff))) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  diff = __arc_sub2(c, diff, val1);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(0.9 - creal(REPCPX(diff))) < 1e-6);
+  fail_unless(fabs(-2.2 - cimag(REPCPX(diff))) < 1e-6);
+}
+END_TEST
+
+/*================================= Multiplications involving fixnums */
+
 START_TEST(test_mul_fixnum)
 {
   value prod;
@@ -891,6 +1007,41 @@ int main(void)
   tcase_add_test(tc_arith, test_add_string);
   tcase_add_test(tc_arith, test_add_string2char);
 
+  /* Subtraction of fixnums */
+  tcase_add_test(tc_arith, test_sub_fixnum);
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_arith, test_sub_fixnum2bignum);
+  tcase_add_test(tc_arith, test_sub_fixnum2rational);
+#endif
+
+  tcase_add_test(tc_arith, test_sub_fixnum2flonum);
+  tcase_add_test(tc_arith, test_sub_fixnum2complex);
+
+#if 0
+
+#ifdef HAVE_GMP_H
+  /* Subtraction of bignums */
+  tcase_add_test(tc_arith, test_sub_bignum);
+
+  tcase_add_test(tc_arith, test_sub_bignum2rational);
+  tcase_add_test(tc_arith, test_sub_bignum2flonum);
+  tcase_add_test(tc_arith, test_sub_bignum2complex);
+
+  /* Subtraction of rationals */
+  tcase_add_test(tc_arith, test_sub_rational);
+  tcase_add_test(tc_arith, test_sub_rational2flonum);
+  tcase_add_test(tc_arith, test_sub_rational2complex);
+
+#endif
+
+  /* Subtraction of flonums */
+  tcase_add_test(tc_arith, test_sub_flonum);
+  tcase_add_test(tc_arith, test_sub_flonum2complex);
+
+  /* Subtraction of complexes */
+  tcase_add_test(tc_arith, test_sub_complex);
+
+#endif
 
   /* Multiplication of fixnums */
   tcase_add_test(tc_arith, test_mul_fixnum);
