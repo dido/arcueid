@@ -50,9 +50,31 @@ void *alloca (size_t);
 #define SGN(x) (((x)>=0)?(1):(-(1)))
 
 #ifdef HAVE_GMP_H
-#define REPBNUM(n) *((mpz_t *)REP(n))
-#define REPRAT(q) *((mpq_t *)REP(q))
+static value bignum_fixnum(arc *c, value n);
 #endif
+
+/*================================= Fixnums */
+
+static value fixnum_coerce(arc *c, value x, enum arc_types t)
+{
+  switch(t) {
+  case T_FIXNUM:
+    return(x);
+  case T_COMPLEX:
+    return(arc_mkcomplex(c, (double)FIX2INT(x) + I*0.0));
+  case T_FLONUM:
+    return(arc_mkflonum(c, (double)FIX2INT(x)));
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    return(arc_mkbignuml(c, FIX2INT(x)));
+  case T_RATIONAL:
+    return(arc_mkrationall(c, FIX2INT(x), 1));
+#endif
+  default:
+    break;
+  }
+  return(CNIL);
+}
 
 /*================================= Flonums */
 
@@ -92,9 +114,9 @@ static value flonum_coerce(arc *c, value v, enum arc_types t)
   case T_FIXNUM:
     if (ABS(REPFLO(v)) > FIXNUM_MAX)
       return(CNIL);
-    return(INT2FIX((long)REPFLO(v)));
-    break;
+    return(INT2FIX((int)REPFLO(v)));
   case T_COMPLEX:
+    return(arc_mkcomplex(c, REPFLO(v) + I*0.0));
   case T_FLONUM:
     /* trivial case */
     return(v);
@@ -175,8 +197,50 @@ static value complex_iscmp(arc *c, value v1, value v2)
   return((*((double complex *)REP(v1)) == *((double complex *)REP(v2))) ? CTRUE : CNIL);
 }
 
-static value complex_coerce(arc *c, value v1, enum arc_types t)
+/* Note: most of the coercions here will result in loss of the imaginary
+   part of the complex number. */
+static value complex_coerce(arc *c, value z, enum arc_types t)
 {
+  double re;
+
+  re = creal(REPCPX(z));
+
+  switch(t) {
+  case T_FIXNUM:
+    if (ABS(re) > FIXNUM_MAX)
+      return(CNIL);
+    return(INT2FIX((long)re));
+  case T_COMPLEX:
+    /* trivial case */
+    return(z);
+  case T_FLONUM:
+    return(arc_mkflonum(c, re));
+#ifdef HAVE_GMP_H
+  case T_BIGNUM: {
+    double base, drem;
+    value bignum = arc_mkbignuml(c, 0L);
+
+    if (!isfinite(re) || isnan(re))
+      return(CNIL);
+    /* see if we need to round */
+    base = floor(re);
+    drem = re - base;
+    mpz_set_d(REPBNUM(bignum), re);
+    if (drem > 0.5 || (drem == 0.5 && (((int)base)&0x1) == 1))
+      mpz_add_ui(REPBNUM(bignum), REPBNUM(bignum), 1);
+    return(bignum);
+  }
+  case T_RATIONAL: {
+    value rat;
+
+    rat = arc_mkrationall(c, 0, 1);
+    mpq_set_d(REPRAT(rat), re);
+    return(rat);
+  }
+#endif
+  default:
+    break;
+  }
   return(CNIL);
 }
 
@@ -223,8 +287,31 @@ static AFFDEF(bignum_pprint, n)
 }
 AFFEND
 
-static value bignum_coerce(arc *c, value v1, enum arc_types t)
+static value bignum_coerce(arc *c, value n, enum arc_types t)
 {
+  switch(t) {
+  case T_FIXNUM:
+    if ((mpz_cmp_si(REPBNUM(n), FIXNUM_MAX) >= 0) ||
+	(mpz_cmp_si(REPBNUM(n), -FIXNUM_MAX) <= 0))
+      return(CNIL);
+    return(INT2FIX(mpz_get_si(REPBNUM(n))));
+  case T_COMPLEX:
+    return(arc_mkcomplex(c, mpz_get_d(REPBNUM(n)) + I*0.0));
+  case T_FLONUM:
+    return(arc_mkflonum(c, mpz_get_d(REPBNUM(n))));
+  case T_BIGNUM:
+    /* trivial case */
+    return(n);
+  case T_RATIONAL: {
+      value rat;
+
+      rat = arc_mkrationall(c, 0, 1); 
+      mpq_set_z(REPRAT(rat), REPBNUM(n));
+      return(rat);
+    }
+  default:
+    break;
+  }
   return(CNIL);
 }
 
@@ -300,8 +387,35 @@ static AFFDEF(rational_pprint, q)
 }
 AFFEND
 
-static value rational_coerce(arc *c, value v1, enum arc_types t)
+static value rational_coerce(arc *c, value q, enum arc_types t)
 {
+  double d;
+
+  switch(t) {
+  case T_FIXNUM:
+    d = mpq_get_d(REPRAT(q));
+    if (ABS(d) > FIXNUM_MAX)
+      return(CNIL);
+    return(INT2FIX((int)d));
+  case T_COMPLEX:
+    d = mpq_get_d(REPRAT(q));
+    return(arc_mkcomplex(c, d + I*0.0));
+  case T_FLONUM:
+    d = mpq_get_d(REPRAT(q));
+    return(arc_mkflonum(c, d));
+  case T_BIGNUM: {
+    value bn;
+
+    bn = arc_mkbignuml(c, 0L);
+    mpz_tdiv_q(REPBNUM(bn), mpq_numref(REPRAT(q)), mpq_denref(REPRAT(q)));
+    return(bn);
+  }
+  case T_RATIONAL:
+    /* trivial case */
+    return(q);
+  default:
+    break;
+  }
   return(CNIL);
 }
 
@@ -356,7 +470,7 @@ value arc_mkrationall(arc *c, long num, long den)
    implicitly converted to a fixnum.  If arithmetic on fixnums
    would give a result greater than ±FIXNUM_MAX, it will
    automatically extend to a bignum unless bignum support is not
-   compiled in (in which case an overflow error is signaled).
+   available (in which case results are extended to flonum).
 
    If a rational has a denominator of 1, the result is implicitly
    converted to a fixnum, if the range allows, or a bignum if not.
@@ -426,10 +540,13 @@ value __arc_add2(arc *c, value arg1, value arg2)
 
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
     fixnum_sum = FIX2INT(arg1) + FIX2INT(arg2);
+    if (ABS(fixnum_sum) > FIXNUM_MAX) {
 #ifdef HAVE_GMP_H
-    if (ABS(fixnum_sum) > FIXNUM_MAX)
       return(arc_mkbignuml(c, fixnum_sum));
-    /* without bignum support, overflow can do strange things, sorry! */
+#else
+/* without bignum support, we extend to flonum */
+      return(arc_mkflonum(c, (double)fixnum_sum));
+    }
 #endif
     return(INT2FIX(fixnum_sum));
   } 
@@ -869,6 +986,17 @@ value arc_string2num(arc *c, value str, int index, int rational)
 }
 
 #endif
+
+typefn_t __arc_fixnum_typefn__ = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  fixnum_coerce
+};
 
 typefn_t __arc_complex_typefn__ = {
   __arc_null_marker,
