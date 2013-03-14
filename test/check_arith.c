@@ -261,6 +261,74 @@ START_TEST(test_add_bignum2complex)
 }
 END_TEST
 
+START_TEST(test_add_rational)
+{
+  value val1, val2, sum;
+  mpz_t expected;
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkrationall(c, 1, 4);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(sum), 3, 4) == 0);
+
+  /* Conversions of rationals to integer types when appropriate */
+  val1 = sum;
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_FIXNUM);
+  fail_unless(FIX2INT(sum) == 1);
+
+  val1 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(val1), "1606938044258990275541962092341162602522202993782792835301375/4", 10);
+  val2 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(val2), "1/4", 10);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "401734511064747568885490523085290650630550748445698208825344", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(sum)) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_add_rational2flonum)
+{
+  value val1, val2, sum;
+
+  val1 = arc_mkflonum(c, 0.5);
+  val2 = arc_mkrationall(c, 1, 2);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(1.0 - REPFLO(sum)) < 1e-6);
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkflonum(c, 0.5);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(1.0 - REPFLO(sum)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_add_rational2complex)
+{
+  value val1, val2, sum;
+
+  val1 = arc_mkcomplex(c, 0.5 + I*0.5);
+  val2 = arc_mkrationall(c, 1, 2);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(1.0 - creal(REPCPX(sum))) < 1e-6);
+  fail_unless(fabs(0.5 - cimag(REPCPX(sum))) < 1e-6);
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkcomplex(c, 0.5 + I*0.5);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(1.0 - creal(REPCPX(sum))) < 1e-6);
+  fail_unless(fabs(0.5 - cimag(REPCPX(sum))) < 1e-6);
+}
+END_TEST
+
 #endif
 
 int main(void)
@@ -292,12 +360,10 @@ int main(void)
   tcase_add_test(tc_arith, test_add_bignum2flonum);
   tcase_add_test(tc_arith, test_add_bignum2complex);
 
-#if 0
   /* Additions of rationals */
   tcase_add_test(tc_arith, test_add_rational);
   tcase_add_test(tc_arith, test_add_rational2flonum);
   tcase_add_test(tc_arith, test_add_rational2complex);
-#endif
 
 #endif
 
