@@ -397,13 +397,34 @@ START_TEST(test_add_cons)
   fail_unless(cadr(sum) == INT2FIX(4));
   fail_unless(NIL_P(cddr(sum)));
 
-  sum = __arc_add2(c, val2, val1);
+  sum = __arc_add2(c, val1, val2);
   fail_unless(TYPE(sum) == T_CONS);
   fail_unless(car(sum) == INT2FIX(1));
   fail_unless(cadr(sum) == INT2FIX(2));
   fail_unless(car(cddr(sum)) == INT2FIX(3));
   fail_unless(cadr(cddr(sum)) == INT2FIX(4));
   fail_unless(NIL_P(cddr(cddr(sum))));
+}
+END_TEST
+
+START_TEST(test_add_string)
+{
+  value val1, val2, sum;
+
+  val1 = arc_mkstringc(c, "foo");
+  val2 = arc_mkstringc(c, "bar");
+
+  sum = __arc_add2(c, val1, CNIL);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, val1) == 0);
+
+  sum = __arc_add2(c, CNIL, val2);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, val2) == 0);
+
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_STRING);
+  fail_unless(arc_strcmp(c, sum, arc_mkstringc(c, "foobar")) == 0);
 }
 END_TEST
 
@@ -454,9 +475,9 @@ int main(void)
      (concatenating the lists), strings and characters (producing
      strings) */
   tcase_add_test(tc_arith, test_add_cons);
-#if 0
   tcase_add_test(tc_arith, test_add_string);
 
+#if 0
   tcase_add_test(tc_arith, test_add_string2char);
 
 #endif
