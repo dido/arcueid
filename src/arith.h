@@ -21,7 +21,16 @@
 
 #define __ARITH_H__
 
+#include <math.h>
+#include <complex.h>
 #include "arcueid.h"
+#include "../config.h"
+
+#ifdef HAVE_GMP_H
+#include <gmp.h>
+#define REPBNUM(n) *((mpz_t *)REP(n))
+#define REPRAT(q) *((mpq_t *)REP(q))
+#endif
 
 #define REPFLO(f) *((double *)REP(f))
 #define REPCPX(z) *((double complex *)REP(z))
