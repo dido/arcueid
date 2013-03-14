@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
-TESTS = check_gc check_string check_is_iso check_aff check_io check_reader
+TESTS = check_gc check_string check_is_iso check_aff check_io check_reader \
+	check_arith
 check_PROGRAMS = check_gc check_string check_is_iso check_aff \
-	check_io check_reader
+	check_io check_reader check_arith
 
 check_gc_SOURCES = check_gc.c $(top_builddir)/src/arcueid.h
 check_gc_CFLAGS = @CHECK_CFLAGS@
@@ -46,3 +47,7 @@ check_io_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 check_reader_SOURCES = check_reader.c $(top_builddir)/src/arcueid.h
 check_reader_CFLAGS = @CHECK_CFLAGS@
 check_reader_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+check_arith_SOURCES = check_arith.c $(top_builddir)/src/arcueid.h
+check_arith_CFLAGS = @CHECK_CFLAGS@
+check_arith_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
