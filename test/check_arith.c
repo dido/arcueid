@@ -378,6 +378,35 @@ START_TEST(test_add_complex)
 }
 END_TEST
 
+START_TEST(test_add_cons)
+{
+  value val1, val2, sum;
+
+  val1 = cons(c, INT2FIX(1), cons(c, INT2FIX(2), CNIL));
+  val2 = cons(c, INT2FIX(3), cons(c, INT2FIX(4), CNIL));
+
+  sum = __arc_add2(c, val1, CNIL);
+  fail_unless(TYPE(sum) == T_CONS);
+  fail_unless(car(sum) == INT2FIX(1));
+  fail_unless(cadr(sum) == INT2FIX(2));
+  fail_unless(NIL_P(cddr(sum)));
+
+  sum = __arc_add2(c, CNIL, val2);
+  fail_unless(TYPE(sum) == T_CONS);
+  fail_unless(car(sum) == INT2FIX(3));
+  fail_unless(cadr(sum) == INT2FIX(4));
+  fail_unless(NIL_P(cddr(sum)));
+
+  sum = __arc_add2(c, val2, val1);
+  fail_unless(TYPE(sum) == T_CONS);
+  fail_unless(car(sum) == INT2FIX(1));
+  fail_unless(cadr(sum) == INT2FIX(2));
+  fail_unless(car(cddr(sum)) == INT2FIX(3));
+  fail_unless(cadr(cddr(sum)) == INT2FIX(4));
+  fail_unless(NIL_P(cddr(cddr(sum))));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -421,11 +450,11 @@ int main(void)
   /* Additions of complexes */
   tcase_add_test(tc_arith, test_add_complex);
 
-#if 0
   /* Miscellaneous type additions -- it is possible to add conses
      (concatenating the lists), strings and characters (producing
      strings) */
   tcase_add_test(tc_arith, test_add_cons);
+#if 0
   tcase_add_test(tc_arith, test_add_string);
 
   tcase_add_test(tc_arith, test_add_string2char);
