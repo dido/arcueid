@@ -331,6 +331,53 @@ END_TEST
 
 #endif
 
+START_TEST(test_add_flonum)
+{
+  value val1, val2, sum;
+
+  val1 = arc_mkflonum(c, 2.71828);
+  val2 = arc_mkflonum(c, 3.14159);
+
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_FLONUM);
+  fail_unless(fabs(5.85987 - REPFLO(sum)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_add_flonum2complex)
+{
+  value val1, val2, sum;
+
+  val1 = arc_mkflonum(c, 0.5);
+  val2 = arc_mkcomplex(c, 3 - I*4);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(3.5 - creal(REPCPX(sum))) < 1e-6);
+  fail_unless(fabs(-4 - cimag(REPCPX(sum))) < 1e-6);
+
+  val1 = arc_mkcomplex(c, 3 - I*4);
+  val2 = arc_mkflonum(c, 0.5);
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(3.5 - creal(REPCPX(sum))) < 1e-6);
+  fail_unless(fabs(-4 - cimag(REPCPX(sum))) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_add_complex)
+{
+  value val1, val2, sum;
+
+  val1 = arc_mkcomplex(c, 1 - I*2);
+  val2 = arc_mkcomplex(c, 3 - I*4);
+
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(4 - creal(REPCPX(sum))) < 1e-6);
+  fail_unless(fabs(-6 - cimag(REPCPX(sum))) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -367,13 +414,22 @@ int main(void)
 
 #endif
 
-#if 0
   /* Additions of flonums */
   tcase_add_test(tc_arith, test_add_flonum);
   tcase_add_test(tc_arith, test_add_flonum2complex);
 
   /* Additions of complexes */
   tcase_add_test(tc_arith, test_add_complex);
+
+#if 0
+  /* Miscellaneous type additions -- it is possible to add conses
+     (concatenating the lists), strings and characters (producing
+     strings) */
+  tcase_add_test(tc_arith, test_add_cons);
+  tcase_add_test(tc_arith, test_add_string);
+
+  tcase_add_test(tc_arith, test_add_string2char);
+
 #endif
 
   suite_add_tcase(s, tc_arith);
