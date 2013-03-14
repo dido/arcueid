@@ -392,11 +392,19 @@ static value rational_coerce(arc *c, value q, enum arc_types t)
   double d;
 
   switch(t) {
-  case T_FIXNUM:
-    d = mpq_get_d(REPRAT(q));
-    if (ABS(d) > FIXNUM_MAX)
+  case T_FIXNUM: {
+    mpz_t quot;
+    value fix;
+
+    if (mpq_cmp_si(REPRAT(q), FIXNUM_MAX, 1) > 0 ||
+	mpq_cmp_si(REPRAT(q), -FIXNUM_MAX, 1) < 0)
       return(CNIL);
-    return(INT2FIX((int)d));
+    mpz_init(quot);
+    mpz_tdiv_q(quot, mpq_numref(REPRAT(q)), mpq_denref(REPRAT(q)));
+    fix = INT2FIX(mpz_get_si(quot));
+    mpz_clear(quot);
+    return(fix);
+  }
   case T_COMPLEX:
     d = mpq_get_d(REPRAT(q));
     return(arc_mkcomplex(c, d + I*0.0));
@@ -430,9 +438,33 @@ static value rational_iscmp(arc *c, value v1, value v2)
   return(CNIL);
 }
 
+/* Convert the rational number q to an integer type where possible.
+   Otherwise return q.  Used by most rational arithmetic operators. */
+value rational_int(arc *c, value q)
+{
+  value val;
+  if (mpz_cmp_si(mpq_denref(REPRAT(q)), 1) != 0) {
+    /* not 1, cannot coerce */
+    return(q);
+  }
+
+  /* It is an integer, try to convert to fixnum or bignum */
+  val = rational_coerce(c, q, T_FIXNUM);
+  if (!NIL_P(val))
+    return(val);
+
+  /* Coerce to bignum */
+  return(rational_coerce(c, q, T_BIGNUM));
+}
+
 static value add_rational(arc *c, value v1, value v2)
 {
-  return(CNIL);
+  value sum;
+
+  sum = arc_mkrationall(c, 0, 1);
+  mpq_add(REPRAT(sum), REPRAT(v1), REPRAT(v2));
+  sum = rational_int(c, sum);
+  return(sum);
 }
 
 value arc_mkrationall(arc *c, long num, long den)
