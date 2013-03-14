@@ -22,6 +22,22 @@
 #include "../src/arith.h"
 #include "../config.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 arc cc;
 arc *c;
 
@@ -33,6 +49,8 @@ arc *c;
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
     __arc_thr_trampoline(c, thr);		\
   } while (0)
+
+/*================================= Additions involving fixnums */
 
 START_TEST(test_add_fixnum)
 {
@@ -97,6 +115,61 @@ START_TEST(test_add_fixnum2flonum)
 }
 END_TEST
 
+START_TEST(test_add_fixnum2complex)
+{
+  value val1, val2, sum;
+
+  val1 = INT2FIX(1);
+  val2 = arc_mkcomplex(c, 1.1 + I*2.2);
+
+  sum = __arc_add2(c, val1, val2);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(2.1 - creal(REPCPX(sum))) < 1e-6);
+  fail_unless(fabs(2.2 - cimag(REPCPX(sum))) < 1e-6);
+
+  val1 = INT2FIX(-1);
+  sum = __arc_add2(c, sum, val1);
+  fail_unless(TYPE(sum) == T_COMPLEX);
+  fail_unless(fabs(1.1 - creal(REPCPX(sum))) < 1e-6);
+  fail_unless(fabs(2.2 - cimag(REPCPX(sum))) < 1e-6);
+}
+END_TEST
+
+#ifdef HAVE_GMP_H
+
+START_TEST(test_add_fixnum2bignum)
+{
+  value bn, sum;
+  char *str;
+
+  bn = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(bn), "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
+  sum = __arc_add2(c, bn, INT2FIX(1));
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  str = alloca(mpz_sizeinbase(REPBNUM(bn), 10) + 2);
+  mpz_get_str(str, 10, REPBNUM(sum));
+  fail_unless(strcmp(str, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001") == 0);
+}
+END_TEST
+
+START_TEST(test_add_fixnum2rational)
+{
+  value v1, v2, sum;
+
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = INT2FIX(1);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(sum), 3, 2) == 0);
+
+  sum = __arc_add2(c, v2, v1);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(sum), 3, 2) == 0);
+}
+END_TEST
+
+#endif
+
 int main(void)
 {
   int number_failed;
@@ -110,6 +183,11 @@ int main(void)
   tcase_add_test(tc_arith, test_add_fixnum);
   tcase_add_test(tc_arith, test_add_limit);
   tcase_add_test(tc_arith, test_add_fixnum2flonum);
+  tcase_add_test(tc_arith, test_add_fixnum2complex);
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_arith, test_add_fixnum2bignum);
+  tcase_add_test(tc_arith, test_add_fixnum2rational);
+#endif
 
   suite_add_tcase(s, tc_arith);
   sr = srunner_create(s);
