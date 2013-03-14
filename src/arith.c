@@ -591,7 +591,7 @@ value __arc_add2(arc *c, value arg1, value arg2)
       return(arg2);
     if (arg2 == CNIL)
       return(arg1);
-    return(arc_list_append(arg2, arg1));
+    return(arc_list_append(arg1, arg2));
   }
 
   if ((NIL_P(arg1) || TYPE(arg1) == T_STRING)
@@ -600,7 +600,7 @@ value __arc_add2(arc *c, value arg1, value arg2)
       return(arg2);
     if (arg2 == CNIL)
       return(arg1);
-    return(arc_strcat(c, arg2, arg1));
+    return(arc_strcat(c, arg1, arg2));
   }
 
   if (NIL_P(arg1) && TYPE(arg2) == T_CHAR) {
@@ -618,27 +618,27 @@ value __arc_add2(arc *c, value arg1, value arg2)
   }
 
   if (TYPE(arg1) == T_STRING && TYPE(arg2) == T_CHAR) {
-    Rune data[1];
-
-    data[0] = *((Rune *)REP(arg2));
-    return(arc_strcat(c, arc_mkstring(c, data, 1), arg1));
+    return(arc_strcatc(c, arg1, *((Rune *)REP(arg2))));
   }
 
   if (TYPE(arg1) == T_CHAR && TYPE(arg2) == T_STRING) {
-    return(arc_strcatc(c, arg2, *((Rune *)REP(arg1))));
+    Rune data[1];
+
+    data[0] = *((Rune *)REP(arg1));
+    return(arc_strcat(c, arc_mkstring(c, data, 1), arg2);
   }
 
-  if (TYPE(arg2) == T_STRING) {
+  if (TYPE(arg1) == T_STRING) {
     value carg1;
     typefn_t *tfn;
 
-    tfn = __arc_typefn(c, arg1);
+    tfn = __arc_typefn(c, arg2);
     if (tfn == NULL || tfn->coerce == NULL) {
       arc_err_cstrfmt(c, "cannot coerce to string");
       return(CNIL);
     }
-    carg1 = tfn->coerce(c, arg1, T_STRING);
-    return(arc_strcat(c, arg2, carg1));
+    carg1 = tfn->coerce(c, arg2, T_STRING);
+    return(arc_strcat(c, arg1, carg2));
   }
 
   TYPE_CASES(add, arg1, arg2);
