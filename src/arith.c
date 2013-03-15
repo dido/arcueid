@@ -1091,10 +1091,12 @@ value arc_string2num(arc *c, value str, int index, int rational)
     case 2:
       /* digits, or possible radix */
       switch (ch) {
+	/* Use the Limbo-style radix selector!
       case '0':
 	radix = INT2FIX(8);
 	state = 3;
 	break;
+	*/
       case '.':
 	return(str2flonum(c, str, 0, 0));
 	break;
@@ -1130,6 +1132,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
     case 3:
       /* digits, or possible radix */
       switch (ch) {
+	/*
       case 'x':
 	radix = INT2FIX(16);
 	state = 4;
@@ -1137,7 +1140,8 @@ value arc_string2num(arc *c, value str, int index, int rational)
       case 'b':
 	radix = INT2FIX(2);
 	state = 4;
-	break;
+	break;x
+	*/
       case '.':
 	return(str2flonum(c, str, 0, 0));
 	break;
