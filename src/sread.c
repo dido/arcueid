@@ -350,7 +350,8 @@ static AFFDEF(codestring, s)
   /* Get the current position after reading. Break the string up
      again at that point, and pass the remainder of the string back
      to codestring recursively. */
-  i = arc_tell(c, AV(in));
+  AFCALL(arc_mkaff(c, arc_tell, CNIL), AV(in));
+  i = FIX2INT(AFCRV);
   rlen = arc_strlen(c, AV(rest));
   AFCALL(arc_mkaff(c, codestring, CNIL),
 	 arc_substr(c, AV(rest), i, rlen));
