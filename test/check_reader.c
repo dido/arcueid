@@ -383,6 +383,31 @@ START_TEST(test_read_number)
 }
 END_TEST
 
+START_TEST(test_read_atstring)
+{
+  value str, sexpr, fp, thr;
+
+  c->atstrings = 1;
+  thr = arc_mkthread(c);
+  str = arc_mkstringc(c, "\"now @@ escaped at-signs\"");
+  fp = arc_instring(c, str, CNIL);
+  XCALL(arc_sread, fp, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  fail_unless(arc_is2(c, arc_mkstringc(c, "now @ escaped at-signs"), sexpr) == CTRUE);
+
+  thr = arc_mkthread(c);
+  str = arc_mkstringc(c, "\"and @(+ 1 1) from (+ 1 1)\"");
+  fp = arc_instring(c, str, CNIL);
+  XCALL(arc_sread, fp, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  /* XXX study what the cons cell this created actually contains */
+
+  c->atstrings = 0;
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -404,6 +429,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_comment);
   tcase_add_test(tc_reader, test_read_symbol);
   tcase_add_test(tc_reader, test_read_number);
+  tcase_add_test(tc_reader, test_read_atstring);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
