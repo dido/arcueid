@@ -669,6 +669,18 @@ value arc_mkrationall(arc *c, long num, long den)
 
 #endif
 
+static int hibit(unsigned long n)
+{
+  int ret;
+
+  if (!n)
+    return(0);
+  ret = 1;
+  while (n >>= 1 && n)
+    ret++;
+  return(ret);
+}
+
 value __arc_mul2(arc *c, value arg1, value arg2)
 {
   if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
@@ -676,25 +688,10 @@ value __arc_mul2(arc *c, value arg1, value arg2)
 
     varg1 = FIX2INT(arg1);
     varg2 = FIX2INT(arg2);
-#if SIZEOF_LONG == 8
-    /* 64-bit platform.  We can mask against the high bits of the
-       absolute value to determine whether or not bignum arithmetic
-       is necessary. */
-    if ((ABS(varg1) | ABS(varg2)) & 0xffffffff80000000)
-#elif SIZEOF_LONG == 4
-      /* 32-bit platform.  Similarly. */
-    if ((ABS(varg1) | ABS(varg2)) & 0xffff8000)
-#else
-    /* This rather complicated test is a (sorta) portable check for
-       multiplication overflow.  If the product would overflow, we need to
-       use bignum arithmetic.  This should work on any oddball platform
-       no matter what the actual size of a value is. */
-    if ((varg1 > 0 && varg2 > 0 && varg1 > (FIXNUM_MAX / varg2))
-	|| (varg1 > 0 && varg2 <= 0 && (varg2 < (FIXNUM_MIN / varg1)))
-	|| (varg1 <= 0 && varg2 > 0 && (varg1 < (FIXNUM_MIN / varg2)))
-	|| (varg1 != 0 && (varg2 < (FIXNUM_MAX / varg1))))
-#endif
-    {
+
+    /* Check to see if the size of the product will fit in a fixnum.
+       Promote to bignum or flonum as needed. */
+    if (hibit(ABS(varg1)) + hibit(ABS(varg2)) >= hibit(FIXNUM_MAX)) {
 #ifdef HAVE_GMP_H
       return(mul_bignum(c, arc_mkbignuml(c, varg1),
 			arc_mkbignuml(c, varg2)));
@@ -729,24 +726,66 @@ value __arc_div2(arc *c, value arg1, value arg2)
     }
 
     res = ldiv(varg1, varg2);
+    if (res.rem == 0) {
+      if (ABS(res.quot) > FIXNUM_MAX) {
 #ifdef HAVE_GMP_H
-    if (res.rem != 0) {
-      return(arc_mkrationall(c, varg1, varg2));
-    } else {
-      if (ABS(res.quot) > FIXNUM_MAX)
 	return(arc_mkbignuml(c, res.quot));
+#else
+	return(arc_mkflonum(c, (double)res.quot));
 #endif
-      /* The conditional compilation produces only this if
-	 we don't have GMP */
+      }
       return(INT2FIX(res.quot));
+    } else {
+      /* Not an exact integer division.  Will produce either a
+	 rational or a flonum depending on whether or not gmp
+	 support is enabled. */
 #ifdef HAVE_GMP_H
-    }
+      return(arc_mkrationall(c, varg1, varg2));
+#else
+      return(arc_mkflonum(c, ((double)varg1) / ((double)varg2)));
 #endif
+    }
   }
 
   TYPE_CASES(div, arg1, arg2);
 
   arc_err_cstrfmt(c, "Invalid types for division");
+  return(CNIL);
+}
+
+value __arc_idiv2(arc *c, value arg1, value arg2)
+{
+  ldiv_t res;
+
+  if (TYPE(arg2) == T_FIXNUM && FIX2INT(arg2) == 0) {
+    arc_err_cstrfmt(c, "Division by zero");
+    return(CNIL);
+  }
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    long varg1, varg2;
+
+    varg1 = FIX2INT(arg1);
+    varg2 = FIX2INT(arg2);
+
+    res = ldiv(varg1, varg2);
+    return(INT2FIX(res.quot));
+  }
+#ifdef HAVE_GMP_H
+  else if ((TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM) &&
+	   (TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM)) {
+    value barg1, barg2, quot;
+    typefn_t *tfn = __arc_typefn(c, arg1), *tfn2 = __arc_typefn(c, arg2);
+
+    /* Coerce both args to bignum */
+    barg1 = tfn->coerce(c, arg1, T_BIGNUM);
+    barg2 = tfn->coerce(c, arg2, T_BIGNUM);
+    quot = arc_mkbignuml(c, 0L);
+    mpz_fdiv_q(REPBNUM(quot), REPBNUM(arg1), REPBNUM(arg2));
+    return(bignum_fixnum(c, quot));
+  }
+#endif
+  arc_err_cstrfmt(c, "Invalid types for modulus");
   return(CNIL);
 }
 
@@ -1187,7 +1226,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
 	  return(CNIL);
 	denom = arc_string2num(c, str, index, 1);
 	if (TYPE(denom) == T_FIXNUM || TYPE(denom) == T_BIGNUM)
-	  return(__arc_div2(c, __arc_mul2(c, INT2FIX(sign), nval), denom));
+	  return(__arc_idiv2(c, __arc_mul2(c, INT2FIX(sign), nval), denom));
 	else
 	  return(CNIL);
 	break;
