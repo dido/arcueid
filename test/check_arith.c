@@ -1373,6 +1373,110 @@ START_TEST(test_div_fixnum2complex)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+/*================================= Divisions involving bignums */
+START_TEST(test_div_bignum)
+{
+  value val1, val2, quot;
+  mpz_t expected;
+
+  /* Bignum result */
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "40000000000000000000000000000000000000000000000", 10);
+  val2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val2), "20000000000000000000000", 10);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "2000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(quot)) == 0);
+  mpz_clear(expected);
+
+  /* Fixnum result */
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "40000000000000000000000000000000000000000000000", 10);
+  val2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val2), "20000000000000000000000000000000000000000000000", 10);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 2);
+
+  /* Rational result */
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "40000000000000000000000000000000000000000000000", 10);
+  val2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val2), "30000000000000000000000000000000000000000000000", 10);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(quot), 4, 3) == 0);
+
+}
+END_TEST
+
+/*================================= Divisions involving rationals */
+START_TEST(test_div_rational)
+{
+  value val1, val2, quot;
+  mpz_t expected;
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkrationall(c, 1, 3);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(quot), 3, 2) == 0);
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkrationall(c, 1, 4);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 2);
+
+  val1 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(val1), "115792089237316195423570985008687907853269984665640564039457584007913129639936/3", 10);
+  val2 = arc_mkrationall(c, 4, 3);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "28948022309329048855892746252171976963317496166410141009864396001978282409984", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(quot)) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+
+#endif
+
+/*================================= Divisions involving flonums */
+START_TEST(test_div_flonum)
+{
+  value val1, val2, quot;
+
+  val1 = arc_mkflonum(c, 1.20257);
+  val2 = arc_mkflonum(c, 0.57721);
+
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(2.0834185 - REPFLO(quot)) < 1e-6);
+
+}
+END_TEST
+
+START_TEST(test_div_complex)
+{
+  value val1, val2, quot;
+
+  val1 = arc_mkcomplex(c, 2.0 + I*1.0);
+  val2 = arc_mkcomplex(c, 3.0 + I*2.0);
+
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(0.61538462 - creal(REPCPX(quot))) < 1e-6);
+  fail_unless(fabs(-0.07692308 - cimag(REPCPX(quot))) < 1e-6);
+
+}
+END_TEST
+
 /*================================= End of Division Tests */
 
 int main(void)
@@ -1497,31 +1601,31 @@ int main(void)
   tcase_add_test(tc_arith, test_div_fixnum2flonum);
   tcase_add_test(tc_arith, test_div_fixnum2complex);
 
-#if 0
-
 #ifdef HAVE_GMP_H
   /* Division of bignums */
   tcase_add_test(tc_arith, test_div_bignum);
-
+#if 0
   tcase_add_test(tc_arith, test_div_bignum2rational);
   tcase_add_test(tc_arith, test_div_bignum2flonum);
   tcase_add_test(tc_arith, test_div_bignum2complex);
-
+#endif
   /* Division of rationals */
   tcase_add_test(tc_arith, test_div_rational);
+#if 0
   tcase_add_test(tc_arith, test_div_rational2flonum);
   tcase_add_test(tc_arith, test_div_rational2complex);
+#endif
 
 #endif
 
   /* Division of flonums */
   tcase_add_test(tc_arith, test_div_flonum);
+#if 0
   tcase_add_test(tc_arith, test_div_flonum2complex);
+#endif
 
   /* Division of complexes */
   tcase_add_test(tc_arith, test_div_complex);
-
-#endif
 
   suite_add_tcase(s, tc_arith);
   sr = srunner_create(s);
