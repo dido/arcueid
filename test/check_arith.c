@@ -567,6 +567,171 @@ START_TEST(test_sub_fixnum2complex)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+START_TEST(test_sub_bignum)
+{
+  value val1, val2, diff;
+  mpz_t expected;
+
+  val1 = arc_mkbignuml(c, FIXNUM_MAX+1);
+  val2 = arc_mkbignuml(c, FIXNUM_MAX+2);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_FIXNUM);
+  fail_unless(FIX2INT(diff) == -1);
+
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "300000000000000000000000000000", 10);
+  val2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val2), "100000000000000000000000000000", 10);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "200000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(diff)) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_sub_bignum2rational)
+{
+  value v1, v2, diff;
+  mpq_t expected;
+
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "100000000000000000000000000000", 10);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "-199999999999999999999999999999/2", 10);
+  fail_unless(mpq_cmp(expected, REPRAT(diff)) == 0);
+  mpq_clear(expected);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "100000000000000000000000000000", 10);
+  v2 = arc_mkrationall(c, 1, 2);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "199999999999999999999999999999/2", 10);
+  fail_unless(mpq_cmp(expected, REPRAT(diff)) == 0);
+  mpq_clear(expected);
+}
+END_TEST
+
+START_TEST(test_sub_bignum2flonum)
+{
+  value v1, v2, diff;
+
+  v1 = arc_mkflonum(c, 0.0);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "10000000000000000000000", 10);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REPFLO(diff) + 1e22) < 1e-6);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "10000000000000000000000", 10);
+  v2 = arc_mkflonum(c, 0.0);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REPFLO(diff) - 1e22) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_sub_bignum2complex)
+{
+  value v1, v2, diff;
+
+  v1 = arc_mkcomplex(c, 0.0 + I*1.1);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "10000000000000000000000", 10);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(diff)) + 1e22) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(diff)) - 1.1) < 1e-6);
+
+  v1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v1), "10000000000000000000000", 10);
+  v2 = arc_mkcomplex(c, 0.0 + I*1.1);
+  diff = __arc_sub2(c, v1, v2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(diff)) - 1e22) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(diff)) + 1.1) < 1e-6);
+}
+END_TEST
+
+/*================================= Subtractions involving rationals */
+START_TEST(test_sub_rational)
+{
+  value val1, val2, diff;
+  mpz_t expected;
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkrationall(c, 1, 4);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(diff), 1, 4) == 0);
+
+  val1 = diff;
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_FIXNUM);
+  fail_unless(FIX2INT(diff) == 0);
+
+  val1 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(val1), "1606938044258990275541962092341162602522202993782792835301375/4", 10);
+  val2 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(val2), "3/4", 10);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "401734511064747568885490523085290650630550748445698208825343", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(diff)) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_sub_rational2flonum)
+{
+  value val1, val2, diff;
+
+  val1 = arc_mkflonum(c, 0.5);
+  val2 = arc_mkrationall(c, 1, 2);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REPFLO(diff)) < 1e-6);
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkflonum(c, 0.5);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(REPFLO(diff)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_sub_rational2complex)
+{
+  value val1, val2, diff;
+
+  val1 = arc_mkcomplex(c, 0.5 + I*0.5);
+  val2 = arc_mkrationall(c, 1, 2);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(diff))) < 1e-6);
+  fail_unless(fabs(0.5 - cimag(REPCPX(diff))) < 1e-6);
+
+  val1 = arc_mkrationall(c, 1, 2);
+  val2 = arc_mkcomplex(c, 0.5 + I*0.5);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(diff))) < 1e-6);
+  fail_unless(fabs(-0.5 - cimag(REPCPX(diff))) < 1e-6);
+}
+END_TEST
+
+#endif
+
 /*================================= Multiplications involving fixnums */
 
 START_TEST(test_mul_fixnum)
@@ -1017,8 +1182,6 @@ int main(void)
   tcase_add_test(tc_arith, test_sub_fixnum2flonum);
   tcase_add_test(tc_arith, test_sub_fixnum2complex);
 
-#if 0
-
 #ifdef HAVE_GMP_H
   /* Subtraction of bignums */
   tcase_add_test(tc_arith, test_sub_bignum);
@@ -1031,8 +1194,9 @@ int main(void)
   tcase_add_test(tc_arith, test_sub_rational);
   tcase_add_test(tc_arith, test_sub_rational2flonum);
   tcase_add_test(tc_arith, test_sub_rational2complex);
-
 #endif
+
+#if 0
 
   /* Subtraction of flonums */
   tcase_add_test(tc_arith, test_sub_flonum);
