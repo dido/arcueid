@@ -321,13 +321,9 @@ END_TEST
 START_TEST(test_read_number)
 {
   value thr, sio;
+#ifdef HAVE_GMP_H
   value expected;
-
-  thr = arc_mkthread(c);
-  sio = arc_instring(c, arc_mkstringc(c, "31337"), CNIL);
-  XCALL(arc_sread, sio, CNIL);
-  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
-  fail_unless(TVALR(thr) == INT2FIX(31337));
+#endif
 
   /* Hmm... reference Arc doesn't support the 0xdeadbeef form for hexadecimal
      constants? The Limbo-style radix selector used here is an Arcueid
@@ -337,6 +333,12 @@ START_TEST(test_read_number)
   XCALL(arc_sread, sio, CNIL);
   fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
   fail_unless(TVALR(thr) == INT2FIX(0xdeadbeef));
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "31337"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
 
   thr = arc_mkthread(c);
   sio = arc_instring(c, arc_mkstringc(c, "8r1234"), CNIL);
