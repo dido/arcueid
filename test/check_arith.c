@@ -732,6 +732,58 @@ END_TEST
 
 #endif
 
+/*================================= Subtractions involving flonums */
+
+START_TEST(test_sub_flonum)
+{
+  value val1, val2, diff;
+
+  val1 = arc_mkflonum(c, 2.71828);
+  val2 = arc_mkflonum(c, 3.14159);
+
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_FLONUM);
+  fail_unless(fabs(-0.42331 - REPFLO(diff)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_sub_flonum2complex)
+{
+  value val1, val2, diff;
+
+  val1 = arc_mkflonum(c, 0.5);
+  val2 = arc_mkcomplex(c, 3 - I*4);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(-2.5 - creal(REPCPX(diff))) < 1e-6);
+  fail_unless(fabs(4 - cimag(REPCPX(diff))) < 1e-6);
+
+  val1 = arc_mkcomplex(c, 3 - I*4);
+  val2 = arc_mkflonum(c, 0.5);
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(2.5 - creal(REPCPX(diff))) < 1e-6);
+  fail_unless(fabs(-4 - cimag(REPCPX(diff))) < 1e-6);
+
+}
+END_TEST
+
+START_TEST(test_sub_complex)
+{
+  value val1, val2, diff;
+
+  val1 = arc_mkcomplex(c, 1 - I*2);
+  val2 = arc_mkcomplex(c, 3 - I*4);
+
+  diff = __arc_sub2(c, val1, val2);
+  fail_unless(TYPE(diff) == T_COMPLEX);
+  fail_unless(fabs(-2 - creal(REPCPX(diff))) < 1e-6);
+  fail_unless(fabs(2 - cimag(REPCPX(diff))) < 1e-6);
+}
+END_TEST
+
+/*================================= End of Subtraction Tests */
+
 /*================================= Multiplications involving fixnums */
 
 START_TEST(test_mul_fixnum)
@@ -1123,6 +1175,8 @@ START_TEST(test_mul_complex)
 }
 END_TEST
 
+/*================================= End of Multiplication Tests */
+
 int main(void)
 {
   int number_failed;
@@ -1196,16 +1250,12 @@ int main(void)
   tcase_add_test(tc_arith, test_sub_rational2complex);
 #endif
 
-#if 0
-
   /* Subtraction of flonums */
   tcase_add_test(tc_arith, test_sub_flonum);
   tcase_add_test(tc_arith, test_sub_flonum2complex);
 
   /* Subtraction of complexes */
   tcase_add_test(tc_arith, test_sub_complex);
-
-#endif
 
   /* Multiplication of fixnums */
   tcase_add_test(tc_arith, test_mul_fixnum);
