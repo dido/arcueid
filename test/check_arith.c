@@ -92,6 +92,41 @@ START_TEST(test_add_fixnum)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+START_TEST(test_add_fixnum2bignum)
+{
+  value bn, sum;
+  char *str;
+
+  bn = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(bn), "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
+  sum = __arc_add2(c, bn, INT2FIX(1));
+  fail_unless(TYPE(sum) == T_BIGNUM);
+  str = alloca(mpz_sizeinbase(REPBNUM(bn), 10) + 2);
+  mpz_get_str(str, 10, REPBNUM(sum));
+  fail_unless(strcmp(str, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001") == 0);
+}
+END_TEST
+
+START_TEST(test_add_fixnum2rational)
+{
+  value v1, v2, sum;
+
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = INT2FIX(1);
+  sum = __arc_add2(c, v1, v2);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(sum), 3, 2) == 0);
+
+  sum = __arc_add2(c, v2, v1);
+  fail_unless(TYPE(sum) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(sum), 3, 2) == 0);
+}
+END_TEST
+
+#endif
+
 START_TEST(test_add_fixnum2flonum)
 {
   value val1, val2, sum;
@@ -129,41 +164,6 @@ START_TEST(test_add_fixnum2complex)
   fail_unless(fabs(2.2 - cimag(REPCPX(sum))) < 1e-6);
 }
 END_TEST
-
-#ifdef HAVE_GMP_H
-
-START_TEST(test_add_fixnum2bignum)
-{
-  value bn, sum;
-  char *str;
-
-  bn = arc_mkbignuml(c, 0);
-  mpz_set_str(REPBNUM(bn), "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
-  sum = __arc_add2(c, bn, INT2FIX(1));
-  fail_unless(TYPE(sum) == T_BIGNUM);
-  str = alloca(mpz_sizeinbase(REPBNUM(bn), 10) + 2);
-  mpz_get_str(str, 10, REPBNUM(sum));
-  fail_unless(strcmp(str, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001") == 0);
-}
-END_TEST
-
-START_TEST(test_add_fixnum2rational)
-{
-  value v1, v2, sum;
-
-  v1 = arc_mkrationall(c, 1, 2);
-  v2 = INT2FIX(1);
-  sum = __arc_add2(c, v1, v2);
-  fail_unless(TYPE(sum) == T_RATIONAL);
-  fail_unless(mpq_cmp_si(REPRAT(sum), 3, 2) == 0);
-
-  sum = __arc_add2(c, v2, v1);
-  fail_unless(TYPE(sum) == T_RATIONAL);
-  fail_unless(mpq_cmp_si(REPRAT(sum), 3, 2) == 0);
-}
-END_TEST
-
-#endif
 
 #ifdef HAVE_GMP_H
 
@@ -1241,6 +1241,137 @@ START_TEST(test_div_fixnum)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+START_TEST(test_div_fixnum2bignum)
+{
+  value val1, val2, quot;
+  mpz_t expected;
+  mpq_t qexpected;
+  int i;
+
+  /* Bignum / Fixnum = Bignum */
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "40000000000000000000000000000000000000000000000", 10);
+  val2 = INT2FIX(2);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "20000000000000000000000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(quot)) == 0);
+  mpz_clear(expected);
+
+  /* Bignum / Fixnum = Fixnum (eventually) */
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "40000000000000000000000000000000000000000000000", 10);
+  val2 = INT2FIX(10);
+  for (i=0; i<46; i++)
+    val1 = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(val1) == T_FIXNUM);
+  fail_unless(FIX2INT(val1) == 4);
+
+  /* Bignum / Fixnum = Rational */
+  val1 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val1), "40000000000000000000000000000000000000000000000",
+	      10);
+  val2 = INT2FIX(3);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  mpq_init(qexpected);
+  mpq_set_str(qexpected, "40000000000000000000000000000000000000000000000/3",
+	      10);
+  fail_unless(mpq_cmp(qexpected, REPRAT(quot)) == 0);
+
+  /* Fixnum / "Bignum" = Fixnum (somewhat contrived) */
+  val1 = INT2FIX(100);
+  val2 = arc_mkbignuml(c, 10);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 10);
+
+  /* Fixnum / "Bignum" = Bignum (somewhat contrived).  See test_div_fixnum
+     for a similar test */
+  val1 = INT2FIX(FIXNUM_MIN);
+  val2 = arc_mkbignuml(c, -1);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  fail_unless(mpz_cmp_si(REPBNUM(quot), -FIXNUM_MIN) == 0);
+
+  /* Fixnum / Bignum = Rational */
+  val1 = INT2FIX(3);
+  val2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(val2), "40000000000000000000000000000000000000000000000",
+	      10);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  mpq_init(qexpected);
+  mpq_set_str(qexpected, "3/40000000000000000000000000000000000000000000000",
+	      10);
+  fail_unless(mpq_cmp(qexpected, REPRAT(quot)) == 0);
+}
+END_TEST
+
+START_TEST(test_div_fixnum2rational)
+{
+  value v1, v2, quot;
+
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = INT2FIX(3);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(quot), 1, 6) == 0);
+
+  v1 = INT2FIX(3);
+  v2 = arc_mkrationall(c, 5, 2);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(quot), 6, 5) == 0);
+
+  v1 = INT2FIX(3);
+  v2 = arc_mkrationall(c, 3, 2);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 2);
+}
+END_TEST
+
+#endif
+
+START_TEST(test_div_fixnum2flonum)
+{
+  value val1, val2, quot;
+
+  val1 = INT2FIX(2);
+  val2 = arc_mkflonum(c, 3.14159);
+  quot = __arc_div2(c, val1, val2);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(0.63662031 - REPFLO(quot)) < 1e-6);
+
+  val1 = INT2FIX(2);
+  quot = __arc_div2(c, quot, val1);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(0.3183101 - REPFLO(quot)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_div_fixnum2complex)
+{
+  value v1, v2, quot;
+
+  v1 = arc_mkcomplex(c, 1.0 + I*2.0);
+  v2 = INT2FIX(4);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(0.25 - creal(REPCPX(quot))) < 1e-6);
+  fail_unless(fabs(0.50 - cimag(REPCPX(quot))) < 1e-6);
+
+  v1 = INT2FIX(2);
+  v2 = arc_mkcomplex(c, 1.0 + I*2.0);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(fabs(0.4 - creal(REPCPX(quot))) < 1e-6);
+  fail_unless(fabs(-0.8 - cimag(REPCPX(quot))) < 1e-6);
+}
+END_TEST
 
 /*================================= End of Division Tests */
 
@@ -1358,14 +1489,15 @@ int main(void)
   /* Division of fixnums */
   tcase_add_test(tc_arith, test_div_fixnum);
 
-#if 0
-
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_arith, test_div_fixnum2bignum);
   tcase_add_test(tc_arith, test_div_fixnum2rational);
 #endif
+
   tcase_add_test(tc_arith, test_div_fixnum2flonum);
   tcase_add_test(tc_arith, test_div_fixnum2complex);
+
+#if 0
 
 #ifdef HAVE_GMP_H
   /* Division of bignums */
