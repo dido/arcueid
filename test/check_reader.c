@@ -20,6 +20,8 @@
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/builtins.h"
+#include "../src/arith.h"
+#include "../config.h"
 
 arc cc;
 arc *c;
@@ -316,6 +318,71 @@ START_TEST(test_read_symbol)
 }
 END_TEST
 
+START_TEST(test_read_number)
+{
+  value thr, sio;
+  value expected;
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "31337"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+
+  /* Hmm... reference Arc doesn't support the 0xdeadbeef form for hexadecimal
+     constants? The Limbo-style radix selector used here is an Arcueid
+     extension. */
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "16rdeadbeef"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(0xdeadbeef));
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "8r1234"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(01234));
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "01234"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(1234));
+
+#ifdef HAVE_GMP_H
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_BIGNUM);
+  expected = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(expected), "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", 10);
+  fail_unless(arc_is2(c, TVALR(thr), expected) == CTRUE);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "1/2"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_RATIONAL);
+  expected = arc_mkrationall(c, 1, 2);
+  fail_unless(arc_is2(c, TVALR(thr), expected) == CTRUE);
+#endif
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "3.1415926"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_FLONUM);
+  fail_unless(fabs(REPFLO(TVALR(thr)) - 3.1415926) < 1e-6);
+
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "3.1415926+2.7182828i"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(TVALR(thr))) - 3.1415926) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(TVALR(thr))) - 2.7182828) < 1e-6);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -326,7 +393,6 @@ int main(void)
   c = &cc;
   arc_init(c);
 
-  tcase_add_test(tc_reader, test_read_symbol);
   tcase_add_test(tc_reader, test_read_list);
   tcase_add_test(tc_reader, test_read_imp_list);
   tcase_add_test(tc_reader, test_read_bracket_fn);
@@ -336,6 +402,8 @@ int main(void)
   tcase_add_test(tc_reader, test_read_string);
   tcase_add_test(tc_reader, test_read_char);
   tcase_add_test(tc_reader, test_read_comment);
+  tcase_add_test(tc_reader, test_read_symbol);
+  tcase_add_test(tc_reader, test_read_number);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
