@@ -779,9 +779,9 @@ value __arc_idiv2(arc *c, value arg1, value arg2)
 
     /* Coerce both args to bignum */
     barg1 = tfn->coerce(c, arg1, T_BIGNUM);
-    barg2 = tfn->coerce(c, arg2, T_BIGNUM);
+    barg2 = tfn2->coerce(c, arg2, T_BIGNUM);
     quot = arc_mkbignuml(c, 0L);
-    mpz_fdiv_q(REPBNUM(quot), REPBNUM(arg1), REPBNUM(arg2));
+    mpz_fdiv_q(REPBNUM(quot), REPBNUM(barg1), REPBNUM(barg2));
     return(bignum_fixnum(c, quot));
   }
 #endif
@@ -1226,7 +1226,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
 	  return(CNIL);
 	denom = arc_string2num(c, str, index, 1);
 	if (TYPE(denom) == T_FIXNUM || TYPE(denom) == T_BIGNUM)
-	  return(__arc_idiv2(c, __arc_mul2(c, INT2FIX(sign), nval), denom));
+	  return(__arc_div2(c, __arc_mul2(c, INT2FIX(sign), nval), denom));
 	else
 	  return(CNIL);
 	break;
