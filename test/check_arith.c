@@ -809,6 +809,10 @@ START_TEST(test_mul_fixnum)
   fail_unless(TYPE(prod) == T_FIXNUM);
   fail_unless(FIX2INT(prod) == -168);
 
+  prod = __arc_mul2(c, INT2FIX(0xdeadbeef), INT2FIX(1));
+  fail_unless(TYPE(prod) == T_FIXNUM);
+  fail_unless(FIX2INT(prod) == 0xdeadbeef);
+
 #ifdef HAVE_GMP_H
   prod = __arc_mul2(c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
   fail_unless(TYPE(prod) == T_BIGNUM);
@@ -833,7 +837,7 @@ START_TEST(test_mul_fixnum)
   mpz_clear(expected);
 #else
 
-  prod = __arc_mul2(c, INT2FIX(2), INT2FIX(FIXNUM_MAX));
+  prod = __arc_mul2(c, INT2FIX(2), FIXNUM_MAX);
   fail_unless(TYPE(prod) == T_FLONUM);
   fail_unless(REPFLO(prod) - 2*FIXNUM_MAX < 1e-6);
 
@@ -947,6 +951,8 @@ END_TEST
 
 #ifdef HAVE_GMP_H
 
+/*================================= Multiplications involving bignums */
+
 START_TEST(test_mul_bignum)
 {
   value val1, val2, sum;
@@ -1053,6 +1059,8 @@ START_TEST(test_mul_bignum2complex)
 }
 END_TEST
 
+/*================================= Multiplications involving rationals */
+
 START_TEST(test_mul_rational)
 {
   value val1, val2, prod;
@@ -1128,6 +1136,8 @@ END_TEST
 
 #endif
 
+/*================================= Multiplications involving flonums */
+
 START_TEST(test_mul_flonum)
 {
   value val1, val2, prod;
@@ -1161,6 +1171,8 @@ START_TEST(test_mul_flonum2complex)
 }
 END_TEST
 
+/*================================= Multiplications involving complexes */
+
 START_TEST(test_mul_complex)
 {
   value val1, val2, prod;
@@ -1176,6 +1188,61 @@ START_TEST(test_mul_complex)
 END_TEST
 
 /*================================= End of Multiplication Tests */
+
+/*================================= Divisions involving fixnums */
+
+START_TEST(test_div_fixnum)
+{
+  value quot;
+#ifdef HAVE_GMP_H
+  mpq_t expected;
+#endif
+
+  quot = __arc_div2(c, INT2FIX(168), INT2FIX(21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 8);
+
+  quot = __arc_div2(c, INT2FIX(-168), INT2FIX(21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == -8);
+
+  quot = __arc_div2(c, INT2FIX(168), INT2FIX(-21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == -8);
+
+  quot = __arc_div2(c, INT2FIX(-168), INT2FIX(-21));
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(FIX2INT(quot) == 8);
+
+  quot = __arc_div2(c, INT2FIX(1), INT2FIX(2));
+#ifdef HAVE_GMP_H
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  mpq_init(expected);
+  mpq_set_str(expected, "1/2", 10);
+  fail_unless(mpq_cmp(expected, REPRAT(quot)) == 0);
+  mpq_clear(expected);
+#else
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(REPFLO(quot) - 0.5) < 1e-6);
+#endif
+
+  /* This is the only case where a division of two fixnums will
+     result in a bignum (or a flonum without bignum support).
+     Happens because the fixnum range is unsymmetric. */
+  quot = __arc_div2(c, INT2FIX(FIXNUM_MIN), INT2FIX(-1));
+#ifdef HAVE_GMP_H
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  fail_unless(mpz_cmp_si(REPBNUM(quot), -FIXNUM_MIN) == 0);
+#else
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(REPFLO(quot) - ((double)-FIXNUM_MIN)) < 1e-6);
+#endif
+
+}
+END_TEST
+
+
+/*================================= End of Division Tests */
 
 int main(void)
 {
@@ -1287,6 +1354,42 @@ int main(void)
 
   /* Multiplication of complexes */
   tcase_add_test(tc_arith, test_mul_complex);
+
+  /* Division of fixnums */
+  tcase_add_test(tc_arith, test_div_fixnum);
+
+#if 0
+
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_arith, test_div_fixnum2bignum);
+  tcase_add_test(tc_arith, test_div_fixnum2rational);
+#endif
+  tcase_add_test(tc_arith, test_div_fixnum2flonum);
+  tcase_add_test(tc_arith, test_div_fixnum2complex);
+
+#ifdef HAVE_GMP_H
+  /* Division of bignums */
+  tcase_add_test(tc_arith, test_div_bignum);
+
+  tcase_add_test(tc_arith, test_div_bignum2rational);
+  tcase_add_test(tc_arith, test_div_bignum2flonum);
+  tcase_add_test(tc_arith, test_div_bignum2complex);
+
+  /* Division of rationals */
+  tcase_add_test(tc_arith, test_div_rational);
+  tcase_add_test(tc_arith, test_div_rational2flonum);
+  tcase_add_test(tc_arith, test_div_rational2complex);
+
+#endif
+
+  /* Division of flonums */
+  tcase_add_test(tc_arith, test_div_flonum);
+  tcase_add_test(tc_arith, test_div_flonum2complex);
+
+  /* Division of complexes */
+  tcase_add_test(tc_arith, test_div_complex);
+
+#endif
 
   suite_add_tcase(s, tc_arith);
   sr = srunner_create(s);
