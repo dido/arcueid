@@ -59,6 +59,7 @@ This manual is for Arcueid, version @value{VERSION}
 @menu
 * Preface::                     What is Arcueid
 * Virtual Machine Design::      The design of the virtual machine
+* Arcueid Extensions::          Extensions to Reference Arc
 * Compact Information Expression Layer (CIEL)::  Serialization format
 
 @detailmenu
@@ -69,6 +70,11 @@ Virtual Machine Design
 * Object Representations::      
 * Registers::                   
 * Applying a function::         
+
+Arcueid Extensions
+
+* Reader Extensions
+* Missing functions
 
 Compact Information Expression Layer (CIEL)
 
@@ -172,7 +178,28 @@ that was saved by the caller (or by its caller, in the case of a tail
 call).  When a function finishes, it should leave the value it wishes to
 return in the value register.
 
-@node Compact Information Expression Layer (CIEL),  , Virtual Machine Design, Top
+@node Arcueid Extensions, Compact Information Expression Layer (CIEL), Virtual Machine Design, Top
+@chapter Arcueid Extensions
+
+Arcueid provides several language features not found in the reference
+Arc implementation by Paul Graham and Robert Morris.  These extensions
+are designed in such a way as not to interfere with normal Arc.
+
+@menu
+* Numeric Constants in Other Bases::
+@end menu
+
+@node Reader Extensions,  , Arcueid Extensions, Arcueid Extensions
+@section Numeric Constants in Other Bases
+
+Like reference Arc integer constants are decimal by default.  A
+constant, however, may be specified with an explicit radix, consisting
+of a decimal radix followed by the letter 'r' followed by the digits
+of the number.  The radix is between 2 and 36 inclusive: digits above
+10 in the number are expressed using the letters A to Z or a to z.
+
+
+@node Compact Information Expression Layer (CIEL), Arcueid Extensions, Virtual Machine Design, Top
 @chapter Compact Information Expression Layer (CIEL)
 
 The Compact Information Expression Layer (CIEL)@footnote{Sorry, a
