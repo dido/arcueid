@@ -135,8 +135,6 @@ void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t state)
     goto *(JTBASE + jumptbl[*TIPP(thr)++]); }
 #else
 #define NEXT {							\
-    if (--TQUANTA(thr) <= 0)					\
-      goto endquantum;						\
     goto *(JTBASE + jumptbl[*TIPP(thr)++]); }
 #endif
 
@@ -166,10 +164,8 @@ int __arc_vmengine(arc *c, value thr)
   goto *(void *)(JTBASE + jumptbl[*TIPP(thr)++]);
 #else
   for (;;) {
-    if (--TQUANTA(thr) <= 0)
-      goto endquantum;
     curr_instr = *TIPP(thr)++;
-    switch (curr_instr) {
+    switch (FIX2INT(curr_instr)) {
 #endif
     INST(inop):
       NEXT;
@@ -317,6 +313,8 @@ int __arc_vmengine(arc *c, value thr)
 #ifdef HAVE_THREADED_INTERPRETER
 #else
     }
+    if (--TQUANTA(thr) <= 0)
+      goto endquantum;
   }
 #endif
 
