@@ -146,34 +146,34 @@ static int cons_apply(arc *c, value thr, value list)
   if (arc_thr_argc(c, thr) != 1) {
     arc_err_cstrfmt(c, "application of a cons expects 1 argument, given %d",
 		    arc_thr_argc(c, thr));
-    return(APP_RC);
+    return(TR_RC);
   }
 
   fidx = arc_thr_pop(c, thr);
   if (TYPE(fidx) != T_FIXNUM) {
     arc_err_cstrfmt(c, "application of a cons expects type <non-negative exact integer> as argument");
-    return(APP_RC);
+    return(TR_RC);
   }
   index = FIX2INT(fidx);
 
   if (index < 0) {
     arc_err_cstrfmt(c, "application of a cons expects type <non-negative exact integer> as argument");
-    return(APP_RC);
+    return(TR_RC);
   }
 
   for (i=0;; i++) {
     if (i==index) {
       arc_thr_set_valr(c, thr, car(list));
-      return(APP_RC);
+      return(TR_RC);
     }
     list = cdr(list);
     if (NIL_P(list) || TYPE(list) != T_CONS) {
       arc_err_cstrfmt(c, "index %d too large for list", index);
-      return(APP_RC);
+      return(TR_RC);
     }
   }
   /* never get here */
-  return(APP_RC);
+  return(TR_RC);
 }
 
 value cons(arc *c, value x, value y)
