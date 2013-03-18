@@ -135,6 +135,8 @@ void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t state)
     goto *(JTBASE + jumptbl[*TIPP(thr)++]); }
 #else
 #define NEXT {							\
+    if (--TQUANTA(thr) <= 0)					\
+      goto endquantum;						\
     goto *(JTBASE + jumptbl[*TIPP(thr)++]); }
 #endif
 
