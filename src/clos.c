@@ -43,7 +43,7 @@ static int clos_apply(arc *c, value thr, value clos)
   code = car(clos);
   env = cdr(clos);
   /* Set up the registers to make this code execute */
-  TIPP(thr) = &VINDEX(code, 0);
+  TIPP(thr) = &VINDEX(CODE_CODE(code), 0);
   TENVR(thr) = env;
   TFUNR(thr) = clos;
   /* Return to the trampoline to make it resume */
