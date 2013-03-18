@@ -78,6 +78,25 @@ START_TEST(test_nop)
 }
 END_TEST
 
+START_TEST(test_ldi)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit1(c, cctx, ildi, INT2FIX(31337));
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-1);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -89,6 +108,7 @@ int main(void)
   arc_init(c);
 
   tcase_add_test(tc_vm, test_nop);
+  tcase_add_test(tc_vm, test_ldi);
   tcase_add_test(tc_vm, test_hlt);
 
   suite_add_tcase(s, tc_vm);
