@@ -18,6 +18,7 @@
 */
 #include "arcueid.h"
 #include "vmengine.h"
+#include "arith.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -47,92 +48,279 @@ static value apply_return(arc *c, value thr)
   return(cont);
 }
 
-/* This function is used to perform function application.  Before entering,
-   the following must have been performed:
-
-   1. A continuation must have been created and linked to the continuation
-      register so that the state of the system may be restored when the
-      called function returns.
-   2. The arguments to the function must have been pushed onto the stack
-      in reverse order.
-   3. The function to be called must be in the thread's value register.
-
-   This function is meant to be used from the thread dispatcher.
- */
-void __arc_thr_trampoline(arc *c, value thr)
+static int apply_vr(arc *c, value thr)
 {
   typefn_t *tfn;
-  enum avals_t result;
-  value cont;
 
   TFUNR(thr) = TVALR(thr);
+  tfn = __arc_typefn(c, TVALR(thr));
+  if (tfn == NULL) {
+    arc_err_cstrfmt(c, "cannot apply value");
+    return(0);
+  }
+  return(tfn->apply(c, thr, TVALR(thr)));
+}
+
+/* This is the main trampoline.  Its job is basically to keep running
+   the thread until some condition occurs where it is no longer able to.
+
+   The trampoline states are as follows:
+
+   TR_RESUME
+   Resume execution of the current state of the function being executed
+   after it has been suspended for whatever reason.
+
+   TR_SUSPEND
+   Return to the thread dispatcher if the thread has been suspended for
+   whatever reason.
+
+   TR_FNAPP
+   Apply the function that has been set up in the value register.  This
+   will set up the thread state so that APP_RESUME will begin executing
+   the function in question.
+
+   TR_RC
+   Restore the last continuation on the continuation register.
+*/
+void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t state)
+{
+  value cont;
+
   for (;;) {
-    tfn = __arc_typefn(c, TVALR(thr));
-    if (tfn == NULL) {
-      arc_err_cstrfmt(c, "cannot apply value");
+    switch (state) {
+    case TR_RESUME:
+      /* Resume execution of the current virtual machine state. */
+      state = (TYPE(TFUNR(thr)) == T_CCODE) ? __arc_resume_aff(c, thr) : __arc_vmengine(c, thr);
+      break;
+    case TR_SUSPEND:
+      /* just return to the dispatcher */
       return;
-    }
-    result = tfn->apply(c, thr, TVALR(thr));
-    for (;;) {
-      /* This is a sort of trampoline that handles the possible
-	 re-invocation of an AFF. */
-      switch (result) {
-      case APP_RET:
-	/* This case is used for returning to the thread dispatcher. Used
-	   when either the thread quantum expires, the function yields, or
-	   the thread becomes blocked for whatever reason.  If the thread
-	   is to resume execution, a continuation must have been set up
-	   prior to entering this state. */
+    case TR_FNAPP:
+      /* If the state of the trampoline becomes TR_FNAPP, we will attempt
+	 to apply the function in the value register, with arguments on
+	 the stack, whatever type of function it happens to be. */
+      state = apply_vr(c, thr);
+      break;
+    case TR_RC:
+    default:
+      /* Restore the last continuation on the continuation register.  Just
+	 return to the virtual machine if the last continuation was a normal
+	 continuation. */
+      cont = apply_return(c, thr);
+      if (NIL_P(cont)) {
+	/* There was no available continuation on the continuation
+	   register.  If this happens, the current thread should
+	   terminate. */
+	TQUANTA(thr) = 0;
+	TSTATE(thr) = Trelease;
 	return;
-      case APP_FNAPP:
-	/* If an Arcueid Foreign Function returns APP_FNAPP, it will have
-	   created and saved a continuation to allow us to restore it at the
-	   point after it made the call, pushed the arguments to the function
-	   on the stack, and set the value register to the function to be
-	   called.  Looping back will thus take care of what we need to do
-	   nicely! */
-	break;
-      case APP_RC:
-      default:
-	/* Restore the last continuation on the continuation register.  Just
-	   return to the virtual machine if the last continuation was a normal
-	   continuation. */
-	cont = apply_return(c, thr);
-	if (NIL_P(cont)) {
-	  /* There was no available continuation on the continuation
-	     register.  If this happens, the current thread should
-	     terminate. */
-	  TQUANTA(thr) = 0;
-	  TSTATE(thr) = Trelease;
-	  return;
-	}
-	/* If the continuation is a normal one, just return.  It was already
-	   restored by the call to __arc_return */
-	if (TYPE(CONT_FUN(cont)) == T_CCODE) {
-	  /* If we get an AFF's continuation, the thread state should have been
-	     restored to a state suitable for resuming the function. */
-	  result = __arc_resume_aff(c, thr);
-	}
-	continue;
       }
+      state = TR_RESUME;
       break;
     }
   }
 }
 
+/* instruction decoding macros */
+#ifdef HAVE_THREADED_INTERPRETER
+/* threaded interpreter */
+#define INST(name) lbl_##name
+#define JTBASE ((void *)&&lbl_inop)
+#ifdef HAVE_TRACING
+#define NEXT {							\
+    if (--TQUANTA(thr) <= 0)					\
+      goto endquantum;						\
+    if (vmtrace)						\
+      trace(c, thr);						\
+    goto *(JTBASE + jumptbl[*TIPP(thr)++]); }
+#else
+#define NEXT {							\
+    if (--TQUANTA(thr) <= 0)					\
+      goto endquantum;						\
+    goto *(JTBASE + jumptbl[*TIPP(thr)++]); }
+#endif
+
+#else
+/* switch interpreter */
+#define INST(name) case name
+#define NEXT break
+#endif
+
 /* The actual virtual machine engine.  Fits into the trampoline just
    like a normal function. */
 int __arc_vmengine(arc *c, value thr)
 {
-  int offset;
-  value *base;
+#ifdef HAVE_THREADED_INTERPRETER
+  static const int jumptbl[] = {
+#include "jumptbl.h"
+  };
+#else
+  value curr_instr;
+#endif
 
-  goto endquantum;
+#ifdef HAVE_THREADED_INTERPRETER
+#ifdef HAVE_TRACING
+  if (vmtrace)
+    trace(c, thr);
+#endif
+  goto *(void *)(JTBASE + jumptbl[*TIPP(thr)++]);
+#else
+  for (;;) {
+    if (--TQUANTA(thr) <= 0)
+      goto endquantum;
+    curr_instr = *TIPP(thr)++;
+    switch (curr_instr) {
+#endif
+    INST(inop):
+      NEXT;
+    INST(ipush):
+      CPUSH(thr, TVALR(thr));
+      NEXT;
+    INST(ipop):
+      TVALR(thr) = CPOP(thr);
+      NEXT;
+    INST(ildi):
+      TVALR(thr) = *TIPP(thr)++;
+      NEXT;
+    INST(ildl):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(ildg):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(istg):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(ilde):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(iste):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(imvarg):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(imvoarg):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(imvrarg):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(icont):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(ienv):
+      /* XXX - unimplemented */
+      NEXT;
+    INST(iapply):
+      {
+	/* Set up the argc based on the call.  Everything else required
+	   for function application has already been set up beforehand */
+	TARGC(thr) = FIX2INT(*TIPP(thr)++);
+	return(TR_FNAPP);
+      }
+      NEXT;
+    INST(iret):
+      /* Return to the trampoline, and make it restore the current
+	 continuation in the continuation register */
+      return(TR_RC);
+      NEXT;
+    INST(ijmp):
+    INST(ijt):
+    INST(ijf):
+    INST(itrue):
+      TVALR(thr) = CTRUE;
+      NEXT;
+    INST(inil):
+      TVALR(thr) = CNIL;
+      NEXT;
+    INST(ihlt):
+      TQUANTA(thr) = 0;
+      TSTATE(thr) = Trelease;
+      goto endquantum;
+      NEXT;
+    INST(iadd):
+      TVALR(thr) = __arc_add2(c, CPOP(thr), TVALR(thr));
+      NEXT;
+    INST(isub):
+      TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
+      NEXT;
+    INST(imul):
+      TVALR(thr) = __arc_mul2(c, CPOP(thr), TVALR(thr));
+      NEXT;
+    INST(idiv):
+      TVALR(thr) = __arc_div2(c, CPOP(thr), TVALR(thr));
+      NEXT;
+    INST(icons):
+      TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
+      NEXT;
+    INST(icar):
+      if (NIL_P(TVALR(thr)))
+	TVALR(thr) = CNIL;
+      else if (TYPE(TVALR(thr)) != T_CONS)
+	arc_err_cstrfmt(c, "can't take car of value");
+      else
+	TVALR(thr) = car(TVALR(thr));
+      NEXT;
+    INST(icdr):
+      if (NIL_P(TVALR(thr)))
+	TVALR(thr) = CNIL;
+      else if (TYPE(TVALR(thr)) != T_CONS)
+	arc_err_cstrfmt(c, "can't take cdr of value");
+      else
+	TVALR(thr) = cdr(TVALR(thr));
+      NEXT;
+    INST(iscar):
+      scar(CPOP(thr), TVALR(thr));
+      NEXT;
+    INST(iscdr):
+      scdr(CPOP(thr), TVALR(thr));
+      NEXT;
+    INST(ispl):
+      {
+	value list = TVALR(thr), nlist = CPOP(thr);
+	/* Find the first cons in list whose cdr is not itself a cons.
+	   Join the list from the stack to it. */
+	if (list == CNIL) {
+	  TVALR(thr) = nlist;
+	} else {
+	  for (;;) {
+	    if (!CONS_P(cdr(list))) {
+	      if (cdr(list) == CNIL)
+		scdr(list, nlist);
+	      else
+		arc_err_cstrfmt(c, "splicing improper list");
+	      break;
+	    }
+	    list = cdr(list);
+	  }
+	}
+      }
+      NEXT;
+    INST(iis):
+      TVALR(thr) = arc_is2(c, TVALR(thr), CPOP(thr));
+      NEXT;
+    INST(igt):
+    INST(ilt):
+    INST(idup):
+      TVALR(thr) = *(TSP(thr)+1);
+      NEXT;
+    INST(icls):
+    INST(iconsr):
+      TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
+      NEXT;
+#ifndef HAVE_THREADED_INTERPRETER
+    default:
+#else
+    INST(invalid):
+#endif
+      arc_err_cstrfmt(c, "invalid opcode %02x", *TIPP(thr));
+#ifdef HAVE_THREADED_INTERPRETER
+#else
+    }
+  }
+#endif
 
  endquantum:
-  /* Save a continuation to restore later on the next context switch */
-  base = &VINDEX(CODE_CODE(TFUNR(thr)), 0);
-  offset = TIP(thr).ipptr - base;
-  TCONR(thr) = cons(c, __arc_mkcont(c, thr, offset), TCONR(thr));
-  return(APP_RET);
+  return(TR_SUSPEND);
 }
