@@ -19,6 +19,7 @@
 #include <check.h>
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
+#include "../src/arith.h"
 
 arc cc;
 arc *c;
@@ -147,6 +148,29 @@ START_TEST(test_ldi)
 }
 END_TEST
 
+START_TEST(test_ldl)
+{
+  value cctx, code, clos;
+  value thr;
+  int lptr;
+
+  cctx = arc_mkcctx(c);
+  lptr = arc_literal(c, cctx, arc_mkflonum(c, 3.1415926535));
+  arc_emit1(c, cctx, ildl, INT2FIX(lptr));
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-1);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TYPE(TVALR(thr)) == T_FLONUM);
+  fail_unless(fabs(REPFLO(TVALR(thr)) - 3.1415926535) < 1e-6);
+
+}
+END_TEST
+
 START_TEST(test_true)
 {
   value cctx, code, clos;
@@ -197,6 +221,7 @@ int main(void)
 
   tcase_add_test(tc_vm, test_nop);
   tcase_add_test(tc_vm, test_ldi);
+  tcase_add_test(tc_vm, test_ldl);
   tcase_add_test(tc_vm, test_push);
   tcase_add_test(tc_vm, test_pop);
   tcase_add_test(tc_vm, test_true);
