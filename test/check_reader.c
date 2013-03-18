@@ -32,7 +32,7 @@ arc *c;
     TVALR(thr) = arc_mkaff(c, fname, CNIL);	\
     TARGC(thr) = NARGS(__VA_ARGS__);		\
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
-    __arc_thr_trampoline(c, thr);		\
+    __arc_thr_trampoline(c, thr, TR_FNAPP);	\
   } while (0)
 
 START_TEST(test_read_list)
