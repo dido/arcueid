@@ -15,10 +15,10 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [-] Implement virtual machine instructions [3/38]
+    - [-] Implement virtual machine instructions [7/38]
       - [X] nop
-      - [ ] push
-      - [ ] pop
+      - [X] push
+      - [X] pop
       - [ ] ldl
       - [X] ldi
       - [ ] ldg
@@ -35,8 +35,8 @@ notice and this notice are preserved.
       - [ ] jmp
       - [ ] jt
       - [ ] jf
-      - [ ] true
-      - [ ] nil
+      - [X] true
+      - [X] nil
       - [X] hlt
       - [ ] add
       - [ ] sub
