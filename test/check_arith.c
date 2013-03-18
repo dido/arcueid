@@ -1512,6 +1512,41 @@ START_TEST(test_div_rational)
 }
 END_TEST
 
+START_TEST(test_div_rational2flonum)
+{
+  value v1, v2, quot;
+
+  v1 = arc_mkflonum(c, 0.25);
+  v2 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(v2), "5/2", 10);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(REPFLO(quot) - 0.1) < 1e-6);
+
+  quot = __arc_div2(c, v2, v1);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(REPFLO(quot) - 10.0) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_div_rational2complex)
+{
+  value v1, v2, quot;
+
+  v1 = arc_mkcomplex(c, 2.0+I*5.0);
+  v2 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(v2), "5/2", 10);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(quot)) - 0.8) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(quot)) - 2.0) < 1e-6);
+
+  quot = __arc_div2(c, v2, v1);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(quot)) -  0.172413793) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(quot)) - -0.431034483) < 1e-6);
+}
+END_TEST
 
 #endif
 
@@ -1678,10 +1713,8 @@ int main(void)
 
   /* Division of rationals */
   tcase_add_test(tc_arith, test_div_rational);
-#if 0
   tcase_add_test(tc_arith, test_div_rational2flonum);
   tcase_add_test(tc_arith, test_div_rational2complex);
-#endif
 
 #endif
 
