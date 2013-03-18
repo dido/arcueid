@@ -230,6 +230,8 @@ static inline enum arc_types TYPE(value v)
 #define scar(x, y) ((car(x)) = (y))
 #define scdr(x, y) ((cdr(x)) = (y))
 
+#define CONS_P(x) (TYPE(x) == T_CONS)
+
 extern value cons(arc *c, value x, value y);
 extern value arc_list_append(value list1, value val);
 
