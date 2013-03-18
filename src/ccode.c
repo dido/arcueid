@@ -143,22 +143,20 @@ int __arc_affapply(arc *c, value thr, value cont, value func, ...)
   TARGC(thr) = argc;
   /* set the value register to the function to be called */
   TVALR(thr) = func;
-  return(APP_FNAPP);
+  return(TR_FNAPP);
 }
 
-int __arc_affyield(arc *c, value thr, value cont)
+int __arc_affyield(arc *c, value thr, int line)
 {
-  /* add the continuation to the continuation register */
-  TCONR(thr) = cons(c, cont, TCONR(thr));
-  return(APP_RET);
+  TIP(thr).aff_line = line;
+  return(TR_SUSPEND);
 }
 
-int __arc_affiowait(arc *c, value thr, value cont, int fd)
+int __arc_affiowait(arc *c, value thr, int line, int fd)
 {
-  TCONR(thr) = cons(c, cont, TCONR(thr));
   TWAITFD(thr) = INT2FIX(fd);
   TSTATE(thr) = Tiowait;
-  return(APP_RET);
+  return(__arc_affyield(c, thr, line));
 }
 
 int __arc_resume_aff(arc *c, value thr)
@@ -166,7 +164,7 @@ int __arc_resume_aff(arc *c, value thr)
   struct cfunc_t *rcfn;
 
   rcfn = (struct cfunc_t *)REP(TFUNR(thr));
-  return((int)rcfn->cfunc.aff(c, thr));
+  return(rcfn->cfunc.aff(c, thr));
 }
 
 static int cfunc_apply(arc *c, value thr, value cfn)
@@ -181,7 +179,7 @@ static int cfunc_apply(arc *c, value thr, value cfn)
     /* XXX - error handling */
     arc_err_cstrfmt(c, "wrong number of arguments (%d for %d)", argc,
 		    rcfn->argc);
-    return(APP_RC);
+    return(TR_RC);
   }
 
   if (rcfn->argc == -2) {
@@ -190,7 +188,9 @@ static int cfunc_apply(arc *c, value thr, value cfn)
     /* The __arc_affenv function will fill this in when the function starts */
     TENVR(thr) = CNIL;
     TFUNR(thr) = cfn;
-    return(rcfn->cfunc.aff(c, thr));
+    /* return to the trampoline and make it resume from the beginning
+       of the function now that everything is ready */
+    return(TR_RESUME);
   }
 
   /* Simple Foreign Functions */
@@ -237,7 +237,9 @@ static int cfunc_apply(arc *c, value thr, value cfn)
     arc_err_cstrfmt(c, "too many arguments");
     break;
   }
-  return(APP_RC);
+  /* Restore continuation for non-AFF.  This will just return to
+     wherever we were called from. */
+  return(TR_RC);
 }
 
 typefn_t __arc_cfunc_typefn__ = {
