@@ -66,6 +66,9 @@ enum vminst {
 #define CODE_SRC(c) (VINDEX((c), 1))
 #define CODE_LITERAL(c, idx) (VINDEX((c), 2+(idx)))
 
+#define CLOS_CODE(cl) (car(cl))
+#define CLOS_ENV(cl) (cdr(cl))
+
 /* The source information is a hash table, whose keys are code offsets
    into the function and whose values are line numbers.  The following
    special negative indexes are used for metadata. */
