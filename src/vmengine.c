@@ -180,8 +180,10 @@ int __arc_vmengine(arc *c, value thr)
     INST(ildi):
       TVALR(thr) = *TIPP(thr)++;
       NEXT;
-    INST(ildl):
-      /* XXX - unimplemented */
+    INST(ildl): {
+	value lidx = *TIPP(thr)++;
+	TVALR(thr) = CODE_LITERAL(CLOS_CODE(TFUNR(thr)), FIX2INT(lidx));
+      }
       NEXT;
     INST(ildg):
       /* XXX - unimplemented */
