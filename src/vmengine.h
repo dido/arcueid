@@ -128,6 +128,7 @@ struct vmthread_t {
 #define TSBASE(t) (((struct vmthread_t *)REP(t))->stkbase)
 #define TSTOP(t) (((struct vmthread_t *)REP(t))->stktop)
 #define TIP(t) (((struct vmthread_t *)REP(t))->ip)
+#define TIPP(t) (((struct vmthread_t *)REP(t))->ip.ipptr)
 #define TARGC(t) (((struct vmthread_t *)REP(t))->argc)
 
 #define TSTATE(t) (((struct vmthread_t *)REP(t))->state)
@@ -157,7 +158,7 @@ struct vmthread_t {
 
 #define CONT_SIZE 4
 
-extern void __arc_thr_trampoline(arc *c, value thr);
+extern void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t result);
 extern int __arc_resume_aff(arc *c, value thr);
 extern void arc_restorecont(arc *c, value thr, value cont);
 extern int __arc_vmengine(arc *c, value thr);
