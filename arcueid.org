@@ -8,9 +8,6 @@ notice and this notice are preserved.
 
 * The Arc Runtime
 ** TODO base virtual machine [5/7]
-   We need to rethink the structure of the virtual machine.  It now
-   seems that vmgen might not have been such a good idea, and we
-   should probably write our own interpreter core directly.
     - [X] Define virtual machine architecture
     - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
@@ -18,12 +15,12 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [-] Implement virtual machine instructions [2/39]
+    - [-] Implement virtual machine instructions [3/38]
       - [X] nop
       - [ ] push
       - [ ] pop
       - [ ] ldl
-      - [ ] ldi
+      - [X] ldi
       - [ ] ldg
       - [ ] stg
       - [ ] lde
@@ -52,7 +49,6 @@ notice and this notice are preserved.
       - [ ] scdr
       - [ ] spl
       - [ ] is
-      - [ ] iso
       - [ ] gt
       - [ ] lt
       - [ ] dup
