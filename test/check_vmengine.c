@@ -104,6 +104,30 @@ START_TEST(test_push)
 }
 END_TEST
 
+START_TEST(test_pop)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit(c, cctx, inil);
+  arc_emit(c, cctx, ipush);
+  arc_emit(c, cctx, itrue);
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(31337));
+  arc_emit(c, cctx, ipush);
+  arc_emit(c, cctx, ipop);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+  fail_unless(*(TSP(thr)+1) == CTRUE);
+  fail_unless(*(TSP(thr)+2) == CNIL);
+}
+END_TEST
+
 START_TEST(test_ldi)
 {
   value cctx, code, clos;
@@ -174,6 +198,7 @@ int main(void)
   tcase_add_test(tc_vm, test_nop);
   tcase_add_test(tc_vm, test_ldi);
   tcase_add_test(tc_vm, test_push);
+  tcase_add_test(tc_vm, test_pop);
   tcase_add_test(tc_vm, test_true);
   tcase_add_test(tc_vm, test_nil);
   tcase_add_test(tc_vm, test_hlt);
