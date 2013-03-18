@@ -235,7 +235,6 @@ int __arc_vmengine(arc *c, value thr)
       TVALR(thr) = CNIL;
       NEXT;
     INST(ihlt):
-      TQUANTA(thr) = 0;
       TSTATE(thr) = Trelease;
       goto endquantum;
       NEXT;
