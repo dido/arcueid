@@ -307,6 +307,9 @@ extern int __arc_affiowait(arc *c, value thr, int line, int fd);
 extern void __arc_affenv(arc *c, value thr, int __vidx__, int nparams);
 extern int __arc_affip(arc *c, value thr);
 
+/* Closures */
+extern value arc_mkclos(arc *, value code, value env);
+
 /* String Port I/O */
 extern value arc_instring(arc *c, value str, value name);
 extern value arc_outstring(arc *c, value name);
