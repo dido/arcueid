@@ -44,7 +44,7 @@ START_TEST(test_cons)
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list2);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == CTRUE);
 
   thr = arc_mkthread(c);
@@ -52,7 +52,7 @@ START_TEST(test_cons)
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list3);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(NIL_P(TVALR(thr)));
 }
 END_TEST
@@ -73,7 +73,7 @@ START_TEST(test_circ_cons)
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list2);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == CTRUE);
 
   thr = arc_mkthread(c);
@@ -81,7 +81,7 @@ START_TEST(test_circ_cons)
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list3);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(NIL_P(TVALR(thr)));
 
   car(cdr(cdr(list3))) = list3;
@@ -90,7 +90,7 @@ START_TEST(test_circ_cons)
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list3);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(NIL_P(TVALR(thr)));
 }
 END_TEST
