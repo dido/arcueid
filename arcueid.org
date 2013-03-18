@@ -136,15 +136,15 @@ notice and this notice are preserved.
      - [ ] Function applications
    - [ ] Macros
    - [ ] Special Syntax
-** TODO basic data types [9/16]
+** TODO basic data types [10/16]
     - [X] Nil
     - [X] True
-    - [ ] Numeric Types [0/5]
-      - [ ] fixnum
-      - [ ] bignum
-      - [ ] flonum
-      - [ ] complex
-      - [ ] rational
+    - [X] Numeric Types [5/5]
+      - [X] fixnum
+      - [X] bignum
+      - [X] flonum
+      - [X] complex
+      - [X] rational
     - [X] Characters
     - [X] Strings
     - [X] Symbols
@@ -365,7 +365,7 @@ notice and this notice are preserved.
    - [-] Basic I/O primitives (src/io.c) [1/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
-     - [-] Input [3/5]
+     - [-] Input [4/5]
        - [X] readb
        - [X] readc
        - [ ] peekc
@@ -379,7 +379,7 @@ notice and this notice are preserved.
 	   CHARACTER.  This saves us the trouble of decoding Unicode
 	   all over again, and reinforces the maxim of never mixing
 	   the b functions with the c functions.
-       - [ ] sread
+       - [X] sread (see the Arc reader above)
      - [ ] Output [0/3]
        - [ ] writeb
        - [ ] writec
