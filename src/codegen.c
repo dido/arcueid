@@ -111,7 +111,7 @@ void arc_emit1(arc *c, value cctx, enum vminst inst, value arg)
 
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
-  if (vptr+1 >= VECLEN(vcode))
+  if (NIL_P(vcode) || vptr+1 >= VECLEN(vcode))
     vcode = __resize_vmcode(c, cctx);
   VINDEX(vcode, vptr++) = INT2FIX((int)inst);
   VINDEX(vcode, vptr++) = arg;
@@ -125,7 +125,7 @@ void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
 
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
-  if (vptr+2 >= VECLEN(vcode))
+  if (NIL_P(vcode) || vptr+2 >= VECLEN(vcode))
     vcode = __resize_vmcode(c, cctx);
   VINDEX(vcode, vptr++) = INT2FIX((int)inst);
   VINDEX(vcode, vptr++) = arg1;
