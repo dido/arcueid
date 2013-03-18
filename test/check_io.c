@@ -32,25 +32,25 @@ START_TEST(test_sio_readb)
   TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == INT2FIX(97));
 
   TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == INT2FIX(98));
 
   TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == INT2FIX(99));
 
   TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(NIL_P(TVALR(thr)));
 }
 END_TEST
@@ -64,27 +64,27 @@ START_TEST(test_sio_readc)
   TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TYPE(TVALR(thr)) == T_CHAR);
   fail_unless(arc_char2rune(c, TVALR(thr)) == 0x4ee5);
 
   TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TYPE(TVALR(thr)) == T_CHAR);
   fail_unless(arc_char2rune(c, TVALR(thr)) == 0x5442);
 
   TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TYPE(TVALR(thr)) == T_CHAR);
   fail_unless(arc_char2rune(c, TVALR(thr)) == 0x6ce2);
   TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
   TARGC(thr) = 1;
   CPUSH(thr, sio);
-  __arc_thr_trampoline(c, thr);
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(NIL_P(TVALR(thr)));
 
 }
