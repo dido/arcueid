@@ -282,11 +282,11 @@ notice and this notice are preserved.
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
    - [ ] Math operations [0/4]
-     - [-] Arithmetic [3/5]
+     - [-] Arithmetic [4/5]
        - [X] * Multiplication (virtual machine instruction)
        - [X] + Addition (virtual machine instruction)
        - [X] - Subtraction (virtual machine instruction)
-       - [ ] / Division (virtual machine instruction)
+       - [X] / Division (virtual machine instruction)
        - [ ] idiv integer division
      - [ ] Complex arithmetic [0/4]
 	   This is again an Arcueid extension.  It's rather annoying
