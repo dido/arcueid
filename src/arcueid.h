@@ -76,10 +76,12 @@ enum arc_types {
 
 struct arc;
 
-enum avals_t {
-  APP_RET=1,			/* Return to thread dispatcher */
-  APP_RC=3,			/* Restore continuation */
-  APP_FNAPP=5,			/* Apply value register */
+/* Trampoline states */
+enum tr_states_t {
+  TR_RESUME=1,
+  TR_SUSPEND=3,
+  TR_FNAPP=5,
+  TR_RC
 };
 
 /* Type functions */
@@ -300,8 +302,8 @@ extern value arc_mkccode(arc *c, int argc, value (*cfunc)(arc *, ...),
 			 value name);
 extern value arc_mkaff(arc *c, int (*aff)(arc *, value), value name);
 extern int __arc_affapply(arc *c, value thr, value ccont, value func, ...);
-extern int __arc_affyield(arc *c, value thr, value ccont);
-extern int __arc_affiowait(arc *c, value thr, value ccont, int fd);
+extern int __arc_affyield(arc *c, value thr, int line);
+extern int __arc_affiowait(arc *c, value thr, int line, int fd);
 extern void __arc_affenv(arc *c, value thr, int __vidx__, int nparams);
 extern int __arc_affip(arc *c, value thr);
 
@@ -424,7 +426,7 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 
 #define AFFDEF0(fname) int fname(arc *c, value thr) { int __vidx__ = 0; int __nparams__ = 0; do
 
-#define AFFEND while (0); return(APP_RC); }
+#define AFFEND while (0); return(TR_RC); }
 
 #define ADEFVAR(x) int x = __vidx__++
 
@@ -446,18 +448,18 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 
 #define AYIELD()							\
   do {									\
-    return(__arc_affyield(c, thr, __arc_mkcont(c, thr, __LINE__))); case __LINE__:; \
+    return(__arc_affyield(c, thr, __LINE__)); case __LINE__:;		\
   } while (0)
 
 #define AIOWAIT(fd)							\
   do {									\
-    return(__arc_affiowait(c, thr, __arc_mkcont(c, thr, __LINE__), fd)); case __LINE__:; \
+    return(__arc_affiowait(c, thr, __LINE__, fd)); case __LINE__:;	\
   } while (0)
 
 #define ARETURN(val)			\
   do {						\
     arc_thr_set_valr(c, thr, val);		\
-    return(APP_RC);				\
+    return(TR_RC);				\
   } while (0)
 
 #endif
