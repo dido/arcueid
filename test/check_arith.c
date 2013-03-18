@@ -1414,6 +1414,37 @@ START_TEST(test_div_bignum)
 }
 END_TEST
 
+START_TEST(test_div_bignum2rational)
+{
+  value v1, v2, quot;
+  value expected;
+
+  /* rational result */
+  v1 = arc_mkrationall(c, 1, 2);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "40000000000000000000000000000000000000000000000", 10);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_RATIONAL);
+  expected = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(expected), "1/80000000000000000000000000000000000000000000000", 10);
+  fail_unless(arc_is2(c, expected, quot) == CTRUE);
+
+  /* bignum result */
+  quot = __arc_div2(c, v2, v1);
+  fail_unless(TYPE(quot) == T_BIGNUM);
+  expected = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(expected), "80000000000000000000000000000000000000000000000", 10);
+  fail_unless(arc_is2(c, expected, quot) == CTRUE);
+
+  /* fixnum result */
+  v1 = arc_mkrationall(c, 0, 1);
+  mpq_set_str(REPRAT(v1), "1000000000000000000000000000000000000000000/2", 10);
+  quot = __arc_div2(c, v2, v1);
+  fail_unless(TYPE(quot) == T_FIXNUM);
+  fail_unless(quot == INT2FIX(80000));
+}
+END_TEST
+
 /*================================= Divisions involving rationals */
 START_TEST(test_div_rational)
 {
@@ -1604,8 +1635,8 @@ int main(void)
 #ifdef HAVE_GMP_H
   /* Division of bignums */
   tcase_add_test(tc_arith, test_div_bignum);
-#if 0
   tcase_add_test(tc_arith, test_div_bignum2rational);
+#if 0
   tcase_add_test(tc_arith, test_div_bignum2flonum);
   tcase_add_test(tc_arith, test_div_bignum2complex);
 #endif
