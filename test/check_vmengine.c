@@ -97,6 +97,44 @@ START_TEST(test_ldi)
 }
 END_TEST
 
+START_TEST(test_true)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit(c, cctx, itrue);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-1);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TYPE(TVALR(thr)) == T_TRUE);
+  fail_unless(TVALR(thr) == CTRUE);
+}
+END_TEST
+
+START_TEST(test_nil)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit(c, cctx, inil);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-1);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TYPE(TVALR(thr)) == T_NIL);
+  fail_unless(NIL_P(TVALR(thr)));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -109,6 +147,8 @@ int main(void)
 
   tcase_add_test(tc_vm, test_nop);
   tcase_add_test(tc_vm, test_ldi);
+  tcase_add_test(tc_vm, test_true);
+  tcase_add_test(tc_vm, test_nil);
   tcase_add_test(tc_vm, test_hlt);
 
   suite_add_tcase(s, tc_vm);
