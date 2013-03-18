@@ -18,9 +18,8 @@ STDIN.each do |line|
     break
   end
 end
-
 instrlist = []
-0.upto(255) do |index|
+0.upto(511) do |index|
   instrlist <<
     ((instructions.has_key?(index)) ? "&&lbl_#{instructions[index]} - &&lbl_inop" :
      "&&lbl_invalid - &&lbl_inop")
