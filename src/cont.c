@@ -90,7 +90,7 @@ static int cont_apply(arc *c, value thr, value cont)
   /* Applying a continuation just means it goes on the continuation
      register and we make it go. */
   TCONR(thr) = cons(c, cont, TCONR(thr));
-  return(APP_RC);
+  return(TR_RC);
 }
 
 typefn_t __arc_cont_typefn__ = {
