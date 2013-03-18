@@ -98,7 +98,7 @@ void arc_emit(arc *c, value cctx, enum vminst inst)
 
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
-  if (vptr >= VECLEN(vcode))
+  if (NIL_P(vcode) || vptr >= VECLEN(vcode))
     vcode = __resize_vmcode(c, cctx);
   VINDEX(vcode, vptr++) = INT2FIX((int)inst);
   CCTX_VCPTR(cctx) = INT2FIX(vptr);
