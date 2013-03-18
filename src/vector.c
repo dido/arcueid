@@ -73,27 +73,27 @@ static int vector_apply(arc *c, value thr, value vec)
   if (arc_thr_argc(c, thr) != 1) {
     arc_err_cstrfmt(c, "application of a vector expects 1 argument, given %d",
 		    arc_thr_argc(c, thr));
-    return(APP_RC);
+    return(TR_RC);
   }
   fidx = arc_thr_pop(c, thr);
   if (TYPE(fidx) != T_FIXNUM) {
     arc_err_cstrfmt(c, "application of a vector expects type <non-negative exact integer> as argument");
-    return(APP_RC);
+    return(TR_RC);
   }
   index = FIX2INT(fidx);
 
   if (index < 0) {
     arc_err_cstrfmt(c, "application of a vector expects type <non-negative exact integer> as argument");
-    return(APP_RC);
+    return(TR_RC);
   }
 
   if (index >= VECLEN(vec)) {
     arc_err_cstrfmt(c, "index %d out of range [0, %d] for vector",
 		    index, VECLEN(vec)-1);
-    return(APP_RC);
+    return(TR_RC);
   }
   arc_thr_set_valr(c, thr, VINDEX(vec, index));
-  return(APP_RC);
+  return(TR_RC);
 }
 
 value arc_mkvector(arc *c, int length)
