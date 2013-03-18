@@ -1445,6 +1445,43 @@ START_TEST(test_div_bignum2rational)
 }
 END_TEST
 
+START_TEST(test_div_bignum2flonum)
+{
+  value v1, v2, quot;
+
+  /* rational result */
+  v1 = arc_mkflonum(c, 0.5);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "1000000000000000000000000", 10);
+  quot = __arc_div2(c, v2, v1);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(REPFLO(quot) - 2e24) < 1e-6);
+
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_FLONUM);
+  fail_unless(fabs(REPFLO(quot) - 5e-25) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_div_bignum2complex)
+{
+  value v1, v2, quot;
+
+  v1 = arc_mkcomplex(c, 2.0+I*5.0);
+  v2 = arc_mkbignuml(c, 0);
+  mpz_set_str(REPBNUM(v2), "1000000000000000000000000", 10);
+  quot = __arc_div2(c, v1, v2);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(quot)) - 2e-24) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(quot)) - 5e-24) < 1e-6);
+
+  quot = __arc_div2(c, v2, v1);
+  fail_unless(TYPE(quot) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(quot))/1e22 - 6.896551724) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(quot))/1e23 - -1.724137931) < 1e-6);
+}
+END_TEST
+
 /*================================= Divisions involving rationals */
 START_TEST(test_div_rational)
 {
@@ -1636,10 +1673,9 @@ int main(void)
   /* Division of bignums */
   tcase_add_test(tc_arith, test_div_bignum);
   tcase_add_test(tc_arith, test_div_bignum2rational);
-#if 0
   tcase_add_test(tc_arith, test_div_bignum2flonum);
   tcase_add_test(tc_arith, test_div_bignum2complex);
-#endif
+
   /* Division of rationals */
   tcase_add_test(tc_arith, test_div_rational);
 #if 0
