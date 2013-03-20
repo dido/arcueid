@@ -44,23 +44,6 @@ arc *c;
     __arc_thr_trampoline(c, thr, TR_FNAPP);	\
   } while (0)
 
-START_TEST(test_hlt)
-{
-  value cctx, code, clos;
-  value thr;
-
-  cctx = arc_mkcctx(c);
-  arc_emit(c, cctx, ihlt);
-  code = arc_cctx2code(c, cctx);
-  clos = arc_mkclos(c, code, CNIL);
-  thr = arc_mkthread(c);
-  XCALL0(clos);
-  fail_unless(TQUANTA(thr) == QUANTA);
-  fail_unless(TSTATE(thr) == Trelease);
-  fail_unless(TVALR(thr) == clos);
-}
-END_TEST
-
 START_TEST(test_nop)
 {
   value cctx, code, clos;
@@ -209,6 +192,107 @@ START_TEST(test_nil)
 }
 END_TEST
 
+START_TEST(test_hlt)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TVALR(thr) == clos);
+}
+END_TEST
+
+START_TEST(test_add)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit1(c, cctx, ildi, INT2FIX(2));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(3));
+  arc_emit(c, cctx, iadd);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TVALR(thr) == INT2FIX(5));
+}
+END_TEST
+
+START_TEST(test_sub)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit1(c, cctx, ildi, INT2FIX(2));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(3));
+  arc_emit(c, cctx, isub);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TVALR(thr) == INT2FIX(-1));
+}
+END_TEST
+
+START_TEST(test_mul)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit1(c, cctx, ildi, INT2FIX(2));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(3));
+  arc_emit(c, cctx, imul);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TVALR(thr) == INT2FIX(6));
+}
+END_TEST
+
+START_TEST(test_div)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit1(c, cctx, ildi, INT2FIX(4));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(2));
+  arc_emit(c, cctx, idiv);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -227,6 +311,10 @@ int main(void)
   tcase_add_test(tc_vm, test_true);
   tcase_add_test(tc_vm, test_nil);
   tcase_add_test(tc_vm, test_hlt);
+  tcase_add_test(tc_vm, test_add);
+  tcase_add_test(tc_vm, test_sub);
+  tcase_add_test(tc_vm, test_mul);
+  tcase_add_test(tc_vm, test_div);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
