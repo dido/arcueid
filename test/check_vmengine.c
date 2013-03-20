@@ -361,6 +361,59 @@ START_TEST(test_cdr)
   fail_unless(TVALR(thr) == INT2FIX(8));
 }
 END_TEST
+START_TEST(test_scar)
+{
+  value cctx, code, clos;
+  value thr;
+  int lptr;
+
+  cctx = arc_mkcctx(c);
+  lptr = arc_literal(c, cctx, cons(c, INT2FIX(4), INT2FIX(8)));
+  arc_emit1(c, cctx, ildl, INT2FIX(lptr));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(2));
+  arc_emit(c, cctx, iscar);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+  fail_unless(TYPE(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == T_CONS);
+  fail_unless(car(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(2));
+  fail_unless(cdr(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(8));
+}
+END_TEST
+
+START_TEST(test_scdr)
+{
+  value cctx, code, clos;
+  value thr;
+  int lptr;
+
+  cctx = arc_mkcctx(c);
+  lptr = arc_literal(c, cctx, cons(c, INT2FIX(4), INT2FIX(8)));
+  arc_emit1(c, cctx, ildl, INT2FIX(lptr));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(2));
+  arc_emit(c, cctx, iscdr);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+  fail_unless(TYPE(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == T_CONS);
+  fail_unless(car(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(4));
+  fail_unless(cdr(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(2));
+}
+END_TEST
 
 int main(void)
 {
@@ -387,6 +440,8 @@ int main(void)
   tcase_add_test(tc_vm, test_cons);
   tcase_add_test(tc_vm, test_car);
   tcase_add_test(tc_vm, test_cdr);
+  tcase_add_test(tc_vm, test_scar);
+  tcase_add_test(tc_vm, test_scdr);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
