@@ -383,8 +383,8 @@ START_TEST(test_scar)
   fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
   fail_unless(TVALR(thr) == INT2FIX(2));
   fail_unless(TYPE(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == T_CONS);
-  fail_unless(car(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(2));
-  fail_unless(cdr(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(8));
+  fail_unless(car(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == INT2FIX(2));
+  fail_unless(cdr(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == INT2FIX(8));
 }
 END_TEST
 
@@ -410,8 +410,8 @@ START_TEST(test_scdr)
   fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
   fail_unless(TVALR(thr) == INT2FIX(2));
   fail_unless(TYPE(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == T_CONS);
-  fail_unless(car(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(4));
-  fail_unless(cdr(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == FIX2INT(2));
+  fail_unless(car(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == INT2FIX(4));
+  fail_unless(cdr(CODE_LITERAL(CLOS_CODE(TFUNR(thr)), lptr)) == INT2FIX(2));
 }
 END_TEST
 
