@@ -186,10 +186,29 @@ int __arc_vmengine(arc *c, value thr)
       }
       NEXT;
     INST(ildg):
-      /* XXX - unimplemented */
+      {
+	value tmp, tmpstr;
+	char *cstr;
+
+	tmp = CODE_LITERAL(CLOS_CODE(TFUNR(thr)), FIX2INT(*TIPP(thr)));
+	/* XXX - should we use the more general hash lookup?  Don't think
+	   it should be possible to use anything besides symbols to index
+	   the global top-level environment. */
+	TVALR(thr) = arc_hash_lookup(c, c->genv, tmp);
+	if (TVALR(thr) == CUNBOUND) {
+	  tmpstr = arc_sym2name(c, tmp);
+	  cstr = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, tmpstr)) + 1));
+	  arc_str2cstr(c, tmpstr, cstr);
+	  /* arc_print_string(c, arc_prettyprint(c, tmp)); printf("\n"); */
+	  arc_err_cstrfmt(c, "Unbound symbol: _%s", cstr);
+	  TVALR(thr) = CNIL;
+	}
+      }
       NEXT;
     INST(istg):
-      /* XXX - unimplemented */
+      arc_hash_insert(c, c->genv, CODE_LITERAL(CLOS_CODE(TFUNR(thr)),
+					       FIX2INT(*TIPP(thr)++)),
+		      TVALR(thr));
       NEXT;
     INST(ilde):
       /* XXX - unimplemented */
