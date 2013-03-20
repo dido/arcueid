@@ -251,7 +251,7 @@ int __arc_vmengine(arc *c, value thr)
       TVALR(thr) = __arc_div2(c, CPOP(thr), TVALR(thr));
       NEXT;
     INST(icons):
-      TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
+      TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
       NEXT;
     INST(icar):
       if (NIL_P(TVALR(thr)))
