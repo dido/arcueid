@@ -15,7 +15,7 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [-] Implement virtual machine instructions [12/38]
+    - [-] Implement virtual machine instructions [17/38]
       - [X] nop
       - [X] push
       - [X] pop
@@ -42,11 +42,11 @@ notice and this notice are preserved.
       - [X] sub
       - [X] mul
       - [X] div
-      - [ ] cons
-      - [ ] car
-      - [ ] cdr
-      - [ ] scar
-      - [ ] scdr
+      - [X] cons
+      - [X] car
+      - [X] cdr
+      - [X] scar
+      - [X] scdr
       - [ ] spl
       - [ ] is
       - [ ] gt
