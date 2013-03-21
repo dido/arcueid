@@ -28,22 +28,6 @@ static value mkcont(arc *c)
   return(cont);
 }
 
-static void save_stack(arc *c, value thr, value cont)
-{
-  int stklen, i;
-  value savedstk;
-
-  stklen = TSTOP(thr) - TSP(thr);
-  if (stklen == 0) {
-    savedstk = CNIL;
-  } else {
-    savedstk = arc_mkvector(c, stklen);
-    for (i=0; i<stklen; i++)
-      VINDEX(savedstk, i) = *(TSP(thr) + i + 1);
-  }
-  CONT_STK(cont) = savedstk;
-}
-
 value __arc_mkcont(arc *c, value thr, int offset)
 {
   value cont = mkcont(c);
@@ -51,24 +35,22 @@ value __arc_mkcont(arc *c, value thr, int offset)
   CONT_OFS(cont) = INT2FIX(offset);
   CONT_ENV(cont) = TENVR(thr);
   CONT_FUN(cont) = TFUNR(thr);
-  save_stack(c, thr, cont);
+  CONT_ARGC(cont) = INT2FIX(TARGC(thr));
+  CONT_CONT(cont) = TCONR(thr);
+  CONT_SP(cont) = INT2FIX(TSP(thr) - TSBASE(thr));
   return(cont);
 }
 
 void arc_restorecont(arc *c, value thr, value cont)
 {
-  value savedstk;
-  int offset, stklen, i;
+  int offset;
 
   /* restore function and environment */
   TFUNR(thr) = CONT_FUN(cont);
   TENVR(thr) = CONT_ENV(cont);
-  /* restore the saved stack */
-  savedstk = VINDEX(cont, 3);
-  stklen = (savedstk == CNIL) ? 0 : VECLEN(savedstk);
-  TSP(thr) = TSTOP(thr) - stklen;
-  for (i=0; i<stklen; i++)
-    *(TSP(thr) + i + 1) = VINDEX(savedstk, i);
+  TARGC(thr) = FIX2INT(CONT_ARGC(cont));
+  TCONR(thr) = CONT_CONT(cont);
+  TSP(thr) = TSBASE(thr) + FIX2INT(CONT_SP(cont));
   offset = FIX2INT(CONT_OFS(cont));
   if (TYPE(TFUNR(thr)) == T_CCODE) {
     TIP(thr).aff_line = offset;
@@ -89,7 +71,7 @@ static int cont_apply(arc *c, value thr, value cont)
 {
   /* Applying a continuation just means it goes on the continuation
      register and we make it go. */
-  TCONR(thr) = cons(c, cont, TCONR(thr));
+  TCONR(thr) = cont;
   return(TR_RC);
 }
 
