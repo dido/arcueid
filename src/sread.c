@@ -372,6 +372,7 @@ static AFFDEF(read_atstring, s)
   AFBEGIN;
   if (atpos(c, AV(s), 0) >= 0) {
     AFCALL(arc_mkaff(c, codestring, CNIL), AV(s));
+    AV(cs) = AFCRV;
     for (AV(p)=AV(cs); AV(p); AV(p) = cdr(AV(p))) {
       if (TYPE(car(AV(p))) == T_STRING)
 	scar(AV(p), unescape_ats(c, car(AV(p))));
