@@ -124,7 +124,7 @@ AFFDEF0(arc_readb)
   if (arc_thr_argc(c, thr) == 0) {
     STDIN(AV(fd));
   } else if (arc_thr_argc(c, thr) == 1) {
-    AV(fd) = arc_thr_pop(c, thr);
+    AV(fd) = *__arc_getenv(c, thr, 0, 0);
   } else {
     arc_err_cstrfmt(c, "readb: too many arguments");
     return(CNIL);
@@ -163,7 +163,7 @@ AFFDEF0(arc_readc)
   if (arc_thr_argc(c, thr) == 0) {
     STDIN(AV(fd));
   } else if (arc_thr_argc(c, thr) == 1) {
-    AV(fd) = arc_thr_pop(c, thr);
+    AV(fd) = *__arc_getenv(c, thr, 0, 0);
   } else {
     arc_err_cstrfmt(c, "readc: too many arguments");
     return(CNIL);
@@ -216,13 +216,13 @@ AFFDEF0(arc_writeb)
 
   if (arc_thr_argc(c, thr) == 1) {
     STDOUT(AV(fd));
-  } else if (arc_thr_argc(c, thr) == 1) {
-    AV(fd) = arc_thr_pop(c, thr);
+  } else if (arc_thr_argc(c, thr) == 2) {
+    AV(fd) = *__arc_getenv(c, thr, 0, 1);
   } else {
     arc_err_cstrfmt(c, "writeb: too many arguments");
     return(CNIL);
   }
-  AV(byte) = arc_thr_pop(c, thr);
+  AV(byte) = *__arc_getenv(c, thr, 0, 0);
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_wready), AV(fd));
@@ -252,13 +252,13 @@ AFFDEF0(arc_writec)
   if (arc_thr_argc(c, thr) == 1) {
     STDOUT(AV(fd));
   } else if (arc_thr_argc(c, thr) == 2) {
-    AV(fd) = arc_thr_pop(c, thr);
+    AV(fd) = *__arc_getenv(c, thr, 0, 1);
   } else {
     arc_err_cstrfmt(c, "writec: too many arguments");
     return(CNIL);
   }
 
-  AV(chr) = arc_thr_pop(c, thr);
+  AV(chr) = *__arc_getenv(c, thr, 0, 0);
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
@@ -292,7 +292,7 @@ AFFDEF0(arc_close)
   }
   AV(nargs) = INT2FIX(arc_thr_argc(c, thr));
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nargs)); AV(i) = INT2FIX(FIX2INT(i) + 1)) {
-    AV(fd) = arc_thr_pop(c, thr);
+    AV(fd) = *__arc_getenv(c, thr, 0, FIX2INT(AV(i)));
     AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_close), AV(fd));
   }
   ARETURN(CNIL);
