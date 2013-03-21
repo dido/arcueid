@@ -152,14 +152,18 @@ struct vmthread_t {
    0. Offset into the code object (or internal label in an AFF)
    1. Function
    2. Environment
-   3. Saved stack
+   3. Argument count
+   4. Old value of continuation register
+   5. Previous offset of stack pointer
  */
 #define CONT_OFS(cont) (VINDEX(cont, 0))
 #define CONT_FUN(cont) (VINDEX(cont, 1))
 #define CONT_ENV(cont) (VINDEX(cont, 2))
-#define CONT_STK(cont) (VINDEX(cont, 3))
+#define CONT_ARGC(cont) (VINDEX(cont, 3))
+#define CONT_CONT(cont) (VINDEX(cont, 4))
+#define CONT_SP(cont) (VINDEX(cont, 5))
 
-#define CONT_SIZE 4
+#define CONT_SIZE 6
 
 extern void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t result);
 extern int __arc_resume_aff(arc *c, value thr);
