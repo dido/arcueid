@@ -63,7 +63,7 @@ enum arc_types {
   T_CONT = 19,			/* continuation */
   T_CLOS = 20,			/* closure */
   T_CODE = 21,			/* actual compiled code */
-  T_ENV = 22,			/* environment */
+  T_ENV = 22,			/* stack-based environment */
   T_CCODE = 23,			/* a C function */
   T_CUSTOM = 24,		/* custom type */
   T_CHAN = 25,			/* channel */
@@ -176,6 +176,10 @@ extern void __arc_null_sweeper(arc *c, value v);
 #define SYM2ID(x) (((unsigned long)(x))>>8)
 #define SYMBOL_P(x) (((value)(x)&0xff)==SYMBOL_FLAG)
 
+/* Stack-based environments */
+#define ENV_FLAG 0x0c
+#define ENV_P(x) (((value)(x)&0xf)==ENV_FLAG)
+
 /* Special constants -- non-zero and non-fixnum constants */
 #define CNIL ((value)0)
 #define CTRUE ((value)2)
@@ -183,7 +187,7 @@ extern void __arc_null_sweeper(arc *c, value v);
 #define CUNBOUND ((value)6)	/* returned when a hash has no binding value */
 #define CLASTARG ((value)8)	/* last argument */
 
-#define IMMEDIATE_MASK 0x07
+#define IMMEDIATE_MASK 0x0f
 #define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
 #define NIL_P(v) ((v) == CNIL)
 
@@ -207,6 +211,8 @@ static inline enum arc_types TYPE(value v)
     return(T_FIXNUM);
   if (SYMBOL_P(v))
     return(T_SYMBOL);
+  if (ENV_P(v))
+    return(T_ENV);
   if (v == CNIL)
     return(T_NIL);
   if (v == CTRUE)
@@ -304,7 +310,7 @@ extern value arc_mkaff(arc *c, int (*aff)(arc *, value), value name);
 extern int __arc_affapply(arc *c, value thr, value ccont, value func, ...);
 extern int __arc_affyield(arc *c, value thr, int line);
 extern int __arc_affiowait(arc *c, value thr, int line, int fd);
-extern void __arc_affenv(arc *c, value thr, int __vidx__, int nparams);
+extern void __arc_affenv(arc *c, value thr, int prevsize, int extrasize);
 extern int __arc_affip(arc *c, value thr);
 
 /* Closures */
@@ -369,6 +375,10 @@ extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
 extern value arc_unintern(arc *c, value sym);
 
+/* Environments */
+extern void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
+extern value *__arc_getenv(arc *c, value thr, int depth, int index);
+
 /* Numbers and arithmetic */
 extern value arc_string2num(arc *c, value str, int index, int rational);
 
@@ -427,7 +437,7 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
     FOR_EACH(AFF_PARAM, __VA_ARGS__);		\
     do
 
-#define AFFDEF0(fname) int fname(arc *c, value thr) { int __vidx__ = 0; int __nparams__ = 0; do
+#define AFFDEF0(fname) int fname(arc *c, value thr) { int __vidx__ = arc_thr_argc(c, thr); int __nparams__ = __vidx__; do
 
 #define AFFEND while (0); return(TR_RC); }
 
@@ -435,12 +445,13 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 
 #define AVAR(...) FOR_EACH(ADEFVAR, __VA_ARGS__)
 
-#define AFBEGIN __arc_affenv(c, thr, __vidx__, __nparams__); \
-  switch (__arc_affip(c, thr)) {			     \
+#define AFBEGIN								\
+  __arc_affenv(c, thr, __nparams__, __vidx__ - __nparams__);		\
+  switch (__arc_affip(c, thr)) {					\
  case 0:;
 #define AFEND }
 
-#define AV(x) (VINDEX(arc_thr_envr(c, thr), x))
+#define AV(x) (*__arc_getenv(c, thr, 0, x))
 
 #define AFCALL(func, ...)						\
   do {									\
