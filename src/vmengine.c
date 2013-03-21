@@ -42,8 +42,7 @@ static value apply_return(arc *c, value thr)
 
   if (NIL_P(TCONR(thr)))
     return(CNIL);
-  cont = car(TCONR(thr));
-  TCONR(thr) = cdr(TCONR(thr));
+  cont = TCONR(thr);
   arc_restorecont(c, thr, cont);
   return(cont);
 }
