@@ -96,22 +96,13 @@ value arc_mkaff(arc *c, int (*xaff)(arc *, value), value name)
    there (i.e. the the TENVR of the thread is nil.  It will also take
    care of copying the parameters to the function from the thread's
    stack into any parameters that were defined by the AFFDEF macro. */
-void __arc_affenv(arc *c, value thr, int __vidx__, int nparams)
+void __arc_affenv(arc *c, value thr, int prevsize, int extrasize)
 {
-  int i;
-
-  /* Environment already initialised by previous call, do not do anything */
+  /* Not the first call--assume env was already set up before */
   if (!NIL_P(TENVR(thr)))
     return;
 
-  /* Create the function's environment */
-  TENVR(thr) = arc_mkvector(c, __vidx__);
-  /* Nothing further to do if no parameters have been declared */
-  if (nparams <= 0)
-    return;
-  /* Copy parameters from the stack if there are declared parameters */
-  for (i=nparams-1; i>=0; i--)
-    VINDEX(TENVR(thr), i) = CPOP(thr);
+  __arc_mkenv(c, thr, prevsize, extrasize);
 }
 
 int __arc_affip(arc *c, value thr)
@@ -130,7 +121,7 @@ int __arc_affapply(arc *c, value thr, value cont, value func, ...)
   int argc=0;
 
   /* add the continuation to the continuation register */
-  TCONR(thr) = cons(c, cont, TCONR(thr));
+  TCONR(thr) = cont;
   va_start(ap, func);
   /* Push the arguments onto the stack. Look for the CLASTARG sentinel
      value. */
@@ -185,7 +176,6 @@ static int cfunc_apply(arc *c, value thr, value cfn)
   if (rcfn->argc == -2) {
     /* Set up the thread with the initial information for AFFs */
     TIP(thr).aff_line = 0;	/* start at line 0 (start of function body) */
-    /* The __arc_affenv function will fill this in when the function starts */
     TENVR(thr) = CNIL;
     TFUNR(thr) = cfn;
     /* return to the trampoline and make it resume from the beginning
