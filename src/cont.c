@@ -56,7 +56,7 @@ void arc_restorecont(arc *c, value thr, value cont)
     TIP(thr).aff_line = offset;
     return;
   }
-  /* XXX - work out what to do for a closure-based continuation */
+  TIPP(thr) = &VINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), offset);
 }
 
 #if 0
