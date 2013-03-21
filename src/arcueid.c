@@ -122,13 +122,13 @@ AFFEND
 
 AFFDEF0(arc_is)
 {
-  int argc;
+  int argc, i;
   AVAR(list, fis2, pw);
   AFBEGIN;
   AV(list) = CNIL;
   argc = arc_thr_argc(c, thr);
-  while (--argc >= 0)
-    AV(list) = cons(c, arc_thr_pop(c, thr), AV(list));
+  for (i=argc-1; i>=0; i--)
+    AV(list) = cons(c, *__arc_getenv(c, thr, 0, i), AV(list));
   AV(fis2) = arc_mkaff(c, is2, CNIL);
   AV(pw) = arc_mkaff(c, pairwise, CNIL);
   AFCALL(AV(pw), AV(fis2), AV(list), CNIL, CNIL);
@@ -177,13 +177,13 @@ AFFEND
 
 AFFDEF0(arc_iso)
 {
-  int argc;
+  int argc, i;
   AVAR(list, fiso2, pw);
   AFBEGIN;
   AV(list) = CNIL;
   argc = arc_thr_argc(c, thr);
-  while (--argc >= 0)
-    AV(list) = cons(c, arc_thr_pop(c, thr), AV(list));
+  for (i=argc-1; i>=0; i--)
+    AV(list) = cons(c, *__arc_getenv(c, thr, 0, i), AV(list));
   AV(fiso2) = arc_mkaff(c, arc_iso2, CNIL);
   AV(pw) = arc_mkaff(c, pairwise, CNIL);
   /* Call pairwise with new visithashes */
