@@ -198,6 +198,46 @@ START_TEST(test_stg)
 }
 END_TEST
 
+/* Environment instructions */
+START_TEST(test_envs)
+{
+  value cctx, code, clos, thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit3(c, cctx, ienv, INT2FIX(3), INT2FIX(0), INT2FIX(2));
+  arc_emit(c, cctx, itrue);
+  arc_emit2(c, cctx, iste, INT2FIX(0), INT2FIX(3));
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(2));
+  arc_emit(c, cctx, ipush);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1));
+  arc_emit(c, cctx, ipush);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0));
+  arc_emit(c, cctx, ipush);
+  arc_emit3(c, cctx, ienv, INT2FIX(3), INT2FIX(0), INT2FIX(1));
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0));
+  arc_emit(c, cctx, ipush);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1));
+  arc_emit(c, cctx, iadd);
+  arc_emit(c, cctx, ipush);
+  arc_emit2(c, cctx, ilde, INT2FIX(1), INT2FIX(2));
+  arc_emit(c, cctx, iadd);
+  arc_emit2(c, cctx, iste, INT2FIX(0), INT2FIX(2));
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL(clos, INT2FIX(1), INT2FIX(2), INT2FIX(3));
+  fail_unless(*__arc_getenv(c, thr, 0, 0) == INT2FIX(3));
+  fail_unless(*__arc_getenv(c, thr, 0, 1) == INT2FIX(2));
+  fail_unless(*__arc_getenv(c, thr, 0, 2) == INT2FIX(8));
+  fail_unless(*__arc_getenv(c, thr, 1, 0) == INT2FIX(1));
+  fail_unless(*__arc_getenv(c, thr, 1, 1) == INT2FIX(2));
+  fail_unless(*__arc_getenv(c, thr, 1, 2) == INT2FIX(3));
+  fail_unless(*__arc_getenv(c, thr, 1, 3) == CTRUE);
+  fail_unless(*__arc_getenv(c, thr, 1, 4) == CUNBOUND);
+}
+END_TEST
+
 START_TEST(test_true)
 {
   value cctx, code, clos;
@@ -474,6 +514,7 @@ int main(void)
   tcase_add_test(tc_vm, test_ldl);
   tcase_add_test(tc_vm, test_ldg);
   tcase_add_test(tc_vm, test_stg);
+  tcase_add_test(tc_vm, test_envs);
   tcase_add_test(tc_vm, test_push);
   tcase_add_test(tc_vm, test_pop);
   tcase_add_test(tc_vm, test_true);
