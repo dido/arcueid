@@ -133,6 +133,23 @@ void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
   CCTX_VCPTR(cctx) = INT2FIX(vptr);
 }
 
+void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
+	       value arg3)
+{
+  value vcode;
+  int vptr;
+
+  vptr = FIX2INT(CCTX_VCPTR(cctx));
+  vcode = CCTX_VCODE(cctx);
+  if (NIL_P(vcode) || vptr+3 >= VECLEN(vcode))
+    vcode = __resize_vmcode(c, cctx);
+  VINDEX(vcode, vptr++) = INT2FIX((int)inst);
+  VINDEX(vcode, vptr++) = arg1;
+  VINDEX(vcode, vptr++) = arg2;
+  VINDEX(vcode, vptr++) = arg3;
+  CCTX_VCPTR(cctx) = INT2FIX(vptr);
+}
+
 /* Add a literal, growing the literal vector as needed */
 int arc_literal(arc *c, value cctx, value literal)
 {
