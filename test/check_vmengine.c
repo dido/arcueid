@@ -176,6 +176,28 @@ START_TEST(test_ldg)
 }
 END_TEST
 
+START_TEST(test_stg)
+{
+  value cctx, code, clos, thr;
+  value sym = arc_intern_cstr(c, "foo");
+  int lptr;
+
+  cctx = arc_mkcctx(c);
+  lptr = arc_literal(c, cctx, sym);
+  arc_hash_insert(c, c->genv, sym, INT2FIX(0));
+  arc_emit1(c, cctx, ildi, INT2FIX(31337));
+  arc_emit1(c, cctx, istg, INT2FIX(lptr));
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-2);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(arc_hash_lookup(c, c->genv, sym) == INT2FIX(31337));
+}
+END_TEST
+
 START_TEST(test_true)
 {
   value cctx, code, clos;
@@ -451,6 +473,7 @@ int main(void)
   tcase_add_test(tc_vm, test_ldi);
   tcase_add_test(tc_vm, test_ldl);
   tcase_add_test(tc_vm, test_ldg);
+  tcase_add_test(tc_vm, test_stg);
   tcase_add_test(tc_vm, test_push);
   tcase_add_test(tc_vm, test_pop);
   tcase_add_test(tc_vm, test_true);
