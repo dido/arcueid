@@ -210,25 +210,68 @@ int __arc_vmengine(arc *c, value thr)
 		      TVALR(thr));
       NEXT;
     INST(ilde):
-      /* XXX - unimplemented */
+      {
+	value ienv, iindx;
+
+	ienv = *TIPP(thr)++;
+	iindx = *TIPP(thr)++;
+	TVALR(thr) = *__arc_getenv(c, thr, FIX2INT(ienv), FIX2INT(iindx));
+      }
       NEXT;
     INST(iste):
-      /* XXX - unimplemented */
-      NEXT;
-    INST(imvarg):
-      /* XXX - unimplemented */
-      NEXT;
-    INST(imvoarg):
-      /* XXX - unimplemented */
-      NEXT;
-    INST(imvrarg):
-      /* XXX - unimplemented */
+      {
+	value ienv, iindx;
+
+	ienv = *TIPP(thr)++;
+	iindx = *TIPP(thr)++;
+	*__arc_getenv(c, thr, FIX2INT(ienv), FIX2INT(iindx)) = TVALR(thr);
+      }
       NEXT;
     INST(icont):
-      /* XXX - unimplemented */
+      {
+	value icofs = *TIPP(thr)++;
+	TCONR(thr) = __arc_mkcont(c, thr, FIX2INT(icofs));
+      }
       NEXT;
     INST(ienv):
-      /* XXX - unimplemented */
+      {
+	int minenv, dsenv, optenv;
+
+	minenv = FIX2INT(*TIPP(thr)++);
+	dsenv = FIX2INT(*TIPP(thr)++);
+	optenv = FIX2INT(*TIPP(thr)++);
+	if (TARGC(thr) < minenv) {
+	  arc_err_cstrfmt(c, "too few arguments, at least %d required, %d passed", minenv, TARGC(thr));
+	} else if (TARGC(thr) > minenv + optenv) {
+	  arc_err_cstrfmt(c, "too many arguments, at most %d allowed, %d passed", minenv + optenv, TARGC(thr));
+	} else {
+	  /* Make a new environment */
+	  __arc_mkenv(c, thr, TARGC(thr), minenv + optenv - TARGC(thr) + dsenv);
+	}
+      }
+      NEXT;
+    INST(ienvr):
+      {
+	int minenv, dsenv, optenv, i;
+	value rest;
+
+	minenv = FIX2INT(*TIPP(thr)++);
+	dsenv = FIX2INT(*TIPP(thr)++);
+	optenv = FIX2INT(*TIPP(thr)++);
+	if (TARGC(thr) < minenv) {
+	  arc_err_cstrfmt(c, "too few arguments, at least %d required, %d passed", minenv, TARGC(thr));
+	} else {
+	  rest = CNIL;
+
+	  for (i = TARGC(thr) - (minenv + optenv); i>0; i--)
+	    rest = cons(c, CPOP(thr), rest);
+	  /* Create a new environment one larger than the nominal size, with
+	     a final entry for the rest parameter. */
+	  __arc_mkenv(c, thr, TARGC(thr), minenv + optenv - TARGC(thr) + dsenv + 1);
+	  /* Store the rest parameter */
+	  *__arc_getenv(c, thr, 0, minenv + optenv + dsenv) = rest;
+	}
+      }
       NEXT;
     INST(iapply):
       {
@@ -239,13 +282,39 @@ int __arc_vmengine(arc *c, value thr)
       }
       NEXT;
     INST(iret):
+      /* XXX - we may need to check the value register.  If it is a
+	 closure, we may need to move its environment to the heap. */
       /* Return to the trampoline, and make it restore the current
 	 continuation in the continuation register */
       return(TR_RC);
       NEXT;
     INST(ijmp):
+      {
+	int itarget = FIX2INT(*TIPP(thr)++);
+	TIPP(thr) += itarget-2;
+      }
+      NEXT;
     INST(ijt):
+      {
+	int itarget = FIX2INT(*TIPP(thr)++);
+	if (!NIL_P(TVALR(thr)))
+	  TIPP(thr) += itarget-2;
+      }
+      NEXT;
     INST(ijf):
+      {
+	int itarget = FIX2INT(*TIPP(thr)++);
+	if (NIL_P(TVALR(thr)))
+	  TIPP(thr) += itarget-2;
+      }
+      NEXT;
+    INST(ijbnd):
+      {
+	int itarget = FIX2INT(*TIPP(thr)++);
+	if (TVALR(thr) != CUNBOUND)
+	  TIPP(thr) += itarget-2;
+      }
+      NEXT;
     INST(itrue):
       TVALR(thr) = CTRUE;
       NEXT;
@@ -317,14 +386,17 @@ int __arc_vmengine(arc *c, value thr)
     INST(iis):
       TVALR(thr) = arc_is2(c, TVALR(thr), CPOP(thr));
       NEXT;
-    INST(igt):
-    INST(ilt):
     INST(idup):
       TVALR(thr) = *(TSP(thr)+1);
       NEXT;
     INST(icls):
+      TVALR(thr) = arc_mkclos(c, TVALR(thr), TENVR(thr));
+      NEXT;
     INST(iconsr):
       TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
+      NEXT;
+    INST(imenv):
+      __arc_menv(c, thr, FIX2INT(*TIPP(thr)++));
       NEXT;
 #ifndef HAVE_THREADED_INTERPRETER
     default:
