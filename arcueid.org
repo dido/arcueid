@@ -15,21 +15,19 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [-] Implement virtual machine instructions [17/38]
+    - [-] Implement virtual machine instructions [19/35]
       - [X] nop
       - [X] push
       - [X] pop
       - [X] ldl
       - [X] ldi
-      - [ ] ldg
-      - [ ] stg
+      - [X] ldg
+      - [X] stg
       - [ ] lde
       - [ ] ste
-      - [ ] mvarg
-      - [ ] mvoarg
-      - [ ] mvrarg
       - [ ] cont
       - [ ] env
+      - [ ] envr
       - [ ] apply
       - [ ] ret
       - [ ] jmp
@@ -49,11 +47,10 @@ notice and this notice are preserved.
       - [X] scdr
       - [ ] spl
       - [ ] is
-      - [ ] gt
-      - [ ] lt
       - [ ] dup
       - [ ] cls
       - [ ] consr
+      - [ ] imenv
     - [X] Build a foreign function interface [3/3]
       - [X] Calling convention 1 (straight args)
       - [X] Calling convention 2 (args as a C array)
