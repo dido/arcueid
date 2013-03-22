@@ -60,6 +60,7 @@
        Record of the 1988 ACM Symposium on Lisp and Functional
        Programming, ACM, 1988.
  */
+#include <string.h>
 #include "arcueid.h"
 #include "vmengine.h"
 
@@ -89,6 +90,7 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
 
 #define VENV_NEXT(x) (VINDEX((x), 0))
 #define VENV_INDEX(x, i) (VINDEX((x), (i)+1))
+#define VENV_CREATE(c, count) (arc_mkvector(c, count+1));
 
 static value nextenv(arc *c, value thr, value env)
 {
@@ -130,3 +132,66 @@ value *__arc_getenv(arc *c, value thr, int depth, int index)
   senvstart = senv + count + 1;
   return(senvstart - index);
 }
+
+/* Move n elements from the top of stack, overwriting the current
+   environment.  Points the stack pointer to just above the last
+   element moved.  Does not do this if current environment is on
+   the heap.  It will, in either case, set the environment register to
+   the parent environment (possibly leaving the heap environment as
+   garbage to be collected). */
+void __arc_menv(arc *c, value thr, int n)
+{
+  value *src, *dest;
+  value parentenv = nextenv(c, thr, TENVR(thr));
+
+  if (TYPE(TENVR(thr)) == T_ENV) {
+    /* source of our copy is the last value pushed on the stack */
+    src = TSP(thr)+1;
+    /* Destination of our copy is the (n-1)th element of the environment.
+       May be larger or smaller than the actual size of the environment.
+       Doesn't matter, as long as it remains inside the stack! */
+    dest = __arc_getenv(c, thr, 0, n-1);
+    /* use memmove because the new environment might be larger than the old
+       one. */
+    memmove(dest, src, n*sizeof(value));
+    /* new stack pointer points to just outside previous one */
+    TSP(thr) = dest-1;
+  }
+  /* If the current environment was on the heap, none of this black
+     magic needs to be done.  It is enough to just set the environment
+     register to point to the parent environment. */
+  TENVR(thr) = parentenv;
+}
+
+#if 0
+
+/* Convert a single environment into a heap-based environment */
+static value heap_env(arc *c, value thr, value env)
+{
+  value *senv, *senvstart, henv;
+  int count, i;
+
+  senv = SENV_PTR(TSBASE(thr), env);
+  count = SENV_COUNT(senv);
+  henv = VENV_CREATE(c, count);
+  senvstart = senv + count + 1;
+  for (i=0; i<count; i++)
+    VENV_INDEX(henv, i) = *(senvstart - i);
+  VENV_NEXT(henv) = nextenv(c, thr, env);
+  return(henv);
+}
+
+/* Move the current environment and all of its parent environments into
+   the heap.  Also adjusts the environment pointers in continuations
+   referring to them accordingly. */
+void __arc_heap_env(arc *c, value thr)
+{
+  value env, *parentptr, henv;
+
+  for (env = TENVR(thr), parentptr = &TENVR(thr); TYPE(env)==T_ENV;
+       env=nextenv(c, thr, env)) {
+
+  }
+}
+
+#endif
