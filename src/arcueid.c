@@ -65,22 +65,23 @@ value arc_mkobject(arc *c, size_t size, int type)
   return((value)cc);
 }
 
-/* compare with def of pairwise in ac.scm */
+/* compare with def of pairwise in ac.scm: tail-recursive version */
 static AFFDEF(pairwise, pred, lst, vh1, vh2)
 {
   AVAR(self);
   AFBEGIN;
 
-  AV(self) = arc_mkaff(c, pairwise, CNIL);
-  if (NIL_P(AV(lst)))
-    ARETURN(CTRUE);
-  if (NIL_P(cdr(AV(lst))))
-    ARETURN(CTRUE);
-  AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)), AV(vh1), AV(vh2));
-  if (NIL_P(AFCRV))
-    ARETURN(CNIL);
-  AFCALL(AV(self), AV(pred), cddr(AV(lst)));
-  ARETURN(AFCRV);
+  for (;;) {
+    AV(self) = arc_mkaff(c, pairwise, CNIL);
+    if (NIL_P(AV(lst)))
+      ARETURN(CTRUE);
+    if (NIL_P(cdr(AV(lst))))
+      ARETURN(CTRUE);
+    AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)), AV(vh1), AV(vh2));
+    if (NIL_P(AFCRV))
+      ARETURN(CNIL);
+    AV(lst) = cddr(AV(lst));
+  }
   AFEND;
 }
 AFFEND
