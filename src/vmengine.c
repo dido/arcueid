@@ -189,7 +189,7 @@ int __arc_vmengine(arc *c, value thr)
 	value tmp, tmpstr;
 	char *cstr;
 
-	tmp = CODE_LITERAL(CLOS_CODE(TFUNR(thr)), FIX2INT(*TIPP(thr)));
+	tmp = CODE_LITERAL(CLOS_CODE(TFUNR(thr)), FIX2INT(*TIPP(thr)++));
 	/* XXX - should we use the more general hash lookup?  Don't think
 	   it should be possible to use anything besides symbols to index
 	   the global top-level environment. */
