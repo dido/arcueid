@@ -30,36 +30,33 @@ enum vminst {
   istg=70,
   ilde=135,
   iste=136,
-  imvarg=73,
-  imvoarg=74,
-  imvrarg=75,
-  icont=140,
-  ienv=141,
-  iapply=78,
-  iret=15,
-  ijmp=80,
-  ijt=81,
-  ijf=82,
-  itrue=19,
-  inil=20,
-  ihlt=21,
-  iadd=22,
-  isub=23,
-  imul=24,
-  idiv=25,
-  icons=26,
-  icar=27,
-  icdr=28,
-  iscar=29,
-  iscdr=30,
-  ispl=31,
-  iis=32,
-  /* iiso=33, */
-  igt=34,
-  ilt=35,
-  idup=36,
-  icls=37,
-  iconsr=38
+  icont=137,
+  ienv=202,
+  ienvr=203,
+  iapply=76,
+  iret=13,
+  ijmp=78,
+  ijt=79,
+  ijf=80,
+  ijbnd=81,
+  itrue=18,
+  inil=19,
+  ihlt=20,
+  iadd=21,
+  isub=22,
+  imul=23,
+  idiv=24,
+  icons=25,
+  icar=26,
+  icdr=27,
+  iscar=28,
+  iscdr=29,
+  ispl=30,
+  iis=31,
+  idup=34,
+  icls=35,
+  iconsr=36,
+  imenv=101
 };
 
 #define CODE_CODE(c) (VINDEX((c), 0))
@@ -145,7 +142,7 @@ struct vmthread_t {
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
 #define CPOP(thr) (*(++TSP(thr)))
 /* Default thread stack size */
-#define TSTKSIZE 512
+#define TSTKSIZE 65536
 
 /* Continuations are vectors with the following items as indexes:
 
