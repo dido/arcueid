@@ -78,6 +78,8 @@ extern void arc_emit(arc *c, value cctx, enum vminst inst);
 extern void arc_emit1(arc *c, value cctx, enum vminst inst, value arg);
 extern void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1,
 		      value arg2);
+extern void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1,
+		      value arg2, value arg3);
 extern int arc_literal(arc *c, value cctx, value literal);
 extern value arc_mkcode(arc *c, int ncodes, int nlits);
 extern value arc_code_setsrc(arc *c, value code, value src);
