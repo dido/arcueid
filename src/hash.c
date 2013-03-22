@@ -136,8 +136,8 @@ unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
     /* XXX - this is an error! */
     break;
   case T_SYMBOL:
-    /* XXX - to be implemented */
-    /*    arc_hash_update(s, (unsigned long)SYM2ID(v)); */
+    arc_hash_update(s, (unsigned long)SYM2ID(v));
+    break;
   default:
     tfn = __arc_typefn(c, v);
     if (tfn->hash == CNIL) {
