@@ -15,7 +15,7 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [-] Implement virtual machine instructions [19/35]
+    - [-] Implement virtual machine instructions [22/35]
       - [X] nop
       - [X] push
       - [X] pop
@@ -23,10 +23,10 @@ notice and this notice are preserved.
       - [X] ldi
       - [X] ldg
       - [X] stg
-      - [ ] lde
-      - [ ] ste
+      - [X] lde
+      - [X] ste
       - [ ] cont
-      - [ ] env
+      - [X] env
       - [ ] envr
       - [ ] apply
       - [ ] ret
