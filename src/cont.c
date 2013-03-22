@@ -64,7 +64,7 @@ value __arc_mkcont(arc *c, value thr, int offset)
 
 void arc_restorecont(arc *c, value thr, value cont)
 {
-  int offset;
+  int offset, i;
 
   if (TYPE(cont) == T_FIXNUM) {
     /* A continuation on the stack is just an offset into the stack. */
@@ -80,11 +80,10 @@ void arc_restorecont(arc *c, value thr, value cont)
     TENVR(thr) = CONT_ENV(cont);
     TARGC(thr) = FIX2INT(CONT_ARGC(cont));
     TCONR(thr) = CONT_CONT(cont);
-    if (TYPE(CONT_SP(thr)) == T_FIXNUM) {
-      TSP(thr) = TSBASE(thr) + FIX2INT(CONT_SP(cont));
-    } else {
-      /* XXX - what to do about reified continuations that have
-	 a vector of saved stack values */
+    /* restore saved stack */
+    if (TYPE(CONT_STK(cont)) == T_VECTOR) {
+      for (i=0; i<VECLEN(CONT_STK(cont)); i++)
+	CPUSH(thr, VINDEX(CONT_STK(cont), i));
     }
     offset = FIX2INT(CONT_OFS(cont));
   }
