@@ -252,7 +252,7 @@ int __arc_vmengine(arc *c, value thr)
       NEXT;
     INST(ienvr):
       {
-	int minenv, dsenv, optenv, i, restcount;
+	int minenv, dsenv, optenv, i;
 	value rest;
 
 	minenv = FIX2INT(*TIPP(thr)++);
@@ -263,12 +263,15 @@ int __arc_vmengine(arc *c, value thr)
 	} else {
 	  rest = CNIL;
 
-	  restcount = TARGC(thr) - (minenv + optenv);
-	  for (i=restcount; i>0; i--)
+	  /* Swallow as many extra arguments into the rest parameter,
+	     up to the minimum + optional number of arguments */
+	  for (i=TARGC(thr); i>(minenv + optenv); i--)
 	    rest = cons(c, CPOP(thr), rest);
-	  /* Create a new environment one larger than the nominal size, with
-	     a final entry for the rest parameter. */
-	  __arc_mkenv(c, thr, minenv, optenv + dsenv + 1);
+	  /* Create a new environment with the number of additional
+	     arguments thus obtained.  Unbound arguments include an
+	     extra one for storing the rest parameter, whatever it
+	     might have. */
+	  __arc_mkenv(c, thr, i, minenv + optenv - i + dsenv + 1);
 	  /* Store the rest parameter */
 	  *__arc_getenv(c, thr, 0, minenv + optenv + dsenv) = rest;
 	}
