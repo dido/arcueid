@@ -752,6 +752,43 @@ START_TEST(test_imenv)
 }
 END_TEST
 
+/* Tests cont, apply, ret, and cls all at once. */
+START_TEST(test_apply)
+{
+  value cctx, c1, code, clos,  thr;
+  int lptr, j1, lbl1;
+
+  cctx = arc_mkcctx(c);
+  arc_emit3(c, cctx, ienv, INT2FIX(0), INT2FIX(0), INT2FIX(0));
+  arc_emit2(c, cctx, ilde, INT2FIX(1), INT2FIX(0));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(1));
+  arc_emit(c, cctx, iadd);
+  arc_emit(c, cctx, iret);
+  c1 = arc_cctx2code(c, cctx);
+
+  cctx = arc_mkcctx(c);
+  lptr = arc_literal(c, cctx, c1);
+  arc_emit3(c, cctx, ienv, INT2FIX(2), INT2FIX(0), INT2FIX(0));
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1));
+  arc_emit(c, cctx, ipush);
+  j1 = FIX2INT(CCTX_VCPTR(cctx));
+  arc_emit1(c, cctx, icont, INT2FIX(0));
+  arc_emit1(c, cctx, ildl, INT2FIX(lptr));
+  arc_emit(c, cctx, icls);
+  arc_emit1(c, cctx, iapply, INT2FIX(0));
+  lbl1 = FIX2INT(CCTX_VCPTR(cctx));
+  arc_jmpoffset(c, cctx, j1, lbl1);
+  arc_emit(c, cctx, iadd);
+  arc_emit(c, cctx, iret);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL(clos, INT2FIX(2), INT2FIX(3));
+  fail_unless(TVALR(thr) == INT2FIX(6));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -771,6 +808,7 @@ int main(void)
   tcase_add_test(tc_vm, test_pop);
   tcase_add_test(tc_vm, test_envs);
   tcase_add_test(tc_vm, test_envr);
+  tcase_add_test(tc_vm, test_apply);
   tcase_add_test(tc_vm, test_jmp);
   tcase_add_test(tc_vm, test_jt);
   tcase_add_test(tc_vm, test_jf);
