@@ -684,6 +684,29 @@ START_TEST(test_scdr)
 }
 END_TEST
 
+START_TEST(test_consr)
+{
+  value cctx, code, clos;
+  value thr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit1(c, cctx, ildi, INT2FIX(4));
+  arc_emit(c, cctx, ipush);
+  arc_emit(c, cctx, inil);
+  arc_emit(c, cctx, iconsr);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TSTATE(thr) == Trelease);
+  fail_unless(TYPE(TVALR(thr)) == T_CONS);
+  fail_unless(cdr(TVALR(thr)) == INT2FIX(4));
+  fail_unless(NIL_P(car(TVALR(thr))));
+}
+END_TEST
+
 /* Essentially computes a tail-recursive factorial */
 START_TEST(test_imenv)
 {
@@ -764,6 +787,7 @@ int main(void)
   tcase_add_test(tc_vm, test_cdr);
   tcase_add_test(tc_vm, test_scar);
   tcase_add_test(tc_vm, test_scdr);
+  tcase_add_test(tc_vm, test_consr);
   tcase_add_test(tc_vm, test_imenv);
 
   suite_add_tcase(s, tc_vm);
