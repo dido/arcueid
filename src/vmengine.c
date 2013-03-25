@@ -399,8 +399,12 @@ int __arc_vmengine(arc *c, value thr)
     INST(iconsr):
       TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
       NEXT;
-    INST(imenv):
-      __arc_menv(c, thr, FIX2INT(*TIPP(thr)++));
+    INST(imenv): {
+	int n = FIX2INT(*TIPP(thr)++);
+
+	__arc_menv(c, thr, n);
+	TARGC(thr) = n;
+      }
       NEXT;
 #ifndef HAVE_THREADED_INTERPRETER
     default:
