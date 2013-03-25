@@ -50,6 +50,12 @@ static int clos_apply(arc *c, value thr, value clos)
   return(TR_RESUME);
 }
 
+/* Convert a closure */
+void __arc_clos_env2heap(arc *c, value thr, value clos)
+{
+  scdr(clos, __arc_env2heap(c, thr, cdr(clos)));
+}
+
 typefn_t __arc_clos_typefn__ = {
   clos_marker,
   __arc_null_sweeper,
