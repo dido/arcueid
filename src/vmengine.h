@@ -188,4 +188,11 @@ extern int __arc_resume_aff(arc *c, value thr);
 extern void arc_restorecont(arc *c, value thr, value cont);
 extern int __arc_vmengine(arc *c, value thr);
 
+extern void __arc_clos_env2heap(arc *c, value thr, value clos);
+
+extern value __arc_env2heap(arc *c, value thr, value env);
+extern void __arc_menv(arc *c, value thr, int n);
+
+extern void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv);
+
 #endif
