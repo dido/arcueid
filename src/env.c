@@ -186,11 +186,14 @@ value __arc_env2heap(arc *c, value thr, value env)
 {
   value nenv = env, oldenv;
 
+  env = CNIL;
   do {
     oldenv = nenv;
     nenv = heap_env(c, thr, oldenv);
+    if (NIL_P(env))
+      env = nenv;
     __arc_update_cont_envs(c, thr, oldenv, nenv);
-    nenv = nextenv(c, thr, env);
+    nenv = nextenv(c, thr, nenv);
   } while (!NIL_P(nenv));
   return(env);
 }
