@@ -24,7 +24,7 @@
 arc cc;
 arc *c;
 
-#define QUANTA 128
+#define QUANTA 256
 
 #define CPUSH_(val) CPUSH(thr, val)
 
@@ -684,7 +684,50 @@ START_TEST(test_scdr)
 }
 END_TEST
 
+/* Essentially computes a tail-recursive factorial */
+START_TEST(test_imenv)
+{
+  value cctx, code, clos;
+  value thr;
+  int lbl1, lbl2, j1, j2;
 
+  cctx = arc_mkcctx(c);
+  lbl1 = FIX2INT(CCTX_VCPTR(cctx));
+  arc_emit3(c, cctx, ienv, INT2FIX(2), INT2FIX(0), INT2FIX(0));
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(0));
+  arc_emit(c, cctx, iis);
+  j2 = FIX2INT(CCTX_VCPTR(cctx));
+  arc_emit1(c, cctx, ijt, 0);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0));
+  arc_emit(c, cctx, ipush);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1));
+  arc_emit(c, cctx, imul);
+  arc_emit2(c, cctx, iste, INT2FIX(0), INT2FIX(1));
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(1));
+  arc_emit(c, cctx, isub);
+  arc_emit(c, cctx, ipush);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1));
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, imenv, INT2FIX(2));
+  j1 = FIX2INT(CCTX_VCPTR(cctx));
+  arc_emit1(c, cctx, ijmp, 0);
+  arc_jmpoffset(c, cctx, j1, lbl1);
+  lbl2 = FIX2INT(CCTX_VCPTR(cctx));
+  arc_jmpoffset(c, cctx, j2, lbl2);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1));
+  arc_emit(c, cctx, ihlt);
+
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL(clos, INT2FIX(7), INT2FIX(1));
+  fail_unless(TVALR(thr) == INT2FIX(5040));
+}
+END_TEST
 
 int main(void)
 {
@@ -721,6 +764,7 @@ int main(void)
   tcase_add_test(tc_vm, test_cdr);
   tcase_add_test(tc_vm, test_scar);
   tcase_add_test(tc_vm, test_scdr);
+  tcase_add_test(tc_vm, test_imenv);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
