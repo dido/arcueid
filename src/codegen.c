@@ -132,6 +132,13 @@ void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
   CCTX_VCPTR(cctx) = INT2FIX(vptr);
 }
 
+/* Patch a jump offset given the address of the jump instruction
+   and the destination offset. */
+void arc_jmpoffset(arc *c, value cctx, int jmpinst, int destoffset)
+{
+  VINDEX(CCTX_VCODE(cctx), jmpinst+1) = INT2FIX(destoffset - jmpinst);
+}
+
 /* Add a literal, growing the literal vector as needed */
 int arc_literal(arc *c, value cctx, value literal)
 {
