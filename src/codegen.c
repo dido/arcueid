@@ -26,24 +26,6 @@
 #include "arcueid.h"
 #include "vmengine.h"
 
-/* A code generation context (cctx) is a vector with the following
-   items as indexes:
-
-   0. A code pointer into the vmcode object (usually a fixnum)
-   1. A vmcode object.
-   2. A pointer into the literal vector (usually a fixnum)
-   3. A vector of literals
-
-   The following macros are intended to manage the data
-   structure, and to generate code and literals for the
-   system.
- */
-
-#define CCTX_VCPTR(cctx) (VINDEX(cctx, 0))
-#define CCTX_VCODE(cctx) (VINDEX(cctx, 1))
-#define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
-#define CCTX_LITS(cctx) (VINDEX(cctx, 3))
-
 /* Create an empty code generation context. This is just a plain vector */
 value arc_mkcctx(arc *c)
 {
