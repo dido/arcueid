@@ -1,5 +1,5 @@
 ARCUEID ROADMAP
-Copyright (C) 2012 Rafael R. Sevilla
+Copyright (C) 2013 Rafael R. Sevilla
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [7/8]
+** TODO base virtual machine [7/9]
     - [X] Define virtual machine architecture
     - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
@@ -51,21 +51,24 @@ notice and this notice are preserved.
       - [X] cls
       - [X] consr
       - [X] imenv
-    - [-] Environments and continuations [1/2]
+    - [-] Environments [1/2]
           We use what Clinger et. al. call the stack/heap strategy.
 	  Environments and continuations normally go on the stack, but
 	  may be moved to the heap if required, e.g. when a closure or
 	  continuation is required to outlive its initial context.
-	  Environments and continuations can have their lives extended
-          if one of these things happens:
+	  Environments can have their lives extended if one of
+	  these things happens:
 
-	  1. A continuation is reified by ccc
 	  2. A function returns with a closure in its value register
 	  3. A closure is stored in the global environment
           4. A closure is stored in an environment other than at level 0.
       - [X] Stack-based
       - [ ] Heap-based
-    - [X] Build a foreign function interface [3/3]
+    - [-] Continuations [1/2]
+	  Heap-based continuations are required to support ccc.
+      - [X] Stack-based
+      - [ ] Heap-based
+    - [X] Foreign function interface [3/3]
       - [X] Calling convention 1 (straight args)
       - [X] Calling convention 2 (args as a C array)
       - [X] Arcueid Foreign Functions (AFF)
