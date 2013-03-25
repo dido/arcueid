@@ -58,7 +58,7 @@ value __arc_mkcont(arc *c, value thr, int offset)
   CPUSH(thr, TFUNR(thr));
   CPUSH(thr, INT2FIX(TARGC(thr)));
   CPUSH(thr, TCONR(thr));
-  cont = INT2FIX(TSBASE(thr) - TSP(thr));
+  cont = INT2FIX(TSP(thr) - TSBASE(thr));
   return(cont);
 }
 
@@ -68,7 +68,7 @@ void arc_restorecont(arc *c, value thr, value cont)
 
   if (TYPE(cont) == T_FIXNUM) {
     /* A continuation on the stack is just an offset into the stack. */
-    TSP(thr) = TSBASE(thr) - FIX2INT(cont);
+    TSP(thr) = TSBASE(thr) + FIX2INT(cont);
     TCONR(thr) = CPOP(thr);
     TARGC(thr) = FIX2INT(CPOP(thr));
     TFUNR(thr) = CPOP(thr);
