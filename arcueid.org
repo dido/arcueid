@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [5/7]
+** TODO base virtual machine [6/7]
     - [X] Define virtual machine architecture
     - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
@@ -56,12 +56,8 @@ notice and this notice are preserved.
       - [X] Calling convention 1 (straight args)
       - [X] Calling convention 2 (args as a C array)
       - [X] Arcueid Foreign Functions (AFF)
-    - [ ] Enable GCC's labels as values for doing interpreter threading
-	  The macro structure is already in place.  We only need to fill
-	  in some of the conditional compilation stuff and defines.
+    - [X] Enable GCC's labels as values for doing interpreter threading
     - [X] Type invocations [5/5]
-	 We need to modify the arc_apply function so that it becomes
-	 possible to apply objects of these various types
       - [X] procedure
       - [X] list
       - [X] vector
