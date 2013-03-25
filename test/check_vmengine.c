@@ -238,6 +238,29 @@ START_TEST(test_envs)
 }
 END_TEST
 
+START_TEST(test_jmp)
+{
+  value cctx, code, clos;
+  value thr;
+  int ptr, ptr2;
+
+  cctx = arc_mkcctx(c);
+  arc_emit1(c, cctx, ildi, INT2FIX(1234));
+  ptr = FIX2INT(CCTX_VCPTR(cctx));
+  arc_emit1(c, cctx, ijmp, 0);
+  arc_emit1(c, cctx, ildi, INT2FIX(5678));
+  ptr2 = FIX2INT(CCTX_VCPTR(cctx));
+  VINDEX(CCTX_VCODE(cctx), ptr+1) = INT2FIX(ptr2 - ptr);
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-2);
+  fail_unless(TVALR(thr) == INT2FIX(1234));
+}
+END_TEST
+
 START_TEST(test_true)
 {
   value cctx, code, clos;
@@ -499,6 +522,8 @@ START_TEST(test_scdr)
 }
 END_TEST
 
+
+
 int main(void)
 {
   int number_failed;
@@ -514,9 +539,10 @@ int main(void)
   tcase_add_test(tc_vm, test_ldl);
   tcase_add_test(tc_vm, test_ldg);
   tcase_add_test(tc_vm, test_stg);
-  tcase_add_test(tc_vm, test_envs);
   tcase_add_test(tc_vm, test_push);
   tcase_add_test(tc_vm, test_pop);
+  tcase_add_test(tc_vm, test_envs);
+  tcase_add_test(tc_vm, test_jmp);
   tcase_add_test(tc_vm, test_true);
   tcase_add_test(tc_vm, test_nil);
   tcase_add_test(tc_vm, test_hlt);
