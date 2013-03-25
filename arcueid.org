@@ -15,7 +15,7 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [-] Implement virtual machine instructions [29/36]
+    - [-] Implement virtual machine instructions [30/35]
       - [X] nop
       - [X] push
       - [X] pop
@@ -46,11 +46,10 @@ notice and this notice are preserved.
       - [X] cdr
       - [X] scar
       - [X] scdr
-      - [ ] spl
       - [X] is
       - [ ] dup
       - [ ] cls
-      - [ ] consr
+      - [X] consr
       - [X] imenv
     - [-] Environments and continuations [1/2]
           We use what Clinger et. al. call the stack/heap strategy.
