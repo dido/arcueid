@@ -182,6 +182,8 @@ struct vmthread_t {
 
 #define CONT_SIZE 6
 
+extern void arc_jmpoffset(arc *c, value cctx, int jmpinst, int destoffset);
+
 extern void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t result);
 extern int __arc_resume_aff(arc *c, value thr);
 extern void arc_restorecont(arc *c, value thr, value cont);
