@@ -94,6 +94,40 @@ void arc_restorecont(arc *c, value thr, value cont)
   TIPP(thr) = &VINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), offset);
 }
 
+static value nextcont(arc *c, value thr, value cont)
+{
+  value *sp;
+
+  if (TYPE(cont) == T_FIXNUM) {
+    sp = TSBASE(thr) + FIX2INT(cont);
+    return (*(sp + 1));
+  }
+  return(CONT_CONT(cont));
+}
+
+static value *contenv(arc *c, value thr, value cont)
+{
+  value *sp;
+
+  if (TYPE(cont) == T_FIXNUM) {
+    sp = TSBASE(thr) + FIX2INT(cont);
+    return(sp + 4);
+  }
+  return(&CONT_ENV(cont));
+}
+
+/* Update environments in the continuations referred to in the continuation
+   register so oldenv always points to nenv */
+void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv)
+{
+  value cont;
+
+  for (cont=TCONR(thr); !NIL_P(cont); cont = nextcont(c, thr, cont)) {
+    if (*contenv(c, thr, cont) == oldenv)
+      *contenv(c, thr, cont) = nenv;
+  }
+}
+
 #if 0
 static value cont_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
