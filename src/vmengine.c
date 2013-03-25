@@ -205,26 +205,30 @@ int __arc_vmengine(arc *c, value thr)
       }
       NEXT;
     INST(istg):
+      if (TYPE(TVALR(thr)) == T_CLOS)
+	__arc_clos_env2heap(c, thr, TVALR(thr));
       arc_hash_insert(c, c->genv, CODE_LITERAL(CLOS_CODE(TFUNR(thr)),
 					       FIX2INT(*TIPP(thr)++)),
 		      TVALR(thr));
       NEXT;
     INST(ilde):
       {
-	value ienv, iindx;
+	int ienv, iindx;
 
-	ienv = *TIPP(thr)++;
-	iindx = *TIPP(thr)++;
-	TVALR(thr) = *__arc_getenv(c, thr, FIX2INT(ienv), FIX2INT(iindx));
+	ienv = FIX2INT(*TIPP(thr)++);
+	iindx = FIX2INT(*TIPP(thr)++);
+	TVALR(thr) = *__arc_getenv(c, thr, ienv, iindx);
       }
       NEXT;
     INST(iste):
       {
-	value ienv, iindx;
+	int ienv, iindx;
 
-	ienv = *TIPP(thr)++;
-	iindx = *TIPP(thr)++;
-	*__arc_getenv(c, thr, FIX2INT(ienv), FIX2INT(iindx)) = TVALR(thr);
+	ienv = FIX2INT(*TIPP(thr)++);
+	iindx = FIX2INT(*TIPP(thr)++);
+	if (ienv != 0 && TYPE(TVALR(thr)) == T_CLOS)
+	  __arc_clos_env2heap(c, thr, TVALR(thr));
+	*__arc_getenv(c, thr, ienv, iindx) = TVALR(thr);
       }
       NEXT;
     INST(icont):
@@ -290,8 +294,11 @@ int __arc_vmengine(arc *c, value thr)
       }
       NEXT;
     INST(iret):
-      /* XXX - we may need to check the value register.  If it is a
-	 closure, we may need to move its environment to the heap. */
+      if (TYPE(TVALR(thr)) == T_CLOS) {
+	/* XXX - move the environments referenced by the closure to the
+	   heap if needed. */
+	__arc_clos_env2heap(c, thr, TVALR(thr));
+      }
       /* Return to the trampoline, and make it restore the current
 	 continuation in the continuation register */
       return(TR_RC);
