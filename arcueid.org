@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [7/9]
+** TODO base virtual machine [8/9]
     - [X] Define virtual machine architecture
     - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
@@ -51,7 +51,7 @@ notice and this notice are preserved.
       - [X] cls
       - [X] consr
       - [X] imenv
-    - [-] Environments [1/2]
+    - [X] Environments [2/2]
           We use what Clinger et. al. call the stack/heap strategy.
 	  Environments and continuations normally go on the stack, but
 	  may be moved to the heap if required, e.g. when a closure or
@@ -63,7 +63,7 @@ notice and this notice are preserved.
 	  3. A closure is stored in the global environment
           4. A closure is stored in an environment other than at level 0.
       - [X] Stack-based
-      - [ ] Heap-based
+      - [X] Heap-based
     - [-] Continuations [1/2]
 	  Heap-based continuations are required to support ccc.
       - [X] Stack-based
