@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [6/8]
+** TODO base virtual machine [7/8]
     - [X] Define virtual machine architecture
     - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
@@ -15,7 +15,7 @@ notice and this notice are preserved.
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
     - [X] Build code generation infrastructure
-    - [-] Implement virtual machine instructions [30/35]
+    - [X] Implement virtual machine instructions [35/35]
       - [X] nop
       - [X] push
       - [X] pop
@@ -25,11 +25,11 @@ notice and this notice are preserved.
       - [X] stg
       - [X] lde
       - [X] ste
-      - [ ] cont
+      - [X] cont
       - [X] env
       - [X] envr
-      - [ ] apply
-      - [ ] ret
+      - [X] apply
+      - [X] ret
       - [X] jmp
       - [X] jt
       - [X] jf
@@ -47,8 +47,8 @@ notice and this notice are preserved.
       - [X] scar
       - [X] scdr
       - [X] is
-      - [ ] dup
-      - [ ] cls
+      - [X] dup
+      - [X] cls
       - [X] consr
       - [X] imenv
     - [-] Environments and continuations [1/2]
