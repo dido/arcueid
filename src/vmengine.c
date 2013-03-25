@@ -229,8 +229,12 @@ int __arc_vmengine(arc *c, value thr)
       NEXT;
     INST(icont):
       {
-	value icofs = *TIPP(thr)++;
-	TCONR(thr) = __arc_mkcont(c, thr, FIX2INT(icofs));
+	int icofs = FIX2INT(*TIPP(thr)++);
+	value *target = TIPP(thr) + icofs - 2;
+
+	/* Compute the absolute target */
+	icofs = target - &VINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), 0);
+	TCONR(thr) = __arc_mkcont(c, thr, icofs);
       }
       NEXT;
     INST(ienv):
