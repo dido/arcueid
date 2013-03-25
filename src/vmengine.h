@@ -51,7 +51,6 @@ enum vminst {
   icdr=27,
   iscar=28,
   iscdr=29,
-  ispl=30,
   iis=31,
   idup=34,
   icls=35,
