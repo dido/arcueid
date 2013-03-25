@@ -397,7 +397,7 @@ int __arc_vmengine(arc *c, value thr)
       TVALR(thr) = arc_mkclos(c, TVALR(thr), TENVR(thr));
       NEXT;
     INST(iconsr):
-      TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
+      TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
       NEXT;
     INST(imenv): {
 	int n = FIX2INT(*TIPP(thr)++);
