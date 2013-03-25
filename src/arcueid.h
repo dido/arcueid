@@ -314,7 +314,7 @@ extern void __arc_affenv(arc *c, value thr, int prevsize, int extrasize);
 extern int __arc_affip(arc *c, value thr);
 
 /* Closures */
-extern value arc_mkclos(arc *, value code, value env);
+extern value arc_mkclos(arc *c, value code, value env);
 
 /* String Port I/O */
 extern value arc_instring(arc *c, value str, value name);
@@ -378,7 +378,6 @@ extern value arc_unintern(arc *c, value sym);
 /* Environments */
 extern void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
 extern value *__arc_getenv(arc *c, value thr, int depth, int index);
-extern void __arc_menv(arc *c, value thr, int n);
 
 /* Numbers and arithmetic */
 extern value arc_string2num(arc *c, value str, int index, int rational);
