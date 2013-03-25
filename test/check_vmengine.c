@@ -781,11 +781,70 @@ START_TEST(test_apply)
   arc_jmpoffset(c, cctx, j1, lbl1);
   arc_emit(c, cctx, iadd);
   arc_emit(c, cctx, iret);
+
   code = arc_cctx2code(c, cctx);
   clos = arc_mkclos(c, code, CNIL);
   thr = arc_mkthread(c);
   XCALL(clos, INT2FIX(2), INT2FIX(3));
   fail_unless(TVALR(thr) == INT2FIX(6));
+}
+END_TEST
+
+/* Tests that illustrate the funarg problem.
+
+   What we have here would be the equivalent to the following code:
+
+   (fn (a b) (= b (fn (c) (+ a c))) (++ a) b)
+
+   The return value of this function is a function, and a becomes
+   part of its closure.  This is an example of the upwards funarg
+   problem.
+
+   Passing the closure created by this function to another function
+   should still work.
+
+   We really need to build the compiler in order to test this more
+   thoroughly.  Programming Arcueid in its bytecode is hard!
+*/
+START_TEST(test_funarg)
+{
+  value cctx, c1, code, clos, thr;
+  int lptr;
+
+  cctx = arc_mkcctx(c);
+  arc_emit3(c, cctx, ienv, INT2FIX(1), INT2FIX(0), INT2FIX(0));
+  arc_emit2(c, cctx, ilde, INT2FIX(1), INT2FIX(0)); /* a */
+  arc_emit(c, cctx, ipush);
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0)); /* c */
+  arc_emit(c, cctx, iadd);
+  arc_emit(c, cctx, iret);
+  c1 = arc_cctx2code(c, cctx);
+
+  cctx = arc_mkcctx(c);
+  lptr = arc_literal(c, cctx, c1);
+  arc_emit3(c, cctx, ienv, INT2FIX(2), INT2FIX(0), INT2FIX(0));
+  arc_emit1(c, cctx, ildl, INT2FIX(lptr));
+  arc_emit(c, cctx, icls);
+  arc_emit2(c, cctx, iste, INT2FIX(0), INT2FIX(1)); /* b */
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0)); /* a */
+  arc_emit(c, cctx, ipush);
+  arc_emit1(c, cctx, ildi, INT2FIX(1));
+  arc_emit(c, cctx, iadd);
+  arc_emit2(c, cctx, iste, INT2FIX(0), INT2FIX(0)); /* a */
+  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1)); /* b */
+  arc_emit(c, cctx, iret);
+
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL(clos, INT2FIX(1), CNIL);
+  fail_unless(TYPE(TVALR(thr)) == T_CLOS);
+  clos = TVALR(thr);
+
+  thr = arc_mkthread(c);
+  XCALL(clos, INT2FIX(1));
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(3));
 }
 END_TEST
 
@@ -827,6 +886,8 @@ int main(void)
   tcase_add_test(tc_vm, test_scdr);
   tcase_add_test(tc_vm, test_consr);
   tcase_add_test(tc_vm, test_imenv);
+
+  tcase_add_test(tc_vm, test_funarg);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
