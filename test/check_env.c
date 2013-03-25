@@ -148,6 +148,43 @@ START_TEST(test_menv)
 }
 END_TEST
 
+START_TEST(test_heap_env)
+{
+  value thr;
+
+  thr = arc_mkthread(c);
+  CPUSH(thr, INT2FIX(1));
+  CPUSH(thr, INT2FIX(2));
+  CPUSH(thr, INT2FIX(3));
+  __arc_mkenv(c, thr, 3, 0);
+
+  CPUSH(thr, INT2FIX(4));
+  CPUSH(thr, INT2FIX(5));
+  CPUSH(thr, INT2FIX(6));
+  __arc_mkenv(c, thr, 3, 0);
+
+  CPUSH(thr, INT2FIX(7));
+  CPUSH(thr, INT2FIX(8));
+  CPUSH(thr, INT2FIX(9));
+  __arc_mkenv(c, thr, 3, 0);
+
+  TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
+
+  fail_unless(*__arc_getenv(c, thr, 0, 0) == INT2FIX(7));
+  fail_unless(*__arc_getenv(c, thr, 0, 1) == INT2FIX(8));
+  fail_unless(*__arc_getenv(c, thr, 0, 2) == INT2FIX(9));
+
+  fail_unless(*__arc_getenv(c, thr, 1, 0) == INT2FIX(4));
+  fail_unless(*__arc_getenv(c, thr, 1, 1) == INT2FIX(5));
+  fail_unless(*__arc_getenv(c, thr, 1, 2) == INT2FIX(6));
+
+  fail_unless(*__arc_getenv(c, thr, 2, 0) == INT2FIX(1));
+  fail_unless(*__arc_getenv(c, thr, 2, 1) == INT2FIX(2));
+  fail_unless(*__arc_getenv(c, thr, 2, 2) == INT2FIX(3));
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -160,6 +197,7 @@ int main(void)
 
   tcase_add_test(tc_env, test_env_simple);
   tcase_add_test(tc_env, test_menv);
+  tcase_add_test(tc_env, test_heap_env);
 
   suite_add_tcase(s, tc_env);
   sr = srunner_create(s);
