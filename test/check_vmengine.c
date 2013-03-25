@@ -353,6 +353,36 @@ START_TEST(test_jf)
 }
 END_TEST
 
+START_TEST(test_jbnd)
+{
+  value cctx, code, clos;
+  value thr;
+  int ptr;
+
+  /* jump taken */
+  cctx = arc_mkcctx(c);
+  arc_emit3(c, cctx, ienv, INT2FIX(0), INT2FIX(0), INT2FIX(1));
+  arc_emit2(c, cctx, ilde, 0, 0);
+  ptr = FIX2INT(CCTX_VCPTR(cctx));
+  arc_emit1(c, cctx, ijbnd, 0);
+  arc_emit1(c, cctx, ildi, INT2FIX(1234));
+  arc_jmpoffset(c, cctx, ptr, FIX2INT(CCTX_VCPTR(cctx)));
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  thr = arc_mkthread(c);
+  XCALL(clos, INT2FIX(5678));
+  fail_unless(TQUANTA(thr) == QUANTA-3);
+  fail_unless(TVALR(thr) == INT2FIX(5678));
+
+  /* jump not taken */
+  thr = arc_mkthread(c);
+  XCALL0(clos);
+  fail_unless(TQUANTA(thr) == QUANTA-4);
+  fail_unless(TVALR(thr) == INT2FIX(1234));
+}
+END_TEST
+
 START_TEST(test_true)
 {
   value cctx, code, clos;
@@ -637,6 +667,7 @@ int main(void)
   tcase_add_test(tc_vm, test_jmp);
   tcase_add_test(tc_vm, test_jt);
   tcase_add_test(tc_vm, test_jf);
+  tcase_add_test(tc_vm, test_jbnd);
   tcase_add_test(tc_vm, test_true);
   tcase_add_test(tc_vm, test_nil);
   tcase_add_test(tc_vm, test_hlt);
