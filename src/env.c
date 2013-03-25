@@ -163,9 +163,7 @@ void __arc_menv(arc *c, value thr, int n)
   TENVR(thr) = parentenv;
 }
 
-#if 0
-
-/* Convert a single environment into a heap-based environment */
+/* Convert a single stack environment into a heap-based environment */
 static value heap_env(arc *c, value thr, value env)
 {
   value *senv, *senvstart, henv;
@@ -184,14 +182,15 @@ static value heap_env(arc *c, value thr, value env)
 /* Move the current environment and all of its parent environments into
    the heap.  Also adjusts the environment pointers in continuations
    referring to them accordingly. */
-void __arc_heap_env(arc *c, value thr)
+value __arc_env2heap(arc *c, value thr, value env)
 {
-  value env, *parentptr, henv;
+  value nenv = env, oldenv;
 
-  for (env = TENVR(thr), parentptr = &TENVR(thr); TYPE(env)==T_ENV;
-       env=nextenv(c, thr, env)) {
-
-  }
+  do {
+    oldenv = nenv;
+    nenv = heap_env(c, thr, oldenv);
+    __arc_update_cont_envs(c, thr, oldenv, nenv);
+    nenv = nextenv(c, thr, env);
+  } while (!NIL_P(nenv));
+  return(env);
 }
-
-#endif
