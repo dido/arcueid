@@ -113,15 +113,22 @@ int __arc_affip(arc *c, value thr)
 /* Call a function.  This sets up the thread so that when the AFF returns,
    the dispatcher will invoke the function that has been set up.  DO NOT
    USE THIS FUNCTION DIRECTLY.  It should only be used from the AFCALL
-   macro. */
+   macro.
+
+   If a null continuation is passed, the function application is processed
+   as a tail call.
+ */
 int __arc_affapply(arc *c, value thr, value cont, value func, ...)
 {
   va_list ap;
   value arg;
   int argc=0;
 
-  /* add the continuation to the continuation register */
-  TCONR(thr) = cont;
+  /* Add the continuation to the continuation register if a continuation
+     was passed.  If it is null, then the current continuation is used,
+     as it is a tail call. */
+  if (!NIL_P(cont))
+    TCONR(thr) = cont;
   va_start(ap, func);
   /* Push the arguments onto the stack. Look for the CLASTARG sentinel
      value. */
@@ -134,6 +141,9 @@ int __arc_affapply(arc *c, value thr, value cont, value func, ...)
   TARGC(thr) = argc;
   /* set the value register to the function to be called */
   TVALR(thr) = func;
+  /* If this is a tail call, overwrite the current environment */
+  if (NIL_P(cont))
+    __arc_menv(c, thr, argc);
   return(TR_FNAPP);
 }
 
