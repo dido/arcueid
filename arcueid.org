@@ -113,12 +113,12 @@ notice and this notice are preserved.
      - [X] flonum
      - [X] rational
      - [X] complex
-   - [ ] Symbols [0/2]
+   - [-] Symbols [1/2]
      - [ ] Environment symbols
-     - [ ] Global symbols
+     - [X] Global symbols
    - [ ] Lists [0/3]
-     - [ ] Special forms [0/5]
-       - [ ] if
+     - [-] Special forms [1/5]
+       - [X] if
        - [ ] fn [0/5]
 	 - [ ] single symbol arguments
 	 - [ ] simple argument lists
