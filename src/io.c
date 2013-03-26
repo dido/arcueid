@@ -146,8 +146,7 @@ AFFDEF0(arc_readb)
     arc_err_cstrfmt(c, "port is not ready for reading");
     return(CNIL);
   }
-  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), AV(fd));
-  ARETURN(AFCRV);
+  AFTCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), AV(fd));
   AFEND;
 }
 AFFEND
@@ -230,8 +229,7 @@ AFFDEF0(arc_writeb)
     arc_err_cstrfmt(c, "port is not ready for writing");
     return(CNIL);
   }
-  AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd), AV(byte));
-  ARETURN(AFCRV);
+  AFTCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd), AV(byte));
   AFEND;
 }
 AFFEND
@@ -262,9 +260,8 @@ AFFDEF0(arc_writec)
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
-    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd),
-	   INT2FIX(arc_char2rune(c, AV(chr))));
-    ARETURN(AFCRV);
+    AFTCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd),
+	    INT2FIX(arc_char2rune(c, AV(chr))));
   }
   /* XXX - should put this in builtins */
   AV(writeb) = arc_mkaff(c, arc_writeb, CNIL);
@@ -303,8 +300,7 @@ AFFEND
 AFFDEF(arc_tell, fp)
 {
   AFBEGIN;
-  AFCALL(VINDEX(IO(AV(fp))->io_ops, IO_tell), AV(fp));
-  ARETURN(AFCRV);
+  AFTCALL(VINDEX(IO(AV(fp))->io_ops, IO_tell), AV(fp));
   AFEND;
 }
 AFFEND
