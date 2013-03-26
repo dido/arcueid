@@ -459,6 +459,13 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
     return(__arc_affapply(c, thr, __arc_mkcont(c, thr, __LINE__), func, __VA_ARGS__, CLASTARG)); case __LINE__:; \
   } while (0)
 
+/* Tail call -- this will pass the return value of the function called
+   back to the caller of the function which invoked it. */
+#define AFTCALL(func, ...)					       \
+  do {								       \
+    return(__arc_affapply(c, thr, CNIL, func, __VA_ARGS__, CLASTARG)); \
+  } while (0)
+
 #define AFCRV (arc_thr_valr(c, thr))
 
 #define AYIELD()							\
