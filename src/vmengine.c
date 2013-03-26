@@ -420,8 +420,7 @@ AFFDEF(arc_callcc, thunk)
   AFBEGIN;
   /* First move the continuations to the heap if needed */
   TCONR(thr) = __arc_cont2heap(c, thr, TCONR(thr));
-  AFCALL(AV(thunk), TCONR(thr));
-  ARETURN(AFCRV);
+  AFTCALL(AV(thunk), TCONR(thr));
   AFEND;
 }
 AFFEND
