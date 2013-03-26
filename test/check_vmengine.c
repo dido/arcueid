@@ -848,6 +848,71 @@ START_TEST(test_funarg)
 }
 END_TEST
 
+static value mycont;
+
+/* The following two functions are essentially the same as the following:
+
+   (fn (arg) (- arg (- 20 (- 10 (ccc (fn (cc) (= mycont cc) 1))))))
+ */
+
+AFFDEF(cccfn, cc)
+{
+  AFBEGIN;
+  mycont = AV(cc);
+  ARETURN(INT2FIX(1));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(ccctest, arg)
+{
+  AFBEGIN;
+  CPUSH(thr, INT2FIX(20));
+  CPUSH(thr, INT2FIX(10));
+  AFCALL(arc_mkaff(c, arc_callcc, CNIL), arc_mkaff(c, cccfn, CNIL));
+  TVALR(thr) = AFCRV;
+  TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
+  TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
+  TVALR(thr) = __arc_sub2(c, AV(arg), TVALR(thr));
+  ARETURN(TVALR(thr));
+  AFEND;
+}
+AFFEND
+
+START_TEST(test_callcc)
+{
+  value thr;
+
+  mycont = CNIL;
+  thr = arc_mkthread(c);
+  TVALR(thr) = arc_mkaff(c, ccctest, arc_mkstringc(c, "doubler"));
+  CPUSH(thr, INT2FIX(30));
+  TARGC(thr) = 1;
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(19));
+  fail_unless(TYPE(mycont) == T_CONT);
+
+  /* See what happens when we restore the continuation */
+  thr = arc_mkthread(c);
+  TVALR(thr) = mycont;
+  CPUSH(thr, INT2FIX(4));
+  TARGC(thr) = 1;
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(16));
+
+  /* ... and again ... */
+  thr = arc_mkthread(c);
+  TVALR(thr) = mycont;
+  CPUSH(thr, INT2FIX(3));
+  TARGC(thr) = 1;
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(17));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -888,6 +953,7 @@ int main(void)
   tcase_add_test(tc_vm, test_imenv);
 
   tcase_add_test(tc_vm, test_funarg);
+  tcase_add_test(tc_vm, test_callcc);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);
