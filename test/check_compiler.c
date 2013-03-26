@@ -74,6 +74,140 @@ START_TEST(test_compile_nil)
 }
 END_TEST
 
+START_TEST(test_compile_t)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("t");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == CTRUE);
+}
+END_TEST
+
+START_TEST(test_compile_char)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("#\\a");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_CHAR);
+  fail_unless(arc_char2rune(c, TVALR(thr)) == 'a');
+}
+END_TEST
+
+START_TEST(test_compile_string)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("\"foo\"");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_STRING);
+  fail_unless(arc_is2(c, arc_mkstringc(c, "foo"), TVALR(thr)) == CTRUE);
+}
+END_TEST
+
+START_TEST(test_compile_fixnum)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("31337");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+}
+END_TEST
+
+#ifdef HAVE_GMP_H
+
+START_TEST(test_compile_bignum)
+{
+  value thr, cctx, clos, code;
+  mpz_t expected;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("300000000000000000000000000000");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_BIGNUM);
+  mpz_init(expected);
+  mpz_set_str(expected, "300000000000000000000000000000", 10);
+  fail_unless(mpz_cmp(expected, REPBNUM(TVALR(thr))) == 0);
+  mpz_clear(expected);
+}
+END_TEST
+
+START_TEST(test_compile_rational)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("1/2");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(TVALR(thr)), 1, 2) == 0);
+}
+END_TEST
+
+#endif
+
+START_TEST(test_compile_complex)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("1.1+2.2i");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_COMPLEX);
+  fail_unless(cabs(REPCPX(TVALR(thr)) - (1.1+I*2.2)) < 1e-6);
+}
+END_TEST
+
+START_TEST(test_compile_flonum)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("3.14159");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_FLONUM);
+  fail_unless(fabs(REPFLO(TVALR(thr)) - 3.14159) < 1e-6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -85,7 +219,18 @@ int main(void)
   arc_init(c);
 
   tcase_add_test(tc_compiler, test_compile_nil);
+  tcase_add_test(tc_compiler, test_compile_t);
+  tcase_add_test(tc_compiler, test_compile_char);
+  tcase_add_test(tc_compiler, test_compile_string);
+  tcase_add_test(tc_compiler, test_compile_fixnum);
 
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_compiler, test_compile_bignum);
+  tcase_add_test(tc_compiler, test_compile_rational);
+#endif
+
+  tcase_add_test(tc_compiler, test_compile_flonum);
+  tcase_add_test(tc_compiler, test_compile_complex);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
