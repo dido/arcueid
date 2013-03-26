@@ -53,7 +53,7 @@ static int apply_vr(arc *c, value thr)
 
   TFUNR(thr) = TVALR(thr);
   tfn = __arc_typefn(c, TVALR(thr));
-  if (tfn == NULL) {
+  if (tfn == NULL || tfn->apply == NULL) {
     arc_err_cstrfmt(c, "cannot apply value");
     return(0);
   }
@@ -413,3 +413,15 @@ int __arc_vmengine(arc *c, value thr)
  endquantum:
   return(TR_SUSPEND);
 }
+
+/* call/cc! */
+AFFDEF(arc_callcc, thunk)
+{
+  AFBEGIN;
+  /* First move the continuations to the heap if needed */
+  TCONR(thr) = __arc_cont2heap(c, thr, TCONR(thr));
+  AFCALL(AV(thunk), TCONR(thr));
+  ARETURN(AFCRV);
+  AFEND;
+}
+AFFEND
