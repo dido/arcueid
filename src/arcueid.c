@@ -130,8 +130,8 @@ AFFDEF0(arc_is)
     AV(list) = cons(c, *__arc_getenv(c, thr, 0, i), AV(list));
   AV(fis2) = arc_mkaff(c, is2, CNIL);
   AV(pw) = arc_mkaff(c, pairwise, CNIL);
-  AFCALL(AV(pw), AV(fis2), AV(list), CNIL, CNIL);
-  ARETURN(AFCRV);
+  /* Tail call */
+  AFTCALL(AV(pw), AV(fis2), AV(list), CNIL, CNIL);
   AFEND;
 }
 AFFEND
@@ -140,7 +140,6 @@ AFFEND
 AFFDEF(arc_iso2, a, b, vh1, vh2)
 {
   typefn_t *tfn;
-  AVAR(isop);
   AFBEGIN;
   /* An object is isomorphic to itself */
   if (AV(a) == AV(b))
@@ -163,9 +162,7 @@ AFFDEF(arc_iso2, a, b, vh1, vh2)
      iscmp if available.  If neither is available, then they cannot
      be compared.  */
   if (tfn->isocmp != NULL) {
-    AV(isop) = arc_mkaff(c, tfn->isocmp, CNIL);
-    AFCALL(AV(isop), AV(a), AV(b), AV(vh1), AV(vh2));
-    ARETURN(AFCRV);
+    AFTCALL(arc_mkaff(c, tfn->isocmp, CNIL), AV(a), AV(b), AV(vh1), AV(vh2));
   } else if (tfn->iscmp != NULL) {
     ARETURN(tfn->iscmp(c, AV(a), AV(b)));
   }
@@ -177,19 +174,18 @@ AFFEND
 AFFDEF0(arc_iso)
 {
   int argc, i;
-  AVAR(list, fiso2, pw);
+  AVAR(list);
   AFBEGIN;
   AV(list) = CNIL;
   argc = arc_thr_argc(c, thr);
   for (i=argc-1; i>=0; i--)
     AV(list) = cons(c, *__arc_getenv(c, thr, 0, i), AV(list));
-  AV(fiso2) = arc_mkaff(c, arc_iso2, CNIL);
-  AV(pw) = arc_mkaff(c, pairwise, CNIL);
   /* Call pairwise with new visithashes */
-  AFCALL(AV(pw), AV(fiso2), AV(list),
-	 arc_mkhash(c, ARC_HASHBITS),
-	 arc_mkhash(c, ARC_HASHBITS));
-  ARETURN(AFCRV);
+  AFTCALL(arc_mkaff(c, pairwise, CNIL),
+	  arc_mkaff(c, arc_iso2, CNIL),
+	  AV(list),
+	  arc_mkhash(c, ARC_HASHBITS),
+	  arc_mkhash(c, ARC_HASHBITS));
   AFEND;
 }
 AFFEND
