@@ -96,7 +96,135 @@ static value compile_ident(arc *c, value ident, value ctx, value env,
     arc_emit1(c, ctx, ildg, find_literal(c, ctx, ident));
   }
   return(compile_continuation(c, ctx, cont));
+
 }
+
+static AFFDEF(compile_if, args, ctx, env, cont)
+{
+  AVAR(jumpaddr, jumpaddr2);
+  AFBEGIN;
+  /* if we run out of arguments, the last value becomes nil */
+  if (NIL_P(AV(args))) {
+    arc_emit(c, AV(ctx), inil);
+    ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  }
+
+  /* If the next is the end of the line, compile the tail end if no
+     additional */
+  if (NIL_P(cdr(AV(args)))) {
+    AFTCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(args)), AV(ctx),
+	    AV(env), AV(cont));
+  }
+
+  /* In the final case, we have the conditional (car), the then portion
+     (cadr), and the else portion (cddr). */
+  /* First, compile the conditional */
+  AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(args)), AV(ctx),
+	 AV(env), CNIL);
+  /* this jump address will be the address of the jf instruction
+     which we are about to generate.  We have to patch it with the
+     address of the start of the else portion once we know it. */
+  AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+  arc_emit1(c, AV(ctx), ijf, INT2FIX(0));
+  /* compile the then portion */
+  AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(args)), AV(ctx),
+	 AV(env), CNIL);
+  /* This second jump target should be patched with the address of the
+     unconditional jump at the end.  It should be patched after the else
+     portion is compiled. */
+  AV(jumpaddr2) = CCTX_VCPTR(AV(ctx));
+  arc_emit1(c, AV(ctx), ijmp, INT2FIX(0));
+  /* patch jumpaddr so that it will jump to the address of the else
+     portion which is about to be compiled */
+  arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)),
+		FIX2INT(CCTX_VCPTR(AV(ctx))));
+  /* compile the else portion, which should be treated as though it were
+     an if as well */
+  AFCALL(arc_mkaff(c, compile_if, CNIL), cddr(AV(args)), AV(ctx),
+	 AV(env), CNIL);
+  /* Fix the target address of the conditional jump at the end of the
+     then portion (jumpaddr2) */
+  arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr2)),
+		FIX2INT(CCTX_VCPTR(AV(ctx))));
+  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFEND;
+}
+AFFEND
+
+static int (*spform(arc *c, value ident))(arc *, value)
+{
+  if (ARC_BUILTIN(c, S_IF) == ident)
+    return(compile_if);
+  return(NULL);
+}
+
+static int (*inline_func(arc *c, value ident))(arc *, value)
+{
+  return(NULL);
+}
+
+static AFFDEF(compile_compose, nexpr, ctx, env, cont)
+{
+  (void)cont;
+  (void)env;
+  (void)ctx;
+  (void)nexpr;
+  ARETURN(CNIL);
+}
+AFFEND
+
+static AFFDEF(compile_complement, nexpr, ctx, env, cont)
+{
+  (void)cont;
+  (void)env;
+  (void)ctx;
+  (void)nexpr;
+  ARETURN(CNIL);
+}
+AFFEND
+
+static AFFDEF(compile_apply, nexpr, ctx, env, cont)
+{
+  (void)cont;
+  (void)env;
+  (void)ctx;
+  (void)nexpr;
+  ARETURN(CNIL);
+}
+AFFEND
+
+static AFFDEF(compile_list, nexpr, ctx, env, cont)
+{
+  int (*fun)(arc *, value) = NULL;
+  value expr;
+  AFBEGIN;
+
+  expr = AV(nexpr);
+  if ((fun = spform(c, car(expr))) != NULL) {
+    AFTCALL(arc_mkaff(c, fun, CNIL), cdr(AV(nexpr)), AV(ctx), AV(env),
+	    AV(cont));
+  }
+
+  if ((fun = inline_func(c, car(expr))) != NULL) {
+    AFTCALL(arc_mkaff(c, fun, CNIL), AV(nexpr), AV(ctx), AV(env), AV(cont));
+  }
+  /* compose in a functional position */
+  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPOSE)) {
+    AFTCALL(arc_mkaff(c, compile_compose, CNIL), AV(nexpr), AV(ctx), AV(env),
+	    AV(cont));
+  }
+
+  /* complement in a functional position */
+  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPLEMENT)) {
+    AFTCALL(arc_mkaff(c, compile_complement, CNIL), AV(nexpr), AV(ctx),
+	    AV(env), AV(cont));
+  }
+
+  AFTCALL(arc_mkaff(c, compile_apply, CNIL), AV(nexpr), AV(ctx), AV(env),
+	  AV(cont));
+  AFEND;
+}
+AFFEND
 
 /* Given an expression nexpr, a compilation context ctx, and a continuation
    flag, return the compilation context after the expression is compiled. */
@@ -128,12 +256,10 @@ AFFDEF(arc_compile, nexpr, ctx, env, cont)
     AFTCALL(arc_mkaff(c, arc_compile, CNIL), AV(ssx), AV(ctx),
 	    AV(env), AV(cont));
   }
-  /*
   if (CONS_P(AV(expr))) {
-    AFTCALL(arc_mkaff(c, compile_list, CNIL) AV(expr), AV(ctx),
+    AFTCALL(arc_mkaff(c, compile_list, CNIL), AV(expr), AV(ctx),
 	    AV(env), AV(cont));
   }
-  */
   arc_err_cstrfmt(c, "invalid_expression");
   ARETURN(AV(ctx));
   AFEND;
