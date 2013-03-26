@@ -398,6 +398,34 @@ START_TEST(test_compile_fn_basic)
   XCALL0(clos);
   fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
   fail_unless(TVALR(thr) == INT2FIX(3));
+
+  COMPILE("((fn a a) 1 2 3)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_CONS);
+  fail_unless(car(TVALR(thr)) == INT2FIX(1));
+  fail_unless(cadr(TVALR(thr)) == INT2FIX(2));
+  fail_unless(car(cddr(TVALR(thr))) == INT2FIX(3));
+
+  COMPILE("((fn (a . b) a) 1 2 3)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  COMPILE("((fn (a . b) b) 1 2 3)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_CONS);
+  fail_unless(car(TVALR(thr)) == INT2FIX(2));
+  fail_unless(cadr(TVALR(thr)) == INT2FIX(3));
+
 }
 END_TEST
 
