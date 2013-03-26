@@ -33,9 +33,7 @@
 #include "arcueid.h"
 #include "vmengine.h"
 
-#if 0
-
-/* Creates an empty reified continuation */
+/* Creates an empty continuation on the heap */
 static value mkcont(arc *c)
 {
   value cont = arc_mkvector(c, CONT_SIZE);
@@ -44,15 +42,15 @@ static value mkcont(arc *c)
   return(cont);
 }
 
-#endif
-
 /* Make a continuation on the stack.  Returns the fixnum offset of
    the top of stack after all the continuation information has been
    saved. */
 value __arc_mkcont(arc *c, value thr, int offset)
 {
-  value cont;
+  value cont, tsfn;
 
+  tsfn = INT2FIX(TSFN(thr) - TSBASE(thr));
+  CPUSH(thr, tsfn);
   CPUSH(thr, INT2FIX(offset));
   CPUSH(thr, TENVR(thr));
   CPUSH(thr, TFUNR(thr));
@@ -74,12 +72,14 @@ void arc_restorecont(arc *c, value thr, value cont)
     TFUNR(thr) = CPOP(thr);
     TENVR(thr) = CPOP(thr);
     offset = FIX2INT(CPOP(thr));
+    TSFN(thr) = TSBASE(thr) + FIX2INT(CPOP(thr));
   } else {
-    /* Reified continuations */
+    /* Heap-based continuations */
     TFUNR(thr) = CONT_FUN(cont);
     TENVR(thr) = CONT_ENV(cont);
     TARGC(thr) = FIX2INT(CONT_ARGC(cont));
     TCONR(thr) = CONT_CONT(cont);
+    TSFN(thr) = TSP(thr);
     /* restore saved stack */
     if (TYPE(CONT_STK(cont)) == T_VECTOR) {
       for (i=0; i<VECLEN(CONT_STK(cont)); i++)
@@ -128,6 +128,52 @@ void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv)
   }
 }
 
+/* Move a single continuation to the heap.  This will move any environments
+   referenced by the continuation to the heap as well. */
+static value heap_cont(arc *c, value thr, value cont)
+{
+  value *sp, *tsfn, ncont;
+  int sslen, i;
+
+  if (TYPE(cont) == T_CONT)
+    return(cont);
+
+  ncont = mkcont(c);
+  sp = TSBASE(thr) + FIX2INT(cont);
+  CONT_CONT(ncont) = *(sp+1);
+  CONT_ARGC(ncont) = *(sp+2);
+  CONT_FUN(ncont) = *(sp+3);
+  CONT_ENV(ncont) = __arc_env2heap(c, thr, *(sp+4));
+  CONT_OFS(ncont) = *(sp+5);
+  /* save the stack up to the saved TSFN */
+  tsfn = TSBASE(thr) + FIX2INT(*(sp+6));
+  sslen = tsfn - (sp + 6);
+  CONT_STK(ncont) = arc_mkvector(c, sslen);
+  for (i=0; i<sslen; i++)
+    VINDEX(CONT_STK(ncont), i) = *(tsfn - i);
+  return(ncont);
+}
+
+/* Move a continuation and all its parent continuations into the heap. */
+value __arc_cont2heap(arc *c, value thr, value cont)
+{
+  value ncont = cont, oldcont;
+
+  /* Do nothing if the continuation is already on the heap */
+  if (TYPE(cont) == T_CONT)
+    return(cont);
+
+  cont = CNIL;
+  do {
+    oldcont = ncont;
+    ncont = heap_cont(c, thr, oldcont);
+    if (NIL_P(cont))
+      cont = ncont;
+    ncont = nextcont(c, thr, ncont);
+  } while (!NIL_P(ncont));
+  return(cont);
+}
+
 #if 0
 static value cont_pprint(arc *c, value sexpr, value *ppstr, value visithash)
 {
@@ -140,6 +186,12 @@ static int cont_apply(arc *c, value thr, value cont)
 {
   /* Applying a continuation just means it goes on the continuation
      register and we make it go. */
+  if (TARGC(thr) == 1)
+    TVALR(thr) = CPOP(thr);
+  else {
+    arc_err_cstrfmt(c, "context expected 1 value, received %d values", TARGC(thr));
+    TVALR(thr) = CNIL;
+  }
   TCONR(thr) = cont;
   return(TR_RC);
 }
