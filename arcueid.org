@@ -119,11 +119,11 @@ notice and this notice are preserved.
    - [-] Lists [1/3]
      - [-] Special forms [1/5]
        - [X] if
-       - [ ] fn [0/5]
-	 - [ ] single symbol arguments
-	 - [ ] simple argument lists
+       - [-] fn [3/5]
+	 - [X] single symbol arguments
+	 - [X] simple argument lists
 	 - [ ] optional arguments
-         - [ ] rest arguments
+         - [X] rest arguments
 	 - [ ] destructuring binds
        - [ ] quote
        - [ ] quasiquote
