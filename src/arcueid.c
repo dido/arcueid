@@ -68,11 +68,9 @@ value arc_mkobject(arc *c, size_t size, int type)
 /* compare with def of pairwise in ac.scm: tail-recursive version */
 static AFFDEF(pairwise, pred, lst, vh1, vh2)
 {
-  AVAR(self);
   AFBEGIN;
 
   for (;;) {
-    AV(self) = arc_mkaff(c, pairwise, CNIL);
     if (NIL_P(AV(lst)))
       ARETURN(CTRUE);
     if (NIL_P(cdr(AV(lst))))
