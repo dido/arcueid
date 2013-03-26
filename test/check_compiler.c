@@ -342,6 +342,33 @@ START_TEST(test_compile_if_compound)
 }
 END_TEST
 
+AFFDEF(testfunc, arg1, arg2)
+{
+  AFBEGIN;
+  ARETURN(INT2FIX(FIX2INT(AV(arg1)) + FIX2INT(AV(arg2))));
+  AFEND;
+}
+AFFEND
+
+START_TEST(test_compile_apply)
+{
+  value thr, cctx, clos, code;
+  value sym = arc_intern_cstr(c, "foo");
+
+  /* global symbol binding for foo */
+  arc_hash_insert(c, c->genv, sym, arc_mkaff(c, testfunc, CNIL));
+  thr = arc_mkthread(c);
+
+  COMPILE("(foo (foo 1 2) (foo 3 4))");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(10));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -373,6 +400,8 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_if_full);
   tcase_add_test(tc_compiler, test_compile_if_partial);
   tcase_add_test(tc_compiler, test_compile_if_compound);
+
+  tcase_add_test(tc_compiler, test_compile_apply);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
