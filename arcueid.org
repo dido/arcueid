@@ -102,17 +102,17 @@ notice and this notice are preserved.
      - [X] Rational
      - [X] Complex
    - [X] Atstrings
-** TODO Arc compiler [0/5]
-   - [ ] Literal expressions [0/9]
-     - [ ] nil
-     - [ ] true (t)
-     - [ ] character
-     - [ ] string
-     - [ ] fixnum
-     - [ ] bignum
-     - [ ] flonum
-     - [ ] rational
-     - [ ] complex
+** TODO Arc compiler [1/5]
+   - [X] Literal expressions [9/9]
+     - [X] nil
+     - [X] true (t)
+     - [X] character
+     - [X] string
+     - [X] fixnum
+     - [X] bignum
+     - [X] flonum
+     - [X] rational
+     - [X] complex
    - [ ] Symbols [0/2]
      - [ ] Environment symbols
      - [ ] Global symbols
@@ -455,11 +455,11 @@ notice and this notice are preserved.
      - [ ] file-exists
      - [ ] rmfile
      - [ ] mvfile
-   - [ ] Error handling and continuations [0/5]
+   - [-] Error handling and continuations [1/5]
      - [ ] details
      - [ ] err
      - [ ] on-err
-     - [ ] ccc
+     - [X] ccc
      - [ ] protect
    - [X] Strings [1/1]
      - [X] newstring
