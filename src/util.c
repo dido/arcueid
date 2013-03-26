@@ -17,6 +17,7 @@
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #include "arcueid.h"
+#include "utf.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -116,4 +117,18 @@ void __arc_print_string(arc *c, value ppstr)
   str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
   arc_str2cstr(c, ppstr, str);
   printf("%s\n", str);
+}
+
+Rune __arc_strgetc(arc *c, value str, int *index)
+{
+  if (*index < arc_strlen(c, str))
+    return(arc_strindex(c, str, (*index)++));
+  return(Runeerror);
+}
+
+void __arc_strungetc(arc *c, int *index)
+{
+  if (*index <= 0)
+    return;
+  (*index)--;
 }
