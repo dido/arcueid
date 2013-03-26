@@ -146,6 +146,9 @@ static AFFDEF(compile_if, args, ctx, env, cont)
      then portion (jumpaddr2) */
   arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr2)),
 		FIX2INT(CCTX_VCPTR(AV(ctx))));
+  /* XXX - this emits a ret instruction that is never reached
+     if this compiles a tail call.  If it isn't a tail call, then
+     compile_continuation does precisely nothing. */
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
   AFEND;
 }
@@ -183,13 +186,46 @@ static AFFDEF(compile_complement, nexpr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(compile_apply, nexpr, ctx, env, cont)
+static AFFDEF(compile_apply, expr, ctx, env, cont)
 {
-  (void)cont;
-  (void)env;
-  (void)ctx;
-  (void)nexpr;
-  ARETURN(CNIL);
+  AVAR(fname, args, nahd, contaddr, nargs);
+  AFBEGIN;
+
+  AV(fname) = car(AV(expr));
+  AV(args) = cdr(AV(expr));
+
+  /* There are two possible cases here.  If this is not a tail call,
+     cont will be nil, so we need to make a continuation. */
+  if (NIL_P(AV(cont))) {
+    AV(contaddr) = CCTX_VCPTR(AV(ctx));
+    arc_emit1(c, AV(ctx), icont, FIX2INT(0));
+  }
+  AV(nahd) = AV(args);
+  /* Traverse the arguments, compiling each and pushing them on the stack */
+  for (AV(nargs) = INT2FIX(0); AV(nahd); AV(nahd) = cdr(AV(nahd)),
+	 AV(nargs) = INT2FIX(FIX2INT(AV(nargs)) + 1)) {
+    AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(nahd)),
+	   AV(ctx), AV(env), CNIL);
+    arc_emit(c, AV(ctx), ipush);
+  }
+  /* compile the function name, which should load it into the value register */
+  AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(fname), AV(ctx), AV(env), CNIL);
+
+  /* If this is a tail call, create a menv instruction to overwrite the
+     current environment just before performing the application */
+  if (!NIL_P(AV(cont))) {
+    arc_emit1(c, AV(ctx), imenv, AV(nargs));
+  }
+  /* create the apply instruction that will perform the application */
+  arc_emit1(c, AV(ctx), iapply, AV(nargs));
+  /* If we are not a tail call, fix the continuation address */
+  if (NIL_P(AV(cont))) {
+    arc_jmpoffset(c, AV(ctx), FIX2INT(AV(contaddr)),
+		  FIX2INT(CCTX_VCPTR(AV(ctx))));
+  }
+  /* done */
+  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFEND;
 }
 AFFEND
 
