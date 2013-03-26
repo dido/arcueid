@@ -103,8 +103,7 @@ int main(void)
   SRunner *sr;
 
   c = &cc;
-  arc_init_memmgr(c);
-  arc_init_datatypes(c);
+  arc_init(c);
 
   tcase_add_test(tc_is_iso, test_cons);
   tcase_add_test(tc_is_iso, test_circ_cons);
