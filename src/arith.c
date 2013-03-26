@@ -902,21 +902,6 @@ value __arc_sub2(arc *c, value arg1, value arg2)
   return(CNIL);
 }
 
-/* utility functions */
-static Rune strgetc(arc *c, value str, int *index)
-{
-  if (*index < arc_strlen(c, str))
-    return(arc_strindex(c, str, (*index)++));
-  return(Runeerror);
-}
-
-static void strungetc(arc *c, int *index)
-{
-  if (*index <= 0)
-    return;
-  (*index)--;
-}
-
 static value rune2dig(Rune r, int radix)
 {
   Rune rl;
@@ -941,7 +926,7 @@ static double str2flonum(arc *c, value str, int index, int imagflag)
   value digitval, imag;
   Rune ch;
 
-  while ((ch = strgetc(c, str, &index)) != Runeerror) {
+  while ((ch = __arc_strgetc(c, str, &index)) != Runeerror) {
     switch (state) {
     case 1:
       /* sign */
@@ -957,7 +942,7 @@ static double str2flonum(arc *c, value str, int index, int imagflag)
       default:
 	if (!(isdigit(ch) || ch == '.'))
 	  return(CNIL);
-	strungetc(c, &index);
+	__arc_strungetc(c, &index);
 	state = 2;
 	break;
       }
@@ -1051,7 +1036,7 @@ static double str2flonum(arc *c, value str, int index, int imagflag)
       default:
 	if (!isdigit(ch))
 	  return(CNIL);
-	strungetc(c, &index);
+	__arc_strungetc(c, &index);
 	state = 5;
 	break;
       }
@@ -1103,7 +1088,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
   value nval = INT2FIX(0), digitval, radix = INT2FIX(10), denom;
   Rune chs[4];
 
-  while ((ch = strgetc(c, str, &index)) != Runeerror) {
+  while ((ch = __arc_strgetc(c, str, &index)) != Runeerror) {
     switch (state) {
     case 1:
       /* sign */
@@ -1122,7 +1107,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
       default:
 	if (!isdigit(ch))
 	  return(CNIL);
-	strungetc(c, &index);
+	__arc_strungetc(c, &index);
 	state = 2;
 	break;
       }
@@ -1142,7 +1127,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
       default:
 	if (tolower(ch) == 'i') {
 	  for (i=0; i<4; i++) {
-	    chs[i] = strgetc(c, str, &index);
+	    chs[i] = __arc_strgetc(c, str, &index);
 	    if (chs[i] == Runeerror)
 	      return(CNIL);
 	  }
@@ -1152,7 +1137,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
 	}
 	if (tolower(ch) == 'n') {
 	  for (i=0; i<4; i++) {
-	    chs[i] = strgetc(c, str, &index);
+	    chs[i] = __arc_strgetc(c, str, &index);
 	    if (chs[i] == Runeerror)
 	      return(CNIL);
 	  }
@@ -1163,7 +1148,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
 	if (!isdigit(ch))
 	  return(CNIL);
 	/* more digits */
-	strungetc(c, &index);
+	__arc_strungetc(c, &index);
 	state = 4;
 	break;
       }
@@ -1196,7 +1181,7 @@ value arc_string2num(arc *c, value str, int index, int rational)
 	if (!isdigit(ch))
 	  return(CNIL);
 	/* more digits */
-	strungetc(c, &index);
+	__arc_strungetc(c, &index);
 	state = 4;
 	break;
       }
