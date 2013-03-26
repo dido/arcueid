@@ -355,6 +355,9 @@ extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
 extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
 				Rune ch, value *str);
 extern void __arc_append_cstring(arc *c, char *buf, value *ppstr);
+extern Rune __arc_strgetc(arc *c, value str, int *index);
+extern void __arc_strungetc(arc *c, int *index);
+
 
 /* Output */
 extern int arc_write(arc *c, value thr);
