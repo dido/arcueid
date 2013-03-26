@@ -208,6 +208,140 @@ START_TEST(test_compile_flonum)
 }
 END_TEST
 
+START_TEST(test_compile_gsym)
+{
+  value thr, cctx, clos, code;
+  value sym = arc_intern_cstr(c, "foo");
+
+  /* global symbol binding for foo */
+  arc_hash_insert(c, c->genv, sym, INT2FIX(31337));
+  thr = arc_mkthread(c);
+
+  COMPILE("foo");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(31337));
+}
+END_TEST
+
+/* simple case of an empty if, should just be nil */
+START_TEST(test_compile_if_empty)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("(if)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(NIL_P(TVALR(thr)));
+}
+END_TEST
+
+/* should compile (if x) to simply x */
+START_TEST(test_compile_if_x)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("(if 4)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(4));
+}
+END_TEST
+
+/* should compile a full if statement */
+START_TEST(test_compile_if_full)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("(if t 1 2)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  COMPILE("(if nil 1 2)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+}
+END_TEST
+
+/* should compile a partial if statement */
+START_TEST(test_compile_if_partial)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("(if t 1)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  COMPILE("(if nil 1)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(NIL_P(TVALR(thr)));
+}
+END_TEST
+
+/* should compile a compound if statement */
+START_TEST(test_compile_if_compound)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("(if t 1 t 3 t 5 6)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  COMPILE("(if nil 1 t 3 t 5 6)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(3));
+
+  COMPILE("(if nil 1 nil 3 t 5 6)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(5));
+
+  COMPILE("(if nil 1 nil 3 nil 5 6)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(6));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -231,6 +365,14 @@ int main(void)
 
   tcase_add_test(tc_compiler, test_compile_flonum);
   tcase_add_test(tc_compiler, test_compile_complex);
+
+  tcase_add_test(tc_compiler, test_compile_gsym);
+
+  tcase_add_test(tc_compiler, test_compile_if_empty);
+  tcase_add_test(tc_compiler, test_compile_if_x);
+  tcase_add_test(tc_compiler, test_compile_if_full);
+  tcase_add_test(tc_compiler, test_compile_if_partial);
+  tcase_add_test(tc_compiler, test_compile_if_compound);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
