@@ -349,6 +349,9 @@ extern int arc_callcc(arc *c, value thr);
 /* The reader */
 extern int arc_sread(arc *c, value thr);
 
+/* The compiler */
+extern int arc_compile(arc *c, value thr);
+
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
 				      value *str);
