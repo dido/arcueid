@@ -104,6 +104,7 @@ struct vmthread_t {
   value stack;			/* actual stack (a vector) */
   value *stkbase;		/* base pointer of the stack */
   value *stktop;		/* top of value stack */
+  value *stkfn;			/* start of stack for current function */
   union {
     value *ipptr;		/* instruction pointer */
     int aff_line;		/* line number in an AFF */
@@ -127,6 +128,7 @@ struct vmthread_t {
 #define TSP(t) (((struct vmthread_t *)REP(t))->spr)
 #define TSTACK(t) (((struct vmthread_t *)REP(t))->stack)
 #define TSBASE(t) (((struct vmthread_t *)REP(t))->stkbase)
+#define TSFN(t) (((struct vmthread_t *)REP(t))->stkfn)
 #define TSTOP(t) (((struct vmthread_t *)REP(t))->stktop)
 #define TIP(t) (((struct vmthread_t *)REP(t))->ip)
 #define TIPP(t) (((struct vmthread_t *)REP(t))->ip.ipptr)
@@ -194,5 +196,6 @@ extern value __arc_env2heap(arc *c, value thr, value env);
 extern void __arc_menv(arc *c, value thr, int n);
 
 extern void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv);
+extern value __arc_cont2heap(arc *c, value thr, value cont);
 
 #endif
