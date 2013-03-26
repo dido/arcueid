@@ -369,6 +369,38 @@ START_TEST(test_compile_apply)
 }
 END_TEST
 
+START_TEST(test_compile_fn_basic)
+{
+  value thr, cctx, clos, code;
+
+  thr = arc_mkthread(c);
+
+  COMPILE("((fn (a b c) a) 1 2 3)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  COMPILE("((fn (a b c) b) 1 2 3)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+
+  COMPILE("((fn (a b c) c) 1 2 3)");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
+  fail_unless(TVALR(thr) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -402,6 +434,8 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_if_compound);
 
   tcase_add_test(tc_compiler, test_compile_apply);
+
+  tcase_add_test(tc_compiler, test_compile_fn_basic);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
