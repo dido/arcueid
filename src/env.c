@@ -82,6 +82,7 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
   envstart = TSP(thr);
   CPUSH(thr, TENVR(thr));
   esofs = envstart - TSBASE(thr);
+  TSFN(thr) = TSP(thr);		/* start of stack after env */
   TENVR(thr) = ((value)((long)(esofs << 4) | ENV_FLAG));
 }
 
@@ -185,6 +186,10 @@ static value heap_env(arc *c, value thr, value env)
 value __arc_env2heap(arc *c, value thr, value env)
 {
   value nenv = env, oldenv;
+
+  /* Do nothing if the environment is already on the heap */
+  if (TYPE(env) == T_VECTOR)
+    return(env);
 
   env = CNIL;
   do {
