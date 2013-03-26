@@ -158,6 +158,7 @@ static void add_env_name(arc *c, value envframe, value name, value idx)
   arc_hash_insert(c, envframe, idx, name);
 }
 
+#define FIXINC(x) (x) = INT2FIX(FIX2INT(x) + 1)
 
 /* generate code to set up the new environment given the arguments. 
    After producing the code to generate the new environment, which
@@ -173,9 +174,8 @@ static void add_env_name(arc *c, value envframe, value name, value idx)
  */
 static AFFDEF(compile_args, args, ctx, env)
 {
-  AVAR(nframe, optargtbl, dsbtbl);
-  int regargs, dsbargs, optargs, idx, optargbegin, restarg;
-  value arg;
+  AVAR(nframe, envptr, jumpaddr);
+  AVAR(regargs, dsbargs, optargs, idx, optargbegin);
   AFBEGIN;
 
   /* just return the current environment if no args */
@@ -199,74 +199,82 @@ static AFFDEF(compile_args, args, ctx, env)
 
   /* Iterate over all of the args and obtain counts of each type of arg
      specified */
-  regargs = dsbargs = optargs = idx = optargbegin = restarg = 0;
+  AV(regargs) = AV(dsbargs) = AV(optargs) = AV(idx) = INT2FIX(0);
+  AV(optargbegin) = CNIL;
   AV(nframe) = arc_mkhash(c, ARC_HASHBITS);
-  AV(optargtbl) = arc_mkhash(c, ARC_HASHBITS);
-  AV(dsbtbl) = arc_mkhash(c, ARC_HASHBITS);
-  for (arg = AV(args);;) {
-    if (SYMBOL_P(car(arg))) {
-      if (optargbegin) {
+  AV(env) = cons(c, AV(nframe), AV(env));
+  /* save address of env instruction -- we will need to patch it later to
+     fill in the values, and we may even need to change it to an envr */
+  AV(envptr) = CCTX_VCPTR(AV(ctx));
+  arc_emit3(c, AV(ctx), ienv, INT2FIX(0), INT2FIX(0), INT2FIX(0));
+  for (;;) {
+    if (SYMBOL_P(car(AV(args)))) {
+      if (AV(optargbegin) == CTRUE) {
 	arc_err_cstrfmt(c, "non-optional arg found after optional args");
 	ARETURN(AV(env));
       }
       /* Ordinary symbol arg. */
-      add_env_name(c, AV(nframe), car(arg), INT2FIX(idx));
-      idx++;
-      regargs++;
-    } else if (CONS_P(car(AV(arg)))
-	       && car(car(AV(arg))) == ARC_BUILTIN(c, S_O)) {
+      add_env_name(c, AV(nframe), car(AV(args)), AV(idx));
+      FIXINC(AV(idx));
+      FIXINC(AV(regargs));
+    } else if (CONS_P(car(AV(args)))
+	       && car(car(AV(args))) == ARC_BUILTIN(c, S_O)) {
       value oarg, oargname, oargdef;
 
       /* Optional arg */
-      optargbegin = 1;
-      oarg = car(arg);
+      AV(optargbegin) = CTRUE;
+      oarg = car(AV(args));
       oargname = cadr(oarg);
-      if (!SYMBOL_P(oarg)) {
+      if (!SYMBOL_P(oargname)) {
 	arc_err_cstrfmt(c, "optional arg is not an identifier");
 	ARETURN(AV(env));
       }
       oargdef = (NIL_P(cddr(oarg))) ? CNIL : car(cddr(oarg));
-      add_env_name(c, AV(nframe), oargname, INT2FIX(idx));
-      idx++;
-      optargs++;
-      /* Optional arguments are put into a hash, keyed by the name of the
-	 argument mapping it to the default value of the argument. */
-      arc_hash_insert(c, AV(optargtbl), oargname, oargdef);
-      arg = cdr(arg);
-      continue;
-    } else if (CONS_P(car(arg))) {
+      AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+      /* jump if bound check -- if we are bound, then don't overwrite
+	 the optional value  */
+      arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
+      /* compile the optional argument's definition */
+      AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
+      arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
+		    FIX2INT(CCTX_VCPTR(AV(ctx))));
+      add_env_name(c, AV(nframe), cadr(car(AV(args))), AV(idx));
+      FIXINC(AV(idx));
+      FIXINC(AV(optargs));
+    } else if (CONS_P(car(AV(args)))) {
       /* Destructuring binds are put into a hash table, indexed
 	 by the initial index.  We generate instructions to
 	 unbind them later. */
-      arc_hash_insert(c, AV(dsbtbl), INT2FIX(idx), car(arg));
-      idx++;
-    } else if (NIL_P(car(arg))) {
+      FIXINC(AV(idx));
+    } else if (NIL_P(car(AV(args)))) {
       /* increment the index and the regular args without creating
 	 a name for the arg in that position if we see a nil. */
-      idx++;
-      regargs++;
+      FIXINC(AV(idx));
+      FIXINC(AV(regargs));
     } else {
       arc_err_cstrfmt(c, "invalid fn arg");
       ARETURN(AV(env));
     }
 
-    if (SYMBOL_P(cdr(arg))) {
+    if (SYMBOL_P(cdr(AV(args)))) {
       /* rest arg */
-      restarg = 1;
-      add_env_name(c, AV(nframe), cdr(arg), INT2FIX(idx));
-      idx++;
+      add_env_name(c, AV(nframe), cdr(AV(args)), AV(idx));
+      /* change to envr instr. */
+      VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr))) = INT2FIX(ienvr);
+      FIXINC(AV(idx));
       break;
-    } else if (NIL_P(cdr(arg))) {
+    } else if (NIL_P(cdr(AV(args)))) {
       /* done */
       break;
     }
-    arg = cdr(arg);
+    AV(args) = cdr(AV(args));
   }
 
-  /* XXX - we need to fix the number of destructuring bind arguments later */
-  arc_emit3(c, AV(ctx), (restarg) ? ienvr : ienv,
-	    INT2FIX(regargs), INT2FIX(0), INT2FIX(optargs));
-  AV(env) = cons(c, AV(nframe), AV(env));
+  /* adjust the env instruction based on the number of args we
+     actually have */
+  VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 1) = AV(regargs);
+  VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 2) = AV(dsbargs);
+  VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 3) = AV(optargs);
   ARETURN(AV(env));
   AFEND;
 }
