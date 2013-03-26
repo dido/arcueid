@@ -344,6 +344,7 @@ extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
+extern int arc_callcc(arc *c, value thr);
 
 /* The reader */
 extern int arc_sread(arc *c, value thr);
