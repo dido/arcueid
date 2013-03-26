@@ -29,7 +29,7 @@ static value compile_continuation(arc *c, value ctx, value cont)
 
 /* Find a literal lit in ctx.  If not found, create it and add it to the
    literals in the ctx. */
-static int find_literal(arc *c, value ctx, value lit)
+static value find_literal(arc *c, value ctx, value lit)
 {
   value lits;
 
@@ -38,12 +38,12 @@ static int find_literal(arc *c, value ctx, value lit)
   if (!NIL_P(lits)) {
     for (i=0; i<VECLEN(lits); i++) {
       if (arc_is2(c, VINDEX(lits, i), lit))
-	return(i);
+	return(INT2FIX(i));
     }
   }
 
   /* create the literal since it doesn't exist */
-  return(arc_literal(c, ctx, lit));
+  return(INT2FIX(arc_literal(c, ctx, lit)));
 }
 
 static value compile_literal(arc *c, value lit, value ctx, value cont)
@@ -89,7 +89,7 @@ static value compile_ident(arc *c, value ident, value ctx, value env,
 
   /* look for the variable in the environment first */
   if (find_var(c, ident, env, &level, &offset) == CTRUE) {
-    arc_emit2(c, ctx, ilde, level, offset);
+    arc_emit2(c, ctx, ilde, INT2FIX(level), INT2FIX(offset));
   } else {
     /* If the variable is not bound in the current environment, it's
        a global symbol. */
@@ -146,9 +146,165 @@ static AFFDEF(compile_if, args, ctx, env, cont)
      then portion (jumpaddr2) */
   arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr2)),
 		FIX2INT(CCTX_VCPTR(AV(ctx))));
-  /* XXX - this emits a ret instruction that is never reached
-     if this compiles a tail call.  If it isn't a tail call, then
-     compile_continuation does precisely nothing. */
+  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFEND;
+}
+AFFEND
+
+/* Add a new name with index idx to envframe. */
+static void add_env_name(arc *c, value envframe, value name, value idx)
+{
+  arc_hash_insert(c, envframe, name, idx);
+  arc_hash_insert(c, envframe, idx, name);
+}
+
+
+/* generate code to set up the new environment given the arguments. 
+   After producing the code to generate the new environment, which
+   generally consists of an env or envr instruction to create an
+   environment of the appropriate size, additional instructions are
+   added to fill in optional arguments and perform any destructuring
+   binds.  The function returns a new environment, which for the
+   compiler is a hash table of argument name to environment index
+   mappings, as expected by find_var.
+
+   This might be the most complicated single function in the whole
+   compiler!
+ */
+static AFFDEF(compile_args, args, ctx, env)
+{
+  AVAR(nframe, optargtbl, dsbtbl);
+  int regargs, dsbargs, optargs, idx, optargbegin, restarg;
+  value arg;
+  AFBEGIN;
+
+  /* just return the current environment if no args */
+  if (AV(args) == CNIL)
+    ARETURN(AV(env));
+
+  if (SYMBOL_P(AV(args))) {
+    /* if args is a single name, make an environment with a single
+       name and a list containing the name of the sole argument. */
+    AV(nframe) = arc_mkhash(c, ARC_HASHBITS);
+    add_env_name(c, AV(nframe), AV(args), INT2FIX(0));
+    arc_emit3(c, AV(ctx), ienvr, INT2FIX(0), INT2FIX(0), INT2FIX(0));
+    AV(env) = cons(c, AV(nframe), AV(env));
+    ARETURN(AV(env));
+  }
+
+  if (!CONS_P(AV(args))) {
+    arc_err_cstrfmt(c, "invalid fn arg");
+    ARETURN(AV(env));
+  }
+
+  /* Iterate over all of the args and obtain counts of each type of arg
+     specified */
+  regargs = dsbargs = optargs = idx = optargbegin = restarg = 0;
+  AV(nframe) = arc_mkhash(c, ARC_HASHBITS);
+  AV(optargtbl) = arc_mkhash(c, ARC_HASHBITS);
+  AV(dsbtbl) = arc_mkhash(c, ARC_HASHBITS);
+  for (arg = AV(args);;) {
+    if (SYMBOL_P(car(arg))) {
+      if (optargbegin) {
+	arc_err_cstrfmt(c, "non-optional arg found after optional args");
+	ARETURN(AV(env));
+      }
+      /* Ordinary symbol arg. */
+      add_env_name(c, AV(nframe), car(arg), INT2FIX(idx));
+      idx++;
+      regargs++;
+    } else if (CONS_P(car(AV(arg)))
+	       && car(car(AV(arg))) == ARC_BUILTIN(c, S_O)) {
+      value oarg, oargname, oargdef;
+
+      /* Optional arg */
+      optargbegin = 1;
+      oarg = car(arg);
+      oargname = cadr(oarg);
+      if (!SYMBOL_P(oarg)) {
+	arc_err_cstrfmt(c, "optional arg is not an identifier");
+	ARETURN(AV(env));
+      }
+      oargdef = (NIL_P(cddr(oarg))) ? CNIL : car(cddr(oarg));
+      add_env_name(c, AV(nframe), oargname, INT2FIX(idx));
+      idx++;
+      optargs++;
+      /* Optional arguments are put into a hash, keyed by the name of the
+	 argument mapping it to the default value of the argument. */
+      arc_hash_insert(c, AV(optargtbl), oargname, oargdef);
+      arg = cdr(arg);
+      continue;
+    } else if (CONS_P(car(arg))) {
+      /* Destructuring binds are put into a hash table, indexed
+	 by the initial index.  We generate instructions to
+	 unbind them later. */
+      arc_hash_insert(c, AV(dsbtbl), INT2FIX(idx), car(arg));
+      idx++;
+    } else if (NIL_P(car(arg))) {
+      /* increment the index and the regular args without creating
+	 a name for the arg in that position if we see a nil. */
+      idx++;
+      regargs++;
+    } else {
+      arc_err_cstrfmt(c, "invalid fn arg");
+      ARETURN(AV(env));
+    }
+
+    if (SYMBOL_P(cdr(arg))) {
+      /* rest arg */
+      restarg = 1;
+      add_env_name(c, AV(nframe), cdr(arg), INT2FIX(idx));
+      idx++;
+      break;
+    } else if (NIL_P(cdr(arg))) {
+      /* done */
+      break;
+    }
+    arg = cdr(arg);
+  }
+
+  /* XXX - we need to fix the number of destructuring bind arguments later */
+  arc_emit3(c, AV(ctx), (restarg) ? ienvr : ienv,
+	    INT2FIX(regargs), INT2FIX(0), INT2FIX(optargs));
+  AV(env) = cons(c, AV(nframe), AV(env));
+  ARETURN(AV(env));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(compile_fn, expr, ctx, env, cont)
+{
+  AVAR(args, body, nctx, nenv, newcode, stmts);
+  AFBEGIN;
+
+  AV(stmts) = INT2FIX(0);
+  AV(args) = car(AV(expr));
+  AV(body) = cdr(AV(expr));
+  AV(nctx) = arc_mkcctx(c);
+  AFCALL(arc_mkaff(c, compile_args, CNIL),
+	 AV(args), AV(nctx), AV(env));
+  AV(nenv) = AFCRV;
+  /* the body of a fn works as an implicit do/progn */
+  for (; AV(body); AV(body) = cdr(AV(body))) {
+    /* The last statement in the body gets compiled with the 
+       continuation flag set true. */
+    AFCALL(arc_mkaff(c, arc_compile, CNIL),
+	   car(AV(body)), AV(nctx), AV(nenv),
+	   (NIL_P(cdr(AV(body)))) ? CTRUE : CNIL);
+    AV(stmts) = INT2FIX(FIX2INT(AV(stmts)) + 1);
+  }
+  /* if we have an empty list of statements add a nil instruction */
+  if (AV(stmts) == INT2FIX(0)) {
+    arc_emit(c, AV(nctx), inil);
+    arc_emit(c, AV(nctx), iret);
+  }
+  /* convert the new context into a code object and generate an
+     instruction in the present context to load it as a literal,
+     then create a closure using the code object and the current
+     environment. */
+  AV(newcode) = arc_cctx2code(c, AV(nctx));
+  arc_emit1(c, AV(ctx), ildl, find_literal(c, AV(ctx), AV(newcode)));
+  arc_emit(c, AV(ctx), icls);
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
   AFEND;
 }
@@ -158,6 +314,8 @@ static int (*spform(arc *c, value ident))(arc *, value)
 {
   if (ARC_BUILTIN(c, S_IF) == ident)
     return(compile_if);
+  if (ARC_BUILTIN(c, S_FN) == ident)
+    return(compile_fn);
   return(NULL);
 }
 
@@ -224,7 +382,11 @@ static AFFDEF(compile_apply, expr, ctx, env, cont)
 		  FIX2INT(CCTX_VCPTR(AV(ctx))));
   }
   /* done */
-  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  /* XXX - this emits a ret instruction that is never reached
+     if this compiles a tail call.  If it isn't a tail call, then
+     compile_continuation does precisely nothing. */
+  /* ARETURN(compile_continuation(c, AV(ctx), AV(cont))); */
+  ARETURN(AV(ctx));
   AFEND;
 }
 AFFEND
