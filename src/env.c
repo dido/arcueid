@@ -143,8 +143,13 @@ value *__arc_getenv(arc *c, value thr, int depth, int index)
 void __arc_menv(arc *c, value thr, int n)
 {
   value *src, *dest;
-  value parentenv = nextenv(c, thr, TENVR(thr));
+  value parentenv ;
 
+  /* do nothing if we have no env */
+  if (NIL_P(TENVR(thr)))
+    return;
+
+  parentenv = nextenv(c, thr, TENVR(thr));
   if (TYPE(TENVR(thr)) == T_ENV) {
     /* source of our copy is the last value pushed on the stack */
     src = TSP(thr)+1;
