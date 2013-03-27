@@ -160,6 +160,83 @@ static void add_env_name(arc *c, value envframe, value name, value idx)
 
 #define FIXINC(x) (x) = INT2FIX(FIX2INT(x) + 1)
 
+/* To perform a destructuring bind, we begin by assuming that the
+   value to be unbound is in the value argument.  We traverse the
+   destructuring bind argument (which can be considered a binary
+   tree).  During the traversal, there are several possibilities:
+
+   1. We find a symbol.  In this case, we create an iste instruction
+      that stores the value thus unbound to get there.
+   2. We find a cons cell.  We decide to visit the car and cdr of the
+      cell if one is not null.  In any case, we push the argument onto
+      the stack (so we can pop it again later) generate a car or cdr
+      instruction, and then call ourselves recursively with it.
+
+*/
+static AFFDEF(destructure, arg, ctx, env, idx)
+{
+  AVAR(frame, jumpaddr);
+  AFBEGIN;
+
+  AV(frame) = car(AV(env));
+  if (TYPE(AV(arg)) == T_SYMBOL) {
+    arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
+    add_env_name(c, AV(frame), AV(arg), AV(idx));
+    FIXINC(AV(idx));
+    ARETURN(AV(idx));
+  }
+
+  if (TYPE(AV(arg)) != T_CONS) {
+    arc_err_cstrfmt(c, "invalid fn arg");
+    ARETURN(AV(idx));
+  }
+
+  /* If we have an optional argument, we have to do some contortions */
+  if (car(AV(arg)) == ARC_BUILTIN(c, S_O) && !NIL_P(cdr(AV(arg))) &&
+      !NIL_P(cadr(AV(arg)))) {
+    value oargname, oargdef;
+    oargname = cadr(AV(arg));
+    if (!SYMBOL_P(oargname)) {
+	arc_err_cstrfmt(c, "optional arg is not an identifier");
+	ARETURN(AV(idx));
+    }
+    oargdef = (NIL_P(cddr(AV(arg)))) ? CNIL : car(cddr(AV(arg)));
+    AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+    arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
+    /* compile the optional argument's definition */
+    AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
+    arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
+		    FIX2INT(CCTX_VCPTR(AV(ctx))));
+    arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
+    add_env_name(c, AV(frame), cadr(AV(arg)), AV(idx));
+    FIXINC(AV(idx));
+    ARETURN(AV(idx));
+  }
+
+  if (!NIL_P(car(AV(arg))) && !NIL_P(cdr(AV(arg)))) {
+    arc_emit(c, AV(ctx), ipush);
+    arc_emit(c, AV(ctx), idcar);
+    AFCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
+	   AV(env), AV(idx));
+    AV(idx) = AFCRV;
+    arc_emit(c, AV(ctx), ipop);
+    arc_emit(c, AV(ctx), idcdr);
+    AFTCALL(arc_mkaff(c, destructure, CNIL), cdr(AV(arg)), AV(ctx),
+	    AV(env), AV(idx));
+  } else if (!NIL_P(car(AV(arg))) && NIL_P(cdr(AV(arg)))) {
+    arc_emit(c, AV(ctx), idcar);
+    AFTCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
+	   AV(env), AV(idx));
+  } else if (NIL_P(car(AV(arg))) && !NIL_P(cdr(AV(arg)))) {
+    arc_emit(c, AV(ctx), idcdr);
+    AFTCALL(arc_mkaff(c, destructure, CNIL), cdr(AV(arg)), AV(ctx),
+	    AV(env), AV(idx));
+  }
+  ARETURN(AV(idx));
+  AFEND;
+}
+AFFEND
+
 /* generate code to set up the new environment given the arguments. 
    After producing the code to generate the new environment, which
    generally consists of an env or envr instruction to create an
@@ -174,7 +251,7 @@ static void add_env_name(arc *c, value envframe, value name, value idx)
  */
 static AFFDEF(compile_args, args, ctx, env)
 {
-  AVAR(nframe, envptr, jumpaddr);
+  AVAR(nframe, envptr, jumpaddr, dsb, oldidx);
   AVAR(regargs, dsbargs, optargs, idx, optargbegin);
   AFBEGIN;
 
@@ -200,7 +277,7 @@ static AFFDEF(compile_args, args, ctx, env)
   /* Iterate over all of the args and obtain counts of each type of arg
      specified */
   AV(regargs) = AV(dsbargs) = AV(optargs) = AV(idx) = INT2FIX(0);
-  AV(optargbegin) = CNIL;
+  AV(optargbegin) = AV(dsb) = CNIL;
   AV(nframe) = arc_mkhash(c, ARC_HASHBITS);
   AV(env) = cons(c, AV(nframe), AV(env));
   /* save address of env instruction -- we will need to patch it later to
@@ -244,10 +321,12 @@ static AFFDEF(compile_args, args, ctx, env)
       FIXINC(AV(idx));
       FIXINC(AV(optargs));
     } else if (CONS_P(car(AV(args)))) {
-      /* Destructuring binds are put into a hash table, indexed
-	 by the initial index.  We generate instructions to
-	 unbind them later. */
+      /* We have a destructuring bind argument.  In this case, we have
+	 to store the index of the bind first.  We will generate
+	 instructions to perform unbinding later. */
+      AV(dsb) = cons(c, cons(c, car(AV(args)), AV(idx)), AV(dsb));
       FIXINC(AV(idx));
+      FIXINC(AV(regargs));
     } else if (NIL_P(car(AV(args)))) {
       /* increment the index and the regular args without creating
 	 a name for the arg in that position if we see a nil. */
@@ -271,6 +350,22 @@ static AFFDEF(compile_args, args, ctx, env)
     }
     AV(args) = cdr(AV(args));
   }
+
+  AV(oldidx) = AV(idx);
+  while (!NIL_P(AV(dsb))) {
+    value elem = car(AV(dsb));
+
+    /* To begin a destructuring bind, we first load the value of the
+       argument to be destructured ... */
+    arc_emit2(c, AV(ctx), ilde, FIX2INT(0), cdr(elem));
+    /* ... then we generate car and cdr instructions to reach each of
+       the names to which we do the destructuring. */
+    AFCALL(arc_mkaff(c, destructure, CNIL),
+	   car(elem), AV(ctx), AV(env), AV(idx));
+    AV(idx) = AFCRV;
+    AV(dsb) = cdr(AV(dsb));
+  }
+  AV(dsbargs) = INT2FIX(FIX2INT(AV(idx)) - FIX2INT(AV(oldidx)));
 
   /* adjust the env instruction based on the number of args we
      actually have */
@@ -320,16 +415,29 @@ static AFFDEF(compile_fn, expr, ctx, env, cont)
 }
 AFFEND
 
+static AFFDEF(compile_quote, expr, ctx, env, cont)
+{
+  AFBEGIN;
+  (void)env;	    /* not used */
+  /* compiling quotes need not be more complex... */
+  arc_emit1(c, AV(ctx), ildl, find_literal(c, AV(ctx), car(AV(expr))));
+  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFEND;
+}
+AFFEND
+
 static int (*spform(arc *c, value ident))(arc *, value)
 {
   if (ARC_BUILTIN(c, S_IF) == ident)
     return(compile_if);
   if (ARC_BUILTIN(c, S_FN) == ident)
     return(compile_fn);
+  if (ARC_BUILTIN(c, S_QUOTE) == ident)
+    return(compile_quote);
   return(NULL);
 }
 
-static int (*inline_func(arc *c, value ident))(arc *, value)
+static int (*inline_func(arc *c, value ident))(arc *, value)\
 {
   return(NULL);
 }
