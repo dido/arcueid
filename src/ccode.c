@@ -147,6 +147,33 @@ int __arc_affapply(arc *c, value thr, value cont, value func, ...)
   return(TR_FNAPP);
 }
 
+int __arc_affapply2(arc *c, value thr, value cont, value func, value argv)
+{
+  int argc=0;
+
+  /* Add the continuation to the continuation register if a continuation
+     was passed.  If it is null, then the current continuation is used,
+     as it is a tail call. */
+  if (!NIL_P(cont))
+    TCONR(thr) = cont;
+  /* Push the arguments onto the stack. */
+  while (!NIL_P(argv)) {
+    argc++;
+    CPUSH(thr, car(argv));
+    argv = cdr(argv);
+  }
+
+  /* set the argument count */
+  TARGC(thr) = argc;
+  /* set the value register to the function to be called */
+  TVALR(thr) = func;
+  /* If this is a tail call, overwrite the current environment */
+  if (NIL_P(cont))
+    __arc_menv(c, thr, argc);
+  return(TR_FNAPP);
+}
+
+
 int __arc_affyield(arc *c, value thr, int line)
 {
   TIP(thr).aff_line = line;
