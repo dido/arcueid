@@ -180,6 +180,11 @@ static AFFDEF(destructure, arg, ctx, env, idx)
 
   AV(frame) = car(AV(env));
   if (TYPE(AV(arg)) == T_SYMBOL) {
+    AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+    arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
+    arc_emit(c, AV(ctx), inil);
+    arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
+		    FIX2INT(CCTX_VCPTR(AV(ctx))));
     arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
     add_env_name(c, AV(frame), AV(arg), AV(idx));
     FIXINC(AV(idx));
