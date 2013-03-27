@@ -622,6 +622,53 @@ START_TEST(test_compile_inline_cdr)
 }
 END_TEST
 
+START_TEST(test_compile_inline_plus)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(+ 1 2 3 4 5 6 7)");
+  fail_unless(ret == INT2FIX(28));
+}
+END_TEST
+
+START_TEST(test_compile_inline_minus)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(- 1)");
+  fail_unless(ret == INT2FIX(-1));
+
+  TEST("(- 3 2 1)");
+  fail_unless(ret == INT2FIX(0));
+}
+END_TEST
+
+START_TEST(test_compile_inline_times)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(* 1 2 3 4 5 6 7)");
+  fail_unless(ret == INT2FIX(5040));
+}
+END_TEST
+
+START_TEST(test_compile_inline_div)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(/ 2.0)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(fabs(REPFLO(ret) - 0.5) < 1e-6);
+
+  TEST("(/ 8 2 2)");
+  fail_unless(FIX2INT(ret) == 2);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -661,6 +708,10 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_inline_cons);
   tcase_add_test(tc_compiler, test_compile_inline_car);
   tcase_add_test(tc_compiler, test_compile_inline_cdr);
+  tcase_add_test(tc_compiler, test_compile_inline_plus);
+  tcase_add_test(tc_compiler, test_compile_inline_times);
+  tcase_add_test(tc_compiler, test_compile_inline_minus);
+  tcase_add_test(tc_compiler, test_compile_inline_div);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
