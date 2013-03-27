@@ -211,11 +211,190 @@ typefn_t *__arc_typefn(arc *c, value v)
   /* For tagged types (custom types), the type descriptor hash should
      contain a type descriptor wrapped in a table. */
   typedesc = arc_hash_lookup(c, c->typedesc, car(v));
+  /* no type descriptor defaults to the type descriptor of a cons */
   if (typedesc == CNIL)
-    return(NULL);		/* XXX should this be an error? */
+    return(c->typefns[T_CONS]);
   return((typefn_t *)REP(typedesc));
 }
 
+value arc_type(arc *c, value obj)
+{
+  switch (TYPE(obj)) {
+  case T_NIL:
+  case T_TRUE:
+  case T_SYMBOL:
+    return(ARC_BUILTIN(c, S_SYM));
+    break;
+  case T_FIXNUM:
+    return(ARC_BUILTIN(c, S_FIXNUM));
+    break;
+  case T_BIGNUM:
+    return(ARC_BUILTIN(c, S_BIGNUM));
+    break;
+  case T_FLONUM:
+    return(ARC_BUILTIN(c, S_FLONUM));
+    break;
+  case T_RATIONAL:
+    return(ARC_BUILTIN(c, S_RATIONAL));
+    break;
+  case T_COMPLEX:
+    return(ARC_BUILTIN(c, S_COMPLEX));
+    break;
+  case T_CHAR:
+    return(ARC_BUILTIN(c, S_CHAR));
+    break;
+  case T_STRING:
+    return(ARC_BUILTIN(c, S_STRING));
+    break;
+  case T_CONS:
+    return(ARC_BUILTIN(c, S_CONS));
+    break;
+  case T_TABLE:
+    return(ARC_BUILTIN(c, S_TABLE));
+    break;
+  case T_TAGGED:
+    /* A tagged object created by annotate has as its car the type
+       as a symbol */
+    return(car(obj));
+    break;
+  case T_INPORT:
+    return(ARC_BUILTIN(c, S_INPUT));
+    break;
+  case T_OUTPORT:
+    return(ARC_BUILTIN(c, S_OUTPUT));
+    break;
+  case T_EXCEPTION:
+    return(ARC_BUILTIN(c, S_EXCEPTION));
+    break;
+  case T_THREAD:
+    return(ARC_BUILTIN(c, S_THREAD));
+    break;
+  case T_VECTOR:
+    return(ARC_BUILTIN(c, S_VECTOR));
+    break;
+  case T_CONT:
+    return(ARC_BUILTIN(c, S_CONTINUATION));
+    break;
+  case T_CLOS:
+    return(ARC_BUILTIN(c, S_FN));
+    break;
+  case T_CODE:
+    return(ARC_BUILTIN(c, S_CODE));
+    break;
+  case T_ENV:
+    return(ARC_BUILTIN(c, S_ENVIRONMENT));
+    break;
+  case T_CCODE:
+    return(ARC_BUILTIN(c, S_CCODE));
+    break;
+  case T_CUSTOM:
+    return(ARC_BUILTIN(c, S_CUSTOM));
+    break;
+  case T_CHAN:
+    return(ARC_BUILTIN(c, S_CHAN));
+    break;
+  default:
+    break;
+  }
+  return(ARC_BUILTIN(c, S_UNKNOWN));
+}
+
+/* Arc3-compatible type */
+value arc_type_compat(arc *c, value obj)
+{
+  switch (TYPE(obj)) {
+  case T_NIL:
+  case T_TRUE:
+  case T_SYMBOL:
+    return(ARC_BUILTIN(c, S_SYM));
+    break;
+  case T_FIXNUM:
+  case T_BIGNUM:
+    return(ARC_BUILTIN(c, S_INT));
+    break;
+  case T_FLONUM:
+  case T_RATIONAL:
+  case T_COMPLEX:
+    return(ARC_BUILTIN(c, S_NUM));
+    break;
+  case T_CHAR:
+    return(ARC_BUILTIN(c, S_CHAR));
+    break;
+  case T_STRING:
+    return(ARC_BUILTIN(c, S_STRING));
+    break;
+  case T_CONS:
+    return(ARC_BUILTIN(c, S_CONS));
+    break;
+  case T_TABLE:
+    return(ARC_BUILTIN(c, S_TABLE));
+    break;
+  case T_TAGGED:
+    /* A tagged object created by annotate has as its car the type
+       as a symbol */
+    return(car(obj));
+    break;
+  case T_INPORT:
+    return(ARC_BUILTIN(c, S_INPUT));
+    break;
+  case T_OUTPORT:
+    return(ARC_BUILTIN(c, S_OUTPUT));
+    break;
+  case T_EXCEPTION:
+    return(ARC_BUILTIN(c, S_EXCEPTION));
+    break;
+  case T_THREAD:
+    return(ARC_BUILTIN(c, S_THREAD));
+    break;
+  case T_VECTOR:
+    return(ARC_BUILTIN(c, S_VECTOR));
+    break;
+  case T_CONT:
+    return(ARC_BUILTIN(c, S_CONTINUATION));
+    break;
+  case T_CLOS:
+    return(ARC_BUILTIN(c, S_FN));
+    break;
+  case T_CODE:
+    return(ARC_BUILTIN(c, S_FN));
+    break;
+  case T_ENV:
+    return(ARC_BUILTIN(c, S_ENVIRONMENT));
+    break;
+  case T_CCODE:
+    return(ARC_BUILTIN(c, S_FN));
+    break;
+  case T_CUSTOM:
+    return(ARC_BUILTIN(c, S_CUSTOM));
+    break;
+  case T_CHAN:
+    return(ARC_BUILTIN(c, S_CHAN));
+    break;
+  default:
+    break;
+  }
+  return(ARC_BUILTIN(c, S_UNKNOWN));
+}
+
+value arc_rep(arc *c, value obj)
+{
+  if (TYPE(obj) != T_TAGGED)
+    return(obj);
+  return(cdr(obj));
+}
+
+value arc_annotate(arc *c, value typesym, value obj)
+{
+  value ann;
+
+  /* Do not re-tag something with the same typesym */
+  if (TYPE(obj) == T_TAGGED && arc_is2(c, car(obj), typesym) == CTRUE)
+    return(obj);
+
+  ann = cons(c, typesym, obj);
+  ((struct cell *)ann)->_type = T_TAGGED;
+  return(ann);
+}
 
 extern typefn_t __arc_fixnum_typefn__;
 extern typefn_t __arc_flonum_typefn__;
