@@ -287,8 +287,12 @@ extern value arc_hash_insert(arc *c, value hash, value key, value val);
 extern value arc_hash_delete(arc *c, value hash, value key);
 
 /* Type handling functions */
-typefn_t *__arc_typefn(arc *c, value v);
-void __arc_register_typefn(arc *c, enum arc_types type, typefn_t *tfn);
+extern typefn_t *__arc_typefn(arc *c, value v);
+extern void __arc_register_typefn(arc *c, enum arc_types type, typefn_t *tfn);
+extern value arc_type(arc *c, value obj);
+extern value arc_type_compat(arc *c, value obj);
+extern value arc_rep(arc *c, value obj);
+extern value arc_annotate(arc *c, value typesym, value obj);
 
 /* Thread definitions and functions */
 extern value arc_mkthread(arc *c);
@@ -308,6 +312,8 @@ extern value arc_mkccode(arc *c, int argc, value (*cfunc)(arc *, ...),
 			 value name);
 extern value arc_mkaff(arc *c, int (*aff)(arc *, value), value name);
 extern int __arc_affapply(arc *c, value thr, value ccont, value func, ...);
+extern int __arc_affapply2(arc *c, value thr, value ccont, value func,
+			   value args);
 extern int __arc_affyield(arc *c, value thr, int line);
 extern int __arc_affiowait(arc *c, value thr, int line, int fd);
 extern void __arc_affenv(arc *c, value thr, int prevsize, int extrasize);
@@ -463,6 +469,12 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 #define AFCALL(func, ...)						\
   do {									\
     return(__arc_affapply(c, thr, __arc_mkcont(c, thr, __LINE__), func, __VA_ARGS__, CLASTARG)); case __LINE__:; \
+  } while (0)
+
+/* call giving args as a list */
+#define AFCALL2(func, argv)						\
+  do {									\
+    return(__arc_affapply2(c, thr, __arc_mkcont(c, thr, __LINE__), func, argv)); case __LINE__:; \
   } while (0)
 
 /* Tail call -- this will pass the return value of the function called
