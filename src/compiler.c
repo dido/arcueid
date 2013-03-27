@@ -20,6 +20,49 @@
 #include "builtins.h"
 #include "vmengine.h"
 
+/* Macro expansion.  This will look for any macro applications in e
+   and attempt to expand them.
+
+   This current implementation can only expand macros which are defined
+   by global symbols.  I don't know if you should be able to define a
+   macro in a local environment or even create an anonymous macro and
+   apply it directly, e.g. (+ 10 ((annotate 'mac (fn () (list '+ 1
+   2))).
+
+   Note that neither reference Arc nor Anarki can handle this case, as
+   it seems that macro definitions should be known at read (i.e. compile)
+   time, when macros are expanded.  I don't know that anonymous or local
+   macros are particularly useful either.
+
+   Also, I don't see any other atomic types that can evaluate to
+   macros, so the eval inside the reference Arc implementation becomes
+   nothing but a lookup in the global symbol table here.
+*/
+static AFFDEF(macex, e, once)
+{
+  AVAR(op, expansion);
+  AFBEGIN;
+  do {
+    if (!CONS_P(AV(e)))
+      ARETURN(AV(e));
+    AV(op) = car(AV(e));
+    /* I don't know if it's possible to make any other type of atom evaluate
+       to a macro. */
+    if (!SYMBOL_P(AV(op)))
+      ARETURN(AV(e));
+    /* Look up the symbol's binding in the global symbol table */
+    while (arc_type(c, AV(op) = arc_hash_lookup(c, c->genv, AV(op))) == T_SYMBOL)
+      ;
+    if (arc_type(c, AV(op)) != ARC_BUILTIN(c, S_MAC))
+      ARETURN(AV(e));		/* not a macro */
+    AFCALL2(arc_rep(c, AV(op)), cdr(AV(e)));
+    AV(expansion) = AFCRV;
+    AV(e) = AV(expansion);
+  } while (AV(once) == CTRUE);
+  AFEND;
+}
+AFFEND
+
 static value compile_continuation(arc *c, value ctx, value cont)
 {
   if (!NIL_P(cont))
@@ -431,6 +474,82 @@ static AFFDEF(compile_quote, expr, ctx, env, cont)
 }
 AFFEND
 
+static AFFDEF(qquote, expr, ctx, env)
+{
+  AFBEGIN;
+  if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE)) {
+    AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(expr)), AV(ctx),
+	   AV(env), CNIL);
+    /* no splice */
+    ARETURN(CNIL);
+  }
+
+  if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP)) {
+    AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(expr)), AV(ctx),
+	   AV(env), CNIL);
+    /* splice */
+    ARETURN(CTRUE);
+  }
+
+  if (CONS_P(AV(expr))) {
+    /* If we see a cons, we need to recurse into the cdr of the
+       argument first, generating the code for that, then push
+       the result, then generate the code for the car of the
+       argument, and then generate code to cons them together,
+       or splice them together if the return so indicates. */
+    AFCALL(arc_mkaff(c, qquote, CNIL), cdr(AV(expr)), AV(ctx), AV(env));
+    arc_emit(c, AV(ctx), ipush);
+    AFCALL(arc_mkaff(c, qquote, CNIL), car(AV(expr)), AV(ctx), AV(env));
+    arc_emit(c, AV(ctx), (NIL_P(AFCRV)) ? iconsr : ispl);
+    ARETURN(CNIL);
+  }
+
+  compile_literal(c, AV(expr), AV(ctx), CNIL);
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(compile_quasiquote, expr, ctx, env, cont)
+{
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, qquote, CNIL), car(AV(expr)), AV(ctx), AV(env));
+  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(compile_assign, expr, ctx, env, cont)
+{
+  int frameno, idx;
+  AVAR(a, val, envvar);
+  AFBEGIN;
+  while (AV(expr) != CNIL) {
+    AFCALL(arc_mkaff(c, macex, CNIL), car(AV(expr)), CTRUE);
+    AV(a) = AFCRV;
+    AV(val) = cadr(AV(expr));
+    if (AV(a) == CNIL) {
+      arc_err_cstrfmt(c, "Can't rebind nil");
+    } else if (AV(a) == ARC_BUILTIN(c, S_T)) {
+      arc_err_cstrfmt(c, "Can't rebind t");
+    } else {
+      AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(val), AV(ctx),
+	     AV(env), CNIL);
+      AV(envvar) = find_var(c, AV(a), AV(env), &frameno, &idx);
+      if (AV(envvar) == CTRUE) {
+	arc_emit2(c, AV(ctx), iste, frameno, idx);
+      } else {
+	/* global symbol */
+	arc_emit1(c, AV(ctx), istg, find_literal(c, AV(ctx), AV(a)));
+      }
+    }
+    AV(expr) = cddr(AV(expr));
+  }
+  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFEND;
+}
+AFFEND
+
 static int (*spform(arc *c, value ident))(arc *, value)
 {
   if (ARC_BUILTIN(c, S_IF) == ident)
@@ -439,6 +558,10 @@ static int (*spform(arc *c, value ident))(arc *, value)
     return(compile_fn);
   if (ARC_BUILTIN(c, S_QUOTE) == ident)
     return(compile_quote);
+  if (ARC_BUILTIN(c, S_QQUOTE) == ident)
+    return(compile_quasiquote);
+  if (ARC_BUILTIN(c, S_ASSIGN) == ident)
+    return(compile_assign);
   return(NULL);
 }
 
@@ -554,10 +677,8 @@ AFFDEF(arc_compile, nexpr, ctx, env, cont)
   AVAR(expr, ssx);
   AFBEGIN;
 
-  /* AFCALL(arc_mkaff(c, macex, CNIL), AV(nexpr), CTRUE);
-     AV(expr) = AFCRV;
-  */
-  AV(expr) = AV(nexpr);
+  AFCALL(arc_mkaff(c, macex, CNIL), AV(nexpr), CTRUE);
+  AV(expr) = AFCRV;
   if (AV(expr) == ARC_BUILTIN(c, S_T) || AV(expr) == ARC_BUILTIN(c, S_NIL)
       || NIL_P(AV(expr)) || AV(expr) == CTRUE
       || TYPE(AV(expr)) == T_CHAR || TYPE(AV(expr)) == T_STRING
