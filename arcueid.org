@@ -102,7 +102,7 @@ notice and this notice are preserved.
      - [X] Rational
      - [X] Complex
    - [X] Atstrings
-** TODO Arc compiler [2/5]
+** TODO Arc compiler [3/5]
    - [X] Literal expressions [9/9]
      - [X] nil
      - [X] true (t)
@@ -116,7 +116,7 @@ notice and this notice are preserved.
    - [X] Symbols [2/2]
      - [X] Environment symbols
      - [X] Global symbols
-   - [-] Lists [2/3]
+   - [X] Lists [3/3]
      - [X] Special forms [5/5]
        - [X] if
        - [X] fn [5/5]
@@ -128,15 +128,14 @@ notice and this notice are preserved.
        - [X] quote
        - [X] quasiquote
        - [X] assign
-     - [-] Inline functions [3/8]
+     - [X] Inline functions [7/7]
        - [X] cons
        - [X] car
        - [X] cdr
-       - [ ] is
-       - [ ] +
-       - [ ] -
-       - [ ] *
-       - [ ] /
+       - [X] +
+       - [X] -
+       - [X] *
+       - [X] /
      - [X] Function applications
    - [ ] Macros
    - [ ] Special Syntax
