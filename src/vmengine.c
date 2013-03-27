@@ -412,7 +412,27 @@ int __arc_vmengine(arc *c, value thr)
       else
 	TVALR(thr) = cdr(TVALR(thr));
       NEXT;
-
+    INST(ispl):
+      {
+	value list = TVALR(thr), nlist = CPOP(thr);
+	/* Find the first cons in list whose cdr is not itself a cons.
+	   Join the list from the stack to it. */
+	if (list == CNIL) {
+	  TVALR(thr) = nlist;
+	} else {
+	  for (;;) {
+	    if (!CONS_P(cdr(list))) {
+	      if (cdr(list) == CNIL)
+		scdr(list, nlist);
+	      else
+		arc_err_cstrfmt(c, "splicing improper list");
+	      break;
+	    }
+	    list = cdr(list);
+	  }
+	}
+      }
+      NEXT;
 #ifndef HAVE_THREADED_INTERPRETER
     default:
 #else
