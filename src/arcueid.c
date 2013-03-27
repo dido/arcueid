@@ -446,6 +446,50 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_CLOS] = &__arc_clos_typefn__;
 }
 
+
+static struct {
+  char *fname;
+  int argc;
+  void *fnptr;
+} fntable[] = {
+  { "type", 1, arc_type_compat },
+  { "atype", 1, arc_type },
+  { "annotate", 2, arc_annotate },
+  { "rep", 1, arc_rep },
+
+  {NULL, 0, NULL }
+};
+
+value arc_bindsym(arc *c, value sym, value binding)
+{
+  return(arc_hash_insert(c, c->genv, sym, binding));
+}
+
+value arc_bindcstr(arc *c, const char *csym, value binding)
+{
+  value sym = arc_intern_cstr(c, csym);
+  return(arc_bindsym(c, sym, binding));
+}
+
+void arc_init_builtins(arc *c)
+{
+  int i;
+  value cfunc;
+
+  for (i=0; fntable[i].fname != NULL; i++) {
+    value name = arc_intern_cstr(c, fntable[i].fname);
+    if (fntable[i].argc == -2)
+      cfunc = arc_mkaff(c, fntable[i].fnptr, name);
+    else
+      cfunc = arc_mkccode(c, fntable[i].argc, fntable[i].fnptr, name);
+    arc_bindsym(c, name, cfunc);
+  }
+
+  arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
+  arc_bindsym(c, ARC_BUILTIN(c, S_T), CTRUE);
+  arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
+}
+
 void arc_init(arc *c)
 {
   /* Initialise memory manager first */
@@ -468,4 +512,8 @@ void arc_init(arc *c)
 
   /* Initialise I/O subsystem */
   arc_init_io(c);
+
+  /* Initialise builtin functions */
+  arc_init_builtins(c);
+
 }
