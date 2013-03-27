@@ -396,6 +396,23 @@ int __arc_vmengine(arc *c, value thr)
 	TARGC(thr) = n;
       }
       NEXT;
+    INST(idcar):
+      if (NIL_P(TVALR(thr)) || TVALR(thr) == CUNBOUND)
+	TVALR(thr) = CUNBOUND;
+      else if (TYPE(TVALR(thr)) != T_CONS)
+	arc_err_cstrfmt(c, "can't take car of value");
+      else
+	TVALR(thr) = car(TVALR(thr));
+      NEXT;
+    INST(idcdr):
+      if (NIL_P(TVALR(thr)) || TVALR(thr) == CUNBOUND)
+	TVALR(thr) = CUNBOUND;
+      else if (TYPE(TVALR(thr)) != T_CONS)
+	arc_err_cstrfmt(c, "can't take cdr of value");
+      else
+	TVALR(thr) = cdr(TVALR(thr));
+      NEXT;
+
 #ifndef HAVE_THREADED_INTERPRETER
     default:
 #else
