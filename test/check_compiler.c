@@ -551,6 +551,23 @@ START_TEST(test_compile_quote)
 }
 END_TEST
 
+START_TEST(test_compile_assign)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(assign leet 1337 eleet 31337)");
+  ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "leet"));
+  fail_unless(ret == INT2FIX(1337));
+  ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "eleet"));
+  fail_unless(ret == INT2FIX(31337));
+
+  /* local variable assignment */
+  TEST("((fn (x y) (assign x 12345) x) 54321 6789)");
+  fail_unless(ret == INT2FIX(12345));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -590,6 +607,8 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_fn_dsb);
 
   tcase_add_test(tc_compiler, test_compile_quote);
+
+  tcase_add_test(tc_compiler, test_compile_assign);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
