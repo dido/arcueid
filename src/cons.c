@@ -17,6 +17,7 @@
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #include "arcueid.h"
+#include "arith.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -199,6 +200,18 @@ value arc_list_append(value list1, value val)
     list = cdr(list);
   scdr(list, val);
   return(list1);
+}
+
+value arc_list_length(arc *c, value list)
+{
+  value n;
+
+  n = INT2FIX(0);
+  while (list != CNIL) {
+    list = cdr(list);
+    n = __arc_add2(c, n, INT2FIX(1));
+  }
+  return(n);
 }
 
 typefn_t __arc_cons_typefn__ = {
