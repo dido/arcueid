@@ -565,8 +565,43 @@ static int (*spform(arc *c, value ident))(arc *, value)
   return(NULL);
 }
 
-static int (*inline_func(arc *c, value ident))(arc *, value)\
+#define INLINE_FUNC(name, instr, nargs)					\
+  static AFFDEF(inline_##name, expr, ctx, env, cont)			\
+  {									\
+    AVAR(count);       							\
+    AFBEGIN;								\
+    AV(expr) = cdr(AV(expr));						\
+    for (AV(count)=FIX2INT(0); AV(expr); AV(expr) = cdr(AV(expr)),      \
+	   FIXINC(AV(count))) {						\
+      AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(expr)),	        \
+	     AV(ctx), AV(env), CNIL);					\
+      if (cdr(AV(expr)) != CNIL)					\
+	arc_emit(c, AV(ctx), ipush);					\
+    }									\
+    if (AV(count) != INT2FIX(nargs)) {					\
+      arc_err_cstrfmt(c, "inline procedure expects %d arguments (%d passed)", \
+		      nargs, FIX2INT(AV(count)));			\
+    } else {								\
+      arc_emit(c, AV(ctx), instr);					\
+    }									\
+    AFEND;								\
+    ARETURN(compile_continuation(c, AV(ctx), AV(cont)));		\
+  }									\
+  AFFEND
+
+INLINE_FUNC(cons, icons, 2);
+INLINE_FUNC(car, icar, 1);
+INLINE_FUNC(cdr, icdr, 1);
+
+static int (*inline_func(arc *c, value ident))(arc *, value)
 {
+  if (ident == ARC_BUILTIN(c, S_CONS)) {
+    return(inline_cons);
+  } else if (ident == ARC_BUILTIN(c, S_CAR)) {
+    return(inline_car);
+  } else if (ident == ARC_BUILTIN(c, S_CDR)) {
+    return(inline_cdr);
+  }
   return(NULL);
 }
 
