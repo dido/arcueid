@@ -505,6 +505,35 @@ START_TEST(test_compile_fn_dsb)
 
   TEST("((fn (a (b c (d e) f) g) g) 1 '(2 3 (4 5) 6) 7)");
   fail_unless(ret == INT2FIX(7));
+
+  /* extra destructuring binds */
+  TEST("((fn (a (b . c) d) a) 1 '(2 3 4) 5)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("((fn (a (b . c) d) b) 1 '(2 3 4) 5)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("((fn (a (b . c) d) c) 1 '(2 3 4) 5)");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(cadr(ret) == INT2FIX(4));
+
+  TEST("((fn (a (b . c) d) d) 1 '(2 3 4) 5)");
+  fail_unless(ret == INT2FIX(5));
+
+  /* Destructuring binds with optional arguments */
+  TEST("((fn (a (b c (o d 123) e) f) d) 1 '(2 3 4) 4)");
+  fail_unless(ret == INT2FIX(4));
+
+  /* Destructuring binds with optional arguments */
+  TEST("((fn (a (b c (o d 123) e) f) d) 1 '(2 3) 4)");
+  fail_unless(ret == INT2FIX(123));
+
+  TEST("((fn (a (b c (o d 123) e) f) d) 1 '(2 3 nil) 4)");
+  fail_unless(NIL_P(ret));
+
+  TEST("((fn (a (b c (o d 123) e) f) e) 1 '(2 3 nil) 4)");
+  fail_unless(NIL_P(ret));
 }
 END_TEST
 
