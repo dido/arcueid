@@ -587,6 +587,41 @@ START_TEST(test_compile_assign)
 }
 END_TEST
 
+START_TEST(test_compile_inline_cons)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(cons 1 (cons 2 (cons 3 nil)))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_compile_inline_car)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(car '(1 2 3))");
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
+START_TEST(test_compile_inline_cdr)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(cdr '(1 2 3))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(2));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -610,25 +645,22 @@ int main(void)
 
   tcase_add_test(tc_compiler, test_compile_flonum);
   tcase_add_test(tc_compiler, test_compile_complex);
-
   tcase_add_test(tc_compiler, test_compile_gsym);
-
   tcase_add_test(tc_compiler, test_compile_if_empty);
   tcase_add_test(tc_compiler, test_compile_if_x);
   tcase_add_test(tc_compiler, test_compile_if_full);
   tcase_add_test(tc_compiler, test_compile_if_partial);
   tcase_add_test(tc_compiler, test_compile_if_compound);
-
   tcase_add_test(tc_compiler, test_compile_apply);
-
   tcase_add_test(tc_compiler, test_compile_fn_basic);
   tcase_add_test(tc_compiler, test_compile_fn_oarg);
   tcase_add_test(tc_compiler, test_compile_fn_dsb);
-
   tcase_add_test(tc_compiler, test_compile_quote);
   tcase_add_test(tc_compiler, test_compile_qquote);
-
   tcase_add_test(tc_compiler, test_compile_assign);
+  tcase_add_test(tc_compiler, test_compile_inline_cons);
+  tcase_add_test(tc_compiler, test_compile_inline_car);
+  tcase_add_test(tc_compiler, test_compile_inline_cdr);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
