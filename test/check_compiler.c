@@ -551,6 +551,25 @@ START_TEST(test_compile_quote)
 }
 END_TEST
 
+START_TEST(test_compile_qquote)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+
+  TEST("((fn (a b) `(0 ,a ,@b 5 6)) 1 '(2 3 4))");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(0));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(ret))))))) == INT2FIX(6));
+}
+END_TEST
+
 START_TEST(test_compile_assign)
 {
   value thr, cctx, clos, code, ret;
@@ -607,6 +626,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_fn_dsb);
 
   tcase_add_test(tc_compiler, test_compile_quote);
+  tcase_add_test(tc_compiler, test_compile_qquote);
 
   tcase_add_test(tc_compiler, test_compile_assign);
 
