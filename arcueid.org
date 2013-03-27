@@ -128,12 +128,10 @@ notice and this notice are preserved.
        - [X] quote
        - [X] quasiquote
        - [X] assign
-     - [ ] Inline functions [0/10]
-       - [ ] cons
-       - [ ] car
-       - [ ] cdr
-       - [ ] scar
-       - [ ] scdr
+     - [-] Inline functions [3/8]
+       - [X] cons
+       - [X] car
+       - [X] cdr
        - [ ] is
        - [ ] +
        - [ ] -
@@ -142,7 +140,7 @@ notice and this notice are preserved.
      - [X] Function applications
    - [ ] Macros
    - [ ] Special Syntax
-** TODO basic data types [10/16]
+** TODO basic data types [14/16]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -157,10 +155,10 @@ notice and this notice are preserved.
     - [X] Conses
     - [X] Tables
     - [X] Vectors
-    - [ ] Tagged
-    - [ ] Functions
-    - [ ] Input Ports
-    - [ ] Output Ports
+    - [X] Tagged
+    - [X] Functions
+    - [X] Input Ports
+    - [X] Output Ports
     - [X] Threads
     - [ ] Channels
     - [ ] Regular Expressions
