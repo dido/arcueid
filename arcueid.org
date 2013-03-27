@@ -102,7 +102,7 @@ notice and this notice are preserved.
      - [X] Rational
      - [X] Complex
    - [X] Atstrings
-** TODO Arc compiler [3/5]
+** TODO Arc compiler [4/5]
    - [X] Literal expressions [9/9]
      - [X] nil
      - [X] true (t)
@@ -137,7 +137,7 @@ notice and this notice are preserved.
        - [X] *
        - [X] /
      - [X] Function applications
-   - [ ] Macros
+   - [X] Macros
    - [ ] Special Syntax
 ** TODO basic data types [14/16]
     - [X] Nil
