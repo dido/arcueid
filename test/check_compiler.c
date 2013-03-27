@@ -57,6 +57,7 @@ AFFDEF(compile_something, something)
   value sexpr;
   AVAR(sio);
   AFBEGIN;
+  TQUANTA(thr) = QUANTA;	/* needed so macros can execute */
   AV(sio) = arc_instring(c, AV(something), CNIL);
   AFCALL(arc_mkaff(c, arc_sread, CNIL), AV(sio), CNIL);
   sexpr = AFCRV;
@@ -669,6 +670,40 @@ START_TEST(test_compile_inline_div)
 }
 END_TEST
 
+START_TEST(test_compile_macro)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  /* define a simple macro */
+  TEST("(assign foo (annotate 'mac (fn () '(+ 1 2))))");
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  /* Try to use the macro */
+  TEST("(+ 10 (foo))");
+  fail_unless(FIX2INT(ret) == 13);
+
+  /* Define another few macros. The "do" macro */
+  TEST("(assign do (annotate 'mac (fn args `((fn () ,@args)))))");
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  /* Try to use the "do" macro */
+  TEST("(do 1 2)");
+  fail_unless(FIX2INT(ret) == 2);
+
+  /* Define another macro */
+  TEST("(assign when (annotate 'mac (fn (test . body) `(if ,test (do ,@body)))))");
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  TEST("(when 1 2 3)");
+  fail_unless(FIX2INT(ret) == 3);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -712,6 +747,7 @@ int main(void)
   tcase_add_test(tc_compiler, test_compile_inline_times);
   tcase_add_test(tc_compiler, test_compile_inline_minus);
   tcase_add_test(tc_compiler, test_compile_inline_div);
+  tcase_add_test(tc_compiler, test_compile_macro);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
