@@ -242,6 +242,7 @@ static inline enum arc_types TYPE(value v)
 
 extern value cons(arc *c, value x, value y);
 extern value arc_list_append(value list1, value val);
+extern value arc_list_length(arc *c, value list);
 
 /* Definitions for strings and characters */
 extern value arc_mkstringlen(arc *c, int length);
