@@ -593,6 +593,86 @@ INLINE_FUNC(cons, icons, 2);
 INLINE_FUNC(car, icar, 1);
 INLINE_FUNC(cdr, icdr, 1);
 
+static AFFDEF(compile_inlinen, inst, expr, ctx, env, cont, base)
+{
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(base), AV(ctx), AV(env), CNIL);
+  for (AV(expr) = cdr(AV(expr)); AV(expr); AV(expr) = cdr(AV(expr))) {
+    arc_emit(c, AV(ctx), ipush);
+    AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(expr)), AV(ctx),
+	   AV(env), CNIL);
+    arc_emit(c, AV(ctx), AV(inst));
+  }
+  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(compile_inlinen2, inst, expr, ctx, env, cont, base)
+{
+  AVAR(xexpr, xelen);
+  AFBEGIN;
+  AV(xexpr) = cdr(AV(expr));
+  AV(xelen) = arc_list_length(c, AV(xexpr));
+  if (AV(xelen) == INT2FIX(0)) {
+    arc_err_cstrfmt(c, "operator requires at least one argument");
+    ARETURN(CNIL);
+  } else if (AV(xelen) == INT2FIX(1)) {
+    AFTCALL(arc_mkaff(c, compile_inlinen, CNIL), AV(inst),
+	    AV(expr), AV(ctx), AV(env), AV(cont), AV(base));
+  }
+  AFTCALL(arc_mkaff(c, compile_inlinen, CNIL), AV(inst),
+	  cons(c, car(AV(expr)), cdr(AV(xexpr))), AV(ctx),
+	  AV(env), AV(cont), car(AV(xexpr)));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(inline_plus, expr, ctx, env, cont)
+{
+  value xexpr, xelen;
+  AFBEGIN;
+  xexpr = cdr(AV(expr));
+  xelen = arc_list_length(c, xexpr);
+  if (xelen == INT2FIX(0))
+    AFTCALL(arc_mkaff(c, arc_compile, CNIL), INT2FIX(0), AV(ctx),
+	    AV(env), AV(cont));
+  if (xelen == INT2FIX(1))
+    AFTCALL(arc_mkaff(c, arc_compile, CNIL), car(xexpr), AV(ctx),
+	    AV(env), AV(cont));
+  AFTCALL(arc_mkaff(c, compile_inlinen2, CNIL), iadd,
+	  AV(expr), AV(ctx), AV(env), AV(cont), INT2FIX(0));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(inline_times, expr, ctx, env, cont)
+{
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, compile_inlinen, CNIL), imul,
+	  AV(expr), AV(ctx), AV(env), AV(cont), INT2FIX(1));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(inline_minus, expr, ctx, env, cont)
+{
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, compile_inlinen2, CNIL), isub,
+	  AV(expr), AV(ctx), AV(env), AV(cont), INT2FIX(0));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(inline_div, expr, ctx, env, cont)
+{
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, compile_inlinen2, CNIL), idiv,
+	  AV(expr), AV(ctx), AV(env), AV(cont), INT2FIX(1));
+  AFEND;
+}
+AFFEND
+
 static int (*inline_func(arc *c, value ident))(arc *, value)
 {
   if (ident == ARC_BUILTIN(c, S_CONS)) {
@@ -601,6 +681,14 @@ static int (*inline_func(arc *c, value ident))(arc *, value)
     return(inline_car);
   } else if (ident == ARC_BUILTIN(c, S_CDR)) {
     return(inline_cdr);
+  }else if (ident == ARC_BUILTIN(c, S_PLUS)) {
+    return(inline_plus);
+  } else if (ident == ARC_BUILTIN(c, S_TIMES)) {
+    return(inline_times);
+  } else if (ident == ARC_BUILTIN(c, S_MINUS)) {
+    return(inline_minus);
+  } else if (ident == ARC_BUILTIN(c, S_DIV)) {
+    return(inline_div);
   }
   return(NULL);
 }
