@@ -466,6 +466,62 @@ START_TEST(test_compile_fn_oarg)
 }
 END_TEST
 
+START_TEST(test_compile_fn_dsb)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+
+  TEST("((fn (a (b c) d) a) 1 '(2 3) 4)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("((fn (a (b c) d) b) 1 '(2 3) 4)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("((fn (a (b c) d) c) 1 '(2 3) 4)");
+  fail_unless(ret == INT2FIX(3));
+
+  TEST("((fn (a (b c) d) d) 1 '(2 3) 4)");
+  fail_unless(ret == INT2FIX(4));
+
+  /* something more complicated */
+  TEST("((fn (a (b c (d e) f) g) a) 1 '(2 3 (4 5) 6) 7)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("((fn (a (b c (d e) f) g) b) 1 '(2 3 (4 5) 6) 7)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("((fn (a (b c (d e) f) g) c) 1 '(2 3 (4 5) 6) 7)");
+  fail_unless(ret == INT2FIX(3));
+
+  TEST("((fn (a (b c (d e) f) g) d) 1 '(2 3 (4 5) 6) 7)");
+  fail_unless(ret == INT2FIX(4));
+
+  TEST("((fn (a (b c (d e) f) g) e) 1 '(2 3 (4 5) 6) 7)");
+  fail_unless(ret == INT2FIX(5));
+
+  TEST("((fn (a (b c (d e) f) g) f) 1 '(2 3 (4 5) 6) 7)");
+  fail_unless(ret == INT2FIX(6));
+
+  TEST("((fn (a (b c (d e) f) g) g) 1 '(2 3 (4 5) 6) 7)");
+  fail_unless(ret == INT2FIX(7));
+}
+END_TEST
+
+START_TEST(test_compile_quote)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+
+  TEST("'(1 2 3)");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -502,6 +558,9 @@ int main(void)
 
   tcase_add_test(tc_compiler, test_compile_fn_basic);
   tcase_add_test(tc_compiler, test_compile_fn_oarg);
+  tcase_add_test(tc_compiler, test_compile_fn_dsb);
+
+  tcase_add_test(tc_compiler, test_compile_quote);
 
   suite_add_tcase(s, tc_compiler);
   sr = srunner_create(s);
