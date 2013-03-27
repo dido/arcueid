@@ -230,12 +230,14 @@ static AFFDEF(compile_args, args, ctx, env)
 	ARETURN(AV(env));
       }
       oargdef = (NIL_P(cddr(oarg))) ? CNIL : car(cddr(oarg));
-      AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
       /* jump if bound check -- if we are bound, then don't overwrite
 	 the optional value  */
+      arc_emit2(c, AV(ctx), ilde, INT2FIX(0), AV(idx));
+      AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
       arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
       /* compile the optional argument's definition */
       AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
+      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
       arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
       add_env_name(c, AV(nframe), cadr(car(AV(args))), AV(idx));
