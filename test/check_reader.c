@@ -480,6 +480,57 @@ START_TEST(test_ssyntax_compose_complement)
 }
 END_TEST
 
+START_TEST(test_ssyntax_structure_access)
+{
+  value thr, sym, sexpr;
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "foo.bar");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == arc_intern(c, arc_mkstringc(c, "foo")));
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "bar")));
+
+  sym = arc_intern_cstr(c, "alice.bob.carol");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_CONS);
+  fail_unless(car(car(sexpr)) == arc_intern(c, arc_mkstringc(c, "alice")));
+  fail_unless(car(cdr(car(sexpr))) == arc_intern(c, arc_mkstringc(c, "bob")));
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "carol")));
+
+  sym = arc_intern_cstr(c, ".foo");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_GET));
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "foo")));
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "alice!bob");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == arc_intern(c, arc_mkstringc(c, "alice")));
+  fail_unless(car(car(cdr(sexpr))) == ARC_BUILTIN(c, S_QUOTE));
+  fail_unless(car(cdr(car(cdr(sexpr)))) == arc_intern(c, arc_mkstringc(c, "bob")));
+
+  sym = arc_intern_cstr(c, "!foo");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(TYPE(car(sexpr)) == T_SYMBOL);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_GET));
+  fail_unless(car(car(cdr(sexpr))) == ARC_BUILTIN(c, S_QUOTE));
+  fail_unless(car(cdr(car(cdr(sexpr)))) == arc_intern(c, arc_mkstringc(c, "foo")));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -503,6 +554,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_number);
   tcase_add_test(tc_reader, test_read_atstring);
   tcase_add_test(tc_reader, test_ssyntax_compose_complement);
+  tcase_add_test(tc_reader, test_ssyntax_structure_access);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
