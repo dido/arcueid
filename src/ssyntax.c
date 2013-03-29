@@ -155,9 +155,45 @@ AFFEND
 static AFFDEF(expand_and)
 {
   AARG(sym);
+  AVAR(top, last, elt, sh, ch, run);
+  Rune rch;
   AFBEGIN;
-  (void)sym;
-  ARETURN(CNIL);
+
+  AV(sh) = arc_instring(c, AV(sym), CNIL);
+  AV(top) = AV(elt) = AV(last) = CNIL;
+  AV(run) = CTRUE;
+  while (AV(run) == CTRUE) {
+    READC(AV(sh), AV(ch));
+    rch = (NIL_P(AV(ch))) ? -1 : arc_char2rune(c, AV(ch));
+    if (rch == '&' || rch == -1) {
+      if (!NIL_P(AV(elt)) && arc_strlen(c, AV(elt)) > 0) {
+	READ(arc_instring(c, AV(elt), CNIL), CNIL, AV(elt));
+      } else {
+	AV(elt) = CNIL;
+      }
+
+      if (NIL_P(AV(elt))) {
+	if (NIL_P(AV(ch)))
+	  AV(run) = CNIL;
+	continue;
+      }
+      AV(elt) = cons(c, AV(elt), CNIL);
+      if (AV(last))
+	scdr(AV(last), AV(elt));
+      else
+	AV(top) = AV(elt);
+      AV(last) = AV(elt);
+      AV(elt) = CNIL;
+      if (NIL_P(AV(ch)))
+	AV(run) = CNIL;
+    } else {
+      AV(elt) = (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
+	: arc_strcatc(c, AV(elt), rch);
+    }
+  }
+  if (cdr(AV(top)) == CNIL)
+    ARETURN(car(AV(top)));
+  ARETURN(cons(c, ARC_BUILTIN(c, S_ANDF), AV(top)));
   AFEND;
 }
 AFFEND
