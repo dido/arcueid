@@ -79,8 +79,9 @@ static value fixnum_coerce(arc *c, value x, enum arc_types t)
 
 /*================================= Flonums */
 
-static AFFDEF(flonum_pprint, f)
+static AFFDEF(flonum_pprint)
 {
+  AARG(f);
   AFBEGIN;
   double val = *((double *)REP(AV(f)));
   int len;
@@ -187,8 +188,9 @@ value arc_mkflonum(arc *c, double val)
 
 /*================================= Complex */
 
-static AFFDEF(complex_pprint, z)
+static AFFDEF(complex_pprint)
 {
+  AARG(z);
   AFBEGIN;
   double complex val = *((double *)REP(AV(z)));
   int len;
@@ -308,8 +310,9 @@ static void bignum_sweep(arc *c, value v)
   mpz_clear(REPBNUM(v));
 }
 
-static AFFDEF(bignum_pprint, n)
+static AFFDEF(bignum_pprint)
 {
+  AARG(n);
   AFBEGIN;
   char *outstr;
   int len;
@@ -445,8 +448,9 @@ static void rational_sweep(arc *c, value v)
   mpq_clear(REPRAT(v));
 }
 
-static AFFDEF(rational_pprint, q)
+static AFFDEF(rational_pprint)
 {
+  AARG(q);
   AFBEGIN;
   (void)q;
   /* XXX fill this in */
