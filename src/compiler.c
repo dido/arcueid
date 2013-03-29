@@ -709,28 +709,45 @@ static int (*inline_func(arc *c, value ident))(arc *, value)
   return(NULL);
 }
 
+static value fold(arc *c, value expr, value final)
+{
+  if (cdr(expr) == CNIL)
+    return(cons(c, car(expr), final));
+  return(cons(c, car(expr), cons(c, fold(c, cdr(expr), final), CNIL)));
+}
+
 static AFFDEF(compile_compose)
 {
-  AARG(nexpr, ctx, env, cont);
+  AARG(expr, ctx, env, cont);
+  value composer, cargs;
   AFBEGIN;
-  (void)cont;
-  (void)env;
-  (void)ctx;
-  (void)nexpr;
-  ARETURN(CNIL);
+
+  composer = cdr(car(AV(expr)));
+  cargs = cdr(AV(expr));
+  AFTCALL(arc_mkaff(c, arc_compile, CNIL), fold(c, composer, cargs),
+	  AV(ctx), AV(env), AV(cont));
   AFEND;
 }
 AFFEND
 
 static AFFDEF(compile_complement)
 {
-  AARG(nexpr, ctx, env, cont);
+  AARG(expr, ctx, env, cont);
+  value complemented, cargs, result;
   AFBEGIN;
-  (void)cont;
-  (void)env;
-  (void)ctx;
-  (void)nexpr;
-  ARETURN(CNIL);
+
+  complemented = cdr(car(AV(expr)));
+  cargs = cdr(AV(expr));
+
+  if (!NIL_P(cdr(complemented))) {
+    arc_err_cstrfmt(c, "complement: wrong number of arguments (1 required)");
+    return(CNIL);
+  }
+  complemented = car(complemented);
+  result = cons(c, ARC_BUILTIN(c, S_NO),
+		cons(c, cons(c, complemented, cargs), CNIL));
+  AFTCALL(arc_mkaff(c, arc_compile, CNIL), result,
+	  AV(ctx), AV(env), AV(cont));
   AFEND;
 }
 AFFEND
