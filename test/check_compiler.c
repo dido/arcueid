@@ -52,8 +52,9 @@ arc *c;
   XCALL0(clos);					\
   ret = TVALR(thr)
 
-AFFDEF(compile_something, something)
+AFFDEF(compile_something)
 {
+  AARG(something);
   value sexpr;
   AVAR(sio);
   AFBEGIN;
@@ -351,8 +352,9 @@ START_TEST(test_compile_if_compound)
 }
 END_TEST
 
-AFFDEF(testfunc, arg1, arg2)
+AFFDEF(testfunc)
 {
+  AARG(arg1, arg2);
   AFBEGIN;
   ARETURN(INT2FIX(FIX2INT(AV(arg1)) + FIX2INT(AV(arg2))));
   AFEND;

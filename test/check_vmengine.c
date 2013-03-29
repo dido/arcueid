@@ -855,8 +855,9 @@ static value mycont;
    (fn (arg) (- arg (- 20 (- 10 (ccc (fn (cc) (= mycont cc) 1))))))
  */
 
-AFFDEF(cccfn, cc)
+AFFDEF(cccfn)
 {
+  AARG(cc);
   AFBEGIN;
   mycont = AV(cc);
   ARETURN(INT2FIX(1));
@@ -864,8 +865,9 @@ AFFDEF(cccfn, cc)
 }
 AFFEND
 
-AFFDEF(ccctest, arg)
+AFFDEF(ccctest)
 {
+  AARG(arg);
   AFBEGIN;
   CPUSH(thr, INT2FIX(20));
   CPUSH(thr, INT2FIX(10));

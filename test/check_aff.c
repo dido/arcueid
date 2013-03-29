@@ -23,7 +23,7 @@
 arc cc;
 arc *c;
 
-AFFDEF0(simple_aff)
+AFFDEF(simple_aff)
 {
   AFBEGIN;
   ARETURN(INT2FIX(31337));
@@ -31,16 +31,18 @@ AFFDEF0(simple_aff)
 }
 AFFEND
 
-AFFDEF(subtractor, a, b)
+AFFDEF(subtractor)
 {
+  AARG(a, b);
   AFBEGIN;
   ARETURN(INT2FIX(FIX2INT(AV(a)) - FIX2INT(AV(b))));
   AFEND;
 }
 AFFEND
 
-AFFDEF(doubler, a, b)
+AFFDEF(doubler)
 {
+  AARG(a, b);
   AVAR(subf);
   AFBEGIN;
 
