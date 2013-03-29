@@ -140,10 +140,10 @@ notice and this notice are preserved.
        - [X] /
      - [X] Function applications
    - [X] Macros
-   - [-] Special Syntax [2/4]
+   - [-] Special Syntax [3/4]
        - [X] Compose (:)
        - [X] Complement (~)
-       - [ ] Structure access (. and !)
+       - [X] Structure access (. and !)
        - [ ] And (&)
 ** TODO basic data types [14/16]
     - [X] Nil
