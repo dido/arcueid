@@ -291,6 +291,17 @@ value arc_strutflen(arc *c, value str)
   return(INT2FIX(count));
 }
 
+value arc_strchr(arc *c, value str, Rune ch)
+{
+  int i;
+
+  for (i=0; i<arc_strlen(c, str); i++) {
+    if (arc_strindex(c, str, i) == ch)
+      return(INT2FIX(i));
+  }
+  return(CNIL);
+}
+
 /* Convert a string into a C string.  The pointer ptr must be big
    enough to store all the data. BE SURE OF THIS BEFORE USING THIS
    FUNCTION! */
