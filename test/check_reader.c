@@ -531,6 +531,52 @@ START_TEST(test_ssyntax_structure_access)
 }
 END_TEST
 
+START_TEST(test_ssyntax_and)
+{
+  value thr, sym, sexpr;
+
+#if 0
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "alice&");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_SYMBOL);
+  fail_unless(sexpr == arc_intern(c, arc_mkstringc(c, "alice")));
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "&alice");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_SYMBOL);
+  fail_unless(sexpr == arc_intern(c, arc_mkstringc(c, "alice")));
+#endif
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "alice&bob");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_ANDF));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "alice")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(c, arc_mkstringc(c, "bob")));
+
+ thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "alice&bob&carol");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+   fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_ANDF));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "alice")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(c, arc_mkstringc(c, "bob")));
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(c, arc_mkstringc(c, "carol")));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -555,6 +601,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_atstring);
   tcase_add_test(tc_reader, test_ssyntax_compose_complement);
   tcase_add_test(tc_reader, test_ssyntax_structure_access);
+  tcase_add_test(tc_reader, test_ssyntax_and);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
