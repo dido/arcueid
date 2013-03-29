@@ -50,12 +50,11 @@ static AFFDEF(expand_compose)
 {
   AARG(sym);
   AVAR(top, last, elt, sh, ch);
-  AVAR(negate, run, index);
+  AVAR(negate, run);
   Rune rch;
   AFBEGIN;
 
   AV(sh) = arc_instring(c, AV(sym), CNIL);
-  AV(index) = INT2FIX(0);
   AV(top) = AV(elt) = AV(last) = AV(negate) = CNIL;
   AV(run) = CTRUE;
   while (AV(run) == CTRUE) {
@@ -105,9 +104,50 @@ AFFEND
 static AFFDEF(expand_sexpr)
 {
   AARG(sym);
+  AVAR(last, cur, elt, sh, ch, run, prevchar);
+  Rune rch;
   AFBEGIN;
-  (void)sym;
-  ARETURN(CNIL);
+
+  AV(sh) = arc_instring(c, AV(sym), CNIL);
+  AV(last) = AV(cur) = AV(elt) = AV(last) = CNIL;
+  AV(run) = CTRUE;
+  while (AV(run) == CTRUE) {
+    READC(AV(sh), AV(ch));
+    if (NIL_P(AV(ch))) {
+      AV(run) = CNIL;
+      continue;
+    }
+    rch = arc_char2rune(c, AV(ch));
+    if (rch == '.' || rch == '!') {
+      AV(prevchar) = INT2FIX(rch);
+      if (NIL_P(AV(elt)) || arc_strlen(c, AV(elt)) <= 0)
+	continue;
+      READ(arc_instring(c, AV(elt), CNIL), CNIL, AV(elt));
+      if (NIL_P(AV(last)))
+	AV(last) = AV(elt);
+      else if (FIX2INT(AV(prevchar)) == '!')
+	AV(last) = cons(c, AV(last), cons(c, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, AV(elt), CNIL)), CNIL));
+      else
+	AV(last) = cons(c, AV(last), cons(c, AV(elt), CNIL));
+      AV(elt) = CNIL;
+      continue;
+    }
+    AV(elt) = (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
+      : arc_strcatc(c, AV(elt), rch);
+  }
+  READ(arc_instring(c, AV(elt), CNIL), CNIL, AV(elt));
+  if (AV(elt) == CNIL) {
+    arc_err_cstrfmt(c, "Bad ssyntax %s", sym);
+    return(CNIL);
+  }
+  if (AV(last) == CNIL) {
+    if (FIX2INT(AV(prevchar)) == '!')
+      ARETURN(cons(c, ARC_BUILTIN(c, S_GET), cons(c, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, AV(elt), CNIL)), CNIL)));
+    ARETURN(cons(c, ARC_BUILTIN(c, S_GET), cons(c, AV(elt), CNIL)));
+  }
+  if (FIX2INT(AV(prevchar)) == '!')
+    ARETURN(cons(c, AV(last), cons(c, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, AV(elt), CNIL)), CNIL)));
+  ARETURN(cons(c, AV(last), cons(c, AV(elt), CNIL)));
   AFEND;
 }
 AFFEND
