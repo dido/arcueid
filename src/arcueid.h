@@ -259,7 +259,7 @@ extern value arc_strcat(arc *c, value v1, value v2);
 extern int arc_strcmp(arc *c, value v1, value v2);
 extern void arc_str2cstr(arc *c, value str, char *ptr);
 extern value arc_strutflen(arc *c, value str);
-
+extern value arc_strchr(arc *c, value str, Rune ch);
 
 /* Definitions for vectors */
 #define VECLEN(x) (FIX2INT(REP(x)[0]))
@@ -355,6 +355,10 @@ extern int arc_callcc(arc *c, value thr);
 
 /* The reader */
 extern int arc_sread(arc *c, value thr);
+
+/* Special syntax handling */
+extern value arc_ssyntax(arc *c, value x);
+extern int arc_ssexpand(arc *c, value thr);
 
 /* The compiler */
 extern int arc_compile(arc *c, value thr);
