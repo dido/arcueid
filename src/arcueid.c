@@ -66,8 +66,9 @@ value arc_mkobject(arc *c, size_t size, int type)
 }
 
 /* compare with def of pairwise in ac.scm: tail-recursive version */
-static AFFDEF(pairwise, pred, lst, vh1, vh2)
+static AFFDEF(pairwise)
 {
+  AARG(pred, lst, vh1, vh2);
   AFBEGIN;
 
   for (;;) {
@@ -108,8 +109,9 @@ value arc_is2(arc *c, value a, value b)
 }
 
 /* two-argument wrapper to arc_is2. vh1 and vh2 are not used. */
-static AFFDEF(is2, a, b, vh1, vh2)
+static AFFDEF(is2)
 {
+  AARG(a, b, vh1, vh2);
   AFBEGIN;
   ((void)vh1);
   ((void)vh2);
@@ -119,26 +121,23 @@ static AFFDEF(is2, a, b, vh1, vh2)
 AFFEND
 
 
-AFFDEF0(arc_is)
+AFFDEF(arc_is)
 {
-  int argc, i;
-  AVAR(list, fis2, pw);
+  ARARG(list);
   AFBEGIN;
   AV(list) = CNIL;
-  argc = arc_thr_argc(c, thr);
-  for (i=argc-1; i>=0; i--)
-    AV(list) = cons(c, *__arc_getenv(c, thr, 0, i), AV(list));
-  AV(fis2) = arc_mkaff(c, is2, CNIL);
-  AV(pw) = arc_mkaff(c, pairwise, CNIL);
+
   /* Tail call */
-  AFTCALL(AV(pw), AV(fis2), AV(list), CNIL, CNIL);
+  AFTCALL(arc_mkaff(c, pairwise, CNIL), arc_mkaff(c, is2, CNIL),
+	  AV(list), CNIL, CNIL);
   AFEND;
 }
 AFFEND
 
 /* Two-argment iso. */
-AFFDEF(arc_iso2, a, b, vh1, vh2)
+AFFDEF(arc_iso2)
 {
+  AARG(a, b, vh1, vh2);
   typefn_t *tfn;
   AFBEGIN;
   /* An object is isomorphic to itself */
@@ -171,15 +170,10 @@ AFFDEF(arc_iso2, a, b, vh1, vh2)
 }
 AFFEND
 
-AFFDEF0(arc_iso)
+AFFDEF(arc_iso)
 {
-  int argc, i;
-  AVAR(list);
+  ARARG(list);
   AFBEGIN;
-  AV(list) = CNIL;
-  argc = arc_thr_argc(c, thr);
-  for (i=argc-1; i>=0; i--)
-    AV(list) = cons(c, *__arc_getenv(c, thr, 0, i), AV(list));
   /* Call pairwise with new visithashes */
   AFTCALL(arc_mkaff(c, pairwise, CNIL),
 	  arc_mkaff(c, arc_iso2, CNIL),
