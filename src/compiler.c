@@ -38,8 +38,9 @@
    macros, so the eval inside the reference Arc implementation becomes
    nothing but a lookup in the global symbol table here.
 */
-static AFFDEF(macex, e, once)
+static AFFDEF(macex)
 {
+  AARG(e, once);
   AVAR(op, expansion);
   AFBEGIN;
   do {
@@ -142,8 +143,9 @@ static value compile_ident(arc *c, value ident, value ctx, value env,
 
 }
 
-static AFFDEF(compile_if, args, ctx, env, cont)
+static AFFDEF(compile_if)
 {
+  AARG(args, ctx, env, cont);
   AVAR(jumpaddr, jumpaddr2);
   AFBEGIN;
   /* if we run out of arguments, the last value becomes nil */
@@ -216,8 +218,9 @@ static void add_env_name(arc *c, value envframe, value name, value idx)
       instruction, and then call ourselves recursively with it.
 
 */
-static AFFDEF(destructure, arg, ctx, env, idx)
+static AFFDEF(destructure)
 {
+  AARG(arg, ctx, env, idx);
   AVAR(frame, jumpaddr);
   AFBEGIN;
 
@@ -297,8 +300,9 @@ AFFEND
    This might be the most complicated single function in the whole
    compiler!
  */
-static AFFDEF(compile_args, args, ctx, env)
+static AFFDEF(compile_args)
 {
+  AARG(args, ctx, env);
   AVAR(nframe, envptr, jumpaddr, dsb, oldidx);
   AVAR(regargs, dsbargs, optargs, idx, optargbegin);
   AFBEGIN;
@@ -425,8 +429,9 @@ static AFFDEF(compile_args, args, ctx, env)
 }
 AFFEND
 
-static AFFDEF(compile_fn, expr, ctx, env, cont)
+static AFFDEF(compile_fn)
 {
+  AARG(expr, ctx, env, cont);
   AVAR(args, body, nctx, nenv, newcode, stmts);
   AFBEGIN;
 
@@ -463,8 +468,9 @@ static AFFDEF(compile_fn, expr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(compile_quote, expr, ctx, env, cont)
+static AFFDEF(compile_quote)
 {
+  AARG(expr, ctx, env, cont);
   AFBEGIN;
   (void)env;	    /* not used */
   /* compiling quotes need not be more complex... */
@@ -474,8 +480,9 @@ static AFFDEF(compile_quote, expr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(qquote, expr, ctx, env)
+static AFFDEF(qquote)
 {
+  AARG(expr, ctx, env);
   AFBEGIN;
   if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE)) {
     AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(expr)), AV(ctx),
@@ -510,8 +517,9 @@ static AFFDEF(qquote, expr, ctx, env)
 }
 AFFEND
 
-static AFFDEF(compile_quasiquote, expr, ctx, env, cont)
+static AFFDEF(compile_quasiquote)
 {
+  AARG(expr, ctx, env, cont);
   AFBEGIN;
   AFCALL(arc_mkaff(c, qquote, CNIL), car(AV(expr)), AV(ctx), AV(env));
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
@@ -519,8 +527,9 @@ static AFFDEF(compile_quasiquote, expr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(compile_assign, expr, ctx, env, cont)
+static AFFDEF(compile_assign)
 {
+  AARG(expr, ctx, env, cont);
   int frameno, idx;
   AVAR(a, val, envvar);
   AFBEGIN;
@@ -566,8 +575,9 @@ static int (*spform(arc *c, value ident))(arc *, value)
 }
 
 #define INLINE_FUNC(name, instr, nargs)					\
-  static AFFDEF(inline_##name, expr, ctx, env, cont)			\
+  static AFFDEF(inline_##name)						\
   {									\
+    AARG(expr, ctx, env, cont);						\
     AVAR(count);       							\
     AFBEGIN;								\
     AV(expr) = cdr(AV(expr));						\
@@ -593,8 +603,9 @@ INLINE_FUNC(cons, icons, 2);
 INLINE_FUNC(car, icar, 1);
 INLINE_FUNC(cdr, icdr, 1);
 
-static AFFDEF(compile_inlinen, inst, expr, ctx, env, cont, base)
+static AFFDEF(compile_inlinen)
 {
+  AARG(inst, expr, ctx, env, cont, base);
   AFBEGIN;
   AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(base), AV(ctx), AV(env), CNIL);
   for (AV(expr) = cdr(AV(expr)); AV(expr); AV(expr) = cdr(AV(expr))) {
@@ -608,8 +619,9 @@ static AFFDEF(compile_inlinen, inst, expr, ctx, env, cont, base)
 }
 AFFEND
 
-static AFFDEF(compile_inlinen2, inst, expr, ctx, env, cont, base)
+static AFFDEF(compile_inlinen2)
 {
+  AARG(inst, expr, ctx, env, cont, base);
   AVAR(xexpr, xelen);
   AFBEGIN;
   AV(xexpr) = cdr(AV(expr));
@@ -628,8 +640,9 @@ static AFFDEF(compile_inlinen2, inst, expr, ctx, env, cont, base)
 }
 AFFEND
 
-static AFFDEF(inline_plus, expr, ctx, env, cont)
+static AFFDEF(inline_plus)
 {
+  AARG(expr, ctx, env, cont);
   value xexpr, xelen;
   AFBEGIN;
   xexpr = cdr(AV(expr));
@@ -646,8 +659,9 @@ static AFFDEF(inline_plus, expr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(inline_times, expr, ctx, env, cont)
+static AFFDEF(inline_times)
 {
+  AARG(expr, ctx, env, cont);
   AFBEGIN;
   AFTCALL(arc_mkaff(c, compile_inlinen, CNIL), imul,
 	  AV(expr), AV(ctx), AV(env), AV(cont), INT2FIX(1));
@@ -655,8 +669,9 @@ static AFFDEF(inline_times, expr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(inline_minus, expr, ctx, env, cont)
+static AFFDEF(inline_minus)
 {
+  AARG(expr, ctx, env, cont);
   AFBEGIN;
   AFTCALL(arc_mkaff(c, compile_inlinen2, CNIL), isub,
 	  AV(expr), AV(ctx), AV(env), AV(cont), INT2FIX(0));
@@ -664,8 +679,9 @@ static AFFDEF(inline_minus, expr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(inline_div, expr, ctx, env, cont)
+static AFFDEF(inline_div)
 {
+  AARG(expr, ctx, env, cont);
   AFBEGIN;
   AFTCALL(arc_mkaff(c, compile_inlinen2, CNIL), idiv,
 	  AV(expr), AV(ctx), AV(env), AV(cont), INT2FIX(1));
@@ -693,28 +709,35 @@ static int (*inline_func(arc *c, value ident))(arc *, value)
   return(NULL);
 }
 
-static AFFDEF(compile_compose, nexpr, ctx, env, cont)
+static AFFDEF(compile_compose)
 {
+  AARG(nexpr, ctx, env, cont);
+  AFBEGIN;
   (void)cont;
   (void)env;
   (void)ctx;
   (void)nexpr;
   ARETURN(CNIL);
+  AFEND;
 }
 AFFEND
 
-static AFFDEF(compile_complement, nexpr, ctx, env, cont)
+static AFFDEF(compile_complement)
 {
+  AARG(nexpr, ctx, env, cont);
+  AFBEGIN;
   (void)cont;
   (void)env;
   (void)ctx;
   (void)nexpr;
   ARETURN(CNIL);
+  AFEND;
 }
 AFFEND
 
-static AFFDEF(compile_apply, expr, ctx, env, cont)
+static AFFDEF(compile_apply)
 {
+  AARG(expr, ctx, env, cont);
   AVAR(fname, args, nahd, contaddr, nargs);
   AFBEGIN;
 
@@ -760,8 +783,9 @@ static AFFDEF(compile_apply, expr, ctx, env, cont)
 }
 AFFEND
 
-static AFFDEF(compile_list, nexpr, ctx, env, cont)
+static AFFDEF(compile_list)
 {
+  AARG(nexpr, ctx, env, cont);
   int (*fun)(arc *, value) = NULL;
   value expr;
   AFBEGIN;
@@ -795,8 +819,9 @@ AFFEND
 
 /* Given an expression nexpr, a compilation context ctx, and a continuation
    flag, return the compilation context after the expression is compiled. */
-AFFDEF(arc_compile, nexpr, ctx, env, cont)
+AFFDEF(arc_compile)
 {
+  AARG(nexpr, ctx, env, cont);
   AVAR(expr, ssx);
   AFBEGIN;
 

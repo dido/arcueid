@@ -124,8 +124,9 @@ value arc_thr_envr(arc *c, value thr)
   return(TENVR(thr));
 }
 
-AFFDEF(arc_cmark, key)
+AFFDEF(arc_cmark)
 {
+  AARG(key);
   AVAR(cm, val);
   AFBEGIN;
   AV(cm) = TCM(thr);
@@ -138,8 +139,9 @@ AFFDEF(arc_cmark, key)
 AFFEND
 
 /* Do not use these functions outside the call-w/cmark macro */
-AFFDEF(arc_scmark, key, val)
+AFFDEF(arc_scmark)
 {
+  AARG(key, val);
   AVAR(cm, bind);
   AFBEGIN;
   AV(cm) = TCM(thr);
@@ -153,8 +155,9 @@ AFFDEF(arc_scmark, key, val)
 }
 AFFEND
 
-AFFDEF(arc_ccmark, key)
+AFFDEF(arc_ccmark)
 {
+  AARG(key);
   AVAR(cm, bind, val);
   AFBEGIN;
   AV(cm) = TCM(thr);

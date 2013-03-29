@@ -49,8 +49,9 @@ static unsigned long sio_hash(arc *c, value v, arc_hs *s)
   return(len);
 }
 
-static AFFDEF(sio_closed_p, sio)
+static AFFDEF(sio_closed_p)
 {
+  AARG(sio);
   AFBEGIN;
   ARETURN((SIODATA(AV(sio))->closed) ? CTRUE : CNIL);
   AFEND;
@@ -58,27 +59,29 @@ static AFFDEF(sio_closed_p, sio)
 AFFEND
 
 /* This essentially always returns true */
-static AFFDEF(sio_ready, sio)
+static AFFDEF(sio_ready)
 {
+  AARG(sio);
   AFBEGIN;
   ARETURN((SIODATA(AV(sio))->idx >= 0) ? CTRUE : CTRUE);
   AFEND;
 }
 AFFEND
 
-static AFFDEF(sio_wready, sio)
+static AFFDEF(sio_wready)
 {
+  AARG(sio);
   AFBEGIN;
   ARETURN((TYPE(AV(sio)) == T_OUTPORT) ? CTRUE : CNIL);
   AFEND;
 }
 AFFEND
 
-static AFFDEF(sio_getb, sio)
+static AFFDEF(sio_getb)
 {
+  AARG(sio);
   int len;
   Rune r;
-
   AFBEGIN;
   len = arc_strlen(c, SIODATA(AV(sio))->str);
   if (SIODATA(AV(sio))->idx >= len)
@@ -89,8 +92,9 @@ static AFFDEF(sio_getb, sio)
 }
 AFFEND
 
-static AFFDEF(sio_putb, sio, byte)
+static AFFDEF(sio_putb)
 {
+  AARG(sio, byte);
   int len;
 
   AFBEGIN;
@@ -110,11 +114,12 @@ static AFFDEF(sio_putb, sio, byte)
 }
 AFFEND
 
-static AFFDEF(sio_seek, sio, offset, whence)
+static AFFDEF(sio_seek)
 {
+  AARG(sio, offset, whence);
   int len, noffset;
-
   AFBEGIN;
+
   len = arc_strlen(c, SIODATA(AV(sio))->str);
   switch (FIX2INT(AV(whence))) {
   case SEEK_SET:
@@ -137,16 +142,18 @@ static AFFDEF(sio_seek, sio, offset, whence)
 }
 AFFEND
 
-static AFFDEF(sio_tell, sio)
+static AFFDEF(sio_tell)
 {
+  AARG(sio);
   AFBEGIN;
   ARETURN(INT2FIX(SIODATA(AV(sio))->idx));
   AFEND;
 }
 AFFEND
 
-static AFFDEF(sio_close, sio)
+static AFFDEF(sio_close)
 {
+  AARG(sio);
   AFBEGIN;
   SIODATA(AV(sio))->closed = 1;
   ARETURN(CNIL);

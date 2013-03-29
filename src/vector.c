@@ -27,8 +27,9 @@ void __arc_vector_marker(arc *c, value v, int depth,
     markfn(c, VINDEX(v, i), depth);
 }
 
-AFFDEF(__arc_vector_isocmp, v1, v2, vh1, vh2)
+AFFDEF(__arc_vector_isocmp)
 {
+  AARG(v1, v2, vh1, vh2);
   value vhh1, vhh2;		/* not required after calls */
   AVAR(iso2, i);
   AFBEGIN;

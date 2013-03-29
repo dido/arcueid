@@ -46,8 +46,9 @@ value arc_ssyntax(arc *c, value x)
 }
 
 /* I imagine this can be done a lot more cleanly! */
-static AFFDEF(expand_compose, sym)
+static AFFDEF(expand_compose)
 {
+  AARG(sym);
   AVAR(top, last, elt, sh, ch);
   AVAR(negate, run, index);
   Rune rch;
@@ -101,8 +102,9 @@ static AFFDEF(expand_compose, sym)
 }
 AFFEND
 
-static AFFDEF(expand_sexpr, sym)
+static AFFDEF(expand_sexpr)
 {
+  AARG(sym);
   AFBEGIN;
   (void)sym;
   ARETURN(CNIL);
@@ -110,8 +112,9 @@ static AFFDEF(expand_sexpr, sym)
 }
 AFFEND
 
-static AFFDEF(expand_and, sym)
+static AFFDEF(expand_and)
 {
+  AARG(sym);
   AFBEGIN;
   (void)sym;
   ARETURN(CNIL);
@@ -119,8 +122,9 @@ static AFFDEF(expand_and, sym)
 }
 AFFEND
 
-static AFFDEF(expand_ssyntax, sym)
+static AFFDEF(expand_ssyntax)
 {
+  AARG(sym);
   AFBEGIN;
   if (arc_strchr(c, AV(sym), ':') != CNIL
       || arc_strchr(c, AV(sym), '~') != CNIL)
@@ -135,8 +139,9 @@ static AFFDEF(expand_ssyntax, sym)
 } 
 AFFEND
 
-AFFDEF(arc_ssexpand, sym)
+AFFDEF(arc_ssexpand)
 {
+  AARG(sym);
   value x;
   AFBEGIN;
 

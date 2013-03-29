@@ -452,8 +452,9 @@ int __arc_vmengine(arc *c, value thr)
 }
 
 /* call/cc! */
-AFFDEF(arc_callcc, thunk)
+AFFDEF(arc_callcc)
 {
+  AARG(thunk);
   AFBEGIN;
   /* First move the continuations to the heap if needed */
   TCONR(thr) = __arc_cont2heap(c, thr, TCONR(thr));

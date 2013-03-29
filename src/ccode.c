@@ -91,18 +91,57 @@ value arc_mkaff(arc *c, int (*xaff)(arc *, value), value name)
   return(aff);
 }
 
+/* same as below, but with rest arguments */
+static void affenvr(arc *c, value thr, int minenv, int optenv, int dsenv)
+{
+  int i;
+  value rest;
+
+  if (TARGC(thr) < minenv) {
+    arc_err_cstrfmt(c, "too few arguments, at least %d required, %d passed", minenv, TARGC(thr));
+  } else {
+    rest = CNIL;
+
+    /* Swallow as many extra arguments into the rest parameter,
+       up to the minimum + optional number of arguments */
+    for (i=TARGC(thr); i>(minenv + optenv); i--)
+      rest = cons(c, CPOP(thr), rest);
+    /* Create a new environment with the number of additional
+       arguments thus obtained.  Unbound arguments include an
+       extra one for storing the rest parameter, whatever it
+       might have. */
+    __arc_mkenv(c, thr, i, minenv + optenv - i + dsenv + 1);
+    /* Store the rest parameter */
+    *__arc_getenv(c, thr, 0, minenv + optenv + dsenv) = rest;
+  }
+}
+
 /* Initialize the environment of an Arcueid foreign function.  This
    essentially creates the AFF's local environment if it is not yet
    there (i.e. the the TENVR of the thread is nil.  It will also take
    care of copying the parameters to the function from the thread's
-   stack into any parameters that were defined by the AFFDEF macro. */
-void __arc_affenv(arc *c, value thr, int prevsize, int extrasize)
+   stack into any parameters that were defined by the AARG and AOARG
+   macros. */
+void __arc_affenv(arc *c, value thr, int nargs, int optargs, int localvars,
+		  int restarg)
 {
   /* Not the first call--assume env was already set up before */
   if (!NIL_P(TENVR(thr)))
     return;
 
-  __arc_mkenv(c, thr, prevsize, extrasize);
+  if (restarg) {
+    affenvr(c, thr, nargs, optargs, localvars);
+    return;
+  }
+
+  if (TARGC(thr) < nargs) {
+    arc_err_cstrfmt(c, "too few arguments, at least %d required, %d passed", nargs, TARGC(thr));
+    return;
+  } else if (TARGC(thr) > nargs + optargs) {
+    arc_err_cstrfmt(c, "too many arguments, at most %d allowed, %d passed", nargs + optargs, TARGC(thr));
+    return;
+  }
+  __arc_mkenv(c, thr, TARGC(thr), nargs + optargs - TARGC(thr) + localvars);
 }
 
 int __arc_affip(arc *c, value thr)

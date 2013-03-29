@@ -262,11 +262,11 @@ static unsigned long hash_hasher(arc *c, value v, arc_hs *s)
   return(len);
 }
 
-static AFFDEF(hash_isocmp, v1, v2, vh1, vh2)
+static AFFDEF(hash_isocmp)
 {
-  value vhh1, vhh2;		/* not required after calls */
+  AARG(v1, v2, vh1, vh2);
   AVAR(iso2, tbl, e, v2val, i);
-
+  value vhh1, vhh2;		/* not required after calls */
   AFBEGIN;
 
   if ((vhh1 = __arc_visit(c, AV(v1), AV(vh1))) != CNIL) {

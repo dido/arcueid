@@ -70,8 +70,9 @@ static int issym(Rune ch)
 #define READ_COMMENT(fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd, CNIL)
 
 /* Read up to the first non-symbol character from fp */
-static AFFDEF(getsymbol, fp)
+static AFFDEF(getsymbol)
 {
+  AARG(fp);
   AVAR(buf, ch);
   Rune r;
   AFBEGIN;
@@ -91,10 +92,11 @@ static AFFDEF(getsymbol, fp)
 }
 AFFEND
 
-AFFDEF(arc_sread, fp, eof)
+AFFDEF(arc_sread)
 {
-  Rune r;
+  AARG(fp, eof);
   AVAR(ch, func);
+  Rune r;
   AFBEGIN;
   /* XXX - should put this in builtins somewhere? */
   for (;;) {
@@ -138,8 +140,9 @@ AFFDEF(arc_sread, fp, eof)
 AFFEND
 
 /* Scan for the first non-blank character */
-static AFFDEF(scan, fp)
+static AFFDEF(scan)
 {
+  AARG(fp);
   Rune r;
   AVAR(ch);
   AFBEGIN;
@@ -154,8 +157,9 @@ static AFFDEF(scan, fp)
 }
 AFFEND
 
-static AFFDEF(read_list, fp, eof)
+static AFFDEF(read_list)
 {
+  AARG(fp, eof);
   AVAR(top, val, last, ch, indot);
   Rune r;
   AFBEGIN;
@@ -204,8 +208,9 @@ AFFEND
 
 /* Read an Arc square bracketed anonymous function.  This expands
    [ ... _ ... ] to (fn (_) ... _ ...) */
-static AFFDEF(read_anonf, fp, eof)
+static AFFDEF(read_anonf)
 {
+  AARG(fp, eof);
   AVAR(top, val, last, ch);
   Rune r;
   AFBEGIN;
@@ -241,8 +246,9 @@ AFFEND
 
 /* Read a portion that happens to be quoted, and then enclose it in a
    form covered by the provided qsym. */
-static AFFDEF(readq, fp, qsym, eof)
+static AFFDEF(readq)
 {
+  AARG(fp, qsym, eof);
   AVAR(val);
   AFBEGIN;
   READ(AV(fp), AV(eof), AV(val));
@@ -251,24 +257,27 @@ static AFFDEF(readq, fp, qsym, eof)
 }
 AFFEND
 
-static AFFDEF(read_quote, fp, eof)
+static AFFDEF(read_quote)
 {
+  AARG(fp, eof);
   AFBEGIN;
   AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QUOTE), AV(eof));
   AFEND;
 }
 AFFEND
 
-static AFFDEF(read_qquote, fp, eof)
+static AFFDEF(read_qquote)
 {
+  AARG(fp, eof);
   AFBEGIN;
   AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QQUOTE), AV(eof));
   AFEND;
 }
 AFFEND
 
-static AFFDEF(read_comma, fp, eof)
+static AFFDEF(read_comma)
 {
+  AARG(fp, eof);
   Rune r;
   AVAR(ch);
   AFBEGIN;
@@ -324,8 +333,9 @@ static value unescape_ats(arc *c, value s)
 }
 
 /* Break up a string s into a list of fragments delimited by the @'s. */
-static AFFDEF(codestring, s)
+static AFFDEF(codestring)
 {
+  AARG(s);
   int i, len, rlen;
   AVAR(ss, rest, in, expr);
   AFBEGIN;
@@ -362,8 +372,9 @@ static AFFDEF(codestring, s)
 }
 AFFEND
 
-static AFFDEF(read_atstring, s)
+static AFFDEF(read_atstring)
 {
+  AARG(s);
   AVAR(cs, p);
   AFBEGIN;
   if (atpos(c, AV(s), 0) >= 0) {
@@ -380,8 +391,9 @@ static AFFDEF(read_atstring, s)
 }
 AFFEND
 
-AFFDEF(read_string, fp, eof)
+AFFDEF(read_string)
 {
+  AARG(fp, eof);
   Rune r;
   int digval;
   AVAR(ch, state, buf, escrune, digcount);
@@ -490,8 +502,9 @@ AFFEND
    that modifies this reader behavior to something more rational (such as
    sharp followed by the actual character, with slash for escapes).  Arc
    does not otherwise use the #-sign for anything else. */
-static AFFDEF(read_char, fp, eof)
+static AFFDEF(read_char)
 {
+  AARG(fp, eof);
   AVAR(ch);
   int alldigits, val, i, digit;
   Rune r;
@@ -582,8 +595,9 @@ static AFFDEF(read_char, fp, eof)
 AFFEND
 
 /* Just basically keep reading until we reach end of line or end of file */
-static AFFDEF(read_comment, fp, eof)
+static AFFDEF(read_comment)
 {
+  AARG(fp, eof);
   AVAR(ch);
   Rune r;
   AFBEGIN;
@@ -599,8 +613,9 @@ static AFFDEF(read_comment, fp, eof)
 AFFEND
 
 /* parse a symbol name or number */
-static AFFDEF(read_symbol, fp, eof)
+static AFFDEF(read_symbol)
 {
+  AARG(fp, eof);
   AVAR(sym);
   value num;
   AFBEGIN;

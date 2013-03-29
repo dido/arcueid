@@ -105,8 +105,9 @@ static void cons_marker(arc *c, value v, int depth,
   markfn(c, cdr(v), depth);
 }
 
-static AFFDEF(cons_isocmp, v1, v2, vh1, vh2)
+static AFFDEF(cons_isocmp)
 {
+  AARG(v1, v2, vh1, vh2);
   value vhh1, vhh2;		/* not required after calls */
   AVAR(iso2);
   AFBEGIN;

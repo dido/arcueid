@@ -114,21 +114,15 @@ static unsigned long io_hash(arc *c, value v, arc_hs *s)
   return(IO(v)->io_tfn->hash(c, v, s));
 }
 
-AFFDEF0(arc_readb)
+AFFDEF(arc_readb)
 {
-  AVAR(fd);
-
+  AOARG(fd);
   Rune ch;
   AFBEGIN;
 
-  if (arc_thr_argc(c, thr) == 0) {
+  if (!BOUND_P(AV(fd)))
     STDIN(AV(fd));
-  } else if (arc_thr_argc(c, thr) == 1) {
-    AV(fd) = *__arc_getenv(c, thr, 0, 0);
-  } else {
-    arc_err_cstrfmt(c, "readb: too many arguments");
-    return(CNIL);
-  }
+
   IO_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   /* Note that if there is an unget value available, it will return
@@ -151,22 +145,17 @@ AFFDEF0(arc_readb)
 }
 AFFEND
 
-AFFDEF0(arc_readc)
+AFFDEF(arc_readc)
 {
-  AVAR(fd, chr, buf, i, readb);
+  AOARG(fd);
+  AVAR(chr, buf, i, readb);
   char cbuf[UTFmax];    /* this is always destroyed */
   Rune ch;
   int j;
   AFBEGIN;
 
-  if (arc_thr_argc(c, thr) == 0) {
+  if (!BOUND_P(AV(fd)))
     STDIN(AV(fd));
-  } else if (arc_thr_argc(c, thr) == 1) {
-    AV(fd) = *__arc_getenv(c, thr, 0, 0);
-  } else {
-    arc_err_cstrfmt(c, "readc: too many arguments");
-    return(CNIL);
-  }
 
   IO_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
@@ -203,9 +192,10 @@ AFFDEF0(arc_readc)
 }
 AFFEND
 
-AFFDEF0(arc_writeb)
+AFFDEF(arc_writeb)
 {
-  AVAR(byte, fd);
+  AARG(byte);
+  AOARG(fd);
   AFBEGIN;
 
   if (arc_thr_argc(c, thr) == 0) {
@@ -213,15 +203,9 @@ AFFDEF0(arc_writeb)
     return(CNIL);
   }
 
-  if (arc_thr_argc(c, thr) == 1) {
+  if (!BOUND_P(AV(fd)))
     STDOUT(AV(fd));
-  } else if (arc_thr_argc(c, thr) == 2) {
-    AV(fd) = *__arc_getenv(c, thr, 0, 1);
-  } else {
-    arc_err_cstrfmt(c, "writeb: too many arguments");
-    return(CNIL);
-  }
-  AV(byte) = *__arc_getenv(c, thr, 0, 0);
+
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_wready), AV(fd));
@@ -234,9 +218,11 @@ AFFDEF0(arc_writeb)
 }
 AFFEND
 
-AFFDEF0(arc_writec)
+AFFDEF(arc_writec)
 {
-  AVAR(fd, chr, buf, i, writeb, nbytes);
+  AARG(chr);
+  AOARG(fd);
+  AVAR(buf, i, writeb, nbytes);
   char cbuf[UTFmax];
   Rune ch;
   int j;
@@ -247,16 +233,9 @@ AFFDEF0(arc_writec)
     return(CNIL);
   }
 
-  if (arc_thr_argc(c, thr) == 1) {
+  if (!BOUND_P(AV(fd)))
     STDOUT(AV(fd));
-  } else if (arc_thr_argc(c, thr) == 2) {
-    AV(fd) = *__arc_getenv(c, thr, 0, 1);
-  } else {
-    arc_err_cstrfmt(c, "writec: too many arguments");
-    return(CNIL);
-  }
 
-  AV(chr) = *__arc_getenv(c, thr, 0, 0);
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
@@ -279,33 +258,28 @@ AFFDEF0(arc_writec)
 }
 AFFEND
 
-AFFDEF0(arc_close)
+AFFDEF(arc_close)
 {
-  AVAR(fd, nargs, i);
+  ARARG(list);
   AFBEGIN;
-  if (arc_thr_argc(c, thr) == 0) {
-    arc_err_cstrfmt(c, "close: too few arguments");
-    return(CNIL);
-  }
-  AV(nargs) = INT2FIX(arc_thr_argc(c, thr));
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nargs)); AV(i) = INT2FIX(FIX2INT(i) + 1)) {
-    AV(fd) = *__arc_getenv(c, thr, 0, FIX2INT(AV(i)));
-    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_close), AV(fd));
+  for (; !NIL_P(AV(list)); AV(list) = cdr(AV(list))) {
+    AFCALL(VINDEX(IO(car(AV(list)))->io_ops, IO_close), car(AV(list)));
   }
   ARETURN(CNIL);
   AFEND;
 }
 AFFEND
 
-AFFDEF(arc_tell, fp)
+AFFDEF(arc_tell)
 {
+  AARG(fp);
   AFBEGIN;
   AFTCALL(VINDEX(IO(AV(fp))->io_ops, IO_tell), AV(fp));
   AFEND;
 }
 AFFEND
 
-AFFDEF0(arc_stdin)
+AFFDEF(arc_stdin)
 {
   AVAR(fd);
   AFBEGIN;
@@ -315,7 +289,7 @@ AFFDEF0(arc_stdin)
 }
 AFFEND
 
-AFFDEF0(arc_stdout)
+AFFDEF(arc_stdout)
 {
   AVAR(fd);
   AFBEGIN;
@@ -325,7 +299,7 @@ AFFDEF0(arc_stdout)
 }
 AFFEND
 
-AFFDEF0(arc_stderr)
+AFFDEF(arc_stderr)
 {
   AVAR(fd);
   AFBEGIN;
@@ -346,8 +320,9 @@ Rune arc_ungetc_rune(arc *c, Rune r, value fd)
   return(r);
 }
 
-AFFDEF(arc_swrite, sexpr, visithash)
+AFFDEF(arc_swrite)
 {
+  AARG(sexpr, visithash);
   typefn_t *tfn;
   AFBEGIN;
 
