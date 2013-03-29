@@ -410,6 +410,76 @@ START_TEST(test_read_atstring)
 }
 END_TEST
 
+START_TEST(test_ssyntax_compose_complement)
+{
+  value thr, sym, sexpr;
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "~");
+  XCALL(arc_ssexpand, sym);
+  fail_unless(TYPE(TVALR(thr)) == T_SYMBOL);
+  fail_unless(TVALR(thr) == ARC_BUILTIN(c, S_NO));
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "foo:");
+  XCALL(arc_ssexpand, sym);
+  fail_unless(TYPE(TVALR(thr)) == T_SYMBOL);
+  fail_unless(TVALR(thr) == arc_intern_cstr(c, "foo"));
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, ":foo");
+  XCALL(arc_ssexpand, sym);
+  fail_unless(TYPE(TVALR(thr)) == T_SYMBOL);
+  fail_unless(TVALR(thr) == arc_intern_cstr(c, "foo"));
+
+  thr = arc_mkthread(c);
+  sym = arc_intern_cstr(c, "foo:bar");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_COMPOSE));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "foo")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(c, arc_mkstringc(c, "bar")));
+
+  sym = arc_intern_cstr(c, "foo:bar:baz");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_COMPOSE));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "foo")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(c, arc_mkstringc(c, "bar")));
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(c, arc_mkstringc(c, "baz")));
+
+  sym = arc_intern_cstr(c, "~foo");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_COMPLEMENT));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "foo")));
+
+  sym = arc_intern_cstr(c, "foo:~bar:baz");
+  XCALL(arc_ssexpand, sym);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_COMPOSE));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "foo")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_CONS);
+  fail_unless(car(car(cdr(cdr(sexpr)))) == ARC_BUILTIN(c, S_COMPLEMENT));
+  fail_unless(TYPE(car(cdr(car(cdr(cdr(sexpr)))))) == T_SYMBOL);
+  fail_unless(car(cdr(car(cdr(cdr(sexpr))))) == arc_intern(c, arc_mkstringc(c, "bar")));
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(c, arc_mkstringc(c, "baz")));
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -432,6 +502,7 @@ int main(void)
   tcase_add_test(tc_reader, test_read_symbol);
   tcase_add_test(tc_reader, test_read_number);
   tcase_add_test(tc_reader, test_read_atstring);
+  tcase_add_test(tc_reader, test_ssyntax_compose_complement);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
