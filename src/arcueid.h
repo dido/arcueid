@@ -190,6 +190,7 @@ extern void __arc_null_sweeper(arc *c, value v);
 #define IMMEDIATE_MASK 0x0f
 #define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
 #define NIL_P(v) ((v) == CNIL)
+#define BOUND_P(v) ((v) != CUNBOUND)
 
 #define BTYPE(v) (((struct cell *)(v))->_type & 0x3f)
 #define STYPE(v, t) (((struct cell *)(v))->_type = (t))
@@ -317,7 +318,7 @@ extern int __arc_affapply2(arc *c, value thr, value ccont, value func,
 			   value args);
 extern int __arc_affyield(arc *c, value thr, int line);
 extern int __arc_affiowait(arc *c, value thr, int line, int fd);
-extern void __arc_affenv(arc *c, value thr, int prevsize, int extrasize);
+extern void __arc_affenv(arc *c, value thr, int nargs, int optargs, int localvars, int rest);
 extern int __arc_affip(arc *c, value thr);
 
 /* Closures */
@@ -411,12 +412,9 @@ extern void arc_init(arc *c);
 extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 
 /* Arcueid Foreign Functions.  This is possibly the most insane abuse
-   of the C preprocessor I have ever done.  The AFFDEF macro will permit
-   at least 1 and at most 8 arguments to an AFF.  For zero arguments, or
-   if you want to define a foreign function that uses more than 8, use
-   AFFDEF0 and pull the parameters from the stack manually using arc_thr_argc
-   and arc_thr_pop.  The technique used for defining parameters and variables
-   using variadic macros used here is inspired by this:
+   of the C preprocessor I have ever done.  The technique used for defining
+   parameters and variables using variadic macros used here is inspired by
+   this:
 
    http://stackoverflow.com/questions/1872220/is-it-possible-to-iterate-over-arguments-in-variadic-macros
 
@@ -446,25 +444,26 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 #define FOR_EACH_(N, what, ...) CONCATENATE(FOR_EACH_, N)(what, __VA_ARGS__)
 #define FOR_EACH(what, ...) FOR_EACH_(NARGS(__VA_ARGS__), what, __VA_ARGS__)
 
-#define AFF_PARAM(x) int x = __vidx__++; __nparams__++
-
-#define AFFDEF(fname, ...)			\
-  int fname(arc *c, value thr)			\
-  {						\
-    int __vidx__ = 0; int __nparams__ = 0;	\
-    FOR_EACH(AFF_PARAM, __VA_ARGS__);		\
-    do
-
-#define AFFDEF0(fname) int fname(arc *c, value thr) { int __vidx__ = arc_thr_argc(c, thr); int __nparams__ = __vidx__; do
+#define AFFDEF(fname) int fname(arc *c, value thr) { int __nargs__ = 0; int __optargs__ = 0; int __restarg__ = 0; int __localvars__ = 0; do
 
 #define AFFEND while (0); return(TR_RC); }
 
-#define ADEFVAR(x) int x = __vidx__++
+#define ADEFARG(x) int x = __nargs__++
+
+#define AOPTARG(x) int x = __nargs__ +  __optargs__++
+
+#define ARARG(x) int x = __nargs__ + __optargs__ + __localvars__; __restarg__ = 1
+
+#define ADEFVAR(x) int x = __nargs__ + __optargs__ + __localvars__++;
+
+#define AARG(...) FOR_EACH(ADEFARG, __VA_ARGS__)
+
+#define AOARG(...) FOR_EACH(AOPTARG, __VA_ARGS__)
 
 #define AVAR(...) FOR_EACH(ADEFVAR, __VA_ARGS__)
 
 #define AFBEGIN								\
-  __arc_affenv(c, thr, __nparams__, __vidx__ - __nparams__);		\
+  __arc_affenv(c, thr, __nargs__, __optargs__, __localvars__, __restarg__); \
   switch (__arc_affip(c, thr)) {					\
  case 0:;
 #define AFEND }
