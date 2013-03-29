@@ -138,7 +138,11 @@ notice and this notice are preserved.
        - [X] /
      - [X] Function applications
    - [X] Macros
-   - [ ] Special Syntax
+   - [-] Special Syntax [2/4]
+       - [X] Compose (:)
+       - [X] Complement (~)
+       - [ ] Structure access (. and !)
+       - [ ] And (&)
 ** TODO basic data types [14/16]
     - [X] Nil
     - [X] True
@@ -161,11 +165,11 @@ notice and this notice are preserved.
     - [X] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [2/19]
+** TODO Runtime Built-In Functions [3/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
-   - [ ] Initialization for binding runtime primitives to global symbols
-   - [ ] Type handling [0/5]
+   - [X] Initialization for binding runtime primitives to global symbols
+   - [-] Type handling [3/5]
      - [ ] coerce [0/10]
        - [ ] Integer conversions [0/5]
 	     Note that fixnum and bignum may be used as aliases for int
@@ -263,9 +267,9 @@ notice and this notice are preserved.
 	 5. If string contains '&', convert as floating point.
 	 6. If string contains '/', convert as rational.
 	 7. Otherwise, consider string as representing an integer
-     - [ ] type
-     - [ ] annotate
-     - [ ] rep
+     - [X] type
+     - [X] annotate
+     - [X] rep
      - [ ] sym
    - [-] Predicates [2/10]
      - [ ] Less-than (<) *
@@ -349,19 +353,19 @@ notice and this notice are preserved.
    - [-] Table operations [1/2]
      - [ ] maptable
      - [X] table
-   - [-] Evaluation [1/4]
+   - [ ] Evaluation [0/4]
      - [ ] eval
 	   We will implement eval by calling the compiler on the
 	   expression to be evaluated.  The output of the compiler
 	   is a T_CODE object which we can convert into a closure by
 	   combining it with the caller's environment.
-     - [X] apply
+     - [ ] apply
      - [ ] ssexpand
      - [ ] ssyntax
-   - [ ] Macros [0/4]
+   - [-] Macros [1/4]
      - [ ] macex
      - [ ] macex1
-     - [ ] sig
+     - [X] sig
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
      - [ ] uniq
@@ -383,9 +387,9 @@ notice and this notice are preserved.
 	   all over again, and reinforces the maxim of never mixing
 	   the b functions with the c functions.
        - [X] sread (see the Arc reader above)
-     - [ ] Output [0/3]
-       - [ ] writeb
-       - [ ] writec
+     - [-] Output [2/3]
+       - [X] writeb
+       - [X] writec
        - [ ] write
      - [ ] File I/O [0/3]
        - [ ] infile
