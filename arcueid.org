@@ -172,7 +172,7 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [3/5]
-     - [-] coerce [1/11]
+     - [-] coerce [2/11]
        - [X] Fixnum conversions [8/8]
          - [X] fixnum -> int (trivial)
          - [X] fixnum -> fixnum (trivial)
@@ -184,13 +184,13 @@ notice and this notice are preserved.
 	       limit to 0 - 0x10FFFF, also exclude 0xd800-0xdfff, invalid
 	       Unicode block.
          - [X] fixnum -> string (has base as optional arg)
-       - [ ] Bignum conversions [0/6]
-         - [ ] bignum -> int (trivial)
-         - [ ] bignum -> bignum (trivial)
-         - [ ] bignum -> rational (trivial)
-         - [ ] bignum -> flonum
-         - [ ] bignum -> complex (same as conversion to flonum)
-         - [ ] bignum -> str
+       - [X] Bignum conversions [6/6]
+         - [X] bignum -> int (trivial)
+         - [X] bignum -> bignum (trivial)
+         - [X] bignum -> rational (trivial)
+         - [X] bignum -> flonum
+         - [X] bignum -> complex (same as conversion to flonum)
+         - [X] bignum -> str
        - [ ] Flonum conversions [0/6]
          - [ ] flonum -> fixnum
          - [ ] flonum -> bignum
