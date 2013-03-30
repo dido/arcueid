@@ -174,6 +174,64 @@ START_TEST(test_coerce_fixnum)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+static int rel_compare(double a, double b, double maxdiff)
+{
+  double diff = fabs(a - b);
+  double largest;
+
+  a = fabs(a);
+  b = fabs(b);
+  largest = (a > b) ? a : b;
+  if (diff <= largest * maxdiff)
+    return(1);
+  return(0);
+}
+
+START_TEST(test_coerce_bignum)
+{
+  value thr, cctx, clos, code, ret, expected;
+  static const char *expected_str = "39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816";
+  static const char *b36str = "2op9vv3r85y0ag8ukw7bqnnknjigy9r4407r3dbiq68kv8h2zuqyon925oqg0whhftleubw3g1s";
+
+  expected = arc_mkbignuml(c, 0L);
+  mpz_set_str(REPBNUM(expected), expected_str, 10);
+  thr = arc_mkthread(c);
+
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'fixnum)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'int)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'bignum)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'rational)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'flonum)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 3.940200619639448e+115, 1e-6));
+
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, expected_str)) == 0);
+
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'string 36)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, b36str)) == 0);
+
+}
+END_TEST
+
+#endif
+
 int main(void)
 {
   int number_failed;
@@ -185,6 +243,10 @@ int main(void)
   arc_init(c);
 
   tcase_add_test(tc_bif, test_coerce_fixnum);
+
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_bif, test_coerce_bignum);
+#endif
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
