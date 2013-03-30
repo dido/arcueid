@@ -1225,19 +1225,6 @@ START_TEST(test_div_fixnum)
   fail_unless(TYPE(quot) == T_FLONUM);
   fail_unless(fabs(REPFLO(quot) - 0.5) < 1e-6);
 #endif
-
-  /* This is the only case where a division of two fixnums will
-     result in a bignum (or a flonum without bignum support).
-     Happens because the fixnum range is unsymmetric. */
-  quot = __arc_div2(c, INT2FIX(FIXNUM_MIN), INT2FIX(-1));
-#ifdef HAVE_GMP_H
-  fail_unless(TYPE(quot) == T_BIGNUM);
-  fail_unless(mpz_cmp_si(REPBNUM(quot), -FIXNUM_MIN) == 0);
-#else
-  fail_unless(TYPE(quot) == T_FLONUM);
-  fail_unless(fabs(REPFLO(quot) - ((double)-FIXNUM_MIN)) < 1e-6);
-#endif
-
 }
 END_TEST
 
@@ -1288,14 +1275,6 @@ START_TEST(test_div_fixnum2bignum)
   quot = __arc_div2(c, val1, val2);
   fail_unless(TYPE(quot) == T_FIXNUM);
   fail_unless(FIX2INT(quot) == 10);
-
-  /* Fixnum / "Bignum" = Bignum (somewhat contrived).  See test_div_fixnum
-     for a similar test */
-  val1 = INT2FIX(FIXNUM_MIN);
-  val2 = arc_mkbignuml(c, -1);
-  quot = __arc_div2(c, val1, val2);
-  fail_unless(TYPE(quot) == T_BIGNUM);
-  fail_unless(mpz_cmp_si(REPBNUM(quot), -FIXNUM_MIN) == 0);
 
   /* Fixnum / Bignum = Rational */
   val1 = INT2FIX(3);
