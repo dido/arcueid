@@ -103,6 +103,8 @@ struct typefn_t {
   /* Coerce.  This can in general only be used to convert something
      to a numeric type. */
   value (*coerce)(struct arc *c, value, enum arc_types);
+  /* More general coercions.  May be used for more general conversions */
+  int (*xcoerce)(struct arc *c, value);
 #if 0
   /* Recursive hasher.  This is used for computing possibly recursive
      hashes and is an AFF. */
@@ -295,6 +297,7 @@ extern value arc_type(arc *c, value obj);
 extern value arc_type_compat(arc *c, value obj);
 extern value arc_rep(arc *c, value obj);
 extern value arc_annotate(arc *c, value typesym, value obj);
+extern int arc_coerce(arc *c, value thr);
 
 /* Thread definitions and functions */
 extern value arc_mkthread(arc *c);
@@ -444,17 +447,17 @@ extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
 #define FOR_EACH_(N, what, ...) CONCATENATE(FOR_EACH_, N)(what, __VA_ARGS__)
 #define FOR_EACH(what, ...) FOR_EACH_(NARGS(__VA_ARGS__), what, __VA_ARGS__)
 
-#define AFFDEF(fname) int fname(arc *c, value thr) { int __nargs__ = 0; int __optargs__ = 0; int __restarg__ = 0; int __localvars__ = 0; do
+#define AFFDEF(fname) int fname(arc *c, value thr) { char __nargs__ = 0; char  __optargs__ = 0; char __restarg__ = 0; char __localvars__ = 0; do
 
 #define AFFEND while (0); return(TR_RC); }
 
-#define ADEFARG(x) int x = __nargs__++
+#define ADEFARG(x) char x = __nargs__++
 
-#define AOPTARG(x) int x = __nargs__ +  __optargs__++
+#define AOPTARG(x) char x = __nargs__ +  __optargs__++
 
-#define ARARG(x) int x = __nargs__ + __optargs__ + __localvars__; __restarg__ = 1
+#define ARARG(x) char x = __nargs__ + __optargs__ + __localvars__; __restarg__ = 1
 
-#define ADEFVAR(x) int x = __nargs__ + __optargs__ + __localvars__++;
+#define ADEFVAR(x) char x = __nargs__ + __optargs__ + __localvars__++;
 
 #define AARG(...) FOR_EACH(ADEFARG, __VA_ARGS__)
 
