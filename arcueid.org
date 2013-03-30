@@ -172,103 +172,65 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [3/5]
-     - [ ] coerce [0/10]
-       - [ ] Integer conversions [0/5]
-	     Note that fixnum and bignum may be used as aliases for int
-         - [ ] char -> int (results in a fixnum from 0 - 0x10FFFF)
-         - [ ] flonum -> int
-	       Either fixnum or bignum as needed.
-         - [ ] complex -> int
-	       optional argument for imaginary, use 'im
-         - [ ] rational -> int
-	       May return fixnum or bignum as needed
-         - [ ] string -> int, base specified as optional arg
-       - [ ] Flonum conversions [0/5]
-         - [ ] fixnum -> flonum
+     - [-] coerce [1/11]
+       - [X] Fixnum conversions [8/8]
+         - [X] fixnum -> int (trivial)
+         - [X] fixnum -> fixnum (trivial)
+         - [X] fixnum -> bignum (trivial)
+         - [X] fixnum -> rational (trivial)
+         - [X] fixnum -> flonum
+         - [X] fixnum -> complex (same as fixnum -> flonum)
+         - [X] fixnum -> char
+	       limit to 0 - 0x10FFFF, also exclude 0xd800-0xdfff, invalid
+	       Unicode block.
+         - [X] fixnum -> string (has base as optional arg)
+       - [ ] Bignum conversions [0/6]
+         - [ ] bignum -> int (trivial)
+         - [ ] bignum -> bignum (trivial)
+         - [ ] bignum -> rational (trivial)
          - [ ] bignum -> flonum
-         - [ ] rational -> flonum
-         - [ ] complex -> flonum
-	       Extra argument for Im(z)
-         - [ ] string -> flonum
-	       A base may be specified here as well.  Arc3 does not allow
-	       specification of an exponent for bases greater than 14, but
-	       Arcueid allows alternate use of an '&' character to denote
-               exponents (after Simula), or a 'p/P' character for bases
-               less than 25 (as per strtod).  The strings '±inf' and 'nan'
-               with any capitalization, with or without a trailing .0, will
-               create an infinity or a NaN respectively.
-       - [ ] Rational conversions [0/5]
-         - [ ] fixnum -> rational
-	       This has no real effect.  It will still return the original
-	       fixnum, without error.         
-         - [ ] bignum -> rational
-	       Also has no effect, returning the original bignum without
-	       error.
+         - [ ] bignum -> complex (same as conversion to flonum)
+         - [ ] bignum -> str
+       - [ ] Flonum conversions [0/6]
+         - [ ] flonum -> fixnum
+         - [ ] flonum -> bignum
          - [ ] flonum -> rational
-         - [ ] complex -> rational
-	       Extra argument for Im(z)
-         - [ ] string -> rational, base specified as optional arg
-	       May return a fixnum or a bignum instead depending on the
-	       value therein.
-       - [ ] Complex conversions [0/5]
-         - [ ] fixnum -> complex
-	       Works the same as fixnum -> flonum
-         - [ ] bignum -> complex
-	       Works the same as bignum -> flonum
-         - [ ] flonum -> complex
-	       Has no effect, returning the original flonum
-         - [ ] string -> complex
-	       May return a flonum if no imaginary part is specified.
-	 - [ ] cons -> complex
-       - [ ] String conversions [0/10]
-	 - [ ] nil -> string
-         - [ ] char -> string
-         - [ ] fixnum -> string
-	       Has extra argument specifying base
-         - [ ] bignum -> string
-	       Has extra argument specifying base
-         - [ ] rational -> string
-	       Has extra argument specifying base
+         - [ ] flonum -> flonum (trivial)
+         - [ ] flonum -> complex (trivial)
          - [ ] flonum -> string
+       - [ ] Rational conversions [0/6]
+	 - [ ] rational -> fixnum
+	 - [ ] rational -> bignum
+	 - [ ] rational -> rational (trivial)
+	 - [ ] rational -> flonum
+         - [ ] rational -> complex
+         - [ ] rational -> string
+       - [ ] Complex conversions [0/6]
+	 - [ ] complex -> fixnum
+	 - [ ] complex -> bignum
+	 - [ ] complex -> rational
+	 - [ ] complex -> flonum
+         - [ ] complex -> complex (trivial)
          - [ ] complex -> string
-         - [ ] cons -> string
-         - [ ] vector -> string
+       - [ ] Character conversions [0/3]
+         - [ ] char -> int (results in a fixnum from 0 - 0x10FFFF)
+         - [ ] char -> fixnum (same as char -> int)
+         - [ ] char -> string
+       - [ ] String conversions [0/2]
+         - [ ] string -> symbol
+         - [ ] string -> cons
+       - [ ] Symbol conversions [0/3]
          - [ ] symbol -> string
-       - [ ] Cons conversions [0/4]
-         - [ ] rational -> cons
-	       car = numerator, cdr = denominator, could be fixnums or
-	       bignums as needed.
-         - [ ] complex -> cons
-	       car = Re(z), cdr = Im(z)
-         - [ ] vector -> cons
-         - [ ] string -> cons (char list)
-       - [ ] Symbol conversions [0/2]
-         - [ ] char -> sym
-         - [ ] string -> sym
-       - [ ] Vector conversions [0/2]
-         - [ ] string -> vector (char vector)
+         - [ ] nil -> string (produces empty string)
+         - [ ] t -> string
+       - [ ] Cons conversions [0/3]
+         - [ ] cons -> string
          - [ ] cons -> vector
-       - [ ] fixnum -> char
-             limit to 0 - 0x10FFFF, also exclude 0xd800-0xdfff, invalid
-	     Unicode block.
-       - [ ] string -> num
-	     Converts any string into a number of the appropriate
-	     type.  This should use the best available numeric type
-	     that is able to most accurately represent the value
-	     described by the string.  Numeric base may be specified
-	     as an optional argument as before.
-
-	     Basic algorithm makes the following tests:
-
-	 1. If string ends with 'i' or 'j', convert as complex
-	 2. If string contains '.', convert as floating point.
-	 3. If base is less than 14 and the string contains 'e/E',
-	    convert as floating point.
-	 4. If base is less than 25 and the string contains 'p/P',
-	    convert as floating point.
-	 5. If string contains '&', convert as floating point.
-	 6. If string contains '/', convert as rational.
-	 7. Otherwise, consider string as representing an integer
+         - [ ] cons -> table
+       - [ ] Table conversions [0/1]
+         - [ ] table -> cons
+       - [ ] Vector conversions [0/1]
+         - [ ] vector -> cons
      - [X] type
      - [X] annotate
      - [X] rep
