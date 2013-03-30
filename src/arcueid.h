@@ -200,7 +200,7 @@ extern void __arc_null_sweeper(arc *c, value v);
 
 /* Definitions for Fixnums */
 #define FIXNUM_MAX (LONG_MAX >> 1)
-#define FIXNUM_MIN (-FIXNUM_MAX - 1)
+#define FIXNUM_MIN (-FIXNUM_MAX)
 #define FIXNUM_FLAG 0x01
 #define INT2FIX(i) ((value)(((long)(i))<< 1 | FIXNUM_FLAG))
 /* FIXME: portability to systems that don't preserve sign bit on
