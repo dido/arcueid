@@ -161,6 +161,16 @@ START_TEST(test_coerce_fixnum)
   fail_unless(TYPE(ret) == T_STRING);
   fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, fixnumstr)) == 0);
 
+  /* different bases */
+
+  TEST("(coerce 233495534 'string 16)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "deadbee")) == 0);
+
+  TEST("(coerce 1678244 'string 36)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "zyxw")) == 0);
+
 }
 END_TEST
 
