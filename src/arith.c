@@ -56,6 +56,50 @@ static value div_rational(arc *c, value v1, value v2);
 
 /*================================= Fixnums */
 
+static const char _itoa_lower_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+static const char _itoa_upper_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+value __arc_itoa(arc *c, value onum, value base,
+			int uc, int sf)
+{
+  const char *digits = (uc) ? _itoa_upper_digits : _itoa_lower_digits;
+  value dig, num;
+  value str;
+  long int p, q, sign;
+  Rune t;
+
+  sign = 1;
+  sign = FIX2INT(onum);
+  sign = (sign > 0) ? 1 : ((sign < 0) ? -1 : 0);
+  num = INT2FIX(sign * FIX2INT(onum));
+  /* special case for 0 */
+  if (sign == 0) {
+    return(arc_mkstringc(c, "0"));
+  } else {
+    str = arc_mkstringc(c, "");
+    while (FIX2INT(num) > 0) {
+      dig = __arc_mod2(c, num, base);
+      str = arc_strcatc(c, str, (Rune)digits[FIX2INT(dig)]);
+      num = __arc_idiv2(c, num, base);
+    }
+  }
+  /* sign goes at the end if it's present, since the digits come in
+     reversed. */
+  if (sign < 0)
+    str = arc_strcatc(c, str, (Rune)'-');
+  else if (sf)
+    str = arc_strcatc(c, str, (Rune)'+');
+  /* Reverse the string */
+  q = arc_strlen(c, str);
+  p = 0;
+  for (--q; p < q; ++p, --q) {
+    t = arc_strindex(c, str, p);
+    arc_strsetindex(c, str, p, arc_strindex(c, str, q));
+    arc_strsetindex(c, str, q, t);
+  }
+  return(str);
+}
+
 static value fixnum_coerce(arc *c, value x, enum arc_types t)
 {
   switch(t) {
@@ -76,6 +120,42 @@ static value fixnum_coerce(arc *c, value x, enum arc_types t)
   }
   return(CNIL);
 }
+
+static AFFDEF(fixnum_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+
+  (void)arg;
+  /* trivial cases */
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
+      || FIX2INT(AV(stype)) == T_RATIONAL)
+    ARETURN(AV(obj));
+  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
+    ARETURN(arc_mkflonum(c, (double)FIX2INT(AV(obj))));
+  if (FIX2INT(AV(stype)) == T_CHAR) {
+    Rune ch;
+    /* Check for invalid ranges */
+    ch = FIX2INT(AV(obj));
+    if (ch < 0 || ch > 0x10FFFF || (ch >= 0xd800 && ch <= 0xdfff)) {
+      arc_err_cstrfmt(c, "integer->char: expects argument of type <exact integer in [0,#x10FFFF], not in [#xD800,#xDFFF]>");
+      ARETURN(CNIL);
+    }
+    ARETURN(arc_mkchar(c, ch));
+  }
+
+  if (!BOUND_P(AV(arg)))
+    AV(arg) = INT2FIX(10);
+
+  if (FIX2INT(AV(stype)) == T_STRING) {
+    ARETURN(__arc_itoa(c, AV(obj), AV(arg), 0, 0));
+  }
+
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
 
 /*================================= Flonums */
 
@@ -438,6 +518,35 @@ value arc_mkbignuml(arc *c, long val)
   mpz_set_si(REPBNUM(cv), val);
   return(cv);
 }
+
+static AFFDEF(bignum_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+
+  (void)arg;
+  /* trivial cases */
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
+      || FIX2INT(AV(stype)) == T_RATIONAL)
+    ARETURN(AV(obj));
+  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
+    ARETURN(arc_mkflonum(c, mpz_get_d(REPBNUM(AV(obj)))));
+
+  if (!BOUND_P(AV(arg)))
+    AV(arg) = INT2FIX(10);
+
+  if (FIX2INT(AV(stype)) == T_STRING) {
+    char *str = mpz_get_str(NULL, FIX2INT(AV(arg)), REPBNUM(AV(obj)));
+    value astr = arc_mkstringc(c, str);
+    free(str);
+    ARETURN(astr);
+  }
+
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
 
 /*================================= End Bignum */
 
@@ -1295,86 +1404,6 @@ value arc_string2num(arc *c, value str, int index, int rational)
   return(CNIL);
 }
 
-static const char _itoa_lower_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
-static const char _itoa_upper_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-value __arc_itoa(arc *c, value onum, value base,
-			int uc, int sf)
-{
-  const char *digits = (uc) ? _itoa_upper_digits : _itoa_lower_digits;
-  value dig, num;
-  value str;
-  long int p, q, sign;
-  Rune t;
-
-  sign = 1;
-  sign = FIX2INT(onum);
-  sign = (sign > 0) ? 1 : ((sign < 0) ? -1 : 0);
-  num = INT2FIX(sign * FIX2INT(onum));
-  /* special case for 0 */
-  if (sign == 0) {
-    return(arc_mkstringc(c, "0"));
-  } else {
-    str = arc_mkstringc(c, "");
-    while (FIX2INT(num) > 0) {
-      dig = __arc_mod2(c, num, base);
-      str = arc_strcatc(c, str, (Rune)digits[FIX2INT(dig)]);
-      num = __arc_idiv2(c, num, base);
-    }
-  }
-  /* sign goes at the end if it's present, since the digits come in
-     reversed. */
-  if (sign < 0)
-    str = arc_strcatc(c, str, (Rune)'-');
-  else if (sf)
-    str = arc_strcatc(c, str, (Rune)'+');
-  /* Reverse the string */
-  q = arc_strlen(c, str);
-  p = 0;
-  for (--q; p < q; ++p, --q) {
-    t = arc_strindex(c, str, p);
-    arc_strsetindex(c, str, p, arc_strindex(c, str, q));
-    arc_strsetindex(c, str, q, t);
-  }
-  return(str);
-}
-
-static AFFDEF(fixnum_xcoerce)
-{
-  AARG(obj, stype, arg);
-  AFBEGIN;
-
-  (void)arg;
-  /* trivial cases */
-  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
-      || FIX2INT(AV(stype)) == T_RATIONAL)
-    ARETURN(AV(obj));
-  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
-    ARETURN(arc_mkflonum(c, (double)FIX2INT(AV(obj))));
-  if (FIX2INT(AV(stype)) == T_CHAR) {
-    Rune ch;
-    /* Check for invalid ranges */
-    ch = FIX2INT(AV(obj));
-    if (ch < 0 || ch > 0x10FFFF || (ch >= 0xd800 && ch <= 0xdfff)) {
-      arc_err_cstrfmt(c, "integer->char: expects argument of type <exact integer in [0,#x10FFFF], not in [#xD800,#xDFFF]>");
-      ARETURN(CNIL);
-    }
-    ARETURN(arc_mkchar(c, ch));
-  }
-
-  if (!BOUND_P(AV(arg)))
-    AV(arg) = INT2FIX(10);
-
-  if (FIX2INT(AV(stype)) == T_STRING) {
-    ARETURN(__arc_itoa(c, AV(obj), AV(arg), 0, 0));
-  }
-
-  arc_err_cstrfmt(c, "cannot coerce");
-  ARETURN(CNIL);
-  AFEND;
-}
-AFFEND
-
 typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
@@ -1419,7 +1448,8 @@ typefn_t __arc_bignum_typefn__ = {
   bignum_iscmp,
   NULL,
   NULL,
-  bignum_coerce
+  bignum_coerce,
+  bignum_xcoerce
 };
 
 typefn_t __arc_rational_typefn__ = {
