@@ -390,6 +390,95 @@ value arc_annotate(arc *c, value typesym, value obj)
   return(ann);
 }
 
+enum arc_types typesym2type(arc *c, value typesym)
+{
+  if (typesym == ARC_BUILTIN(c, S_SYM))
+    return(T_SYMBOL);
+
+  if (typesym == ARC_BUILTIN(c, S_FIXNUM))
+    return(T_FIXNUM);
+
+  if (typesym == ARC_BUILTIN(c, S_BIGNUM) || typesym == ARC_BUILTIN(c, S_INT))
+    return(T_BIGNUM);
+
+  if (typesym == ARC_BUILTIN(c, S_FLONUM))
+    return(T_FLONUM);
+
+  if (typesym == ARC_BUILTIN(c, S_RATIONAL))
+    return(T_RATIONAL);
+
+  if (typesym == ARC_BUILTIN(c, S_COMPLEX))
+    return(T_COMPLEX);
+
+  if (typesym == ARC_BUILTIN(c, S_CHAR))
+    return(T_CHAR);
+
+  if (typesym == ARC_BUILTIN(c, S_STRING))
+    return(T_STRING);
+
+  if (typesym == ARC_BUILTIN(c, S_CONS))
+    return(T_CONS);
+
+  if (typesym == ARC_BUILTIN(c, S_TABLE))
+    return(T_TABLE);
+
+  if (typesym == ARC_BUILTIN(c, S_INPUT))
+    return(T_INPORT);
+
+  if (typesym == ARC_BUILTIN(c, S_OUTPUT))
+    return(T_OUTPORT);
+
+  if (typesym == ARC_BUILTIN(c, S_EXCEPTION))
+    return(T_EXCEPTION);
+
+  if (typesym == ARC_BUILTIN(c, S_THREAD))
+    return(T_THREAD);
+
+  if (typesym == ARC_BUILTIN(c, S_VECTOR))
+    return(T_VECTOR);
+
+  if (typesym == ARC_BUILTIN(c, S_CONTINUATION))
+    return(T_CONT);
+
+  if (typesym == ARC_BUILTIN(c, S_FN))
+    return(T_CLOS);
+
+  if (typesym == ARC_BUILTIN(c, S_CODE))
+    return(T_CODE);
+
+  if (typesym == ARC_BUILTIN(c, S_ENVIRONMENT))
+    return(T_ENV);
+
+  if (typesym == ARC_BUILTIN(c, S_CCODE))
+    return(T_CCODE);
+
+  if (typesym == ARC_BUILTIN(c, S_CHAN))
+    return(T_CHAN);
+
+  return(T_NONE);
+}
+
+AFFDEF(arc_coerce)
+{
+  AARG(obj, typesym);
+  AOARG(args);
+  typefn_t *tfn;
+  AFBEGIN;
+
+  if (NIL_P(AV(obj)) && AV(typesym) == ARC_BUILTIN(c, S_STRING))
+    ARETURN(arc_mkstringc(c, ""));
+
+  tfn = __arc_typefn(c, AV(obj));
+  if (tfn == NULL || tfn->xcoerce == NULL) {
+    arc_err_cstrfmt(c, "cannot coerce");
+    ARETURN(AV(obj));
+  }
+  AFTCALL(arc_mkaff(c, tfn->xcoerce, CNIL), AV(obj),
+	  INT2FIX(typesym2type(c, AV(typesym))), AV(args));
+  AFEND;
+}
+AFFEND
+
 extern typefn_t __arc_fixnum_typefn__;
 extern typefn_t __arc_flonum_typefn__;
 extern typefn_t __arc_complex_typefn__;
@@ -450,7 +539,7 @@ static struct {
   { "atype", 1, arc_type },
   { "annotate", 2, arc_annotate },
   { "rep", 1, arc_rep },
-
+  { "coerce", -2, arc_coerce },
   {NULL, 0, NULL }
 };
 
