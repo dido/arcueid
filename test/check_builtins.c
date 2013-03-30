@@ -29,6 +29,22 @@
 #include "../src/vmengine.h"
 #include "../src/builtins.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 arc *c, cc;
 
 #define QUANTA 65536
@@ -74,16 +90,77 @@ AFFEND
   XCALL0(clos);					\
   ret = TVALR(thr)
 
+extern void __arc_print_string(arc *c, value ppstr);
+
 
 START_TEST(test_coerce_fixnum)
 {
   value thr, cctx, clos, code, ret;
+  char *fixnumstr, *coercestr;
+  int len;
 
   thr = arc_mkthread(c);
 
   TEST("(coerce 1234 'fixnum)");
   fail_unless(TYPE(ret) == T_FIXNUM);
   fail_unless(ret == INT2FIX(1234));
+
+  TEST("(coerce 1234 'int)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(1234));
+
+  TEST("(coerce 1234 'bignum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(1234));
+
+  TEST("(coerce 1234 'rational)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(1234));
+
+  TEST("(coerce 1234 'flonum)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(fabs(REPFLO(ret) - 1234.0) < 1e-6);
+
+  TEST("(coerce 1234 'complex)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(fabs(REPFLO(ret) - 1234.0) < 1e-6);
+
+  TEST("(coerce 65 'char)");
+  fail_unless(TYPE(ret) == T_CHAR);
+  fail_unless(arc_char2rune(c, ret) == 'A');
+
+  TEST("(coerce 1234 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "1234")) == 0);
+
+  TEST("(coerce -1234 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "-1234")) == 0);
+
+  len = snprintf(NULL, 0, "%ld", FIXNUM_MAX);
+  fixnumstr = alloca(sizeof(char)*(len+1));
+  snprintf(fixnumstr, len+1, "%ld", FIXNUM_MAX);
+
+  len = snprintf(NULL, 0, "(coerce %s 'string)", fixnumstr);
+  coercestr = alloca(sizeof(char)*(len+1));
+  snprintf(coercestr, len+1, "(coerce %s 'string)", fixnumstr);
+
+  TEST(coercestr);
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, fixnumstr)) == 0);
+
+  len = snprintf(NULL, 0, "%ld", FIXNUM_MIN);
+  fixnumstr = alloca(sizeof(char)*(len+1));
+  snprintf(fixnumstr, len+1, "%ld", FIXNUM_MIN);
+
+  len = snprintf(NULL, 0, "(coerce %s 'string)", fixnumstr);
+  coercestr = alloca(sizeof(char)*(len+1));
+  snprintf(coercestr, len+1, "(coerce %s 'string)", fixnumstr);
+
+  TEST(coercestr);
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, fixnumstr)) == 0);
+
 }
 END_TEST
 
