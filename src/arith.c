@@ -789,6 +789,45 @@ value __arc_idiv2(arc *c, value arg1, value arg2)
     return(bignum_fixnum(c, quot));
   }
 #endif
+  arc_err_cstrfmt(c, "Invalid types for idiv");
+  return(CNIL);
+}
+
+value __arc_mod2(arc *c, value arg1, value arg2)
+{
+  ldiv_t res;
+
+  if (TYPE(arg2) == T_FIXNUM && FIX2INT(arg2) == 0) {
+    arc_err_cstrfmt(c, "Division by zero");
+    return(CNIL);
+  }
+
+  if (TYPE(arg1) == T_FIXNUM && TYPE(arg2) == T_FIXNUM) {
+    long varg1, varg2;
+
+    varg1 = FIX2INT(arg1);
+    varg2 = FIX2INT(arg2);
+    res = ldiv(varg1, varg2);
+    /* Corrections to make the modulo Euclidean */
+    if ((varg1 < 0 && varg2 > 0) || (varg1 > 0 && varg2 < 0))
+      res = ldiv(res.rem + varg2, varg2);
+    return(INT2FIX(res.rem));
+  } 
+
+#ifdef HAVE_GMP_H
+  else if ((TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM) &&
+	   (TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM)) {
+    value barg1, barg2, modulus;
+    typefn_t *tfn = __arc_typefn(c, arg1), *tfn2 = __arc_typefn(c, arg2);
+
+    /* Coerce both args to bignum */
+    barg1 = tfn->coerce(c, arg1, T_BIGNUM);
+    barg2 = tfn2->coerce(c, arg2, T_BIGNUM);
+    modulus = arc_mkbignuml(c, 0L);
+    mpz_fdiv_r(REPBNUM(modulus), REPBNUM(barg1), REPBNUM(barg2));
+    return(bignum_fixnum(c, modulus));
+  }
+#endif
   arc_err_cstrfmt(c, "Invalid types for modulus");
   return(CNIL);
 }
@@ -1256,6 +1295,86 @@ value arc_string2num(arc *c, value str, int index, int rational)
   return(CNIL);
 }
 
+static const char _itoa_lower_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
+static const char _itoa_upper_digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+value __arc_itoa(arc *c, value onum, value base,
+			int uc, int sf)
+{
+  const char *digits = (uc) ? _itoa_upper_digits : _itoa_lower_digits;
+  value dig, num;
+  value str;
+  long int p, q, sign;
+  Rune t;
+
+  sign = 1;
+  sign = FIX2INT(onum);
+  sign = (sign > 0) ? 1 : ((sign < 0) ? -1 : 0);
+  num = INT2FIX(sign * FIX2INT(onum));
+  /* special case for 0 */
+  if (sign == 0) {
+    return(arc_mkstringc(c, "0"));
+  } else {
+    str = arc_mkstringc(c, "");
+    while (FIX2INT(num) > 0) {
+      dig = __arc_mod2(c, num, base);
+      str = arc_strcatc(c, str, (Rune)digits[FIX2INT(dig)]);
+      num = __arc_idiv2(c, num, base);
+    }
+  }
+  /* sign goes at the end if it's present, since the digits come in
+     reversed. */
+  if (sign < 0)
+    str = arc_strcatc(c, str, (Rune)'-');
+  else if (sf)
+    str = arc_strcatc(c, str, (Rune)'+');
+  /* Reverse the string */
+  q = arc_strlen(c, str);
+  p = 0;
+  for (--q; p < q; ++p, --q) {
+    t = arc_strindex(c, str, p);
+    arc_strsetindex(c, str, p, arc_strindex(c, str, q));
+    arc_strsetindex(c, str, q, t);
+  }
+  return(str);
+}
+
+static AFFDEF(fixnum_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+
+  (void)arg;
+  /* trivial cases */
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
+      || FIX2INT(AV(stype)) == T_RATIONAL)
+    ARETURN(AV(obj));
+  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
+    ARETURN(arc_mkflonum(c, (double)FIX2INT(AV(obj))));
+  if (FIX2INT(AV(stype)) == T_CHAR) {
+    Rune ch;
+    /* Check for invalid ranges */
+    ch = FIX2INT(AV(obj));
+    if (ch < 0 || ch > 0x10FFFF || (ch >= 0xd800 && ch <= 0xdfff)) {
+      arc_err_cstrfmt(c, "integer->char: expects argument of type <exact integer in [0,#x10FFFF], not in [#xD800,#xDFFF]>");
+      ARETURN(CNIL);
+    }
+    ARETURN(arc_mkchar(c, ch));
+  }
+
+  if (!BOUND_P(AV(arg)))
+    AV(arg) = INT2FIX(10);
+
+  if (FIX2INT(AV(stype)) == T_STRING) {
+    ARETURN(__arc_itoa(c, AV(obj), AV(arg), 0, 0));
+  }
+
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
@@ -1264,7 +1383,8 @@ typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
   NULL,
-  fixnum_coerce
+  fixnum_coerce,
+  fixnum_xcoerce
 };
 
 typefn_t __arc_complex_typefn__ = {
