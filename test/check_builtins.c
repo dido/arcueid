@@ -234,6 +234,61 @@ START_TEST(test_coerce_bignum)
 }
 END_TEST
 
+START_TEST(test_coerce_rational)
+{
+
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+
+  TEST("(coerce 3/2 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(coerce 5/2 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(coerce 7/2 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(4));
+
+  TEST("(coerce 9/2 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(4));
+
+  TEST("(coerce 11/2 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(6));
+
+  TEST("(coerce 11/2 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(6));
+
+  TEST("(coerce 1/2 'rational)");
+  fail_unless(TYPE(ret) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
+
+  TEST("(coerce 1/2 'flonum)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 0.5, 1e-6));
+
+  TEST("(coerce 1/2 'complex)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 0.5, 1e-6));
+
+  TEST("(coerce 1/2 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "1/2")) == 0);
+
+  TEST("(coerce 1/2 'cons)");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(cdr(ret) == INT2FIX(2));
+
+}
+END_TEST
+
 #endif
 
 START_TEST(test_coerce_flonum)
@@ -285,6 +340,7 @@ START_TEST(test_coerce_flonum)
 }
 END_TEST
 
+
 int main(void)
 {
   int number_failed;
@@ -299,6 +355,7 @@ int main(void)
 
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_bif, test_coerce_bignum);
+  tcase_add_test(tc_bif, test_coerce_rational);
 #endif
 
   tcase_add_test(tc_bif, test_coerce_flonum);
