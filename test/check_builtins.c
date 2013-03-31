@@ -174,8 +174,6 @@ START_TEST(test_coerce_fixnum)
 }
 END_TEST
 
-#ifdef HAVE_GMP_H
-
 static int rel_compare(double a, double b, double maxdiff)
 {
   double diff = fabs(a - b);
@@ -188,6 +186,8 @@ static int rel_compare(double a, double b, double maxdiff)
     return(1);
   return(0);
 }
+
+#ifdef HAVE_GMP_H
 
 START_TEST(test_coerce_bignum)
 {
@@ -219,6 +219,10 @@ START_TEST(test_coerce_bignum)
   fail_unless(TYPE(ret) == T_FLONUM);
   fail_unless(rel_compare(REPFLO(ret), 3.940200619639448e+115, 1e-6));
 
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'complex)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 3.940200619639448e+115, 1e-6));
+
   TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'string)");
   fail_unless(TYPE(ret) == T_STRING);
   fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, expected_str)) == 0);
@@ -231,6 +235,55 @@ START_TEST(test_coerce_bignum)
 END_TEST
 
 #endif
+
+START_TEST(test_coerce_flonum)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+
+  TEST("(coerce 1.0 'flonum)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.0, 1e-6));
+
+  TEST("(coerce 1.0 'complex)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.0, 1e-6));
+
+  TEST("(coerce 1234.0 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(1234));
+
+#ifdef HAVE_GMP_H
+
+  TEST("(coerce 1e100 'fixnum)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  /* I don't think a more exact check is possible: 1e100 has 101 decimal
+     digits. */
+  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
+
+  TEST("(coerce 1e100 'bignum)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
+
+  TEST("(coerce 1e100 'int)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
+
+  /* I suppose 0.5 should be exactly enough represented in binary
+     floating point. */
+  TEST("(coerce 0.5 'rational)");
+  fail_unless(TYPE(ret) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
+
+#endif
+
+  TEST("(coerce 45.23e-5 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "0.0004523")) == 0);
+
+}
+END_TEST
 
 int main(void)
 {
@@ -247,6 +300,8 @@ int main(void)
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_bif, test_coerce_bignum);
 #endif
+
+  tcase_add_test(tc_bif, test_coerce_flonum);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
