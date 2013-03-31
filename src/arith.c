@@ -665,6 +665,68 @@ static value rational_coerce(arc *c, value q, enum arc_types t)
   return(CNIL);
 }
 
+static AFFDEF(rational_xcoerce)
+{
+  AARG(obj, stype, arg);
+  value bignum;
+  mpq_t rem;
+  double drem;
+
+  AFBEGIN;
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
+    bignum = arc_mkbignuml(c, 0L);
+    mpq_init(rem);
+    mpz_tdiv_qr(REPBNUM(bignum), mpq_numref(rem),
+		mpq_numref(REPRAT(AV(obj))),
+		mpq_denref(REPRAT(AV(obj))));
+    mpz_set(mpq_denref(rem), mpq_denref(REPRAT(AV(obj))));
+    mpq_canonicalize(rem);
+    drem = mpq_get_d(rem);
+    mpq_clear(rem);
+    if (drem >  0.5)
+      mpz_add_ui(REPBNUM(bignum), REPBNUM(bignum), 1);
+    else if (drem == 0.5 && mpz_odd_p(REPBNUM(bignum)))
+      mpz_add_ui(REPBNUM(bignum), REPBNUM(bignum), 1);
+    ARETURN(bignum_fixnum(c, bignum));
+  }
+
+  if (FIX2INT(AV(stype)) == T_RATIONAL)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
+    ARETURN(arc_mkflonum(c, mpq_get_d(REPRAT(AV(obj)))));
+
+  if (FIX2INT(AV(stype)) == T_STRING) {
+    char *str;
+    value astr;
+
+    if (!BOUND_P(AV(arg)))
+      AV(arg) = INT2FIX(10);
+
+    str = mpq_get_str(NULL, FIX2INT(AV(arg)), REPRAT(AV(obj)));
+    astr = arc_mkstringc(c, str);
+    free(str);
+    ARETURN(astr);
+  }
+
+  if (FIX2INT(AV(stype)) == T_CONS) {
+    value num, den;
+
+    num = arc_mkbignuml(c, 0L);
+    den = arc_mkbignuml(c, 0L);
+    mpz_set(REPBNUM(num), mpq_numref(REPRAT(AV(obj))));
+    mpz_set(REPBNUM(den), mpq_denref(REPRAT(AV(obj))));
+    num = bignum_fixnum(c, num);
+    den = bignum_fixnum(c, den);
+    ARETURN(cons(c, num, den));
+  }
+
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 static value rational_hash(arc *c, value n, arc_hs *s)
 {
   /* XXX fill this in */
@@ -1518,7 +1580,8 @@ typefn_t __arc_rational_typefn__ = {
   rational_iscmp,
   NULL,
   NULL,
-  rational_coerce
+  rational_coerce,
+  rational_xcoerce
 };
 
 #endif
