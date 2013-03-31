@@ -126,7 +126,6 @@ static AFFDEF(fixnum_xcoerce)
   AARG(obj, stype, arg);
   AFBEGIN;
 
-  (void)arg;
   /* trivial cases */
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
       || FIX2INT(AV(stype)) == T_RATIONAL)
@@ -230,6 +229,65 @@ static value flonum_coerce(arc *c, value v, enum arc_types t)
   }
   return(CNIL);
 }
+
+static AFFDEF(flonum_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+
+  (void)arg;
+  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
+    if (fabs(REPFLO(AV(obj))) > FIXNUM_MAX) {
+#ifdef HAVE_GMP_H
+      value bn;
+
+      bn = arc_mkbignuml(c, 0L);
+      mpz_set_d(REPBNUM(bn), REPFLO(AV(obj)));
+      ARETURN(bn);
+#else
+      /* Sorry, we overflow! */
+#endif
+    }
+    ARETURN(INT2FIX((long)REPFLO(AV(obj))));    
+  }
+
+  if (FIX2INT(AV(stype)) == T_RATIONAL) {
+#ifdef HAVE_GMP_H
+    value rat;
+
+    rat = arc_mkrationall(c, 0, 1);
+    mpq_set_d(REPRAT(rat), REPFLO(AV(obj)));
+    ARETURN(rat);
+#else
+    /* we cannot coerce flonums to rationals without gmp!*/
+    arc_err_cstrfmt(c, "cannot coerce");
+    ARETURN(CNIL);
+#endif
+  }
+
+  if (BOUND_P(AV(arg)) && AV(arg) != INT2FIX(10)) {
+    arc_err_cstrfmt(c, "inexact numbers can only be printed in base 10");
+    ARETURN(CNIL);
+  }
+
+  if (FIX2INT(AV(stype)) == T_STRING) {
+    char *str;
+    int len;
+
+    len = snprintf(NULL, 0, "%g", REPFLO(AV(obj)));
+    str = alloca(sizeof(char)*(len+1));
+    snprintf(str, len+1, "%g", REPFLO(AV(obj)));
+    ARETURN(arc_mkstringc(c, str));
+  }
+
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
 
 static value mul_flonum(arc *c, value v1, value v2)
 {
@@ -524,7 +582,6 @@ static AFFDEF(bignum_xcoerce)
   AARG(obj, stype, arg);
   AFBEGIN;
 
-  (void)arg;
   /* trivial cases */
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
       || FIX2INT(AV(stype)) == T_RATIONAL)
@@ -1416,17 +1473,6 @@ typefn_t __arc_fixnum_typefn__ = {
   fixnum_xcoerce
 };
 
-typefn_t __arc_complex_typefn__ = {
-  __arc_null_marker,
-  __arc_null_sweeper,
-  complex_pprint,
-  complex_hash,
-  complex_iscmp,
-  NULL,
-  NULL,
-  complex_coerce,
-};
-
 typefn_t __arc_flonum_typefn__ = {
   __arc_null_marker,
   __arc_null_sweeper,
@@ -1436,6 +1482,18 @@ typefn_t __arc_flonum_typefn__ = {
   NULL,
   NULL,
   flonum_coerce,
+  flonum_xcoerce
+};
+
+typefn_t __arc_complex_typefn__ = {
+  __arc_null_marker,
+  __arc_null_sweeper,
+  complex_pprint,
+  complex_hash,
+  complex_iscmp,
+  NULL,
+  NULL,
+  complex_coerce
 };
 
 #ifdef HAVE_GMP_H
