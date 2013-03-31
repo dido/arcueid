@@ -172,7 +172,7 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [3/5]
-     - [-] coerce [3/11]
+     - [-] coerce [4/11]
        - [X] Fixnum conversions [8/8]
          - [X] fixnum -> int (trivial)
          - [X] fixnum -> fixnum (trivial)
@@ -198,38 +198,46 @@ notice and this notice are preserved.
          - [X] flonum -> flonum (trivial)
          - [X] flonum -> complex (trivial)
          - [X] flonum -> string
-       - [ ] Rational conversions [0/6]
-	 - [ ] rational -> fixnum (rounds)
-	 - [ ] rational -> bignum (rounds)
-	 - [ ] rational -> rational (trivial)
-	 - [ ] rational -> flonum
-         - [ ] rational -> complex (same as flonum)
-         - [ ] rational -> string
-       - [ ] Complex conversions [0/6]
+       - [X] Rational conversions [7/7]
+	 - [X] rational -> fixnum (rounds)
+	 - [X] rational -> bignum (rounds)
+	 - [X] rational -> rational (trivial)
+	 - [X] rational -> flonum
+         - [X] rational -> complex (same as flonum)
+         - [X] rational -> string
+         - [X] rational -> cons
+       - [ ] Complex conversions [0/7]
 	 - [ ] complex -> fixnum
 	 - [ ] complex -> bignum
 	 - [ ] complex -> rational
 	 - [ ] complex -> flonum
          - [ ] complex -> complex (trivial)
          - [ ] complex -> string
-       - [ ] Character conversions [0/3]
+         - [ ] complex -> cons
+       - [ ] Character conversions [0/4]
+         - [ ] char -> char (trivial)
          - [ ] char -> int (results in a fixnum from 0 - 0x10FFFF)
          - [ ] char -> fixnum (same as char -> int)
          - [ ] char -> string
-       - [ ] String conversions [0/2]
+       - [ ] String conversions [0/3]
+         - [ ] string -> string (trivial)
          - [ ] string -> symbol
          - [ ] string -> cons
-       - [ ] Symbol conversions [0/3]
+       - [ ] Symbol conversions [0/4]
+         - [ ] symbol -> symbol (trivial)
          - [ ] symbol -> string
          - [ ] nil -> string (produces empty string)
          - [ ] t -> string
-       - [ ] Cons conversions [0/3]
+       - [ ] Cons conversions [0/4]
+         - [ ] cons -> cons (trivial)
          - [ ] cons -> string
          - [ ] cons -> vector
          - [ ] cons -> table
-       - [ ] Table conversions [0/1]
+       - [ ] Table conversions [0/2]
+         - [ ] table -> table (trivial)
          - [ ] table -> cons
-       - [ ] Vector conversions [0/1]
+       - [ ] Vector conversions [0/2]
+         - [ ] vector -> vector (trivial)
          - [ ] vector -> cons
      - [X] type
      - [X] annotate
