@@ -21,6 +21,8 @@
 #include <math.h>
 #include <float.h>
 #include <complex.h>
+#include <string.h>
+#include <ctype.h>
 #include "arcueid.h"
 #include "arith.h"
 #include "../config.h"
@@ -1591,6 +1593,316 @@ static value (*coercefn(arc *c, value val))(arc *, value, enum arc_types)
     return(rational_coerce);
 #endif
   return(NULL);
+}
+
+value __arc_neg(arc *c, value arg)
+{
+  switch (TYPE(arg)) {
+  case T_FIXNUM:
+    return(INT2FIX(-FIX2INT(arg)));
+  case T_FLONUM:
+    return(arc_mkflonum(c, -REPFLO(arg)));
+  case T_COMPLEX:
+    return(arc_mkcomplex(c, -REPCPX(arg)));
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    {
+      value big;
+      big = arc_mkbignuml(c, 0);
+      mpz_neg(REPBNUM(big), REPBNUM(arg));
+      return(big);
+    }
+    break;
+  case T_RATIONAL:
+    {
+      value rat;
+      rat = arc_mkrationall(c, 0, 1);
+      mpq_neg(REPRAT(rat), REPRAT(arg));
+      return(rat);
+    }
+    break;
+#endif
+  default:
+    arc_err_cstrfmt(c, "Invalid type for negation");
+  }
+  return(CNIL);
+}
+
+value arc_expt(arc *c, value a, value b)
+{
+  value ac, bc;
+  double complex p;
+  value (*coerce_a)(struct arc *, value, enum arc_types);
+  value (*coerce_b)(struct arc *, value, enum arc_types);
+#ifdef HAVE_GMP_H
+  mpz_t anumer, adenom;
+  unsigned long int babs;
+  value result;
+#endif
+
+  if (!((TYPE(a) == T_FIXNUM || TYPE(a) == T_FLONUM
+	 || TYPE(a) == T_BIGNUM || TYPE(a) == T_RATIONAL
+	 || TYPE(a) == T_COMPLEX)
+	&& (TYPE(b) == T_FIXNUM || TYPE(b) == T_FLONUM
+	    || TYPE(b) == T_BIGNUM || TYPE(a) == T_RATIONAL
+	    || TYPE(a) == T_COMPLEX))) {
+    arc_err_cstrfmt(c, "Invalid types for exponentiation");
+    return(CNIL);
+  }
+
+  coerce_a = coercefn(c, a);
+  coerce_b = coercefn(c, b);
+  /* We coerce everything to complex and use cpow if any argument
+     is a flonum or a complex, or if the exponent is rational.
+     Note that if bignum support is unavailable, this
+     method is still used even for fixnum arguments. */
+#ifdef HAVE_GMP_H
+  if (TYPE(a) == T_FLONUM || TYPE(b) == T_FLONUM
+      || TYPE(a) == T_COMPLEX || TYPE(b) == T_COMPLEX
+      || TYPE(b) == T_RATIONAL) {
+#endif
+    /* Use complex arithmetic here, convert back to real if
+       Im(p) ~== 0.0.  Note that complex exponents are NOT
+       supported by PG-ARC! */
+    ac = coerce_a(c, a, T_COMPLEX);
+    bc = coerce_b(c, b, T_COMPLEX);
+    p = cpow(REPCPX(ac), REPCPX(bc));
+    if (fabs(cimag(p)) < DBL_EPSILON)
+      return(arc_mkflonum(c, creal(p)));
+    return(arc_mkcomplex(c, p));
+#ifdef HAVE_GMP_H
+  }
+#endif
+#ifdef HAVE_GMP_H
+  /* We can't handle a bignum exponent... */
+  if (TYPE(b) == T_BIGNUM) {
+    arc_err_cstrfmt(c, "Exponent too large");
+    return(arc_mkflonum(c, INFINITY));
+  }
+  /* Special case, zero base */
+  if (a == INT2FIX(0))
+    return(INT2FIX(0));
+
+  /* Special case, zero exponent */
+  if (b == INT2FIX(0))
+    return(INT2FIX(1));
+  /* The only unhandled case is a fixnum, bignum, or rational base with
+     a fixnum exponent.  */
+  mpz_init(anumer);
+  mpz_init(adenom);
+  switch (TYPE(a)) {
+  case T_FIXNUM:
+    mpz_set_si(anumer, FIX2INT(a));
+    mpz_set_si(adenom, 1);
+    break;
+  case T_BIGNUM:
+    mpz_set(anumer, REPBNUM(a));
+    mpz_set_si(adenom, 1);
+    break;
+  case T_RATIONAL:
+    mpq_get_num(anumer, REPRAT(a));
+    mpq_get_den(adenom, REPRAT(a));
+    break;
+  default:
+    mpz_clear(anumer);
+    mpz_clear(adenom);
+    arc_err_cstrfmt(c, "Invalid types for exponentiation");
+    return(CNIL);
+    break;
+  }
+  babs = abs(FIX2INT(b));
+  mpz_pow_ui(anumer, anumer, babs);
+  mpz_pow_ui(adenom, adenom, babs);
+  /* if the original value was negative, take the reciprocal */
+  if (FIX2INT(b) < 0)
+    mpz_swap(anumer, adenom);
+  if (mpz_cmp_si(adenom, 1) == 0) {
+    result = arc_mkbignuml(c, 0);
+    mpz_set(REPBNUM(result), anumer);
+    result = bignum_fixnum(c, result);
+  } else {
+    result = arc_mkrationall(c, 0, 1);
+    mpq_set_num(REPRAT(result), anumer);
+    mpq_set_den(REPRAT(result), adenom);
+    mpq_canonicalize(REPRAT(result));
+  }
+  mpz_clear(anumer);
+  mpz_clear(adenom);
+  return(result);
+#endif
+}
+
+value __arc_str2int(arc *c, value obj, value base, int strptr, int limit)
+{
+  /* Tell me if this looks too much like glibc's implementation of
+     strtol... */
+  value res;
+  int save, negative;
+  Rune r;
+
+  if (strptr >= limit)
+    goto noconv;
+  if (arc_strindex(c, obj, strptr) == '-') {
+    negative = 1;
+    ++strptr;
+  } else if (arc_strindex(c, obj, strptr) == '+') {
+    negative = 0;
+    ++strptr;
+  } else
+    negative = 0;
+  /* save the pointer so we can check later if anything happened */
+  save = strptr;
+  res = INT2FIX(0);
+  for (r = arc_strindex(c, obj, strptr); strptr < limit; r = arc_strindex(c, obj, ++strptr)) {
+    if (isdigit(r))
+      r -= '0';
+    else if (isalpha(r))
+      r = toupper(r) - 'A' + 10;
+    else
+      goto noconv;
+    if (r > FIX2INT(base))
+      goto noconv;
+    res = __arc_mul2(c, res, base);
+    res = __arc_add2(c, res, INT2FIX(r));
+  }
+
+  /* check if anything actually happened */
+  if (strptr == save)
+    goto noconv;
+
+  if (negative)
+    res = __arc_neg(c, res);
+  return(res);
+ noconv:
+  return(CNIL);
+}
+
+static int digitval(Rune r, int base)
+{
+  int v;
+
+  if (isdigit(r)) {
+    v = r - '0';
+  } else if (isalpha(r)) {
+    v = toupper(r) - 'A' + 10;
+  } else
+    return(-1);
+
+  if (v >= base)
+    return(-1);
+  return(v);
+}
+
+/* convert a string to a floating point number */
+value __arc_str2flo(arc *c, value obj, value b, int strptr, int limit)
+{
+  int sign;
+  double num;			/* the number so far */
+  int got_dot;			/* found a (decimal) point */
+  int got_digit;		/* seen any digits */
+  value exponent;		/* exponent of the number */
+  Rune r;
+  int dv;			/* digit value */
+  int base;			/* base */
+  value res;
+  char str[4];
+  value (*coercer)(struct arc *, value, enum arc_types); 
+
+  base = FIX2INT(b);
+  if (strptr >= limit)
+    goto noconv;
+
+  /* Get the sign */
+  r = arc_strindex(c, obj, strptr);
+  sign = (r == '-') ? -1 : 1;
+  if (r == '-' || r == '+')
+    ++strptr;
+
+  num = 0.0;
+  got_dot = 0;
+  got_digit = 0;
+  exponent = INT2FIX(0);
+
+  /* Check special cases of INF and NAN */
+  if (limit - strptr == 3 || limit - strptr == 5) {
+    int i;
+
+    for (i=0; i<3; i++)
+      str[i] = (char)arc_strindex(c, obj, strptr + i);
+    str[3] = 0;
+    if (strcasecmp(str, "INF") == 0 || strcasecmp(str, "inf.0") == 0)
+      return(arc_mkflonum(c, sign*INFINITY));
+    if (strcasecmp(str, "NAN") == 0)
+      return(arc_mkflonum(c, sign*NAN));
+  }
+  for (;; ++strptr) {
+    if (strptr >= limit)
+      break;
+    r = arc_strindex(c, obj, strptr);
+    dv = digitval(r, base);
+    if (dv >= 0) {
+      got_digit = 1;
+      num = (num * (double)base) + (double)dv;
+      /* Keep track of the number of digits after the decimal point.
+	 If we just divided by base here, we would lose precision. */
+      if (got_dot)
+	exponent = INT2FIX(FIX2INT(exponent) - 1);
+    } else if (!got_dot && r == '.') {
+      got_dot = 1;
+    } else {
+      /* any other character terminates the number */
+      break;
+    }
+  }
+
+  if (!got_digit)
+    goto noconv;
+
+  if (strptr < limit) {
+    r = tolower(arc_strindex(c, obj, strptr++));
+    if (r == 'e' || r == 'p' || r == '&') {
+      /* get the exponent specified after the 'e', 'p', or '&' */
+      value exp;
+
+      exp = __arc_str2int(c, obj, b, strptr, limit);
+
+#ifdef HAVE_GMP_H
+      if (TYPE(exp) == T_BIGNUM) {
+	/* The exponent overflowed a fixnum.  It is probably a safe assumption
+	   that an exponent that needs to be represented by a bignum exceeds
+	   the limits of a double!  A highly negative exponent is essentially
+	   zero. */
+	if (mpz_cmp_si(REPBNUM(exp), 0) < 0)
+	  return(arc_mkflonum(c, 0.0));
+	else
+	  return(arc_mkflonum(c, INFINITY));
+      }
+#endif
+      exponent = __arc_add2(c, exponent, exp);
+      if (num == 0.0)
+	return(arc_mkflonum(c, 0.0));
+
+#ifdef HAVE_GMP_H
+      /* check the exponent again */
+      if (TYPE(exponent) == T_BIGNUM) {
+	if (mpz_cmp_si(REPBNUM(exp), 0) < 0)
+	  return(arc_mkflonum(c, 0.0));
+	else
+	  return(arc_mkflonum(c, INFINITY));
+      }
+#endif
+    }
+  }
+
+  coercer = coercefn(c, b);
+  b = coercer(c, b, T_FLONUM);
+  coercer = coercefn(c, exponent);
+  b = coercer(c, exponent, T_FLONUM);
+  /* Multiply NUM by BASE to the EXPONENT power */
+  res = __arc_mul2(c, arc_mkflonum(c, sign*num), arc_expt(c, b, exponent));
+  return(res);
+ noconv:
+  return(CNIL);
 }
 
 typefn_t __arc_fixnum_typefn__ = {
