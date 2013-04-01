@@ -235,6 +235,7 @@ static value flonum_coerce(arc *c, value v, enum arc_types t)
 static AFFDEF(flonum_xcoerce)
 {
   AARG(obj, stype, arg);
+  double base, drem;
   AFBEGIN;
 
   (void)arg;
@@ -257,7 +258,12 @@ static AFFDEF(flonum_xcoerce)
       ARETURN(CNIL);
 #endif
     }
-    ARETURN(INT2FIX((long)REPFLO(AV(obj))));    
+    /* rounding algorithm */
+    base = floor(REPFLO(AV(obj)));
+    drem = REPFLO(AV(obj)) - base;
+    if (drem > 0.5 || (drem == 0.5 && (((int)base)&0x1) == 1))
+      ARETURN(INT2FIX((long)REPFLO(AV(obj)) + 1));
+    ARETURN(INT2FIX((long)REPFLO(AV(obj))));
   }
 
   if (FIX2INT(AV(stype)) == T_RATIONAL) {
@@ -1897,7 +1903,7 @@ value __arc_str2flo(arc *c, value obj, value b, int strptr, int limit)
   coercer = coercefn(c, b);
   b = coercer(c, b, T_FLONUM);
   coercer = coercefn(c, exponent);
-  b = coercer(c, exponent, T_FLONUM);
+  exponent = coercer(c, exponent, T_FLONUM);
   /* Multiply NUM by BASE to the EXPONENT power */
   res = __arc_mul2(c, arc_mkflonum(c, sign*num), arc_expt(c, b, exponent));
   return(res);
