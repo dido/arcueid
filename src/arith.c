@@ -406,6 +406,74 @@ static value complex_coerce(arc *c, value z, enum arc_types t)
   return(CNIL);
 }
 
+static AFFDEF(complex_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+
+  (void)arg;
+  if (FIX2INT(AV(stype)) == T_COMPLEX)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_FLONUM)
+    ARETURN(arc_mkflonum(c, creal(REPCPX(AV(obj)))));
+
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
+    if (fabs(creal(REPCPX(AV(obj)))) > FIXNUM_MAX) {
+#ifdef HAVE_GMP_H
+      value bn;
+
+      bn = arc_mkbignuml(c, 0L);
+      mpz_set_d(REPBNUM(bn), creal(REPCPX(AV(obj))));
+      ARETURN(bn);
+#else
+      /* Sorry, we overflow! */
+#endif
+    }
+    ARETURN(INT2FIX((long)creal(REPCPX(AV(obj)))));
+  }
+
+  if (FIX2INT(AV(stype)) == T_RATIONAL) {
+#ifdef HAVE_GMP_H
+    value rat;
+
+    rat = arc_mkrationall(c, 0, 1);
+    mpq_set_d(REPRAT(rat), creal(REPCPX(AV(obj))));
+    ARETURN(rat);
+#else
+    /* we cannot coerce complex to rationals without gmp!*/
+    arc_err_cstrfmt(c, "cannot coerce");
+    ARETURN(CNIL);
+#endif
+  }
+
+  if (BOUND_P(AV(arg)) && AV(arg) != INT2FIX(10)) {
+    arc_err_cstrfmt(c, "inexact numbers can only be printed in base 10");
+    ARETURN(CNIL);
+  }
+
+  if (FIX2INT(AV(stype)) == T_STRING) {
+    char *str;
+    int len;
+
+    len = snprintf(NULL, 0, "%g+%gi", creal(REPCPX(AV(obj))),
+		   cimag(REPCPX(AV(obj))));
+    str = alloca(sizeof(char)*(len+1));
+    snprintf(str, len+1, "%g+%gi", creal(REPCPX(AV(obj))),
+	     cimag(REPCPX(AV(obj))));
+    ARETURN(arc_mkstringc(c, str));
+  }
+
+  if (FIX2INT(AV(stype)) == T_CONS) {
+    ARETURN(cons(c, arc_mkflonum(c, creal(REPCPX(AV(obj)))),
+		 arc_mkflonum(c, cimag(REPCPX(AV(obj))))));
+  }
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 static value mul_complex(arc *c, value v1, value v2)
 {
   return(arc_mkcomplex(c, REPCPX(v1) * REPCPX(v2)));
@@ -1582,7 +1650,7 @@ typefn_t __arc_complex_typefn__ = {
   complex_iscmp,
   NULL,
   NULL,
-  NULL
+  complex_xcoerce
 };
 
 #ifdef HAVE_GMP_H
