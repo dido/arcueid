@@ -100,10 +100,9 @@ struct typefn_t {
   int (*isocmp)(struct arc *c, value);
   /* applicator */
   int (*apply)(struct arc *c, value, value);
-  /* Coerce.  This can in general only be used to convert something
-     to a numeric type. */
-  value (*coerce)(struct arc *c, value, enum arc_types);
-  /* More general coercions.  May be used for more general conversions */
+  /* Type coercion function.  An AFF that takes as argument an object
+     of its type and a fixnum representation of the type to convert to
+     and tries to convert it to that type. */
   int (*xcoerce)(struct arc *c, value);
 #if 0
   /* Recursive hasher.  This is used for computing possibly recursive
