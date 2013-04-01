@@ -46,9 +46,6 @@
 void *alloca (size_t);
 #endif
 
-#define ABS(x) (((x)>=0)?(x):(-(x)))
-#define SGN(x) (((x)>=0)?(1):(-(1)))
-
 #ifdef HAVE_GMP_H
 static value bignum_fixnum(arc *c, value n);
 static value div_rational(arc *c, value v1, value v2);
@@ -130,7 +127,7 @@ static AFFDEF(fixnum_xcoerce)
 
   /* trivial cases */
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
-      || FIX2INT(AV(stype)) == T_RATIONAL)
+      || FIX2INT(AV(stype)) == T_RATIONAL || FIX2INT(AV(stype)) == T_NUM)
     ARETURN(AV(obj));
   if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
     ARETURN(arc_mkflonum(c, (double)FIX2INT(AV(obj))));
@@ -238,7 +235,8 @@ static AFFDEF(flonum_xcoerce)
   AFBEGIN;
 
   (void)arg;
-  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
+  if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX
+      || FIX2INT(AV(stype)) == T_NUM)
     ARETURN(AV(obj));
 
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
@@ -412,7 +410,7 @@ static AFFDEF(complex_xcoerce)
   AFBEGIN;
 
   (void)arg;
-  if (FIX2INT(AV(stype)) == T_COMPLEX)
+  if (FIX2INT(AV(stype)) == T_COMPLEX || FIX2INT(AV(stype)) == T_NUM)
     ARETURN(AV(obj));
 
   if (FIX2INT(AV(stype)) == T_FLONUM)
@@ -654,7 +652,7 @@ static AFFDEF(bignum_xcoerce)
 
   /* trivial cases */
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
-      || FIX2INT(AV(stype)) == T_RATIONAL)
+      || FIX2INT(AV(stype)) == T_RATIONAL || FIX2INT(AV(stype)) == T_NUM)
     ARETURN(AV(obj));
   if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
     ARETURN(arc_mkflonum(c, mpz_get_d(REPBNUM(AV(obj)))));
@@ -760,7 +758,7 @@ static AFFDEF(rational_xcoerce)
     ARETURN(bignum_fixnum(c, bignum));
   }
 
-  if (FIX2INT(AV(stype)) == T_RATIONAL)
+  if (FIX2INT(AV(stype)) == T_RATIONAL || FIX2INT(AV(stype)) == T_NUM)
     ARETURN(AV(obj));
 
   if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
