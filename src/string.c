@@ -320,6 +320,38 @@ void arc_str2cstr(arc *c, value str, char *ptr)
   *p = 0;			/* null terminator */
 }
 
+static AFFDEF(char_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+  (void)arg;
+  if (FIX2INT(AV(stype)) == T_CHAR)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM)
+    ARETURN(INT2FIX(arc_char2rune(c, AV(obj))));
+
+  if (FIX2INT(AV(stype)) == T_STRING)
+    ARETURN(arc_mkstring(c, (Rune *)REP(AV(obj)), 1));
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(string_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+  (void)obj;
+  (void)stype;
+  (void)arg;
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 typefn_t __arc_char_typefn__ = {
   __arc_null_marker,
   __arc_null_sweeper,
@@ -327,7 +359,8 @@ typefn_t __arc_char_typefn__ = {
   char_hash,
   char_iscmp,
   NULL,
-  NULL
+  NULL,
+  char_xcoerce
 };
 
 typefn_t __arc_string_typefn__ = {
@@ -338,5 +371,5 @@ typefn_t __arc_string_typefn__ = {
   string_iscmp,
   NULL,
   string_apply,
-  NULL
+  string_xcoerce
 };
