@@ -341,6 +341,56 @@ START_TEST(test_coerce_flonum)
 END_TEST
 
 
+START_TEST(test_coerce_complex)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+
+  TEST("(coerce 1.0+2.0i 'flonum)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.0, 1e-6));
+
+  TEST("(coerce 1.0+2.0i 'complex)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(rel_compare(creal(REPCPX(ret)), 1.0, 1e-6));
+  fail_unless(rel_compare(cimag(REPCPX(ret)), 2.0, 1e-6));
+
+  TEST("(coerce 1234.0+5678.0i 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(1234));
+
+#ifdef HAVE_GMP_H
+
+  TEST("(coerce 1e100+1e200i 'fixnum)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  /* I don't think a more exact check is possible: 1e100 has 101 decimal
+     digits. */
+  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
+
+  TEST("(coerce 1e100+1e200i 'bignum)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
+
+  TEST("(coerce 1e100+1e200i 'int)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
+
+  /* I suppose 0.5 should be exactly enough represented in binary
+     floating point. */
+  TEST("(coerce 0.5+0.25i 'rational)");
+  fail_unless(TYPE(ret) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
+
+#endif
+
+  TEST("(coerce 45.23e-5+1.23i 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "0.0004523+1.23i")) == 0);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -359,6 +409,7 @@ int main(void)
 #endif
 
   tcase_add_test(tc_bif, test_coerce_flonum);
+  tcase_add_test(tc_bif, test_coerce_complex);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
