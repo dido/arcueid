@@ -173,8 +173,9 @@ notice and this notice are preserved.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [3/5]
      - [-] coerce [6/11]
-       - [X] Fixnum conversions [8/8]
+       - [X] Fixnum conversions [9/9]
          - [X] fixnum -> int (trivial)
+         - [X] fixnum -> num (trivial)
          - [X] fixnum -> fixnum (trivial)
          - [X] fixnum -> bignum (trivial)
          - [X] fixnum -> rational (trivial)
@@ -184,34 +185,34 @@ notice and this notice are preserved.
 	       limit to 0 - 0x10FFFF, also exclude 0xd800-0xdfff, invalid
 	       Unicode block.
          - [X] fixnum -> string (has base as optional arg)
-       - [X] Bignum conversions [6/6]
+       - [X] Bignum conversions [7/7]
          - [X] bignum -> int (trivial)
+         - [X] bignum -> num (trivial)
          - [X] bignum -> bignum (trivial)
          - [X] bignum -> rational (trivial)
          - [X] bignum -> flonum
          - [X] bignum -> complex (same as conversion to flonum)
          - [X] bignum -> str
-       - [X] Flonum conversions [6/6]
+       - [X] Flonum conversions [7/7]
          - [X] flonum -> fixnum
          - [X] flonum -> bignum
          - [X] flonum -> rational
          - [X] flonum -> flonum (trivial)
+         - [X] flonum -> num (trivial)
          - [X] flonum -> complex (trivial)
          - [X] flonum -> string
-       - [X] Rational conversions [7/7]
+       - [X] Rational conversions [8/8]
 	 - [X] rational -> fixnum (rounds)
 	 - [X] rational -> bignum (rounds)
 	 - [X] rational -> rational (trivial)
+	 - [X] rational -> num (trivial)
 	 - [X] rational -> flonum
          - [X] rational -> complex (same as flonum)
          - [X] rational -> string
          - [X] rational -> cons
-       - [X] Complex conversions [7/7]
-	 - [X] complex -> fixnum
-	 - [X] complex -> bignum
-	 - [X] complex -> rational
-	 - [X] complex -> flonum
+       - [X] Complex conversions [4/4]
          - [X] complex -> complex (trivial)
+         - [X] complex -> num (trivial)
          - [X] complex -> string
          - [X] complex -> cons
        - [X] Character conversions [5/5]
@@ -220,15 +221,37 @@ notice and this notice are preserved.
          - [X] char -> fixnum (same as char -> int)
          - [X] char -> bignum (same as char -> int)
          - [X] char -> string
-       - [ ] String conversions [0/8]
-         - [ ] string -> string (trivial)
-         - [ ] string -> symbol
-         - [ ] string -> cons
-         - [ ] string -> fixnum
-         - [ ] string -> bignum (string -> int)
+       - [-] String conversions [5/10]
+         - [X] string -> string (trivial)
+         - [X] string -> symbol
+         - [X] string -> cons
+         - [X] string -> fixnum
+         - [X] string -> bignum
          - [ ] string -> flonum
          - [ ] string -> complex
          - [ ] string -> rational
+         - [ ] string -> int
+               Note that unlike for the numeric types (coerce "..."
+               'int) is not the same as using (coerce "..." 'fixnum)
+               or (coerce "..." 'bignum).  What it does amounts to
+	       (coerce ... 'num) (see below) and then converts the
+	       result into an integer type of appropriate size.
+         - [ ] string -> num (generic number conversion)
+	       Converts any string into a number of the appropriate
+               type. This should use the best available numeric type
+               that is able to most accurately represent the value
+               described by the string. Numeric base may be specified
+               as an optional argument as before.
+
+	       Basic algorithm makes the following tests:
+	       1. If string ends with ‘i’ or ‘j’, convert as complex
+	       2. If string contains ‘.’, convert as floating point.
+               3. If base is less than 14 and the string contains
+                  ‘e/E’, convert as floating point.
+               4. If base is less than 25 and the string contains
+	          ‘p/P’, convert as floating point.
+	       5. If string contains ‘/’, convert as rational.
+	       6. Otherwise, consider string as representing an integer
        - [ ] Symbol conversions [0/4]
          - [ ] symbol -> symbol (trivial)
          - [ ] symbol -> string
