@@ -20,6 +20,8 @@
 #include <string.h>
 #include "arcueid.h"
 #include "utf.h"
+#include "arith.h"
+#include "builtins.h"
 
 typedef struct {
   int len;
@@ -328,7 +330,8 @@ static AFFDEF(char_xcoerce)
   if (FIX2INT(AV(stype)) == T_CHAR)
     ARETURN(AV(obj));
 
-  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM)
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
+      || FIX2INT(AV(stype)) == T_INT)
     ARETURN(INT2FIX(arc_char2rune(c, AV(obj))));
 
   if (FIX2INT(AV(stype)) == T_STRING)
@@ -339,13 +342,184 @@ static AFFDEF(char_xcoerce)
 }
 AFFEND
 
+static value coerce_flonum(arc *c, value obj, value argv)
+{
+  value val, base = argv;
+
+  val = __arc_str2flo(c, obj, base, 0, arc_strlen(c, obj));
+  if (val == CNIL) {
+    arc_err_cstrfmt(c, "string->flonum cannot convert string to a flonum");
+    return(CNIL);
+  }
+  return(val);
+}
+
+static value coerce_num(arc *c, value obj, value argv)
+{
+  int len, base;
+  value res;
+
+  base = FIX2INT(argv);
+  len = arc_strlen(c, obj);
+
+  /* 1. If string ends with 'i' or 'j', convert as complex */
+  if (arc_strindex(c, obj, len-1) == 'i'
+      || arc_strindex(c, obj, len-1) == 'j') {
+    /* To do this, we have to find where the real part ends and
+       the complex part begins.  The real part ends after a + or -
+       that is NOT preceded by an E, P, or &, which is where the
+       imaginary part begins.  The imaginary unit i/j must be at the
+       end of the string.   Once we know where the parts are we can
+       use the functions for extracting floating point numbers to
+       get the real and imaginary parts of the number. */
+    value re, im;
+    int reend = -1, i, len, b = base;
+    Rune r;
+
+    len = arc_strlen(c, obj);
+    for (i=0; i<len; i++) {
+      r = arc_strindex(c, obj, i);
+      if ((r == '-' || r == '+') && i-1 >= 0) {
+	Rune prev = arc_strindex(c, obj, i-1);
+	if (b < 14 && (prev == 'e' || prev == 'E'))
+	  continue;
+	if (b < 25 && (prev == 'p' || prev == 'P'))
+	  continue;
+	if (prev == '&')
+	  continue;
+	reend = i;
+	break;
+      }
+    }
+    if (reend < 0) {
+      arc_err_cstrfmt(c, "cannot find end of real part of number", obj);
+      return(CNIL);
+    }
+    r = tolower(arc_strindex(c, obj, len-1));
+    if (r != 'i' && r != 'j') {
+      arc_err_cstrfmt(c, "cannot find end of imaginary part of number", obj);
+      return(CNIL);
+    }
+    re = __arc_str2flo(c, obj, base, 0, reend);
+    im = __arc_str2flo(c, obj, base, reend, len-1);
+    if (re == CNIL || im == CNIL) {
+      arc_err_cstrfmt(c, "failed to parse complex number", obj);
+      return(CNIL);
+    }
+    return(arc_mkcomplex(c, REPFLO(re) + I*REPFLO(im)));
+  }
+
+  /* 2. If string contains '.', convert as floating point. */
+  if (!(arc_strchr(c, obj, '.') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+  /* 3. If base is less than 14 and the string contains 'e/E',
+        convert as floating point. */
+  if (base < 14 && !(arc_strchr(c, obj, 'e') == CNIL
+		     && arc_strchr(c, obj, 'E') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+  /* 4. If base is less than 25 and the string contains 'p/P',
+        convert as floating point. */
+  if (base < 25 && !(arc_strchr(c, obj, 'p') == CNIL
+		     && arc_strchr(c, obj, 'P') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+  /* 5. If string contains '&', convert as floating point. */
+  if (!(arc_strchr(c, obj, '&') == CNIL))
+    return(coerce_flonum(c, obj, argv));
+
+#ifdef HAVE_GMP_H
+  /* 6. If string contains '/', convert as rational. */
+  if (!(arc_strchr(c, obj, '/') == CNIL)) {
+    value numer, denom, base = argv;
+    int slashpos=-1;
+
+    slashpos = FIX2INT(arc_strchr(c, obj, '/'));
+    numer = __arc_str2int(c, obj, base, 0, slashpos);
+    denom = __arc_str2int(c, obj, base, slashpos+1, arc_strlen(c, obj));
+    if (numer == CNIL || denom == CNIL) {
+      arc_err_cstrfmt(c, "string->flonum cannot convert to a rational");
+      return(CNIL);
+    }
+    return(__arc_div2(c, numer, denom));
+  }
+#endif
+
+  /* 7. Otherwise, consider string as representing an integer */
+  res = __arc_str2int(c, obj, INT2FIX(base), 0, len);
+  if (res != CNIL)
+    return(res);
+  arc_err_cstrfmt(c, "cannot coerce to numeric type");
+  return(CNIL);
+
+}
+
 static AFFDEF(string_xcoerce)
 {
   AARG(obj, stype, arg);
   AFBEGIN;
-  (void)obj;
-  (void)stype;
-  (void)arg;
+
+  if (FIX2INT(AV(stype)) == T_STRING)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_SYMBOL)
+    ARETURN(arc_intern(c, AV(obj)));
+
+  if (FIX2INT(AV(stype)) == T_CONS) {
+    value ncons = CNIL;
+    int i;
+    for (i=arc_strlen(c, AV(obj))-1; i>= 0; i--)
+      ncons = cons(c, arc_mkchar(c, arc_strindex(c, AV(obj), i)), ncons);
+    ARETURN(ncons);
+  }
+
+  if (!BOUND_P(AV(arg)))
+    AV(arg) = INT2FIX(10);
+
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
+    char *cstr, *endptr;
+    long fix;
+
+    cstr = alloca(sizeof(char) * (arc_strlen(c, AV(obj)) + 1));
+    arc_str2cstr(c, AV(obj), cstr);
+
+    fix = strtol(cstr, &endptr, FIX2INT(AV(arg)));
+
+    if (*endptr != '\0') {
+      arc_err_cstrfmt(c, "cannot coerce");
+      ARETURN(CNIL);
+    }
+
+    if (fix >= FIXNUM_MIN && fix <= FIXNUM_MAX)
+      ARETURN(INT2FIX(fix));
+
+#ifdef HAVE_GMP_H
+    /* we have something that should be a bignum */
+    do {
+      value bn;
+
+      bn = arc_mkbignuml(c, 0L);
+      if (mpz_set_str(REPBNUM(bn), cstr, FIX2INT(AV(arg))) == 0)
+	ARETURN(bn);
+    } while (0);
+#endif
+    /* Without GMP, this is where we wind up. Also where we wind up without
+       a properly parseable number */
+    arc_err_cstrfmt(c, "cannot coerce");
+  }
+
+  /* Generic type conversions */
+  if (FIX2INT(AV(stype)) == T_NUM)
+    ARETURN(coerce_num(c, AV(obj), AV(arg)));
+
+  if (FIX2INT(AV(stype)) == T_INT) {
+    value num;
+
+    num = coerce_num(c, AV(obj), AV(arg));
+    AFTCALL(arc_mkaff(c, arc_coerce, CNIL), num, ARC_BUILTIN(c, S_INT));
+  }
+
   arc_err_cstrfmt(c, "cannot coerce");
   ARETURN(CNIL);
   AFEND;
