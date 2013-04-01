@@ -49,5 +49,8 @@ extern value __arc_mul2(arc *c, value arg1, value arg2);
 extern value __arc_div2(arc *c, value arg1, value arg2);
 extern value __arc_idiv2(arc *c, value arg1, value arg2);
 extern value __arc_mod2(arc *c, value arg1, value arg2);
+extern value __arc_neg(arc *c, value arg);
+extern value __arc_str2flo(arc *c, value obj, value b, int strptr, int limit);
+extern value __arc_str2int(arc *c, value obj, value base, int strptr, int limit);
 
 #endif
