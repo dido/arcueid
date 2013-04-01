@@ -417,46 +417,14 @@ static AFFDEF(complex_xcoerce)
   if (FIX2INT(AV(stype)) == T_COMPLEX || FIX2INT(AV(stype)) == T_NUM)
     ARETURN(AV(obj));
 
-  if (FIX2INT(AV(stype)) == T_FLONUM)
-    ARETURN(arc_mkflonum(c, creal(REPCPX(AV(obj)))));
-
-  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
-    if (fabs(creal(REPCPX(AV(obj)))) > FIXNUM_MAX) {
-#ifdef HAVE_GMP_H
-      value bn;
-
-      bn = arc_mkbignuml(c, 0L);
-      mpz_set_d(REPBNUM(bn), creal(REPCPX(AV(obj))));
-      ARETURN(bn);
-#else
-      /* Sorry, we overflow! */
-#endif
-    }
-    ARETURN(INT2FIX((long)creal(REPCPX(AV(obj)))));
-  }
-
-  if (FIX2INT(AV(stype)) == T_RATIONAL) {
-#ifdef HAVE_GMP_H
-    value rat;
-
-    rat = arc_mkrationall(c, 0, 1);
-    mpq_set_d(REPRAT(rat), creal(REPCPX(AV(obj))));
-    ARETURN(rat);
-#else
-    /* we cannot coerce complex to rationals without gmp!*/
-    arc_err_cstrfmt(c, "cannot coerce");
-    ARETURN(CNIL);
-#endif
-  }
-
-  if (BOUND_P(AV(arg)) && AV(arg) != INT2FIX(10)) {
-    arc_err_cstrfmt(c, "inexact numbers can only be printed in base 10");
-    ARETURN(CNIL);
-  }
-
   if (FIX2INT(AV(stype)) == T_STRING) {
     char *str;
     int len;
+
+    if (BOUND_P(AV(arg)) && AV(arg) != INT2FIX(10)) {
+      arc_err_cstrfmt(c, "inexact numbers can only be printed in base 10");
+      ARETURN(CNIL);
+    }
 
     len = snprintf(NULL, 0, "%g+%gi", creal(REPCPX(AV(obj))),
 		   cimag(REPCPX(AV(obj))));
