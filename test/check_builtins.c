@@ -388,6 +388,10 @@ START_TEST(test_coerce_complex)
   fail_unless(TYPE(ret) == T_STRING);
   fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "0.0004523+1.23i")) == 0);
 
+  TEST("(coerce 1.0+2.0i 'cons)");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(rel_compare(REPFLO(car(ret)), 1.0, 1e-6));
+  fail_unless(rel_compare(REPFLO(cdr(ret)), 2.0, 1e-6));
 }
 END_TEST
 
