@@ -127,7 +127,8 @@ static AFFDEF(fixnum_xcoerce)
 
   /* trivial cases */
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
-      || FIX2INT(AV(stype)) == T_RATIONAL || FIX2INT(AV(stype)) == T_NUM)
+      || FIX2INT(AV(stype)) == T_RATIONAL || FIX2INT(AV(stype)) == T_NUM
+      || FIX2INT(AV(stype)) == T_INT)
     ARETURN(AV(obj));
   if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
     ARETURN(arc_mkflonum(c, (double)FIX2INT(AV(obj))));
@@ -239,7 +240,8 @@ static AFFDEF(flonum_xcoerce)
       || FIX2INT(AV(stype)) == T_NUM)
     ARETURN(AV(obj));
 
-  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
+      || FIX2INT(AV(stype)) == T_INT) {
     if (fabs(REPFLO(AV(obj))) > FIXNUM_MAX) {
 #ifdef HAVE_GMP_H
       value bn;
@@ -248,7 +250,9 @@ static AFFDEF(flonum_xcoerce)
       mpz_set_d(REPBNUM(bn), REPFLO(AV(obj)));
       ARETURN(bn);
 #else
-      /* Sorry, we overflow! */
+      /* sorry, overflow! */
+      arc_err_cstrfmt(c, "cannot coerce (overflow)");
+      ARETURN(CNIL);
 #endif
     }
     ARETURN(INT2FIX((long)REPFLO(AV(obj))));    
@@ -466,6 +470,8 @@ static AFFDEF(complex_xcoerce)
     ARETURN(cons(c, arc_mkflonum(c, creal(REPCPX(AV(obj)))),
 		 arc_mkflonum(c, cimag(REPCPX(AV(obj))))));
   }
+
+  /* T_INT is not valid for complex args */
   arc_err_cstrfmt(c, "cannot coerce");
   ARETURN(CNIL);
   AFEND;
@@ -652,7 +658,8 @@ static AFFDEF(bignum_xcoerce)
 
   /* trivial cases */
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
-      || FIX2INT(AV(stype)) == T_RATIONAL || FIX2INT(AV(stype)) == T_NUM)
+      || FIX2INT(AV(stype)) == T_RATIONAL || FIX2INT(AV(stype)) == T_NUM
+      || FIX2INT(AV(stype)) == T_INT)
     ARETURN(AV(obj));
   if (FIX2INT(AV(stype)) == T_FLONUM || FIX2INT(AV(stype)) == T_COMPLEX)
     ARETURN(arc_mkflonum(c, mpz_get_d(REPBNUM(AV(obj)))));
