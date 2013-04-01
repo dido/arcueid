@@ -395,10 +395,16 @@ enum arc_types typesym2type(arc *c, value typesym)
   if (typesym == ARC_BUILTIN(c, S_SYM))
     return(T_SYMBOL);
 
+  if (typesym == ARC_BUILTIN(c, S_NUM))
+    return(T_NUM);
+
+  if (typesym == ARC_BUILTIN(c, S_INT))
+    return(T_INT);
+
   if (typesym == ARC_BUILTIN(c, S_FIXNUM))
     return(T_FIXNUM);
 
-  if (typesym == ARC_BUILTIN(c, S_BIGNUM) || typesym == ARC_BUILTIN(c, S_INT))
+  if (typesym == ARC_BUILTIN(c, S_BIGNUM))
     return(T_BIGNUM);
 
   if (typesym == ARC_BUILTIN(c, S_FLONUM))
