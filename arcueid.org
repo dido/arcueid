@@ -172,7 +172,7 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [3/5]
-     - [-] coerce [5/11]
+     - [-] coerce [6/11]
        - [X] Fixnum conversions [8/8]
          - [X] fixnum -> int (trivial)
          - [X] fixnum -> fixnum (trivial)
@@ -214,15 +214,21 @@ notice and this notice are preserved.
          - [X] complex -> complex (trivial)
          - [X] complex -> string
          - [X] complex -> cons
-       - [ ] Character conversions [0/4]
-         - [ ] char -> char (trivial)
-         - [ ] char -> int (results in a fixnum from 0 - 0x10FFFF)
-         - [ ] char -> fixnum (same as char -> int)
-         - [ ] char -> string
-       - [ ] String conversions [0/3]
+       - [X] Character conversions [5/5]
+         - [X] char -> char (trivial)
+         - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
+         - [X] char -> fixnum (same as char -> int)
+         - [X] char -> bignum (same as char -> int)
+         - [X] char -> string
+       - [ ] String conversions [0/8]
          - [ ] string -> string (trivial)
          - [ ] string -> symbol
          - [ ] string -> cons
+         - [ ] string -> fixnum
+         - [ ] string -> bignum (string -> int)
+         - [ ] string -> flonum
+         - [ ] string -> complex
+         - [ ] string -> rational
        - [ ] Symbol conversions [0/4]
          - [ ] symbol -> symbol (trivial)
          - [ ] symbol -> string
