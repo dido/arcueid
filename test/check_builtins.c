@@ -117,6 +117,10 @@ START_TEST(test_coerce_fixnum)
   fail_unless(TYPE(ret) == T_FIXNUM);
   fail_unless(ret == INT2FIX(1234));
 
+  TEST("(coerce 1234 'num)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(1234));
+
   TEST("(coerce 1234 'flonum)");
   fail_unless(TYPE(ret) == T_FLONUM);
   fail_unless(fabs(REPFLO(ret) - 1234.0) < 1e-6);
@@ -207,6 +211,10 @@ START_TEST(test_coerce_bignum)
   fail_unless(TYPE(ret) == T_BIGNUM);
   fail_unless(arc_is2(c, ret, expected) == CTRUE);
 
+  TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'num)");
+  fail_unless(TYPE(ret) == T_BIGNUM);
+  fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
   TEST("(coerce 39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816 'bignum)");
   fail_unless(TYPE(ret) == T_BIGNUM);
   fail_unless(arc_is2(c, ret, expected) == CTRUE);
@@ -269,6 +277,10 @@ START_TEST(test_coerce_rational)
   fail_unless(TYPE(ret) == T_RATIONAL);
   fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
 
+  TEST("(coerce 1/2 'num)");
+  fail_unless(TYPE(ret) == T_RATIONAL);
+  fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
+
   TEST("(coerce 1/2 'flonum)");
   fail_unless(TYPE(ret) == T_FLONUM);
   fail_unless(rel_compare(REPFLO(ret), 0.5, 1e-6));
@@ -298,6 +310,10 @@ START_TEST(test_coerce_flonum)
   thr = arc_mkthread(c);
 
   TEST("(coerce 1.0 'flonum)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.0, 1e-6));
+
+  TEST("(coerce 1.0 'num)");
   fail_unless(TYPE(ret) == T_FLONUM);
   fail_unless(rel_compare(REPFLO(ret), 1.0, 1e-6));
 
@@ -347,51 +363,24 @@ START_TEST(test_coerce_complex)
 
   thr = arc_mkthread(c);
 
-  TEST("(coerce 1.0+2.0i 'flonum)");
-  fail_unless(TYPE(ret) == T_FLONUM);
-  fail_unless(rel_compare(REPFLO(ret), 1.0, 1e-6));
-
   TEST("(coerce 1.0+2.0i 'complex)");
   fail_unless(TYPE(ret) == T_COMPLEX);
   fail_unless(rel_compare(creal(REPCPX(ret)), 1.0, 1e-6));
   fail_unless(rel_compare(cimag(REPCPX(ret)), 2.0, 1e-6));
 
-  TEST("(coerce 1234.0+5678.0i 'fixnum)");
-  fail_unless(TYPE(ret) == T_FIXNUM);
-  fail_unless(ret == INT2FIX(1234));
-
-#ifdef HAVE_GMP_H
-
-  TEST("(coerce 1e100+1e200i 'fixnum)");
-  fail_unless(TYPE(ret) == T_BIGNUM);
-  /* I don't think a more exact check is possible: 1e100 has 101 decimal
-     digits. */
-  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
-
-  TEST("(coerce 1e100+1e200i 'bignum)");
-  fail_unless(TYPE(ret) == T_BIGNUM);
-  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
-
-  TEST("(coerce 1e100+1e200i 'int)");
-  fail_unless(TYPE(ret) == T_BIGNUM);
-  fail_unless(mpz_sizeinbase(REPBNUM(ret), 10) == 101);
-
-  /* I suppose 0.5 should be exactly enough represented in binary
-     floating point. */
-  TEST("(coerce 0.5+0.25i 'rational)");
-  fail_unless(TYPE(ret) == T_RATIONAL);
-  fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
-
-#endif
+  TEST("(coerce 1.0+2.0i 'num)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(rel_compare(creal(REPCPX(ret)), 1.0, 1e-6));
+  fail_unless(rel_compare(cimag(REPCPX(ret)), 2.0, 1e-6));
 
   TEST("(coerce 45.23e-5+1.23i 'string)");
   fail_unless(TYPE(ret) == T_STRING);
   fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "0.0004523+1.23i")) == 0);
 
-  TEST("(coerce 1.0+2.0i 'cons)");
+  TEST("(coerce 45.23e-5+1.23i 'cons)");
   fail_unless(TYPE(ret) == T_CONS);
-  fail_unless(rel_compare(REPFLO(car(ret)), 1.0, 1e-6));
-  fail_unless(rel_compare(REPFLO(cdr(ret)), 2.0, 1e-6));
+  fail_unless(rel_compare(REPFLO(car(ret)), 0.0004523, 1e-6));
+  fail_unless(rel_compare(REPFLO(cdr(ret)), 1.23, 1e-6));
 }
 END_TEST
 
@@ -422,6 +411,64 @@ START_TEST(test_coerce_char)
 }
 END_TEST
 
+START_TEST(test_coerce_string)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(coerce \"foo\" 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "foo")) == 0);
+
+  TEST("(coerce \"foo\" 'sym)");
+  fail_unless(TYPE(ret) == T_SYMBOL);
+  fail_unless(ret == arc_intern_cstr(c, "foo"));
+
+  TEST("(coerce \"bar\" 'cons)");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(arc_char2rune(c, car(ret)) == 'b');
+  fail_unless(arc_char2rune(c, cadr(ret)) == 'a');
+  fail_unless(arc_char2rune(c, car(cddr(ret))) == 'r');
+
+  TEST("(coerce \"31337\" 'fixnum)");
+  fail_unless(ret == INT2FIX(31337));
+
+  TEST("(coerce \"deadbee\" 'fixnum 16)");
+  fail_unless(ret == INT2FIX(233495534));
+
+  TEST("(coerce \"zyxw\" 'int 36)");
+  fail_unless(ret == INT2FIX(1678244));
+
+#ifdef HAVE_GMP_H
+  {
+    static const char *expected_str = "39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816";
+    value expected;
+
+    expected = arc_mkbignuml(c, 0L);
+    mpz_set_str(REPBNUM(expected), expected_str, 10);
+
+    TEST("(coerce \"39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816\" 'fixnum)");
+    fail_unless(TYPE(ret) == T_BIGNUM);
+    fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+   TEST("(coerce \"39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816\" 'bignum)");
+    fail_unless(TYPE(ret) == T_BIGNUM);
+    fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+   TEST("(coerce \"39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816\" 'int)");
+    fail_unless(TYPE(ret) == T_BIGNUM);
+    fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+    TEST("(coerce \"2op9vv3r85y0ag8ukw7bqnnknjigy9r4407r3dbiq68kv8h2zuqyon925oqg0whhftleubw3g1s\" 'int 36)");
+    fail_unless(TYPE(ret) == T_BIGNUM);
+    fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+  }
+#endif
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -443,6 +490,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_complex);
 
   tcase_add_test(tc_bif, test_coerce_char);
+  tcase_add_test(tc_bif, test_coerce_string);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
