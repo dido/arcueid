@@ -221,7 +221,7 @@ notice and this notice are preserved.
          - [X] char -> fixnum (same as char -> int)
          - [X] char -> bignum (same as char -> int)
          - [X] char -> string
-       - [-] String conversions [5/10]
+       - [-] String conversions [7/10]
          - [X] string -> string (trivial)
          - [X] string -> symbol
          - [X] string -> cons
@@ -230,13 +230,13 @@ notice and this notice are preserved.
          - [ ] string -> flonum
          - [ ] string -> complex
          - [ ] string -> rational
-         - [ ] string -> int
+         - [X] string -> int
                Note that unlike for the numeric types (coerce "..."
                'int) is not the same as using (coerce "..." 'fixnum)
                or (coerce "..." 'bignum).  What it does amounts to
 	       (coerce ... 'num) (see below) and then converts the
 	       result into an integer type of appropriate size.
-         - [ ] string -> num (generic number conversion)
+         - [X] string -> num (generic number conversion)
 	       Converts any string into a number of the appropriate
                type. This should use the best available numeric type
                that is able to most accurately represent the value
