@@ -26,6 +26,9 @@
 #include "arcueid.h"
 #include "../config.h"
 
+#define ABS(x) (((x)>=0)?(x):(-(x)))
+#define SGN(x) (((x)>=0)?(1):(-(1)))
+
 #ifdef HAVE_GMP_H
 #include <gmp.h>
 #define REPBNUM(n) *((mpz_t *)REP(n))
