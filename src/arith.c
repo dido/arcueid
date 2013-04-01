@@ -54,6 +54,8 @@ static value bignum_fixnum(arc *c, value n);
 static value div_rational(arc *c, value v1, value v2);
 #endif
 
+static value (*coercefn(arc *c, value val))(arc *, value, enum arc_types);
+
 /*================================= Fixnums */
 
 static const char _itoa_lower_digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
@@ -852,28 +854,29 @@ value arc_mkrationall(arc *c, long num, long den)
 #ifdef HAVE_GMP_H
 
 #define TYPE_CASES(func, arg1, arg2) do {				\
-    typefn_t *tfn = __arc_typefn(c, arg1),				\
-      *tfn2 = __arc_typefn(c, arg2);					\
-    if (tfn == NULL || tfn->coerce == NULL ||				\
-	tfn2 == NULL || tfn2->coerce == NULL) {				\
+    value (*coerce1)(struct arc *, value, enum arc_types);		\
+    value (*coerce2)(struct arc *, value, enum arc_types);		\
+    coerce1 = coercefn(c, arg1);					\
+    coerce2 = coercefn(c, arg2);					\
+    if (coerce1 == NULL || coerce2 == NULL) {				\
       arc_err_cstrfmt(c, "cannot coerce %d %d", TYPE(arg1), TYPE(arg2)); \
       return(CNIL);							\
     }									\
     if (TYPE(arg1) == T_COMPLEX || TYPE(arg2) == T_COMPLEX) {		\
-      arg1 = tfn->coerce(c, arg1, T_COMPLEX);				\
-      arg2 = tfn2->coerce(c, arg2, T_COMPLEX);				\
+      arg1 = coerce1(c, arg1, T_COMPLEX);				\
+      arg2 = coerce2(c, arg2, T_COMPLEX);				\
       return(func##_complex(c, arg1, arg2));				\
     } else if (TYPE(arg1) == T_FLONUM || TYPE(arg2) == T_FLONUM) {	\
-      arg1 = tfn->coerce(c, arg1, T_FLONUM);				\
-      arg2 = tfn2->coerce(c, arg2, T_FLONUM);				\
+      arg1 = coerce1(c, arg1, T_FLONUM);				\
+      arg2 = coerce2(c, arg2, T_FLONUM);				\
       return(func##_flonum(c, arg1, arg2));				\
     } else if (TYPE(arg1) == T_RATIONAL || TYPE(arg2) == T_RATIONAL) {	\
-      arg1 = tfn->coerce(c, arg1, T_RATIONAL);				\
-      arg2 = tfn2->coerce(c, arg2, T_RATIONAL);				\
+      arg1 = coerce1(c, arg1, T_RATIONAL);				\
+      arg2 = coerce2(c, arg2, T_RATIONAL);				\
       return(func##_rational(c, arg1, arg2));				\
     } else if (TYPE(arg1) == T_BIGNUM || TYPE(arg2) == T_BIGNUM) {	\
-      arg1 = tfn->coerce(c, arg1, T_BIGNUM);				\
-      arg2 = tfn2->coerce(c, arg2, T_BIGNUM);				\
+      arg1 = coerce1(c, arg1, T_BIGNUM);				\
+      arg2 = coerce2(c, arg2, T_BIGNUM);				\
       return(func##_bignum(c, arg1, arg2));				\
     }									\
   } while (0)
@@ -881,20 +884,21 @@ value arc_mkrationall(arc *c, long num, long den)
 #else
 
 #define TYPE_CASES(func, arg1, arg2) do {				\
-    typefn_t *tfn = __arc_typefn(c, arg1),				\
-      *tfn2 = __arc_typefn(c, arg2);					\
-    if (tfn == NULL || tfn->coerce == NULL ||				\
-	tfn2 == NULL || tfn2->coerce == NULL) {				\
-      arc_err_cstrfmt(c, "cannot coerce");				\
+    value (*coerce1)(struct arc *, value, enum arc_types);		\
+    value (*coerce2)(struct arc *, value, enum arc_types);		\
+    coerce1 = coercefn(c, arg1);					\
+    coerce2 = coercefn(c, arg2);					\
+    if (coerce1 == NULL || coerce2 == NULL) {				\
+      arc_err_cstrfmt(c, "cannot coerce %d %d", TYPE(arg1), TYPE(arg2)); \
       return(CNIL);							\
     }									\
     if (TYPE(arg1) == T_COMPLEX || TYPE(arg2) == T_COMPLEX) {		\
-      arg1 = tfn->coerce(c, arg1, T_COMPLEX);				\
-      arg2 = tfn2->coerce(c, arg2, T_COMPLEX);				\
+      arg1 = coerce1(c, arg1, T_COMPLEX);				\
+      arg2 = coerce2(c, arg2, T_COMPLEX);				\
       return(func##_complex(c, arg1, arg2));				\
     } else if (TYPE(arg1) == T_FLONUM || TYPE(arg2) == T_FLONUM) {	\
-      arg1 = tfn->coerce(c, arg1, T_FLONUM);				\
-      arg2 = tfn2->coerce(c, arg2, T_FLONUM);				\
+      arg1 = coerce1(c, arg1, T_FLONUM);				\
+      arg2 = coerce2(c, arg2, T_FLONUM);				\
       return(func##_flonum(c, arg1, arg2));				\
     }									\
   } while (0)
@@ -1007,11 +1011,14 @@ value __arc_idiv2(arc *c, value arg1, value arg2)
   else if ((TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM) &&
 	   (TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM)) {
     value barg1, barg2, quot;
-    typefn_t *tfn = __arc_typefn(c, arg1), *tfn2 = __arc_typefn(c, arg2);
+    value (*coerce1)(struct arc *, value, enum arc_types);
+    value (*coerce2)(struct arc *, value, enum arc_types);
 
+    coerce1 = coercefn(c, arg1);
+    coerce2 = coercefn(c, arg2);
     /* Coerce both args to bignum */
-    barg1 = tfn->coerce(c, arg1, T_BIGNUM);
-    barg2 = tfn2->coerce(c, arg2, T_BIGNUM);
+    barg1 = coerce1(c, arg1, T_BIGNUM);
+    barg2 = coerce2(c, arg2, T_BIGNUM);
     quot = arc_mkbignuml(c, 0L);
     mpz_fdiv_q(REPBNUM(quot), REPBNUM(barg1), REPBNUM(barg2));
     return(bignum_fixnum(c, quot));
@@ -1046,11 +1053,15 @@ value __arc_mod2(arc *c, value arg1, value arg2)
   else if ((TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM) &&
 	   (TYPE(arg1) == T_BIGNUM || TYPE(arg1) == T_FIXNUM)) {
     value barg1, barg2, modulus;
-    typefn_t *tfn = __arc_typefn(c, arg1), *tfn2 = __arc_typefn(c, arg2);
+    value (*coerce1)(struct arc *, value, enum arc_types);
+    value (*coerce2)(struct arc *, value, enum arc_types);
+
+    coerce1 = coercefn(c, arg1);
+    coerce2 = coercefn(c, arg2);
 
     /* Coerce both args to bignum */
-    barg1 = tfn->coerce(c, arg1, T_BIGNUM);
-    barg2 = tfn2->coerce(c, arg2, T_BIGNUM);
+    barg1 = coerce1(c, arg1, T_BIGNUM);
+    barg2 = coerce2(c, arg2, T_BIGNUM);
     modulus = arc_mkbignuml(c, 0L);
     mpz_fdiv_r(REPBNUM(modulus), REPBNUM(barg1), REPBNUM(barg2));
     return(bignum_fixnum(c, modulus));
@@ -1133,14 +1144,15 @@ value __arc_add2(arc *c, value arg1, value arg2)
 
   if (TYPE(arg1) == T_STRING) {
     value carg2;
-    typefn_t *tfn;
+    value (*coerce1)(struct arc *, value, enum arc_types);
 
-    tfn = __arc_typefn(c, arg2);
-    if (tfn == NULL || tfn->coerce == NULL) {
+    coerce1 = coercefn(c, arg2);
+
+    if (coerce1 == NULL) {
       arc_err_cstrfmt(c, "cannot coerce to string");
       return(CNIL);
     }
-    carg2 = tfn->coerce(c, arg2, T_STRING);
+    carg2 = coerce1(c, arg2, T_STRING);
     return(arc_strcat(c, arg1, carg2));
   }
 
@@ -1523,6 +1535,23 @@ value arc_string2num(arc *c, value str, int index, int rational)
   return(CNIL);
 }
 
+static value (*coercefn(arc *c, value val))(arc *, value, enum arc_types)
+{
+  if (TYPE(val) == T_FIXNUM)
+    return(fixnum_coerce);
+  if (TYPE(val) == T_FLONUM)
+    return(flonum_coerce);
+  if (TYPE(val) == T_COMPLEX)
+    return(complex_coerce);
+#ifdef HAVE_GMP_H
+  if (TYPE(val) == T_BIGNUM)
+    return(bignum_coerce);
+  if (TYPE(val) == T_RATIONAL)
+    return(rational_coerce);
+#endif
+  return(NULL);
+}
+
 typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
@@ -1531,7 +1560,6 @@ typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
   NULL,
-  fixnum_coerce,
   fixnum_xcoerce
 };
 
@@ -1543,7 +1571,6 @@ typefn_t __arc_flonum_typefn__ = {
   flonum_iscmp,
   NULL,
   NULL,
-  flonum_coerce,
   flonum_xcoerce
 };
 
@@ -1555,7 +1582,7 @@ typefn_t __arc_complex_typefn__ = {
   complex_iscmp,
   NULL,
   NULL,
-  complex_coerce
+  NULL
 };
 
 #ifdef HAVE_GMP_H
@@ -1568,7 +1595,6 @@ typefn_t __arc_bignum_typefn__ = {
   bignum_iscmp,
   NULL,
   NULL,
-  bignum_coerce,
   bignum_xcoerce
 };
 
@@ -1580,7 +1606,6 @@ typefn_t __arc_rational_typefn__ = {
   rational_iscmp,
   NULL,
   NULL,
-  rational_coerce,
   rational_xcoerce
 };
 
