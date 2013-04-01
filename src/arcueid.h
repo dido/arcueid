@@ -69,6 +69,7 @@ enum arc_types {
   T_CHAN = 25,			/* channel */
   T_TYPEDESC = 26,		/* type descriptor */
   T_WTABLE = 27,		/* weak table */
+  T_NUM = 28,			/* number -- not a real type */
   T_MAX = 28,
 
   T_NONE=64
