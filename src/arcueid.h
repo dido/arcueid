@@ -70,6 +70,7 @@ enum arc_types {
   T_TYPEDESC = 26,		/* type descriptor */
   T_WTABLE = 27,		/* weak table */
   T_NUM = 28,			/* number -- not a real type */
+  T_INT = 29,			/* int -- not a real type */
   T_MAX = 28,
 
   T_NONE=64
@@ -403,6 +404,7 @@ extern value *__arc_getenv(arc *c, value thr, int depth, int index);
 
 /* Numbers and arithmetic */
 extern value arc_string2num(arc *c, value str, int index, int rational);
+extern value arc_expt(arc *c, value a, value b);
 
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
