@@ -439,6 +439,18 @@ START_TEST(test_coerce_string)
   TEST("(coerce \"zyxw\" 'int 36)");
   fail_unless(ret == INT2FIX(1678244));
 
+  TEST("(coerce \"101E100\" 'num 2)");
+  fail_unless(rel_compare(REPFLO(ret), 80.0, 1e-6));
+
+  TEST("(coerce \"101E100\" 'int 2)");
+  fail_unless(ret == INT2FIX(80));
+
+  TEST("(coerce \"FF\" 'int 16)");
+  fail_unless(ret == INT2FIX(255));
+
+  TEST("(coerce \"10.11E1010\" 'num 3)");
+  fail_unless(rel_compare(REPFLO(ret), 709180566103791.0, 1e-6));
+
 #ifdef HAVE_GMP_H
   {
     static const char *expected_str = "39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816";
@@ -462,9 +474,9 @@ START_TEST(test_coerce_string)
     TEST("(coerce \"2op9vv3r85y0ag8ukw7bqnnknjigy9r4407r3dbiq68kv8h2zuqyon925oqg0whhftleubw3g1s\" 'int 36)");
     fail_unless(TYPE(ret) == T_BIGNUM);
     fail_unless(arc_is2(c, ret, expected) == CTRUE);
-
   }
 #endif
+
 
 }
 END_TEST
