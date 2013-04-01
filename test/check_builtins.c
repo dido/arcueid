@@ -395,6 +395,33 @@ START_TEST(test_coerce_complex)
 }
 END_TEST
 
+START_TEST(test_coerce_char)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(coerce #\\a 'char)");
+  fail_unless(TYPE(ret) == T_CHAR);
+  fail_unless(arc_char2rune(c, ret) == 'a');
+
+  TEST("(coerce #\\a 'fixnum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX('a'));
+
+  TEST("(coerce #\\a 'bignum)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX('a'));
+
+  TEST("(coerce #\\a 'int)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX('a'));
+
+  TEST("(coerce #\\a 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "a")) == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -414,6 +441,8 @@ int main(void)
 
   tcase_add_test(tc_bif, test_coerce_flonum);
   tcase_add_test(tc_bif, test_coerce_complex);
+
+  tcase_add_test(tc_bif, test_coerce_char);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
