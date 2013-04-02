@@ -402,6 +402,7 @@ static value coerce_num(arc *c, value obj, value argv)
     }
     re = __arc_str2flo(c, obj, INT2FIX(base), 0, reend);
     im = __arc_str2flo(c, obj, INT2FIX(base), reend, len-1);
+
     if (re == CNIL || im == CNIL) {
       arc_err_cstrfmt(c, "failed to parse complex number", obj);
       return(CNIL);
@@ -507,6 +508,24 @@ static AFFDEF(string_xcoerce)
     /* Without GMP, this is where we wind up. Also where we wind up without
        a properly parseable number */
     arc_err_cstrfmt(c, "cannot coerce");
+    ARETURN(CNIL);
+  }
+
+  if (FIX2INT(AV(stype)) == T_FLONUM) {
+    value ret;
+    ret = __arc_str2flo(c, AV(obj), AV(arg), 0, arc_strlen(c, AV(obj)));
+    if (NIL_P(ret))
+      arc_err_cstrfmt(c, "cannot coerce");
+    ARETURN(ret);
+  }
+
+  if (FIX2INT(AV(stype)) == T_COMPLEX || FIX2INT(AV(stype)) == T_RATIONAL) {
+    value ret = coerce_num(c, AV(obj), AV(arg));
+    if (TYPE(ret) != FIX2INT(AV(stype))) {
+      arc_err_cstrfmt(c, "cannot coerce");
+      ARETURN(CNIL);
+    }
+    ARETURN(ret);
   }
 
   /* Generic type conversions */
