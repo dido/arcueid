@@ -172,7 +172,7 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [3/5]
-     - [-] coerce [7/11]
+     - [-] coerce [8/11]
        - [X] Fixnum conversions [9/9]
          - [X] fixnum -> int (trivial)
          - [X] fixnum -> num (trivial)
@@ -252,11 +252,11 @@ notice and this notice are preserved.
 	          ‘p/P’, convert as floating point.
 	       5. If string contains ‘/’, convert as rational.
 	       6. Otherwise, consider string as representing an integer
-       - [ ] Symbol conversions [0/4]
-         - [ ] symbol -> symbol (trivial)
-         - [ ] symbol -> string
-         - [ ] nil -> string (produces empty string)
-         - [ ] t -> string
+       - [X] Symbol conversions [4/4]
+         - [X] symbol -> symbol (trivial)
+         - [X] symbol -> string
+         - [X] nil -> string (produces empty string)
+         - [X] t -> string
        - [ ] Cons conversions [0/4]
          - [ ] cons -> cons (trivial)
          - [ ] cons -> string
