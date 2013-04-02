@@ -505,6 +505,29 @@ START_TEST(test_coerce_string)
 }
 END_TEST
 
+START_TEST(test_coerce_symbol)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(coerce 'foo 'sym)");
+  fail_unless(TYPE(ret) == T_SYMBOL);
+  fail_unless(ret == arc_intern_cstr(c, "foo"));
+
+  TEST("(coerce 'foo 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "foo")) == 0);
+
+  TEST("(coerce nil 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strlen(c, ret) == 0);
+
+  TEST("(coerce t 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "t")) == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -527,6 +550,7 @@ int main(void)
 
   tcase_add_test(tc_bif, test_coerce_char);
   tcase_add_test(tc_bif, test_coerce_string);
+  tcase_add_test(tc_bif, test_coerce_symbol);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
