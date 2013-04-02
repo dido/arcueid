@@ -119,3 +119,31 @@ void arc_init_symtable(arc *c)
     arc_hash_insert(c, VINDEX(c->builtins, BI_charesc), chr, str);
   }
 }
+
+static AFFDEF(symbol_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+  (void)arg;
+  if (FIX2INT(AV(stype)) == T_SYMBOL)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_STRING)
+    ARETURN(arc_sym2name(c, AV(obj)));
+
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+typefn_t __arc_symbol_typefn__ = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  symbol_xcoerce
+};
