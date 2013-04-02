@@ -400,8 +400,8 @@ static value coerce_num(arc *c, value obj, value argv)
       arc_err_cstrfmt(c, "cannot find end of imaginary part of number", obj);
       return(CNIL);
     }
-    re = __arc_str2flo(c, obj, base, 0, reend);
-    im = __arc_str2flo(c, obj, base, reend, len-1);
+    re = __arc_str2flo(c, obj, INT2FIX(base), 0, reend);
+    im = __arc_str2flo(c, obj, INT2FIX(base), reend, len-1);
     if (re == CNIL || im == CNIL) {
       arc_err_cstrfmt(c, "failed to parse complex number", obj);
       return(CNIL);
