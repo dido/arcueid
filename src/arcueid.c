@@ -474,6 +474,9 @@ AFFDEF(arc_coerce)
   if (NIL_P(AV(obj)) && AV(typesym) == ARC_BUILTIN(c, S_STRING))
     ARETURN(arc_mkstringc(c, ""));
 
+  if (AV(obj) == CTRUE)
+    ARETURN(arc_mkstringc(c, "t"));
+
   tfn = __arc_typefn(c, AV(obj));
   if (tfn == NULL || tfn->xcoerce == NULL) {
     arc_err_cstrfmt(c, "cannot coerce");
@@ -489,6 +492,7 @@ extern typefn_t __arc_fixnum_typefn__;
 extern typefn_t __arc_flonum_typefn__;
 extern typefn_t __arc_complex_typefn__;
 extern typefn_t __arc_string_typefn__;
+extern typefn_t __arc_symbol_typefn__;
 extern typefn_t __arc_char_typefn__;
 
 #ifdef HAVE_GMP_H
@@ -514,6 +518,7 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_FLONUM] = &__arc_flonum_typefn__;
   c->typefns[T_COMPLEX] = &__arc_complex_typefn__;
   c->typefns[T_STRING] = &__arc_string_typefn__;
+  c->typefns[T_SYMBOL] = &__arc_symbol_typefn__;
   c->typefns[T_CHAR] = &__arc_char_typefn__;
 
 #ifdef HAVE_GMP_H
