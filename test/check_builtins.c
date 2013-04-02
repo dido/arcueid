@@ -451,6 +451,21 @@ START_TEST(test_coerce_string)
   TEST("(coerce \"10.11E1010\" 'num 3)");
   fail_unless(rel_compare(REPFLO(ret), 709180566103791.0, 1e-6));
 
+  TEST("(coerce \"10.11E1010\" 'flonum 3)");
+  fail_unless(rel_compare(REPFLO(ret), 709180566103791.0, 1e-6));
+
+  TEST("(coerce \"1\" 'flonum)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.0, 1e-6));
+
+  TEST("(coerce \"1+2i\" 'num)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(rel_compare(cabs(REPCPX(ret)), cabs(1.0+I*2.0), 1e-6));
+
+  TEST("(coerce \"1+2i\" 'complex)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(rel_compare(cabs(REPCPX(ret)), cabs(1.0+I*2.0), 1e-6));
+
 #ifdef HAVE_GMP_H
   {
     static const char *expected_str = "39402006196394479212279040100143613805079739270465446667948293404245721771497210611414266254884915640806627990306816";
@@ -474,6 +489,15 @@ START_TEST(test_coerce_string)
     TEST("(coerce \"2op9vv3r85y0ag8ukw7bqnnknjigy9r4407r3dbiq68kv8h2zuqyon925oqg0whhftleubw3g1s\" 'int 36)");
     fail_unless(TYPE(ret) == T_BIGNUM);
     fail_unless(arc_is2(c, ret, expected) == CTRUE);
+
+    TEST("(coerce \"1/2\" 'rational)");
+    fail_unless(TYPE(ret) == T_RATIONAL);
+    fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
+
+    TEST("(coerce \"1/2\" 'num)");
+    fail_unless(TYPE(ret) == T_RATIONAL);
+    fail_unless(mpq_cmp_si(REPRAT(ret), 1, 2) == 0);
+
   }
 #endif
 
