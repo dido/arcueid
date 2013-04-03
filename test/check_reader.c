@@ -329,10 +329,10 @@ START_TEST(test_read_number)
      constants? The Limbo-style radix selector used here is an Arcueid
      extension. */
   thr = arc_mkthread(c);
-  sio = arc_instring(c, arc_mkstringc(c, "16rdeadbeef"), CNIL);
+  sio = arc_instring(c, arc_mkstringc(c, "16rdeadbee"), CNIL);
   XCALL(arc_sread, sio, CNIL);
   fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
-  fail_unless(TVALR(thr) == INT2FIX(0xdeadbeef));
+  fail_unless(TVALR(thr) == INT2FIX(0xdeadbee));
 
   thr = arc_mkthread(c);
   sio = arc_instring(c, arc_mkstringc(c, "31337"), CNIL);
