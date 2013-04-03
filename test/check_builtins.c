@@ -353,6 +353,11 @@ START_TEST(test_coerce_flonum)
   fail_unless(TYPE(ret) == T_STRING);
   fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "0.0004523")) == 0);
 
+  TEST("(coerce '((1 . 2) (2 . 3) (3 . 4)) 'table)");
+  fail_unless(TYPE(ret) == T_TABLE);
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(1)) == INT2FIX(2));
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(2)) == INT2FIX(3));
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(3)) == INT2FIX(4));
 }
 END_TEST
 
