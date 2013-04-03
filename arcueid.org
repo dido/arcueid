@@ -158,7 +158,7 @@ notice and this notice are preserved.
     - [X] Strings
     - [X] Symbols
     - [X] Conses
-    - [-] Tables [1/4]
+    - [-] Tables [2/4]
       - [X] Atomic keys [8/8]
         - [X] Fixnum
         - [X] Bignum
@@ -168,7 +168,7 @@ notice and this notice are preserved.
         - [X] Symbol
         - [X] String
         - [X] Character
-      - [ ] Cons keys
+      - [X] Cons keys
       - [ ] Vector keys
       - [ ] Hash table keys
     - [X] Vectors
