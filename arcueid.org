@@ -145,7 +145,7 @@ notice and this notice are preserved.
        - [X] Complement (~)
        - [X] Structure access (. and !)
        - [X] And (&)
-** TODO basic data types [14/16]
+** TODO basic data types [13/16]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -158,7 +158,19 @@ notice and this notice are preserved.
     - [X] Strings
     - [X] Symbols
     - [X] Conses
-    - [X] Tables
+    - [-] Tables [1/4]
+      - [X] Atomic keys [8/8]
+        - [X] Fixnum
+        - [X] Bignum
+        - [X] Flonum
+        - [X] Rational
+        - [X] Complex
+        - [X] Symbol
+        - [X] String
+        - [X] Character
+      - [ ] Cons keys
+      - [ ] Vector keys
+      - [ ] Hash table keys
     - [X] Vectors
     - [X] Tagged
     - [X] Functions
@@ -257,10 +269,10 @@ notice and this notice are preserved.
          - [X] symbol -> string
          - [X] nil -> string (produces empty string)
          - [X] t -> string
-       - [ ] Cons conversions [0/4]
-         - [ ] cons -> cons (trivial)
-         - [ ] cons -> string
-         - [ ] cons -> vector
+       - [-] Cons conversions [3/4]
+         - [X] cons -> cons (trivial)
+         - [X] cons -> string
+         - [X] cons -> vector
          - [ ] cons -> table
        - [ ] Table conversions [0/2]
          - [ ] table -> table (trivial)
