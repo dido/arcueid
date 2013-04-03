@@ -528,6 +528,43 @@ START_TEST(test_coerce_symbol)
 }
 END_TEST
 
+START_TEST(test_coerce_cons)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(coerce '(foo bar) 'cons)");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == arc_intern_cstr(c, "foo"));
+  fail_unless(cadr(ret) == arc_intern_cstr(c, "bar"));
+
+  TEST("(coerce '(1 2 3 4) 'string)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "1234")) == 0);
+
+  /* EXT - invalid in reference arc */
+  TEST("(coerce '(10 11 12 13 14 15) 'string 16)");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "abcdef")) == 0);
+
+  TEST("(coerce '(1 2 3 4) 'vector)");
+  fail_unless(TYPE(ret) == T_VECTOR);
+  fail_unless(VECLEN(ret) == 4);
+  fail_unless(VINDEX(ret, 0) == INT2FIX(1));
+  fail_unless(VINDEX(ret, 1) == INT2FIX(2));
+  fail_unless(VINDEX(ret, 2) == INT2FIX(3));
+  fail_unless(VINDEX(ret, 3) == INT2FIX(4));
+
+  TEST("(coerce '(1 2 3 . 4) 'vector)");
+  fail_unless(TYPE(ret) == T_VECTOR);
+  fail_unless(VECLEN(ret) == 4);
+  fail_unless(VINDEX(ret, 0) == INT2FIX(1));
+  fail_unless(VINDEX(ret, 1) == INT2FIX(2));
+  fail_unless(VINDEX(ret, 2) == INT2FIX(3));
+  fail_unless(VINDEX(ret, 3) == INT2FIX(4));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -551,6 +588,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_char);
   tcase_add_test(tc_bif, test_coerce_string);
   tcase_add_test(tc_bif, test_coerce_symbol);
+  tcase_add_test(tc_bif, test_coerce_cons);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
