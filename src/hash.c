@@ -546,6 +546,7 @@ static arc_hs *decode_hs(arc *c, arc_hs *hs, value enc)
 AFFDEF(arc_xhash_increment)
 {
   AARG(v, ehs);
+  AOARG(visithash);
   AVAR(length);
   arc_hs hs;
   typefn_t *tfn;
@@ -558,13 +559,16 @@ AFFDEF(arc_xhash_increment)
     arc_hash_update(&hs, (unsigned long)FIX2INT(AV(v)));
   else if (TYPE(AV(v)) == T_SYMBOL)
     arc_hash_update(&hs, (unsigned long)SYM2ID(AV(v)));
-  else {
+  else if (AV(v) == CTRUE || NIL_P(AV(v))) {
+    /* nothing to do here */
+    ;
+  } else {
     tfn = __arc_typefn(c, AV(v));
     if (tfn->hash != NULL)
       AV(length) = INT2FIX(tfn->hash(c, AV(v), &hs));
     else if (tfn->xhash != NULL) {
       encode_hs(c, AV(ehs), &hs);
-      AFTCALL(arc_mkaff(c, tfn->xhash, CNIL), AV(v), AV(ehs), AV(length));
+      AFTCALL(arc_mkaff(c, tfn->xhash, CNIL), AV(v), AV(ehs), AV(length), AV(visithash));
     } else {
       arc_err_cstrfmt(c, "no type-specific hasher found for type %d", TYPE(v));
     }
