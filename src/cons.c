@@ -179,6 +179,30 @@ static int cons_apply(arc *c, value thr, value list)
   return(TR_RC);
 }
 
+AFFDEF(cons_xhash)
+{
+  AARG(obj, ehs, length, visithash);
+  AFBEGIN;
+
+  if (!BOUND_P(AV(visithash)))
+    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+
+  /* Already visited at some point.  Do not recurse further. */
+  if (__arc_visit(c, AV(obj), AV(visithash)) != CNIL)
+    ARETURN(AV(length));
+
+  /* Visit car */
+  AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), car(AV(obj)), AV(ehs),
+	 AV(visithash));
+  AV(length) = __arc_add2(c, AV(length), AFCRV);
+  /* Visit cdr */
+  AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), cdr(AV(obj)), AV(ehs),
+	 AV(visithash));
+  ARETURN(__arc_add2(c, AV(length), AFCRV));
+  AFEND;
+}
+AFFEND
+
 value cons(arc *c, value x, value y)
 {
   value cv;
@@ -279,5 +303,6 @@ typefn_t __arc_cons_typefn__ = {
   NULL,
   cons_isocmp,
   cons_apply,
-  cons_xcoerce
+  cons_xcoerce,
+  cons_xhash
 };
