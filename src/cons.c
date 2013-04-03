@@ -18,6 +18,7 @@
 */
 #include "arcueid.h"
 #include "arith.h"
+#include "builtins.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -208,12 +209,67 @@ value arc_list_length(arc *c, value list)
   value n;
 
   n = INT2FIX(0);
-  while (list != CNIL) {
-    list = cdr(list);
+  for (;;) {
+    if (!CONS_P(list)) {
+      if (!NIL_P(list))
+	n = __arc_add2(c, n, INT2FIX(1));
+      break;
+    }
     n = __arc_add2(c, n, INT2FIX(1));
+    list = cdr(list);
   }
   return(n);
 }
+
+
+static AFFDEF(cons_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AVAR(str);
+  AFBEGIN;
+  if (FIX2INT(AV(stype)) == T_CONS)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_STRING) {
+    AV(str) = arc_mkstringc(c, "");
+    /* EXT: Note that this propagates the extra arg in recursive calls to
+       coerce: arc3.1 and Anarki do not.  So in Arcueid you can do the
+       following:
+       (coerce '(10 11 12) 'string 16) => "abc"
+       Same form causes an error in other Arc implementations.
+     */
+    for (; CONS_P(AV(obj)); AV(obj) = cdr(AV(obj))) {
+      AFCALL(arc_mkaff(c, arc_coerce, CNIL), car(AV(obj)),
+	     ARC_BUILTIN(c, S_STRING), AV(arg));
+      AV(str) = arc_strcat(c, AV(str), AFCRV);
+    }
+    if (!NIL_P(AV(obj))) {
+      /* XXX - this is the behaviour of reference Arc.  Perhaps the final
+	 non-atom should be converted just the same? */
+      arc_err_cstrfmt(c, "cannot coerce improper list");
+      ARETURN(CNIL);
+    }
+    ARETURN(AV(str));
+  }
+
+  if (FIX2INT(AV(stype)) == T_VECTOR) {
+    value len, vec;
+    int i;
+
+    len = arc_list_length(c, AV(obj));
+    vec = arc_mkvector(c, FIX2INT(len));
+    for (i=0; CONS_P(AV(obj)); AV(obj) = cdr(AV(obj)), i++)
+      VINDEX(vec, i) = car(AV(obj));
+    if (!NIL_P(AV(obj)))
+      VINDEX(vec, i) = AV(obj);
+    ARETURN(vec);
+  }
+
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
 
 typefn_t __arc_cons_typefn__ = {
   cons_marker,
@@ -223,5 +279,5 @@ typefn_t __arc_cons_typefn__ = {
   NULL,
   cons_isocmp,
   cons_apply,
-  NULL
+  cons_xcoerce
 };
