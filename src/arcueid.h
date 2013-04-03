@@ -94,7 +94,7 @@ struct typefn_t {
   void (*sweeper)(struct arc *c, value);
   /* Pretty printer.  This is an AFF. */
   int (*pprint)(struct arc *c, value);
-  /* Hasher */
+  /* Hasher.  Simple hasher. */
   unsigned long (*hash)(struct arc *c, value, arc_hs *);
   /* Shallow compare.  This is a normal function. */
   value (*iscmp)(struct arc *c, value, value);
@@ -106,10 +106,10 @@ struct typefn_t {
      of its type and a fixnum representation of the type to convert to
      and tries to convert it to that type. */
   int (*xcoerce)(struct arc *c, value);
-#if 0
   /* Recursive hasher.  This is used for computing possibly recursive
      hashes and is an AFF. */
-  int (*rhash)(struct arc *c, value);
+  int (*xhash)(struct arc *c, value);
+#if 0
   /* Marshaller and unmarshaller. Also AFFs. */
   int (*marshal)(struct arc *c, value);
   int (*unmarshal)(struct arc *c, value);
@@ -290,6 +290,10 @@ extern value arc_hash_lookup(arc *c, value tbl, value key);
 extern value arc_hash_lookup2(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
 extern value arc_hash_delete(arc *c, value hash, value key);
+extern int arc_xhash_lookup(arc *c, value thr);
+extern int arc_xhash_lookup2(arc *c, value thr);
+extern int arc_xhash_delete(arc *c, value thr);
+extern int arc_xhash_insert(arc *c, value thr);
 
 /* Type handling functions */
 extern typefn_t *__arc_typefn(arc *c, value v);
