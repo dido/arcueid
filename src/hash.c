@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2012 Rafael R. Sevilla
+  Copyright (C) 2013 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -140,7 +140,7 @@ unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
     break;
   default:
     tfn = __arc_typefn(c, v);
-    if (tfn->hash == CNIL) {
+    if (tfn->hash == NULL) {
       arc_err_cstrfmt(c, "no type-specific hasher found for type %d", TYPE(v));
       return(length);
     }
@@ -202,7 +202,7 @@ unsigned long arc_hash(arc *c, value v)
 #define HASHMASK(n) (HASHSIZE(n)-1)
 #define MAX_LOAD_FACTOR 70	/* percentage */
 /* linear probing */
-#define PROBE(i, k) (i)
+#define PROBE(i) (i)
 
 #define TABLESIZE(t) (HASHSIZE(HASH_BITS(t)))
 #define TABLEMASK(t) (HASHMASK(HASH_BITS(t)))
@@ -242,24 +242,6 @@ static void hash_sweeper(arc *c, value v)
       continue;
     BTABLE(VINDEX(tbl, i)) = CNIL;
   }
-}
-
-static unsigned long hash_hasher(arc *c, value v, arc_hs *s)
-{
-  unsigned long len;
-  value tbl, e;
-  int i;
-
-  tbl = HASH_TABLE(v);
-  len = 0;
-  for (i=0; i<VECLEN(tbl); i++) {
-    e = VINDEX(tbl, i);
-    if (EMPTYP(e))
-      continue;
-    len += arc_hash(c, BKEY(e));
-    len += arc_hash(c, BVALUE(e));
-  }
-  return(len);
 }
 
 static AFFDEF(hash_isocmp)
@@ -357,7 +339,7 @@ static void hashtable_expand(arc *c, value hash)
     hv = arc_hash(c, BKEY(e));
     index = hv & HASHMASK(nhashbits);
     for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
-      index = (index + PROBE(j, k)) & HASHMASK(nhashbits);
+      index = (index + PROBE(j)) & HASHMASK(nhashbits);
     VINDEX(newtbl, index) = e;
     SBINDEX(e, index);		/* change index */
     VINDEX(oldtbl, i) = CUNBOUND;
@@ -402,27 +384,65 @@ static value mkhashbucket(arc *c, value key, value val, int index, value table)
   return(bucket);
 }
 
+static value hash_lookup(arc *c, value hash, value key, unsigned int *index)
+{
+  unsigned int hv, i;
+  value e;
+
+  hv = arc_hash(c, key);
+  *index = hv & TABLEMASK(hash);
+  for (i=0;; i++) {
+    *index = (*index + PROBE(i)) & TABLEMASK(hash);
+    e = HASH_INDEX(hash, *index);
+    /* CUNBOUND means there was never any element at that index, so we
+       can stop. */
+    if (e == CUNBOUND)
+      return(CUNBOUND);
+    /* CUNDEF means that there was an element at that index, but it was
+       deleted at some point, so we may need to continue probing. */
+    if (e == CUNDEF)
+      continue;
+    if (arc_is2(c, BKEY(e), key) == CTRUE)
+      return(BVALUE(e));
+  }
+  return(CUNBOUND);
+}
+
+/* These functions will only work for simple keys for which a basic hash
+   is available.  They are a convenience because most hash tables are
+   indexed by strings, symbols, numbers, and other simple objects.  In
+   particular, symbol tables are indexed in that way. */
+
 value arc_hash_insert(arc *c, value hash, value key, value val)
 {
   unsigned int hv, index, i;
   value e;
 
+  /* First of all, look for the key if a binding already exists for it */
+  e = hash_lookup(c, hash, key, &index);
+  if (BOUND_P(e)) {
+    /* if we are already bound, overwrite the old value */
+    e = VINDEX(HASH_TABLE(hash), index);
+    BVALUE(e) = val;
+    return(val);
+  }
+  /* Not yet bound.  Look for a slot where we can put it */
   if (HASH_NENTRIES(hash)+1 > HASH_LLIMIT(hash))
     hashtable_expand(c, hash);
   SET_NENTRIES(hash, HASH_NENTRIES(hash)+1);
   hv = arc_hash(c, key);
   index = hv & TABLEMASK(hash);
-  /* Collision resolution with open addressing */
   for (i=0;; i++) {
     e = VINDEX(HASH_TABLE(hash), index);
     /* If we see an empty bucket in our search, or if we see a bucket
        whose key is the same as the key specified, we have found the
-       place where the element should go. */
+       place where the element should go. This second case should never
+       happen, based on what we did above, but hey, belt and suspenders. */
     if (EMPTYP(e) || arc_is2(c, BKEY(e), key) == CTRUE)
       break;
     /* We found a bucket, but it is occupied by some other key. Continue
        probing. */
-    index = (index + PROBE(i, k)) & TABLEMASK(hash);
+    index = (index + PROBE(i)) & TABLEMASK(hash);
   }
 
   if (EMPTYP(e)) {
@@ -436,29 +456,6 @@ value arc_hash_insert(arc *c, value hash, value key, value val)
     BVALUE(e) = val;
   }
   return(val);
-}
-
-static value hash_lookup(arc *c, value hash, value key, unsigned int *index)
-{
-  unsigned int hv, i;
-  value e;
-
-  hv = arc_hash(c, key);
-  *index = hv & TABLEMASK(hash);
-  for (i=0;; i++) {
-    *index = (*index + PROBE(i, key)) & TABLEMASK(hash);
-    e = HASH_INDEX(hash, *index);
-    /* CUNBOUND means there was never any element at that index, so we
-       can stop. */
-    if (e == CUNBOUND)
-      return(CUNBOUND);
-    /* CUNDEF means that there was an element at that index, but it was
-       deleted at some point, so we may need to continue probing. */
-    if (e == CUNDEF)
-      continue;
-    if (arc_is2(c, BKEY(e), key) == CTRUE)
-      return(BVALUE(e));
-  }
 }
 
 value arc_hash_lookup(arc *c, value tbl, value key)
@@ -496,6 +493,235 @@ value arc_hash_delete(arc *c, value hash, value key)
   return(v);
 }
 
+/* The following functions are more general, and will work for any kind
+   of key for which an xhash function exists.
+ */
+
+/* An arc_hs is encoded into a vector of fixnums in the following way:
+
+   HS[0] = low 16 or 32 bits of s[0];
+   HS[1] = high 16 or 32 bits of s[0];
+   HS[2] = low 16 or 32 bits of s[1];
+   HS[3] = high 16 or 32 bits of s[1];
+   HS[4] = low 16 or 32 bits of s[2];
+   HS[5] = high 16 or 32 bits of s[2];
+   HS[6] = hash state
+*/
+
+#ifdef HASH64BITS
+#define BITSHIFT 32
+#define MASK 0xffffffff
+#else
+#define BITSHIFT 16
+#define MASK 0xffff
+#endif
+
+#define ENC_VEC_LEN 7
+
+static value encode_hs(arc *c, value enc, arc_hs *hs)
+{
+  int i, j, shift;
+
+  for (i=0; i<6; i++) {
+    j = i/2;
+    shift = (i%2 == 0) ? 0 : BITSHIFT;
+    VINDEX(enc, i) = INT2FIX((hs->s[j] >> shift) & MASK);
+  }
+  VINDEX(enc, 6) = INT2FIX(hs->state);
+  return(enc);
+}
+
+static arc_hs *decode_hs(arc *c, arc_hs *hs, value enc)
+{
+  int i;
+
+  for (i=0; i<3; i++) {
+    hs->s[i] = ((unsigned long)(FIX2INT(VINDEX(enc, i*2)) & MASK)) |
+      (((unsigned long)((FIX2INT(VINDEX(enc, i*2+1))) & MASK)) << BITSHIFT);
+  }
+  hs->state = FIX2INT(VINDEX(enc, 6));
+  return(hs);
+}
+
+AFFDEF(arc_xhash_increment)
+{
+  AARG(v, ehs);
+  AVAR(length);
+  arc_hs hs;
+  typefn_t *tfn;
+  AFBEGIN;
+
+  decode_hs(c, &hs, AV(ehs));
+  AV(length) = INT2FIX(1);
+  arc_hash_update(&hs, TYPE(AV(v)));
+  if (TYPE(AV(v)) == T_FIXNUM)
+    arc_hash_update(&hs, (unsigned long)FIX2INT(AV(v)));
+  else if (TYPE(AV(v)) == T_SYMBOL)
+    arc_hash_update(&hs, (unsigned long)SYM2ID(AV(v)));
+  else {
+    tfn = __arc_typefn(c, AV(v));
+    if (tfn->hash != NULL)
+      AV(length) = INT2FIX(tfn->hash(c, AV(v), &hs));
+    else if (tfn->xhash != NULL) {
+      encode_hs(c, AV(ehs), &hs);
+      AFTCALL(arc_mkaff(c, tfn->xhash, CNIL), AV(v), AV(ehs), AV(length));
+    } else {
+      arc_err_cstrfmt(c, "no type-specific hasher found for type %d", TYPE(v));
+    }
+  }
+  encode_hs(c, AV(ehs), &hs);
+  ARETURN(AV(length));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_xhash)
+{
+  AARG(v);
+  AOARG(level);
+  AVAR(ehs);
+  arc_hs s;
+  value len;
+  unsigned long final;
+  AFBEGIN;
+  AV(ehs) = arc_mkvector(c, ENC_VEC_LEN);
+  if (!BOUND_P(AV(level)))
+    AV(level) = INT2FIX(0);
+  arc_hash_init(&s, FIX2INT(AV(level)));
+  encode_hs(c, AV(ehs), &s);
+  AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), AV(v), AV(ehs));
+  len = AFCRV;
+  decode_hs(c, &s, AV(ehs));
+  final = arc_hash_final(&s, FIX2INT(len));
+  ARETURN(INT2FIX(final));
+  AFEND;
+}
+AFFEND
+
+/* Returns unbound or the hash bucket */
+AFFDEF(xhash_lookup)
+{
+  AARG(hash, key);
+  AVAR(e, index);
+  unsigned int hv, i;
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, arc_xhash, CNIL), AV(key));
+  hv = FIX2INT(AFCRV);
+  AV(index) = INT2FIX(hv & TABLEMASK(AV(hash)));
+  for (i=0;; i++) {
+    AV(index) = INT2FIX((FIX2INT(AV(index)) + PROBE(i)) & TABLEMASK(AV(hash)));
+    AV(e) = HASH_INDEX(AV(hash), FIX2INT(AV(index)));
+    /* CUNBOUND means there was never any element at that index, so we
+       can stop. */
+    if (AV(e) == CUNBOUND)
+      ARETURN(CUNBOUND);
+    /* CUNDEF means that there was an element at that index, but it was
+       deleted at some point, so we may need to continue probing. */
+    if (e == CUNDEF)
+      continue;
+    AFCALL(arc_mkaff(c, arc_iso, CNIL), BKEY(AV(e)), AV(key));
+    if (AFCRV == CTRUE)
+      ARETURN(cons(c, AV(index), AV(e)));
+  }
+  ARETURN(CUNBOUND);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_xhash_lookup2)
+{
+  AARG(tbl, key);
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, xhash_lookup, CNIL), AV(tbl), AV(key));
+  if (BOUND_P(AFCRV))
+    ARETURN(cdr(AFCRV));
+  ARETURN(CUNBOUND);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_xhash_insert)
+{
+  AARG(hash, key, val);
+  AVAR(hv, index, i, e);
+  AFBEGIN;
+
+  /* First, look for the key if a binding already exists for it */
+  AFCALL(arc_mkaff(c, arc_xhash_lookup2, CNIL), AV(hash), AV(key));
+  if (BOUND_P(AFCRV)) {
+    AV(e) = AFCRV;
+    BVALUE(AV(e)) = AV(val);
+    ARETURN(AV(val));
+  }
+
+  /* Not already bound, so we need to create a new binding */
+  if (HASH_NENTRIES(AV(hash))+1 > HASH_LLIMIT(AV(hash)))
+    hashtable_expand(c, hash);
+  SET_NENTRIES(AV(hash), HASH_NENTRIES(AV(hash))+1);
+  AFCALL(arc_mkaff(c, arc_xhash, CNIL), AV(key));
+  AV(hv) = AFCRV;
+  AV(index) = INT2FIX(FIX2INT(AV(hv)) & TABLEMASK(AV(hash)));
+  for (AV(i)=INT2FIX(0);; AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+    AV(e) = VINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index)));
+    /* If we see an empty bucket in our search, or if we see a bucket
+       whose key is the same as the key specified, we have found the
+       place where the element should go. */
+    if (EMPTYP(AV(e)))
+      break;
+    AFCALL(arc_mkaff(c, arc_iso, CNIL), BKEY(AV(e)), AV(key));
+    if (AFCRV == CTRUE)
+      break;
+    /* We found a bucket, but it is occupied by some other key. Continue
+       probing. */
+    AV(index) = INT2FIX((FIX2INT(AV(index)) + PROBE(FIX2INT(AV(i)))) & TABLEMASK(AV(hash)));
+  }
+
+  if (EMPTYP(AV(e))) {
+    /* No such key in the hash table yet.  Create a bucket and
+       assign it to the table. */
+    AV(e) = mkhashbucket(c, AV(key), AV(val), FIX2INT(AV(index)), AV(hash));
+    VINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index))) = AV(e);
+  } else {
+    /* The key already exists.  Use the current bucket but change the
+       value to the value specified. */
+    BVALUE(AV(e)) = val;
+  }
+  ARETURN(AV(val));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_xhash_lookup)
+{
+  AARG(tbl, key);
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, arc_xhash_lookup2, CNIL), AV(tbl), AV(key));
+  if (BOUND_P(AFCRV))
+    ARETURN(BVALUE(AFCRV));
+  ARETURN(CUNBOUND);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_xhash_delete)
+{
+  AARG(tbl, key);
+  value index, e;
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, arc_xhash_lookup2, CNIL), AV(tbl), AV(key));
+  if (!BOUND_P(AFCRV))
+    ARETURN(CUNBOUND);
+
+  index = car(AFCRV);
+  e = VINDEX(HASH_TABLE(AV(tbl)), FIX2INT(index));
+  BTABLE(e) = CNIL;
+  VINDEX(HASH_TABLE(AV(tbl)), FIX2INT(index)) = CUNDEF;
+  SET_NENTRIES(AV(tbl), HASH_NENTRIES(AV(tbl))-1);
+  ARETURN(BVALUE(e));
+  AFEND;
+}
+AFFEND
+
 /* This is the only difference between a weak table and a normal
    hash table.  A weak table will only mark the table vector itself,
    and will NOT propagate the mark to any of the table buckets. */
@@ -522,7 +748,7 @@ typefn_t __arc_table_typefn__ = {
   hash_marker,
   hash_sweeper,
   NULL,
-  hash_hasher,
+  NULL,
   NULL,
   hash_isocmp,
   hash_apply
@@ -542,7 +768,7 @@ typefn_t __arc_wtable_typefn__ = {
   wtable_marker,
   hash_sweeper,
   NULL,
-  hash_hasher,
+  NULL,
   NULL,
   hash_isocmp,
   hash_apply,
