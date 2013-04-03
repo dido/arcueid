@@ -294,6 +294,8 @@ extern int arc_xhash_lookup(arc *c, value thr);
 extern int arc_xhash_lookup2(arc *c, value thr);
 extern int arc_xhash_delete(arc *c, value thr);
 extern int arc_xhash_insert(arc *c, value thr);
+extern int arc_xhash_increment(arc *c, value thr);
+extern int arc_xhash_map(arc *c, value thr);
 
 /* Type handling functions */
 extern typefn_t *__arc_typefn(arc *c, value v);
