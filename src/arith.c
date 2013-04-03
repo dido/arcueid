@@ -176,7 +176,7 @@ static AFFDEF(flonum_pprint)
 }
 AFFEND
 
-static value flonum_hash(arc *c, value f, arc_hs *s)
+static unsigned long flonum_hash(arc *c, value f, arc_hs *s)
 {
   char *ptr = (char *)REP(f);
   int i;
@@ -354,7 +354,7 @@ static AFFDEF(complex_pprint)
 }
 AFFEND
 
-static value complex_hash(arc *c, value f, arc_hs *s)
+static unsigned long complex_hash(arc *c, value f, arc_hs *s)
 {
   char *ptr = (char *)REP(f);
   int i;
@@ -545,20 +545,25 @@ static value bignum_coerce(arc *c, value n, enum arc_types t)
   return(CNIL);
 }
 
-static value bignum_hash(arc *c, value n, arc_hs *s)
+static unsigned long bignum_hash2(arc *c, mpz_t n, arc_hs *s)
 {
   unsigned long *rop;
   size_t numb = sizeof(unsigned long);
   size_t countp, calc_size;
   int i;
  
-  calc_size = (mpz_sizeinbase(REPBNUM(n),  2) + numb-1) / numb;
+  calc_size = (mpz_sizeinbase(n,  2) + numb-1) / numb;
   rop = (unsigned long *)malloc(calc_size * numb);
-  mpz_export(rop, &countp, 1, numb, 0, 0, REPBNUM(n));
+  mpz_export(rop, &countp, 1, numb, 0, 0, n);
   for (i=0; i<countp; i++)
     arc_hash_update(s, rop[i]);
   free(rop);
   return((unsigned long)countp);
+}
+
+static unsigned long bignum_hash(arc *c, value n, arc_hs *s)
+{
+  return(bignum_hash2(c, REPBNUM(n), s));
 }
 
 static value bignum_iscmp(arc *c, value v1, value v2)
@@ -778,10 +783,13 @@ static AFFDEF(rational_xcoerce)
 }
 AFFEND
 
-static value rational_hash(arc *c, value n, arc_hs *s)
+static unsigned long rational_hash(arc *c, value q, arc_hs *s)
 {
-  /* XXX fill this in */
-  return(CNIL);
+  unsigned long count;
+
+  count = bignum_hash2(c, mpq_numref(REPRAT(q)), s);
+  count += bignum_hash2(c, mpq_denref(REPRAT(q)), s);
+  return(count);
 }
 
 static value rational_iscmp(arc *c, value v1, value v2)
