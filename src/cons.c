@@ -249,7 +249,7 @@ value arc_list_length(arc *c, value list)
 static AFFDEF(cons_xcoerce)
 {
   AARG(obj, stype, arg);
-  AVAR(str);
+  AVAR(str, hash);
   AFBEGIN;
   if (FIX2INT(AV(stype)) == T_CONS)
     ARETURN(AV(obj));
@@ -287,6 +287,25 @@ static AFFDEF(cons_xcoerce)
     if (!NIL_P(AV(obj)))
       VINDEX(vec, i) = AV(obj);
     ARETURN(vec);
+  }
+
+  /* Assoc tables of the form ( ... (key . value) are the only type
+     that can be converted into hashes. */
+  if (FIX2INT(AV(stype)) == T_TABLE) {
+    AV(hash) = arc_mkhash(c, ARC_HASHBITS);
+
+    while (!NIL_P(AV(obj))) {
+      value cell = car(AV(obj)), key, val;
+      if (TYPE(cell) != T_CONS) {
+	arc_err_cstrfmt(c, "cannot coerce to hash, must be assoc form");
+	ARETURN(CNIL);
+      }
+      key = car(cell);
+      val = cdr(cell);
+      AFCALL(arc_mkaff(c, arc_xhash_insert, CNIL), AV(hash), key, val);
+    }
+    AV(obj) = cdr(AV(obj));
+    ARETURN(AV(hash));
   }
 
   arc_err_cstrfmt(c, "cannot coerce");
