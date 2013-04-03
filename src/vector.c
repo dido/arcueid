@@ -17,6 +17,7 @@
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #include "arcueid.h"
+#include "arith.h"
 
 void __arc_vector_marker(arc *c, value v, int depth,
 			 void (*markfn)(arc *, value, int))
@@ -97,6 +98,32 @@ static int vector_apply(arc *c, value thr, value vec)
   return(TR_RC);
 }
 
+AFFDEF(vector_xhash)
+{
+  AARG(obj, ehs, length, visithash);
+  AVAR(i);
+  AFBEGIN;
+
+  if (!BOUND_P(AV(visithash)))
+    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+
+  /* Already visited at some point.  Do not recurse further. */
+  if (__arc_visit(c, AV(obj), AV(visithash)) != CNIL)
+    ARETURN(AV(length));
+
+  /* Visit car */
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(obj));
+       AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+    AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL),
+	   VINDEX(AV(obj), FIX2INT(AV(i))), AV(ehs),
+	   AV(visithash));
+    AV(length) = __arc_add2(c, AV(length), AFCRV);
+  }
+  ARETURN(AV(length));
+  AFEND;
+}
+AFFEND
+
 value arc_mkvector(arc *c, int length)
 {
   value vec;
@@ -117,5 +144,6 @@ typefn_t __arc_vector_typefn__ = {
   NULL,
   __arc_vector_isocmp,
   vector_apply,
-  NULL
+  NULL,
+  vector_xhash
 };
