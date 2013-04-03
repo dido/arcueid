@@ -303,8 +303,8 @@ static AFFDEF(cons_xcoerce)
       key = car(cell);
       val = cdr(cell);
       AFCALL(arc_mkaff(c, arc_xhash_insert, CNIL), AV(hash), key, val);
+      AV(obj) = cdr(AV(obj));
     }
-    AV(obj) = cdr(AV(obj));
     ARETURN(AV(hash));
   }
 
