@@ -112,6 +112,28 @@ START_TEST(test_hash_simple)
 }
 END_TEST
 
+START_TEST(test_hash_cons_keys)
+{
+  value hash, thr;
+  value list1 = cons(c, INT2FIX(1), cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
+  value list2 = cons(c, INT2FIX(2), cons(c, INT2FIX(3), cons(c, INT2FIX(4), CNIL)));
+
+  /* make list2 a circular list */
+  car(cdr(cdr(list2))) = list2;
+
+  thr = arc_mkthread(c);
+  hash = arc_mkhash(c, 8);
+
+  XCALL(arc_xhash_insert, hash, list1, INT2FIX(20));
+  XCALL(arc_xhash_lookup, hash, list1);
+  fail_unless(TVALR(thr) == INT2FIX(20));
+
+  XCALL(arc_xhash_insert, hash, list2, INT2FIX(21));
+  XCALL(arc_xhash_lookup, hash, list2);
+  fail_unless(TVALR(thr) == INT2FIX(21));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -123,6 +145,7 @@ int main(void)
   arc_init(c);
 
   tcase_add_test(tc_hash, test_hash_simple);
+  tcase_add_test(tc_hash, test_hash_cons_keys);
 
   suite_add_tcase(s, tc_hash);
   sr = srunner_create(s);
