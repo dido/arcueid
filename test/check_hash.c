@@ -134,6 +134,23 @@ START_TEST(test_hash_cons_keys)
 }
 END_TEST
 
+START_TEST(test_hash_expansion)
+{
+  value hash;
+  int i;
+
+  /* start off with a ridiculously small hash size. Two bits is only 4
+     elements, so when we try to squeeze 65536 values into it, the size
+     would have doubled at least 17 times.  All the values should still
+     be available after. */
+  hash = arc_mkhash(c, 2);
+  for (i=0; i<65536; i++)
+    arc_hash_insert(c, hash, INT2FIX(i), INT2FIX(i+1));
+  for (i=0; i<65536; i++)
+    fail_unless(arc_hash_lookup(c, hash, INT2FIX(i)) == INT2FIX(i+1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -146,6 +163,7 @@ int main(void)
 
   tcase_add_test(tc_hash, test_hash_simple);
   tcase_add_test(tc_hash, test_hash_cons_keys);
+  tcase_add_test(tc_hash, test_hash_expansion);
 
   suite_add_tcase(s, tc_hash);
   sr = srunner_create(s);
