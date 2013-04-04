@@ -285,14 +285,14 @@ notice and this notice are preserved.
      - [X] annotate
      - [X] rep
      - [X] sym
-   - [-] Predicates [2/10]
+   - [-] Predicates [4/10]
      - [ ] Less-than (<) *
      - [ ] Greater-than (>) *
      - [ ] Less-than or equal (<=) *
      - [ ] Greater-than or equal (>=) *
      - [ ] spaceship operator (<=>) * (Arcueid extension)
-     - [ ] bound
-     - [ ] exact
+     - [X] bound
+     - [X] exact
      - [X] is
      - [X] iso
      - [ ] fixnump
