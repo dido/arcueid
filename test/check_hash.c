@@ -134,6 +134,25 @@ START_TEST(test_hash_cons_keys)
 }
 END_TEST
 
+START_TEST(test_hash_vector_keys)
+{
+  value hash, thr;
+  value vec = arc_mkvector(c, 3);
+
+  VINDEX(vec, 0) = INT2FIX(1);
+  VINDEX(vec, 1) = INT2FIX(2);
+  VINDEX(vec, 2) = INT2FIX(3);
+
+  thr = arc_mkthread(c);
+  hash = arc_mkhash(c, 8);
+
+  XCALL(arc_xhash_insert, hash, vec, INT2FIX(22));
+  fail_unless(TVALR(thr) == INT2FIX(22));
+}
+END_TEST
+
+#define EXPANSION_LIMIT 65536
+
 START_TEST(test_hash_expansion)
 {
   value hash;
@@ -144,9 +163,9 @@ START_TEST(test_hash_expansion)
      would have doubled at least 17 times.  All the values should still
      be available after. */
   hash = arc_mkhash(c, 2);
-  for (i=0; i<65536; i++)
+  for (i=0; i<EXPANSION_LIMIT; i++)
     arc_hash_insert(c, hash, INT2FIX(i), INT2FIX(i+1));
-  for (i=0; i<65536; i++)
+  for (i=0; i<EXPANSION_LIMIT; i++)
     fail_unless(arc_hash_lookup(c, hash, INT2FIX(i)) == INT2FIX(i+1));
 }
 END_TEST
@@ -163,6 +182,7 @@ int main(void)
 
   tcase_add_test(tc_hash, test_hash_simple);
   tcase_add_test(tc_hash, test_hash_cons_keys);
+  tcase_add_test(tc_hash, test_hash_vector_keys);
   tcase_add_test(tc_hash, test_hash_expansion);
 
   suite_add_tcase(s, tc_hash);
