@@ -352,12 +352,6 @@ START_TEST(test_coerce_flonum)
   TEST("(coerce 45.23e-5 'string)");
   fail_unless(TYPE(ret) == T_STRING);
   fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "0.0004523")) == 0);
-
-  TEST("(coerce '((1 . 2) (2 . 3) (3 . 4)) 'table)");
-  fail_unless(TYPE(ret) == T_TABLE);
-  fail_unless(arc_hash_lookup(c, ret, INT2FIX(1)) == INT2FIX(2));
-  fail_unless(arc_hash_lookup(c, ret, INT2FIX(2)) == INT2FIX(3));
-  fail_unless(arc_hash_lookup(c, ret, INT2FIX(3)) == INT2FIX(4));
 }
 END_TEST
 
@@ -567,6 +561,43 @@ START_TEST(test_coerce_cons)
   fail_unless(VINDEX(ret, 1) == INT2FIX(2));
   fail_unless(VINDEX(ret, 2) == INT2FIX(3));
   fail_unless(VINDEX(ret, 3) == INT2FIX(4));
+
+
+  TEST("(coerce '((1 . 2) (2 . 3) (3 . 4)) 'table)");
+  fail_unless(TYPE(ret) == T_TABLE);
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(1)) == INT2FIX(2));
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(2)) == INT2FIX(3));
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(3)) == INT2FIX(4));
+}
+END_TEST
+
+START_TEST(test_coerce_table)
+{
+  value thr, cctx, clos, code, ret, tbl;
+
+  thr = arc_mkthread(c);
+  tbl = arc_mkhash(c, ARC_HASHBITS);
+  arc_bindsym(c, arc_intern_cstr(c, "myhash"), tbl);
+  arc_hash_insert(c, tbl, INT2FIX(1), INT2FIX(2));
+  arc_hash_insert(c, tbl, INT2FIX(2), INT2FIX(3));
+  arc_hash_insert(c, tbl, INT2FIX(3), INT2FIX(4));
+
+  TEST("(coerce myhash 'table)");
+  fail_unless(TYPE(ret) == T_TABLE);
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(1)) == INT2FIX(2));
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(2)) == INT2FIX(3));
+  fail_unless(arc_hash_lookup(c, ret, INT2FIX(3)) == INT2FIX(4));
+
+  TEST("(coerce myhash 'cons)");
+  fail_unless(TYPE(ret) == T_CONS);
+  /* the order in which these pairs occur is essentially random */
+  fail_unless(TYPE(car(car(ret))) == T_FIXNUM);
+  fail_unless(TYPE(cdr(car(ret))) == T_FIXNUM);
+  fail_unless(TYPE(car(cadr(ret))) == T_FIXNUM);
+  fail_unless(TYPE(cdr(cadr(ret))) == T_FIXNUM);
+  fail_unless(TYPE(car(car(cddr(ret)))) == T_FIXNUM);
+  fail_unless(TYPE(cdr(car(cddr(ret)))) == T_FIXNUM);
+  fail_unless(NIL_P(cdr(cddr(ret))));
 }
 END_TEST
 
@@ -594,6 +625,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_string);
   tcase_add_test(tc_bif, test_coerce_symbol);
   tcase_add_test(tc_bif, test_coerce_cons);
+  tcase_add_test(tc_bif, test_coerce_table);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
