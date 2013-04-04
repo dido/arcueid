@@ -638,6 +638,32 @@ START_TEST(test_sym)
 }
 END_TEST
 
+START_TEST(test_exact)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(exact 31337)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(exact 3.14159)");
+  fail_unless(ret == CNIL);
+
+  TEST("(exact 3.14159+2.718i)");
+  fail_unless(ret == CNIL);
+
+#ifdef HAVE_GMP_H
+
+  TEST("(exact 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(exact 1/2)");
+  fail_unless(ret == CTRUE);
+
+#endif
+}
+END_TEST
+
 START_TEST(test_is)
 {
   value thr, cctx, clos, code, ret;
@@ -698,6 +724,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_table);
   tcase_add_test(tc_bif, test_coerce_vector);
   tcase_add_test(tc_bif, test_sym);
+  tcase_add_test(tc_bif, test_exact);
   tcase_add_test(tc_bif, test_is);
   tcase_add_test(tc_bif, test_iso);
   tcase_add_test(tc_bif, test_uniq);
