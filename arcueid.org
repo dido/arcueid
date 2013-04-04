@@ -184,7 +184,7 @@ notice and this notice are preserved.
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
    - [-] Type handling [3/5]
-     - [-] coerce [9/11]
+     - [-] coerce [10/11]
        - [X] Fixnum conversions [9/9]
          - [X] fixnum -> int (trivial)
          - [X] fixnum -> num (trivial)
@@ -274,9 +274,9 @@ notice and this notice are preserved.
          - [X] cons -> string
          - [X] cons -> vector
          - [X] cons -> table
-       - [ ] Table conversions [0/2]
-         - [ ] table -> table (trivial)
-         - [ ] table -> cons
+       - [X] Table conversions [2/2]
+         - [X] table -> table (trivial)
+         - [X] table -> cons
        - [ ] Vector conversions [0/2]
          - [ ] vector -> vector (trivial)
          - [ ] vector -> cons
