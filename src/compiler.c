@@ -873,3 +873,32 @@ AFFDEF(arc_compile)
 }
 AFFEND
 
+AFFDEF(arc_macex)
+{
+  AARG(e);
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, macex, CNIL), AV(e), CNIL);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_macex1)
+{
+  AARG(e);
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, macex, CNIL), AV(e), CTRUE);
+  AFEND;
+}
+AFFEND
+
+#define UNIQ_START_VAL 2874
+#define UNIQ_PREFIX 'g'
+
+value arc_uniq(arc *c)
+{
+  static unsigned long long uniqnum = UNIQ_START_VAL;
+  char buffer[1024];
+
+  snprintf(buffer, sizeof(buffer)/sizeof(char), "g%llu", uniqnum++);
+  return(arc_intern_cstr(c, buffer));
+}
