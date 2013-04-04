@@ -546,12 +546,37 @@ static struct {
   int argc;
   void *fnptr;
 } fntable[] = {
+  /* Type handling */
+  { "coerce", -2, arc_coerce },
   { "type", 1, arc_type_compat },
   { "atype", 1, arc_type },
   { "annotate", 2, arc_annotate },
   { "rep", 1, arc_rep },
-  { "coerce", -2, arc_coerce },
   { "sym", 1, arc_intern },
+
+  /* List operations */
+
+  /* Math Operations */
+
+  /* Table Operations */
+  { "table", 0, arc_newtable },
+
+  /* Macros */
+  { "macex", -2, arc_macex },
+  { "macex1", -2, arc_macex1 },
+  { "uniq", 0, arc_uniq },
+
+  /* Basic I/O primitives */
+  /* Additional I/O functions */
+  /* Threads */
+  /* Networking */
+  /* File system operations */
+  /* Error handling and continuations */
+  /* strings */
+  /* time */
+  /* regular expressions */
+  /* miscellaneous OS operations */
+  /* miscellaneous */
   {NULL, 0, NULL }
 };
 
