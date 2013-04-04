@@ -179,11 +179,11 @@ notice and this notice are preserved.
     - [X] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [3/19]
+** TODO Runtime Built-In Functions [4/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
-   - [-] Type handling [4/5]
+   - [X] Type handling [5/5]
      - [X] coerce [11/11]
        - [X] Fixnum conversions [9/9]
          - [X] fixnum -> int (trivial)
@@ -283,7 +283,7 @@ notice and this notice are preserved.
      - [X] type
      - [X] annotate
      - [X] rep
-     - [ ] sym
+     - [X] sym
    - [-] Predicates [2/10]
      - [ ] Less-than (<) *
      - [ ] Greater-than (>) *
