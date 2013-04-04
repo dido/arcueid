@@ -183,8 +183,8 @@ notice and this notice are preserved.
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
-   - [-] Type handling [3/5]
-     - [-] coerce [10/11]
+   - [-] Type handling [4/5]
+     - [X] coerce [11/11]
        - [X] Fixnum conversions [9/9]
          - [X] fixnum -> int (trivial)
          - [X] fixnum -> num (trivial)
@@ -277,9 +277,9 @@ notice and this notice are preserved.
        - [X] Table conversions [2/2]
          - [X] table -> table (trivial)
          - [X] table -> cons
-       - [ ] Vector conversions [0/2]
-         - [ ] vector -> vector (trivial)
-         - [ ] vector -> cons
+       - [X] Vector conversions [2/2]
+         - [X] vector -> vector (trivial)
+         - [X] vector -> cons
      - [X] type
      - [X] annotate
      - [X] rep
