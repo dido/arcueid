@@ -1956,6 +1956,11 @@ value arc_numcmp(arc *c, value v1, value v2)
   }
 }
 
+value arc_exact(arc *c, value v)
+{
+  return((FIXNUM_P(v) || TYPE(v) == T_BIGNUM || TYPE(v) == T_RATIONAL) ? CTRUE : CNIL);
+}
+
 typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
