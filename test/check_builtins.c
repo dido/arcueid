@@ -601,6 +601,32 @@ START_TEST(test_coerce_table)
 }
 END_TEST
 
+START_TEST(test_coerce_vector)
+{
+  value thr, cctx, clos, code, ret, vec;
+
+  thr = arc_mkthread(c);
+  vec = arc_mkvector(c, 3);
+  VINDEX(vec, 0) = FIX2INT(1);
+  VINDEX(vec, 1) = FIX2INT(2);
+  VINDEX(vec, 2) = FIX2INT(3);
+  arc_bindsym(c, arc_intern_cstr(c, "myvec"), vec);
+
+  TEST("(coerce myvec 'vector)");
+  fail_unless(TYPE(ret) == T_VECTOR);
+  fail_unless(VINDEX(ret, 0) == FIX2INT(1));
+  fail_unless(VINDEX(ret, 1) == FIX2INT(2));
+  fail_unless(VINDEX(ret, 2) == FIX2INT(3));
+
+  TEST("(coerce myvec 'cons)");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == FIX2INT(1));
+  fail_unless(cadr(ret) == FIX2INT(2));
+  fail_unless(car(cddr(ret)) == FIX2INT(3));
+  fail_unless(NIL_P(cdr(cddr(ret))));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -626,6 +652,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_symbol);
   tcase_add_test(tc_bif, test_coerce_cons);
   tcase_add_test(tc_bif, test_coerce_table);
+  tcase_add_test(tc_bif, test_coerce_vector);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
