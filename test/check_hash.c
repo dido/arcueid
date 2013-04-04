@@ -147,7 +147,23 @@ START_TEST(test_hash_vector_keys)
   hash = arc_mkhash(c, 8);
 
   XCALL(arc_xhash_insert, hash, vec, INT2FIX(22));
+  XCALL(arc_xhash_lookup, hash, vec);
   fail_unless(TVALR(thr) == INT2FIX(22));
+}
+END_TEST
+
+START_TEST(test_hash_hash_keys)
+{
+  value hash, thr;
+  value hashkey = arc_mkhash(c, 8);
+
+  arc_hash_insert(c, hashkey, INT2FIX(1), INT2FIX(2));
+  thr = arc_mkthread(c);
+  hash = arc_mkhash(c, 8);
+
+  XCALL(arc_xhash_insert, hash, hashkey, INT2FIX(23));
+  XCALL(arc_xhash_lookup, hash, hashkey);
+  fail_unless(TVALR(thr) == INT2FIX(23));
 }
 END_TEST
 
@@ -183,6 +199,7 @@ int main(void)
   tcase_add_test(tc_hash, test_hash_simple);
   tcase_add_test(tc_hash, test_hash_cons_keys);
   tcase_add_test(tc_hash, test_hash_vector_keys);
+  tcase_add_test(tc_hash, test_hash_hash_keys);
   tcase_add_test(tc_hash, test_hash_expansion);
 
   suite_add_tcase(s, tc_hash);
