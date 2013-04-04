@@ -112,12 +112,27 @@ void arc_hash_update(arc_hs *s, unsigned long val)
     MIX(s->s[0], s->s[1], s->s[2]);
 }
 
+#ifdef BAD_TESTING_HASH
+/* This causes everything to hash to zero. This has the result of
+   turning the open addressing hash table into a table where one
+   has to do a linear search of all items.  Used for test purposes
+   only! */
+
+unsigned long arc_hash_final(arc_hs *s, unsigned long len)
+{
+  return(0L);
+}
+
+#else
+
 unsigned long arc_hash_final(arc_hs *s, unsigned long len)
 {
   s->s[2] += len << 3;
   FINAL(s->s[0], s->s[1], s->s[2]);
   return(s->s[2]);
 }
+
+#endif
 
 unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
 {
@@ -617,14 +632,14 @@ AFFEND
 AFFDEF(xhash_lookup)
 {
   AARG(hash, key);
-  AVAR(e, index);
-  unsigned int hv, i;
+  AVAR(e, index, i);
+  unsigned int hv;
   AFBEGIN;
   AFCALL(arc_mkaff(c, arc_xhash, CNIL), AV(key));
   hv = FIX2INT(AFCRV);
   AV(index) = INT2FIX(hv & TABLEMASK(AV(hash)));
-  for (i=0;; i++) {
-    AV(index) = INT2FIX((FIX2INT(AV(index)) + PROBE(i)) & TABLEMASK(AV(hash)));
+  for (AV(i)=INT2FIX(0);; AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+    AV(index) = INT2FIX((FIX2INT(AV(index)) + PROBE(FIX2INT(AV(i)))) & TABLEMASK(AV(hash)));
     AV(e) = HASH_INDEX(AV(hash), FIX2INT(AV(index)));
     /* CUNBOUND means there was never any element at that index, so we
        can stop. */
@@ -791,6 +806,42 @@ static AFFDEF(hash_xcoerce)
 }
 AFFEND
 
+AFFDEF(hash_xhash)
+{
+  AARG(obj, ehs, length, visithash);
+  AVAR(state);
+  AFBEGIN;
+
+  if (!BOUND_P(AV(visithash)))
+    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+
+  /* Already visited at some point.  Do not recurse further. */
+  if (__arc_visit(c, AV(obj), AV(visithash)) != CNIL)
+    ARETURN(AV(length));
+
+  /* Iterate over all keys and values */
+  AV(state) = CNIL;
+  for (;;) {
+    AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(obj), AV(state));
+    AV(state) = AFCRV;
+    if (NIL_P(AV(state))) {
+      ARETURN(AV(length));
+    }
+    /* increment the hash over the key */
+    AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), car(car(AV(state))),
+	   AV(ehs), AV(visithash));
+    AV(length) = __arc_add2(c, AV(length), AFCRV);
+    /* increment the hash over the value */
+    AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), cdr(car(AV(state))),
+	   AV(ehs), AV(visithash));
+    AV(length) = __arc_add2(c, AV(length), AFCRV);
+  }
+  /* never get here? */
+  ARETURN(AV(length));
+  AFEND;
+}
+AFFEND
+
 /* This is the only difference between a weak table and a normal
    hash table.  A weak table will only mark the table vector itself,
    and will NOT propagate the mark to any of the table buckets. */
@@ -821,7 +872,8 @@ typefn_t __arc_table_typefn__ = {
   NULL,
   hash_isocmp,
   hash_apply,
-  hash_xcoerce
+  hash_xcoerce,
+  hash_xhash
 };
 
 typefn_t __arc_hb_typefn__ = {
@@ -842,6 +894,6 @@ typefn_t __arc_wtable_typefn__ = {
   NULL,
   hash_isocmp,
   hash_apply,
-  NULL,
-  hash_xcoerce
+  hash_xcoerce,
+  hash_xhash
 };
