@@ -111,7 +111,7 @@ AFFDEF(vector_xhash)
   if (__arc_visit(c, AV(obj), AV(visithash)) != CNIL)
     ARETURN(AV(length));
 
-  /* Visit car */
+  /* Visit each element */
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(obj));
        AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
     AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL),
@@ -120,6 +120,28 @@ AFFDEF(vector_xhash)
     AV(length) = __arc_add2(c, AV(length), AFCRV);
   }
   ARETURN(AV(length));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(vector_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AFBEGIN;
+  (void)arg;
+  if (FIX2INT(AV(stype)) == T_VECTOR)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_CONS) {
+    value list = CNIL;
+    int i;
+
+    for (i=VECLEN(AV(obj))-1; i>=0; i--)
+      list = cons(c, VINDEX(AV(obj), i), list);
+    ARETURN(list);
+  }
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
   AFEND;
 }
 AFFEND
@@ -144,6 +166,6 @@ typefn_t __arc_vector_typefn__ = {
   NULL,
   __arc_vector_isocmp,
   vector_apply,
-  NULL,
-  vector_xhash
+  vector_xcoerce,
+  vector_xhash,
 };
