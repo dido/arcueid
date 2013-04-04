@@ -22,6 +22,7 @@
 */
 #include "arcueid.h"
 #include "alloc.h"
+#include "arith.h"
 #include "../config.h"
 
 #if SIZEOF_LONG >= 8
@@ -726,6 +727,59 @@ AFFDEF(arc_xhash_delete)
 }
 AFFEND
 
+AFFDEF(arc_xhash_iter)
+{
+  AARG(hash, state);
+  value index, keyval, e;
+  AFBEGIN;
+  if (NIL_P(AV(state)))
+    AV(state) = cons(c, cons(c, CNIL, CNIL), INT2FIX(0));
+  keyval = car(AV(state));
+  index = cdr(AV(state));
+  while (FIX2INT(index) < VECLEN(HASH_TABLE(AV(hash)))) {
+    e = VINDEX(HASH_TABLE(AV(hash)), FIX2INT(index));
+    index = __arc_add2(c, index, INT2FIX(1));
+    if (EMPTYP(e))
+      continue;
+    scdr(AV(state), index);
+    scar(keyval, BKEY(e));
+    scdr(keyval, BVALUE(e));
+    ARETURN(AV(state));
+  }
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(hash_xcoerce)
+{
+  AARG(obj, stype, arg);
+  AVAR(state, list);
+  AFBEGIN;
+  (void)arg;
+  if (FIX2INT(AV(stype)) == T_TABLE)
+    ARETURN(AV(obj));
+
+  if (FIX2INT(AV(stype)) == T_CONS) {
+    AV(list) = AV(state) = CNIL;
+    for (;;) {
+      AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(obj), AV(state));
+      AV(state) = AFCRV;
+      if (NIL_P(AV(state))) {
+	ARETURN(AV(list));
+      }
+      AV(list) = cons(c, cons(c, car(car(AV(state))), cdr(car(AV(state)))),
+		      AV(list));
+    }
+    /* never get here? */
+    ARETURN(AV(list));
+  }
+  arc_err_cstrfmt(c, "cannot coerce");
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 /* This is the only difference between a weak table and a normal
    hash table.  A weak table will only mark the table vector itself,
    and will NOT propagate the mark to any of the table buckets. */
@@ -755,7 +809,8 @@ typefn_t __arc_table_typefn__ = {
   NULL,
   NULL,
   hash_isocmp,
-  hash_apply
+  hash_apply,
+  hash_xcoerce
 };
 
 typefn_t __arc_hb_typefn__ = {
@@ -776,5 +831,6 @@ typefn_t __arc_wtable_typefn__ = {
   NULL,
   hash_isocmp,
   hash_apply,
-  NULL
+  NULL,
+  hash_xcoerce
 };
