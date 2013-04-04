@@ -117,7 +117,7 @@ notice and this notice are preserved.
      - [X] Environment symbols
      - [X] Global symbols
    - [X] Lists [3/3]
-     - [X] Special forms [7/7]
+     - [X] Special forms [8/8]
        - [X] if
        - [X] fn [5/5]
 	 - [X] single symbol arguments
@@ -130,6 +130,7 @@ notice and this notice are preserved.
        - [X] assign
        - [X] compose in a functional position
        - [X] complement in a functional position
+       - [X] andf in a functional position
      - [X] Inline functions [7/7]
        - [X] cons
        - [X] car
