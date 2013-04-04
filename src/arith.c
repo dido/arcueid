@@ -1919,6 +1919,43 @@ value __arc_str2flo(arc *c, value obj, value b, int strptr, int limit)
   return(CNIL);
 }
 
+#define COMPARE(x) {				\
+  if ((x) > 0)					\
+    return(INT2FIX(1));				\
+  else if ((x) < 0)				\
+    return(INT2FIX(-1));			\
+  else						\
+    return(INT2FIX(0));				\
+  }
+
+/* May be faster if implemented by direct comparison, but subtraction
+   is a lot easier! :p */
+value arc_numcmp(arc *c, value v1, value v2)
+{
+  value diff;
+
+  diff = __arc_sub2(c, v1, v2);
+  switch (TYPE(diff)) {
+  case T_FIXNUM:
+    COMPARE(FIX2INT(diff));
+    break;
+  case T_FLONUM:
+    COMPARE(REPFLO(diff));
+    break;
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+    return(INT2FIX(mpz_sgn(REPBNUM(diff))));
+    break;
+  case T_RATIONAL:
+    return(INT2FIX(mpq_sgn(REPRAT(diff))));
+    break;
+#endif
+  default:
+    arc_err_cstrfmt(c, "Invalid types for numeric comparison");
+    return(CNIL);
+  }
+}
+
 typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
