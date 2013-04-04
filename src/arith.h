@@ -53,4 +53,7 @@ extern value __arc_neg(arc *c, value arg);
 extern value __arc_str2flo(arc *c, value obj, value b, int strptr, int limit);
 extern value __arc_str2int(arc *c, value obj, value base, int strptr, int limit);
 
+extern value arc_numcmp(arc *c, value v1, value v2);
+extern value arc_exact(arc *c, value v);
+
 #endif
