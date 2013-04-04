@@ -375,13 +375,13 @@ notice and this notice are preserved.
      - [ ] apply
      - [ ] ssexpand
      - [ ] ssyntax
-   - [-] Macros [1/4]
-     - [ ] macex
-     - [ ] macex1
+   - [X] Macros [4/4]
+     - [X] macex
+     - [X] macex1
      - [X] sig
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
-     - [ ] uniq
+     - [X] uniq
    - [-] Basic I/O primitives (src/io.c) [1/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
@@ -469,14 +469,15 @@ notice and this notice are preserved.
      - [ ] file-exists
      - [ ] rmfile
      - [ ] mvfile
-   - [-] Error handling and continuations [1/5]
+   - [-] Error handling and continuations [1/6]
      - [ ] details
      - [ ] err
      - [ ] on-err
      - [X] ccc
      - [ ] protect
-   - [X] Strings [1/1]
-     - [X] newstring
+     - [ ] dynamic-wind
+   - [ ] Strings [0/1]
+     - [ ] newstring
    - [ ] Time [0/5]
      - [ ] current-gc-milliseconds
      - [ ] current-process-milliseconds
@@ -487,15 +488,15 @@ notice and this notice are preserved.
      - [ ] rxcompile
      - [ ] rxescape
      - [ ] rxmatch (=~)
-   - [ ] Miscellaneous OS operations [0/3]
+   - [ ] Miscellaneous OS operations [0/4]
      - [ ] system
      - [ ] quit
      - [ ] setuid
-   - [ ] Miscellaneous [0/4]
+     - [ ] memory
+   - [ ] Miscellaneous [0/3]
      - [ ] sref *
      - [ ] len
      - [ ] bound
-     - [ ] memory
 ** TODO Threading [0/6]
    - [ ] Basic scheduling
    - [ ] Suspend threads on I/O
