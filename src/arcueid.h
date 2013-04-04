@@ -295,6 +295,7 @@ extern int arc_xhash_lookup2(arc *c, value thr);
 extern int arc_xhash_delete(arc *c, value thr);
 extern int arc_xhash_insert(arc *c, value thr);
 extern int arc_xhash_increment(arc *c, value thr);
+extern int arc_xhash_iter(arc *c, value thr);
 extern int arc_xhash_map(arc *c, value thr);
 
 /* Type handling functions */
@@ -403,6 +404,8 @@ extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
 extern value arc_unintern(arc *c, value sym);
+extern value arc_bindsym(arc *c, value sym, value binding);
+extern value arc_bindcstr(arc *c, const char *csym, value binding);
 
 /* Environments */
 extern void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
