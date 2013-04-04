@@ -638,6 +638,26 @@ START_TEST(test_sym)
 }
 END_TEST
 
+START_TEST(test_is)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(is 'a 'a)");
+  fail_unless(TYPE(ret) == T_TRUE);
+}
+END_TEST
+
+START_TEST(test_iso)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(iso '(1 2 3) '(1 2 3))");
+  fail_unless(TYPE(ret) == T_TRUE);
+}
+END_TEST
+
 START_TEST(test_uniq)
 {
   value thr, cctx, clos, code, ret, ret2;
@@ -678,6 +698,8 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_table);
   tcase_add_test(tc_bif, test_coerce_vector);
   tcase_add_test(tc_bif, test_sym);
+  tcase_add_test(tc_bif, test_is);
+  tcase_add_test(tc_bif, test_iso);
   tcase_add_test(tc_bif, test_uniq);
 
   suite_add_tcase(s, tc_bif);
