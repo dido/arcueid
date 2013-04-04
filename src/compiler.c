@@ -800,6 +800,28 @@ static AFFDEF(compile_apply)
 }
 AFFEND
 
+static AFFDEF(compile_andf)
+{
+  AARG(expr, ctx, env, cont);
+  value andfuncs, andargs, uniqs, body;
+  AFBEGIN;
+
+  uniqs = CNIL;
+  for (andargs = cdr(AV(expr)); andargs; andargs = cdr(andargs))
+    uniqs = cons(c, arc_uniq(c), uniqs);
+  andargs = cdr(AV(expr));
+  body = CNIL;
+  for (andfuncs = cdr(car(AV(expr))); andfuncs; andfuncs = cdr(andfuncs))
+    body = cons(c, cons(c, car(andfuncs), uniqs), body);
+  body = cons(c, cons(c, ARC_BUILTIN(c, S_AND), body), CNIL);
+  body = cons(c, cons(c, ARC_BUILTIN(c, S_FN),
+		      cons(c, uniqs, body)), andargs);
+  AFTCALL(arc_mkaff(c, arc_compile, CNIL), body, AV(ctx),
+	  AV(env), AV(cont));
+  AFEND;
+}
+AFFEND
+
 static AFFDEF(compile_list)
 {
   AARG(nexpr, ctx, env, cont);
@@ -825,6 +847,12 @@ static AFFDEF(compile_list)
   /* complement in a functional position */
   if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPLEMENT)) {
     AFTCALL(arc_mkaff(c, compile_complement, CNIL), AV(nexpr), AV(ctx),
+	    AV(env), AV(cont));
+  }
+
+  /* andf in a functional position */
+  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_ANDF)) {
+    AFTCALL(arc_mkaff(c, compile_andf, CNIL), AV(nexpr), AV(ctx),
 	    AV(env), AV(cont));
   }
 
