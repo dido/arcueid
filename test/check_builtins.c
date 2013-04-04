@@ -638,6 +638,19 @@ START_TEST(test_sym)
 }
 END_TEST
 
+START_TEST(test_uniq)
+{
+  value thr, cctx, clos, code, ret, ret2;
+
+  thr = arc_mkthread(c);
+  TEST("(uniq)");
+  fail_unless(TYPE(ret) == T_SYMBOL);
+  ret2 = ret;
+  TEST("(uniq)");
+  fail_if(ret == ret2);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -665,6 +678,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_table);
   tcase_add_test(tc_bif, test_coerce_vector);
   tcase_add_test(tc_bif, test_sym);
+  tcase_add_test(tc_bif, test_uniq);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
