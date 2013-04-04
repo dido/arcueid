@@ -551,6 +551,7 @@ static struct {
   { "annotate", 2, arc_annotate },
   { "rep", 1, arc_rep },
   { "coerce", -2, arc_coerce },
+  { "sym", 1, arc_intern },
   {NULL, 0, NULL }
 };
 
