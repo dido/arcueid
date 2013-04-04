@@ -180,6 +180,7 @@ unsigned long arc_hash(arc *c, value v)
    1 - The key of this element
    2 - The value of this element
    3 - The table to which this element belongs
+   4 - The original hash value computed for this element
 */
 
 #define HASH_SIZE (4)
@@ -192,12 +193,13 @@ unsigned long arc_hash(arc *c, value v)
 #define SET_NENTRIES(t, n) (REP(t)[2] = INT2FIX(n))
 #define SET_LLIMIT(t, n) (REP(t)[3] = INT2FIX(n))
 
-#define BUCKET_SIZE (4)
+#define BUCKET_SIZE (5)
 #define BINDEX(t) (FIX2INT(REP(t)[0]))
 #define SBINDEX(t, idx) (REP(t)[0] = INT2FIX(idx))
 #define BKEY(t) (REP(t)[1])
 #define BVALUE(t) (REP(t)[2])
 #define BTABLE(t) (REP(t)[3])
+#define BHASHVAL(t) (REP(t)[4])
 
 #define HASHSIZE(n) ((unsigned long)1 << (n))
 #define HASHMASK(n) (HASHSIZE(n)-1)
@@ -321,6 +323,12 @@ value arc_mkhash(arc *c, int hashbits)
   return(hash);
 }
 
+value arc_newtable(arc *c)
+{
+  return(arc_mkhash(c, ARC_HASHBITS));
+}
+
+
 static void hashtable_expand(arc *c, value hash)
 {
   unsigned int hv, index, i, j, nhashbits;
@@ -337,7 +345,7 @@ static void hashtable_expand(arc *c, value hash)
     if (EMPTYP(e))
       continue;
     /* insert the old key into the new table */
-    hv = arc_hash(c, BKEY(e));
+    hv = (unsigned int)FIX2INT(BHASHVAL(e));
     index = hv & HASHMASK(nhashbits);
     for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
       index = (index + PROBE(j)) & HASHMASK(nhashbits);
@@ -373,7 +381,8 @@ static void hb_sweeper(arc *c, value v)
 /* Create a hash bucket.  Hash buckets are objects that should never be
    directly visble, just as the tombstone values CUNDEF and CUNBOUND should
    never be seen directly by the interpreter. */
-static value mkhashbucket(arc *c, value key, value val, int index, value table)
+static value mkhashbucket(arc *c, value key, value val, int index, value table,
+			  value hashcode)
 {
   value bucket;
 
@@ -382,6 +391,7 @@ static value mkhashbucket(arc *c, value key, value val, int index, value table)
   BVALUE(bucket) = val;
   SBINDEX(bucket, index);
   BTABLE(bucket) = table;
+  BHASHVAL(bucket) = hashcode;
   return(bucket);
 }
 
@@ -449,7 +459,7 @@ value arc_hash_insert(arc *c, value hash, value key, value val)
   if (EMPTYP(e)) {
     /* No such key in the hash table yet.  Create a bucket and
        assign it to the table. */
-    e = mkhashbucket(c, key, val, index, hash);
+    e = mkhashbucket(c, key, val, index, hash, INT2FIX(hv));
     VINDEX(HASH_TABLE(hash), index) = e;
   } else {
     /* The key already exists.  Use the current bucket but change the
@@ -684,7 +694,8 @@ AFFDEF(arc_xhash_insert)
   if (EMPTYP(AV(e))) {
     /* No such key in the hash table yet.  Create a bucket and
        assign it to the table. */
-    AV(e) = mkhashbucket(c, AV(key), AV(val), FIX2INT(AV(index)), AV(hash));
+    AV(e) = mkhashbucket(c, AV(key), AV(val), FIX2INT(AV(index)), AV(hash),
+			 AV(hv));
     VINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index))) = AV(e);
   } else {
     /* The key already exists.  Use the current bucket but change the
