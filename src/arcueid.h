@@ -286,6 +286,7 @@ extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s);
 extern unsigned long arc_hash(arc *c, value v);
 extern value arc_mkhash(arc *c, int hashbits);
 extern value arc_mkwtable(arc *c, int hashbits);
+extern value arc_newtable(arc *c);
 extern value arc_hash_lookup(arc *c, value tbl, value key);
 extern value arc_hash_lookup2(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
@@ -375,6 +376,11 @@ extern int arc_ssexpand(arc *c, value thr);
 /* The compiler */
 extern int arc_compile(arc *c, value thr);
 
+/* Macros */
+extern int arc_macex(arc *c, value thr);
+extern int arc_macex1(arc *c, value thr);
+extern value arc_uniq(arc *c);
+
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
 				      value *str);
@@ -383,7 +389,6 @@ extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
 extern void __arc_append_cstring(arc *c, char *buf, value *ppstr);
 extern Rune __arc_strgetc(arc *c, value str, int *index);
 extern void __arc_strungetc(arc *c, int *index);
-
 
 /* Output */
 extern int arc_write(arc *c, value thr);
@@ -424,6 +429,11 @@ extern void arc_init(arc *c);
 
 /* Error handling */
 extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
+
+/* Miscellaneous functions */
+extern int arc_sref(arc *c, value thr);
+extern int arc_len(arc *c, value thr);
+extern value arc_bound(arc *c, value sym);
 
 /* Arcueid Foreign Functions.  This is possibly the most insane abuse
    of the C preprocessor I have ever done.  The technique used for defining
