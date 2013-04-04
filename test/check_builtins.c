@@ -627,6 +627,17 @@ START_TEST(test_coerce_vector)
 }
 END_TEST
 
+START_TEST(test_sym)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(sym \"quux\")");
+  fail_unless(TYPE(ret) == T_SYMBOL);
+  fail_unless(ret == arc_intern_cstr(c, "quux"));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -653,6 +664,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_cons);
   tcase_add_test(tc_bif, test_coerce_table);
   tcase_add_test(tc_bif, test_coerce_vector);
+  tcase_add_test(tc_bif, test_sym);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
