@@ -25,6 +25,7 @@
 #include <float.h>
 #include <inttypes.h>
 #include "arcueid.h"
+#include "arith.h"
 #include "builtins.h"
 #include "io.h"
 #include "../config.h"
@@ -554,6 +555,12 @@ static struct {
   { "rep", 1, arc_rep },
   { "sym", 1, arc_intern },
 
+  /* predicates */
+  { "bound", 1, arc_bound },
+  { "exact", 1, arc_exact },
+  { "is", -2, arc_is },
+  { "iso", -2, arc_iso },
+
   /* List operations */
 
   /* Math Operations */
@@ -579,6 +586,11 @@ static struct {
   /* miscellaneous */
   {NULL, 0, NULL }
 };
+
+value arc_bound(arc *c, value sym)
+{
+  return((arc_hash_lookup(c, c->genv, sym) == CUNBOUND) ? CNIL: CTRUE);
+}
 
 value arc_bindsym(arc *c, value sym, value binding)
 {
