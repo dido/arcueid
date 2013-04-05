@@ -62,6 +62,11 @@ extern int __arc_mul(arc *c, value thr);
 extern int __arc_div(arc *c, value thr);
 
 extern value arc_expt(arc *c, value a, value b);
+extern value arc_sqrt(arc *c, value v);
+extern value __arc_real(arc *c, value v);
+extern value __arc_imag(arc *c, value v);
+extern value __arc_conj(arc *c, value v);
+extern value __arc_arg(arc *c, value v);
 
 extern value arc_srand(arc *ccc, value seed);
 extern int arc_rand(arc *c, value thr);
