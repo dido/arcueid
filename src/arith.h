@@ -61,4 +61,7 @@ extern int __arc_sub(arc *c, value thr);
 extern int __arc_mul(arc *c, value thr);
 extern int __arc_div(arc *c, value thr);
 
+extern value arc_expt(arc *c, value a, value b);
+
+
 #endif
