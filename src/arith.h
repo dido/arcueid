@@ -63,5 +63,8 @@ extern int __arc_div(arc *c, value thr);
 
 extern value arc_expt(arc *c, value a, value b);
 
+extern value arc_srand(arc *ccc, value seed);
+extern int arc_rand(arc *c, value thr);
+extern value arc_trunc(arc *c, value v);
 
 #endif
