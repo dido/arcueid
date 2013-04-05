@@ -56,4 +56,9 @@ extern value __arc_str2int(arc *c, value obj, value base, int strptr, int limit)
 extern value arc_numcmp(arc *c, value v1, value v2);
 extern value arc_exact(arc *c, value v);
 
+extern int __arc_add(arc *c, value thr);
+extern int __arc_sub(arc *c, value thr);
+extern int __arc_mul(arc *c, value thr);
+extern int __arc_div(arc *c, value thr);
+
 #endif
