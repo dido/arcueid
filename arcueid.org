@@ -316,11 +316,11 @@ notice and this notice are preserved.
        - [ ] imag
        - [ ] conj
        - [ ] arg -- complex argument
-     - [-] Arc3-current functions [2/6]
+     - [-] Arc3-current functions [4/6]
        - [X] expt
        - [X] mod
-       - [ ] rand
-       - [ ] srand
+       - [X] rand
+       - [X] srand
        - [ ] sqrt
        - [ ] trunc
      - [ ] C99 math.h functions (Arcueid only) [0/37]
