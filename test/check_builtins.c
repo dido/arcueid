@@ -1087,6 +1087,17 @@ START_TEST(test_maptable)
 }
 END_TEST
 
+START_TEST(test_eval)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(eval '((fn (x) (+ x 1)) 2))");
+  fail_unless(ret == INT2FIX(3));
+}
+END_TEST
+
+
 /* also tests non-inlined arithmetic operators */
 START_TEST(test_apply)
 {
@@ -1170,7 +1181,7 @@ int main(void)
   tcase_add_test(tc_bif, test_trunc);
 
   tcase_add_test(tc_bif, test_maptable);
-
+  tcase_add_test(tc_bif, test_eval);
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
 
