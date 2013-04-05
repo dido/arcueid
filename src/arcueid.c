@@ -683,6 +683,7 @@ static struct {
 
   /* Table Operations */
   { "table", 0, arc_newtable },
+  { "maptable", -2, arc_xhash_map },
 
   /* Evaluation */
   { "apply", -2, arc_apply },
