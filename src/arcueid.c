@@ -686,6 +686,7 @@ static struct {
   { "maptable", -2, arc_xhash_map },
 
   /* Evaluation */
+  { "eval", -2, arc_eval },
   { "apply", -2, arc_apply },
 
   /* Macros */
