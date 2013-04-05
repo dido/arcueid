@@ -830,26 +830,6 @@ START_TEST(test_iso)
 }
 END_TEST
 
-/* also tests non-inlined arithmetic operators */
-START_TEST(test_apply)
-{
-  value thr, cctx, clos, code, ret;
-
-  thr = arc_mkthread(c);
-  TEST("(apply + '(1 2 3))");
-  fail_unless(ret == INT2FIX(6));
-
-  TEST("(apply - '(3 2 1))");
-  fail_unless(ret == INT2FIX(0));
-
-  TEST("(apply * '(1 2 3 4 5 6 7))");
-  fail_unless(ret == INT2FIX(5040));
-
-  TEST("(apply / '(5040 7 6 5 4 3 2))");
-  fail_unless(ret == INT2FIX(1));
-}
-END_TEST
-
 START_TEST(test_div)
 {
   value thr, cctx, clos, code, ret;
@@ -1092,6 +1072,41 @@ START_TEST(test_trunc)
 }
 END_TEST
 
+START_TEST(test_maptable)
+{
+  value thr, cctx, clos, code, ret, tbl;
+
+  thr = arc_mkthread(c);
+  tbl = arc_mkhash(c, ARC_HASHBITS);
+  arc_bindsym(c, arc_intern_cstr(c, "mytbl"), tbl);
+  arc_hash_insert(c, tbl, INT2FIX(1), INT2FIX(2));
+  arc_hash_insert(c, tbl, INT2FIX(2), INT2FIX(3));
+  arc_hash_insert(c, tbl, INT2FIX(3), INT2FIX(4));
+  TEST("((fn (count tbl) (maptable (fn (k v) (assign count (+ count k)) (assign count (+ count v))) tbl) count) 0 mytbl)");
+  fail_unless(ret == INT2FIX(15));
+}
+END_TEST
+
+/* also tests non-inlined arithmetic operators */
+START_TEST(test_apply)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(apply + '(1 2 3))");
+  fail_unless(ret == INT2FIX(6));
+
+  TEST("(apply - '(3 2 1))");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(apply * '(1 2 3 4 5 6 7))");
+  fail_unless(ret == INT2FIX(5040));
+
+  TEST("(apply / '(5040 7 6 5 4 3 2))");
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
 START_TEST(test_uniq)
 {
   value thr, cctx, clos, code, ret, ret2;
@@ -1104,7 +1119,6 @@ START_TEST(test_uniq)
   fail_if(ret == ret2);
 }
 END_TEST
-
 
 int main(void)
 {
@@ -1154,6 +1168,8 @@ int main(void)
   tcase_add_test(tc_bif, test_rand_srand);
   tcase_add_test(tc_bif, test_sqrt);
   tcase_add_test(tc_bif, test_trunc);
+
+  tcase_add_test(tc_bif, test_maptable);
 
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
