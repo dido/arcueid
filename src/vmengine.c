@@ -462,3 +462,12 @@ AFFDEF(arc_callcc)
   AFEND;
 }
 AFFEND
+
+AFFDEF(arc_apply)
+{
+  AARG(fun, args);
+  AFBEGIN;
+  AFTCALL2(AV(fun), AV(args));
+  AFEND;
+}
+AFFEND
