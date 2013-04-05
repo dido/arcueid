@@ -638,6 +638,56 @@ START_TEST(test_sym)
 }
 END_TEST
 
+START_TEST(test_spaceship)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  /* fixnum */
+  TEST("(<=> 1 1)");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(<=> 2 1)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(<=> 1 2)");
+  fail_unless(ret == INT2FIX(-1));
+
+
+#ifdef HAVE_GMP_H
+  /* bignum */
+  TEST("(<=> 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(<=> 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(<=> 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002)");
+  fail_unless(ret == INT2FIX(-1));
+
+  /* rational */
+  TEST("(<=> 1/3 1/3)");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(<=> 2/3 1/3)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(<=> 1/3 2/3)");
+  fail_unless(ret == INT2FIX(-1));
+#endif
+
+  /* flonum */
+  TEST("(<=> 1.0 1.0)");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(<=> 2.0 1.0)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(<=> 1.0 2.0)");
+  fail_unless(ret == INT2FIX(-1));
+}
+END_TEST
+
 START_TEST(test_bound)
 {
   value thr, cctx, clos, code, ret;
@@ -738,6 +788,7 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_vector);
   tcase_add_test(tc_bif, test_sym);
 
+  tcase_add_test(tc_bif, test_spaceship);
   tcase_add_test(tc_bif, test_bound);
   tcase_add_test(tc_bif, test_exact);
   tcase_add_test(tc_bif, test_is);
