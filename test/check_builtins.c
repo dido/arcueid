@@ -860,6 +860,46 @@ START_TEST(test_div)
 }
 END_TEST
 
+START_TEST(test_expt)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(expt 2 24)");
+  fail_unless(ret == INT2FIX(16777216));
+
+  TEST("(expt 2 256)");
+#ifdef HAVE_GMP_H 
+  {
+    static const char *expected_str = "115792089237316195423570985008687907853269984665640564039457584007913129639936";
+    value expected;
+
+    expected = arc_mkbignuml(c, 0L);
+    mpz_set_str(REPBNUM(expected), expected_str, 10);
+    fail_unless(TYPE(ret) == T_BIGNUM);
+    fail_unless(arc_numcmp(c, ret, expected) == INT2FIX(0));
+  }
+#else
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.157920892373162e+77, 1e-6));
+#endif
+
+  TEST("(expt 2.0 256.0)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.157920892373162e+77, 1e-6));
+
+  TEST("(expt -1 0.5)");  
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(ret))) < 1e-6);
+  fail_unless(rel_compare(cimag(REPCPX(ret)), 1.0, 1e-6));
+
+  TEST("(expt 1+1i 2+2i)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(rel_compare(creal(REPCPX(ret)), -0.26565399849241, 1e-6));
+  fail_unless(rel_compare(cimag(REPCPX(ret)), 0.319818113856136, 1e-6));
+}
+END_TEST
+
 START_TEST(test_mod)
 {
   value thr, cctx, clos, code, ret;
@@ -927,6 +967,7 @@ int main(void)
   tcase_add_test(tc_bif, test_iso);
 
   tcase_add_test(tc_bif, test_div);
+  tcase_add_test(tc_bif, test_expt);
   tcase_add_test(tc_bif, test_mod);
 
   tcase_add_test(tc_bif, test_apply);
