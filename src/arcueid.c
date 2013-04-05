@@ -670,10 +670,16 @@ static struct {
   { "*", -2, __arc_mul },
   { "/", -2, __arc_div },
   { "div", 2, __arc_idiv2 },
+  { "real", 1, __arc_real },
+  { "imag", 1, __arc_imag },
+  { "conj", 1, __arc_conj },
+  { "arg", 1, __arc_arg },
   { "expt", 2, arc_expt },
   { "mod", 2, __arc_mod2 },
   { "srand", 1, arc_srand },
   { "rand", -2, arc_rand },
+  { "sqrt", 1, arc_sqrt },
+  { "trunc", 1, arc_trunc },
 
   /* Table Operations */
   { "table", 0, arc_newtable },
