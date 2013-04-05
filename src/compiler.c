@@ -930,3 +930,18 @@ value arc_uniq(arc *c)
   snprintf(buffer, sizeof(buffer)/sizeof(char), "g%llu", uniqnum++);
   return(arc_intern_cstr(c, buffer));
 }
+
+AFFDEF(arc_eval)
+{
+  AARG(expr);
+  AVAR(ctx);
+  value code, clos;
+  AFBEGIN;
+  AV(ctx) = arc_mkcctx(c);
+  AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(expr), AV(ctx), CNIL, CTRUE);
+  code = arc_cctx2code(c, AV(ctx));
+  clos = arc_mkclos(c, code, CNIL);
+  return(__arc_affapply(c, thr, CNIL, clos, CLASTARG));
+  AFEND;
+}
+AFFEND
