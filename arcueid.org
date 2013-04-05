@@ -180,7 +180,7 @@ notice and this notice are preserved.
     - [X] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [6/19]
+** TODO Runtime Built-In Functions [7/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -366,15 +366,11 @@ notice and this notice are preserved.
    - [X] Table operations [2/2]
      - [X] maptable
      - [X] table
-   - [-] Evaluation [1/4]
-     - [ ] eval
-	   We will implement eval by calling the compiler on the
-	   expression to be evaluated.  The output of the compiler
-	   is a T_CODE object which we can convert into a closure by
-	   combining it with the caller's environment.
+   - [X] Evaluation [4/4]
+     - [X] eval
      - [X] apply
-     - [ ] ssexpand
-     - [ ] ssyntax
+     - [X] ssexpand
+     - [X] ssyntax
    - [X] Macros [4/4]
      - [X] macex
      - [X] macex1
