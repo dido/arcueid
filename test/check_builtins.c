@@ -830,6 +830,50 @@ START_TEST(test_iso)
 }
 END_TEST
 
+/* also tests non-inlined arithmetic operators */
+START_TEST(test_apply)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(apply + '(1 2 3))");
+  fail_unless(ret == INT2FIX(6));
+
+  TEST("(apply - '(3 2 1))");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(apply * '(1 2 3 4 5 6 7))");
+  fail_unless(ret == INT2FIX(5040));
+
+  TEST("(apply / '(5040 7 6 5 4 3 2))");
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
+START_TEST(test_div)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(div 10 3)");
+  fail_unless(ret == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_mod)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(mod 10 3)");
+  fail_unless(ret == INT2FIX(1));
+
+  /* Euclidean modulus */
+  TEST("(mod -10 3)");
+  fail_unless(ret == INT2FIX(2));
+}
+END_TEST
+
 START_TEST(test_uniq)
 {
   value thr, cctx, clos, code, ret, ret2;
@@ -842,6 +886,7 @@ START_TEST(test_uniq)
   fail_if(ret == ret2);
 }
 END_TEST
+
 
 int main(void)
 {
@@ -880,6 +925,11 @@ int main(void)
   tcase_add_test(tc_bif, test_exact);
   tcase_add_test(tc_bif, test_is);
   tcase_add_test(tc_bif, test_iso);
+
+  tcase_add_test(tc_bif, test_div);
+  tcase_add_test(tc_bif, test_mod);
+
+  tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
 
   suite_add_tcase(s, tc_bif);
