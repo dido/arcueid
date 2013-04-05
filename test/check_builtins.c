@@ -638,6 +638,70 @@ START_TEST(test_sym)
 }
 END_TEST
 
+START_TEST(test_gt)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(> 4 3 2 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(> 4 3 2 3)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(> 4 4 3 2)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_lt)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(< 1 2 3 4)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(< 1 2 4 4)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(< 3 2 3 4)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_ge)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(>= 4 3 2 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(>= 4 3 2 3)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(>= 4 4 3 2)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_le)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(<= 1 2 3 4)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(<= 1 2 4 4)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(<= 3 2 3 4)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
 START_TEST(test_spaceship)
 {
   value thr, cctx, clos, code, ret;
@@ -652,7 +716,6 @@ START_TEST(test_spaceship)
 
   TEST("(<=> 1 2)");
   fail_unless(ret == INT2FIX(-1));
-
 
 #ifdef HAVE_GMP_H
   /* bignum */
@@ -684,6 +747,26 @@ START_TEST(test_spaceship)
   fail_unless(ret == INT2FIX(1));
 
   TEST("(<=> 1.0 2.0)");
+  fail_unless(ret == INT2FIX(-1));
+
+  /* char */
+  TEST("(<=> #\\a #\\a)");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(<=> #\\b #\\a)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(<=> #\\a #\\b)");
+  fail_unless(ret == INT2FIX(-1));
+
+  /* string */
+  TEST("(<=> \"foo\" \"foo\")");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(<=> \"foo\" \"bar\")");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(<=> \"bar\" \"foo\")");
   fail_unless(ret == INT2FIX(-1));
 }
 END_TEST
@@ -788,6 +871,10 @@ int main(void)
   tcase_add_test(tc_bif, test_coerce_vector);
   tcase_add_test(tc_bif, test_sym);
 
+  tcase_add_test(tc_bif, test_gt);
+  tcase_add_test(tc_bif, test_lt);
+  tcase_add_test(tc_bif, test_ge);
+  tcase_add_test(tc_bif, test_le);
   tcase_add_test(tc_bif, test_spaceship);
   tcase_add_test(tc_bif, test_bound);
   tcase_add_test(tc_bif, test_exact);
