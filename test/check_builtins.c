@@ -956,6 +956,83 @@ START_TEST(test_sqrt)
 }
 END_TEST
 
+START_TEST(test_real)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(real 1.1)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.1, 1e-6));
+
+  thr = arc_mkthread(c);
+  TEST("(real 1)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(real 1.2+2.1i)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.2, 1e-6));
+
+}
+END_TEST
+
+START_TEST(test_imag)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(imag 1.1)");
+  fail_unless(ret == INT2FIX(0));
+
+  thr = arc_mkthread(c);
+  TEST("(imag 1)");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(imag 1.2+2.1i)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 2.1, 1e-6));
+
+}
+END_TEST
+
+START_TEST(test_conj)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(conj 1.1)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.1, 1e-6));
+
+  thr = arc_mkthread(c);
+  TEST("(conj 1)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(conj 1.2+2.1i)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(rel_compare(creal(REPCPX(ret)), 1.2, 1e-6));
+  fail_unless(rel_compare(cimag(REPCPX(ret)), -2.1, 1e-6));
+}
+END_TEST
+
+START_TEST(test_arg)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(arg 1.1)");
+  fail_unless(ret == INT2FIX(0));
+
+  thr = arc_mkthread(c);
+  TEST("(arg 1)");
+  fail_unless(ret == INT2FIX(0));
+
+  TEST("(arg 1.2+2.1i)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.0516502125483738, 1e-6));
+}
+END_TEST
+
 START_TEST(test_rand_srand)
 {
   value thr, cctx, clos, code, ret;
@@ -998,6 +1075,20 @@ START_TEST(test_rand_srand)
   TEST("(rand 65536)");
   fail_unless(TYPE(ret) == T_FIXNUM);
   fail_unless(ret == INT2FIX(1287));
+}
+END_TEST
+
+START_TEST(test_trunc)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(trunc 13.0)");
+  fail_unless(ret == INT2FIX(13));
+
+  thr = arc_mkthread(c);
+  TEST("(trunc 3.1415)");
+  fail_unless(ret == INT2FIX(3));
 }
 END_TEST
 
@@ -1054,10 +1145,15 @@ int main(void)
   tcase_add_test(tc_bif, test_iso);
 
   tcase_add_test(tc_bif, test_div);
+  tcase_add_test(tc_bif, test_real);
+  tcase_add_test(tc_bif, test_imag);
+  tcase_add_test(tc_bif, test_conj);
+  tcase_add_test(tc_bif, test_arg);
   tcase_add_test(tc_bif, test_expt);
   tcase_add_test(tc_bif, test_mod);
   tcase_add_test(tc_bif, test_rand_srand);
   tcase_add_test(tc_bif, test_sqrt);
+  tcase_add_test(tc_bif, test_trunc);
 
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
