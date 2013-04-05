@@ -193,7 +193,7 @@ value __arc_env2heap(arc *c, value thr, value env)
   value nenv = env, oldenv;
 
   /* Do nothing if the environment is already on the heap */
-  if (TYPE(env) == T_VECTOR)
+  if (NIL_P(env) || TYPE(env) == T_VECTOR)
     return(env);
 
   env = CNIL;
