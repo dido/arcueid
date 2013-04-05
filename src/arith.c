@@ -1219,6 +1219,94 @@ value __arc_add2(arc *c, value arg1, value arg2)
   return(CNIL);
 }
 
+/* used when + is not in a functional position, also when inlining is
+   disabled */
+AFFDEF(__arc_add)
+{
+  ARARG(list);
+  value sum = INT2FIX(0);
+  AFBEGIN;
+  if (arc_thr_argc(c, thr) > 0 && (NIL_P(car(AV(list))) || CONS_P(car(AV(list))) || TYPE(car(AV(list))) == T_STRING))
+    sum = CNIL;
+  while (CONS_P(AV(list))) {
+    sum = __arc_add2(c, car(AV(list)), sum);
+    AV(list) = cdr(AV(list));
+  }
+  if (!NIL_P(AV(list)))
+    arc_err_cstrfmt(c, "proper list expected");
+  ARETURN(sum);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(__arc_sub)
+{
+  ARARG(list);
+  value diff;
+  AFBEGIN;
+  if (arc_thr_argc(c, thr) < 1) {
+    arc_err_cstrfmt(c, "-: expects at least 1 argument, given %d",
+		    arc_thr_argc(c, thr));
+    return(CNIL);
+  }
+  if (arc_thr_argc(c, thr) > 1) {
+    diff = car(AV(list));
+    AV(list) = cdr(AV(list));
+  }
+
+  while (CONS_P(AV(list))) {
+    diff = __arc_sub2(c, diff, car(AV(list)));
+    AV(list) = cdr(AV(list));
+  }
+  if (!NIL_P(AV(list)))
+    arc_err_cstrfmt(c, "proper list expected");
+  ARETURN(diff);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(__arc_mul)
+{
+  ARARG(list);
+  value prod = INT2FIX(1);
+  AFBEGIN;
+  while (CONS_P(AV(list))) {
+    prod = __arc_mul2(c, car(AV(list)), prod);
+    AV(list) = cdr(AV(list));
+  }
+  if (!NIL_P(AV(list)))
+    arc_err_cstrfmt(c, "proper list expected");
+  ARETURN(prod);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(__arc_div)
+{
+  ARARG(list);
+  value quot;
+  AFBEGIN;
+  if (arc_thr_argc(c, thr) < 1) {
+    arc_err_cstrfmt(c, "/: expects at least 1 argument, given %d",
+		    arc_thr_argc(c, thr));
+    return(CNIL);
+  }
+  if (arc_thr_argc(c, thr) > 1) {
+    quot = car(AV(list));
+    AV(list) = cdr(AV(list));
+  }
+
+  while (CONS_P(AV(list))) {
+    quot = __arc_div2(c, quot, car(AV(list)));
+    AV(list) = cdr(AV(list));
+  }
+  if (!NIL_P(AV(list)))
+    arc_err_cstrfmt(c, "proper list expected");
+  ARETURN(quot);
+  AFEND;
+}
+AFFEND
+
 value __arc_sub2(arc *c, value arg1, value arg2)
 {
   long fixnum_diff;
