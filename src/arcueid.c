@@ -672,6 +672,8 @@ static struct {
   { "div", 2, __arc_idiv2 },
   { "expt", 2, arc_expt },
   { "mod", 2, __arc_mod2 },
+  { "srand", 1, arc_srand },
+  { "rand", -2, arc_rand },
 
   /* Table Operations */
   { "table", 0, arc_newtable },
