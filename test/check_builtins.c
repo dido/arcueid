@@ -914,6 +914,48 @@ START_TEST(test_mod)
 }
 END_TEST
 
+START_TEST(test_sqrt)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(sqrt 4)");
+  fail_unless(ret == INT2FIX(2));
+
+  thr = arc_mkthread(c);
+  TEST("(sqrt 2)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 1.4142135623730951, 1e-6));
+
+  TEST("(sqrt -1)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(fabs(creal(REPCPX(ret))) < 1e-6);
+  fail_unless(fabs(cimag(REPCPX(ret)) - 1) < 1e-6);
+
+  TEST("(sqrt 1+1i)");
+  fail_unless(TYPE(ret) == T_COMPLEX);
+  fail_unless(rel_compare(creal(REPCPX(ret)), 1.0986841134678098, 1e-6));
+  fail_unless(rel_compare(cimag(REPCPX(ret)), 0.45508986056222733, 1e-6));
+
+#ifdef HAVE_GMP_H
+  TEST("(is (sqrt 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) 100000000000000000000000000000000000000000000000000)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(sqrt 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 3.1622776601683793e+49, 1e-6));
+
+  TEST("(is (sqrt 1/4) 1/2)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(sqrt 1/2)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(rel_compare(REPFLO(ret), 0.7071067811865476, 1e-6));
+
+#endif
+}
+END_TEST
+
 START_TEST(test_rand_srand)
 {
   value thr, cctx, clos, code, ret;
@@ -1015,6 +1057,7 @@ int main(void)
   tcase_add_test(tc_bif, test_expt);
   tcase_add_test(tc_bif, test_mod);
   tcase_add_test(tc_bif, test_rand_srand);
+  tcase_add_test(tc_bif, test_sqrt);
 
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
