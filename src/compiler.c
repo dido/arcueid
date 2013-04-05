@@ -546,7 +546,7 @@ static AFFDEF(compile_assign)
 	     AV(env), CNIL);
       AV(envvar) = find_var(c, AV(a), AV(env), &frameno, &idx);
       if (AV(envvar) == CTRUE) {
-	arc_emit2(c, AV(ctx), iste, frameno, idx);
+	arc_emit2(c, AV(ctx), iste, INT2FIX(frameno), INT2FIX(idx));
       } else {
 	/* global symbol */
 	arc_emit1(c, AV(ctx), istg, find_literal(c, AV(ctx), AV(a)));
