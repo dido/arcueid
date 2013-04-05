@@ -209,6 +209,10 @@ extern void __arc_null_sweeper(arc *c, value v);
 #define FIX2INT(x) ((long)(x) >> 1)
 #define FIXNUM_P(f) (((long)(f))&FIXNUM_FLAG)
 
+#define NUMERIC_P(x) ((TYPE(x) == (T_FIXNUM)) || (TYPE(x) == (T_BIGNUM)) \
+		      || (TYPE(x) == (T_FLONUM)) || (TYPE(x) == (T_RATIONAL)) \
+		      || (TYPE(x) == (T_COMPLEX)))
+
 static inline enum arc_types TYPE(value v)
 {
   if (FIXNUM_P(v))
@@ -403,12 +407,15 @@ extern value __arc_visit(arc *c, value v, value hash);
 extern value __arc_visit2(arc *c, value v, value hash, value mykeyval);
 extern value __arc_visitp(arc *c, value v, value hash);
 extern void __arc_unvisit(arc *c, value v, value hash);
+extern value arc_cmp(arc *c, value v1, value v2);
+
 
 /* Symbols */
 extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
 extern value arc_sym2name(arc *c, value sym);
 extern value arc_unintern(arc *c, value sym);
+extern value arc_bound(arc *c, value sym);
 extern value arc_bindsym(arc *c, value sym, value binding);
 extern value arc_bindcstr(arc *c, const char *csym, value binding);
 
