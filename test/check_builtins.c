@@ -1097,6 +1097,37 @@ START_TEST(test_eval)
 }
 END_TEST
 
+START_TEST(test_ssyntax)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(ssyntax 'xyzzy)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(ssyntax 'a:b)");
+  fail_unless(ret == CTRUE);
+
+}
+END_TEST
+
+START_TEST(test_ssexpand)
+{
+  value thr, cctx, clos, code, ret, sexpr;
+
+  thr = arc_mkthread(c);
+  TEST("(ssexpand 'foo:bar:baz)");
+  sexpr = ret;
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_COMPOSE));
+  fail_unless(TYPE(car(cdr(sexpr))) == T_SYMBOL);
+  fail_unless(car(cdr(sexpr)) == arc_intern(c, arc_mkstringc(c, "foo")));
+  fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(sexpr))) == arc_intern(c, arc_mkstringc(c, "bar")));
+  fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
+  fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(c, arc_mkstringc(c, "baz")));
+}
+END_TEST
 
 /* also tests non-inlined arithmetic operators */
 START_TEST(test_apply)
@@ -1182,6 +1213,8 @@ int main(void)
 
   tcase_add_test(tc_bif, test_maptable);
   tcase_add_test(tc_bif, test_eval);
+  tcase_add_test(tc_bif, test_ssyntax);
+  tcase_add_test(tc_bif, test_ssexpand);
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
 
