@@ -324,6 +324,8 @@ extern int arc_cmark(arc *c, value thr);
 extern int arc_scmark(arc *c, value thr);
 extern int arc_ccmark(arc *c, value thr);
 
+extern int arc_apply(arc *c, value thr);
+
 /* Foreign function API */
 
 extern value arc_mkccode(arc *c, int argc, value (*cfunc)(),
@@ -517,6 +519,12 @@ extern value arc_bound(arc *c, value sym);
 #define AFTCALL(func, ...)					       \
   do {								       \
     return(__arc_affapply(c, thr, CNIL, func, __VA_ARGS__, CLASTARG)); \
+  } while (0)
+
+/* tail call giving args as a list */
+#define AFTCALL2(func, argv)						\
+  do {									\
+    return(__arc_affapply2(c, thr, CNIL, func, argv));			\
   } while (0)
 
 #define AFCRV (arc_thr_valr(c, thr))
