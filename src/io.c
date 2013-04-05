@@ -320,6 +320,34 @@ Rune arc_ungetc_rune(arc *c, Rune r, value fd)
   return(r);
 }
 
+AFFDEF(arc_ungetc)
+{
+  AARG(ch);
+  AOARG(fd);
+  AFBEGIN;
+  if (!BOUND_P(AV(fd)))
+    STDIN(AV(fd));
+  arc_ungetc_rune(c, arc_char2rune(c, AV(ch)), AV(fd));
+  ARETURN(AV(ch));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_peekc)
+{
+  AOARG(fd);
+  AVAR(ch);
+  AFBEGIN;
+  if (!BOUND_P(AV(fd)))
+    STDIN(AV(fd));
+  AFCALL(arc_mkaff(c, arc_readc, CNIL), AV(fd));
+  AV(ch) = AFCRV;
+  arc_ungetc_rune(c, arc_char2rune(c, AV(ch)), AV(fd));
+  ARETURN(AV(ch));
+  AFEND;
+}
+AFFEND
+
 AFFDEF(arc_swrite)
 {
   AARG(sexpr, visithash);
