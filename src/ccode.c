@@ -39,7 +39,7 @@ void *alloca (size_t);
 struct cfunc_t {
   value name;
   union {
-    value (*sff)(arc *, ...);
+    value (*sff)();
     int (*aff)(arc *, value);
   } cfunc;
   int argc;
@@ -68,7 +68,7 @@ static unsigned long cfunc_hash(arc *c, value v, arc_hs *s)
   return(arc_hash(c, ((struct cfunc_t *)REP(v))->name));
 }
 
-value arc_mkccode(arc *c, int argc, value (*cfunc)(arc *, ...), value name)
+value arc_mkccode(arc *c, int argc, value (*cfunc)(), value name)
 {
   value cfn;
   struct cfunc_t *rcfn;
