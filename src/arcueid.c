@@ -665,9 +665,18 @@ static struct {
   /* List operations */
 
   /* Math Operations */
+  { "+", -2, __arc_add },
+  { "-", -2, __arc_sub },
+  { "*", -2, __arc_mul },
+  { "/", -2, __arc_div },
+  { "div", 2, __arc_idiv2 },
+  { "mod", 2, __arc_mod2 },
 
   /* Table Operations */
   { "table", 0, arc_newtable },
+
+  /* Evaluation */
+  { "apply", -2, arc_apply },
 
   /* Macros */
   { "macex", -2, arc_macex },
