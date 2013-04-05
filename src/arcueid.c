@@ -688,6 +688,8 @@ static struct {
   /* Evaluation */
   { "eval", -2, arc_eval },
   { "apply", -2, arc_apply },
+  { "ssyntax", 1, arc_ssyntax },
+  { "ssexpand", -2, arc_ssexpand },
 
   /* Macros */
   { "macex", -2, arc_macex },
