@@ -316,8 +316,8 @@ notice and this notice are preserved.
        - [ ] imag
        - [ ] conj
        - [ ] arg -- complex argument
-     - [-] Arc3-current functions [1/6]
-       - [ ] expt
+     - [-] Arc3-current functions [2/6]
+       - [X] expt
        - [X] mod
        - [ ] rand
        - [ ] srand
