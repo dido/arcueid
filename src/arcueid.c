@@ -489,6 +489,37 @@ AFFDEF(arc_coerce)
 }
 AFFEND
 
+value arc_cmp(arc *c, value v1, value v2)
+{
+  if (!(NUMERIC_P(v1) && NUMERIC_P(v2)) && TYPE(v1) != TYPE(v2)) {
+    arc_err_cstrfmt(c, "Invalid types for comparison");
+    return(CNIL);
+  }
+  switch (TYPE(v1)) {
+  case T_CHAR:
+    /* XXX - should this change to honor LC_COLLATE someday? */
+    return(arc_numcmp(c, INT2FIX(arc_char2rune(c, v1)),
+		      INT2FIX(arc_char2rune(c, v2))));
+  case T_FIXNUM:
+  case T_FLONUM:
+#ifdef HAVE_GMP_H
+  case T_BIGNUM:
+  case T_RATIONAL:
+#endif
+    return(arc_numcmp(c, v1, v2));
+    break;
+  case T_STRING:
+    return(INT2FIX(arc_strcmp(c, v1, v2)));
+    break;
+  case T_SYMBOL:
+    return(INT2FIX(arc_strcmp(c, arc_sym2name(c, v1), arc_sym2name(c, v2))));
+  default:
+    break;
+  }
+  arc_err_cstrfmt(c, "Invalid types for comparison");
+  return(CNIL);
+}
+
 extern typefn_t __arc_fixnum_typefn__;
 extern typefn_t __arc_flonum_typefn__;
 extern typefn_t __arc_complex_typefn__;
@@ -556,6 +587,7 @@ static struct {
   { "sym", 1, arc_intern },
 
   /* predicates */
+  { "<=>", 2, arc_cmp },
   { "bound", 1, arc_bound },
   { "exact", 1, arc_exact },
   { "is", -2, arc_is },
