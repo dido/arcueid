@@ -301,28 +301,28 @@ notice and this notice are preserved.
      - [X] cons (implemented as a virtual machine instruction)
      - [X] scar (implemented as a virtual machine instruction)
      - [X] scdr (implemented as a virtual machine instruction)
-   - [-] Math operations [1/4]
+   - [-] Math operations [3/4]
      - [X] Arithmetic [5/5]
        - [X] * Multiplication
        - [X] + Addition
        - [X] - Subtraction
        - [X] / Division
        - [X] div - integer division (extension)
-     - [ ] Complex arithmetic [0/4]
+     - [X] Complex arithmetic [4/4]
 	   This is again an Arcueid extension.  It's rather annoying
 	   to have support for complex numbers but no functions to
 	   manipulate them.
-       - [ ] real
-       - [ ] imag
-       - [ ] conj
-       - [ ] arg -- complex argument
-     - [-] Arc3-current functions [4/6]
+       - [X] real
+       - [X] imag
+       - [X] conj
+       - [X] arg -- complex argument
+     - [X] Arc3-current functions [6/6]
        - [X] expt
        - [X] mod
        - [X] rand
        - [X] srand
-       - [ ] sqrt
-       - [ ] trunc
+       - [X] sqrt
+       - [X] trunc
      - [ ] C99 math.h functions (Arcueid only) [0/37]
 	   These functions should support complex arguments in as far
 	   as it makes sense to do so.
