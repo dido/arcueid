@@ -312,6 +312,12 @@ extern value arc_rep(arc *c, value obj);
 extern value arc_annotate(arc *c, value typesym, value obj);
 extern int arc_coerce(arc *c, value thr);
 
+#define TYPECHECK(arg, expected)					\
+  if (TYPE(arg) != expected) {						\
+    arc_err_cstrfmt(c, "%s: expected argument to be type %d given type %d", __func__, TYPE(arg), expected); \
+    return(CNIL);							\
+  }
+
 /* Thread definitions and functions */
 extern value arc_mkthread(arc *c);
 extern void arc_thr_push(arc *c, value thr, value v);
