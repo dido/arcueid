@@ -914,6 +914,51 @@ START_TEST(test_mod)
 }
 END_TEST
 
+START_TEST(test_rand_srand)
+{
+  value thr, cctx, clos, code, ret;
+
+  /* Note: these tests depend on the fact that Arcueid uses the ISAAC64
+     RNG, so they're really a test for the RNG implementation. */
+  thr = arc_mkthread(c);
+  TEST("(srand 31337)");
+  fail_unless(ret == INT2FIX(31337));
+
+  TEST("(rand)");
+  fail_unless(TYPE(ret) == T_FLONUM);
+  fail_unless(REPFLO(ret) <= 1.0 && REPFLO(ret) >= 0.0);
+  fail_unless(rel_compare(REPFLO(ret), 0.875883, 1e-6));
+
+  TEST("(rand 65536)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(17800));
+
+  TEST("(rand 65536)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(36822));
+
+  TEST("(rand 65536)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(36591));
+
+  TEST("(rand 65536)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(41661));
+
+  TEST("(rand 65536)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(44925));
+
+  TEST("(rand 65536)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(55506));
+
+  TEST("(rand 65536)");
+  fail_unless(TYPE(ret) == T_FIXNUM);
+  fail_unless(ret == INT2FIX(1287));
+}
+END_TEST
+
 START_TEST(test_uniq)
 {
   value thr, cctx, clos, code, ret, ret2;
@@ -969,6 +1014,7 @@ int main(void)
   tcase_add_test(tc_bif, test_div);
   tcase_add_test(tc_bif, test_expt);
   tcase_add_test(tc_bif, test_mod);
+  tcase_add_test(tc_bif, test_rand_srand);
 
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
