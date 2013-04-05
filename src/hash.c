@@ -777,6 +777,25 @@ AFFDEF(arc_xhash_iter)
 }
 AFFEND
 
+AFFDEF(arc_xhash_map)
+{
+  AARG(proc, table);
+  AVAR(state);
+  AFBEGIN;
+
+  AV(state) = CNIL;
+  for (;;) {
+    AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(table), AV(state));
+    AV(state) = AFCRV;
+    if (NIL_P(AV(state)))
+      ARETURN(AV(table));
+    AFCALL(AV(proc), car(car(AV(state))), cdr(car(AV(state))));
+  }
+  ARETURN(AV(table));		/* never get here? */
+  AFEND;
+}
+AFFEND
+
 static AFFDEF(hash_xcoerce)
 {
   AARG(obj, stype, arg);
