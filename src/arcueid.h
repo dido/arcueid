@@ -326,7 +326,7 @@ extern int arc_ccmark(arc *c, value thr);
 
 /* Foreign function API */
 
-extern value arc_mkccode(arc *c, int argc, value (*cfunc)(arc *, ...),
+extern value arc_mkccode(arc *c, int argc, value (*cfunc)(),
 			 value name);
 extern value arc_mkaff(arc *c, int (*aff)(arc *, value), value name);
 extern int __arc_affapply(arc *c, value thr, value ccont, value func, ...);
