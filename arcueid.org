@@ -378,13 +378,13 @@ notice and this notice are preserved.
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
      - [X] uniq
-   - [-] Basic I/O primitives (src/io.c) [1/5]
+   - [-] Basic I/O primitives (src/io.c) [2/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
-     - [-] Input [4/5]
+     - [X] Input [5/5]
        - [X] readb
        - [X] readc
-       - [ ] peekc
+       - [X] peekc
 	     Implemented in terms of ungetc
        - [X] ungetc - this is not part of standard Arc
 	   Note that there is no ungetb function.  This is proving a
