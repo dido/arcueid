@@ -180,7 +180,7 @@ notice and this notice are preserved.
     - [X] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [5/19]
+** TODO Runtime Built-In Functions [6/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -363,8 +363,8 @@ notice and this notice are preserved.
        - [ ] tanh
        - [ ] tgamma
        - [ ] trunc (also in arc3)
-   - [-] Table operations [1/2]
-     - [ ] maptable
+   - [X] Table operations [2/2]
+     - [X] maptable
      - [X] table
    - [-] Evaluation [1/4]
      - [ ] eval
