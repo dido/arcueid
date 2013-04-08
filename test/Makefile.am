@@ -17,10 +17,10 @@
 #
 TESTS = check_gc check_string check_is_iso check_aff check_io check_reader \
 	check_arith check_vmengine check_env check_compiler check_builtins \
-	check_hash
+	check_hash check_error
 check_PROGRAMS = check_gc check_string check_is_iso check_aff \
 	check_io check_reader check_arith check_vmengine check_env \
-	check_compiler check_builtins check_hash
+	check_compiler check_builtins check_hash check_error
 
 check_gc_SOURCES = check_gc.c $(top_builddir)/src/arcueid.h
 check_gc_CFLAGS = @CHECK_CFLAGS@
@@ -73,3 +73,7 @@ check_builtins_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 check_hash_SOURCES = check_hash.c $(top_builddir)/src/arcueid.h
 check_hash_CFLAGS = @CHECK_CFLAGS@
 check_hash_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+check_error_SOURCES = check_error.c $(top_builddir)/src/arcueid.h
+check_error_CFLAGS = @CHECK_CFLAGS@
+check_error_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
