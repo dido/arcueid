@@ -122,6 +122,30 @@ START_TEST(test_on_err_noerr)
 }
 END_TEST
 
+START_TEST(test_on_err)
+{
+  value thr, cctx, clos, code, ret;
+  thr = arc_mkthread(c);
+
+  c->curthread = thr;
+  TEST("(on-err (fn (err) (details err)) (fn () (err \"bad\")))");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "bad")) == 0);
+}
+END_TEST
+
+START_TEST(test_on_err_cstrfmt)
+{
+  value thr, cctx, clos, code, ret;
+  thr = arc_mkthread(c);
+
+  c->curthread = thr;
+  TEST("(on-err (fn (err) (details err)) (fn () (/ 1 0)))");
+  fail_unless(TYPE(ret) == T_STRING);
+  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "Division by zero")) == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -135,6 +159,8 @@ int main(void)
   tcase_add_test(tc_err, test_dynamic_wind_noerr);
   tcase_add_test(tc_err, test_dynamic_wind_ccc);
   tcase_add_test(tc_err, test_on_err_noerr);
+  tcase_add_test(tc_err, test_on_err);
+  tcase_add_test(tc_err, test_on_err_cstrfmt);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
