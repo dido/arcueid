@@ -20,6 +20,8 @@
 
 #define _VMENGINE_H_
 
+#include <setjmp.h>
+
 enum vminst {
   inop=0,
   ipush=1,
@@ -95,7 +97,8 @@ enum threadstate {
   Tiowait,			/* I/O wait */
   Tioready,			/* I/O ready to resume */
   Tready,			/* ready to be scheduled */
-  Trelease			/* thread released */
+  Trelease,			/* thread released */
+  Tbroken			/* error break */
 };
 
 struct vmthread_t {
@@ -121,6 +124,8 @@ struct vmthread_t {
   unsigned long long wakeuptime; /* wakeup time */
   value waitfd;			 /* file descriptor to wait on */
   value here;			 /* the local root of the here */
+  value exh;			 /* current exception handler */
+  jmp_buf errjmp;		 /* error jump point */
 
   value cmarks;			/* continuation marks */
 };
@@ -145,6 +150,8 @@ struct vmthread_t {
 #define TWAKEUP(t) (((struct vmthread_t *)REP(t))->wakeuptime)
 #define TWAITFD(t) (((struct vmthread_t *)REP(t))->waitfd)
 #define TCH(t) (((struct vmthread_t *)REP(t))->here)
+#define TEXH(t) (((struct vmthread_t *)REP(t))->exh)
+#define TEJMP(t) (((struct vmthread_t *)REP(t))->errjmp)
 #define TCM(t) (((struct vmthread_t *)REP(t))->cmarks)
 
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
