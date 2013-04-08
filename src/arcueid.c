@@ -697,6 +697,14 @@ static struct {
   { "uniq", 0, arc_uniq },
 
   /* Basic I/O primitives */
+  { "readb", -2, arc_readb },
+  { "readc", -2, arc_readc },
+  { "peekc", -2, arc_peekc },
+  { "ungetc", -2, arc_ungetc },
+  { "sread", -2, arc_sread },
+  { "writeb", -2, arc_writeb },
+  { "writec", -2, arc_writec },
+
   /* Additional I/O functions */
   /* Threads */
   /* Networking */
@@ -704,6 +712,7 @@ static struct {
   /* Error handling and continuations */
   { "ccc", -2, arc_callcc },
   { "dynamic-wind", -2, arc_dynamic_wind },
+
   /* strings */
   /* time */
   /* regular expressions */

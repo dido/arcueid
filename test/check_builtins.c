@@ -1162,6 +1162,16 @@ START_TEST(test_uniq)
 }
 END_TEST
 
+START_TEST(test_ccc)
+{
+  value thr, cctx, clos, code, ret;
+
+  thr = arc_mkthread(c);
+  TEST("(+ 1 (ccc (fn (c) (c 41) 43)))");
+  fail_unless(ret == INT2FIX(42));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1217,6 +1227,7 @@ int main(void)
   tcase_add_test(tc_bif, test_ssexpand);
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
+  tcase_add_test(tc_bif, test_ccc);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
