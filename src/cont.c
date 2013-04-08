@@ -160,7 +160,7 @@ value __arc_cont2heap(arc *c, value thr, value cont)
   value ncont = cont, oldcont;
 
   /* Do nothing if the continuation is already on the heap */
-  if (TYPE(cont) == T_CONT)
+  if (TYPE(cont) == T_CONT || NIL_P(cont))
     return(cont);
 
   cont = CNIL;
