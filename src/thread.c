@@ -64,6 +64,7 @@ static void thread_marker(arc *c, value thr, int depth,
     mark(c, *p, depth);
 
   mark(c, TWAITFD(thr), depth);
+  mark(c, TCH(thr), depth);
   mark(c, TCM(thr), depth);
 }
 
@@ -89,6 +90,7 @@ value arc_mkthread(arc *c)
   TWAKEUP(thr) = 0LL;
   TWAITFD(thr) = CNIL;
   TCM(thr) = arc_mkhash(c, ARC_HASHBITS);
+  TCH(thr) = c->here;
   return(thr);
 }
 
@@ -184,6 +186,7 @@ void arc_init_threads(arc *c)
   c->curthread = CNIL;
   c->tid_nonce = 0;
   c->stksize = TSTKSIZE;
+  c->here = cons(c, INT2FIX(0xdead), CNIL);
 }
 
 typefn_t __arc_thread_typefn__ = {
