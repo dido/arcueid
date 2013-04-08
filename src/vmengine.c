@@ -443,23 +443,97 @@ int __arc_vmengine(arc *c, value thr)
   return(TR_SUSPEND);
 }
 
-/* call/cc! */
-AFFDEF(arc_callcc)
-{
-  AARG(thunk);
-  AFBEGIN;
-  /* First move the continuations to the heap if needed */
-  TCONR(thr) = __arc_cont2heap(c, thr, TCONR(thr));
-  AFTCALL(AV(thunk), TCONR(thr));
-  AFEND;
-}
-AFFEND
-
 AFFDEF(arc_apply)
 {
   AARG(fun, args);
   AFBEGIN;
   AFTCALL2(AV(fun), AV(args));
+  AFEND;
+}
+AFFEND
+
+/* This function will invoke all of the closures that should be invoked
+   after rerooting.  This is the core of the Hanson-Lamping algorithm for
+   implementing dynamic-wind.
+
+   Many thanks to Ross Angle (rocketnia) for helping me to understand
+   the Hanson-Lamping algorithm! */
+static AFFDEF(reroot)
+{
+  AARG(there);
+  AVAR(before, after);
+  AFBEGIN;
+  if (TCH(thr) == AV(there))
+    ARETURN(CNIL);
+  AFCALL(arc_mkaff(c, reroot, CNIL), cdr(AV(there)));
+  AV(before) = car(car(AV(there)));
+  AV(after) = cdr(car(AV(there)));
+  scar(TCH(thr), cons(c, AV(after), AV(before)));
+  scdr(TCH(thr), AV(there));
+  scar(AV(there), INT2FIX(0xdead));
+  scdr(AV(there), CNIL);
+  TCH(thr) = AV(there);
+  AFTCALL2(AV(before), CNIL);
+  AFEND;
+}
+AFFEND
+
+/* This is an example of a rather cumbersome method by which a function
+   can have access to its parent's environment. */
+static AFFDEF(contwrapper)
+{
+  AARG(arg);
+  value cont;
+  AFBEGIN;
+  /* access the tcr variable in the environment of arc_callcc that
+     created this closure, and reroot it */
+  AFCALL(arc_mkaff(c, reroot, CNIL), *__arc_getenv(c, thr, 1, 3));
+  /* call the continuation in the environment of arc_callcc */
+  cont = *__arc_getenv(c, thr, 1, 1);
+  AFTCALL(cont, AV(arg));
+  AFEND;
+}
+AFFEND
+
+/* call/cc! */
+AFFDEF(arc_callcc)
+{
+  AARG(thunk);
+  AVAR(tcr, func, tch);
+  AFBEGIN;
+  /* First move the continuations to the heap if needed */
+  TCONR(thr) = __arc_cont2heap(c, thr, TCONR(thr));
+  AV(tcr) = TCONR(thr);
+  AV(tch) = TCH(thr);
+  /* Save the environment of this call/cc invocation so contwrapper
+     can have access to it later */
+  TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
+  /* This use of mkaff2 effectively makes contwrapper a nested
+     function that has access to the environment of arc_callcc.  It
+     needs the values of tcr and tch above. */
+  AV(func) = arc_mkaff2(c, contwrapper, CNIL, TENVR(thr));
+  /* Instead of passing the continuation directly, we pass it the
+     contwrapper function, which takes care of calling reroot
+     before restoring the continuation. */
+  AFTCALL(AV(thunk), AV(func));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_dynamic_wind)
+{
+  AARG(before, during, after);
+  AVAR(here, ret);
+  AFBEGIN;
+
+  AV(here) = TCH(thr);
+  AFCALL(arc_mkaff(c, reroot, CNIL),
+	 cons(c, cons(c, AV(before), AV(after)), AV(here)));
+  AFCALL2(AV(during), CNIL);
+  AV(ret) = AFCRV;
+  /* execute the after clauses if the during thunk returns normally */
+  AFCALL(arc_mkaff(c, reroot, CNIL), AV(here));
+  ARETURN(AV(ret));
   AFEND;
 }
 AFFEND
