@@ -65,6 +65,7 @@ static void thread_marker(arc *c, value thr, int depth,
 
   mark(c, TWAITFD(thr), depth);
   mark(c, TCH(thr), depth);
+  mark(c, TEXH(thr), depth);
   mark(c, TCM(thr), depth);
 }
 
@@ -90,6 +91,7 @@ value arc_mkthread(arc *c)
   TWAKEUP(thr) = 0LL;
   TWAITFD(thr) = CNIL;
   TCM(thr) = arc_mkhash(c, ARC_HASHBITS);
+  TEXH(thr) = CNIL;
   TCH(thr) = c->here;
   return(thr);
 }
