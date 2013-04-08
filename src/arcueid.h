@@ -154,6 +154,7 @@ struct arc {
   int tid_nonce;		/* nonce for thread IDs */
   int stksize;			/* default stack size for threads */
   value here;			/* here variable (used for dynamic-wind) */
+  void (*errhandler)(value);	/* catch-all error handler */
 
   /* declarations */
   int atstrings;		/* allow atstrings or not */
@@ -379,8 +380,6 @@ extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
-extern int arc_callcc(arc *c, value thr);
-extern int arc_dynamic_wind(arc *c, value thr);
 
 /* The reader */
 extern int arc_sread(arc *c, value thr);
@@ -449,6 +448,12 @@ extern void arc_init(arc *c);
 
 /* Error handling */
 extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
+extern int arc_callcc(arc *c, value thr);
+extern int arc_dynamic_wind(arc *c, value thr);
+extern int arc_err(arc *c, value thr);
+extern int arc_on_err(arc *c, value thr);
+extern value arc_mkexception(arc *c, value str);
+extern value arc_details(arc *c, value ex);
 
 /* Miscellaneous functions */
 extern int arc_sref(arc *c, value thr);
