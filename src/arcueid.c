@@ -183,18 +183,6 @@ AFFDEF(arc_iso)
 }
 AFFEND
 
-void arc_err_cstrfmt(arc *c, const char *fmt, ...)
-{
-  va_list ap;
-
-  /* XXX - should do something more */
-  va_start(ap, fmt);
-  vfprintf(stderr, fmt, ap);
-  fprintf(stderr, "\n");
-  va_end(ap);
-  abort();
-}
-
 typefn_t *__arc_typefn(arc *c, value v)
 {
   value typedesc;
@@ -609,6 +597,7 @@ extern typefn_t __arc_vector_typefn__;
 extern typefn_t __arc_cfunc_typefn__;
 extern typefn_t __arc_cont_typefn__;
 extern typefn_t __arc_clos_typefn__;
+extern typefn_t __arc_exception_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -636,6 +625,7 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_CCODE] = &__arc_cfunc_typefn__;
   c->typefns[T_CONT] = &__arc_cont_typefn__;
   c->typefns[T_CLOS] = &__arc_clos_typefn__;
+  c->typefns[T_EXCEPTION] = &__arc_exception_typefn__;
 }
 
 static struct {
@@ -712,6 +702,9 @@ static struct {
   /* Error handling and continuations */
   { "ccc", -2, arc_callcc },
   { "dynamic-wind", -2, arc_dynamic_wind },
+  { "details", 1, arc_details },
+  { "err", -2, arc_err },
+  { "on-err", -2, arc_on_err },
 
   /* strings */
   /* time */
