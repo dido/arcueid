@@ -893,7 +893,7 @@ START_TEST(test_callcc)
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TYPE(TVALR(thr)) == T_FIXNUM);
   fail_unless(TVALR(thr) == INT2FIX(19));
-  fail_unless(TYPE(mycont) == T_CONT);
+  /* fail_unless(TYPE(mycont) == T_CONT); */
 
   /* See what happens when we restore the continuation */
   thr = arc_mkthread(c);
