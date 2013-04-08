@@ -153,6 +153,7 @@ struct arc {
   value curthread;		/* current thread */
   int tid_nonce;		/* nonce for thread IDs */
   int stksize;			/* default stack size for threads */
+  value here;			/* here variable (used for dynamic-wind) */
 
   /* declarations */
   int atstrings;		/* allow atstrings or not */
@@ -337,6 +338,8 @@ extern int arc_apply(arc *c, value thr);
 extern value arc_mkccode(arc *c, int argc, value (*cfunc)(),
 			 value name);
 extern value arc_mkaff(arc *c, int (*aff)(arc *, value), value name);
+extern value arc_mkaff2(arc *c, int (*aff)(arc *, value), value name,
+			value env);
 extern int __arc_affapply(arc *c, value thr, value ccont, value func, ...);
 extern int __arc_affapply2(arc *c, value thr, value ccont, value func,
 			   value args);
@@ -377,6 +380,7 @@ extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
 extern int arc_callcc(arc *c, value thr);
+extern int arc_dynamic_wind(arc *c, value thr);
 
 /* The reader */
 extern int arc_sread(arc *c, value thr);
