@@ -112,6 +112,16 @@ START_TEST(test_dynamic_wind_ccc)
 }
 END_TEST
 
+START_TEST(test_on_err_noerr)
+{
+  value thr, cctx, clos, code, ret;
+  thr = arc_mkthread(c);
+
+  TEST("(on-err (fn (err) (details err)) (fn () 1))");
+  fail_unless(ret == INT2FIX(1));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -124,6 +134,7 @@ int main(void)
 
   tcase_add_test(tc_err, test_dynamic_wind_noerr);
   tcase_add_test(tc_err, test_dynamic_wind_ccc);
+  tcase_add_test(tc_err, test_on_err_noerr);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
