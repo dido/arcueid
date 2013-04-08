@@ -45,6 +45,11 @@ void *alloca (size_t);
 	                     thunk
                              (fn () (= *exh old))))))
 
+  ;; not counting the cases where *exh is empty
+  (def err (exc)
+     (let (cont . handler) *exh
+        (cont (handler exc))))
+
  */
 
 /* For the following two functions, the environment layout is as follows:
@@ -162,15 +167,15 @@ void arc_err_cstrfmt(arc *c, const char *fmt, ...)
 {
   va_list ap;
   char cstr[1000];
-  value str, exc;
+  value str;
 
   va_start(ap, fmt);
   vsnprintf(cstr, sizeof(char)*1000, fmt, ap);
   va_end(ap);
   str = arc_mkstringc(c, cstr);
-  exc = arc_mkexception(c, str);
   /* This is how we can invoke arc_err from a non-AFF */
-  __arc_affapply(c, c->curthread, CNIL, arc_mkaff(c, arc_err, CNIL), exc);
+  __arc_affapply(c, c->curthread, CNIL, arc_mkaff(c, arc_err, CNIL), str,
+		 CLASTARG);
   longjmp(TEJMP(c->curthread), 1);
 }
 
