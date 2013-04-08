@@ -465,13 +465,13 @@ notice and this notice are preserved.
      - [ ] file-exists
      - [ ] rmfile
      - [ ] mvfile
-   - [-] Error handling and continuations [1/6]
+   - [-] Error handling and continuations [3/6]
      - [ ] details
      - [ ] err
      - [ ] on-err
      - [X] ccc
-     - [ ] protect
-     - [ ] dynamic-wind
+     - [X] protect
+     - [X] dynamic-wind
    - [ ] Strings [0/1]
      - [ ] newstring
    - [ ] Time [0/5]
