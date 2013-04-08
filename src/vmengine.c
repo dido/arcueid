@@ -502,6 +502,9 @@ static AFFDEF(contwrapper)
   AFCALL(arc_mkaff(c, reroot, CNIL), *__arc_getenv(c, thr, 1, 3));
   /* call the continuation in the environment of arc_callcc */
   cont = *__arc_getenv(c, thr, 1, 1);
+  /* special case -- when ccc is a tail call */
+  if (NIL_P(cont))
+    ARETURN(AV(arg));
   AFTCALL(cont, AV(arg));
   AFEND;
 }
