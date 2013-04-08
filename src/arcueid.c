@@ -702,6 +702,8 @@ static struct {
   /* Networking */
   /* File system operations */
   /* Error handling and continuations */
+  { "ccc", -2, arc_callcc },
+  { "dynamic-wind", -2, arc_dynamic_wind },
   /* strings */
   /* time */
   /* regular expressions */
