@@ -84,6 +84,18 @@ static int apply_vr(arc *c, value thr)
 void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t state)
 {
   value cont;
+  int jmpval;
+
+  jmpval = setjmp(TEJMP(thr));
+  if (jmpval == 2) {
+    TQUANTA(thr) = 0;
+    TSTATE(thr) = Tbroken;
+    return;
+  }
+
+  if (jmpval == 1) {
+    state = TR_FNAPP;
+  }
 
   for (;;) {
     switch (state) {
