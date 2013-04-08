@@ -40,7 +40,10 @@ struct cfunc_t {
   value name;
   union {
     value (*sff)();
-    int (*aff)(arc *, value);
+    struct {
+      int (*aff)(arc *, value);
+      value env;
+    } aff_t;
   } cfunc;
   int argc;
 };
@@ -81,14 +84,20 @@ value arc_mkccode(arc *c, int argc, value (*cfunc)(), value name)
   return(cfn);
 }
 
-value arc_mkaff(arc *c, int (*xaff)(arc *, value), value name)
+value arc_mkaff2(arc *c, int (*xaff)(arc *, value), value name, value env)
 {
   value aff = arc_mkccode(c, -2, NULL, name);
   struct cfunc_t *rcfn;
 
   rcfn = (struct cfunc_t *)REP(aff);
-  rcfn->cfunc.aff = xaff;
+  rcfn->cfunc.aff_t.aff = xaff;
+  rcfn->cfunc.aff_t.env = env;
   return(aff);
+}
+
+value arc_mkaff(arc *c, int (*xaff)(arc *, value), value name)
+{
+  return(arc_mkaff2(c, xaff, name, CNIL));
 }
 
 /* same as below, but with rest arguments */
@@ -125,8 +134,9 @@ static void affenvr(arc *c, value thr, int minenv, int optenv, int dsenv)
 void __arc_affenv(arc *c, value thr, int nargs, int optargs, int localvars,
 		  int restarg)
 {
-  /* Not the first call--assume env was already set up before */
-  if (!NIL_P(TENVR(thr)))
+  /* If the aff_line is zero this is the first call, and we need to
+     set up the environment */
+  if (TIP(thr).aff_line != 0)
     return;
 
   if (restarg) {
@@ -231,7 +241,7 @@ int __arc_resume_aff(arc *c, value thr)
   struct cfunc_t *rcfn;
 
   rcfn = (struct cfunc_t *)REP(TFUNR(thr));
-  return(rcfn->cfunc.aff(c, thr));
+  return(rcfn->cfunc.aff_t.aff(c, thr));
 }
 
 static int cfunc_apply(arc *c, value thr, value cfn)
@@ -252,7 +262,7 @@ static int cfunc_apply(arc *c, value thr, value cfn)
   if (rcfn->argc == -2) {
     /* Set up the thread with the initial information for AFFs */
     TIP(thr).aff_line = 0;	/* start at line 0 (start of function body) */
-    TENVR(thr) = CNIL;
+    TENVR(thr) = rcfn->cfunc.aff_t.env; /* parent env */
     TFUNR(thr) = cfn;
     /* return to the trampoline and make it resume from the beginning
        of the function now that everything is ready */
