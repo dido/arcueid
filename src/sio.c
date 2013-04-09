@@ -197,7 +197,6 @@ void __arc_init_sio(arc *c)
 {
   value io_ops;
 
-  VINDEX(c->builtins, BI_io) = arc_mkvector(c, BI_io_last);
   io_ops = arc_mkvector(c, IO_last+1);
   VINDEX(io_ops, IO_closed_p) = arc_mkaff(c, sio_closed_p, CNIL);
   VINDEX(io_ops, IO_ready) = arc_mkaff(c, sio_ready, CNIL);
