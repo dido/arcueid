@@ -311,7 +311,9 @@ AFFEND
 
 void arc_init_io(arc *c)
 {
+  VINDEX(c->builtins, BI_io) = arc_mkvector(c, BI_io_last);
   __arc_init_sio(c); 
+  __arc_init_fio(c);
 }
 
 Rune arc_ungetc_rune(arc *c, Rune r, value fd)
