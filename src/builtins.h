@@ -100,6 +100,10 @@ enum builtin_syms {
   S_SOCK_DGRAM,			/* SOCK_DGRAM */
   S_SOCK_RAW,			/* SOCK_RAW */
 
+  S_BINARY,			/* binary */
+  S_TEXT,			/* text */
+  S_APPEND,			/* append */
+
   S_THE_END			/* end of the line */
 };
 
