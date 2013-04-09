@@ -72,6 +72,7 @@ extern value __arc_allocio(arc *c, int type, struct typefn_t *tfn,
 			   size_t xdsize);
 
 extern void __arc_init_sio(arc *c);
+extern void __arc_init_fio(arc *c);
 extern void arc_init_io(arc *c);
 
 enum {
