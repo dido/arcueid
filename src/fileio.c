@@ -20,6 +20,8 @@
 */
 
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 #include "arcueid.h"
 #include "builtins.h"
 #include "io.h"
@@ -44,6 +46,7 @@ static typefn_t fileio_tfn;
 
 struct fileio_t {
   FILE *fp;
+  int closed;
 };
 
 #define FIODATA(fio) (IODATA(fio, struct fileio_t *))
@@ -55,10 +58,142 @@ static void fio_marker(arc *c, value v, int depth,
 
 static void fio_sweeper(arc *c, value v)
 {
-  fclose(FIODATA(v));
+  fclose(FIODATA(v)->fp);
 }
 
-static void mkfio(arc *c, int type, value filename, const char *mode)
+static AFFDEF(fio_closed_p)
+{
+  AARG(fio);
+  AFBEGIN;
+  ARETURN((FIODATA(AV(fio))->closed) ? CTRUE : CNIL);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(fio_ready)
+{
+  AARG(fio);
+  FILE *fp;
+  fd_set rfds;
+  int retval, check;
+  struct timeval tv;
+  AFBEGIN;
+
+  if (TYPE(AV(fio)) == T_OUTPORT)
+    ARETURN(CNIL);
+
+  fp = FIODATA(AV(fio))->fp;
+  /* XXX - NOT PORTABLE! */
+#ifdef _IO_fpos_t
+  check = (fp->_IO_read_ptr != fp->_IO_read_end);
+#else
+  check = (fp->_gptr < (fp)->_egptr);
+#endif
+  if (check)
+    ARETURN(CTRUE);
+  /* No buffered data available. See if the underlying file descriptor
+     is readable. */
+  FD_ZERO(&rfds);
+  FD_SET(fileno(fp), &rfds);
+  tv.tv_usec = tv.tv_sec = 0;
+  retval = select(fileno(fp)+1, &rfds, NULL, NULL, &tv);
+  if (retval == -1) {
+    int en = errno;
+
+    arc_err_cstrfmt(c, "error checking file descriptor (%s; errno=%d)",
+		    strerror(en), en);
+    ARETURN(CNIL);
+  }
+
+  if (retval == 0)
+    ARETURN(CNIL);
+  if (FD_ISSET(fileno(fp), &rfds))
+    ARETURN(CTRUE);
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(fio_wready)
+{
+  AARG(fio);
+  AFBEGIN;
+  (void)fio;
+  ARETURN(CTRUE);   /* XXX - make this do something more reasonable */
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(fio_getb)
+{
+  AARG(fio);
+  AFBEGIN;
+  ARETURN(INT2FIX(fgetc(FIODATA(AV(fio))->fp)));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(fio_putb)
+{
+  AARG(fio, byte);
+  AFBEGIN;
+  ARETURN(INT2FIX(fputc(byte, FIODATA(AV(fio))->fp)));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(fio_seek)
+{
+  AARG(fio, offset, whence);
+  AFBEGIN;
+  if (!(FIX2INT(AV(whence)) == SEEK_SET || FIX2INT(AV(whence)) == SEEK_CUR ||
+	FIX2INT(AV(whence)) == SEEK_END))
+    ARETURN(CNIL);
+
+#ifdef HAVE_FSEEKO
+  /* XXX - this does not provide the ability to seek in full 64-bit
+     large files! */
+  ARETURN(INT2FIX(fseeko(FIODATA(AV(fio))->fp)),
+	  (long long)FIX2INT(AV(offset)),
+	  FIX2INT(AV(whence)));
+#else
+  ARETURN(INT2FIX(fseek(FIODATA(AV(fio))->fp,
+			(long)FIX2INT(AV(offset)),
+			FIX2INT(AV(whence)))));
+#endif
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(fio_tell)
+{
+  AARG(fio);
+  AFBEGIN;
+#ifdef HAVE_FSEEKO
+  /* XXX - this does not provide the ability to seek in full 64-bit
+     large files! */
+  ARETURN(INT2FIX(ftello(FIODATA(AV(fio))->fp)));
+#else
+  ARETURN(INT2FIX(ftell(FIODATA(AV(fio))->fp)));
+#endif
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(fio_close)
+{
+  AARG(fio);
+  AFBEGIN;
+  if (FIODATA(AV(fio))->closed == 0) {
+    fclose(FIODATA(AV(fio))->fp);
+    FIODATA(AV(fio))->closed = 1;
+  }
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+static value mkfio(arc *c, int type, value filename, const char *mode)
 {
   value fio;
   int len;
@@ -72,7 +207,8 @@ static void mkfio(arc *c, int type, value filename, const char *mode)
   len = arc_strutflen(c, filename);
   cfn = alloca(sizeof(char)*(len+2));
   arc_str2cstr(c, filename, cfn);
-  FIODATA(fio)->fp = fopen(c, cfn, mode);
+  FIODATA(fio)->fp = fopen(cfn, mode);
+  FIODATA(fio)->closed = 0;
   return(fio);
 }
 
@@ -142,4 +278,4 @@ static typefn_t fileio_tfn = {
   NULL,
   NULL,
   NULL
-}
+};
