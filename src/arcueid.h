@@ -358,8 +358,8 @@ extern value arc_outstring(arc *c, value name);
 extern value arc_inside(arc *c, value sio);
 
 /* File I/O */
-extern value arc_infile(arc *c, value thr);
-extern value arc_outfile(arc *c, value thr);
+extern int arc_infile(arc *c, value thr);
+extern int arc_outfile(arc *c, value thr);
 
 /* stdin/stdout/stderr */
 extern int arc_stdin(arc *c, value thr);
