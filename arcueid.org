@@ -296,11 +296,13 @@ notice and this notice are preserved.
      - [X] is
      - [X] iso
    - [X] List operations [5/5]
-     - [X] car (implemented as a virtual machine instruction)
-     - [X] cdr (implemented as a virtual machine instruction)
-     - [X] cons (implemented as a virtual machine instruction)
-     - [X] scar (implemented as a virtual machine instruction)
-     - [X] scdr (implemented as a virtual machine instruction)
+     - [X] car
+     - [X] cdr
+     - [X] cadr
+     - [X] cddr
+     - [X] cons
+     - [X] scar
+     - [X] scdr
    - [-] Math operations [3/4]
      - [X] Arithmetic [5/5]
        - [X] * Multiplication
