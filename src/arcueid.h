@@ -154,7 +154,7 @@ struct arc {
   int tid_nonce;		/* nonce for thread IDs */
   int stksize;			/* default stack size for threads */
   value here;			/* here variable (used for dynamic-wind) */
-  void (*errhandler)(value);	/* catch-all error handler */
+  void (*errhandler)(struct arc *, value); /* catch-all error handler */
 
   /* declarations */
   int atstrings;		/* allow atstrings or not */
