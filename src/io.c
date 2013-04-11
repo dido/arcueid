@@ -311,7 +311,7 @@ AFFEND
 
 void arc_init_io(arc *c)
 {
-  VINDEX(c->builtins, BI_io) = arc_mkvector(c, BI_io_last);
+  VINDEX(c->builtins, BI_io) = arc_mkvector(c, BI_io_last+1);
   __arc_init_sio(c); 
   __arc_init_fio(c);
 }
