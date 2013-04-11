@@ -148,7 +148,7 @@ AFFDEF(arc_err)
     /* if no exception handler is available, call the default error
        handler if one is set, */
     if (c->errhandler != NULL)
-      c->errhandler(AV(exc));
+      c->errhandler(c, arc_details(c, AV(exc)));
     longjmp(TEJMP(thr), 2);
   }
 
