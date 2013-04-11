@@ -1172,6 +1172,46 @@ START_TEST(test_ccc)
 }
 END_TEST
 
+START_TEST(test_sref)
+{
+  value thr, cctx, clos, code, ret, val;
+
+  thr = arc_mkthread(c);
+
+  val = arc_mkhash(c, ARC_HASHBITS);
+  arc_bindsym(c, arc_intern_cstr(c, "sreftest"), val);
+  TEST("(sref sreftest 2 1)");
+  fail_unless(ret == INT2FIX(2));
+  fail_unless(arc_hash_lookup(c, val, INT2FIX(1)) == INT2FIX(2));
+
+  val = arc_mkstringc(c, "abc");
+  arc_bindsym(c, arc_intern_cstr(c, "sreftest"), val);
+  TEST("(sref sreftest #\\z 1)");
+  fail_unless(TYPE(ret) == T_CHAR);
+  fail_unless(arc_char2rune(c, ret) == 'z');
+  fail_unless(arc_strcmp(c, val, arc_mkstringc(c, "azc")) == 0);
+
+  val = cons(c, INT2FIX(1), cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
+  arc_bindsym(c, arc_intern_cstr(c, "sreftest"), val);
+  TEST("(sref sreftest 31337 1)");
+  fail_unless(ret == INT2FIX(31337));
+  fail_unless(car(val) == INT2FIX(1));
+  fail_unless(car(cdr(val)) == INT2FIX(31337));
+  fail_unless(car(cdr(cdr(val))) == INT2FIX(3));
+
+  val = arc_mkvector(c, 3);
+  VINDEX(val, 0) = INT2FIX(1);
+  VINDEX(val, 1) = INT2FIX(2);
+  VINDEX(val, 2) = INT2FIX(3);
+  arc_bindsym(c, arc_intern_cstr(c, "sreftest"), val);
+  TEST("(sref sreftest 31337 1)");
+  fail_unless(ret == INT2FIX(31337));
+  fail_unless(VINDEX(val, 0) == INT2FIX(1));
+  fail_unless(VINDEX(val, 1) == INT2FIX(31337));
+  fail_unless(VINDEX(val, 2) == INT2FIX(3));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -1228,6 +1268,7 @@ int main(void)
   tcase_add_test(tc_bif, test_apply);
   tcase_add_test(tc_bif, test_uniq);
   tcase_add_test(tc_bif, test_ccc);
+  tcase_add_test(tc_bif, test_sref);
 
   suite_add_tcase(s, tc_bif);
   sr = srunner_create(s);
