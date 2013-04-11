@@ -127,8 +127,12 @@ AFFEND
 static AFFDEF(fio_getb)
 {
   AARG(fio);
+  int byte;
   AFBEGIN;
-  ARETURN(INT2FIX(fgetc(FIODATA(AV(fio))->fp)));
+  byte = fgetc(FIODATA(AV(fio))->fp);
+  if (byte < 0)
+    ARETURN(CNIL);
+  ARETURN(INT2FIX(byte));
   AFEND;
 }
 AFFEND
