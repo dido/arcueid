@@ -193,7 +193,7 @@ typefn_t *__arc_typefn(arc *c, value v)
      contain a type descriptor wrapped in a table. */
   typedesc = arc_hash_lookup(c, c->typedesc, car(v));
   /* no type descriptor defaults to the type descriptor of a cons */
-  if (typedesc == CNIL)
+  if (!BOUND_P(typedesc))
     return(c->typefns[T_CONS]);
   return((typefn_t *)REP(typedesc));
 }
@@ -574,6 +574,70 @@ AFFDEF(arc_le)
 }
 AFFEND
 
+AFFDEF(arc_sref)
+{
+  AARG(com, val, ind);
+  AFBEGIN;
+
+  if (TYPE(AV(com)) == T_TABLE) {
+    if (NIL_P(AV(val))) {
+      AFCALL(arc_mkaff(c, arc_xhash_delete, CNIL), AV(com), AV(ind));
+    } else {
+      AFCALL(arc_mkaff(c, arc_xhash_insert, CNIL), AV(com), AV(ind), AV(val));
+    }
+  } else if (TYPE(AV(com)) == T_STRING) {
+    if (TYPE(AV(val)) != T_CHAR) {
+      arc_err_cstrfmt(c, "cannot set string index to non-character");
+      ARETURN(CNIL);
+    }
+    if (TYPE(AV(ind)) != T_FIXNUM || FIX2INT(AV(ind)) < 0) {
+      arc_err_cstrfmt(c, "string index must be non-negative exact integer");
+      ARETURN(CNIL);
+    }
+
+    if (FIX2INT(AV(ind)) >= arc_strlen(c, AV(com))) {
+      arc_err_cstrfmt(c, "string index out of bounds");
+      ARETURN(CNIL);
+    }
+    arc_strsetindex(c, AV(com), FIX2INT(AV(ind)), arc_char2rune(c, AV(val)));
+  } else if (CONS_P(AV(com))) {
+    int idx, notfound = 1;
+    value obj;
+
+    if (TYPE(AV(ind)) != T_FIXNUM || (idx = FIX2INT(AV(ind))) < 0) {
+      arc_err_cstrfmt(c, "list index must be non-negative exact integer");
+      ARETURN(CNIL);
+    }
+
+    for (obj=AV(com); obj != CNIL; obj = cdr(obj), --idx) {
+      if (idx == 0) {
+	scar(obj, AV(val));
+	notfound = 0;
+	break;
+      }
+    }
+    if (notfound) {
+      arc_err_cstrfmt(c, "index %d too large for list", FIX2INT(ind));
+      ARETURN(CNIL);
+    }
+  } else if (TYPE(AV(com)) == T_VECTOR) {
+    if (TYPE(AV(ind)) != T_FIXNUM || FIX2INT(AV(ind)) < 0) {
+      arc_err_cstrfmt(c, "vector index must be non-negative exact integer");
+      ARETURN(CNIL);
+    }
+    if (FIX2INT(AV(ind)) >= VECLEN(AV(com))) {
+      arc_err_cstrfmt(c, "index %d too large for vector", FIX2INT(ind));
+      ARETURN(CNIL);
+    }
+    VINDEX(AV(com), FIX2INT(AV(ind))) = AV(val);
+  } else {
+    arc_err_cstrfmt(c, "can't set reference to object of type %d", TYPE(AV(com)));
+  }
+  ARETURN(AV(val));
+  AFEND;
+}
+AFFEND
+
 extern typefn_t __arc_fixnum_typefn__;
 extern typefn_t __arc_flonum_typefn__;
 extern typefn_t __arc_complex_typefn__;
@@ -595,6 +659,7 @@ extern typefn_t __arc_io_typefn__; /* used for both T_INPORT and T_OUTPORT */
 extern typefn_t __arc_thread_typefn__;
 extern typefn_t __arc_vector_typefn__;
 extern typefn_t __arc_cfunc_typefn__;
+extern typefn_t __arc_code_typefn__;
 extern typefn_t __arc_cont_typefn__;
 extern typefn_t __arc_clos_typefn__;
 extern typefn_t __arc_exception_typefn__;
@@ -620,9 +685,11 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_OUTPORT] = &__arc_io_typefn__;
   c->typefns[T_THREAD] = &__arc_thread_typefn__;
   c->typefns[T_VECTOR] = &__arc_vector_typefn__;
+  c->typefns[T_TAGGED] = &__arc_cons_typefn__;
 
   c->typefns[T_WTABLE] = &__arc_wtable_typefn__;
   c->typefns[T_CCODE] = &__arc_cfunc_typefn__;
+  c->typefns[T_CODE] = &__arc_code_typefn__;
   c->typefns[T_CONT] = &__arc_cont_typefn__;
   c->typefns[T_CLOS] = &__arc_clos_typefn__;
   c->typefns[T_EXCEPTION] = &__arc_exception_typefn__;
@@ -694,6 +761,8 @@ static struct {
   { "sread", -2, arc_sread },
   { "writeb", -2, arc_writeb },
   { "writec", -2, arc_writec },
+  { "infile", -2, arc_infile },
+  { "outfile", -2, arc_outfile },
 
   /* Additional I/O functions */
   /* Threads */
@@ -711,6 +780,7 @@ static struct {
   /* regular expressions */
   /* miscellaneous OS operations */
   /* miscellaneous */
+  { "sref", -2, arc_sref },
   {NULL, 0, NULL }
 };
 
