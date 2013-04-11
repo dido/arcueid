@@ -309,6 +309,7 @@ static void markroots(arc *c)
   __arc_markprop(c, c->typedesc);
   __arc_markprop(c, c->builtins);
   __arc_markprop(c, c->here);
+  __arc_markprop(c, c->curthread);
 }
 
 void arc_init_memmgr(arc *c)
