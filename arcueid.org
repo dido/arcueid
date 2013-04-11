@@ -378,7 +378,7 @@ notice and this notice are preserved.
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
      - [X] uniq
-   - [-] Basic I/O primitives (src/io.c) [2/5]
+   - [-] Basic I/O primitives (src/io.c) [3/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
      - [X] Input [5/5]
@@ -400,10 +400,10 @@ notice and this notice are preserved.
        - [X] writeb
        - [X] writec
        - [ ] write
-     - [ ] File I/O [0/3]
-       - [ ] infile
-       - [ ] outfile
-       - [ ] close
+     - [X] File I/O [3/3]
+       - [X] infile
+       - [X] outfile
+       - [X] close
      - [X] String port I/O [3/3]
 	     Note that doing readb/writeb or readc/writec on a string
 	     port have the same effect.  Strings are made up of Unicode
