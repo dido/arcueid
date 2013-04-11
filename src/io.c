@@ -176,7 +176,7 @@ AFFDEF(arc_readc)
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
     AFCALL(AV(readb), AV(fd));
     AV(chr) = AFCRV;
-    if (FIX2INT(AV(chr)) < 0)
+    if (NIL_P(AV(chr)))
       ARETURN(CNIL);
     VINDEX(AV(buf), FIX2INT(AV(i))) = AV(chr);
     /* Arcueid fixnum vector to C array of chars */
