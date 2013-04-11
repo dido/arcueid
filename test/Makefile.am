@@ -77,3 +77,7 @@ check_hash_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 check_error_SOURCES = check_error.c $(top_builddir)/src/arcueid.h
 check_error_CFLAGS = @CHECK_CFLAGS@
 check_error_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+#check_arc_SOURCES = check_arc.c $(top_builddir)/src/arcueid.h
+#check_arc_CFLAGS = @CHECK_CFLAGS@
+#check_arc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
