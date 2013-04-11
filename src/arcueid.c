@@ -773,6 +773,9 @@ static struct {
   { "outfile", -2, arc_outfile },
 
   /* Additional I/O functions */
+  { "stdin", -2, arc_stdin },
+  { "stdout", -2, arc_stdout },
+  { "stderr", -2, arc_stderr },
   /* Threads */
   /* Networking */
   /* File system operations */
