@@ -1146,6 +1146,37 @@ START_TEST(test_apply)
 
   TEST("(apply / '(5040 7 6 5 4 3 2))");
   fail_unless(ret == INT2FIX(1));
+
+  /* tests for list operations in a non-functional position */
+  TEST("(apply car '((1 2)))");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(apply cdr '((1 2)))");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(2));
+
+  TEST("(apply cadr '((1 2)))");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(apply cddr '((1 2)))");
+  fail_unless(NIL_P(ret));
+
+  arc_bindsym(c, arc_intern_cstr(c, "asc"),
+	      cons(c, INT2FIX(1), cons(c, INT2FIX(2), CNIL)));
+  TEST("(apply scar `(,asc 3))");
+  fail_unless(ret == INT2FIX(3));
+
+  TEST("asc");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(cadr(ret) == INT2FIX(2));
+
+  TEST("(apply scdr `(,asc 4))");
+  fail_unless(ret == INT2FIX(4));
+  TEST("asc");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(cdr(ret) == INT2FIX(4));
 }
 END_TEST
 
