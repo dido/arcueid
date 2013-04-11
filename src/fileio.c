@@ -212,6 +212,12 @@ static value mkfio(arc *c, int type, value filename, const char *mode)
   cfn = alloca(sizeof(char)*(len+2));
   arc_str2cstr(c, filename, cfn);
   FIODATA(fio)->fp = fopen(cfn, mode);
+  if (FIODATA(fio)->fp == NULL) {
+    int en = errno;
+    arc_err_cstrfmt(c, "error opening file %s (%s; errno=%d)",
+		    cfn, strerror(en), en);
+    return(CNIL);
+  }
   FIODATA(fio)->closed = 0;
   return(fio);
 }
