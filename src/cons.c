@@ -213,6 +213,63 @@ value cons(arc *c, value x, value y)
   return(cv);
 }
 
+value arc_car(arc *c, value v)
+{
+  if (NIL_P(v))
+    return(CNIL);
+  TYPECHECK(v, T_CONS);
+  return(car(v));
+}
+
+value arc_cdr(arc *c, value v)
+{
+  if (NIL_P(v))
+    return(CNIL);
+  TYPECHECK(v, T_CONS);
+  return(cdr(v));
+}
+
+value arc_cadr(arc *c, value v)
+{
+  if (NIL_P(v))
+    return(CNIL);
+  TYPECHECK(v, T_CONS);
+  if (NIL_P(cdr(v)))
+    return(CNIL);
+  TYPECHECK(cdr(v), T_CONS);
+  return(cadr(v));
+}
+
+value arc_cddr(arc *c, value v)
+{
+  if (NIL_P(v))
+    return(CNIL);
+  TYPECHECK(v, T_CONS);
+  if (NIL_P(cdr(v)))
+    return(CNIL);
+  TYPECHECK(cdr(v), T_CONS);
+  return(cddr(v));
+}
+
+value arc_scar(arc *c, value x, value y)
+{
+  if (TYPE(x) == T_CONS)
+    return(scar(x, y));
+
+  if (TYPE(x) == T_STRING && TYPE(y) == T_CHAR) {
+    arc_strsetindex(c, x, 0, arc_char2rune(c, y));
+    return(y);
+  }
+  TYPECHECK(x, T_CONS);
+  return(CNIL);
+}
+
+value arc_scdr(arc *c, value x, value y)
+{
+  TYPECHECK(x, T_CONS);
+  return(scdr(x, y));
+}
+
 value arc_list_append(value list1, value val)
 {
   value list;
