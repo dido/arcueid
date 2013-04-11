@@ -489,8 +489,8 @@ notice and this notice are preserved.
      - [ ] quit
      - [ ] setuid
      - [ ] memory
-   - [ ] Miscellaneous [0/3]
-     - [ ] sref *
+   - [-] Miscellaneous [1/3]
+     - [X] sref *
      - [ ] len
      - [ ] bound
 ** TODO Threading [0/6]
