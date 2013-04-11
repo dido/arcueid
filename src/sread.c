@@ -147,12 +147,16 @@ static AFFDEF(scan)
   AVAR(ch);
   AFBEGIN;
   for (;;) {
-    READC(AV(fp), AV(ch));
+    AFCALL(arc_mkaff(c, arc_readc, CNIL), AV(fp));
+    AV(ch) = AFCRV;
+    if (NIL_P(AV(ch)))
+      ARETURN(CNIL);
     r = arc_char2rune(c, AV(ch));
     if (ucisspace(r))
       continue;
     break;
   }
+  ARETURN(AV(ch));
   AFEND;
 }
 AFFEND
