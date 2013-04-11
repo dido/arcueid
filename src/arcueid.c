@@ -719,7 +719,15 @@ static struct {
   { "is", -2, arc_is },
   { "iso", -2, arc_iso },
 
-  /* List operations */
+  /* List operations -- used when the names appear in a
+     non-functional position */
+  { "car", 1, arc_car },
+  { "cdr", 1, arc_cdr },
+  { "cadr", 1, arc_cadr },
+  { "cddr", 1, arc_cddr },
+  { "cons", 2, cons },
+  { "scar", 2, arc_scar },
+  { "scdr", 2, arc_scdr },
 
   /* Math Operations */
   { "+", -2, __arc_add },
