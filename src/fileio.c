@@ -197,29 +197,36 @@ static AFFDEF(fio_close)
 }
 AFFEND
 
-static value mkfio(arc *c, int type, value filename, const char *mode)
+static value mkfio(arc *c, int type, FILE *fd, value name)
 {
   value fio;
-  int len;
-  char *cfn;
 
   fio = __arc_allocio(c, type, &fileio_tfn, sizeof(struct fileio_t));
   IO(fio)->flags = 0;
   IO(fio)->io_ops = VINDEX(VINDEX(c->builtins, BI_io), BI_io_fp);
-  IO(fio)->name = filename;
+  IO(fio)->name = name;
+  FIODATA(fio)->closed = 0;
+  FIODATA(fio)->fp = fd;
+  return(fio);
+}
+
+static value openfio(arc *c, int type, value filename, const char *mode)
+{
+  int len;
+  char *cfn;
+  FILE *fp;
 
   len = arc_strutflen(c, filename);
   cfn = alloca(sizeof(char)*(len+2));
   arc_str2cstr(c, filename, cfn);
-  FIODATA(fio)->fp = fopen(cfn, mode);
-  if (FIODATA(fio)->fp == NULL) {
+  fp = fopen(cfn, mode);
+  if (fp == NULL) {
     int en = errno;
     arc_err_cstrfmt(c, "error opening file %s (%s; errno=%d)",
 		    cfn, strerror(en), en);
     return(CNIL);
   }
-  FIODATA(fio)->closed = 0;
-  return(fio);
+  return(mkfio(c, type, fp, filename));
 }
 
 AFFDEF(arc_infile)
@@ -237,7 +244,7 @@ AFFDEF(arc_infile)
     arc_err_cstrfmt(c, "infile: invalid mode");
     ARETURN(CNIL);
   }
-  ARETURN(mkfio(c, T_INPORT, AV(filename), cmode));
+  ARETURN(openfio(c, T_INPORT, AV(filename), cmode));
   AFEND;
 }
 AFFEND
@@ -257,7 +264,7 @@ AFFDEF(arc_outfile)
     arc_err_cstrfmt(c, "outfile: invalid mode");
     ARETURN(CNIL);
   }
-  ARETURN(mkfio(c, T_OUTPORT, AV(filename), cmode));
+  ARETURN(openfio(c, T_OUTPORT, AV(filename), cmode));
   AFEND;
 }
 AFFEND
@@ -277,6 +284,9 @@ void __arc_init_fio(arc *c)
   VINDEX(io_ops, IO_tell) = arc_mkaff(c, fio_tell, CNIL);
   VINDEX(io_ops, IO_close) = arc_mkaff(c, fio_close, CNIL);
   VINDEX(VINDEX(c->builtins, BI_io), BI_io_fp) = io_ops;
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDIN_FD), mkfio(c, T_INPORT, stdin, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT_FD), mkfio(c, T_OUTPORT, stdout, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDERR_FD), mkfio(c, T_OUTPORT, stderr, CNIL));
 }
 
 static typefn_t fileio_tfn = {
