@@ -173,11 +173,11 @@ AFFDEF(arc_readc)
   AV(buf) = arc_mkvector(c, UTFmax);
   /* XXX - should put this in builtins */
   AV(readb) = arc_mkaff(c, arc_readb, CNIL);
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(i) + 1)) {
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
     AFCALL(AV(readb), AV(fd));
     AV(chr) = AFCRV;
-    if (AV(chr) == CNIL)
-      return(CNIL);
+    if (FIX2INT(AV(chr)) < 0)
+      ARETURN(CNIL);
     VINDEX(AV(buf), FIX2INT(AV(i))) = AV(chr);
     /* Arcueid fixnum vector to C array of chars */
     for (j=0; j<=FIX2INT(AV(i)); j++)
@@ -250,7 +250,7 @@ AFFDEF(arc_writec)
   AV(buf) = arc_mkvector(c, FIX2INT(AV(nbytes)));
   for (j=0; j<FIX2INT(AV(nbytes)); j++)
     VINDEX(AV(buf), j) = INT2FIX(cbuf[j]);
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nbytes)); AV(i) = INT2FIX(FIX2INT(i) + 1)) {
+  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nbytes)); AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
     AFCALL(AV(writeb), AV(fd), VINDEX(AV(buf), AV(i)));
   }
   ARETURN(AV(chr));
