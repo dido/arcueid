@@ -134,7 +134,7 @@ START_TEST(test_fio_readb)
   fail_unless(TYPE(fio) == T_INPORT);
   for (i=0;;i++) {
     XCALL(arc_readb, fio);
-    if (FIX2INT(ret) < 0)
+    if (NIL_P(ret))
       break;
     fail_unless(FIX2INT(ret) == bytevals[i]);
   }
