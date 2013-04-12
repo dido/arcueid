@@ -233,13 +233,57 @@ unsigned long arc_hash(arc *c, value v)
    elements which remain unused. */
 #define EMPTYP(x) (((x) == CUNBOUND) || ((x) == CUNDEF))
 
-#if 0
-static value hash_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+static AFFDEF(hash_pprint)
 {
-  /* XXX - fill this in */
-  return(CNIL);
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(wc, dw, state);
+  AFBEGIN;
+
+  if (!BOUND_P(AV(visithash)))
+    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+
+  if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
+    /* already visited at some point. Do not recurse further */
+    AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), arc_mkstringc(c, "(...)"),
+	   CTRUE, AV(fp), AV(visithash));
+  }
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  AFCALL(AV(dw), arc_mkstringc(c, "#hash("), CTRUE, AV(fp), CNIL);
+  AV(state) = CNIL;
+  for (;;) {
+    AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(sexpr), AV(state));
+    AV(state) = AFCRV;
+    if (NIL_P(AV(state)))
+      goto finished;
+    AFCALL(AV(wc), arc_mkchar(c, '('), AV(fp));
+    if (!NIL_P(__arc_visitp(c, car(car(AV(state))), AV(visithash)))) {
+      /* already visited at some point. Do not recurse further */
+      AFCALL(AV(dw), arc_mkstringc(c, "(...)"), CTRUE,
+	     AV(fp), AV(visithash));
+    } else {
+      AFCALL(AV(dw), car(car(AV(state))), AV(disp), AV(fp), AV(visithash));
+    }
+    AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+    AFCALL(AV(wc), arc_mkchar(c, '.'), AV(fp));
+    AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+    if (!NIL_P(__arc_visitp(c, cdr(car(AV(state))), AV(visithash)))) {
+      /* already visited at some point. Do not recurse further */
+      AFCALL(AV(dw), arc_mkstringc(c, "(...)"), CTRUE,
+	     AV(fp), AV(visithash));
+    } else {
+      AFCALL(AV(dw), cdr(car(AV(state))), AV(disp), AV(fp), AV(visithash));
+    }
+    AFCALL(AV(wc), arc_mkchar(c, ')'), AV(fp));
+  }
+ finished:
+  AFCALL(AV(wc), arc_mkchar(c, ')'), AV(fp));
+  __arc_unvisit(c, AV(sexpr), AV(visithash));
+  ARETURN(CNIL);
+  AFEND;
 }
-#endif
+AFFEND
 
 static void hash_marker(arc *c, value v, int depth,
 			void (*markfn)(arc *, value, int))
@@ -886,7 +930,7 @@ value arc_mkwtable(arc *c, int hashbits)
 typefn_t __arc_table_typefn__ = {
   hash_marker,
   hash_sweeper,
-  NULL,
+  hash_pprint,
   NULL,
   NULL,
   hash_isocmp,
@@ -908,7 +952,7 @@ typefn_t __arc_hb_typefn__ = {
 typefn_t __arc_wtable_typefn__ = {
   wtable_marker,
   hash_sweeper,
-  NULL,
+  hash_pprint,
   NULL,
   NULL,
   hash_isocmp,
