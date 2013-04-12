@@ -507,7 +507,7 @@ notice and this notice are preserved.
    PG-Arc.
 ** TODO pretty printer [1/2]
    - [X] Framework for disp and write
-   - [-] Printers for various types [8/16]
+   - [-] Printers for various types [9/16]
      - [X] nil
      - [X] t
      - [X] Numeric Types [5/5]
@@ -520,7 +520,7 @@ notice and this notice are preserved.
      - [X] Strings
      - [X] Symbols
      - [X] Conses
-     - [ ] Tables
+     - [X] Tables
      - [X] Vectors
      - [ ] Tagged
      - [ ] Functions
