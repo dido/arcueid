@@ -507,14 +507,14 @@ notice and this notice are preserved.
    PG-Arc.
 ** TODO pretty printer [1/2]
    - [X] Framework for disp and write
-   - [-] Printers for various types [5/14]
+   - [-] Printers for various types [9/14]
      - [X] nil
      - [X] t
      - [X] Fixnums
-     - [ ] Bignums
-     - [ ] Rationals
-     - [ ] Flonums
-     - [ ] Complex numbers
+     - [X] Bignums
+     - [X] Rationals
+     - [X] Flonums
+     - [X] Complex numbers
      - [X] Symbols
      - [X] Strings
      - [ ] Characters
