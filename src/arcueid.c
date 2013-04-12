@@ -771,6 +771,9 @@ static struct {
   { "writec", -2, arc_writec },
   { "infile", -2, arc_infile },
   { "outfile", -2, arc_outfile },
+  { "write", -2, arc_write },
+  { "disp", -2, arc_disp },
+
 
   /* Additional I/O functions */
   { "stdin", -2, arc_stdin },
