@@ -529,7 +529,7 @@ static AFFDEF(bignum_pprint)
   (void)disp;
   (void)visithash;
 
-  len = mpz_sizeinbase(REPBNUM(AV(n)), 10) + 1;
+  len = mpz_sizeinbase(REPBNUM(AV(n)), 10) + 2;
   outstr = (char *)malloc(sizeof(char)*len);
   mpz_get_str(outstr, 10, REPBNUM(AV(n)));
   psv = arc_mkstringc(c, outstr);
@@ -694,11 +694,22 @@ static void rational_sweep(arc *c, value v)
 
 static AFFDEF(rational_pprint)
 {
-  AARG(q);
+  AARG(q, disp, fp);
+  AOARG(visithash);
   AFBEGIN;
-  (void)q;
-  /* XXX fill this in */
-  ARETURN(CNIL);
+  char *outstr;
+  int len;
+  value psv;
+  (void)disp;
+  (void)visithash;
+
+  len = mpz_sizeinbase(mpq_numref(REPRAT(AV(q))), 10)
+    + mpz_sizeinbase(mpq_denref(REPRAT(AV(q))), 10) + 3;
+  outstr = (char *)malloc(sizeof(char)*len);
+  mpq_get_str(outstr, 10, REPRAT(AV(q)));
+  psv = arc_mkstringc(c, outstr);
+  free(outstr);
+  AFTCALL(arc_mkaff(c, arc_disp, CNIL), psv, AV(fp));
   AFEND;
 }
 AFFEND
