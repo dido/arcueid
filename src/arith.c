@@ -123,6 +123,25 @@ static value fixnum_coerce(arc *c, value x, enum arc_types t)
   return(CNIL);
 }
 
+static AFFDEF(fixnum_pprint)
+{
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  char *strrep;
+  int len;
+  value vstr;
+  AFBEGIN;
+  (void)visithash;
+  (void)disp;
+  len = snprintf(NULL, 0, "%ld", FIX2INT(AV(sexpr)));
+  strrep = alloca(sizeof(char)*(len+1));
+  snprintf(strrep, len+1, "%ld", FIX2INT(AV(sexpr)));
+  vstr = arc_mkstringc(c, strrep);
+  AFTCALL(arc_mkaff(c, arc_disp, CNIL), vstr, AV(fp));
+  AFEND;
+}
+AFFEND
+
 static AFFDEF(fixnum_xcoerce)
 {
   AARG(obj, stype, arg);
@@ -2409,7 +2428,7 @@ value arc_trunc(arc *c, value v)
 typefn_t __arc_fixnum_typefn__ = {
   NULL,
   NULL,
-  NULL,
+  fixnum_pprint,
   NULL,
   NULL,
   NULL,
