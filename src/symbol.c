@@ -120,6 +120,18 @@ void arc_init_symtable(arc *c)
   }
 }
 
+static AFFDEF(symbol_pprint)
+{
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AFBEGIN;
+  (void)visithash;
+  (void)disp;
+  AFTCALL(arc_mkaff(c, arc_disp, CNIL), arc_sym2name(c, AV(sexpr)), AV(fp));
+  AFEND;
+}
+AFFEND
+
 static AFFDEF(symbol_xcoerce)
 {
   AARG(obj, stype, arg);
@@ -140,7 +152,7 @@ AFFEND
 typefn_t __arc_symbol_typefn__ = {
   NULL,
   NULL,
-  NULL,
+  symbol_pprint,
   NULL,
   NULL,
   NULL,
