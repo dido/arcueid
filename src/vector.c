@@ -28,6 +28,49 @@ void __arc_vector_marker(arc *c, value v, int depth,
     markfn(c, VINDEX(v, i), depth);
 }
 
+#define FIXINC(x) (x) = INT2FIX(FIX2INT(x) + 1)
+
+static AFFDEF(vector_pprint)
+{
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(wc, dw, i);
+  AFBEGIN;
+
+  if (!BOUND_P(AV(visithash)))
+    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+
+  if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
+    /* already visited at some point. Do not recurse further */
+    AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), arc_mkstringc(c, "(...)"),
+	   CTRUE, AV(fp), AV(visithash));
+  }
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  AFCALL(AV(wc), arc_mkchar(c, '#'), AV(fp));
+  AFCALL(AV(wc), arc_mkchar(c, '('), AV(fp));
+
+  for (AV(i)=INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(sexpr)); FIXINC(AV(i))) {
+    value elem = VINDEX(AV(sexpr), FIX2INT(AV(i)));
+
+    if (!NIL_P(__arc_visitp(c, elem, AV(visithash)))) {
+      /* already visited at some point. Do not recurse further */
+      AFCALL(AV(dw), arc_mkstringc(c, "(...)"), CTRUE,
+	     AV(fp), AV(visithash));
+    } else {
+      AFCALL(AV(dw), elem, AV(disp), AV(fp), AV(visithash));
+    }
+    if (FIX2INT(AV(i)) != VECLEN(AV(sexpr)) - 1)
+      AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+  }
+
+  AFCALL(AV(wc), arc_mkchar(c, ')'), AV(fp));
+  __arc_unvisit(c, AV(sexpr), AV(visithash));
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 AFFDEF(__arc_vector_isocmp)
 {
   AARG(v1, v2, vh1, vh2);
@@ -161,7 +204,7 @@ value arc_mkvector(arc *c, int length)
 typefn_t __arc_vector_typefn__ = {
   __arc_vector_marker,
   __arc_null_sweeper,
-  NULL,
+  vector_pprint,
   NULL,
   NULL,
   __arc_vector_isocmp,
