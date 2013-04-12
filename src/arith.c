@@ -520,19 +520,21 @@ static void bignum_sweep(arc *c, value v)
 
 static AFFDEF(bignum_pprint)
 {
-  AARG(n);
+  AARG(n, disp, fp);
+  AOARG(visithash);
   AFBEGIN;
   char *outstr;
   int len;
   value psv;
+  (void)disp;
+  (void)visithash;
 
   len = mpz_sizeinbase(REPBNUM(AV(n)), 10) + 1;
-  /* XXX should we be using a real malloc for this? */
   outstr = (char *)malloc(sizeof(char)*len);
   mpz_get_str(outstr, 10, REPBNUM(AV(n)));
   psv = arc_mkstringc(c, outstr);
   free(outstr);
-  ARETURN(psv);
+  AFTCALL(arc_mkaff(c, arc_disp, CNIL), psv, AV(fp));
   AFEND;
 }
 AFFEND
