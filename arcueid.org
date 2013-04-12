@@ -505,15 +505,15 @@ notice and this notice are preserved.
 ** TODO Baseline environment (arc.arc)
    We will doubtless need to customize the base environment provided in
    PG-Arc.
-** TODO pretty printer [0/2]
-   - [ ] Framework for disp and write
-   - [ ] Printers for various types [0/11]
+** TODO pretty printer [1/2]
+   - [X] Framework for disp and write
+   - [-] Printers for various types [1/11]
      - [ ] Fixnums
      - [ ] Bignums
      - [ ] Rationals
      - [ ] Flonums
      - [ ] Complex numbers
-     - [ ] Strings
+     - [X] Strings
      - [ ] Characters
      - [ ] Conses
      - [ ] Vectors
