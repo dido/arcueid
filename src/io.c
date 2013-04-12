@@ -309,7 +309,7 @@ AFFDEF(arc_stderr)
 }
 AFFEND
 
-static AFFDEF(disp_write)
+AFFDEF(__arc_disp_write)
 {
   AARG(arg, disp);
   AOARG(outport);
@@ -336,7 +336,7 @@ AFFDEF(arc_disp)
   AARG(arg);
   AOARG(outport);
   AFBEGIN;
-  AFTCALL(arc_mkaff(c, disp_write, CNIL), AV(arg), CTRUE, AV(outport));
+  AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), AV(arg), CTRUE, AV(outport));
   AFEND;
 }
 AFFEND
@@ -346,7 +346,7 @@ AFFDEF(arc_write)
   AARG(arg);
   AOARG(outport);
   AFBEGIN;
-  AFTCALL(arc_mkaff(c, disp_write, CNIL), AV(arg), CNIL, AV(outport));
+  AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), AV(arg), CNIL, AV(outport));
   AFEND;
 }
 AFFEND
@@ -388,45 +388,6 @@ AFFDEF(arc_peekc)
   AV(ch) = AFCRV;
   arc_ungetc_rune(c, arc_char2rune(c, AV(ch)), AV(fd));
   ARETURN(AV(ch));
-  AFEND;
-}
-AFFEND
-
-AFFDEF(arc_swrite)
-{
-  AARG(sexpr, visithash);
-  typefn_t *tfn;
-  AFBEGIN;
-
-  if (NIL_P(AV(sexpr)))
-    ARETURN(arc_mkstringc(c, "nil"));
-
-  if (TYPE(AV(sexpr)) == T_TRUE)
-    ARETURN(arc_mkstringc(c, "t"));
-  if (TYPE(AV(sexpr)) == T_FIXNUM) {
-    long val = FIX2INT(AV(sexpr));
-    int len;
-    char *outstr;
-
-    len = snprintf(NULL, 0, "%ld", val) + 1;
-    outstr = (char *)alloca(sizeof(char)*(len+2));
-    snprintf(outstr, len+1, "%ld", val);
-    ARETURN(arc_mkstringc(c, outstr));
-  }
-  if (TYPE(AV(sexpr)) == T_SYMBOL) {
-    ARETURN(arc_sym2name(c, AV(sexpr)));
-  }
-
-  if (TYPE(AV(sexpr)) == T_NONE) {
-    arc_err_cstrfmt(c, "invalid type for prettyprint");
-    ARETURN(arc_mkstringc(c, ""));
-  }
-
-  /* Non-immediate type */
-  tfn = __arc_typefn(c, AV(sexpr));
-  if (tfn == NULL || tfn->pprint == NULL)
-    ARETURN(arc_mkstringc(c, ""));
-  AFCALL(arc_mkaff(c, tfn->pprint, CNIL), AV(sexpr), AV(visithash));
   AFEND;
 }
 AFFEND
