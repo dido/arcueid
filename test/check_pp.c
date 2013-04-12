@@ -1,3 +1,4 @@
+
 /* 
   Copyright (C) 2013 Rafael R. Sevilla
 
@@ -19,9 +20,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <check.h>
+#include <math.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include "../src/arcueid.h"
+#include "../src/alloc.h"
+#include "../src/arith.h"
 #include "../config.h"
+#include "../src/vmengine.h"
+#include "../src/builtins.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -39,13 +46,116 @@
 void *alloca (size_t);
 #endif
 
+extern void __arc_print_string(arc *c, value ppstr);
+
 arc cc;
 arc *c;
 
-/* Do nothing: root marking is done by individual tests */
-static void markroots(arc *c)
+#define QUANTA 65536
+
+#define CPUSH_(val) CPUSH(thr, val)
+
+#define XCALL0(clos) do {			\
+    TQUANTA(thr) = QUANTA;			\
+    TVALR(thr) = clos;				\
+    TARGC(thr) = 0;				\
+    __arc_thr_trampoline(c, thr, TR_FNAPP);	\
+  } while (0)
+
+#define XCALL(fname, ...) do {			\
+    TVALR(thr) = arc_mkaff(c, fname, CNIL);	\
+    TARGC(thr) = NARGS(__VA_ARGS__);		\
+    FOR_EACH(CPUSH_, __VA_ARGS__);		\
+    __arc_thr_trampoline(c, thr, TR_FNAPP);	\
+  } while (0)
+
+AFFDEF(compile_something)
 {
+  AARG(something);
+  value sexpr;
+  AVAR(sio);
+  AFBEGIN;
+  TQUANTA(thr) = QUANTA;	/* needed so macros can execute */
+  AV(sio) = arc_instring(c, AV(something), CNIL);
+  AFCALL(arc_mkaff(c, arc_sread, CNIL), AV(sio), CNIL);
+  sexpr = AFCRV;
+  AFTCALL(arc_mkaff(c, arc_compile, CNIL), sexpr, arc_mkcctx(c), CNIL, CTRUE);
+  AFEND;
 }
+AFFEND
+
+#define COMPILE(str) XCALL(compile_something, arc_mkstringc(c, str))
+
+#define TEST(sexpr)				\
+  COMPILE(sexpr);				\
+  cctx = TVALR(thr);				\
+  code = arc_cctx2code(c, cctx);		\
+  clos = arc_mkclos(c, code, CNIL);		\
+  XCALL0(clos);					\
+  ret = TVALR(thr)
+
+START_TEST(test_pp_string)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+
+  TEST("(write \"abc\" ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "\"abc\"")) == 0);
+
+  /* test for some low characters */
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write \"\\n\" ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "\"\\n\"")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write \"\\u0000a\" ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "\"\\n\"")) == 0);
+
+  /* and some high characters */
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write \"\\u09060\" ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "\"遠\"")) == 0);
+
+  /* Tests for using disp */
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp \"abc\" ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "abc")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp \"\\n\" ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "\n")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp \"\\u09060\" ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "遠")) == 0);
+}
+END_TEST
+
+#if 0
 
 START_TEST(test_cons)
 {
@@ -102,6 +212,15 @@ START_TEST(test_cons)
 }
 END_TEST
 
+#endif
+
+static void errhandler(arc *c, value str)
+{
+  fprintf(stderr, "Error\n");
+  __arc_print_string(c, str);
+  abort();
+}
+
 int main(void)
 {
   int number_failed;
@@ -110,11 +229,11 @@ int main(void)
   SRunner *sr;
 
   c = &cc;
-  arc_init_memmgr(c);
-  arc_init_datatypes(c);
-  c->markroots = markroots;
+  arc_init(c);
+  c->curthread = arc_mkthread(c);
+  c->errhandler = errhandler;
 
-  tcase_add_test(tc_pp, test_cons);
+  tcase_add_test(tc_pp, test_pp_string);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
