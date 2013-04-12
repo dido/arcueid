@@ -230,6 +230,56 @@ START_TEST(test_pp_fixnum)
 }
 END_TEST
 
+#ifdef HAVE_GMP_H
+
+START_TEST(test_pp_bignum)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000")) == 0);
+}
+END_TEST
+
+START_TEST(test_pp_rational)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write 1/2 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "1/2")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp 1/2 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "1/2")) == 0);
+}
+END_TEST
+
+#endif
+
 #if 0
 
 START_TEST(test_cons)
@@ -311,6 +361,10 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_string);
   tcase_add_test(tc_pp, test_pp_symbol);
   tcase_add_test(tc_pp, test_pp_fixnum);
+#ifdef HAVE_GMP_H
+  tcase_add_test(tc_pp, test_pp_bignum);
+  tcase_add_test(tc_pp, test_pp_rational);
+#endif
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
