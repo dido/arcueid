@@ -527,6 +527,25 @@ START_TEST(test_pp_vector)
 }
 END_TEST
 
+START_TEST(test_pp_hash)
+{
+  value thr, cctx, clos, code, ret, hash;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  hash = arc_mkhash(c, 10);
+  arc_hash_insert(c, hash, INT2FIX(1), INT2FIX(2));
+  arc_bindcstr(c, "hash", hash);
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write hash ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#hash((1 . 2))")) == 0);
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -557,6 +576,7 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_string);
   tcase_add_test(tc_pp, test_pp_char);
   tcase_add_test(tc_pp, test_pp_cons);
+  tcase_add_test(tc_pp, test_pp_hash);
   tcase_add_test(tc_pp, test_pp_vector);
 
   suite_add_tcase(s, tc_pp);
