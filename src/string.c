@@ -23,6 +23,22 @@
 #include "arith.h"
 #include "builtins.h"
 
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
+#endif
+
 typedef struct {
   int len;
   Rune str[1];
@@ -30,33 +46,76 @@ typedef struct {
 
 #define STRREP(v) ((string *)REP(v))
 
-#define PSTRMAX 1024
+#define FIXINC(x) (x) = INT2FIX(FIX2INT(x) + 1)
 
-#if 0
-static value string_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+static char *escape_lookup[32] = {
+  "\\u0000",
+  "\\u0001",
+  "\\u0002",
+  "\\u0003",
+  "\\u0004",
+  "\\u0005",
+  "\\u0006",
+  "\\a",
+  "\\b",
+  "\\t",
+  "\\n",
+  "\\v",
+  "\\f",
+  "\\r",
+  "\\u000E",
+  "\\u000F"
+  "\\u0010",
+  "\\u0011",
+  "\\u0012",
+  "\\u0013",
+  "\\u0014",
+  "\\u0015",
+  "\\u0016",
+  "\\u0017",
+  "\\u0018",
+  "\\u0019",
+  "\\u001A",
+  "\\e",
+  "\\u001C",
+  "\\u001D",
+  "\\u001E",
+  "\\u001F",
+};
+
+static AFFDEF(string_pprint)
 {
-  Rune buf[PSTRMAX], ch;
-  int idx=0, i;
-  char outstr[4];
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(i, j, os, wc);
+  Rune ch;
+  AFBEGIN;
 
-  __arc_append_buffer(c, buf, &idx, PSTRMAX, '\"', ppstr);
-  for (i=0; i<arc_strlen(c, sexpr); i++) {
-    ch = arc_strindex(c, sexpr, i);
-    if (ch < 32) {
-      snprintf(outstr, 4, "%.3o", ch);
-      __arc_append_buffer(c, buf, &idx, PSTRMAX, '\\', ppstr);
-      __arc_append_buffer(c, buf, &idx, PSTRMAX, outstr[0], ppstr);
-      __arc_append_buffer(c, buf, &idx, PSTRMAX, outstr[1], ppstr);
-      __arc_append_buffer(c, buf, &idx, PSTRMAX, outstr[2], ppstr);
+  (void)visithash;
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  if (NIL_P(AV(disp)))
+    AFCALL(AV(wc), arc_mkchar(c, '\"'), AV(fp));
+
+  for (AV(i)=INT2FIX(0); FIX2INT(AV(i))<arc_strlen(c, AV(sexpr));
+       AV(i) = FIXINC(AV(i))) {
+    ch = arc_strindex(c, AV(sexpr), FIX2INT(AV(i)));
+    if (ch < 32 && NIL_P(AV(disp))) {
+      AV(os) = arc_mkstringc(c, escape_lookup[ch]);
+      for (AV(j)=INT2FIX(0); arc_strindex(c, AV(os), FIX2INT(AV(j))) != 0;
+	   AV(j) = FIXINC(AV(j)))
+	AFCALL(AV(wc), arc_mkchar(c, arc_strindex(c, AV(os), FIX2INT(AV(j)))),
+	       AV(fp));
     } else {
-      __arc_append_buffer(c, buf, &idx, PSTRMAX, ch, ppstr);
+      AFCALL(AV(wc), arc_mkchar(c, ch), AV(fp));
     }
   }
-  __arc_append_buffer(c, buf, &idx, PSTRMAX, '\"', ppstr);
-  __arc_append_buffer_close(c, buf, &idx, ppstr);
-  return(*ppstr);
+
+  if (NIL_P(AV(disp)))
+   AFCALL(AV(wc),  arc_mkchar(c, '\"'), AV(fp));
+  ARETURN(CNIL);
+  AFEND;
 }
-#endif
+AFFEND
 
 static unsigned long string_hash(arc *c, value v, arc_hs *s)
 {
@@ -559,7 +618,7 @@ typefn_t __arc_char_typefn__ = {
 typefn_t __arc_string_typefn__ = {
   __arc_null_marker,
   __arc_null_sweeper,
-  NULL,
+  string_pprint,
   string_hash,
   string_iscmp,
   NULL,
