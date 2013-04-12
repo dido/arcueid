@@ -312,7 +312,7 @@ AFFEND
 AFFDEF(__arc_disp_write)
 {
   AARG(arg, disp);
-  AOARG(outport);
+  AOARG(outport, visithash);
   typefn_t *tfn;
   AFBEGIN;
   if (!BOUND_P(AV(outport)))
@@ -326,7 +326,8 @@ AFFDEF(__arc_disp_write)
     arc_err_cstrfmt(c, "cannot display object of type %d", TYPE(AV(arg)));
     ARETURN(CNIL);
   }
-  AFTCALL(arc_mkaff(c, tfn->pprint, CNIL), AV(arg), AV(disp), AV(outport));
+  AFTCALL(arc_mkaff(c, tfn->pprint, CNIL), AV(arg), AV(disp), AV(outport),
+	  AV(visithash));
   AFEND;
 }
 AFFEND
