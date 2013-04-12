@@ -280,6 +280,52 @@ END_TEST
 
 #endif
 
+START_TEST(test_pp_flonum)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write 3.14159 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "3.14159")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp 3.14159 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "3.14159")) == 0);
+}
+END_TEST
+
+START_TEST(test_pp_complex)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write 3.14159+2.718i ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "3.14159+2.718i")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp 3.14159+2.718i ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "3.14159+2.718i")) == 0);
+}
+END_TEST
+
 #if 0
 
 START_TEST(test_cons)
@@ -365,6 +411,8 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_bignum);
   tcase_add_test(tc_pp, test_pp_rational);
 #endif
+  tcase_add_test(tc_pp, test_pp_flonum);
+  tcase_add_test(tc_pp, test_pp_complex);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
