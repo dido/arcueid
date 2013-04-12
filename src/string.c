@@ -210,13 +210,39 @@ value arc_mkstringc(arc *c, const char *s)
   return(str);
 }
 
-#if 0
-static value char_pprint(arc *c, value v, value *ppstr, value visithash)
+static AFFDEF(char_pprint)
 {
-  /* XXX fill this in */
-  return(CNIL);
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(wc, escape);
+  AFBEGIN;
+  (void)visithash;
+
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  /* in disp mode, we just print out the character as is */
+  if (AV(disp) == CTRUE) {
+    AFCALL(AV(wc), AV(sexpr), AV(fp));
+    ARETURN(CNIL);
+  }
+
+  /* in write mode, we need to go see if the character has an escape
+     sequence, and do a lot of weird things besides... */
+  if (BOUND_P(AV(escape) = arc_hash_lookup(c, VINDEX(c->builtins, BI_charesc),
+				       AV(sexpr)))) {
+    /* escape character */
+    AFCALL(arc_mkaff(c, string_pprint, CNIL), arc_mkstringc(c, "#\\"), CTRUE,
+	   AV(fp));
+    AFTCALL(arc_mkaff(c, string_pprint, CNIL), AV(escape), CTRUE, AV(fp));
+  }
+
+  /* no escape character */
+  AFCALL(AV(wc), arc_mkchar(c, '#'), AV(fp));
+  AFCALL(AV(wc), arc_mkchar(c, '\\'), AV(fp));
+  AFCALL(AV(wc), AV(sexpr), AV(fp));
+  ARETURN(CNIL);
+  AFEND;
 }
-#endif
+AFFEND
 
 static unsigned long char_hash(arc *c, value v, arc_hs *s)
 {
@@ -607,7 +633,7 @@ AFFEND
 typefn_t __arc_char_typefn__ = {
   __arc_null_marker,
   __arc_null_sweeper,
-  NULL,
+  char_pprint,
   char_hash,
   char_iscmp,
   NULL,
