@@ -303,6 +303,89 @@ START_TEST(test_pp_flonum)
 }
 END_TEST
 
+START_TEST(test_pp_char)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write #\\u0000 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#\\nul")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write #\\nul ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#\\nul")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write #\\u0009 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#\\tab")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write #\\a ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#\\a")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write #\\u9f8d ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#\\龍")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp #\\u0000 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strlen(c, result) == 1);
+  fail_unless(arc_strindex(c, result, 0) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp #\\nul ppfp)");
+  fail_unless(NIL_P(ret));
+  fail_unless(arc_strlen(c, result) == 1);
+  fail_unless(arc_strindex(c, result, 0) == 0);
+  result = arc_inside(c, ppfp);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp #\\u0009 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "\t")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp #\\a ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "a")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp #\\u9f8d ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "龍")) == 0);
+
+}
+END_TEST
+
+
 START_TEST(test_pp_complex)
 {
   value thr, cctx, clos, code, ret;
@@ -404,8 +487,6 @@ int main(void)
   c->curthread = arc_mkthread(c);
   c->errhandler = errhandler;
 
-  tcase_add_test(tc_pp, test_pp_string);
-  tcase_add_test(tc_pp, test_pp_symbol);
   tcase_add_test(tc_pp, test_pp_fixnum);
 #ifdef HAVE_GMP_H
   tcase_add_test(tc_pp, test_pp_bignum);
@@ -413,6 +494,9 @@ int main(void)
 #endif
   tcase_add_test(tc_pp, test_pp_flonum);
   tcase_add_test(tc_pp, test_pp_complex);
+  tcase_add_test(tc_pp, test_pp_symbol);
+  tcase_add_test(tc_pp, test_pp_string);
+  tcase_add_test(tc_pp, test_pp_char);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
