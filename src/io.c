@@ -309,6 +309,48 @@ AFFDEF(arc_stderr)
 }
 AFFEND
 
+static AFFDEF(disp_write)
+{
+  AARG(arg, disp);
+  AOARG(outport);
+  typefn_t *tfn;
+  AFBEGIN;
+  if (!BOUND_P(AV(outport)))
+    STDOUT(AV(outport));
+  if (NIL_P(AV(arg)))
+    AV(arg) = ARC_BUILTIN(c, S_NIL);
+  if (AV(arg) == CTRUE)
+    AV(arg) = ARC_BUILTIN(c, S_T);
+  tfn = __arc_typefn(c, AV(arg));
+  if (tfn == NULL || tfn->pprint == NULL) {
+    arc_err_cstrfmt(c, "cannot display object of type %d", TYPE(AV(arg)));
+    ARETURN(CNIL);
+  }
+  AFTCALL(arc_mkaff(c, tfn->pprint, CNIL), AV(arg), AV(disp), AV(outport));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_disp)
+{
+  AARG(arg);
+  AOARG(outport);
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, disp_write, CNIL), AV(arg), CTRUE, AV(outport));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_write)
+{
+  AARG(arg);
+  AOARG(outport);
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, disp_write, CNIL), AV(arg), CNIL, AV(outport));
+  AFEND;
+}
+AFFEND
+
 void arc_init_io(arc *c)
 {
   VINDEX(c->builtins, BI_io) = arc_mkvector(c, BI_io_last+1);
