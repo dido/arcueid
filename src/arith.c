@@ -182,16 +182,21 @@ AFFEND
 
 static AFFDEF(flonum_pprint)
 {
-  AARG(f);
+  AARG(f, disp, fp);
+  AOARG(visithash);
   AFBEGIN;
   double val = *((double *)REP(AV(f)));
   int len;
   char *outstr;
+  value vstr;
 
+  (void)visithash;
+  (void)disp;
   len = snprintf(NULL, 0, "%g", val);
   outstr = (char *)alloca(sizeof(char)*(len+2));
   snprintf(outstr, len+1, "%g", val);
-  ARETURN(arc_mkstringc(c, outstr));
+  vstr = arc_mkstringc(c, outstr);
+  AFTCALL(arc_mkaff(c, arc_disp, CNIL), vstr, AV(fp));
   AFEND;
 }
 AFFEND
@@ -360,16 +365,22 @@ value arc_mkflonum(arc *c, double val)
 
 static AFFDEF(complex_pprint)
 {
-  AARG(z);
+  AARG(z, disp, fp);
+  AOARG(visithash);
   AFBEGIN;
-  double complex val = *((double *)REP(AV(z)));
+  double complex val = *((double complex *)REP(AV(z)));
   int len;
   char *outstr;
+  value vstr;
+
+  (void)visithash;
+  (void)disp;
 
   len = snprintf(NULL, 0, "%g%+gi", creal(val), cimag(val));
   outstr = (char *)alloca(sizeof(char)*(len+2));
   snprintf(outstr, len+1, "%g%+gi", creal(val), cimag(val));
-  ARETURN(arc_mkstringc(c, outstr));
+  vstr = arc_mkstringc(c, outstr);
+  AFTCALL(arc_mkaff(c, arc_disp, CNIL), vstr, AV(fp));
   AFEND;
 }
 AFFEND
