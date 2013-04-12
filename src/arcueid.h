@@ -385,6 +385,7 @@ extern int arc_tell(arc *c, value thr);
 extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 extern int arc_write(arc *c, value thr);
 extern int arc_disp(arc *c, value thr);
+extern int __arc_disp_write(arc *c, value thr);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
