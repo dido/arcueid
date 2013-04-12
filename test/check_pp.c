@@ -409,64 +409,75 @@ START_TEST(test_pp_complex)
 }
 END_TEST
 
-#if 0
-
-START_TEST(test_cons)
+START_TEST(test_pp_cons)
 {
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
   value list1, list2, list3, list4, list5, list6;
-  value ppstr=CNIL;
-  char *str;
+
+  thr = c->curthread;
 
   list1 = cons(c, INT2FIX(1), cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
-
-  arc_prettyprint(c, list1, &ppstr, CNIL);
-  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
-  arc_str2cstr(c, ppstr, str);
-  fail_unless(strcmp(str, "(1 2 3)") == 0);
+  arc_bindcstr(c, "lst", list1);
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write lst ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "(1 2 3)")) == 0);
 
   /* Various types of circular lists */
   list2 = cons(c, INT2FIX(1), cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
   car(list2) = list2;
-  ppstr = CNIL;
-  arc_prettyprint(c, list2, &ppstr, CNIL);
-  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
-  arc_str2cstr(c, ppstr, str);
-  fail_unless(strcmp(str, "((...) 2 3)") == 0);
+  arc_bindcstr(c, "lst", list2);
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write lst ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "((...) 2 3)")) == 0);
 
   list3 = cons(c, INT2FIX(1), cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
   car(cdr(list3)) = list3;
-  ppstr = CNIL;
-  arc_prettyprint(c, list3, &ppstr, CNIL);
-  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
-  arc_str2cstr(c, ppstr, str);
-  fail_unless(strcmp(str, "(1 (...) 3)") == 0);
+  arc_bindcstr(c, "lst", list3);
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write lst ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "(1 (...) 3)")) == 0);
 
   list4 = cons(c, INT2FIX(1), cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
   car(cdr(cdr(list4))) = list4;
-  ppstr = CNIL;
-  arc_prettyprint(c, list4, &ppstr, CNIL);
-  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
-  arc_str2cstr(c, ppstr, str);
-  fail_unless(strcmp(str, "(1 2 (...))") == 0);
+  arc_bindcstr(c, "lst", list4);
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write lst ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "(1 2 (...))")) == 0);
 
   list5 = cons(c, INT2FIX(1), cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
   cdr(cdr(cdr(list5))) = list5;
-  ppstr = CNIL;
-  arc_prettyprint(c, list5, &ppstr, CNIL);
-  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
-  arc_str2cstr(c, ppstr, str);
-  fail_unless(strcmp(str, "(1 2 3 . (...))") == 0);
+  arc_bindcstr(c, "lst", list5);
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write lst ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "(1 2 3 . (...))")) == 0);
 
   list6 = cons(c, list1, cons(c, list1, CNIL));
-  ppstr = CNIL;
-  arc_prettyprint(c, list6, &ppstr, CNIL);
-  str = (char *)alloca(FIX2INT(arc_strutflen(c, ppstr))*sizeof(char));
-  arc_str2cstr(c, ppstr, str);
-  fail_unless(strcmp(str, "((1 2 3) (1 2 3))") == 0);
+  arc_bindcstr(c, "lst", list6);
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write lst ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result,
+			 arc_mkstringc(c, "((1 2 3) (1 2 3))")) == 0);
 }
 END_TEST
-
-#endif
 
 static void errhandler(arc *c, value str)
 {
@@ -497,6 +508,7 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_symbol);
   tcase_add_test(tc_pp, test_pp_string);
   tcase_add_test(tc_pp, test_pp_char);
+  tcase_add_test(tc_pp, test_pp_cons);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
