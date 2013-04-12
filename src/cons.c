@@ -36,67 +36,71 @@
 void *alloca (size_t);
 #endif
 
-#if 0
+/* XXX - we should do something a bit more sophisticated here, e.g.
+   arc> (= x '(1 2))
+   arc> (scdr x x)
+   arc> a
 
-static value cons_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+   should print something like:
+
+   #0=(1 . #0#)
+
+   The current algorithm already produces:
+
+   (1 . (...))
+
+   which is already a fair sight better than what official arc3.1 does when
+   faced with the same input!
+
+   Doing the former may require us to traverse the conses twice.  We'll
+   implement it someday.
+*/
+static AFFDEF(cons_pprint)
 {
-  value osexpr = sexpr;
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(wc, dw, osexpr);
+  AFBEGIN;
 
-  /* XXX - we should do something a bit more sophisticated here, e.g.
-     arc> (= x '(1 2))
-     arc> (scdr x x)
-     arc> a
+  AV(osexpr) = AV(sexpr);
+  if (!BOUND_P(AV(visithash)))
+    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
 
-     should print something like:
-
-     #0=(1 . #0#)
-
-     The current algorithm already produces:
-
-     (1 . (...))
-
-     which is already a fair sight better than what arc3 does when faced
-     with the same problem!
-
-     Doing the former may require us to traverse the conses twice.  We'll
-     implement it someday.
-  */
-  /* Create a visithash if we don't already have one */
-  if (visithash == CNIL)
-    visithash = arc_mkhash(c, ARC_HASHBITS);
-
-  if (__arc_visit(c, sexpr, visithash) != CNIL) {
-    /* Already visited at some point.  Do not recurse further. */
-    __arc_append_cstring(c, "(...)", ppstr);
-    return(*ppstr);
+  if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
+    /* already visited at some point. Do not recurse further */
+    AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), arc_mkstringc(c, "(...)"),
+	   CTRUE, AV(fp), AV(visithash));
   }
-
-  __arc_append_cstring(c, "(", ppstr);
-  while (TYPE(sexpr) == T_CONS) {
-    if (__arc_visitp(c, car(sexpr), visithash) != CNIL) {
-      /* Already visited at some point.  Do not recurse further. */
-      __arc_append_cstring(c, "(...)", ppstr);
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  AFCALL(AV(wc), arc_mkchar(c, '('), AV(fp));
+  while (TYPE(AV(sexpr)) == T_CONS) {
+    if (!NIL_P(__arc_visitp(c, car(AV(sexpr)), AV(visithash)))) {
+    /* already visited at some point. Do not recurse further */
+      AFCALL(AV(dw), arc_mkstringc(c, "(...)"), CTRUE,
+	     AV(fp), AV(visithash));
     } else {
-      arc_prettyprint(c, car(sexpr), ppstr, visithash);
+      AFCALL(AV(dw), car(AV(sexpr)), AV(disp), AV(fp), AV(visithash));
     }
-
-    sexpr = cdr(sexpr);
-    if (__arc_visitp(c, sexpr, visithash) != CNIL)
-      break;
-    if (!NIL_P(sexpr))
-      __arc_append_cstring(c,  " ", ppstr);
+    AV(sexpr) = cdr(AV(sexpr));
+    if (!NIL_P(__arc_visitp(c, AV(sexpr), AV(visithash))))
+      goto finish;		/* not sure if break works fine... */
+    if (!NIL_P(AV(sexpr)))
+      AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
   }
-
-  if (sexpr != CNIL) {
-    __arc_append_cstring(c,  " . ", ppstr);
-    arc_prettyprint(c, sexpr, ppstr, visithash);
+ finish:
+  if (!NIL_P(AV(sexpr))) {	/* improper list */
+    AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+    AFCALL(AV(wc), arc_mkchar(c, '.'), AV(fp));
+    AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+    AFCALL(AV(dw), AV(sexpr), AV(disp), AV(fp), AV(visithash));
   }
-  __arc_append_cstring(c, ")", ppstr);
-  __arc_unvisit(c, osexpr, visithash);
-  return(*ppstr);
+  AFCALL(AV(wc), arc_mkchar(c, ')'), AV(fp));
+  __arc_unvisit(c, AV(osexpr), AV(visithash));
+  ARETURN(CNIL);
+  AFEND;
 }
-
-#endif
+AFFEND
 
 /* Mark the car and cdr */
 static void cons_marker(arc *c, value v, int depth,
@@ -374,7 +378,7 @@ AFFEND
 typefn_t __arc_cons_typefn__ = {
   cons_marker,
   __arc_null_sweeper,
-  NULL,
+  cons_pprint,
   NULL,
   NULL,
   cons_isocmp,
