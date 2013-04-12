@@ -207,6 +207,29 @@ START_TEST(test_pp_symbol)
 }
 END_TEST
 
+START_TEST(test_pp_fixnum)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write 1234 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "1234")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp 1234 ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "1234")) == 0);
+}
+END_TEST
+
 #if 0
 
 START_TEST(test_cons)
@@ -287,6 +310,7 @@ int main(void)
 
   tcase_add_test(tc_pp, test_pp_string);
   tcase_add_test(tc_pp, test_pp_symbol);
+  tcase_add_test(tc_pp, test_pp_fixnum);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
