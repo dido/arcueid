@@ -882,9 +882,8 @@ AFFDEF(arc_compile)
   }
 
   if (SYMBOL_P(AV(expr))) {
-    /*    AFCALL(arc_mkaff(c, arc_ssexpand, CNIL), AV(expr));
-	  AV(ssx) = AFCRV; */
-    AV(ssx) = CNIL;
+    AFCALL(arc_mkaff(c, arc_ssexpand, CNIL), AV(expr));
+    AV(ssx) = AFCRV;
     if (NIL_P(AV(ssx))) {
       ARETURN(compile_ident(c, AV(expr), AV(ctx), AV(env), AV(cont)));
     }
