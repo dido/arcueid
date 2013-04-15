@@ -295,7 +295,7 @@ notice and this notice are preserved.
      - [X] exact
      - [X] is
      - [X] iso
-   - [X] List operations [5/5]
+   - [X] List operations [7/7]
      - [X] car
      - [X] cdr
      - [X] cadr
@@ -491,10 +491,11 @@ notice and this notice are preserved.
      - [ ] quit
      - [ ] setuid
      - [ ] memory
-   - [-] Miscellaneous [1/3]
+   - [-] Miscellaneous [2/4]
      - [X] sref *
      - [ ] len
      - [ ] bound
+     - [X] arcueid-code-setname
 ** TODO Threading [0/6]
    - [ ] Basic scheduling
    - [ ] Suspend threads on I/O
@@ -507,7 +508,7 @@ notice and this notice are preserved.
    PG-Arc.
 ** TODO pretty printer [1/2]
    - [X] Framework for disp and write
-   - [-] Printers for various types [10/16]
+   - [-] Printers for various types [11/16]
      - [X] nil
      - [X] t
      - [X] Numeric Types [5/5]
@@ -523,7 +524,7 @@ notice and this notice are preserved.
      - [X] Tables
      - [X] Vectors
      - [X] Tagged
-     - [ ] Functions
+     - [X] Functions
      - [ ] Input Ports
      - [ ] Output Ports
      - [ ] Threads
