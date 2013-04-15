@@ -1135,6 +1135,25 @@ START_TEST(test_apply)
   value thr, cctx, clos, code, ret;
 
   thr = arc_mkthread(c);
+  TEST("(apply (fn x x))");
+  fail_unless(NIL_P(ret));
+
+  TEST("(apply (fn x x) nil)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(apply (fn x x) 1 2 3 nil)");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(cadr(ret) == INT2FIX(2));
+  fail_unless(car(cddr(ret)) == INT2FIX(3));
+
+  TEST("(apply (fn x x) 1 2 '(3 4))");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(cadr(ret) == INT2FIX(2));
+  fail_unless(car(cddr(ret)) == INT2FIX(3));
+  fail_unless(cadr(cddr(ret)) == INT2FIX(4));
+
   TEST("(apply + '(1 2 3))");
   fail_unless(ret == INT2FIX(6));
 
