@@ -267,7 +267,7 @@ AFFDEF(arc_writec)
   for (j=0; j<FIX2INT(AV(nbytes)); j++)
     VINDEX(AV(buf), j) = INT2FIX(cbuf[j]);
   for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nbytes)); AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
-    AFCALL(AV(writeb), AV(fd), VINDEX(AV(buf), AV(i)));
+    AFCALL(AV(writeb),VINDEX(AV(buf), FIX2INT(AV(i))), AV(fd));
   }
   ARETURN(AV(chr));
   AFEND;
