@@ -27,6 +27,18 @@ static void clos_marker(arc *c, value v, int depth,
   markfn(c, cdr(v), depth);
 }
 
+static AFFDEF(clos_pprint)
+{
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AFBEGIN;
+
+  AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), CLOS_CODE(AV(sexpr)),
+	  AV(disp), AV(fp), AV(visithash));
+  AFEND;
+}
+AFFEND
+
 value arc_mkclos(arc *c, value code, value env)
 {
   value cl;
@@ -59,7 +71,7 @@ void __arc_clos_env2heap(arc *c, value thr, value clos)
 typefn_t __arc_clos_typefn__ = {
   clos_marker,
   __arc_null_sweeper,
-  NULL,
+  clos_pprint,
   NULL,
   NULL,
   NULL,
