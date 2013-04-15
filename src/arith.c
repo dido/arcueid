@@ -1273,7 +1273,7 @@ AFFDEF(__arc_add)
   if (arc_thr_argc(c, thr) > 0 && (NIL_P(car(AV(list))) || CONS_P(car(AV(list))) || TYPE(car(AV(list))) == T_STRING))
     sum = CNIL;
   while (CONS_P(AV(list))) {
-    sum = __arc_add2(c, car(AV(list)), sum);
+    sum = __arc_add2(c, sum, car(AV(list)));
     AV(list) = cdr(AV(list));
   }
   if (!NIL_P(AV(list)))
