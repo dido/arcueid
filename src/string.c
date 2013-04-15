@@ -179,6 +179,23 @@ value arc_mkstringlen(arc *c, int length)
   return(str);
 }
 
+AFFDEF(arc_newstring)
+{
+  AARG(length);
+  AOARG(ch);
+  value str;
+  Rune chr;
+  int i;
+  AFBEGIN;
+  chr = (BOUND_P(AV(ch))) ? arc_char2rune(c, AV(ch)) : 0;
+  str = arc_mkstringlen(c, FIX2INT(AV(length)));
+  for (i=0; i<FIX2INT(AV(length)); i++)
+    arc_strsetindex(c, str, i, chr);
+  ARETURN(str);
+  AFEND;
+}
+AFFEND
+
 /* Make string from UCS-4 Runes */
 value arc_mkstring(arc *c, const Rune *data, int length)
 {
