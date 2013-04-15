@@ -183,6 +183,8 @@ START_TEST(test_hash_expansion)
     arc_hash_insert(c, hash, INT2FIX(i), INT2FIX(i+1));
   for (i=0; i<EXPANSION_LIMIT; i++)
     fail_unless(arc_hash_lookup(c, hash, INT2FIX(i)) == INT2FIX(i+1));
+
+  fail_unless(arc_hash_length(c, hash) == EXPANSION_LIMIT);
 }
 END_TEST
 
