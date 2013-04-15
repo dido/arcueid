@@ -194,7 +194,7 @@ typefn_t *__arc_typefn(arc *c, value v)
   typedesc = arc_hash_lookup(c, c->typedesc, car(v));
   /* no type descriptor defaults to the type descriptor of a cons */
   if (!BOUND_P(typedesc))
-    return(c->typefns[T_CONS]);
+    return(c->typefns[T_TAGGED]);
   return((typefn_t *)REP(typedesc));
 }
 
@@ -376,6 +376,34 @@ value arc_annotate(arc *c, value typesym, value obj)
   ((struct cell *)ann)->_type = T_TAGGED;
   return(ann);
 }
+
+static AFFDEF(tagged_pprint)
+{
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(dw, wc);
+  AFBEGIN;
+
+  if (!BOUND_P(AV(visithash)))
+    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
+    /* already visited at some point. Do not recurse further */
+    AFTCALL(AV(dw), arc_mkstringc(c, "(...)"), CTRUE, AV(fp), AV(visithash));
+  }
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+
+  AFCALL(AV(dw), arc_mkstringc(c, "#(tagged "), CTRUE, AV(fp), AV(visithash));
+  AFCALL(AV(dw), car(AV(sexpr)), AV(disp), AV(fp), AV(visithash));
+  AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+  AFCALL(AV(dw), cdr(AV(sexpr)), AV(disp), AV(fp), AV(visithash));
+  AFCALL(AV(wc), arc_mkchar(c, ')'), AV(fp));
+  __arc_unvisit(c, AV(sexpr), AV(visithash));
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
 
 enum arc_types typesym2type(arc *c, value typesym)
 {
@@ -663,6 +691,7 @@ extern typefn_t __arc_code_typefn__;
 extern typefn_t __arc_cont_typefn__;
 extern typefn_t __arc_clos_typefn__;
 extern typefn_t __arc_exception_typefn__;
+typefn_t __arc_tagged_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -685,7 +714,15 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_OUTPORT] = &__arc_io_typefn__;
   c->typefns[T_THREAD] = &__arc_thread_typefn__;
   c->typefns[T_VECTOR] = &__arc_vector_typefn__;
-  c->typefns[T_TAGGED] = &__arc_cons_typefn__;
+
+  __arc_tagged_typefn__.marker = __arc_cons_typefn__.marker;
+  __arc_tagged_typefn__.sweeper = __arc_cons_typefn__.sweeper;
+  __arc_tagged_typefn__.pprint = tagged_pprint;
+  __arc_tagged_typefn__.hash = __arc_cons_typefn__.hash;
+  __arc_tagged_typefn__.apply = NULL;
+  __arc_tagged_typefn__.xcoerce = NULL;
+  __arc_tagged_typefn__.xhash = __arc_cons_typefn__.xhash;
+  c->typefns[T_TAGGED] = &__arc_tagged_typefn__;
 
   c->typefns[T_WTABLE] = &__arc_wtable_typefn__;
   c->typefns[T_CCODE] = &__arc_cfunc_typefn__;
