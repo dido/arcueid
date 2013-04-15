@@ -646,6 +646,60 @@ START_TEST(test_pp_func)
 }
 END_TEST
 
+START_TEST(test_pp_io)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result, tmpfp;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write ppfp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<output-port:string>")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp ppfp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<output-port:string>")) == 0);
+
+  ppfp = arc_outstring(c, arc_intern_cstr(c, "ppfp"));
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write ppfp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<output-port:ppfp>")) == 0);
+
+  ppfp = arc_outstring(c, arc_intern_cstr(c, "ppfp"));
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp ppfp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<output-port:ppfp>")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  tmpfp = arc_instring(c, arc_mkstringc(c, "abc"),
+		       arc_intern_cstr(c, "tmpfp"));
+  arc_bindcstr(c, "tmpfp", tmpfp);
+  TEST("(write tmpfp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<input-port:tmpfp>")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp tmpfp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<input-port:tmpfp>")) == 0);
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -681,6 +735,7 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_tagged);
   tcase_add_test(tc_pp, test_pp_cfunc);
   tcase_add_test(tc_pp, test_pp_func);
+  tcase_add_test(tc_pp, test_pp_io);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
