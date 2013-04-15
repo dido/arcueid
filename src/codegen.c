@@ -205,7 +205,15 @@ value arc_code_setname(arc *c, value code, value name)
 
   if (TYPE(code) == T_CLOS) {
     code = CLOS_CODE(code);
-  } else if (!TYPE(code) == T_CODE) {
+  } else if (TYPE(code) == T_TAGGED) {
+    code = arc_rep(c, code);
+    if (TYPE(code) == T_CLOS)
+      code = CLOS_CODE(code);
+    else {
+      arc_err_cstrfmt(c, "invalid argument for arc-code-setname");
+      return(CNIL);
+    }
+  } else if (TYPE(code) != T_CODE) {
     arc_err_cstrfmt(c, "invalid argument for arc-code-setname");
     return(CNIL);
   }
