@@ -141,7 +141,7 @@ static AFFDEF(fio_putb)
 {
   AARG(fio, byte);
   AFBEGIN;
-  ARETURN(INT2FIX(fputc(byte, FIODATA(AV(fio))->fp)));
+  ARETURN(INT2FIX(fputc(FIX2INT(AV(byte)), FIODATA(AV(fio))->fp)));
   AFEND;
 }
 AFFEND
