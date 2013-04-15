@@ -138,7 +138,7 @@ AFFDEF(arc_cmark)
   AVAR(cm, val);
   AFBEGIN;
   AV(cm) = TCM(thr);
-  val = arc_hash_lookup(c, AV(cm), AV(key));
+  AV(val) = arc_hash_lookup(c, AV(cm), AV(key));
   if (AV(val) == CUNBOUND)
     ARETURN(CNIL);
   ARETURN(car(AV(val)));
