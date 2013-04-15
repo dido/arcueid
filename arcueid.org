@@ -508,7 +508,7 @@ notice and this notice are preserved.
    PG-Arc.
 ** TODO pretty printer [1/2]
    - [X] Framework for disp and write
-   - [-] Printers for various types [13/16]
+   - [-] Printers for various types [14/16]
      - [X] nil
      - [X] t
      - [X] Numeric Types [5/5]
@@ -527,7 +527,7 @@ notice and this notice are preserved.
      - [X] Functions
      - [X] Input Ports
      - [X] Output Ports
-     - [ ] Threads
+     - [X] Threads
      - [ ] Channels
      - [ ] Regular Expressions
 ** TODO REPL [0/3]
