@@ -811,7 +811,7 @@ static struct {
   { "outfile", -2, arc_outfile },
   { "write", -2, arc_write },
   { "disp", -2, arc_disp },
-
+  { "close", -2, arc_close },
 
   /* Additional I/O functions */
   { "stdin", -2, arc_stdin },
@@ -828,6 +828,8 @@ static struct {
   { "on-err", -2, arc_on_err },
 
   /* strings */
+  { "newstring", -2, arc_newstring },
+
   /* time */
   /* regular expressions */
   /* miscellaneous OS operations */
