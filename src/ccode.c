@@ -48,17 +48,31 @@ struct cfunc_t {
   int argc;
 };
 
-#if 0
-
-static value cfunc_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+static AFFDEF(cfunc_pprint)
 {
-  __arc_append_cstring(c, "#<cprocedure: ", ppstr);
-  arc_prettyprint(c, ((struct cfunc_t *)REP(sexpr))->name, ppstr, visithash);
-  __arc_append_cstring(c, ">", ppstr);
-  return(*ppstr);
-}
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(dw, wc);
+  struct cfunc_t *rep;
+  AFBEGIN;
 
-#endif
+  (void)visithash;
+  (void)disp;
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  AFCALL(AV(dw), arc_mkstringc(c, "#<procedure"), CTRUE, AV(fp), AV(visithash));
+  rep = (struct cfunc_t *)REP(AV(sexpr));
+  if (!NIL_P(rep->name)) {
+    AFCALL(AV(wc), arc_mkchar(c, ':'), AV(fp));
+    AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+    rep = (struct cfunc_t *)REP(AV(sexpr));
+    AFCALL(AV(dw), rep->name, CTRUE, AV(fp), AV(visithash));
+  }
+  AFCALL(AV(wc), arc_mkchar(c, '>'), AV(fp));
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
 
 static void cfunc_marker(arc *c, value v, int depth,
 			  void (*mark)(struct arc *, value, int))
@@ -321,7 +335,7 @@ static int cfunc_apply(arc *c, value thr, value cfn)
 typefn_t __arc_cfunc_typefn__ = {
   cfunc_marker,
   __arc_null_sweeper,
-  NULL,
+  cfunc_pprint,
   cfunc_hash,
   NULL,
   NULL,
