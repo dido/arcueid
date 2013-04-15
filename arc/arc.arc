@@ -25,6 +25,7 @@
 
 (assign do (annotate 'mac
              (fn args `((fn () ,@args)))))
+(arcueid-code-setname do 'do)
 
 (assign safeset (annotate 'mac
                   (fn (var val)
@@ -33,16 +34,19 @@
                                  (disp ',var (stderr))
                                  (disp #\newline (stderr))))
                          (assign ,var ,val)))))
+(arcueid-code-setname safeset 'safeset)
 
 (assign def (annotate 'mac
                (fn (name parms . body)
                  `(do (sref sig ',parms ',name)
                       (safeset ,name (fn ,parms ,@body))
+		      (arcueid-code-setname ,name ',name)
 		      ,name))))
+(arcueid-code-setname def 'def)
 
 (def caar (xs) (car (car xs)))
-(def cadr (xs) (car (cdr xs)))
-(def cddr (xs) (cdr (cdr xs)))
+;;(def cadr (xs) (car (cdr xs)))
+;;(def cddr (xs) (cdr (cdr xs)))
 
 (def no (x) (is x nil))
 
@@ -83,6 +87,7 @@
               (fn (name parms . body)
                 `(do (sref sig ',parms ',name)
                      (safeset ,name (annotate 'mac (fn ,parms ,@body)))
+		     (arcueid-code-setname ,name ',name)
 		     ,name))))
 
 (mac and args
