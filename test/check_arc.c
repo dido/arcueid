@@ -770,6 +770,28 @@ START_TEST(test_caris)
 }
 END_TEST
 
+/* This test should cover all the machinery behind places and setforms. */
+START_TEST(test_places)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(let foo nil (= foo '(1 2 3)) (car foo))");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(let foo '(1 2 3) (= (car foo) 4) (car foo))");
+  fail_unless(ret == INT2FIX(4));
+
+  TEST("(let foo '(1 2 3) (= (car:cdr foo) 5) (car (cdr foo)))");
+  fail_unless(ret == INT2FIX(5));
+
+  TEST("(let x \"abc\" (= (x 1) #\\z) x)");
+  fail_unless(FIX2INT(arc_strcmp(c, ret, arc_mkstringc(c, "azc"))) == 0);
+
+  TEST("(let foo (table) (= (foo 'bar) 6) (foo 'bar)))");
+  fail_unless(ret == INT2FIX(6));
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -807,9 +829,6 @@ int main(void)
     TEST("(disp sexpr)");
     TEST("(disp #\\u000a)");
     */
-    if (i == 79) {
-      break;
-    }
     /*
     TEST("(disp (eval sexpr))");
     TEST("(disp #\\u000a)");
@@ -867,6 +886,7 @@ int main(void)
   tcase_add_test(tc_arc, test_tuples);
   tcase_add_test(tc_arc, test_defs);
   tcase_add_test(tc_arc, test_caris);
+  tcase_add_test(tc_arc, test_places);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
