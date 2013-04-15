@@ -414,6 +414,362 @@ START_TEST(test_compose)
 }
 END_TEST
 
+START_TEST(test_complement)
+{
+  value ret, cctx, code, clos;
+
+  TEST("((complement atom) 'foo)");
+  fail_unless(NIL_P(ret));
+
+  TEST("((complement atom) '(1 2 3))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(~atom 'foo)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(~atom '(1 2 3))");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_rev)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(rev '(1 2 3))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(3));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+}
+END_TEST
+
+START_TEST(test_isnt)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(isnt 1 1)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(isnt 1 2)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_or)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(or 1 2 3)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(or nil 2 3)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(or nil nil 3)");
+  fail_unless(ret == INT2FIX(3));
+
+  TEST("(or nil nil 3)");
+  fail_unless(ret == INT2FIX(3));
+
+  TEST("(or nil nil nil)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_when)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(when t (assign whentest 123))");
+  fail_unless(ret == INT2FIX(123));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+
+  TEST("(when nil (assign whentest 456))");
+  fail_unless(NIL_P(ret));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+}
+END_TEST
+
+START_TEST(test_in)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(in 1 0 2 3)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(in 1 1 2 3)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_unless)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(unless nil (assign whentest 123))");
+  fail_unless(ret == INT2FIX(123));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+
+  TEST("(unless t (assign whentest 456))");
+  fail_unless(NIL_P(ret));
+  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+}
+END_TEST
+
+START_TEST(test_while)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(with (x 0) (do (while (isnt x 10) (= x (+ x 1))) x))");
+  fail_unless(ret == INT2FIX(10));
+
+  TEST("(with (xs '(1 2 3 4 5 6 7) acc 1) (while (= xs (cdr xs)) (assign acc (* acc (car xs)))) acc)");
+  fail_unless(ret == INT2FIX(5040));
+}
+END_TEST
+
+START_TEST(test_empty)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(empty nil)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(empty \"\")");
+  fail_unless(ret == CTRUE);
+
+  TEST("(empty (table))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(empty '(1 2 3))");
+  fail_unless(NIL_P(ret));
+
+  TEST("(empty \"abc\")");
+  fail_unless(NIL_P(ret));
+
+  TEST("(let x (table) (do (sref x 1 'foo) (empty x)))");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_reclist)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(reclist no:car '(1 2 nil 3))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(reclist no:car '(1 2 3))");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_recstring)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(recstring [is _ 1] \"abc\")");
+  fail_unless(ret == CTRUE);
+
+  TEST("(recstring [is _ 3] \"abc\")");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_testify)
+{
+  value ret, cctx, code, clos;
+
+  TEST("((testify [isa _ 'sym]) 'foo)");
+  fail_unless(ret == CTRUE);
+
+  TEST("((testify [isa _ 'sym]) 1)");
+  fail_unless(NIL_P(ret));
+
+  TEST("((testify 'foo) 'foo)");
+  fail_unless(ret == CTRUE);
+
+  TEST("((testify 'foo) 'bar)");
+  fail_unless(NIL_P(ret));
+
+  TEST("((testify 'foo) 1)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_some)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(some 1 '(1 2 3)))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(some #\\a \"abc\")");
+  fail_unless(ret == CTRUE);
+
+  TEST("(some 9 '(1 2 3)))");
+  fail_unless(NIL_P(ret));
+
+  TEST("(some #\\z \"abc\")");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_all)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(all 1 '(1 1 1)))");
+  fail_unless(ret == CTRUE);
+
+  TEST("(all #\\a \"aaa\")");
+  fail_unless(ret == CTRUE);
+
+  TEST("(all 1 '(1 2 3)))");
+  fail_unless(NIL_P(ret));
+
+  TEST("(all #\\a \"abc\")");
+  fail_unless(NIL_P(ret));
+
+  TEST("(all 9 '(1 2 3)))");
+  fail_unless(NIL_P(ret));
+
+  TEST("(all #\\z \"abc\")");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_find)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(find 2 '(1 2 3)))");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(find #\\c \"abc\")");
+  fail_unless(TYPE(ret) == T_CHAR);
+  fail_unless(arc_char2rune(c, ret) == (Rune)'c');
+
+  TEST("(find 9 '(1 2 3)))");
+  fail_unless(NIL_P(ret));
+
+  TEST("(find #\\z \"abc\")");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_isa)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(isa 1 'int)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(isa 1.1 'int)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_map)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(map (fn (x y) `(,x ,y)) '(1 2) '(3 4))");
+  fail_unless(TYPE(ret) == T_CONS);
+  fail_unless(TYPE(car(ret)) == T_CONS);
+  fail_unless(car(car(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(car(ret))) == INT2FIX(3));
+  fail_unless(TYPE(cdr(ret)) == T_CONS);
+  fail_unless(car(car(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(car(cdr(ret)))) == INT2FIX(4));
+}
+END_TEST
+
+START_TEST(test_mappend)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(mappend (fn (x y) `(,x ,y)) '(1 2) '(3 4))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+}
+END_TEST
+
+START_TEST(test_firstn)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(firstn 3 '(1 2 3 4 5 6 7 8 9 10))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_nthcdr)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(nthcdr 7 '(1 2 3 4 5 6 7 8 9 10))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(8));
+  fail_unless(car(cdr(ret)) == INT2FIX(9));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(10));
+}
+END_TEST
+
+START_TEST(test_tuples)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(tuples '(1 2 3 4 5 6 7 8 9 10) 3)");
+  fail_unless(CONS_P(ret));
+  fail_unless(CONS_P(car(ret)));
+  fail_unless(car(car(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(car(ret))) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(car(ret)))) == INT2FIX(3));
+  fail_unless(CONS_P(car(cdr(ret))));
+  fail_unless(car(car(cdr(ret))) == INT2FIX(4));
+  fail_unless(car(cdr(car(cdr(ret)))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(car(cdr(ret))))) == INT2FIX(6));
+}
+END_TEST
+
+START_TEST(test_defs)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(defs hoge (x) (+ x 1) page (x) (+ x 2) piyo (x) (+ x 3))");
+  fail_unless(TYPE(ret) == T_CLOS);
+
+  TEST("(hoge 42)");
+  fail_unless(ret == INT2FIX(43));
+
+  TEST("(page 42)");
+  fail_unless(ret == INT2FIX(44));
+
+  TEST("(piyo 42)");
+  fail_unless(ret == INT2FIX(45));
+}
+END_TEST
+
+START_TEST(test_caris)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(caris '(1 2 3) 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(caris '(1 2 3) 2)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -487,6 +843,30 @@ int main(void)
   tcase_add_test(tc_arc, test_rfn);
   tcase_add_test(tc_arc, test_afn);
   tcase_add_test(tc_arc, test_compose);
+  tcase_add_test(tc_arc, test_complement);
+  tcase_add_test(tc_arc, test_rev);
+  tcase_add_test(tc_arc, test_isnt);
+  tcase_add_test(tc_arc, test_or);
+  tcase_add_test(tc_arc, test_in);
+  tcase_add_test(tc_arc, test_when);
+  tcase_add_test(tc_arc, test_unless);
+  tcase_add_test(tc_arc, test_while);
+  tcase_add_test(tc_arc, test_empty);
+  tcase_add_test(tc_arc, test_reclist);
+  tcase_add_test(tc_arc, test_recstring);
+  tcase_add_test(tc_arc, test_testify);
+  tcase_add_test(tc_arc, test_some);
+  tcase_add_test(tc_arc, test_all);
+  tcase_add_test(tc_arc, test_all);
+  tcase_add_test(tc_arc, test_find);
+  tcase_add_test(tc_arc, test_isa);
+  tcase_add_test(tc_arc, test_map);
+  tcase_add_test(tc_arc, test_mappend);
+  tcase_add_test(tc_arc, test_firstn);
+  tcase_add_test(tc_arc, test_nthcdr);
+  tcase_add_test(tc_arc, test_tuples);
+  tcase_add_test(tc_arc, test_defs);
+  tcase_add_test(tc_arc, test_caris);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
