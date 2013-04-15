@@ -180,7 +180,7 @@ notice and this notice are preserved.
     - [X] Threads
     - [ ] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [10/19]
+** TODO Runtime Built-In Functions [9/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -491,11 +491,12 @@ notice and this notice are preserved.
      - [ ] quit
      - [ ] setuid
      - [ ] memory
-   - [X] Miscellaneous [4/4]
+   - [-] Miscellaneous [4/5]
      - [X] sref *
      - [X] len
      - [X] bound
      - [X] arcueid-code-setname
+     - [ ] declare
 ** TODO Threading [0/6]
    - [ ] Basic scheduling
    - [ ] Suspend threads on I/O
