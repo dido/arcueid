@@ -367,6 +367,22 @@ static int hash_apply(arc *c, value thr, value tbl)
   return(TR_RC);
 }
 
+int arc_hash_length(arc *c, value hash)
+{
+  int count, i;
+  value e, tbl;
+
+  count = 0;
+  tbl = HASH_TABLE(hash);
+  for (i=0; i<VECLEN(tbl); i++) {
+    e = VINDEX(tbl, i);
+    if (EMPTYP(e))
+      continue;
+    count++;
+  }
+  return(count);
+}
+
 value arc_mkhash(arc *c, int hashbits)
 {
   value hash;
