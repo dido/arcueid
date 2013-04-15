@@ -326,14 +326,17 @@
 ;; We use the internal functions __acell__ (which retrieves the atomic
 ;; cell of the current thread) and __achan__  (which retrieves the global
 ;; channel used for atomic-invoke) to implement this.
-(def atomic-invoke (thunk)
-  (if (isnt (type thunk) 'fn) (err "atomic-invoke requires fn arg")
-      (__acell__) (thunk)
-      (do (__acell__ t)
-	  (<-= (__achan__) t)
-	  (protect (fn () (thunk))
-		   (fn () (<- (__achan__))
-		       (__acell__ nil))))))
+;; (def atomic-invoke (thunk)
+;;   (if (isnt (type thunk) 'fn) (err "atomic-invoke requires fn arg")
+;;       (__acell__) (thunk)
+;;       (do (__acell__ t)
+;; 	  (<-= (__achan__) t)
+;; 	  (protect (fn () (thunk))
+;; 		   (fn () (<- (__achan__))
+;; 		       (__acell__ nil))))))
+
+;; XXX - dummy definition of atomic-invoke until we get real threads
+(def atomic-invoke (thunk) (thunk))
 
 (mac atomic body
   `(atomic-invoke (fn () ,@body)))
@@ -409,18 +412,18 @@
 (def setforms (expr0)
   (let expr (macex expr0)
     (if (isa expr 'sym)
-         (if (ssyntax expr)
-             (setforms (ssexpand expr))
-             (w/uniq (g h)
-               (list (list g expr)
-                     g
-                     `(fn (,h) (assign ,expr ,h)))))
+	(if (ssyntax expr)
+	    (setforms (ssexpand expr))
+	    (w/uniq (g h)
+	      (list (list g expr)
+		    g
+		    `(fn (,h) (assign ,expr ,h)))))
         ; make it also work for uncompressed calls to compose
         (and (acons expr) (metafn (car expr)))
-         (setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
-        (and (acons expr) (acons (car expr)) (is (caar expr) 'get))
-         (setforms (list (cadr expr) (cadr (car expr))))
-         (let f (setter (car expr))
+	(setforms (expand-metafn-call (ssexpand (car expr)) (cdr expr)))
+	(and (acons expr) (acons (car expr)) (is (caar expr) 'get))
+	(setforms (list (cadr expr) (cadr (car expr))))
+	(let f (setter (car expr))
            (if f
                (f expr)
                ; assumed to be data structure in fn position
