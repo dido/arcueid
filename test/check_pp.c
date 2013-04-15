@@ -546,6 +546,29 @@ START_TEST(test_pp_hash)
 }
 END_TEST
 
+START_TEST(test_pp_tagged)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write (annotate \'test \"abc\") ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#(tagged test \"abc\")")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp (annotate \'test \"abc\") ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#(tagged test abc)")) == 0);
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -578,6 +601,7 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_cons);
   tcase_add_test(tc_pp, test_pp_hash);
   tcase_add_test(tc_pp, test_pp_vector);
+  tcase_add_test(tc_pp, test_pp_tagged);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
