@@ -457,9 +457,44 @@ int __arc_vmengine(arc *c, value thr)
 
 AFFDEF(arc_apply)
 {
-  AARG(fun, args);
+  AARG(fun);
+  ARARG(argv);
+  int argc, cargc;
   AFBEGIN;
-  AFTCALL2(AV(fun), AV(args));
+  /* Push the arguments onto the stack */
+  argc = TARGC(thr) - 1;
+  cargc = 0;
+  while (argc > 1) {
+    cargc++;
+    argc--;
+    CPUSH(thr, car(AV(argv)));
+    AV(argv) = cdr(AV(argv));
+  }
+
+  if (!(NIL_P(AV(argv)) || CONS_P(AV(argv)))) {
+    arc_err_cstrfmt(c, "apply's last argument non-list (1)");
+    ARETURN(CNIL);
+  }
+  if (!NIL_P(AV(argv))) {
+    AV(argv) = car(AV(argv));
+    if (!(NIL_P(AV(argv)) || CONS_P(AV(argv)))) {
+      arc_err_cstrfmt(c, "apply's last argument non-list (1)");
+      ARETURN(CNIL);
+    }
+    while (CONS_P(AV(argv))) {
+      cargc++;
+      CPUSH(thr, car(AV(argv)));
+      AV(argv) = cdr(AV(argv));
+    }
+    if (!NIL_P(AV(argv))) {
+      arc_err_cstrfmt(c, "apply's last argument not proper list");
+      ARETURN(CNIL);
+    }
+  }
+  TARGC(thr) = cargc;
+  TVALR(thr) = AV(fun);
+  __arc_menv(c, thr, cargc);
+  return(TR_FNAPP);
   AFEND;
 }
 AFFEND
