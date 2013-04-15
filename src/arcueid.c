@@ -545,16 +545,6 @@ static value lt2(arc *c, value v1, value v2, value vh1, value vh2)
   return((FIX2INT(arc_cmp(c, v1, v2)) < 0) ? CTRUE : CNIL);
 }
 
-static value ge2(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  return((FIX2INT(arc_cmp(c, v1, v2)) >= 0) ? CTRUE : CNIL);
-}
-
-static value le2(arc *c, value v1, value v2, value vh1, value vh2)
-{
-  return((FIX2INT(arc_cmp(c, v1, v2)) <= 0) ? CTRUE : CNIL);
-}
-
 AFFDEF(arc_gt)
 {
   ARARG(list);
@@ -574,30 +564,6 @@ AFFDEF(arc_lt)
   /* tail call */
   AFTCALL(arc_mkaff(c, pairwise, CNIL),
 	  arc_mkccode(c, 4, lt2, CNIL),
-	  AV(list), CNIL, CNIL);
-  AFEND;
-}
-AFFEND
-
-AFFDEF(arc_ge)
-{
-  ARARG(list);
-  AFBEGIN;
-  /* tail call */
-  AFTCALL(arc_mkaff(c, pairwise, CNIL),
-	  arc_mkccode(c, 4, ge2, CNIL),
-	  AV(list), CNIL, CNIL);
-  AFEND;
-}
-AFFEND
-
-AFFDEF(arc_le)
-{
-  ARARG(list);
-  AFBEGIN;
-  /* tail call */
-  AFTCALL(arc_mkaff(c, pairwise, CNIL),
-	  arc_mkccode(c, 4, le2, CNIL),
 	  AV(list), CNIL, CNIL);
   AFEND;
 }
@@ -771,8 +737,6 @@ static struct {
   /* predicates */
   { ">", -2, arc_gt },
   { "<", -2, arc_lt },
-  { ">=", -2, arc_ge },
-  { "<=", -2, arc_le },
   { "<=>", 2, arc_cmp },
   { "bound", 1, arc_bound },
   { "exact", 1, arc_exact },
