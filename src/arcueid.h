@@ -155,6 +155,7 @@ struct arc {
   int stksize;			/* default stack size for threads */
   value here;			/* here variable (used for dynamic-wind) */
   void (*errhandler)(struct arc *, value); /* catch-all error handler */
+  value tracethread;			   /* tracing thread */
 
   /* declarations */
   int atstrings;		/* allow atstrings or not */
@@ -304,6 +305,7 @@ extern value arc_hash_lookup(arc *c, value tbl, value key);
 extern value arc_hash_lookup2(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
 extern value arc_hash_delete(arc *c, value hash, value key);
+extern int arc_hash_length(arc *c, value hash);
 extern int arc_xhash_lookup(arc *c, value thr);
 extern int arc_xhash_lookup2(arc *c, value thr);
 extern int arc_xhash_delete(arc *c, value thr);
@@ -467,7 +469,7 @@ extern value arc_details(arc *c, value ex);
 
 /* Miscellaneous functions */
 extern int arc_sref(arc *c, value thr);
-extern int arc_len(arc *c, value thr);
+extern value arc_len(arc *c, value obj);
 extern value arc_bound(arc *c, value sym);
 
 /* Arcueid Foreign Functions.  This is possibly the most insane abuse
