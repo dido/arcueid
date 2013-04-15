@@ -670,38 +670,6 @@ START_TEST(test_lt)
 }
 END_TEST
 
-START_TEST(test_ge)
-{
-  value thr, cctx, clos, code, ret;
-
-  thr = arc_mkthread(c);
-  TEST("(>= 4 3 2 1)");
-  fail_unless(ret == CTRUE);
-
-  TEST("(>= 4 3 2 3)");
-  fail_unless(NIL_P(ret));
-
-  TEST("(>= 4 4 3 2)");
-  fail_unless(ret == CTRUE);
-}
-END_TEST
-
-START_TEST(test_le)
-{
-  value thr, cctx, clos, code, ret;
-
-  thr = arc_mkthread(c);
-  TEST("(<= 1 2 3 4)");
-  fail_unless(ret == CTRUE);
-
-  TEST("(<= 1 2 4 4)");
-  fail_unless(ret == CTRUE);
-
-  TEST("(<= 3 2 3 4)");
-  fail_unless(NIL_P(ret));
-}
-END_TEST
-
 START_TEST(test_spaceship)
 {
   value thr, cctx, clos, code, ret;
@@ -1292,8 +1260,6 @@ int main(void)
 
   tcase_add_test(tc_bif, test_gt);
   tcase_add_test(tc_bif, test_lt);
-  tcase_add_test(tc_bif, test_ge);
-  tcase_add_test(tc_bif, test_le);
   tcase_add_test(tc_bif, test_spaceship);
   tcase_add_test(tc_bif, test_bound);
   tcase_add_test(tc_bif, test_exact);
