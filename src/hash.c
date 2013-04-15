@@ -362,7 +362,7 @@ static int hash_apply(arc *c, value thr, value tbl)
   }
   key = arc_thr_pop(c, thr);
   val = arc_hash_lookup(c, tbl, key);
-  val = (NIL_P(val)) ? dflt : val;
+  val = (BOUND_P(val)) ? val : dflt;
   arc_thr_set_valr(c, thr, val);
   return(TR_RC);
 }
