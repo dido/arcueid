@@ -132,6 +132,54 @@ void __arc_thr_trampoline(arc *c, value thr, enum tr_states_t state)
   }
 }
 
+#ifdef HAVE_TRACING
+
+int __arc_vmtrace = 0;
+
+static void printobj(arc *c, value obj)
+{
+  CPUSH(c->tracethread, obj);
+  TVALR(c->tracethread) = arc_mkaff(c, arc_write, CNIL);
+  TARGC(c->tracethread) = 1;
+  __arc_thr_trampoline(c, c->tracethread, TR_FNAPP);
+}
+
+static void dump_registers(arc *c, value thr)
+{
+  value *sv, env;
+
+  printf("VALR = ");
+  printobj(c, TVALR(thr));
+
+  printf("\t\tFUNR = ");
+  printobj(c, TFUNR(thr));
+  for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
+    printobj(c, *sv);
+    printf(" ");
+  }
+  printf("]\n");
+}
+
+static inline void trace(arc *c, value thr)
+{
+  char str[256];
+  value disasm;
+
+  dump_registers(c, thr);
+  disasm = __arc_disasm_inst(c, TIPP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0),
+			     TIPP(thr), TFUNR(thr));
+  printobj(c, disasm);
+  printf("\n- ");
+  fgets(str, 256, stdin);
+}
+
+void __arc_init_tracing(arc *c)
+{
+  c->tracethread = arc_mkthread(c);
+}
+
+#endif
+
 /* instruction decoding macros */
 #ifdef HAVE_THREADED_INTERPRETER
 /* threaded interpreter */
