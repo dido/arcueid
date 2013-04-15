@@ -28,6 +28,7 @@
 #include "arith.h"
 #include "builtins.h"
 #include "io.h"
+#include "vmengine.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -832,6 +833,7 @@ static struct {
   /* miscellaneous OS operations */
   /* miscellaneous */
   { "sref", -2, arc_sref },
+  { "arcueid-code-setname", 2, arc_code_setname },
   {NULL, 0, NULL }
 };
 
