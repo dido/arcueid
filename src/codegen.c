@@ -155,24 +155,33 @@ int arc_literal(arc *c, value cctx, value literal)
   return(lidx);
 }
 
-#if 0
-static value code_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+static AFFDEF(code_pprint)
 {
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(dw, wc);
   value src;
-  __arc_append_cstring(c, "#<procedure: ", ppstr);
+  AFBEGIN;
+  (void)visithash;
+  (void)disp;
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  AFCALL(AV(dw), arc_mkstringc(c, "#<procedure"), CTRUE, AV(fp), AV(visithash));
+  src = CODE_SRC(AV(sexpr));
+  if (!NIL_P(src)) {
+    value fname;
 
-  src = CODE_SRC(sexpr);
-  if (NIL_P(src)) {
-    __arc_append_cstring(c, "(anonymous)", ppstr);
-  } else {
-    value fname = arc_hash_lookup(c, src, INT2FIX(SRC_FUNCNAME));
-
-    arc_prettyprint(c, fname, ppstr, visithash);
+    AFCALL(AV(wc), arc_mkchar(c, ':'), AV(fp));
+    AFCALL(AV(wc), arc_mkchar(c, ' '), AV(fp));
+    src = CODE_SRC(AV(sexpr));
+    fname = arc_hash_lookup(c, src, INT2FIX(SRC_FUNCNAME));
+    AFCALL(AV(dw), fname, CTRUE, AV(fp), AV(visithash));
   }
-  __arc_append_cstring(c, ">", ppstr);
-  return(*ppstr);
+  AFCALL(AV(wc), arc_mkchar(c, '>'), AV(fp));
+  ARETURN(CNIL);
+  AFEND;
 }
-#endif
+AFFEND
 
 value arc_mkcode(arc *c, int ncodes, int nlits)
 {
@@ -190,6 +199,23 @@ value arc_code_setsrc(arc *c, value code, value src)
   return(code);
 }
 
+value arc_code_setname(arc *c, value code, value name)
+{
+  value orgcode = code;
+
+  if (TYPE(code) == T_CLOS) {
+    code = CLOS_CODE(code);
+  } else if (!TYPE(code) == T_CODE) {
+    arc_err_cstrfmt(c, "invalid argument for arc-code-setname");
+    return(CNIL);
+  }
+  if (NIL_P(CODE_SRC(code))) {
+    CODE_SRC(code) = arc_mkhash(c, ARC_HASHBITS);
+  }
+  arc_hash_insert(c, CODE_SRC(code), INT2FIX(SRC_FUNCNAME), name);
+  return(orgcode);
+}
+
 value arc_cctx2code(arc *c, value cctx)
 {
   value func;
@@ -205,7 +231,7 @@ value arc_cctx2code(arc *c, value cctx)
 typefn_t __arc_code_typefn__ = {
   __arc_vector_marker,
   __arc_null_sweeper,
-  NULL,
+  code_pprint,
   NULL,
   NULL,
   __arc_vector_isocmp,
