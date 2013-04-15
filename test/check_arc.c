@@ -104,6 +104,316 @@ START_TEST(test_do)
 }
 END_TEST
 
+START_TEST(test_safeset)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(safeset foo 1)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("foo");
+  fail_unless(ret == INT2FIX(1));
+
+  /*
+  TEST("(safeset foo 2)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("foo");
+  fail_unless(ret == INT2FIX(2));
+  */
+}
+END_TEST
+
+START_TEST(test_def)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(def bar (x) (+ x 1))");
+  fail_unless(TYPE(ret) == T_CLOS);
+
+  TEST("(bar 10)");
+  fail_unless(ret == INT2FIX(11));
+}
+END_TEST
+
+START_TEST(test_caar)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(caar '((5 6) 7 8))");
+  fail_unless(ret == INT2FIX(5));;
+}
+END_TEST
+
+START_TEST(test_no)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(no 1)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(no nil)");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_acons)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(acons nil)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(acons '())");
+  fail_unless(NIL_P(ret));
+
+  TEST("(acons ())");
+  fail_unless(NIL_P(ret));
+
+  TEST("(acons 1)");
+  fail_unless(NIL_P(ret));
+
+  TEST("(acons '(1 2))");
+  fail_unless(ret == CTRUE);
+
+}
+END_TEST
+
+START_TEST(test_atom)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(atom nil)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(atom '())");
+  fail_unless(ret == CTRUE);
+
+  TEST("(atom ())");
+  fail_unless(ret == CTRUE);
+
+  TEST("(atom 1)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(atom '(1 2))");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_copylist)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(copylist '(1 2 3))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_list)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(list 1 2 3)");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_idfn)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(idfn '(1 2 3))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+
+  TEST("(idfn 31337)");
+  fail_unless(ret == INT2FIX(31337));
+}
+END_TEST
+
+START_TEST(test_map1)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(map1 [+ _ 1] '(1 2 3))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(2));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(4));
+}
+END_TEST
+
+START_TEST(test_pair)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(pair '(1 2 3))");
+  fail_unless(CONS_P(ret));
+  fail_unless(CONS_P(car(ret)));
+  fail_unless(car(car(ret)) == INT2FIX(1));
+  fail_unless(car(cdr(car(ret))) == INT2FIX(2));
+  fail_unless(CONS_P(car(cdr(ret))));
+  fail_unless(car(car(cdr(ret))) == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_mac)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(mac foofoo () (list '+ 1 2))");
+  fail_unless(TYPE(ret) == T_TAGGED);
+  fail_unless(arc_type(c, ret) == ARC_BUILTIN(c, S_MAC));
+
+  /* Try to use the macro */
+  TEST("(+ 10 (foofoo))");
+  fail_unless(FIX2INT(ret) == 13);
+}
+END_TEST
+
+START_TEST(test_and)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(and 1 2 3)");
+  fail_unless(ret == INT2FIX(3));
+
+  TEST("(and 1 nil 3)");
+  fail_unless(ret == CNIL);
+
+  TEST("(and nil 3 4)");
+  fail_unless(ret == CNIL);
+}
+END_TEST
+
+START_TEST(test_alref)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(alref '((a 1) (b 2)) 'a)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(alref '((a 1) (b 2)) 'b)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(alref '((a 1) (b 2)) 'c)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_assoc)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(assoc 'a '((a 1) (b 2)))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == arc_intern_cstr(c, "a"));
+  fail_unless(car(cdr(ret)) == INT2FIX(1));
+
+  TEST("(assoc 'b '((a 1) (b 2)))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == arc_intern_cstr(c, "b"));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+
+  TEST("(assoc 'c '((a 1) (b 2)))");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_with)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(with (a 1 b 2) a)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(with (a 1 b 2) b)");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(with (a 1 b 2))");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_let)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(let x 1 x)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(let x 1)");
+  fail_unless(NIL_P(ret));
+}
+END_TEST
+
+START_TEST(test_withs)
+{
+  value ret, cctx, code, clos;
+
+  /* uses upper binding a is 3 */
+  TEST("(let a 3 (with (a 1 b (+ a 1)) (+ a b)))");
+  fail_unless(ret == INT2FIX(5));
+
+  /* uses simultaneous binding, so a is 1 */
+  TEST("(let a 3 (withs (a 1 b (+ a 1)) (+ a b)))");
+  fail_unless(ret == INT2FIX(3));
+}
+END_TEST
+
+START_TEST(test_join)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(join '(1 2 3) '(4 5 6))");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == INT2FIX(1));
+  fail_unless(car(cdr(ret)) == INT2FIX(2));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(4));
+  fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(5));
+  fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(6));
+}
+END_TEST
+
+START_TEST(test_rfn)
+{
+  value ret, cctx, code, clos;
+
+  TEST("((rfn fact (x) (if (is x 0) 1 (* x (fact (- x 1))))) 7)");
+  fail_unless(ret == INT2FIX(5040));
+}
+END_TEST
+
+START_TEST(test_afn)
+{
+  value ret, cctx, code, clos;
+
+  TEST("((afn (x) (if (is x 0) 1 (* x (self (- x 1))))) 7)");
+  fail_unless(ret == INT2FIX(5040));
+}
+END_TEST
+
+START_TEST(test_compose)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(let div2 (fn (x) (/ x 2)) ((compose div2 len) \"abcd\"))");
+  fail_unless(ret == INT2FIX(2));
+
+  TEST("(let div2 (fn (x) (/ x 2)) (div2:len \"abcd\"))");
+  fail_unless(ret == INT2FIX(2));
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -118,6 +428,7 @@ int main(void)
   TCase *tc_arc = tcase_create("arc.arc");
   SRunner *sr;
   value ret, cctx, code, clos;
+  int i;
 
   c = &cc;
   c->errhandler = errhandler;
@@ -129,10 +440,24 @@ int main(void)
     fprintf(stderr, "failed to load arc.arc");
     return(EXIT_FAILURE);
   }
+  i=0;
   for (;;) {
+    i++;
     TEST("(assign sexpr (sread initload nil))");
     if (ret == CNIL)
       break;
+    /*
+    printf("%d: ", i);
+    TEST("(disp sexpr)");
+    TEST("(disp #\\u000a)");
+    */
+    if (i == 79) {
+      break;
+    }
+    /*
+    TEST("(disp (eval sexpr))");
+    TEST("(disp #\\u000a)");
+    */
     TEST("(eval sexpr)");
     c->gc(c);
   }
@@ -140,6 +465,28 @@ int main(void)
   c->gc(c);
 
   tcase_add_test(tc_arc, test_do);
+  tcase_add_test(tc_arc, test_safeset);
+  tcase_add_test(tc_arc, test_def);
+  tcase_add_test(tc_arc, test_caar);
+  tcase_add_test(tc_arc, test_no);
+  tcase_add_test(tc_arc, test_acons);
+  tcase_add_test(tc_arc, test_atom);
+  tcase_add_test(tc_arc, test_list);
+  tcase_add_test(tc_arc, test_copylist);
+  tcase_add_test(tc_arc, test_idfn);
+  tcase_add_test(tc_arc, test_map1);
+  tcase_add_test(tc_arc, test_pair);
+  tcase_add_test(tc_arc, test_mac);
+  tcase_add_test(tc_arc, test_and);
+  tcase_add_test(tc_arc, test_assoc);
+  tcase_add_test(tc_arc, test_alref);
+  tcase_add_test(tc_arc, test_with);
+  tcase_add_test(tc_arc, test_let);
+  tcase_add_test(tc_arc, test_withs);
+  tcase_add_test(tc_arc, test_join);
+  tcase_add_test(tc_arc, test_rfn);
+  tcase_add_test(tc_arc, test_afn);
+  tcase_add_test(tc_arc, test_compose);
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
