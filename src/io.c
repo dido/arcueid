@@ -92,22 +92,38 @@ static void io_sweeper(arc *c, value v)
   IO(v)->io_tfn->sweeper(c, v);
 }
 
-#if 0
-static value io_pprint(arc *c, value v, value *ppstr, value visithash)
+static AFFDEF(io_pprint)
 {
-  if (TYPE(v) == T_INPORT)
-    __arc_append_cstring(c, "#<input-port:", ppstr);
-  else if (TYPE(v) == T_OUTPORT)
-    __arc_append_cstring(c, "#<output-port:", ppstr);
-  else
-    __arc_append_cstring(c, "#<unknown-port:", ppstr);
-  if (!NIL_P(IO(v)->name))
-    arc_prettyprint(c, IO(v)->name, ppstr, visithash);
-  IO(v)->io_tfn->pprint(c, v, ppstr, visithash);
-  __arc_append_cstring(c, ">", ppstr);
-  return(*ppstr);
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(dw, wc);
+  AFBEGIN;
+
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  if (TYPE(AV(sexpr)) == T_INPORT) {
+    AFCALL(AV(dw), arc_mkstringc(c, "#<input-port:"), CTRUE,
+	   AV(fp), AV(visithash));
+  } else if (TYPE(AV(sexpr)) == T_OUTPORT) {
+    AFCALL(AV(dw), arc_mkstringc(c, "#<output-port:"), CTRUE,
+	   AV(fp), AV(visithash));
+  } else {
+    AFCALL(AV(dw), arc_mkstringc(c, "#<unknown-port:"), CTRUE,
+	   AV(fp), AV(visithash));
+  }
+  if (!NIL_P(IO(AV(sexpr))->name)) {
+    AFCALL(AV(dw), IO(AV(sexpr))->name, CTRUE,
+	   AV(fp), AV(visithash));
+  }
+  if (IO(AV(sexpr))->io_tfn->pprint != NULL) {
+    AFCALL(arc_mkaff(c, IO(AV(sexpr))->io_tfn->pprint, CNIL), AV(sexpr),
+	   AV(disp), AV(fp), AV(visithash));
+  }
+  AFCALL(AV(wc), arc_mkchar(c, '>'), AV(fp));
+  ARETURN(CNIL);
+  AFEND;
 }
-#endif
+AFFEND
 
 static unsigned long io_hash(arc *c, value v, arc_hs *s)
 {
@@ -396,7 +412,7 @@ AFFEND
 typefn_t __arc_io_typefn__ = {
   io_marker,
   io_sweeper,
-  NULL,
+  io_pprint,
   io_hash,
   /* XXX - this means that applying is or iso to any I/O port values
      will only return true if and only if they are the same object.
