@@ -35,21 +35,25 @@
 void *alloca (size_t);
 #endif
 
-#if 0
-static value thread_pprint(arc *c, value sexpr, value *ppstr, value visithash)
+static AFFDEF(thread_pprint)
 {
-  char *outstr;
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(dw);
+  char *coutstr;
   int len;
-
-  __arc_append_cstring(c, "#<thread: ", ppstr);
-  len = snprintf(NULL, 0, "%d>", TTID(sexpr));
-  outstr = (char *)alloca(sizeof(char)*(len+2));
-  snprintf(outstr, len+1, "%d>", TTID(sexpr));
-  __arc_append_cstring(c, outstr, ppstr);
-  return(*ppstr);  
+  value outstr;
+  AFBEGIN;
+  (void)disp;
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  len = snprintf(NULL, 0, "#<thread: %d>", TTID(AV(sexpr)));
+  coutstr = (char *)alloca(sizeof(char)*(len+2));
+  snprintf(coutstr, len+1, "#<thread: %d>", TTID(AV(sexpr)));
+  outstr = arc_mkstringc(c, coutstr);
+  AFTCALL(AV(dw), outstr, CTRUE, AV(fp), AV(visithash));
+  AFEND;
 }
-
-#endif
+AFFEND
 
 static void thread_marker(arc *c, value thr, int depth,
 			  void (*mark)(struct arc *, value, int))
@@ -194,7 +198,7 @@ void arc_init_threads(arc *c)
 typefn_t __arc_thread_typefn__ = {
   thread_marker,
   __arc_null_sweeper,
-  NULL,
+  thread_pprint,
   NULL,
   NULL,
   NULL,
