@@ -310,6 +310,9 @@ static void markroots(arc *c)
   __arc_markprop(c, c->builtins);
   __arc_markprop(c, c->here);
   __arc_markprop(c, c->curthread);
+#ifdef HAVE_TRACING
+  __arc_markprop(c, c->tracethread);
+#endif
 }
 
 void arc_init_memmgr(arc *c)
