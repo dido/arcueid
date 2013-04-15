@@ -607,6 +607,45 @@ START_TEST(test_pp_cfunc)
 }
 END_TEST
 
+START_TEST(test_pp_func)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write (fn (x) x) ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure>")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp (fn (x) x) ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure>")) == 0);
+
+  TEST("(assign idfn (arcueid-code-setname (fn (x) x) \'idfn))");
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write idfn ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure: idfn>")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp idfn ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure: idfn>")) == 0);
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -641,6 +680,7 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_vector);
   tcase_add_test(tc_pp, test_pp_tagged);
   tcase_add_test(tc_pp, test_pp_cfunc);
+  tcase_add_test(tc_pp, test_pp_func);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
