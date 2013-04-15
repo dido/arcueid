@@ -569,6 +569,44 @@ START_TEST(test_pp_tagged)
 }
 END_TEST
 
+START_TEST(test_pp_cfunc)
+{
+  value thr, cctx, clos, code, ret;
+  value ppfp, result;
+
+  thr = c->curthread;
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write disp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure: disp>")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp disp ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure: disp>")) == 0);
+
+  arc_bindcstr(c, "testcfn", arc_mkaff(c, arc_disp, CNIL));
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(write testcfn ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure>")) == 0);
+
+  ppfp = arc_outstring(c, CNIL);
+  arc_bindcstr(c, "ppfp", ppfp);
+  TEST("(disp testcfn ppfp)");
+  fail_unless(NIL_P(ret));
+  result = arc_inside(c, ppfp);
+  fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#<procedure>")) == 0);
+}
+END_TEST
+
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -602,6 +640,7 @@ int main(void)
   tcase_add_test(tc_pp, test_pp_hash);
   tcase_add_test(tc_pp, test_pp_vector);
   tcase_add_test(tc_pp, test_pp_tagged);
+  tcase_add_test(tc_pp, test_pp_cfunc);
 
   suite_add_tcase(s, tc_pp);
   sr = srunner_create(s);
