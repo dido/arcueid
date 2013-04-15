@@ -667,6 +667,28 @@ AFFDEF(arc_sref)
 }
 AFFEND
 
+value arc_len(arc *c, value obj)
+{
+  switch (TYPE(obj)) {
+  case T_NIL:
+    /* Note that, oddly, PG-Arc returns 1 for this! */
+    return(INT2FIX(0));
+  case T_STRING:
+    return(INT2FIX(arc_strlen(c, obj)));
+  case T_CONS:
+    return(arc_list_length(c, obj));
+  case T_VECTOR:
+    return(INT2FIX(VECLEN(obj)));
+  case T_TABLE:
+    return(INT2FIX(arc_hash_length(c, obj)));
+  default:
+    /* Note that PG-Arc also allows the length of symbols to be taken,
+       but why this should be remains inexplicable to me. */
+    arc_err_cstrfmt(c, "can't get length of object of type %d", TYPE(obj));
+  }
+  return(CNIL);
+}
+
 extern typefn_t __arc_fixnum_typefn__;
 extern typefn_t __arc_flonum_typefn__;
 extern typefn_t __arc_complex_typefn__;
@@ -835,6 +857,7 @@ static struct {
   /* miscellaneous OS operations */
   /* miscellaneous */
   { "sref", -2, arc_sref },
+  { "len", 1, arc_len },
   { "arcueid-code-setname", 2, arc_code_setname },
   {NULL, 0, NULL }
 };
