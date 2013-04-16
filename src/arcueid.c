@@ -769,6 +769,7 @@ static struct {
   { "rand", -2, arc_rand },
   { "sqrt", 1, arc_sqrt },
   { "trunc", 1, arc_trunc },
+  { "abs", 1, arc_abs },
 
   /* Table Operations */
   { "table", 0, arc_newtable },
