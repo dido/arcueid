@@ -156,7 +156,7 @@ AFFDEF(arc_scmark)
   AV(bind) = arc_hash_lookup(c, AV(cm), AV(key));
   if (AV(bind) == CUNBOUND)
     AV(bind) = CNIL;
-  bind = cons(c, val, bind);
+  AV(bind) = cons(c, AV(val), AV(bind));
   arc_hash_insert(c, AV(cm), AV(key), AV(bind));
   ARETURN(val);
   AFEND;
