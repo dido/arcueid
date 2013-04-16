@@ -187,6 +187,29 @@ value arc_outstring(arc *c, value name)
   return(mkstringio(c, T_OUTPORT, CNIL, name));
 }
 
+AFFDEF(arc_instring2)
+{
+  AARG(str);
+  AOARG(name);
+  AFBEGIN;
+  if (!BOUND_P(AV(name)))
+    AV(name) = CNIL;
+  ARETURN(arc_instring(c, AV(str), AV(name)));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_outstring2)
+{
+  AOARG(name);
+  AFBEGIN;
+  if (!BOUND_P(AV(name)))
+    AV(name) = CNIL;
+  ARETURN(arc_outstring(c, AV(name)));
+  AFEND;
+}
+AFFEND
+
 value arc_inside(arc *c, value sio)
 {
   /* XXX type checks */
