@@ -795,6 +795,9 @@ static struct {
   { "writec", -2, arc_writec },
   { "infile", -2, arc_infile },
   { "outfile", -2, arc_outfile },
+  { "instring", -2, arc_instring2 },
+  { "outstring", -2, arc_outstring2 },
+  { "inside", 1, arc_inside },
   { "write", -2, arc_write },
   { "disp", -2, arc_disp },
   { "close", -2, arc_close },
@@ -804,6 +807,9 @@ static struct {
   { "stdout", -2, arc_stdout },
   { "stderr", -2, arc_stderr },
   /* Threads */
+  { "scmark", -2, arc_scmark },
+  { "ccmark", -2, arc_ccmark },
+  { "cmark", -2, arc_cmark },
   /* Networking */
   /* File system operations */
   /* Error handling and continuations */
