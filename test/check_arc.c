@@ -1675,8 +1675,6 @@ START_TEST(test_insortnew)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_defmemo)
 {
   value ret, cctx, code, clos;
@@ -1909,6 +1907,8 @@ START_TEST(test_obj)
   fail_unless(ret == CTRUE);
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_copy)
 {
@@ -2513,7 +2513,6 @@ int main(void)
   tcase_add_test(tc_arc, test_reinsert_sorted);
   tcase_add_test(tc_arc, test_insortnew);
 
-#if 0
   /* memo is tested by defmemo */
   tcase_add_test(tc_arc, test_defmemo);
   tcase_add_test(tc_arc, test_lte);
@@ -2539,6 +2538,7 @@ int main(void)
   tcase_add_test(tc_arc, test_tablist);
   tcase_add_test(tc_arc, test_listtab);
   tcase_add_test(tc_arc, test_obj);
+#if 0
   /* no tests for load-table, read-table, load-tables, save-table, or
      write-table yet */
   tcase_add_test(tc_arc, test_copy);
