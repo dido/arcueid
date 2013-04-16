@@ -184,10 +184,26 @@ void arc_err_cstrfmt(arc *c, const char *fmt, ...)
   longjmp(TEJMP(c->curthread), 1);
 }
 
+static AFFDEF(exception_pprint)
+{
+  AARG(sexpr, disp, fp);
+  AOARG(visithash);
+  AVAR(dw, wc);
+  AFBEGIN;
+  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  AFCALL(AV(dw), arc_mkstringc(c, "#<exception: "), CTRUE, AV(fp), CNIL);
+  AFCALL(AV(dw), arc_details(c, AV(sexpr)), AV(disp), AV(fp), AV(visithash));
+  AFCALL(AV(wc), arc_mkchar(c, '>'), AV(fp));
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 typefn_t __arc_exception_typefn__ = {
   exception_marker,
   __arc_null_sweeper,
-  NULL,
+  exception_pprint,
   NULL,
   NULL,
   NULL,
