@@ -501,7 +501,7 @@ value arc_trunc(arc *c, value v)
       }
       bn = arc_mkbignuml(c, 0L);
       mpz_set_d(REPBNUM(bn), REPFLO(v));
-      return(bn);
+      return(__arc_bignum_fixnum(c, bn));
     }
 #else
     arc_err_cstrfmt(c, "flonum->fixnum conversion overflow (this version of Arcueid does not have bignum support)");
@@ -515,7 +515,7 @@ value arc_trunc(arc *c, value v)
 
       bn = arc_mkbignuml(c, 0L);
       mpz_tdiv_q(REPBNUM(bn), mpq_numref(REPRAT(v)), mpq_denref(REPRAT(v)));
-      return(bn);
+      return(__arc_bignum_fixnum(c, bn));
     }
     break;
 #endif
