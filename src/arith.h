@@ -52,6 +52,10 @@ extern value __arc_mod2(arc *c, value arg1, value arg2);
 extern value __arc_neg(arc *c, value arg);
 extern value __arc_str2flo(arc *c, value obj, value b, int strptr, int limit);
 extern value __arc_str2int(arc *c, value obj, value base, int strptr, int limit);
+extern value (*__arc_coercefn(arc *c, value val))(arc *, value, enum arc_types);;
+extern value __arc_bignum_fixnum(arc *c, value n);
+extern value __arc_rational_int(arc *c, value n);
+
 
 extern value arc_numcmp(arc *c, value v1, value v2);
 extern value arc_exact(arc *c, value v);
@@ -71,5 +75,6 @@ extern value __arc_arg(arc *c, value v);
 extern value arc_srand(arc *ccc, value seed);
 extern int arc_rand(arc *c, value thr);
 extern value arc_trunc(arc *c, value v);
+extern value arc_abs(arc *c, value v);
 
 #endif
