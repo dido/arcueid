@@ -17,6 +17,8 @@
   along with this program; if not, see <http://www.gnu.org/licenses/>.
 */
 #include <check.h>
+#include <stdlib.h>
+#include <setjmp.h>
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/builtins.h"
@@ -37,24 +39,27 @@
 void *alloca (size_t);
 #endif
 
+extern void __arc_print_string(arc *c, value ppstr);
+
 arc *c, cc;
+jmp_buf errbuf;
 
-#define QUANTA 65536
+#define QUANTA 1048576
 
-#define CPUSH_(val) CPUSH(thr, val)
+#define CPUSH_(val) CPUSH(c->curthread, val)
 
-#define XCALL0(clos) do {			\
-    TQUANTA(thr) = QUANTA;			\
-    TVALR(thr) = clos;				\
-    TARGC(thr) = 0;				\
-    __arc_thr_trampoline(c, thr, TR_FNAPP);	\
+#define XCALL0(clos) do {				\
+    TQUANTA(c->curthread) = QUANTA;			\
+    TVALR(c->curthread) = clos;				\
+    TARGC(c->curthread) = 0;				\
+    __arc_thr_trampoline(c, c->curthread, TR_FNAPP);	\
   } while (0)
 
-#define XCALL(fname, ...) do {			\
-    TVALR(thr) = arc_mkaff(c, fname, CNIL);	\
-    TARGC(thr) = NARGS(__VA_ARGS__);		\
-    FOR_EACH(CPUSH_, __VA_ARGS__);		\
-    __arc_thr_trampoline(c, thr, TR_FNAPP);	\
+#define XCALL(fname, ...) do {				\
+    TVALR(c->curthread) = arc_mkaff(c, fname, CNIL);	\
+    TARGC(c->curthread) = NARGS(__VA_ARGS__);		\
+    FOR_EACH(CPUSH_, __VA_ARGS__);			\
+    __arc_thr_trampoline(c, c->curthread, TR_FNAPP);	\
   } while (0)
 
 AFFDEF(compile_something)
@@ -76,91 +81,228 @@ AFFEND
 
 #define TEST(sexpr)				\
   COMPILE(sexpr);				\
-  cctx = TVALR(thr);				\
+  cctx = TVALR(c->curthread);			\
   code = arc_cctx2code(c, cctx);		\
   clos = arc_mkclos(c, code, CNIL);		\
   XCALL0(clos);					\
-  ret = TVALR(thr)
+  ret = TVALR(c->curthread)
 
-START_TEST(test_dynamic_wind_noerr)
+static void errhandler(arc *c, value str)
 {
-  value thr, cctx, clos, code, ret;
-  thr = arc_mkthread(c);
+  longjmp(errbuf, 1);
+}
 
-  TEST("(assign protect (annotate 'mac (fn (during after) `(dynamic-wind (fn ()) ,during ,after))))");
-  TEST("(assign list (fn args args))");
+static void errhandler2(arc *c, value str)
+{
+  fprintf(stderr, "Error\n");
+  __arc_print_string(c, str);
+  longjmp(errbuf, 1);
+}
 
-  TEST("((fn (x y cont) (list (+ 3 (protect (fn () (protect (fn () (+ x y)) (fn () (assign y (+ y 1))))) (fn () (assign x (+ y 1))))) x y)) 0 0 nil)");
+
+START_TEST(test_divzero_fixnum)
+{
+  value ret, cctx, code, clos;
+
+  c->errhandler = errhandler;
+  if (setjmp(errbuf) == 1) {
+    fail_unless(1);		/* success */
+    return;
+  }
+  TEST("(/ 1 0)");
+  fail("division by zero exception not raised");
+  fail_unless(ret);
+}
+END_TEST
+
+START_TEST(test_err)
+{
+  value ret, cctx, code, clos;
+
+  c->errhandler = errhandler;
+  if (setjmp(errbuf) == 1) {
+    fail_unless(1);		/* success */
+    return;
+  }
+  TEST("(err \"test raising an error\")");
+  fail("err did not raise an exception");
+  fail_unless(ret);
+}
+END_TEST
+
+START_TEST(test_on_err)
+{
+  value ret, cctx, code, clos;
+  value details;
+
+  c->errhandler = errhandler2;
+  if (setjmp(errbuf) == 1) {
+    fail("on-err did not catch the exception!");
+    return;
+  }
+  TEST("(on-err (fn (x) x) (fn () (err \"test raising an error\")))");
+  fail_unless(TYPE(ret) == T_EXCEPTION);
+  details = arc_details(c, ret);
+  fail_unless(FIX2INT(arc_strcmp(c, details, arc_mkstringc(c, "test raising an error"))) == 0);
+}
+END_TEST
+
+START_TEST(test_on_err_nested)
+{
+  value ret, cctx, code, clos;
+
+  c->errhandler = errhandler2;
+  if (setjmp(errbuf) == 1) {
+    fail("on-err did not catch the exception!");
+    return;
+  }
+  /* this should evaluate to 4 as the continuations are unwound */
+  TEST("(+ (let x 1 (+ (on-err (fn (x) 1) (fn () (+ 100 (err \"raise error\")))) x)) 2)");
+  fail_unless(ret == INT2FIX(4));
+}
+END_TEST
+
+START_TEST(test_ccc)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(+ 1 (ccc (fn (c) (c 41) 43)))");
+  fail_unless(ret == INT2FIX(42));
+}
+END_TEST
+
+START_TEST(test_protect_noerr)
+{
+  value ret, cctx, code, clos;
+
+  TEST("(with (x 0 y 0) (list (+ 3 (protect (fn () (protect (fn () (+ x y)) (fn () (++ y)))) (fn () (= x (+ y 1))))) x y))");
   fail_unless(car(ret) == INT2FIX(3));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
 }
 END_TEST
 
-START_TEST(test_dynamic_wind_ccc)
+START_TEST(test_protect_ccc)
 {
-  value thr, cctx, clos, code, ret;
-  thr = arc_mkthread(c);
+  value ret, cctx, code, clos;
 
-  TEST("(assign protect (annotate 'mac (fn (during after) `(dynamic-wind (fn ()) ,during ,after))))");
-  TEST("(assign list (fn args args))");
-
-  TEST("((fn (x y cont) (list (+ 1 (ccc (fn (c) (assign cont c) (protect (fn () (protect (fn () (cont 100)) (fn () (assign y (+ y 1))))) (fn () (assign x (+ x 1))))))) x y)) 0 0 nil)");
+  TEST("(with (x 0 y 0 cont nil) (list (+ 1 (ccc (fn (c) (= cont c) (protect (fn () (protect (fn () (cont 100)) (fn () (++ y)))) (fn () (++ x)))))) x y))");
   fail_unless(car(ret) == INT2FIX(101));
   fail_unless(car(cdr(ret)) == INT2FIX(1));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
 }
 END_TEST
 
-START_TEST(test_on_err_noerr)
+/* First case of err.  No on-err rescue functions registered */
+START_TEST(test_protect_err1)
 {
-  value thr, cctx, clos, code, ret;
-  thr = arc_mkthread(c);
+  value ret, cctx, code, clos;
 
-  TEST("(on-err (fn (err) (details err)) (fn () 1))");
-  fail_unless(ret == INT2FIX(1));
+  c->errhandler = errhandler2;
+  if (setjmp(errbuf) == 1) {
+    /* Success.  Check if the global variables that were mentioned in the
+       protect clauses were set appropriately */
+    TEST("(and (is x 3) (is y 2))");
+    fail_unless(ret == CTRUE);
+    return;
+  }
+  TEST("(do (= x nil) (= y nil) (protect (fn () (protect (fn () (err \"test raising an error\")) (fn () (= y 2)))) (fn () (= x (+ y 1)))))");
+  fail("err did not raise an exception");
+  fail_unless(ret);
 }
 END_TEST
 
-START_TEST(test_on_err)
+/* Second case of err.  On-err rescue functions registered */
+START_TEST(test_protect_err2)
 {
-  value thr, cctx, clos, code, ret;
-  thr = arc_mkthread(c);
+  value ret, cctx, code, clos;
 
-  c->curthread = thr;
-  TEST("(on-err (fn (err) (details err)) (fn () (err \"bad\")))");
-  fail_unless(TYPE(ret) == T_STRING);
-  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "bad")) == 0);
+  c->errhandler = errhandler2;
+  if (setjmp(errbuf) == 1) {
+    fail("on-err did not catch the exception!");
+    return;
+  }
+
+  TEST("(with (x nil exc nil) (list (+ 1 (on-err (fn (ex) (= exc ex) (+ x 1)) (fn () (protect (fn () (err \"test\")) (fn () (= x 1)))))) x exc))");
+  fail_unless(car(ret) == INT2FIX(3));
+
+  /* This should set y to 1, and x to y+2, and the return value of on-err
+     should be 1 + x + y */
+  TEST("(with (x nil y nil exc nil) (list (+ 1 (on-err (fn (ex) (= exc ex) (+ x y)) (fn () (protect (fn () (protect (fn () (err \"test raising an error\")) (fn () (= y 1)))) (fn () (= x (+ y 2))))))) x y exc))");
+  fail_unless(car(ret) == INT2FIX(5));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+  fail_unless(TYPE(car(cdr(cdr(cdr(ret))))) == T_EXCEPTION);
 }
 END_TEST
 
-START_TEST(test_on_err_cstrfmt)
+START_TEST(test_after)
 {
-  value thr, cctx, clos, code, ret;
-  thr = arc_mkthread(c);
+  value ret, cctx, code, clos;
 
-  c->curthread = thr;
-  TEST("(on-err (fn (err) (details err)) (fn () (/ 1 0)))");
-  fail_unless(TYPE(ret) == T_STRING);
-  fail_unless(arc_strcmp(c, ret, arc_mkstringc(c, "Division by zero")) == 0);
+  TEST("(with (x nil y nil) (list (+ 1 (on-err (fn (ex) (= exc ex) (+ x y)) (fn () (after (after (err \"test\") (= y 1)) (= x (+ y 2)))))) x y exc))");
+  fail_unless(car(ret) == INT2FIX(5));
+  fail_unless(car(cdr(ret)) == INT2FIX(3));
+  fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+  fail_unless(TYPE(car(cdr(cdr(cdr(ret))))) == T_EXCEPTION);
 }
 END_TEST
 
 int main(void)
 {
   int number_failed;
-  Suite *s = suite_create("Error Handling");
-  TCase *tc_err = tcase_create("Error Handling");
+  Suite *s = suite_create("error handling");
+  TCase *tc_err = tcase_create("error handling");
   SRunner *sr;
+  value ret, cctx, code, clos;
+  int i;
 
   c = &cc;
-  arc_init(c);
+  c->errhandler = errhandler;
 
-  tcase_add_test(tc_err, test_dynamic_wind_noerr);
-  tcase_add_test(tc_err, test_dynamic_wind_ccc);
-  tcase_add_test(tc_err, test_on_err_noerr);
+  if (setjmp(errbuf) != 0) {
+    printf("unhandled error received\n");
+    abort();
+  }
+  arc_init(c);
+  c->curthread = arc_mkthread(c);
+  /* Load arc.arc into our system */
+  TEST("(assign initload (infile \"./arc.arc\"))");
+  if (NIL_P(ret)) {
+    fprintf(stderr, "failed to load arc.arc");
+    return(EXIT_FAILURE);
+  }
+  i=0;
+  for (;;) {
+    i++;
+    TEST("(assign sexpr (sread initload nil))");
+    if (ret == CNIL)
+      break;
+    /*
+    printf("%d: ", i);
+    TEST("(disp sexpr)");
+    TEST("(disp #\\u000a)");
+    */
+    /*
+    TEST("(disp (eval sexpr))");
+    TEST("(disp #\\u000a)");
+    */
+    TEST("(eval sexpr)");
+    c->gc(c);
+  }
+  TEST("(close initload)");
+  c->gc(c);
+
+  tcase_add_test(tc_err, test_divzero_fixnum);
+  tcase_add_test(tc_err, test_err);
   tcase_add_test(tc_err, test_on_err);
-  tcase_add_test(tc_err, test_on_err_cstrfmt);
+  tcase_add_test(tc_err, test_on_err_nested);
+  tcase_add_test(tc_err, test_ccc);
+  tcase_add_test(tc_err, test_protect_noerr);
+  tcase_add_test(tc_err, test_protect_ccc);
+  tcase_add_test(tc_err, test_protect_err1);
+  tcase_add_test(tc_err, test_protect_err2);
+  tcase_add_test(tc_err, test_after);
 
   suite_add_tcase(s, tc_err);
   sr = srunner_create(s);
