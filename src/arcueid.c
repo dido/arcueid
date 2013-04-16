@@ -535,12 +535,33 @@ value arc_cmp(arc *c, value v1, value v2)
   return(CNIL);
 }
 
-static value gt2(arc *c, value v1, value v2, value vh1, value vh2)
+/* Similar to pairwise except that it steps through each element one
+   at a time and checks its neighbor as well. */
+static AFFDEF(pairwise2)
+{
+  AARG(pred, lst);
+  AFBEGIN;
+
+  for (;;) {
+    if (NIL_P(AV(lst)))
+      ARETURN(CTRUE);
+    if (NIL_P(cdr(AV(lst))))
+      ARETURN(CTRUE);
+    AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)));
+    if (NIL_P(AFCRV))
+      ARETURN(CNIL);
+    AV(lst) = cdr(AV(lst));
+  }
+  AFEND;
+}
+AFFEND
+
+static value gt2(arc *c, value v1, value v2)
 {
   return((FIX2INT(arc_cmp(c, v1, v2)) > 0) ? CTRUE : CNIL);
 }
 
-static value lt2(arc *c, value v1, value v2, value vh1, value vh2)
+static value lt2(arc *c, value v1, value v2)
 {
   return((FIX2INT(arc_cmp(c, v1, v2)) < 0) ? CTRUE : CNIL);
 }
@@ -550,9 +571,9 @@ AFFDEF(arc_gt)
   ARARG(list);
   AFBEGIN;
   /* tail call */
-  AFTCALL(arc_mkaff(c, pairwise, CNIL),
-	  arc_mkccode(c, 4, gt2, CNIL),
-	  AV(list), CNIL, CNIL);
+  AFTCALL(arc_mkaff(c, pairwise2, CNIL),
+	  arc_mkccode(c, 2, gt2, CNIL),
+	  AV(list));
   AFEND;
 }
 AFFEND
@@ -562,9 +583,9 @@ AFFDEF(arc_lt)
   ARARG(list);
   AFBEGIN;
   /* tail call */
-  AFTCALL(arc_mkaff(c, pairwise, CNIL),
-	  arc_mkccode(c, 4, lt2, CNIL),
-	  AV(list), CNIL, CNIL);
+  AFTCALL(arc_mkaff(c, pairwise2, CNIL),
+	  arc_mkccode(c, 2, lt2, CNIL),
+	  AV(list));
   AFEND;
 }
 AFFEND
