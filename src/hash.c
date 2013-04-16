@@ -23,6 +23,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
+#include "vmengine.h"
 #include "../config.h"
 
 #if SIZEOF_LONG >= 8
@@ -348,10 +349,22 @@ static AFFDEF(hash_isocmp)
 }
 AFFEND
 
+static AFFDEF(xhash_apply)
+{
+  AARG(tbl, key, dflt);
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, arc_xhash_lookup, CNIL), AV(tbl), AV(key));
+  if (BOUND_P(AFCRV))
+    ARETURN(AFCRV);
+  ARETURN(AV(dflt));
+  AFEND;
+}
+AFFEND
+
 /* A hash can be applied with an index and an optional default value */
 static int hash_apply(arc *c, value thr, value tbl)
 {
-  value key, dflt = CNIL, val;
+  value key, dflt = CNIL;
 
   if (arc_thr_argc(c, thr) == 2) {
     dflt = arc_thr_pop(c, thr);
@@ -361,10 +374,11 @@ static int hash_apply(arc *c, value thr, value tbl)
     return(TR_RC);
   }
   key = arc_thr_pop(c, thr);
-  val = arc_hash_lookup(c, tbl, key);
-  val = (BOUND_P(val)) ? val : dflt;
-  arc_thr_set_valr(c, thr, val);
-  return(TR_RC);
+  /* This is one way one can make a tail call from a non-AFF. */
+  __arc_mkenv(c, thr, 0, 0);	/* null env required */
+  __arc_affapply(c, thr, CNIL, arc_mkaff(c, xhash_apply, CNIL), tbl, key, dflt,
+		 CLASTARG);
+  return(TR_FNAPP);
 }
 
 int arc_hash_length(arc *c, value hash)
