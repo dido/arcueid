@@ -473,9 +473,8 @@ static AFFDEF(compile_quote)
   AARG(expr, ctx, env, cont);
   AFBEGIN;
   (void)env;	    /* not used */
-  /* compiling quotes need not be more complex... */
-  arc_emit1(c, AV(ctx), ildl, find_literal(c, AV(ctx), car(AV(expr))));
-  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  /* Anything that is quoted becomes a literal */
+  ARETURN(compile_literal(c, car(AV(expr)), AV(ctx), AV(cont)));
   AFEND;
 }
 AFFEND
