@@ -536,9 +536,10 @@ value arc_abs(arc *c, value v)
   case T_BIGNUM:
   case T_RATIONAL:
   case T_FLONUM:
-    if (arc_numcmp(c, v, INT2FIX(0)) < 0) {
+    if (FIX2INT(arc_numcmp(c, v, INT2FIX(0))) < 0) {
       return(__arc_mul2(c, v, INT2FIX(-1)));
     }
+    return(v);
     break;
   case T_COMPLEX:
     return(arc_mkflonum(c, cabs(REPCPX(v))));
