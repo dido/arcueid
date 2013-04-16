@@ -1479,8 +1479,6 @@ START_TEST(test_w_outfile)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_w_instring)
 {
   value ret, cctx, code, clos;
@@ -1523,7 +1521,6 @@ START_TEST(test_int)
   fail_unless(ret == INT2FIX(256));
 }
 END_TEST
-
 
 START_TEST(test_rand_choice)
 {
@@ -1677,6 +1674,8 @@ START_TEST(test_insortnew)
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(7));
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_defmemo)
 {
@@ -2482,7 +2481,6 @@ int main(void)
   tcase_add_test(tc_arc, test_w_stdin);
   tcase_add_test(tc_arc, test_w_infile);
   tcase_add_test(tc_arc, test_w_outfile);
-#if 0
   tcase_add_test(tc_arc, test_w_instring);
   tcase_add_test(tc_arc, test_w_outstring);
   tcase_add_test(tc_arc, test_w_appendfile);
@@ -2514,6 +2512,8 @@ int main(void)
   tcase_add_test(tc_arc, test_insort);
   tcase_add_test(tc_arc, test_reinsert_sorted);
   tcase_add_test(tc_arc, test_insortnew);
+
+#if 0
   /* memo is tested by defmemo */
   tcase_add_test(tc_arc, test_defmemo);
   tcase_add_test(tc_arc, test_lte);
@@ -2542,6 +2542,7 @@ int main(void)
   /* no tests for load-table, read-table, load-tables, save-table, or
      write-table yet */
   tcase_add_test(tc_arc, test_copy);
+
   tcase_add_test(tc_arc, test_abs);
   tcase_add_test(tc_arc, test_round);
   tcase_add_test(tc_arc, test_roundup);
