@@ -106,14 +106,19 @@ AFFEND
 AFFDEF(arc_on_err)
 {
   AARG(handler, thunk);
+  value ret;
   AFBEGIN;
   /* Silence error messages about them being unused.  They are used
      indirectly. */
   (void)handler;
   (void)thunk;
   TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
-  AFTCALL(arc_mkaff(c, arc_callcc, CNIL), arc_mkaff2(c, ccchandler, CNIL,
-						     TENVR(thr)));
+  AFCALL(arc_mkaff(c, arc_callcc, CNIL), arc_mkaff2(c, ccchandler, CNIL,
+						    TENVR(thr)));
+  ret = AFCRV;
+  if (TYPE(ret) != T_EXCEPTION)
+    ARETURN(ret);
+  AFTCALL(AV(handler), ret);
   AFEND;
 }
 AFFEND
@@ -146,19 +151,18 @@ AFFDEF(arc_err)
   AV(exc) = arc_mkexception(c, AV(str));
   if (NIL_P(TEXH(thr))) {
     /* if no exception handler is available, call the default error
-       handler if one is set, */
+       handler if one is set, and longjmp away */
     if (c->errhandler != NULL)
       c->errhandler(c, arc_details(c, AV(exc)));
     longjmp(TEJMP(thr), 2);
   }
 
-  /* Otherwise, invoke the error handler function with the error
-     we are passed, and then apply its return value to the continuation
-     that is part of TEXH. */
+  /* Otherwise, apply the exception to the continuation, so we 
+     that an error was raised an the error handler needs to be
+     called from arc_on_err. */
   AV(cont) = car(TEXH(thr));
   AV(handler) = cdr(TEXH(thr));
-  AFCALL(AV(handler), AV(exc));
-  AFTCALL(AV(cont), AFCRV);
+  AFTCALL(AV(cont), AV(exc));
   AFEND;
 }
 AFFEND
