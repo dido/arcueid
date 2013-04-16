@@ -364,6 +364,8 @@ extern value arc_mkclos(arc *c, value code, value env);
 /* String Port I/O */
 extern value arc_instring(arc *c, value str, value name);
 extern value arc_outstring(arc *c, value name);
+extern int arc_instring2(arc *c, value thr);
+extern int arc_outstring2(arc *c, value thr);
 extern value arc_inside(arc *c, value sio);
 
 /* File I/O */
