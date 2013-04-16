@@ -1425,21 +1425,32 @@ START_TEST(test_odd)
 }
 END_TEST
 
-#if 0
 /* compare with the tests for protect in check_error.c */
 START_TEST(test_after)
 {
   value ret, cctx, code, clos;
 
-  TEST("(on-err [nil] (fn () (after (after (err \"test\") (= y 1)) (= x (+ y 2)))))");
-  fail_unless(NIL_P(ret));
-#if 0
   TEST("(with (x nil y nil) (list (+ 1 (on-err (fn (ex) (= exc ex) (+ x y)) (fn () (after (after (err \"test\") (= y 1)) (= x (+ y 2)))))) x y exc))");
   fail_unless(car(ret) == INT2FIX(5));
   fail_unless(car(cdr(ret)) == INT2FIX(3));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
   fail_unless(TYPE(car(cdr(cdr(cdr(ret))))) == T_EXCEPTION);
-#endif
+}
+END_TEST
+
+START_TEST(test_w_stdout)
+{
+  value ret, cctx, code, clos;
+  TEST("(is (let sop (outstring) (w/stdout sop (write '(1 2))) (inside sop)) \"(1 2)\")");
+  fail_unless(ret == CTRUE);
+}
+END_TEST
+
+START_TEST(test_w_stdin)
+{
+  value ret, cctx, code, clos;
+  TEST("(w/instring ins \"Hello\" (w/stdin ins (iso (readline) \"Hello\")))");
+  fail_unless(ret == CTRUE);
 }
 END_TEST
 
@@ -1447,8 +1458,8 @@ START_TEST(test_w_infile)
 {
   value ret, cctx, code, clos;
 
-  TEST("(iso (w/infile f \"check_arc.c\" (= myinfile f) (readline f)) \"/* Do not change this comment -- the tests depend on it! */\")");
-  fail_unless(ret == CTRUE);
+  TEST("(w/infile f \"check_arc.c\" (= myinfile f) (readline f))");
+  fail_unless(TYPE(ret) == T_STRING);
   ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "myinfile"));
   fail_unless(TYPE(ret) == T_INPORT);
 }
@@ -1467,6 +1478,8 @@ START_TEST(test_w_outfile)
   unlink("tmp/testoutfile.txt");
 }
 END_TEST
+
+#if 0
 
 START_TEST(test_w_instring)
 {
@@ -1495,22 +1508,6 @@ START_TEST(test_w_outstring)
 {
   value ret, cctx, code, clos;
   TEST("(iso (w/outstring os (writec #\\蛟 os) (inside os)) \"蛟\")");
-  fail_unless(ret == CTRUE);
-}
-END_TEST
-
-START_TEST(test_w_stdout)
-{
-  value ret, cctx, code, clos;
-  TEST("(iso (let sop (outstring) (w/stdout sop (prn '(1 2))) (inside sop)) \"(1 2)\n\")");
-  fail_unless(ret == CTRUE);
-}
-END_TEST
-
-START_TEST(test_w_stdin)
-{
-  value ret, cctx, code, clos;
-  TEST("(w/instring ins \"Hello\" (w/stdin ins (iso (readline) \"Hello\")))");
   fail_unless(ret == CTRUE);
 }
 END_TEST
@@ -2479,15 +2476,16 @@ int main(void)
   tcase_add_test(tc_arc, test_pos);
   tcase_add_test(tc_arc, test_even);
   tcase_add_test(tc_arc, test_odd);
-#if 0
   tcase_add_test(tc_arc, test_after);
+  tcase_add_test(tc_arc, test_w_stdout);
+
+  tcase_add_test(tc_arc, test_w_stdin);
   tcase_add_test(tc_arc, test_w_infile);
   tcase_add_test(tc_arc, test_w_outfile);
+#if 0
   tcase_add_test(tc_arc, test_w_instring);
   tcase_add_test(tc_arc, test_w_outstring);
   tcase_add_test(tc_arc, test_w_appendfile);
-  tcase_add_test(tc_arc, test_w_stdout);
-  tcase_add_test(tc_arc, test_w_stdin);
 
   /* no tests for I/O functions and macros (yet?):
      w/socket
