@@ -528,3 +528,23 @@ value arc_trunc(arc *c, value v)
   }
   return(CNIL);
 }
+
+value arc_abs(arc *c, value v)
+{
+  switch (TYPE(v)) {
+  case T_FIXNUM:
+  case T_BIGNUM:
+  case T_RATIONAL:
+  case T_FLONUM:
+    if (arc_numcmp(c, v, INT2FIX(0)) < 0) {
+      return(__arc_mul2(c, v, INT2FIX(-1)));
+    }
+    break;
+  case T_COMPLEX:
+    return(arc_mkflonum(c, cabs(REPCPX(v))));
+  default:
+    arc_err_cstrfmt(c, "abs expects numeric type, given object of type %d",
+		    TYPE(v));
+  }
+  return(CNIL);
+}
