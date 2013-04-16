@@ -1037,6 +1037,11 @@ START_TEST(test_trunc)
   thr = arc_mkthread(c);
   TEST("(trunc 3.1415)");
   fail_unless(ret == INT2FIX(3));
+
+#ifdef HAVE_GMP_H
+  TEST("(trunc 11/2)");
+  fail_unless(ret == INT2FIX(5));
+#endif
 }
 END_TEST
 
