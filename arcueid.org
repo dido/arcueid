@@ -146,7 +146,7 @@ notice and this notice are preserved.
        - [X] Complement (~)
        - [X] Structure access (. and !)
        - [X] And (&)
-** TODO basic data types [14/16]
+** TODO basic data types [15/17]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -178,6 +178,7 @@ notice and this notice are preserved.
     - [X] Input Ports
     - [X] Output Ports
     - [X] Threads
+    - [X] Exceptions
     - [ ] Channels
     - [ ] Regular Expressions
 ** TODO Runtime Built-In Functions [9/19]
@@ -325,10 +326,10 @@ notice and this notice are preserved.
        - [X] srand
        - [X] sqrt
        - [X] trunc
-     - [ ] C99 math.h functions (Arcueid only) [0/37]
+     - [-] C99 math.h functions (Arcueid only) [3/37]
 	   These functions should support complex arguments in as far
 	   as it makes sense to do so.
-       - [ ] abs -- works for all numeric types
+       - [X] abs -- works for all numeric types
        - [ ] acos
        - [ ] acosh
        - [ ] asin
@@ -360,11 +361,11 @@ notice and this notice are preserved.
        - [ ] pow (alias for expt)
        - [ ] sin
        - [ ] sinh
-       - [ ] sqrt (also in arc3)
+       - [X] sqrt (also in arc3)
        - [ ] tan
        - [ ] tanh
        - [ ] tgamma
-       - [ ] trunc (also in arc3)
+       - [X] trunc (also in arc3)
    - [X] Table operations [2/2]
      - [X] maptable
      - [X] table
@@ -380,7 +381,7 @@ notice and this notice are preserved.
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
      - [X] uniq
-   - [-] Basic I/O primitives (src/io.c) [3/5]
+   - [-] Basic I/O primitives (src/io.c) [4/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
      - [X] Input [5/5]
@@ -398,19 +399,19 @@ notice and this notice are preserved.
 	   all over again, and reinforces the maxim of never mixing
 	   the b functions with the c functions.
        - [X] sread (see the Arc reader above)
-     - [-] Output [2/3]
+     - [X] Output [3/3]
        - [X] writeb
        - [X] writec
-       - [ ] write
+       - [X] write
      - [X] File I/O [3/3]
        - [X] infile
        - [X] outfile
        - [X] close
      - [X] String port I/O [3/3]
-	     Note that doing readb/writeb or readc/writec on a string
-	     port have the same effect.  Strings are made up of Unicode
-	     characters so it would be quite messy to implement a
-	     separate 'byte index' into what is made up of characters.
+	   Note that doing readb/writeb or readc/writec on a string
+	   port have the same effect.  Strings are made up of Unicode
+	   characters so it would be quite messy to implement a
+	   separate 'byte index' into what is made up of characters.
        - [X] instring
        - [X] outstring
        - [X] inside
@@ -420,16 +421,16 @@ notice and this notice are preserved.
              implement CIEL.
        - [ ] seek
        - [ ] tell
-   - [-] Additional I/O functions (src/io.c) [3/8]
+   - [-] Additional I/O functions (src/io.c) [6/8]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
      - [ ] pipe-from
      - [X] stdin
      - [X] stdout
      - [X] stderr
-     - [ ] call-w/stdin
-     - [ ] call-w/stdout
-     - [ ] disp
+     - [X] call-w/stdin
+     - [X] call-w/stdout
+     - [X] disp
      - [ ] flushout -- XXX this is a no-op
    - [ ] Threads [0/2]
      - [ ] Creating and managing threads [0/8]
@@ -504,12 +505,12 @@ notice and this notice are preserved.
    - [ ] Deadlock detection
    - [ ] Thread control
    - [ ] alt mechanism
-** TODO Baseline environment (arc.arc)
-   We will doubtless need to customize the base environment provided in
-   PG-Arc.
+** DONE Baseline environment (arc.arc) [2/2]
+   - [X] Load all arc.arc functions
+   - [X] Test behaviour of all arc.arc functions
 ** TODO pretty printer [1/2]
    - [X] Framework for disp and write
-   - [-] Printers for various types [14/16]
+   - [-] Printers for various types [14/17]
      - [X] nil
      - [X] t
      - [X] Numeric Types [5/5]
@@ -529,6 +530,7 @@ notice and this notice are preserved.
      - [X] Input Ports
      - [X] Output Ports
      - [X] Threads
+     - [ ] Exceptions
      - [ ] Channels
      - [ ] Regular Expressions
 ** TODO REPL [0/3]
