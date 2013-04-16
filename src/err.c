@@ -178,7 +178,7 @@ void arc_err_cstrfmt(arc *c, const char *fmt, ...)
   va_end(ap);
   str = arc_mkstringc(c, cstr);
   /* This is how we can invoke arc_err from a non-AFF */
-  __arc_mkenv(c, thr, 0, 0);	/* null env required */
+  __arc_mkenv(c, c->curthread, 0, 0);	/* null env required */
   __arc_affapply(c, c->curthread, CNIL, arc_mkaff(c, arc_err, CNIL), str,
 		 CLASTARG);
   longjmp(TEJMP(c->curthread), 1);
