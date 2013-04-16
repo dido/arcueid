@@ -326,7 +326,7 @@ static AFFDEF(hash_isocmp)
   vhh1 = __arc_visit(c, AV(v1), AV(vh1));
   /* If we somehow already visited v2 when v1 was not visited in the
      same way, they cannot be the same. */
-  if (__arc_visit2(c, AV(v2), AV(vh2), AV(vhh1)) != CNIL)
+  if (__arc_visit2(c, AV(v2), AV(vh2), vhh1) != CNIL)
     ARETURN(CNIL);
 
   /* Two hash tables must have identical numbers of entries to be isomorphic */
