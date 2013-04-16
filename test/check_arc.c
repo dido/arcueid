@@ -23,6 +23,7 @@
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/builtins.h"
+#include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -442,6 +443,9 @@ START_TEST(test_rev)
   fail_unless(car(ret) == INT2FIX(3));
   fail_unless(car(cdr(ret)) == INT2FIX(2));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(1));
+
+  TEST("(rev nil)");
+  fail_unless(NIL_P(ret));
 }
 END_TEST
 
@@ -1908,8 +1912,6 @@ START_TEST(test_obj)
 }
 END_TEST
 
-#if 0
-
 START_TEST(test_copy)
 {
   value ret, cctx, code, clos;
@@ -1919,7 +1921,6 @@ START_TEST(test_copy)
 
   TEST("(withs (x (obj a 1 b 2 c 3) cp (copy x)) (and (no (is x cp)) (iso x cp)))");
  fail_unless(ret == CTRUE);
-
 }
 END_TEST
 
@@ -1946,9 +1947,9 @@ START_TEST(test_abs)
   TEST("(is (abs -1000000000000000000000000000000000000000000000000000000000000) 1000000000000000000000000000000000000000000000000000000000000)");
   fail_unless(ret == CTRUE);
 
-  TEST("(is (abs 3/2) 3/2)")
+  TEST("(is (abs 3/2) 3/2)");
   fail_unless(ret == CTRUE);
-  TEST("(is (abs -3/2) 3/2)")
+  TEST("(is (abs -3/2) 3/2)");
   fail_unless(ret == CTRUE);
 #endif
 }
@@ -2334,8 +2335,6 @@ START_TEST(test_hash)
 }
 END_TEST
 
-#endif
-
 static void errhandler(arc *c, value str)
 {
   fprintf(stderr, "Error\n");
@@ -2538,11 +2537,9 @@ int main(void)
   tcase_add_test(tc_arc, test_tablist);
   tcase_add_test(tc_arc, test_listtab);
   tcase_add_test(tc_arc, test_obj);
-#if 0
   /* no tests for load-table, read-table, load-tables, save-table, or
      write-table yet */
   tcase_add_test(tc_arc, test_copy);
-
   tcase_add_test(tc_arc, test_abs);
   tcase_add_test(tc_arc, test_round);
   tcase_add_test(tc_arc, test_roundup);
@@ -2557,7 +2554,6 @@ int main(void)
   tcase_add_test(tc_arc, test_union);
   tcase_add_test(tc_arc, test_templates);
   tcase_add_test(tc_arc, test_hash);
-#endif
 
   suite_add_tcase(s, tc_arc);
   sr = srunner_create(s);
