@@ -198,7 +198,7 @@ START_TEST(test_protect_err1)
 {
   value ret, cctx, code, clos;
 
-  c->errhandler = errhandler2;
+  c->errhandler = errhandler;
   if (setjmp(errbuf) == 1) {
     /* Success.  Check if the global variables that were mentioned in the
        protect clauses were set appropriately */
