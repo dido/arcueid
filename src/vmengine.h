@@ -123,7 +123,7 @@ struct vmthread_t {
 
   enum threadstate state;	/* thread state */
   int tid;			/* thread ID */
-  int quanta;			/* time slice */
+  unsigned long quanta;		/* time slice */
   unsigned long long ticks;	/* time used */
   unsigned long long wakeuptime; /* wakeup time */
   int waitfd;			 /* file descriptor to wait on */
