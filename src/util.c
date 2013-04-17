@@ -132,3 +132,32 @@ void __arc_strungetc(arc *c, int *index)
     return;
   (*index)--;
 }
+
+/* Utility functions for queues */
+void __arc_enqueue(arc *c, value thr, value *head, value *tail)
+{
+  value cell;
+
+  cell = cons(c, thr, CNIL);
+  if (*head == CNIL && *tail == CNIL) {
+    *head = cell;
+    *tail = cell;
+    return;
+  }
+  scdr(*tail, cell);
+  *tail = cell;
+}
+
+value __arc_dequeue(arc *c, value *head, value *tail)
+{
+  value thr;
+
+  /* empty queue */
+  if (*head == CNIL && *tail == CNIL)
+    return(CNIL);
+  thr = car(*head);
+  *head = cdr(*head);
+  if (NIL_P(*head))
+    *tail = *head;
+  return(thr);
+}
