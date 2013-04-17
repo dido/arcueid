@@ -154,8 +154,9 @@ struct arc {
   int tid_nonce;		/* nonce for thread IDs */
   int stksize;			/* default stack size for threads */
   value here;			/* here variable (used for dynamic-wind) */
+  value tracethread;		/* tracing thread */
+  int quantum;			/* default quantum */
   void (*errhandler)(struct arc *, value); /* catch-all error handler */
-  value tracethread;			   /* tracing thread */
 
   /* declarations */
   int atstrings;		/* allow atstrings or not */
@@ -354,8 +355,9 @@ extern int __arc_affapply(arc *c, value thr, value ccont, value func, ...);
 extern int __arc_affapply2(arc *c, value thr, value ccont, value func,
 			   value args);
 extern int __arc_affyield(arc *c, value thr, int line);
-extern int __arc_affiowait(arc *c, value thr, int line, int fd);
-extern void __arc_affenv(arc *c, value thr, int nargs, int optargs, int localvars, int rest);
+extern int __arc_affiowait(arc *c, value thr, int line, int fd, int rw);
+extern void __arc_affenv(arc *c, value thr, int nargs, int optargs,
+			 int localvars, int rest);
 extern int __arc_affip(arc *c, value thr);
 
 /* Closures */
@@ -453,6 +455,10 @@ extern value *__arc_getenv(arc *c, value thr, int depth, int index);
 extern value arc_string2num(arc *c, value str, int index, int rational);
 extern value arc_expt(arc *c, value a, value b);
 
+/* Threads and synchronisation */
+extern void arc_thread_dispatch(arc *c);
+extern value arc_spawn(arc *c, value thunk);
+
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
 extern void arc_init_datatypes(arc *c);
@@ -468,6 +474,13 @@ extern int arc_err(arc *c, value thr);
 extern int arc_on_err(arc *c, value thr);
 extern value arc_mkexception(arc *c, value str);
 extern value arc_details(arc *c, value ex);
+
+/* OS-dependent functions */
+extern unsigned long long __arc_milliseconds(void);
+extern value arc_seconds(arc *c);
+extern value arc_msec(arc *c);
+extern value arc_current_process_milliseconds(arc *c);
+extern value arc_setuid(arc *c, value uid);
 
 /* Miscellaneous functions */
 extern int arc_sref(arc *c, value thr);
@@ -564,9 +577,14 @@ extern value arc_bound(arc *c, value sym);
     return(__arc_affyield(c, thr, __LINE__)); case __LINE__:;		\
   } while (0)
 
-#define AIOWAIT(fd)							\
+#define AIOWAITR(fd)							\
   do {									\
-    return(__arc_affiowait(c, thr, __LINE__, fd)); case __LINE__:;	\
+    return(__arc_affiowait(c, thr, __LINE__, fd, 0)); case __LINE__:;	\
+  } while (0)
+
+#define AIOWAITW(fd)							\
+  do {									\
+    return(__arc_affiowait(c, thr, __LINE__, fd, 1)); case __LINE__:;	\
   } while (0)
 
 #define ARETURN(val)			\
