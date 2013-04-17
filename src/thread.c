@@ -214,16 +214,16 @@ static void process_iowait(arc *c, value iowaitdata, int eptimeout)
   /* add fd's in list to epollfd */
   for (thr = iowaitdata; thr; thr = cdr(thr)) {
     niowait++;
-    ev.events = (TWAITRW(thr)) ? EPOLLOUT : EPOLLIN;
-    ev.data.fd = TWAITFD(thr);
-    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(thr), &ev) < 0) {
+    ev.events = (TWAITRW(car(thr))) ? EPOLLOUT : EPOLLIN;
+    ev.data.fd = TWAITFD(car(thr));
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(car(thr)), &ev) < 0) {
       int en = errno;
       if (errno != EEXIST) {
 	arc_err_cstrfmt(c, "error setting epoll for thread on blocking fd (%s; errno=%d)", strerror(en), en);
 	return;
       }
     }
-    arc_hash_insert(c, iowaittbl, INT2FIX(TWAITFD(thr)), thr);
+    arc_hash_insert(c, iowaittbl, INT2FIX(TWAITFD(car(thr))), car(thr));
   }
 
   epevents = (struct epoll_event *)alloca(sizeof(struct epoll_event) * (niowait+2));
@@ -267,12 +267,12 @@ static void process_iowait(arc *c, value iowaitdata, int eptimeout)
   nfds = 0;
   for (thr = iowaitdata; thr; thr = cdr(thr)) {
     niowait++;
-    if (nfds < TWAITFD(thr))
-      nfds = TWAITFD(thr);
-    if (TWAITRW(thr)) {
-      FD_SET(TWAITFD(thr), &wfds);
+    if (nfds < TWAITFD(car(thr)))
+      nfds = TWAITFD(car(thr));
+    if (TWAITRW(car(thr))) {
+      FD_SET(TWAITFD(car(thr)), &wfds);
     } else {
-      FD_SET(TWAITFD(thr), &rfds);
+      FD_SET(TWAITFD(car(thr)), &rfds);
     }
   }
 
@@ -295,11 +295,11 @@ static void process_iowait(arc *c, value iowaitdata, int eptimeout)
   for (thr = iowaitdata; thr; thr = cdr(thr)) {
     int result;
 
-    result = (TWAITRW(thr)) ? FD_ISSET(TWAITFD(thr), &wfds)
-      : FD_ISSET(TWAITFD(thr), &rfds);
+    result = (TWAITRW(car(thr))) ? FD_ISSET(TWAITFD(car(thr)), &wfds)
+      : FD_ISSET(TWAITFD(car(thr)), &rfds);
     if (result) {
-      TWAITFD(thr) = -1;
-      TSTATE(thr) = Tready;
+      TWAITFD(car(thr)) = -1;
+      TSTATE(car(thr)) = Tready;
     }
   }
 }
@@ -432,6 +432,8 @@ void arc_thread_dispatch(arc *c)
       req.tv_nsec = ((st % 1000) * 1000000L);
       nanosleep(&req, NULL);
     }
+    /* Perform garbage collection */
+    c->gc(c);
     /* XXX - detect deadlock */
   }
 }
