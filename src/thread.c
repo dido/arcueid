@@ -16,8 +16,14 @@
   You should have received a copy of the GNU Lesser General Public License
   along with this library. If not, see <http://www.gnu.org/licenses/>
 */
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <time.h>
+#include <sys/time.h>
 #include "arcueid.h"
 #include "vmengine.h"
+#include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -34,6 +40,8 @@
 # include <stddef.h>
 void *alloca (size_t);
 #endif
+
+#define DEFAULT_QUANTUM 1024
 
 static AFFDEF(thread_pprint)
 {
@@ -184,6 +192,282 @@ AFFDEF(arc_ccmark)
 }
 AFFEND
 
+
+#ifdef HAVE_SYS_EPOLL_H
+
+#include <sys/epoll.h>
+
+#define MAX_EVENTS 1048576
+
+/* Version of process_iowait using epoll */
+static void process_iowait(arc *c, value iowaitdata, int eptimeout)
+{
+  value thr, iowaittbl;
+  int niowait=0, n, nfds;
+  static int epollfd = -1;
+  struct epoll_event *epevents, ev;
+
+  if (epollfd < 0)
+    epollfd = epoll_create(MAX_EVENTS);
+
+  iowaittbl = arc_mkhash(c, ARC_HASHBITS);
+  /* add fd's in list to epollfd */
+  for (thr = iowaitdata; thr; thr = cdr(thr)) {
+    niowait++;
+    ev.events = (TWAITRW(thr)) ? EPOLLOUT : EPOLLIN;
+    ev.data.fd = TWAITFD(thr);
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(thr), &ev) < 0) {
+      int en = errno;
+      if (errno != EEXIST) {
+	arc_err_cstrfmt(c, "error setting epoll for thread on blocking fd (%s; errno=%d)", strerror(en), en);
+	return;
+      }
+    }
+    arc_hash_insert(c, iowaittbl, INT2FIX(TWAITFD(thr)), thr);
+  }
+
+  epevents = (struct epoll_event *)alloca(sizeof(struct epoll_event) * (niowait+2));
+  nfds = epoll_wait(epollfd, epevents, niowait, eptimeout);
+  if (nfds < 0) {
+    int en = errno;
+    arc_err_cstrfmt(c, "error waiting for Tiowait fds (%s; errno=%d)",
+		    strerror(en), en);
+    return;
+  }
+
+  for (n=0; n<nfds; n++) {
+    int fd;
+    value thr;
+    fd  = epevents[n].data.fd;
+    thr = arc_hash_lookup(c, iowaittbl, INT2FIX(fd));
+    if (BOUND_P(thr)) {
+      TWAITFD(thr) = -1;
+      TSTATE(thr) = Tready;
+    }
+    epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &ev);
+  }
+}
+
+#elif HAVE_SYS_SELECT_H
+
+#include <sys/select.h>
+#include <unistd.h>
+
+/* Version of process_iowait using select */
+static void process_iowait(arc *c, value iowaitdata, int eptimeout)
+{
+  fd_set rfds, wfds;
+  struct timeval tv;
+  int retval;
+  value thr;
+  int niowait=0, nfds;
+
+  FD_ZERO(&rfds);
+  FD_ZERO(&wfds);
+  nfds = 0;
+  for (thr = iowaitdata; thr; thr = cdr(thr)) {
+    niowait++;
+    if (nfds < TWAITFD(thr))
+      nfds = TWAITFD(thr);
+    if (TWAITRW(thr)) {
+      FD_SET(TWAITFD(thr), &wfds);
+    } else {
+      FD_SET(TWAITFD(thr), &rfds);
+    }
+  }
+
+  tv.tv_sec = eptimeout / 1000;
+  tv.tv_usec = (eptimeout % 1000) * 1000L;
+
+  retval = select(nfds+1, &rfds, &wfds, NULL, &tv);
+  if (retval == -1) {
+    int en = errno;
+    arc_err_cstrfmt(c, "error waiting for Tiowait fds (%s; errno=%d)",
+		    strerror(en), en);
+    return;
+  }
+
+  /* nothing to do? */
+  if (retval == 0)
+    return;
+
+  /* Wake up all the waiting threads with fds for which select said ok */
+  for (thr = iowaitdata; thr; thr = cdr(thr)) {
+    int result;
+
+    result = (TWAITRW(thr)) ? FD_ISSET(TWAITFD(thr), &wfds)
+      : FD_ISSET(TWAITFD(thr), &rfds);
+    if (result) {
+      TWAITFD(thr) = -1;
+      TSTATE(thr) = Tready;
+    }
+  }
+}
+
+#else
+
+/* versions of process_iowait that use other mechanisms for selecting
+   usable file descriptors go here. */
+
+#endif
+
+/* Main dispatcher.  Will run each thread in the thread list for
+   at most c->quanta cycles or until the thread leaves ready state.
+   Also runs garbage collections periodically.  This should
+   be called with at least one thread already in the run queue.
+   Terminates when no more threads are available.
+
+   全く, this is beginning to look a lot a like the reactor pattern!
+*/
+void arc_thread_dispatch(arc *c)
+{
+  value thr, prev;
+  int nthreads, blockedthreads, iowait, sleepthreads, runthreads;
+  int stoppedthreads, need_select;
+  unsigned long long minsleep;
+  value iowaitdata;
+  int eptimeout;
+
+  for (;;) {
+    nthreads = blockedthreads = iowait = stoppedthreads = 0;
+    sleepthreads = runthreads = need_select = 0;
+    minsleep = ULLONG_MAX;
+    iowaitdata = CNIL;
+    for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
+	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
+      thr = car(c->vmqueue);
+      c->curthread = thr;
+      ++nthreads;
+      switch (TSTATE(thr)) {
+	/* Remove a thread in Trelease or Tbroken state from the
+	   queue. */
+      case Trelease:
+      case Tbroken:
+	stoppedthreads++;
+	if (prev == CNIL)
+	  c->vmthreads = cdr(c->vmqueue);
+	else
+	  scdr(prev, cdr(c->vmqueue));
+	if (c->vmthrtail == c->vmqueue)
+	  c->vmthrtail = prev;
+	break;
+      case Talt:
+      case Tsend:
+      case Trecv:
+	/* increment count of threads in blocked states */
+	++blockedthreads;
+	break;
+      case Tsleep:
+	/* Wake up a sleeping thread if the wakeup time is reached */
+	if (__arc_milliseconds() >= TWAKEUP(thr)) {
+	  TSTATE(thr) = Tready;
+	  TVALR(thr) = CNIL;
+	} else {
+	  sleepthreads++;
+	  if (TWAKEUP(thr) < minsleep)
+	    minsleep = TWAKEUP(thr);
+	  continue;
+	}
+	/* fall through and let the thread run if so */
+      case Tready:
+	/* let the thread run */
+	if (TQUANTA(thr) <= 0)
+	  TQUANTA(thr) = c->quantum;
+	__arc_thr_trampoline(c, thr, TR_RESUME);
+	break;
+      case Tcritical:
+	/* If we are in a critical section, allow the thread to keep
+	   running by itself until it leaves the critical state. */
+	while (TSTATE(thr) == Tcritical) {
+	  if (TQUANTA(thr) <= 0)
+	    TQUANTA(thr) = c->quantum;
+	  __arc_thr_trampoline(c, thr, TR_RESUME);
+	}
+	break;
+      case Tiowait:
+	/* Build up the list of threads for which I/O is pending */
+	iowait++;
+	need_select = 1;
+	iowaitdata = cons(c, thr, iowaitdata);
+	break;
+      }
+
+      if (RUNNABLE(thr))
+	runthreads++;
+    }
+
+    /* XXX - should we print a warning message if we abort when all
+       threads are blocked?  I suppose it should be up to the caller
+       to decide whether this is a bad thing or no.  It isn't an
+       issue for the REPL. */
+    if (nthreads == 0 || nthreads == blockedthreads)
+      return;
+
+    /* We have now finished running all threads.  See if we need to
+       do some post-cleanup work */
+    if (need_select) {
+      if ((iowait + blockedthreads) == nthreads) {
+	/* If all threads are blocked on I/O or are waiting on channels,
+	   make epoll wait indefinitely until I/O is possible. */
+	eptimeout = -1;
+      } else if ((iowait + sleepthreads + blockedthreads) == nthreads) {
+	/* If all threads are either asleep, blocked, or waiting on
+	 I/O, wait for at most the time until the first sleep expires. */
+	eptimeout = (minsleep - __arc_milliseconds());
+      } else {
+	/* do not wait if there are any other threads which can run */
+	eptimeout = 0;
+      }
+      process_iowait(c, iowaitdata, eptimeout);
+    }
+
+    /* If all threads are asleep, use nanosleep to wait the the shortest
+       time until it's time for a thread to wake up */
+    if (sleepthreads == nthreads) {
+      unsigned long long st;
+      struct timespec req;
+
+      st = minsleep - __arc_milliseconds();
+      req.tv_sec = st/1000;
+      req.tv_nsec = ((st % 1000) * 1000000L);
+      nanosleep(&req, NULL);
+    }
+    /* XXX - detect deadlock */
+  }
+}
+
+value arc_spawn(arc *c, value thunk)
+{
+  value thr;
+  typefn_t *tfn;
+
+  tfn = __arc_typefn(c, thunk);
+  if (tfn == NULL || tfn->apply == NULL) {
+    arc_err_cstrfmt(c, "cannot apply thunk for spawn");
+    return(CNIL);
+  }
+  thr = arc_mkthread(c);
+  TFUNR(thr) = TVALR(thr) = thunk;
+  /* XXX - copy continuation marks from the spawning thread to the new
+     thread if there is a parent thread. */
+
+  /* If the state on first application is not TR_RESUME, then the thread
+     terminates right then and there and is never enqueued. */
+  if (tfn->apply(c, thr, TVALR(thr)) != TR_RESUME) {
+    TSTATE(thr) = Trelease;
+  } else {
+    /* Otherwise, queue the new thread and enqueue it in the dispatcher. */
+    __arc_enqueue(c, thr, &c->vmthreads, &c->vmthrtail);
+  }
+  return(thr);
+}
+
+value arc_dead(arc *c, value thr)
+{
+  TYPECHECK(thr, T_THREAD);
+  return((TSTATE(thr) == Trelease || TSTATE(thr) == Tbroken) ? CTRUE : CNIL);
+}
+
 void arc_init_threads(arc *c)
 {
   c->vmthreads = CNIL;
@@ -193,6 +477,7 @@ void arc_init_threads(arc *c)
   c->tid_nonce = 0;
   c->stksize = TSTKSIZE;
   c->here = cons(c, INT2FIX(0xdead), CNIL);
+  c->quantum = DEFAULT_QUANTUM;
 }
 
 typefn_t __arc_thread_typefn__ = {
