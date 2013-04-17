@@ -898,6 +898,7 @@ void arc_init_builtins(arc *c)
 
 void arc_init(arc *c)
 {
+  c->atstrings = 0;
   /* Initialise memory manager first */
   arc_init_memmgr(c);
   /* Initialise built-in data type definitions */
