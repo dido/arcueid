@@ -82,33 +82,36 @@ static AFFDEF(fio_ready)
   if (TYPE(AV(fio)) == T_OUTPORT)
     ARETURN(CNIL);
 
-  fp = FIODATA(AV(fio))->fp;
-  /* XXX - NOT PORTABLE! */
+  for (;;) {
+    fp = FIODATA(AV(fio))->fp;
+    /* XXX - NOT PORTABLE! */
 #ifdef _IO_fpos_t
-  check = (fp->_IO_read_ptr != fp->_IO_read_end);
+    check = (fp->_IO_read_ptr != fp->_IO_read_end);
 #else
-  check = (fp->_gptr < (fp)->_egptr);
+    check = (fp->_gptr < (fp)->_egptr);
 #endif
-  if (check)
-    ARETURN(CTRUE);
-  /* No buffered data available. See if the underlying file descriptor
-     is readable. */
-  FD_ZERO(&rfds);
-  FD_SET(fileno(fp), &rfds);
-  tv.tv_usec = tv.tv_sec = 0;
-  retval = select(fileno(fp)+1, &rfds, NULL, NULL, &tv);
-  if (retval == -1) {
-    int en = errno;
+    if (check)
+      ARETURN(CTRUE);
+    /* No buffered data available. See if the underlying file descriptor
+       is readable. */
+    FD_ZERO(&rfds);
+    FD_SET(fileno(fp), &rfds);
+    tv.tv_usec = tv.tv_sec = 0;
+    retval = select(fileno(fp)+1, &rfds, NULL, NULL, &tv);
+    if (retval == -1) {
+      int en = errno;
 
-    arc_err_cstrfmt(c, "error checking file descriptor (%s; errno=%d)",
-		    strerror(en), en);
-    ARETURN(CNIL);
+      arc_err_cstrfmt(c, "error checking file descriptor (%s; errno=%d)",
+		      strerror(en), en);
+      ARETURN(CNIL);
+    }
+
+    if (FD_ISSET(fileno(fp), &rfds))
+      ARETURN(CTRUE);
+
+    /* We have to wait */
+    AIOWAITR(fileno(fp));
   }
-
-  if (retval == 0)
-    ARETURN(CNIL);
-  if (FD_ISSET(fileno(fp), &rfds))
-    ARETURN(CTRUE);
   ARETURN(CNIL);
   AFEND;
 }
