@@ -155,7 +155,7 @@ struct arc {
   int stksize;			/* default stack size for threads */
   value here;			/* here variable (used for dynamic-wind) */
   value tracethread;		/* tracing thread */
-  int quantum;			/* default quantum */
+  unsigned long quantum;	/* default quantum */
   void (*errhandler)(struct arc *, value); /* catch-all error handler */
 
   /* declarations */
