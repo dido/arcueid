@@ -243,9 +243,10 @@ int __arc_affyield(arc *c, value thr, int line)
   return(TR_SUSPEND);
 }
 
-int __arc_affiowait(arc *c, value thr, int line, int fd)
+int __arc_affiowait(arc *c, value thr, int line, int fd, int rw)
 {
-  TWAITFD(thr) = INT2FIX(fd);
+  TWAITFD(thr) = fd;
+  TWAITRW(thr) = rw;
   TSTATE(thr) = Tiowait;
   return(__arc_affyield(c, thr, line));
 }
