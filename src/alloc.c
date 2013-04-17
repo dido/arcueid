@@ -305,11 +305,11 @@ static void markroots(arc *c)
   __arc_markprop(c, c->symtable);
   __arc_markprop(c, c->rsymtable);
   __arc_markprop(c, c->genv);
-  __arc_markprop(c, c->vmthreads);
-  __arc_markprop(c, c->typedesc);
   __arc_markprop(c, c->builtins);
-  __arc_markprop(c, c->here);
+  __arc_markprop(c, c->typedesc);
   __arc_markprop(c, c->curthread);
+  __arc_markprop(c, c->vmthreads);
+  __arc_markprop(c, c->here);
 #ifdef HAVE_TRACING
   __arc_markprop(c, c->tracethread);
 #endif
