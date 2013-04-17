@@ -421,6 +421,8 @@ extern void __arc_append_buffer(arc *c, Rune *buf, int *idx, int bufmax,
 extern void __arc_append_cstring(arc *c, char *buf, value *ppstr);
 extern Rune __arc_strgetc(arc *c, value str, int *index);
 extern void __arc_strungetc(arc *c, int *index);
+extern void __arc_enqueue(arc *c, value thr, value *head, value *tail);
+extern value __arc_dequeue(arc *c, value *head, value *tail);
 
 /* Output */
 extern int arc_write(arc *c, value thr);
@@ -458,6 +460,9 @@ extern value arc_expt(arc *c, value a, value b);
 /* Threads and synchronisation */
 extern void arc_thread_dispatch(arc *c);
 extern value arc_spawn(arc *c, value thunk);
+extern value arc_mkchan(arc *c);
+extern int arc_recv_channel(arc *c, value thr);
+extern int arc_send_channel(arc *c, value thr);
 
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
