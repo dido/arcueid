@@ -96,11 +96,14 @@ enum threadstate {
   Tsend,			/* waiting to send */
   Trecv,			/* waiting to recv */
   Tiowait,			/* I/O wait */
-  Tioready,			/* I/O ready to resume */
+  Tsleep,			/* sleep */
   Tready,			/* ready to be scheduled */
+  Tcritical,			/* critical section */
   Trelease,			/* thread released */
-  Tbroken			/* error break */
+  Tbroken,			/* error break */
 };
+
+#define RUNNABLE(thr) (TSTATE(thr) == Tready || TSTATE(thr) == Tcritical)
 
 struct vmthread_t {
   value funr;			/* function pointer register */
@@ -123,7 +126,8 @@ struct vmthread_t {
   int quanta;			/* time slice */
   unsigned long long ticks;	/* time used */
   unsigned long long wakeuptime; /* wakeup time */
-  value waitfd;			 /* file descriptor to wait on */
+  int waitfd;			 /* file descriptor to wait on */
+  int waitrw;			 /* wait on read or write */
   value here;			 /* the local root of the here */
   value exh;			 /* current exception handler */
   jmp_buf errjmp;		 /* error jump point */
@@ -150,6 +154,7 @@ struct vmthread_t {
 #define TTICKS(t) (((struct vmthread_t *)REP(t))->ticks)
 #define TWAKEUP(t) (((struct vmthread_t *)REP(t))->wakeuptime)
 #define TWAITFD(t) (((struct vmthread_t *)REP(t))->waitfd)
+#define TWAITRW(t) (((struct vmthread_t *)REP(t))->waitrw)
 #define TCH(t) (((struct vmthread_t *)REP(t))->here)
 #define TEXH(t) (((struct vmthread_t *)REP(t))->exh)
 #define TEJMP(t) (((struct vmthread_t *)REP(t))->errjmp)
