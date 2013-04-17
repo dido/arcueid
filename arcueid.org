@@ -146,7 +146,7 @@ notice and this notice are preserved.
        - [X] Complement (~)
        - [X] Structure access (. and !)
        - [X] And (&)
-** TODO basic data types [15/17]
+** TODO basic data types [16/17]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -179,7 +179,7 @@ notice and this notice are preserved.
     - [X] Output Ports
     - [X] Threads
     - [X] Exceptions
-    - [ ] Channels
+    - [X] Channels
     - [ ] Regular Expressions
 ** TODO Runtime Built-In Functions [9/19]
    Consider whether or not to provide instructions for the asterisked
@@ -432,9 +432,9 @@ notice and this notice are preserved.
      - [X] call-w/stdout
      - [X] disp
      - [ ] flushout -- XXX this is a no-op
-   - [ ] Threads [0/2]
-     - [ ] Creating and managing threads [0/8]
-       - [ ] new-thread (spawn)
+   - [-] Threads [1/2]
+     - [-] Creating and managing threads [1/8]
+       - [X] new-thread (spawn)
        - [ ] break-thread
        - [ ] kill-thread
        - [ ] current-thread
@@ -442,10 +442,10 @@ notice and this notice are preserved.
        - [ ] sleep
        - [ ] atomic-invoke - implemented using channels
        - [ ] tjoin (not in standard Arc)
-     - [ ] Channels (cf. Limbo and CSP, Arcueid extension) [0/3]
-       - [ ] chan
-       - [ ] <- (recv-channel) *
-       - [ ] <-= (send-channel) *
+     - [X] Channels (cf. Limbo and CSP, Arcueid extension) [3/3]
+       - [X] chan
+       - [X] <- (recv-channel) *
+       - [X] <-= (send-channel) *
    - [ ] Networking [0/11]
      - [ ] open-socket
      - [ ] getaddrinfo (Arcueid only)
@@ -510,7 +510,7 @@ notice and this notice are preserved.
    - [X] Test behaviour of all arc.arc functions
 ** TODO pretty printer [1/2]
    - [X] Framework for disp and write
-   - [-] Printers for various types [14/17]
+   - [-] Printers for various types [16/17]
      - [X] nil
      - [X] t
      - [X] Numeric Types [5/5]
@@ -530,8 +530,8 @@ notice and this notice are preserved.
      - [X] Input Ports
      - [X] Output Ports
      - [X] Threads
-     - [ ] Exceptions
-     - [ ] Channels
+     - [X] Exceptions
+     - [X] Channels
      - [ ] Regular Expressions
 ** TODO REPL [0/3]
    - [ ] Simple non-readline REPL
