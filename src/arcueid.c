@@ -701,6 +701,7 @@ extern typefn_t __arc_code_typefn__;
 extern typefn_t __arc_cont_typefn__;
 extern typefn_t __arc_clos_typefn__;
 extern typefn_t __arc_exception_typefn__;
+extern typefn_t __arc_chan_typefn__;
 typefn_t __arc_tagged_typefn__;
 
 void arc_init_datatypes(arc *c)
@@ -723,6 +724,7 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_INPORT] = &__arc_io_typefn__;
   c->typefns[T_OUTPORT] = &__arc_io_typefn__;
   c->typefns[T_THREAD] = &__arc_thread_typefn__;
+  c->typefns[T_CHAN] = &__arc_chan_typefn__;
   c->typefns[T_VECTOR] = &__arc_vector_typefn__;
 
   __arc_tagged_typefn__.marker = __arc_cons_typefn__.marker;
@@ -829,6 +831,11 @@ static struct {
   { "stdout", -2, arc_stdout },
   { "stderr", -2, arc_stderr },
   /* Threads */
+  { "new-thread", 1, arc_spawn },
+  { "spawn", 1, arc_spawn },
+  { "chan", 0, arc_mkchan },
+  { "<-", -2, arc_recv_channel },
+  { "<-=", -2, arc_send_channel },
   { "scmark", -2, arc_scmark },
   { "ccmark", -2, arc_ccmark },
   { "cmark", -2, arc_cmark },
