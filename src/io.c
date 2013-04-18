@@ -84,6 +84,8 @@ value __arc_allocio(arc *c, int type, struct typefn_t *tfn, size_t xdsize)
 static void io_marker(arc *c, value v, int depth,
 		      void (*markfn)(arc *, value, int))
 {
+  markfn(c, IO(v)->name, depth);
+  markfn(c, IO(v)->io_ops, depth);
   IO(v)->io_tfn->marker(c, v, depth, markfn);
 }
 
