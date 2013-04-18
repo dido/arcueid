@@ -151,7 +151,9 @@ AFFDEF(arc_err)
   AV(exc) = arc_mkexception(c, AV(str));
   if (NIL_P(TEXH(thr))) {
     /* if no exception handler is available, call the default error
-       handler if one is set, and longjmp away */
+       handler if one is set, and longjmp away.  The thread becomes
+       broken if this happens. */
+    TSTATE(thr) = Tbroken;
     if (c->errhandler != NULL)
       c->errhandler(c, arc_details(c, AV(exc)));
     longjmp(TEJMP(thr), 2);
@@ -159,7 +161,8 @@ AFFDEF(arc_err)
 
   /* Otherwise, apply the exception to the continuation, so we 
      that an error was raised an the error handler needs to be
-     called from arc_on_err. */
+     called from arc_on_err.  The thread also becomes broken when
+     this happens. */
   AV(cont) = car(TEXH(thr));
   AV(handler) = cdr(TEXH(thr));
   AFTCALL(AV(cont), AV(exc));
