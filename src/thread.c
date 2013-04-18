@@ -41,7 +41,7 @@
 void *alloca (size_t);
 #endif
 
-#define DEFAULT_QUANTUM 1024
+#define DEFAULT_QUANTUM 65536
 
 static AFFDEF(thread_pprint)
 {
@@ -438,7 +438,8 @@ void arc_thread_dispatch(arc *c)
       req.tv_nsec = ((st % 1000) * 1000000L);
       nanosleep(&req, NULL);
     }
-    /* Perform garbage collection */
+    /* Perform garbage collection: should be done after every cycle
+       with VCGC, as though it were a thread in our scheduler. */
     c->gc(c);
     /* XXX - detect deadlock */
   }
