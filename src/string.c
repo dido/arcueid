@@ -263,7 +263,8 @@ AFFEND
 
 static unsigned long char_hash(arc *c, value v, arc_hs *s)
 {
-  arc_hash_update(s, *((unsigned long *)REP(v)));
+  Rune r = arc_char2rune(c, v);
+  arc_hash_update(s, (unsigned long)r);
   return(1);
 }
 
