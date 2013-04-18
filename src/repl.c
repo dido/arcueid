@@ -155,7 +155,6 @@ int main(int argc, char **argv)
     TEST("(disp #\\u000a)");
     */
     TEST("(eval sexpr)");
-    c->gc(c);
   }
   TEST("(close initload)");
   c->gc(c);
