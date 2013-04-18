@@ -124,7 +124,12 @@ START_TEST(test_gc_cons)
   for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
     count++;
   fail_unless(count == 8);
-  
+
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 0);  
 }
 END_TEST
 
@@ -432,6 +437,108 @@ START_TEST(test_gc_symbol)
 }
 END_TEST
 
+START_TEST(test_gc_vector)
+{
+  value vec;
+  struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
+  Bhdr *ptr;
+  int count, i;
+
+  vec = arc_mkvector(c, 10);
+  for (i=0; i<10; i++)
+    VINDEX(vec, i) = INT2FIX(i);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 1);
+  fail_unless(TYPE(vec) == T_VECTOR);
+  for (i=0; i<10; i++)
+    fail_unless(VINDEX(vec, i) == INT2FIX(i));
+
+  __arc_markprop(c, vec);
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 1);
+  fail_unless(TYPE(vec) == T_VECTOR);
+  for (i=0; i<10; i++)
+    fail_unless(VINDEX(vec, i) == INT2FIX(i));
+
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 0);
+}
+END_TEST
+
+
+START_TEST(test_gc_table)
+{
+  value tbl;
+  struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
+  Bhdr *ptr;
+  int count, i;
+
+  /* Making a hash produces two blocks */
+  tbl = arc_mkhash(c, ARC_HASHBITS);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 2);
+
+  /* each one produces an additional block for the hash bucket */
+  for (i=0; i<10; i++)
+    arc_hash_insert(c, tbl, INT2FIX(i), INT2FIX(i+1));
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 12);
+  fail_unless(TYPE(tbl) == T_TABLE);
+  for (i=0; i<10; i++)
+    fail_unless(arc_hash_lookup(c, tbl, INT2FIX(i)) == INT2FIX(i+1));
+
+  __arc_markprop(c, tbl);
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 12);
+  fail_unless(TYPE(tbl) == T_TABLE);
+  for (i=0; i<10; i++)
+    fail_unless(arc_hash_lookup(c, tbl, INT2FIX(i)) == INT2FIX(i+1));
+
+  /* Try removing the bindings */
+  for (i=0; i<10; i++)
+    arc_hash_delete(c, tbl, INT2FIX(i));
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 12);
+  fail_unless(TYPE(tbl) == T_TABLE);
+  for (i=0; i<10; i++)
+    fail_unless(arc_hash_lookup(c, tbl, INT2FIX(i)) == CUNBOUND);
+
+  /* garbage collection should remove the dangling buckets */
+  __arc_markprop(c, tbl);
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 2);
+  fail_unless(TYPE(tbl) == T_TABLE);
+  for (i=0; i<10; i++)
+    fail_unless(arc_hash_lookup(c, tbl, INT2FIX(i)) == CUNBOUND);
+
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -455,6 +562,8 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_char);
   tcase_add_test(tc_gc, test_gc_string);
   tcase_add_test(tc_gc, test_gc_symbol);
+  tcase_add_test(tc_gc, test_gc_vector);
+  tcase_add_test(tc_gc, test_gc_table);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
