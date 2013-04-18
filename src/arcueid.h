@@ -52,26 +52,27 @@ enum arc_types {
   T_SYMBOL=9,
   T_CONS=10,
   T_TABLE=11,
-  T_TBUCKET=12,
-  T_TAGGED=13,
-  T_EXCEPTION=14,
-  T_INPORT=15,
-  T_OUTPORT=16,
-  T_THREAD=17,
-  T_VECTOR=18,
+  T_TABLEVEC=12,
+  T_TBUCKET=13,
+  T_TAGGED=14,
+  T_EXCEPTION=15,
+  T_INPORT=16,
+  T_OUTPORT=17,
+  T_THREAD=18,
+  T_VECTOR=19,
 
-  T_CONT = 19,			/* continuation */
-  T_CLOS = 20,			/* closure */
-  T_CODE = 21,			/* actual compiled code */
-  T_ENV = 22,			/* stack-based environment */
-  T_CCODE = 23,			/* a C function */
-  T_CUSTOM = 24,		/* custom type */
-  T_CHAN = 25,			/* channel */
-  T_TYPEDESC = 26,		/* type descriptor */
-  T_WTABLE = 27,		/* weak table */
-  T_NUM = 28,			/* number -- not a real type */
-  T_INT = 29,			/* int -- not a real type */
-  T_MAX = 28,
+  T_CONT = 20,			/* continuation */
+  T_CLOS = 21,			/* closure */
+  T_CODE = 22,			/* actual compiled code */
+  T_ENV = 23,			/* stack-based environment */
+  T_CCODE = 24,			/* a C function */
+  T_CUSTOM = 25,		/* custom type */
+  T_CHAN = 26,			/* channel */
+  T_TYPEDESC = 27,		/* type descriptor */
+  T_WTABLE = 28,		/* weak table */
+  T_NUM = 29,			/* number -- not a real type */
+  T_INT = 30,			/* int -- not a real type */
+  T_MAX = 30,
 
   T_NONE=64
 };
@@ -470,6 +471,7 @@ extern void arc_init_datatypes(arc *c);
 extern void arc_init_symtable(arc *c);
 extern void arc_init_threads(arc *c);
 extern void arc_init(arc *c);
+extern void arc_deinit(arc *c);
 
 /* Error handling */
 extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
