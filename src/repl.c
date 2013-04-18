@@ -162,6 +162,7 @@ int main(int argc, char **argv)
   setvbuf(stdin, NULL, _IONBF, 0);
   arc_bindcstr(c, "warranty", arc_mkccode(c, 0, warranty,
 					  arc_intern_cstr(c, "warranty")));
+  /*  replcode = "(w/uniq eof (whiler e (do (disp \"arc> \") (read (stdin) eof)) eof (do (write (eval e))) (disp #\\u000a)))"; */
   replcode = "(whiler e (do (disp \"arc> \") (read (stdin) nil)) nil (do (write (eval e)) (disp #\\u000a)))";
   COMPILE(replcode);
   cctx = TVALR(c->curthread);
