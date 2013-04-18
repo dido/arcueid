@@ -60,7 +60,9 @@ typedef struct Bhdr_t {
 #define PROPFLAG 0xc0
 #define MARKFLAG 0x40
 
-#define MARK(v) ((((struct cell *)v)->_type) = ((((struct cell *)v)->_type) & FLAGMASK) | MARKFLAG)
+#define MARK(v) ((((struct cell *)(v))->_type) = (((((struct cell *)(v))->_type) & FLAGMASK) | MARKFLAG))
+
+#define MARKED(v) ((((((struct cell *)(v))->_type) & ~FLAGMASK) >> 6) == 1)
 
 extern void __arc_markprop(arc *c, value p);
 
