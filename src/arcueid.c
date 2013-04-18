@@ -192,6 +192,8 @@ typefn_t *__arc_typefn(arc *c, value v)
     return(c->typefns[TYPE(v)]);
   /* For tagged types (custom types), the type descriptor hash should
      contain a type descriptor wrapped in a table. */
+  if (c->typedesc == CNIL)
+    return(c->typefns[T_TAGGED]);
   typedesc = arc_hash_lookup(c, c->typedesc, car(v));
   /* no type descriptor defaults to the type descriptor of a cons */
   if (!BOUND_P(typedesc))
@@ -690,6 +692,7 @@ extern typefn_t __arc_rational_typefn__;
 
 extern typefn_t __arc_cons_typefn__;
 extern typefn_t __arc_table_typefn__;
+extern typefn_t __arc_tablevec_typefn__;
 extern typefn_t __arc_hb_typefn__;
 extern typefn_t __arc_wtable_typefn__;
 extern typefn_t __arc_code_typefn__;
@@ -720,6 +723,7 @@ void arc_init_datatypes(arc *c)
 
   c->typefns[T_CONS] = &__arc_cons_typefn__;
   c->typefns[T_TABLE] = &__arc_table_typefn__;
+  c->typefns[T_TABLEVEC] = &__arc_tablevec_typefn__;
   c->typefns[T_TBUCKET] = &__arc_hb_typefn__;
   c->typefns[T_INPORT] = &__arc_io_typefn__;
   c->typefns[T_OUTPORT] = &__arc_io_typefn__;
@@ -923,4 +927,21 @@ void arc_init(arc *c)
   /* Initialise builtin functions */
   arc_init_builtins(c);
 
+}
+
+void arc_deinit(arc *c)
+{
+  c->symtable = CNIL;
+  c->rsymtable = CNIL;
+  c->genv = CNIL;
+  c->builtins = CNIL;
+  c->typedesc = CNIL;
+  c->curthread = CNIL;
+  c->vmthreads = CNIL;
+  c->here = CNIL;
+#ifdef HAVE_TRACING
+  c->tracethread = CNIL;
+#endif
+  c->gc(c);
+  free(c->alloc_ctx);
 }
