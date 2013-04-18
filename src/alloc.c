@@ -102,6 +102,7 @@ static void *bibop_alloc(arc *c, size_t osize)
       bptr += actual;
     }
   }
+  BSSIZE(h, osize);
   BALLOC(h);
   h->_next = ALLOCHEAD(c);
   ALLOCHEAD(c) = h;
@@ -124,11 +125,14 @@ static void *alloc(arc *c, size_t osize)
     fprintf(stderr, "FATAL: failed to allocate memory\n");
     exit(1);
   }
+  BSSIZE(h, osize);
   BALLOC(h);
   h->_next = ALLOCHEAD(c);
   ALLOCHEAD(c) = h;
   return(B2D(h));
 }
+
+#undef __FREE_DEBUGGING__
 
 /* Freeing a block requires one know the previous block in the alloc
    list.  Probably only feasible to use for the garbage collector's
@@ -146,6 +150,11 @@ static void free_block(arc *c, void *blk, void *prevblk)
     D2B(p, prevblk);
     p->_next = B2NB(h);
   }
+
+#ifdef __FREE_DEBUGGING__
+  /* clear any data in the block */
+  memset(blk, 0, BSIZE(h));
+#endif
 
   if (BSIZE(h) <= MAX_BIBOP) {
     /* For BiBOP allocated objects, freeing them just means putting the
@@ -331,3 +340,4 @@ void arc_init_memmgr(arc *c)
     BIBOPFL(c)[i] = NULL;
   ALLOCHEAD(c) = NULL;
 }
+
