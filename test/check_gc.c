@@ -36,6 +36,8 @@ arc *c;
 struct mm_ctx {
   /* The BiBOP free list */
   Bhdr *bibop_fl[MAX_BIBOP+1];
+  /* The actual BiBOP pages */
+  Bhdr *bibop_pages[MAX_BIBOP+1];
 
   /* The allocated list */
   Bhdr *alloc_head;
@@ -80,7 +82,6 @@ START_TEST(test_gc_cons)
   fail_unless(count == 0);
 }
 END_TEST
-
 
 #ifdef HAVE_GMP_H
 
@@ -630,6 +631,42 @@ START_TEST(test_gc_fn)
 }
 END_TEST
 
+#define NUM_CONSES 256
+
+START_TEST(test_gc_lots_of_conses)
+{
+  value list;
+  struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
+  Bhdr *ptr;
+  int count, i;
+
+  list = CNIL;
+  for (i=0; i<NUM_CONSES; i++)
+    list = cons(c, INT2FIX(i), list);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == NUM_CONSES);
+
+  __arc_markprop(c, list);
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == NUM_CONSES);
+
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 0);
+  /* The BiBOP page lists should also be emptied by this operation */
+  for (i=0; i<=MAX_BIBOP; i++)
+    fail_unless(mmctx->bibop_pages[i] == NULL);
+}
+END_TEST
+
+
 int main(void)
 {
   int number_failed;
@@ -658,6 +695,8 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_tagged);
   tcase_add_test(tc_gc, test_gc_fn_ff);
   tcase_add_test(tc_gc, test_gc_fn);
+
+  tcase_add_test(tc_gc, test_gc_lots_of_conses);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
