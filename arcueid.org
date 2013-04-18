@@ -85,7 +85,7 @@ notice and this notice are preserved.
    - [ ] garbage collector [0/1]
 	 A simple mark and sweep garbage collector for now. Keep things
 	 simple first.
-     - [-] Garbage collection of data types [7/14]
+     - [-] Garbage collection of data types [9/14]
        - [X] Boxed Numeric Types [4/4]
          - [X] bignum
          - [X] rational
@@ -97,8 +97,8 @@ notice and this notice are preserved.
        - [X] Conses
        - [X] Tables
        - [X] Vectors
-       - [ ] Tagged
-       - [ ] Functions
+       - [X] Tagged
+       - [X] Functions
        - [ ] String Ports
        - [ ] File Ports
        - [ ] Threads
