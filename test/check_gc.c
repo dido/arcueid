@@ -50,88 +50,37 @@ static void markroots(arc *c)
 
 START_TEST(test_gc_cons)
 {
-  value list=CNIL, list2=CNIL, list3=CNIL, tlist;
-  int i, count;
+  value r;
   struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
   Bhdr *ptr;
+  int count;
 
-  for (i=0; i<4; i++)
-    list=cons(c, INT2FIX(i), list);
+  r = cons(c, CNIL, CNIL);
   count = 0;
   for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
     count++;
-  fail_unless(count == 4);
+  fail_unless(count == 1);
+  fail_unless(TYPE(r) == T_CONS);
+  fail_unless(NIL_P(car(r)));
+  fail_unless(NIL_P(cdr(r)));
 
-  __arc_markprop(c, list);
+  __arc_markprop(c, r);
   c->gc(c);
   count = 0;
   for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
     count++;
-  fail_unless(count == 4);
-
-  count = 0;
-  for (tlist=list; tlist; tlist = cdr(tlist)) {
-    count++;
-    D2B(ptr, tlist);
-    fail_unless(BALLOCP(ptr));
-  }
-  fail_unless(count == 4);
+  fail_unless(TYPE(r) == T_CONS);
+  fail_unless(NIL_P(car(r)));
+  fail_unless(NIL_P(cdr(r)));
 
   c->gc(c);
   count = 0;
   for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
     count++;
   fail_unless(count == 0);
-
-  list = CNIL;
-  for (i=0; i<4; i++)
-    list=cons(c, INT2FIX(i), list);
-
-  for (i=0; i<4; i++)
-    list2=cons(c, INT2FIX(i+4), list2);
-
-  for (i=0; i<4; i++)
-    list3=cons(c, INT2FIX(i+8), list3);
-  count = 0;
-  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
-    count++;
-  fail_unless(count == 12);
-
-  __arc_markprop(c, list2);
-  c->gc(c);
-
-  count = 0;
-  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
-    count++;
-  fail_unless(count == 4);
-
-  list = list3 = CNIL;
-  for (i=0; i<4; i++)
-    list=cons(c, INT2FIX(i), list);
-
-  for (i=0; i<4; i++)
-    list3=cons(c, INT2FIX(i+8), list3);
-  count = 0;
-  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
-    count++;
-  fail_unless(count == 12);
-
-  __arc_markprop(c, list);
-  __arc_markprop(c, list3);
-  c->gc(c);
-
-  count = 0;
-  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
-    count++;
-  fail_unless(count == 8);
-
-  c->gc(c);
-  count = 0;
-  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
-    count++;
-  fail_unless(count == 0);  
 }
 END_TEST
+
 
 #ifdef HAVE_GMP_H
 
@@ -539,6 +488,148 @@ START_TEST(test_gc_table)
 }
 END_TEST
 
+START_TEST(test_gc_tagged)
+{
+  value tagged;
+  struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
+  Bhdr *ptr;
+  int count;
+
+  /* This is a bit tricky */
+  c->lastsym = 0;
+  c->symtable = arc_mkwtable(c, ARC_HASHBITS);
+  c->rsymtable = arc_mkwtable(c, ARC_HASHBITS);
+  c->builtins = arc_mkvector(c, BI_last+1);
+  c->typedesc = arc_mkhash(c, ARC_HASHBITS);
+  VINDEX(c->builtins, BI_syms) = arc_mkvector(c, S_THE_END);
+  ARC_BUILTIN(c, S_NIL) = arc_intern_cstr(c, "nil");
+  ARC_BUILTIN(c, S_T) = arc_intern_cstr(c, "t");
+
+  /* The above should have produced four items:
+     1. The symbol table
+     2. The reverse symbol table
+     3. The vector for the symbol table data
+     4. The vector for the reverse symbol table
+     5. The builtins vector
+     6. The builtin symbols vector
+     7. The string representation of nil
+     8. The string representation of t
+     9. The hash bucket in symtable for nil
+     10. The hash bucket in rsymtable for nil
+     11. The hash bucket in symtable for t
+     12. The hash bucket in rsymtable for t
+     13. The typedesc hash
+     14. The typedesc hash vector
+   */
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 14);
+
+  /* Annotate created the following objects:
+
+     1. A cons cell for the tagged object
+     2. The string representation for the tag
+     3. The bucket in the symtable for the tag
+     4. The bucket in the rsymtable for the tag
+  */
+  tagged = arc_annotate(c, arc_intern_cstr(c, "tagged"), INT2FIX(3));
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 18);
+  fail_unless(TYPE(tagged) == T_TAGGED);
+  fail_unless(arc_type(c, tagged) == arc_intern_cstr(c, "tagged"));
+  fail_unless(arc_rep(c, tagged) == INT2FIX(3));
+
+  __arc_markprop(c, tagged);
+  __arc_markprop(c, c->symtable);
+  __arc_markprop(c, c->rsymtable);
+  __arc_markprop(c, c->builtins);
+  __arc_markprop(c, c->typedesc);
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 18);
+  fail_unless(TYPE(tagged) == T_TAGGED);
+  fail_unless(arc_type(c, tagged) == arc_intern_cstr(c, "tagged"));
+  fail_unless(arc_rep(c, tagged) == INT2FIX(3));
+
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 0);
+}
+END_TEST
+
+START_TEST(test_gc_fn_ff)
+{
+  value fn;
+  struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
+  Bhdr *ptr;
+  int count;
+
+  fn = arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso"));
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 2);
+  fail_unless(TYPE(fn) == T_CCODE);
+
+
+  __arc_markprop(c, fn);
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 2);
+  fail_unless(TYPE(fn) == T_CCODE);
+
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 0);
+}
+END_TEST
+
+START_TEST(test_gc_fn)
+{
+  value cctx, code;
+  struct mm_ctx *mmctx = (struct mm_ctx *)c->alloc_ctx;
+  Bhdr *ptr;
+  int count, lptr;
+
+  cctx = arc_mkcctx(c);
+  lptr = arc_literal(c, cctx, arc_mkflonum(c, 3.1415926535));
+  arc_emit1(c, cctx, ildl, INT2FIX(lptr));
+  arc_emit(c, cctx, ihlt);
+  code = arc_cctx2code(c, cctx);
+
+  /* The code object created should consist of the following:
+     1. The code vector itself
+     2. The vector for the code
+     3. The literal flonum
+
+     Everything else involved in making it should have become garbage.
+  */
+  __arc_markprop(c, code);
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 3);
+
+  c->gc(c);
+  count = 0;
+  for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
+    count++;
+  fail_unless(count == 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -564,6 +655,9 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_symbol);
   tcase_add_test(tc_gc, test_gc_vector);
   tcase_add_test(tc_gc, test_gc_table);
+  tcase_add_test(tc_gc, test_gc_tagged);
+  tcase_add_test(tc_gc, test_gc_fn_ff);
+  tcase_add_test(tc_gc, test_gc_fn);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
