@@ -160,7 +160,12 @@ struct vmthread_t {
 #define TEJMP(t) (((struct vmthread_t *)REP(t))->errjmp)
 #define TCM(t) (((struct vmthread_t *)REP(t))->cmarks)
 
+#if 1
+#define CPUSH(thr, val) do { if (TSP(thr) <= TSBASE(thr)) { abort(); } (*(TSP(thr)--) = (val)); } while (0)
+#else
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
+#endif
+
 #define CPOP(thr) (*(++TSP(thr)))
 /* Default thread stack size */
 #define TSTKSIZE 65536
