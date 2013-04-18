@@ -53,8 +53,10 @@
 #define BIBOP_PAGE_SIZE 64
 
 struct mm_ctx {
-  /* The BiBOP free list */
+  /* The BiBOP free lists */
   Bhdr *bibop_fl[MAX_BIBOP+1];
+  /* The actual BiBOP pages */
+  Bhdr *bibop_pages[MAX_BIBOP+1];
 
   /* The allocated list */
   Bhdr *alloc_head;
@@ -62,14 +64,15 @@ struct mm_ctx {
 };
 
 #define BIBOPFL(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_fl)
+#define BIBOPPG(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_pages)
 #define ALLOCHEAD(c) (((struct mm_ctx *)c->alloc_ctx)->alloc_head)
 #define NPROP(c) (((struct mm_ctx *)c->alloc_ctx)->nprop)
 
 static void *bibop_alloc(arc *c, size_t osize)
 {
-  Bhdr *h;
+  Bhdr *h, *bpage;
   size_t actual;
-  char *bpage, *bptr;
+  char *bptr;
   int i;
 
   for (;;) {
@@ -88,12 +91,15 @@ static void *bibop_alloc(arc *c, size_t osize)
        of the alignment, all objects inside will also by definition
        be aligned. */
     actual = ALIGN_SIZE(osize) + BHDR_ALIGN_SIZE;
-    bpage = c->mem_alloc(actual * BIBOP_PAGE_SIZE);
+    bpage = (Bhdr *)c->mem_alloc(actual * BIBOP_PAGE_SIZE + BHDR_ALIGN_SIZE);
     if (bpage == NULL) {
       fprintf(stderr, "FATAL: failed to allocate memory for BiBOP page\n");
       exit(1);
     }
-    bptr = bpage;
+    BSSIZE(bpage, actual * BIBOP_PAGE_SIZE + BHDR_ALIGN_SIZE);
+    bpage->_next = BIBOPPG(c)[osize];
+    BIBOPPG(c)[osize] = bpage;
+    bptr = B2D(bpage);
     for (i=0; i<BIBOP_PAGE_SIZE; i++) {
       h = (Bhdr *)bptr;
       BSSIZE(h, osize);
@@ -269,6 +275,61 @@ static void mark(arc *c, value v, int depth)
   tfn->marker(c, v, depth+1, mark);
 }
 
+/* Go over all the allocated BiBOP pages and find ones which are
+   completely empty. We have to rebuild the free lists for that
+   size as well. */
+static void free_unused_bibop(arc *c)
+{
+  Bhdr *bpage, *h, *prev, *nfl, *pfl, *pflt;
+  char *bptr;
+  int empty, i, j, actual;
+
+  for (i=0; i<=MAX_BIBOP; i++) {
+    actual = ALIGN_SIZE(i) + BHDR_ALIGN_SIZE;
+    prev = NULL;
+    nfl = NULL;
+    for (bpage = BIBOPPG(c)[i]; bpage;) {
+      bptr = B2D(bpage);
+      empty = 1;
+      pfl = pflt = NULL;
+      for (j=0; j<BIBOP_PAGE_SIZE; j++) {
+	h = (Bhdr *)bptr;
+	if (BALLOCP(h)) {
+	  empty = 0;
+	  break;
+	} else {
+	  if (pflt == NULL)
+	    pflt = h;
+	  h->_next = pfl;
+	  pfl = h;
+	}
+	bptr += actual;
+      }
+      h = B2NB(bpage);
+      if (empty) {
+	/* We are empty.  Unlink the page to be freed. */
+	if (prev == NULL) {
+	  BIBOPPG(c)[i] = h;
+	} else {
+	  prev->_next = h;
+	}
+	c->mem_free(bpage);
+      } else {
+	/* Not empty.  Previous pointer moves to it. */
+	prev = bpage;
+	/* Also join pfl to nfl if it isn't null */
+	if (pflt != NULL && pfl != NULL) {
+	  pflt->_next = nfl;
+	  nfl = pfl;
+	}
+      }
+      bpage = h;
+    }
+    /* Now that we have a new free list, use it */
+    BIBOPFL(c)[i] = nfl;
+  }
+}
+
 /* Basic mark/sweep garbage collector */
 static void gc(arc *c)
 {
@@ -307,6 +368,8 @@ static void gc(arc *c)
       /* We don't update pptr in this case, it remains the same */
     }
   }
+
+  free_unused_bibop(c);
 }
 
 /* Default root marker */
@@ -338,7 +401,9 @@ void arc_init_memmgr(arc *c)
   c->alloc_ctx = (struct mm_ctx *)malloc(sizeof(struct mm_ctx));
 
   NPROP(c) = 0;
-  for (i=0; i<=MAX_BIBOP; i++)
+  for (i=0; i<=MAX_BIBOP; i++) {
     BIBOPFL(c)[i] = NULL;
+    BIBOPPG(c)[i] = NULL;
+  }
   ALLOCHEAD(c) = NULL;
 }
