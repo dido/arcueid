@@ -58,6 +58,11 @@ static void fio_marker(arc *c, value v, int depth,
 
 static void fio_sweeper(arc *c, value v)
 {
+  /* DO NOT TRY TO CLOSE STDIN, STDOUT, OR STDERR! */
+  if (FIODATA(v)->fp == stdin || FIODATA(v)->fp == stdout
+      || FIODATA(v)->fp == stderr) {
+    return;
+  }
   if (!FIODATA(v)->closed) {
     fclose(FIODATA(v)->fp);
     FIODATA(v)->closed = 1;
