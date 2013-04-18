@@ -288,7 +288,6 @@ int main(void)
     TEST("(disp #\\u000a)");
     */
     TEST("(eval sexpr)");
-    c->gc(c);
   }
   TEST("(close initload)");
   c->gc(c);
