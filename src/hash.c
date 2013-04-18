@@ -15,10 +15,6 @@
 
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
-
-  NOTE: Non-atom keys will not work with the current set of hash table
-  support functions. There will be another set of hash table functions
-  that will not have this limitation.
 */
 #include "arcueid.h"
 #include "alloc.h"
@@ -293,17 +289,16 @@ static void hash_marker(arc *c, value v, int depth,
   markfn(c, HASH_TABLE(v), depth);
 }
 
-static void hash_sweeper(arc *c, value v)
+static void tablevec_sweeper(arc *c, value v)
 {
   int i;
-  value tbl = HASH_TABLE(v);
 
-  /* Clear the BTABLE links for any active buckets within this hash
+  /* Clear the BTABLE links for any active buckets within this tablevec
      before fully sweeping it away. */
-  for (i=0; i<VECLEN(tbl); i++) {
-    if (EMPTYP(VINDEX(tbl, i)))
+  for (i=0; i<VECLEN(v); i++) {
+    if (EMPTYP(VINDEX(v, i)))
       continue;
-    BTABLE(VINDEX(tbl, i)) = CNIL;
+    BTABLE(VINDEX(v, i)) = CNIL;
   }
 }
 
@@ -399,14 +394,17 @@ int arc_hash_length(arc *c, value hash)
 
 value arc_mkhash(arc *c, int hashbits)
 {
-  value hash;
+  value hash, hv;
   int i;
 
   hash = arc_mkobject(c, sizeof(value)*HASH_SIZE, T_TABLE);
   SET_HASHBITS(hash, hashbits);
   SET_NENTRIES(hash, 0);
   SET_LLIMIT(hash, (HASHSIZE(hashbits)*MAX_LOAD_FACTOR) / 100);
-  HASH_TABLE(hash) = arc_mkvector(c, HASHSIZE(hashbits));
+  hv = arc_mkvector(c, HASHSIZE(hashbits));
+  ((struct cell *)hv)->_type = T_TABLEVEC;
+  HASH_TABLE(hash) = hv;
+  
   for (i=0; i<HASHSIZE(hashbits); i++)
     VINDEX(HASH_TABLE(hash), i) = CUNBOUND;
   return(hash);
@@ -425,19 +423,23 @@ static void hashtable_expand(arc *c, value hash)
 
   nhashbits = HASH_BITS(hash) + 1;
   newtbl = arc_mkvector(c, HASHSIZE(nhashbits));
+  ((struct cell *)newtbl)->_type = T_TABLEVEC;
   for (i=0; i<HASHSIZE(nhashbits); i++)
     VINDEX(newtbl, i) = CUNBOUND;
   oldtbl = HASH_TABLE(hash);
-  /* Search for active keys and copy them into the new table */
+  /* Search for active keys and move them into the new table */
   for (i=0; i<VECLEN(oldtbl); i++) {
     e = VINDEX(oldtbl, i);
     if (EMPTYP(e))
       continue;
+    /* remove the old link now that we have a copy */
+    VINDEX(oldtbl, i) = CUNBOUND;
     /* insert the old key into the new table */
     hv = (unsigned int)FIX2INT(BHASHVAL(e));
     index = hv & HASHMASK(nhashbits);
     for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
       index = (index + PROBE(j)) & HASHMASK(nhashbits);
+    BTABLE(e) = newtbl;
     VINDEX(newtbl, index) = e;
     SBINDEX(e, index);		/* change index */
     VINDEX(oldtbl, i) = CUNBOUND;
@@ -462,8 +464,7 @@ static void hb_sweeper(arc *c, value v)
   if (BTABLE(v) != CNIL) {
     value t = BTABLE(v);
 
-    VINDEX(HASH_TABLE(t), BINDEX(v)) = CUNDEF;
-    SET_NENTRIES(t, HASH_NENTRIES(t)-1);
+    VINDEX(t, BINDEX(v)) = CUNDEF;
   }
 }
 
@@ -479,7 +480,7 @@ static value mkhashbucket(arc *c, value key, value val, int index, value table,
   BKEY(bucket) = key;
   BVALUE(bucket) = val;
   SBINDEX(bucket, index);
-  BTABLE(bucket) = table;
+  BTABLE(bucket) = HASH_TABLE(table);
   BHASHVAL(bucket) = hashcode;
   return(bucket);
 }
@@ -518,6 +519,7 @@ value arc_hash_insert(arc *c, value hash, value key, value val)
   unsigned int hv, index, i;
   value e;
 
+  index = 0;
   /* First of all, look for the key if a binding already exists for it */
   e = hash_lookup(c, hash, key, &index);
   if (BOUND_P(e)) {
@@ -959,7 +961,7 @@ value arc_mkwtable(arc *c, int hashbits)
 
 typefn_t __arc_table_typefn__ = {
   hash_marker,
-  hash_sweeper,
+  __arc_null_sweeper,
   hash_pprint,
   NULL,
   NULL,
@@ -981,7 +983,7 @@ typefn_t __arc_hb_typefn__ = {
 
 typefn_t __arc_wtable_typefn__ = {
   wtable_marker,
-  hash_sweeper,
+  __arc_null_sweeper,
   hash_pprint,
   NULL,
   NULL,
@@ -989,4 +991,14 @@ typefn_t __arc_wtable_typefn__ = {
   hash_apply,
   hash_xcoerce,
   hash_xhash
+};
+
+typefn_t __arc_tablevec_typefn__ = {
+  __arc_vector_marker,
+  tablevec_sweeper,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
 };
