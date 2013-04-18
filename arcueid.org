@@ -79,12 +79,31 @@ notice and this notice are preserved.
       - [X] vector
       - [X] table
       - [X] string
-** DONE memory management [2/2]
+** TODO memory management [1/2]
    - [X] memory allocator
 	 A BiBOP-based memory allocator. Keep things simple first.
-   - [X] garbage collector
+   - [ ] garbage collector [0/1]
 	 A simple mark and sweep garbage collector for now. Keep things
 	 simple first.
+     - [-] Garbage collection of data types [7/14]
+       - [X] Boxed Numeric Types [4/4]
+         - [X] bignum
+         - [X] rational
+         - [X] flonum
+         - [X] complex
+       - [X] Characters
+       - [X] Strings
+       - [X] Symbols
+       - [X] Conses
+       - [X] Tables
+       - [X] Vectors
+       - [ ] Tagged
+       - [ ] Functions
+       - [ ] String Ports
+       - [ ] File Ports
+       - [ ] Threads
+       - [ ] Exceptions
+       - [ ] Channels
 ** DONE Arc reader [12/12]
    - [X] Lists
    - [X] Improper lists
