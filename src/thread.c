@@ -220,6 +220,7 @@ static void process_iowait(arc *c, value iowaitdata, int eptimeout)
   for (thr = iowaitdata; thr; thr = cdr(thr)) {
     niowait++;
     ev.events = (TWAITRW(car(thr))) ? EPOLLOUT : EPOLLIN;
+    ev.data.u64 = 0LL;
     ev.data.fd = TWAITFD(car(thr));
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, TWAITFD(car(thr)), &ev) < 0) {
       int en = errno;
