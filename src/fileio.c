@@ -58,7 +58,10 @@ static void fio_marker(arc *c, value v, int depth,
 
 static void fio_sweeper(arc *c, value v)
 {
-  fclose(FIODATA(v)->fp);
+  if (!FIODATA(v)->closed) {
+    fclose(FIODATA(v)->fp);
+    FIODATA(v)->closed = 1;
+  }
 }
 
 static AFFDEF(fio_closed_p)
