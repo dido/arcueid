@@ -64,6 +64,7 @@ struct mm_ctx {
 #define BIBOPFL(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_fl)
 #define ALLOCHEAD(c) (((struct mm_ctx *)c->alloc_ctx)->alloc_head)
 #define NPROP(c) (((struct mm_ctx *)c->alloc_ctx)->nprop)
+
 static void *bibop_alloc(arc *c, size_t osize)
 {
   Bhdr *h;
@@ -336,8 +337,8 @@ void arc_init_memmgr(arc *c)
   c->free = free_block;
   c->alloc_ctx = (struct mm_ctx *)malloc(sizeof(struct mm_ctx));
 
+  NPROP(c) = 0;
   for (i=0; i<=MAX_BIBOP; i++)
     BIBOPFL(c)[i] = NULL;
   ALLOCHEAD(c) = NULL;
 }
-
