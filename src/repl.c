@@ -69,11 +69,12 @@ static value warranty(arc *c)
   return(CNIL);
 }
 
+jmp_buf ejb;
+
 static void errhandler(arc *c, value str)
 {
-  fprintf(stderr, "Error\n");
   __arc_print_string(c, str);
-  exit(EXIT_FAILURE);
+  longjmp(ejb, 1);
 }
 
 #define QUANTA ULONG_MAX
@@ -111,7 +112,7 @@ AFFEND
 
 #define COMPILE(str) XCALL(compile_something, arc_mkstringc(c, str))
 
-#define TEST(sexpr)				\
+#define EXECUTE(sexpr)				\
   COMPILE(sexpr);				\
   cctx = TVALR(c->curthread);			\
   code = arc_cctx2code(c, cctx);		\
@@ -131,32 +132,35 @@ int main(int argc, char **argv)
   c = &cc;
   c->errhandler = errhandler;
   arc_init(c);
+  if (setjmp(ejb) == 1) {
+    fprintf(stderr, "failed to load arc.arc\n");
+    arc_deinit(c);
+    return(EXIT_FAILURE);
+  }
   c->curthread = arc_mkthread(c);
   /* Load arc.arc into our system */
   arc_bindcstr(c, "initload-file", arc_mkstringc(c, loadstr));
-  TEST("(assign initload (infile initload-file))");
-  if (NIL_P(ret)) {
-    fprintf(stderr, "failed to load arc.arc");
-    return(EXIT_FAILURE);
-  }
+  EXECUTE("(assign initload (infile initload-file))");
+  if (NIL_P(ret))
+    longjmp(ejb, 1);
   i=0;
   for (;;) {
     i++;
-    TEST("(assign sexpr (sread initload nil))");
+    EXECUTE("(assign sexpr (sread initload nil))");
     if (ret == CNIL)
       break;
     /*
     printf("%d: ", i);
-    TEST("(disp sexpr)");
-    TEST("(disp #\\u000a)");
+    EXECUTE("(disp sexpr)");
+    EXECUTE("(disp #\\u000a)");
     */
     /*
-    TEST("(disp (eval sexpr))");
-    TEST("(disp #\\u000a)");
+    EXECUTE("(disp (eval sexpr))");
+    EXECUTE("(disp #\\u000a)");
     */
-    TEST("(eval sexpr)");
+    EXECUTE("(eval sexpr)");
   }
-  TEST("(close initload)");
+  EXECUTE("(close initload)");
   c->gc(c);
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stdin, NULL, _IONBF, 0);
@@ -168,7 +172,16 @@ int main(int argc, char **argv)
   cctx = TVALR(c->curthread);
   code = arc_cctx2code(c, cctx);
   clos = arc_mkclos(c, code, CNIL);
+  arc_bindcstr(c, "repl-code*", clos);
+  setjmp(ejb);
+  clos = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "repl-code*"));
+  if (TYPE(clos) != T_CLOS) {
+    fprintf(stderr, "bad repl code\n");
+    arc_deinit(c);
+    return(EXIT_FAILURE);
+  }
   arc_spawn(c, clos);
   arc_thread_dispatch(c);
+  arc_deinit(c);
   return(EXIT_SUCCESS);
 }
