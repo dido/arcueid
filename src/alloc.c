@@ -252,7 +252,7 @@ static void mark(arc *c, value v, int depth)
   }
 
   /* Other types of immediate values obviously cannot be marked */
-  if (IMMEDIATE_P(v))
+  if (IMMEDIATE_P(v) || MARKED(v))
     return;
 
   if (depth > MAX_MARK_RECURSION_DEPTH) {
