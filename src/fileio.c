@@ -154,7 +154,7 @@ static AFFDEF(fio_putb)
   int rv;
 
   AFBEGIN;
-  fputc(FIX2INT(AV(byte)), FIODATA(AV(fio))->fp);
+  rv = fputc(FIX2INT(AV(byte)), FIODATA(AV(fio))->fp);
   if (rv < 0)
     ARETURN(CNIL);
   ARETURN(AV(byte));
