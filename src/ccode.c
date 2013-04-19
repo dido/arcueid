@@ -82,7 +82,7 @@ static void cfunc_marker(arc *c, value v, int depth,
 
 static unsigned long cfunc_hash(arc *c, value v, arc_hs *s)
 {
-  return(arc_hash(c, ((struct cfunc_t *)REP(v))->name));
+  return(arc_hash_increment(c, ((struct cfunc_t *)REP(v))->name, s));
 }
 
 value arc_mkccode(arc *c, int argc, value (*cfunc)(), value name)
