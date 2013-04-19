@@ -44,8 +44,8 @@ static unsigned long sio_hash(arc *c, value v, arc_hs *s)
 {
   unsigned long len;
 
-  len = arc_hash(c, SIODATA(v)->str);
-  len += arc_hash(c, INT2FIX(SIODATA(v)->idx));
+  len = arc_hash_increment(c, SIODATA(v)->str, s);
+  len += arc_hash_increment(c, INT2FIX(SIODATA(v)->idx), s);
   return(len);
 }
 
