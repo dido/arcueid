@@ -152,7 +152,16 @@ value __arc_putenv(arc *c, value thr, int depth, int index, value val)
    element moved.  Does not do this if current environment is on
    the heap.  It will, in either case, set the environment register to
    the parent environment (possibly leaving the heap environment as
-   garbage to be collected). */
+   garbage to be collected)
+
+   This is essentially used to support tail calls and tail recursion.
+   When this mechanism is used, the new arguments are on the stack,
+   over the previous environment.  It will move all of the new arguments
+   onto the old environment and adjust the stack pointer appropriately.
+   When control is transferred to the tail called function the call
+   to __arc_mkenv will turn the stuff on the stack into a new
+   environment.
+*/
 void __arc_menv(arc *c, value thr, int n)
 {
   value *src, *dest, *penv;
@@ -166,10 +175,13 @@ void __arc_menv(arc *c, value thr, int n)
   parentenv = nextenv(c, thr, TENVR(thr));
   /* We should only bother if both the present environment and its
      parent (which should be superseded) are both on the stack. */
-  if (TYPE(TENVR(thr)) == T_ENV && TYPE(parentenv) == T_ENV) {
-    penv = SENV_PTR(TSBASE(thr), parentenv);
+  if (TYPE(TENVR(thr)) == T_ENV) {
+    /* Run the write barrier on the environment that is about to be
+       overwritten.  Required for most incremental and concurrent GC
+       algorithms. */
+    penv = SENV_PTR(TSBASE(thr), TENVR(thr));
     for (i=0; i<SENV_COUNT(penv); i++)
-      __arc_wb(*envval(c, thr, 1, i), CNIL);
+      __arc_wb(*envval(c, thr, 0, i), CNIL);
     /* source of our copy is the last value pushed on the stack */
     src = TSP(thr)+1;
     /* Destination of our copy is the (n-1)th element of the environment.
