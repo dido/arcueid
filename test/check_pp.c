@@ -487,9 +487,9 @@ START_TEST(test_pp_vector)
   thr = c->curthread;
 
   vec = arc_mkvector(c, 3);
-  VINDEX(vec, 0) = INT2FIX(1);
-  VINDEX(vec, 1) = INT2FIX(2);
-  VINDEX(vec, 2) = INT2FIX(3);
+  SVINDEX(vec, 0, INT2FIX(1));
+  SVINDEX(vec, 1, INT2FIX(2));
+  SVINDEX(vec, 2, INT2FIX(3));
   arc_bindcstr(c, "vec", vec);
   ppfp = arc_outstring(c, CNIL);
   arc_bindcstr(c, "ppfp", ppfp);
@@ -499,7 +499,7 @@ START_TEST(test_pp_vector)
   fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#(1 2 3)")) == 0);
 
   /* some circularity */
-  VINDEX(vec, 0) = vec;
+  SVINDEX(vec, 0, vec);
   ppfp = arc_outstring(c, CNIL);
   arc_bindcstr(c, "ppfp", ppfp);
   TEST("(write vec ppfp)");
@@ -507,8 +507,8 @@ START_TEST(test_pp_vector)
   result = arc_inside(c, ppfp);
   fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#((...) 2 3)")) == 0);
 
-  VINDEX(vec, 0) = INT2FIX(1);
-  VINDEX(vec, 1) = vec;
+  SVINDEX(vec, 0, INT2FIX(1));
+  SVINDEX(vec, 1, vec);
   ppfp = arc_outstring(c, CNIL);
   arc_bindcstr(c, "ppfp", ppfp);
   TEST("(write vec ppfp)");
@@ -516,8 +516,8 @@ START_TEST(test_pp_vector)
   result = arc_inside(c, ppfp);
   fail_unless(arc_strcmp(c, result, arc_mkstringc(c, "#(1 (...) 3)")) == 0);
 
-  VINDEX(vec, 1) = INT2FIX(2);
-  VINDEX(vec, 2) = vec;
+  SVINDEX(vec, 1, INT2FIX(2));
+  SVINDEX(vec, 2, vec);
   ppfp = arc_outstring(c, CNIL);
   arc_bindcstr(c, "ppfp", ppfp);
   TEST("(write vec ppfp)");

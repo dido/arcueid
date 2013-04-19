@@ -647,7 +647,7 @@ AFFDEF(arc_sref)
       arc_err_cstrfmt(c, "index %d too large for vector", FIX2INT(ind));
       ARETURN(CNIL);
     }
-    VINDEX(AV(com), FIX2INT(AV(ind))) = AV(val);
+    SVINDEX(AV(com), FIX2INT(AV(ind)), AV(val));
   } else {
     arc_err_cstrfmt(c, "can't set reference to object of type %d", TYPE(AV(com)));
   }

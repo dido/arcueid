@@ -299,9 +299,9 @@ START_TEST(test_gc_symbol)
   c->symtable = arc_mkwtable(c, ARC_HASHBITS);
   c->rsymtable = arc_mkwtable(c, ARC_HASHBITS);
   c->builtins = arc_mkvector(c, BI_last+1);
-  VINDEX(c->builtins, BI_syms) = arc_mkvector(c, S_THE_END);
-  ARC_BUILTIN(c, S_NIL) = arc_intern_cstr(c, "nil");
-  ARC_BUILTIN(c, S_T) = arc_intern_cstr(c, "t");
+  SVINDEX(c->builtins, BI_syms, arc_mkvector(c, S_THE_END));
+  SARC_BUILTIN(c, S_NIL, arc_intern_cstr(c, "nil"));
+  SARC_BUILTIN(c, S_T, arc_intern_cstr(c, "t"));
 
   /* The above should have produced four items:
      1. The symbol table
@@ -396,7 +396,7 @@ START_TEST(test_gc_vector)
 
   vec = arc_mkvector(c, 10);
   for (i=0; i<10; i++)
-    VINDEX(vec, i) = INT2FIX(i);
+    SVINDEX(vec, i, INT2FIX(i));
   count = 0;
   for (ptr = mmctx->alloc_head; ptr; ptr = B2NB(ptr))
     count++;
@@ -502,9 +502,9 @@ START_TEST(test_gc_tagged)
   c->rsymtable = arc_mkwtable(c, ARC_HASHBITS);
   c->builtins = arc_mkvector(c, BI_last+1);
   c->typedesc = arc_mkhash(c, ARC_HASHBITS);
-  VINDEX(c->builtins, BI_syms) = arc_mkvector(c, S_THE_END);
-  ARC_BUILTIN(c, S_NIL) = arc_intern_cstr(c, "nil");
-  ARC_BUILTIN(c, S_T) = arc_intern_cstr(c, "t");
+  SVINDEX(c->builtins, BI_syms, arc_mkvector(c, S_THE_END));
+  SARC_BUILTIN(c, S_NIL, arc_intern_cstr(c, "nil"));
+  SARC_BUILTIN(c, S_T, arc_intern_cstr(c, "t"));
 
   /* The above should have produced four items:
      1. The symbol table

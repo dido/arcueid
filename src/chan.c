@@ -29,12 +29,24 @@
    5 - Tail of list of threads waiting to send to the channel
  */
 
+#define XCHAN_RHEAD(chan) (REP((chan))[3])
+#define XCHAN_RTAIL(chan) (REP((chan))[4])
+#define XCHAN_SHEAD(chan) (REP((chan))[5])
+#define XCHAN_STAIL(chan) (REP((chan))[6])
+
 #define CHAN_HASDATA(chan) (VINDEX(chan, 0))
 #define CHAN_DATA(chan) (VINDEX(chan, 1))
 #define CHAN_RHEAD(chan) (VINDEX(chan, 2))
 #define CHAN_RTAIL(chan) (VINDEX(chan, 3))
 #define CHAN_SHEAD(chan) (VINDEX(chan, 4))
 #define CHAN_STAIL(chan) (VINDEX(chan, 5))
+
+#define SCHAN_HASDATA(chan, val) (SVINDEX(chan, 0, val))
+#define SCHAN_DATA(chan, val) (SVINDEX(chan, 1, val))
+#define SCHAN_RHEAD(chan, val) (SVINDEX(chan, 2, val))
+#define SCHAN_RTAIL(chan, val) (SVINDEX(chan, 3, val))
+#define SCHAN_SHEAD(chan, val) (SVINDEX(chan, 4, val))
+#define SCHAN_STAIL(chan, val) (SVINDEX(chan, 5, val))
 #define CHAN_SIZE 6
 
 value arc_mkchan(arc *c)
@@ -42,12 +54,12 @@ value arc_mkchan(arc *c)
   value chan = arc_mkvector(c, CHAN_SIZE);
 
   ((struct cell *)chan)->_type = T_CHAN;
-  CHAN_HASDATA(chan) = CNIL;
-  CHAN_DATA(chan) = CNIL;
-  CHAN_RHEAD(chan) = CNIL;
-  CHAN_RTAIL(chan) = CNIL;
-  CHAN_SHEAD(chan) = CNIL;
-  CHAN_STAIL(chan) = CNIL;
+  SCHAN_HASDATA(chan, CNIL);
+  SCHAN_DATA(chan, CNIL);
+  SCHAN_RHEAD(chan, CNIL);
+  SCHAN_RTAIL(chan, CNIL);
+  SCHAN_SHEAD(chan, CNIL);
+  SCHAN_STAIL(chan, CNIL);
   return(chan);
 }
 
@@ -75,16 +87,16 @@ AFFDEF(arc_recv_channel)
     /* We have no value that can be received from the channel.  Enqueue
        the calling thread and freeze it into Trecv state.  This should
        never happen with a recursive call arc_recv_channel. */
-    __arc_enqueue(c, thr, &CHAN_RHEAD(AV(chan)), &CHAN_RTAIL(AV(chan)));
+    __arc_enqueue(c, thr, &XCHAN_RHEAD(AV(chan)), &XCHAN_RTAIL(AV(chan)));
     TSTATE(thr) = Trecv;
     AYIELD();
   }
 
   /* If we get here, there is a value that can be received from the
      channel. Read it, and see if there is any thread waiting to send. */
-  CHAN_HASDATA(AV(chan)) = CNIL;
+  SCHAN_HASDATA(AV(chan), CNIL);
   val = CHAN_DATA(AV(chan));
-  xthr = __arc_dequeue(c, &CHAN_SHEAD(AV(chan)), &CHAN_STAIL(AV(chan)));
+  xthr = __arc_dequeue(c, &XCHAN_SHEAD(AV(chan)), &XCHAN_STAIL(AV(chan)));
   if (!NIL_P(xthr)) {
     /* There is at least one thread waiting to send on this channel.
        Wake it up so it can send already. */
@@ -105,7 +117,7 @@ AFFDEF(arc_send_channel)
   while (!NIL_P(CHAN_HASDATA(AV(chan)))) {
     /* There is a value in the channel that was written that has not
        yet been read.  Enqueue the thread. */
-    __arc_enqueue(c, thr, &CHAN_SHEAD(AV(chan)), &CHAN_STAIL(AV(chan)));
+    __arc_enqueue(c, thr, &XCHAN_SHEAD(AV(chan)), &XCHAN_STAIL(AV(chan)));
     /* Change state to Tsend, which is not runnable, and toss us back
        to the virtual machine loop, which will see we are no longer
        runnable and return us to the dispatcher so some other thread
@@ -116,9 +128,9 @@ AFFDEF(arc_send_channel)
 
   /* If we get here, we are clear to send to the channel. Read it, and
      see if there is any thread waiting to receive. */
-  CHAN_HASDATA(AV(chan)) = CTRUE;
-  CHAN_DATA(AV(chan)) = AV(val);
-  xthr = __arc_dequeue(c, &CHAN_RHEAD(AV(chan)), &CHAN_RTAIL(AV(chan)));
+  SCHAN_HASDATA(AV(chan), CTRUE);
+  SCHAN_DATA(AV(chan), AV(val));
+  xthr = __arc_dequeue(c, &XCHAN_RHEAD(AV(chan)), &XCHAN_RTAIL(AV(chan)));
   if (!NIL_P(xthr)) {
     /* There is at least one thread waiting to receive on this channel.
        Wake it up so it can receive. */

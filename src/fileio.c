@@ -286,15 +286,15 @@ void __arc_init_fio(arc *c)
   value io_ops;
 
   io_ops = arc_mkvector(c, IO_last+1);
-  VINDEX(io_ops, IO_closed_p) = arc_mkaff(c, fio_closed_p, CNIL);
-  VINDEX(io_ops, IO_ready) = arc_mkaff(c, fio_ready, CNIL);
-  VINDEX(io_ops, IO_wready) = arc_mkaff(c, fio_wready, CNIL);
-  VINDEX(io_ops, IO_getb) = arc_mkaff(c, fio_getb, CNIL);
-  VINDEX(io_ops, IO_putb) = arc_mkaff(c, fio_putb, CNIL);
-  VINDEX(io_ops, IO_seek) = arc_mkaff(c, fio_seek, CNIL);
-  VINDEX(io_ops, IO_tell) = arc_mkaff(c, fio_tell, CNIL);
-  VINDEX(io_ops, IO_close) = arc_mkaff(c, fio_close, CNIL);
-  VINDEX(VINDEX(c->builtins, BI_io), BI_io_fp) = io_ops;
+  SVINDEX(io_ops, IO_closed_p, arc_mkaff(c, fio_closed_p, CNIL));
+  SVINDEX(io_ops, IO_ready, arc_mkaff(c, fio_ready, CNIL));
+  SVINDEX(io_ops, IO_wready, arc_mkaff(c, fio_wready, CNIL));
+  SVINDEX(io_ops, IO_getb, arc_mkaff(c, fio_getb, CNIL));
+  SVINDEX(io_ops, IO_putb, arc_mkaff(c, fio_putb, CNIL));
+  SVINDEX(io_ops, IO_seek, arc_mkaff(c, fio_seek, CNIL));
+  SVINDEX(io_ops, IO_tell, arc_mkaff(c, fio_tell, CNIL));
+  SVINDEX(io_ops, IO_close, arc_mkaff(c, fio_close, CNIL));
+  SVINDEX(VINDEX(c->builtins, BI_io), BI_io_fp, io_ops);
   arc_bindsym(c, ARC_BUILTIN(c, S_STDIN_FD), mkfio(c, T_INPORT, stdin, CNIL));
   arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT_FD), mkfio(c, T_OUTPORT, stdout, CNIL));
   arc_bindsym(c, ARC_BUILTIN(c, S_STDERR_FD), mkfio(c, T_OUTPORT, stderr, CNIL));

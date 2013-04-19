@@ -99,8 +99,8 @@ value arc_mkthread(arc *c)
   SVALR(thr, CNIL);
   SCONR(thr, CNIL);
   TSTACK(thr) = arc_mkvector(c, c->stksize);
-  TSBASE(thr) = &VINDEX(TSTACK(thr), 0);
-  TSP(thr) = TSTOP(thr) = &VINDEX(TSTACK(thr), c->stksize-1);
+  TSBASE(thr) = &XVINDEX(TSTACK(thr), 0);
+  TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), c->stksize-1);
   TIP(thr).ipptr = NULL;
   TARGC(thr) = 0;
 

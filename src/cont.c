@@ -91,7 +91,7 @@ void arc_restorecont(arc *c, value thr, value cont)
     TIP(thr).aff_line = offset;
     return;
   }
-  TIPP(thr) = &VINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), offset);
+  TIPP(thr) = &XVINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), offset);
 }
 
 static value nextcont(arc *c, value thr, value cont)
@@ -122,6 +122,7 @@ void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv)
 {
   value cont;
 
+  /* XXX - write barrier! */
   for (cont=TCONR(thr); !NIL_P(cont); cont = nextcont(c, thr, cont)) {
     if (*contenv(c, thr, cont) == oldenv)
       *contenv(c, thr, cont) = nenv;
@@ -138,6 +139,7 @@ static value heap_cont(arc *c, value thr, value cont)
   if (TYPE(cont) == T_CONT)
     return(cont);
 
+  /* XXX - write barrier! */
   ncont = mkcont(c);
   sp = TSBASE(thr) + FIX2INT(cont);
   CONT_CONT(ncont) = *(sp+1);
@@ -150,7 +152,7 @@ static value heap_cont(arc *c, value thr, value cont)
   sslen = tsfn - (sp + 6);
   CONT_STK(ncont) = arc_mkvector(c, sslen);
   for (i=0; i<sslen; i++)
-    VINDEX(CONT_STK(ncont), i) = *(tsfn - i);
+    SVINDEX(CONT_STK(ncont), i, *(tsfn - i));
   return(ncont);
 }
 

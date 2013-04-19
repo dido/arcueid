@@ -196,7 +196,7 @@ AFFDEF(arc_readc)
     WV(chr, AFCRV);
     if (NIL_P(AV(chr)))
       ARETURN(CNIL);
-    VINDEX(AV(buf), FIX2INT(AV(i))) = AV(chr);
+    SVINDEX(AV(buf), FIX2INT(AV(i)), AV(chr));
     /* Arcueid fixnum vector to C array of chars */
     for (j=0; j<=FIX2INT(AV(i)); j++)
       cbuf[j] = FIX2INT(VINDEX(AV(buf), j));
@@ -267,7 +267,7 @@ AFFDEF(arc_writec)
   /* Convert C char array into Arcueid vector of fixnums */
   WV(buf, arc_mkvector(c, FIX2INT(AV(nbytes))));
   for (j=0; j<FIX2INT(AV(nbytes)); j++)
-    VINDEX(AV(buf), j) = INT2FIX(cbuf[j]);
+    SVINDEX(AV(buf), j, INT2FIX(cbuf[j]));
   for (WV(i, INT2FIX(0)); FIX2INT(AV(i)) < FIX2INT(AV(nbytes)); WV(i, INT2FIX(FIX2INT(AV(i)) + 1))) {
     AFCALL(AV(writeb),VINDEX(AV(buf), FIX2INT(AV(i))), AV(fd));
   }
@@ -372,7 +372,7 @@ AFFEND
 
 void arc_init_io(arc *c)
 {
-  VINDEX(c->builtins, BI_io) = arc_mkvector(c, BI_io_last+1);
+  SVINDEX(c->builtins, BI_io, arc_mkvector(c, BI_io_last+1));
   __arc_init_sio(c); 
   __arc_init_fio(c);
 }

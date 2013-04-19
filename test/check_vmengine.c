@@ -290,7 +290,7 @@ START_TEST(test_jmp)
   arc_emit1(c, cctx, ijmp, 0);
   arc_emit1(c, cctx, ildi, INT2FIX(5678));
   ptr2 = FIX2INT(CCTX_VCPTR(cctx));
-  VINDEX(CCTX_VCODE(cctx), ptr+1) = INT2FIX(ptr2 - ptr);
+  SVINDEX(CCTX_VCODE(cctx), ptr+1, INT2FIX(ptr2 - ptr));
   arc_emit(c, cctx, ihlt);
   code = arc_cctx2code(c, cctx);
   clos = arc_mkclos(c, code, CNIL);

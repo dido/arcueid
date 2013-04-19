@@ -284,9 +284,8 @@ extern int arc_newstring(arc *c, value thr);
 
 /* Definitions for vectors */
 #define VECLEN(x) (FIX2INT(REP(x)[0]))
-#define VINDEX(x, i) (REP(x)[i+1])
+#define XVINDEX(x, i) (REP(x)[i+1])
 
-/*
 static inline value VINDEX(value x, value i)
 {
   return(REP(x)[i+1]);
@@ -297,7 +296,6 @@ static inline value SVINDEX(value x, value i, value v)
   REP(x)[i+1] = v;
   return(v);
 }
-*/
 
 extern value arc_mkvector(arc *c, int length);
 

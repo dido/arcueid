@@ -293,7 +293,7 @@ int __arc_vmengine(arc *c, value thr)
 	value *target = TIPP(thr) + icofs - 2;
 
 	/* Compute the absolute target */
-	icofs = target - &VINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), 0);
+	icofs = target - &XVINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), 0);
 	SCONR(thr, __arc_mkcont(c, thr, icofs));
       }
       NEXT;

@@ -393,7 +393,7 @@ static AFFDEF(compile_args)
       /* rest arg */
       add_env_name(c, AV(nframe), cdr(AV(args)), AV(idx));
       /* change to envr instr. */
-      VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr))) = INT2FIX(ienvr);
+      SVINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)), INT2FIX(ienvr));
       FIXINC(idx);
       break;
     } else if (NIL_P(cdr(AV(args)))) {
@@ -421,9 +421,9 @@ static AFFDEF(compile_args)
 
   /* adjust the env instruction based on the number of args we
      actually have */
-  VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 1) = AV(regargs);
-  VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 2) = AV(dsbargs);
-  VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 3) = AV(optargs);
+  SVINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 1, AV(regargs));
+  SVINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 2, AV(dsbargs));
+  SVINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr)) + 3, AV(optargs));
   ARETURN(AV(env));
   AFEND;
 }

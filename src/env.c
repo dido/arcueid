@@ -90,7 +90,8 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
 #define SENV_COUNT(base) (FIX2INT(*(base + 1)))
 
 #define VENV_NEXT(x) (VINDEX((x), 0))
-#define VENV_INDEX(x, i) (VINDEX((x), (i)+1))
+#define SVENV_NEXT(x, v) (SVINDEX((x), 0, v))
+#define VENV_INDEX(x, i) (XVINDEX((x), (i)+1))
 #define VENV_CREATE(c, count) (arc_mkvector(c, count+1));
 
 static value nextenv(arc *c, value thr, value env)
@@ -193,7 +194,7 @@ static value heap_env(arc *c, value thr, value env)
   senvstart = senv + count + 1;
   for (i=0; i<count; i++)
     VENV_INDEX(henv, i) = *(senvstart - i);
-  VENV_NEXT(henv) = nextenv(c, thr, env);
+  SVENV_NEXT(henv, nextenv(c, thr, env));
   return(henv);
 }
 

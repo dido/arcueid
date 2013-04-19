@@ -108,5 +108,6 @@ enum builtin_syms {
 };
 
 #define ARC_BUILTIN(c, sym) (VINDEX(VINDEX((c)->builtins, BI_syms), sym))
+#define SARC_BUILTIN(c, sym, val) (SVINDEX(VINDEX((c)->builtins, BI_syms), sym, val))
 
 #endif

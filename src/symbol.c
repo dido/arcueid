@@ -105,12 +105,12 @@ void arc_init_symtable(arc *c)
   c->lastsym = 0;
 
   /* Set up builtin symbols */
-  VINDEX(c->builtins, BI_syms) = arc_mkvector(c, S_THE_END);
+  SVINDEX(c->builtins, BI_syms, arc_mkvector(c, S_THE_END));
   for (i=0; i<S_THE_END; i++)
-    ARC_BUILTIN(c, i) = arc_intern(c, arc_mkstringc(c, syms[i]));
+    SARC_BUILTIN(c, i, arc_intern(c, arc_mkstringc(c, syms[i])));
 
   /* Set up character escape table */
-  VINDEX(c->builtins, BI_charesc) = arc_mkhash(c, ARC_HASHBITS);
+  SVINDEX(c->builtins, BI_charesc, arc_mkhash(c, ARC_HASHBITS));
   for (i=0; chartbl[i].str; i++) {
     value str = arc_mkstringc(c, chartbl[i].str);
     value chr = arc_mkchar(c, chartbl[i].val);

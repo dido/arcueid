@@ -607,9 +607,9 @@ START_TEST(test_coerce_vector)
 
   thr = arc_mkthread(c);
   vec = arc_mkvector(c, 3);
-  VINDEX(vec, 0) = FIX2INT(1);
-  VINDEX(vec, 1) = FIX2INT(2);
-  VINDEX(vec, 2) = FIX2INT(3);
+  SVINDEX(vec, 0, FIX2INT(1));
+  SVINDEX(vec, 1, FIX2INT(2));
+  SVINDEX(vec, 2, FIX2INT(3));
   arc_bindsym(c, arc_intern_cstr(c, "myvec"), vec);
 
   TEST("(coerce myvec 'vector)");
@@ -1223,9 +1223,9 @@ START_TEST(test_sref)
   fail_unless(car(cdr(cdr(val))) == INT2FIX(3));
 
   val = arc_mkvector(c, 3);
-  VINDEX(val, 0) = INT2FIX(1);
-  VINDEX(val, 1) = INT2FIX(2);
-  VINDEX(val, 2) = INT2FIX(3);
+  SVINDEX(val, 0, INT2FIX(1));
+  SVINDEX(val, 1, INT2FIX(2));
+  SVINDEX(val, 2, INT2FIX(3));
   arc_bindsym(c, arc_intern_cstr(c, "sreftest"), val);
   TEST("(sref sreftest 31337 1)");
   fail_unless(ret == INT2FIX(31337));

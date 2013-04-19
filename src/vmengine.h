@@ -67,6 +67,12 @@ enum vminst {
 #define CODE_SRC(c) (VINDEX((c), 1))
 #define CODE_LITERAL(c, idx) (VINDEX((c), 2+(idx)))
 
+#define XCODE_LITERAL(c, idx) (XVINDEX((c), 2+(idx)))
+
+#define SCODE_CODE(c, val) (SVINDEX((c), 0, val))
+#define SCODE_SRC(c, val) (SVINDEX((c), 1, val))
+#define SCODE_LITERAL(c, idx, val) (SVINDEX((c), 2+(idx), val))
+
 #define CLOS_CODE(cl) (car(cl))
 #define CLOS_ENV(cl) (cdr(cl))
 
@@ -230,6 +236,11 @@ static inline value SCONR(value t, value nv)
 #define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
 #define CCTX_LITS(cctx) (VINDEX(cctx, 3))
 
+#define SCCTX_VCPTR(cctx, val) (SVINDEX(cctx, 0, val))
+#define SCCTX_VCODE(cctx, val) (SVINDEX(cctx, 1, val))
+#define SCCTX_LPTR(cctx, val) (SVINDEX(cctx, 2, val))
+#define SCCTX_LITS(cctx, val) (SVINDEX(cctx, 3, val))
+
 /* Continuations are vectors with the following items as indexes:
 
    0. Offset into the code object (or internal label in an AFF)
@@ -239,12 +250,12 @@ static inline value SCONR(value t, value nv)
    4. Old value of continuation register
    5. Vector of saved stack values
  */
-#define CONT_OFS(cont) (VINDEX(cont, 0))
-#define CONT_FUN(cont) (VINDEX(cont, 1))
-#define CONT_ENV(cont) (VINDEX(cont, 2))
-#define CONT_ARGC(cont) (VINDEX(cont, 3))
-#define CONT_CONT(cont) (VINDEX(cont, 4))
-#define CONT_STK(cont) (VINDEX(cont, 5))
+#define CONT_OFS(cont) (XVINDEX(cont, 0))
+#define CONT_FUN(cont) (XVINDEX(cont, 1))
+#define CONT_ENV(cont) (XVINDEX(cont, 2))
+#define CONT_ARGC(cont) (XVINDEX(cont, 3))
+#define CONT_CONT(cont) (XVINDEX(cont, 4))
+#define CONT_STK(cont) (XVINDEX(cont, 5))
 
 #define CONT_SIZE 6
 

@@ -406,7 +406,7 @@ value arc_mkhash(arc *c, int hashbits)
   HASH_TABLE(hash) = hv;
   
   for (i=0; i<HASHSIZE(hashbits); i++)
-    VINDEX(HASH_TABLE(hash), i) = CUNBOUND;
+    SVINDEX(HASH_TABLE(hash), i, CUNBOUND);
   return(hash);
 }
 
@@ -425,7 +425,7 @@ static void hashtable_expand(arc *c, value hash)
   newtbl = arc_mkvector(c, HASHSIZE(nhashbits));
   ((struct cell *)newtbl)->_type = T_TABLEVEC;
   for (i=0; i<HASHSIZE(nhashbits); i++)
-    VINDEX(newtbl, i) = CUNBOUND;
+    SVINDEX(newtbl, i, CUNBOUND);
   oldtbl = HASH_TABLE(hash);
   /* Search for active keys and move them into the new table */
   for (i=0; i<VECLEN(oldtbl); i++) {
@@ -433,16 +433,16 @@ static void hashtable_expand(arc *c, value hash)
     if (EMPTYP(e))
       continue;
     /* remove the old link now that we have a copy */
-    VINDEX(oldtbl, i) = CUNBOUND;
+    SVINDEX(oldtbl, i, CUNBOUND);
     /* insert the old key into the new table */
     hv = (unsigned int)FIX2INT(BHASHVAL(e));
     index = hv & HASHMASK(nhashbits);
     for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
       index = (index + PROBE(j)) & HASHMASK(nhashbits);
     BTABLE(e) = newtbl;
-    VINDEX(newtbl, index) = e;
+    SVINDEX(newtbl, index, e);
     SBINDEX(e, index);		/* change index */
-    VINDEX(oldtbl, i) = CUNBOUND;
+    SVINDEX(oldtbl, i, CUNBOUND);
   }
   SET_HASHBITS(hash, nhashbits);
   SET_LLIMIT(hash, (HASHSIZE(nhashbits)*MAX_LOAD_FACTOR) / 100);
@@ -464,7 +464,7 @@ static void hb_sweeper(arc *c, value v)
   if (BTABLE(v) != CNIL) {
     value t = BTABLE(v);
 
-    VINDEX(t, BINDEX(v)) = CUNDEF;
+    SVINDEX(t, BINDEX(v), CUNDEF);
   }
 }
 
@@ -551,7 +551,7 @@ value arc_hash_insert(arc *c, value hash, value key, value val)
     /* No such key in the hash table yet.  Create a bucket and
        assign it to the table. */
     e = mkhashbucket(c, key, val, index, hash, INT2FIX(hv));
-    VINDEX(HASH_TABLE(hash), index) = e;
+    SVINDEX(HASH_TABLE(hash), index, e);
   } else {
     /* The key already exists.  Use the current bucket but change the
        value to the value specified. */
@@ -589,7 +589,7 @@ value arc_hash_delete(arc *c, value hash, value key)
   if (v != CUNBOUND) {
     e = VINDEX(HASH_TABLE(hash), index);
     BTABLE(e) = CNIL;
-    VINDEX(HASH_TABLE(hash), index) = CUNDEF;
+    SVINDEX(HASH_TABLE(hash), index, CUNDEF);
     SET_NENTRIES(hash, HASH_NENTRIES(hash)-1);
   }
   return(v);
@@ -627,9 +627,9 @@ static value encode_hs(arc *c, value enc, arc_hs *hs)
   for (i=0; i<6; i++) {
     j = i/2;
     shift = (i%2 == 0) ? 0 : BITSHIFT;
-    VINDEX(enc, i) = INT2FIX((hs->s[j] >> shift) & MASK);
+    SVINDEX(enc, i, INT2FIX((hs->s[j] >> shift) & MASK));
   }
-  VINDEX(enc, 6) = INT2FIX(hs->state);
+  SVINDEX(enc, 6, INT2FIX(hs->state));
   return(enc);
 }
 
@@ -787,7 +787,7 @@ AFFDEF(arc_xhash_insert)
        assign it to the table. */
     WV(e, mkhashbucket(c, AV(key), AV(val), FIX2INT(AV(index)), AV(hash),
 		       AV(hv)));
-    VINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index))) = AV(e);
+    SVINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index)), AV(e));
   } else {
     /* The key already exists.  Use the current bucket but change the
        value to the value specified. */
@@ -822,7 +822,7 @@ AFFDEF(arc_xhash_delete)
   index = car(AFCRV);
   e = VINDEX(HASH_TABLE(AV(tbl)), FIX2INT(index));
   BTABLE(e) = CNIL;
-  VINDEX(HASH_TABLE(AV(tbl)), FIX2INT(index)) = CUNDEF;
+  SVINDEX(HASH_TABLE(AV(tbl)), FIX2INT(index), CUNDEF);
   SET_NENTRIES(AV(tbl), HASH_NENTRIES(AV(tbl))-1);
   ARETURN(BVALUE(e));
   AFEND;

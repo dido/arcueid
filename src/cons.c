@@ -344,9 +344,9 @@ static AFFDEF(cons_xcoerce)
     len = arc_list_length(c, AV(obj));
     vec = arc_mkvector(c, FIX2INT(len));
     for (i=0; CONS_P(AV(obj)); WV(obj, cdr(AV(obj))), i++)
-      VINDEX(vec, i) = car(AV(obj));
+      SVINDEX(vec, i, car(AV(obj)));
     if (!NIL_P(AV(obj)))
-      VINDEX(vec, i) = AV(obj);
+      SVINDEX(vec, i, AV(obj));
     ARETURN(vec);
   }
 

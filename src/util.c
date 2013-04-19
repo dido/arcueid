@@ -133,7 +133,10 @@ void __arc_strungetc(arc *c, int *index)
   (*index)--;
 }
 
-/* Utility functions for queues */
+/* Utility functions for queues.
+
+   XXX - write barrier!
+*/
 void __arc_enqueue(arc *c, value thr, value *head, value *tail)
 {
   value cell;

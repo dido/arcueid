@@ -139,9 +139,9 @@ START_TEST(test_hash_vector_keys)
   value hash, thr;
   value vec = arc_mkvector(c, 3);
 
-  VINDEX(vec, 0) = INT2FIX(1);
-  VINDEX(vec, 1) = INT2FIX(2);
-  VINDEX(vec, 2) = INT2FIX(3);
+  SVINDEX(vec, 0, INT2FIX(1));
+  SVINDEX(vec, 1, INT2FIX(2));
+  SVINDEX(vec, 2, INT2FIX(3));
 
   thr = arc_mkthread(c);
   hash = arc_mkhash(c, 8);

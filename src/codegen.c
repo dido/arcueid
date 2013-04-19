@@ -32,8 +32,8 @@ value arc_mkcctx(arc *c)
   value cctx;
 
   cctx = arc_mkvector(c, 4);
-  CCTX_VCPTR(cctx) = CCTX_LITS(cctx) = INT2FIX(0);
-  CCTX_VCODE(cctx) = CCTX_LITS(cctx) = CNIL;
+  SCCTX_VCPTR(cctx, SCCTX_LITS(cctx, INT2FIX(0)));
+  SCCTX_VCODE(cctx, SCCTX_LITS(cctx, CNIL));
   return(cctx);
 }
 
@@ -48,8 +48,8 @@ static value __resize_vmcode(arc *c, value cctx)
   vcode = CCTX_VCODE(cctx);
   size = (vcode == CNIL) ? 16 : (2*VECLEN(vcode));
   nvcode = arc_mkvector(c, size);
-  memcpy(&VINDEX(nvcode, 0), &(VINDEX(vcode, 0)), vptr*sizeof(value));
-  CCTX_VCODE(cctx) = nvcode;
+  memcpy(&XVINDEX(nvcode, 0), &(XVINDEX(vcode, 0)), vptr*sizeof(value));
+  SCCTX_VCODE(cctx, nvcode);
   return(nvcode);
 }
 
@@ -66,8 +66,8 @@ static value __resize_literals(arc *c, value cctx)
   if (size == 0)
     return(CNIL);
   nlit = arc_mkvector(c, size);
-  memcpy(&VINDEX(nlit, 0), &(VINDEX(lit, 0)), lptr*sizeof(value));
-  CCTX_LITS(cctx) = nlit;
+  memcpy(&XVINDEX(nlit, 0), &(XVINDEX(lit, 0)), lptr*sizeof(value));
+  SCCTX_LITS(cctx, nlit);
   return(nlit);
 }
 
@@ -82,8 +82,8 @@ void arc_emit(arc *c, value cctx, enum vminst inst)
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr >= VECLEN(vcode))
     vcode = __resize_vmcode(c, cctx);
-  VINDEX(vcode, vptr++) = INT2FIX((int)inst);
-  CCTX_VCPTR(cctx) = INT2FIX(vptr);
+  SVINDEX(vcode, vptr++, INT2FIX((int)inst));
+  SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
 void arc_emit1(arc *c, value cctx, enum vminst inst, value arg)
@@ -95,9 +95,9 @@ void arc_emit1(arc *c, value cctx, enum vminst inst, value arg)
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr+1 >= VECLEN(vcode))
     vcode = __resize_vmcode(c, cctx);
-  VINDEX(vcode, vptr++) = INT2FIX((int)inst);
-  VINDEX(vcode, vptr++) = arg;
-  CCTX_VCPTR(cctx) = INT2FIX(vptr);
+  SVINDEX(vcode, vptr++, INT2FIX((int)inst));
+  SVINDEX(vcode, vptr++, arg);
+  SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
 void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
@@ -109,10 +109,10 @@ void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr+2 >= VECLEN(vcode))
     vcode = __resize_vmcode(c, cctx);
-  VINDEX(vcode, vptr++) = INT2FIX((int)inst);
-  VINDEX(vcode, vptr++) = arg1;
-  VINDEX(vcode, vptr++) = arg2;
-  CCTX_VCPTR(cctx) = INT2FIX(vptr);
+  SVINDEX(vcode, vptr++, INT2FIX((int)inst));
+  SVINDEX(vcode, vptr++, arg1);
+  SVINDEX(vcode, vptr++, arg2);
+  SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
 void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
@@ -125,18 +125,18 @@ void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr+3 >= VECLEN(vcode))
     vcode = __resize_vmcode(c, cctx);
-  VINDEX(vcode, vptr++) = INT2FIX((int)inst);
-  VINDEX(vcode, vptr++) = arg1;
-  VINDEX(vcode, vptr++) = arg2;
-  VINDEX(vcode, vptr++) = arg3;
-  CCTX_VCPTR(cctx) = INT2FIX(vptr);
+  SVINDEX(vcode, vptr++, INT2FIX((int)inst));
+  SVINDEX(vcode, vptr++, arg1);
+  SVINDEX(vcode, vptr++, arg2);
+  SVINDEX(vcode, vptr++, arg3);
+  SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
 /* Patch a jump offset given the address of the jump instruction
    and the destination offset. */
 void arc_jmpoffset(arc *c, value cctx, int jmpinst, int destoffset)
 {
-  VINDEX(CCTX_VCODE(cctx), jmpinst+1) = INT2FIX(destoffset - jmpinst);
+  SVINDEX(CCTX_VCODE(cctx), jmpinst+1, INT2FIX(destoffset - jmpinst));
 }
 
 /* Add a literal, growing the literal vector as needed */
@@ -150,8 +150,8 @@ int arc_literal(arc *c, value cctx, value literal)
   if (lits == CNIL || lptr >= VECLEN(lits))
     lits = __resize_literals(c, cctx);
   lidx = lptr;
-  VINDEX(lits, lptr++) = (value)literal;
-  CCTX_LPTR(cctx) = INT2FIX(lptr);
+  SVINDEX(lits, lptr++, (value)literal);
+  SCCTX_LPTR(cctx, INT2FIX(lptr));
   return(lidx);
 }
 
@@ -187,15 +187,15 @@ value arc_mkcode(arc *c, int ncodes, int nlits)
 {
   value code = arc_mkvector(c, nlits+2);
 
-  CODE_CODE(code) = arc_mkvector(c, ncodes);
-  CODE_SRC(code) = CNIL;
+  SCODE_CODE(code, arc_mkvector(c, ncodes));
+  SCODE_SRC(code, CNIL);
   ((struct cell *)code)->_type = T_CODE;
   return(code);
 }
 
 value arc_code_setsrc(arc *c, value code, value src)
 {
-  CODE_SRC(code) = src;
+  SCODE_SRC(code, src);
   return(code);
 }
 
@@ -218,7 +218,7 @@ value arc_code_setname(arc *c, value code, value name)
     return(CNIL);
   }
   if (NIL_P(CODE_SRC(code))) {
-    CODE_SRC(code) = arc_mkhash(c, ARC_HASHBITS);
+    SCODE_SRC(code, arc_mkhash(c, ARC_HASHBITS));
   }
   arc_hash_insert(c, CODE_SRC(code), INT2FIX(SRC_FUNCNAME), name);
   return(orgcode);
@@ -229,9 +229,9 @@ value arc_cctx2code(arc *c, value cctx)
   value func;
 
   func = arc_mkcode(c, CCTX_VCPTR(cctx), CCTX_LPTR(cctx));
-  memcpy(&VINDEX(CODE_CODE(func), 0), &VINDEX(CCTX_VCODE(cctx), 0),
+  memcpy(&XVINDEX(CODE_CODE(func), 0), &XVINDEX(CCTX_VCODE(cctx), 0),
 	 FIX2INT(CCTX_VCPTR(cctx))*sizeof(value));
-  memcpy(&CODE_LITERAL(func, 0), &VINDEX(CCTX_LITS(cctx), 0),
+  memcpy(&XCODE_LITERAL(func, 0), &XVINDEX(CCTX_LITS(cctx), 0),
 	 FIX2INT(CCTX_LPTR(cctx))*sizeof(value));
   return(func);
 }
