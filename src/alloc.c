@@ -222,6 +222,11 @@ static void sysfree(void *ptr)
 
 /* The actual garbage collector */
 
+/* The write barrier.  As of now, this does nothing. */
+inline void __arc_wb(value dest, value src)
+{
+}
+
 /* Mark a value with the propagator flag */
 void __arc_markprop(arc *c, value p)
 {

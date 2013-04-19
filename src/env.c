@@ -142,6 +142,7 @@ value __arc_getenv(arc *c, value thr, int depth, int index)
 
 value __arc_putenv(arc *c, value thr, int depth, int index, value val)
 {
+  __arc_wb(*envval(c, thr, depth, index), val);
   *envval(c, thr, depth, index) = val;
   return(val);
 }
@@ -168,7 +169,7 @@ void __arc_menv(arc *c, value thr, int n)
     /* Destination of our copy is the (n-1)th element of the environment.
        May be larger or smaller than the actual size of the environment.
        Doesn't matter, as long as it remains inside the stack! */
-    /* XXX this is not subject to the write barrier! */
+    /* XXX this is not subject to the write barrier.  Should it be? */
     dest = envval(c, thr, 0, n-1);
     /* use memmove because the new environment might be larger than the old
        one. */

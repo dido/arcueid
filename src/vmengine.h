@@ -149,6 +149,7 @@ static inline value TFUNR(value t)
 
 static inline value SFUNR(value t, value nv)
 {
+  __arc_wb(((struct vmthread_t *)REP(t))->funr, nv);
   ((struct vmthread_t *)REP(t))->funr = nv;
   return(nv);
 }
@@ -160,6 +161,7 @@ static inline value TENVR(value t)
 
 static inline value SENVR(value t, value nv)
 {
+  __arc_wb(((struct vmthread_t *)REP(t))->envr, nv);
   ((struct vmthread_t *)REP(t))->envr = nv;
   return(nv);
 }
@@ -171,6 +173,7 @@ static inline value TVALR(value t)
 
 static inline value SVALR(value t, value nv)
 {
+  __arc_wb((((struct vmthread_t *)REP(t))->valr), nv);
   (((struct vmthread_t *)REP(t))->valr) = nv;
   return(nv);
 }
@@ -182,6 +185,7 @@ static inline value TCONR(value t)
 
 static inline value SCONR(value t, value nv)
 {
+  __arc_wb(((struct vmthread_t *)REP(t))->conr, nv);
   ((struct vmthread_t *)REP(t))->conr = nv;
   return(nv);
 }

@@ -122,10 +122,11 @@ void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv)
 {
   value cont;
 
-  /* XXX - write barrier! */
   for (cont=TCONR(thr); !NIL_P(cont); cont = nextcont(c, thr, cont)) {
-    if (*contenv(c, thr, cont) == oldenv)
+    if (*contenv(c, thr, cont) == oldenv) {
+      __arc_wb(*contenv(c, thr, cont), nenv);
       *contenv(c, thr, cont) = nenv;
+    }
   }
 }
 
@@ -139,13 +140,17 @@ static value heap_cont(arc *c, value thr, value cont)
   if (TYPE(cont) == T_CONT)
     return(cont);
 
-  /* XXX - write barrier! */
   ncont = mkcont(c);
   sp = TSBASE(thr) + FIX2INT(cont);
+  __arc_wb(CONT_CONT(ncont), *(sp+1));
   CONT_CONT(ncont) = *(sp+1);
+  __arc_wb(CONT_ARGC(ncont), *(sp+2));
   CONT_ARGC(ncont) = *(sp+2);
+  __arc_wb(CONT_FUN(ncont), *(sp+3));
   CONT_FUN(ncont) = *(sp+3);
+  __arc_wb(CONT_ENV(ncont), __arc_env2heap(c, thr, *(sp+4)));
   CONT_ENV(ncont) = __arc_env2heap(c, thr, *(sp+4));
+  __arc_wb(CONT_OFS(ncont), *(sp+5));
   CONT_OFS(ncont) = *(sp+5);
   /* save the stack up to the saved TSFN */
   tsfn = TSBASE(thr) + FIX2INT(*(sp+6));

@@ -134,8 +134,6 @@ void __arc_strungetc(arc *c, int *index)
 }
 
 /* Utility functions for queues.
-
-   XXX - write barrier!
 */
 void __arc_enqueue(arc *c, value thr, value *head, value *tail)
 {
@@ -143,7 +141,9 @@ void __arc_enqueue(arc *c, value thr, value *head, value *tail)
 
   cell = cons(c, thr, CNIL);
   if (*head == CNIL && *tail == CNIL) {
+    __arc_wb(*head, cell);
     *head = cell;
+    __arc_wb(*tail, cell);
     *tail = cell;
     return;
   }
@@ -159,8 +159,11 @@ value __arc_dequeue(arc *c, value *head, value *tail)
   if (*head == CNIL && *tail == CNIL)
     return(CNIL);
   thr = car(*head);
+  __arc_wb(*head, cdr(*head));
   *head = cdr(*head);
-  if (NIL_P(*head))
+  if (NIL_P(*head)) {
+    __arc_wb(*tail, *head);
     *tail = *head;
+  }
   return(thr);
 }

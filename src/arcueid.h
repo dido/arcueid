@@ -239,6 +239,8 @@ static inline enum arc_types TYPE(value v)
   return(T_NONE);		/* unrecognized immediate type */
 }
 
+extern inline void __arc_wb(value x, value y);
+
 #define TYPENAME(tnum) (((tnum) >= 0 && (tnum) <= T_MAX) ? (__arc_typenames[tnum]) : "unknown")
 
 /* Definitions for conses */
@@ -248,9 +250,19 @@ static inline enum arc_types TYPE(value v)
 #define cddr(x) (cdr(cdr(x)))
 #define caddr(x) (car(cddr(x)))
 
-/* XXX - write barrier! */
-#define scar(x, y) ((car(x)) = (y))
-#define scdr(x, y) ((cdr(x)) = (y))
+static inline value scar(value x, value y)
+{
+  __arc_wb(car(x), y);
+  car(x) = y;
+  return(y);
+}
+
+static inline value scdr(value x, value y)
+{
+  __arc_wb(cdr(x), y);
+  cdr(x) = y;
+  return(y);
+}
 
 #define CONS_P(x) (TYPE(x) == T_CONS)
 
@@ -293,6 +305,7 @@ static inline value VINDEX(value x, value i)
 
 static inline value SVINDEX(value x, value i, value v)
 {
+  __arc_wb(REP(x)[i+1], v);
   REP(x)[i+1] = v;
   return(v);
 }

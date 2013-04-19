@@ -61,22 +61,26 @@ void *alloca (size_t);
  */
 static AFFDEF(savetexh)
 {
+  value nexh;
   AFBEGIN;
   /* (= old *exh) */
   __arc_putenv(c, thr, 1, 1, TEXH(thr));
   /* (= *exh (cons cont handler)) */
-  /* XXX - write barrier! */
-  TEXH(thr) = cons(c, __arc_getenv(c, thr, 1, 0), __arc_getenv(c, thr, 2, 0));
+  nexh = cons(c, __arc_getenv(c, thr, 1, 0), __arc_getenv(c, thr, 2, 0));
+  __arc_wb(TEXH(thr), nexh);
+  TEXH(thr) = nexh;
   AFEND;
 }
 AFFEND
 
 static AFFDEF(restoretexh)
 {
+  value old;
   AFBEGIN;
   /* (= *exh old) */
-  /* XXX - write barrier! */
-  TEXH(thr) = __arc_getenv(c, thr, 1, 1);
+  old = __arc_getenv(c, thr, 1, 1);
+  __arc_wb(TEXH(thr), old);
+  TEXH(thr) = old;
   AFEND;
 }
 AFFEND

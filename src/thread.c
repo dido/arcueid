@@ -76,11 +76,11 @@ static void thread_marker(arc *c, value thr, int depth,
      to clear out the unused portions before marking the stack vector
      itself.  XXX - we could also do this by non-recursively marking
      the stack vector itself and then marking only the used portions.
-
-     XXX - write barrier!
   */
-  for (p = TSBASE(thr); p == TSP(thr); p++)
+  for (p = TSBASE(thr); p == TSP(thr); p++) {
+    __arc_wb(*p, CNIL);
     *p = CNIL;
+  }
   mark(c, TSTACK(thr), depth);
 
   mark(c, TWAITFD(thr), depth);

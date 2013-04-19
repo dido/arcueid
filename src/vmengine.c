@@ -567,7 +567,7 @@ static AFFDEF(reroot)
   scdr(TCH(thr), AV(there));
   scar(AV(there), INT2FIX(0xdead));
   scdr(AV(there), CNIL);
-  /* XXX - write barrier! */
+  __arc_wb(TCH(thr), AV(there));
   TCH(thr) = AV(there);
   AFTCALL2(AV(before), CNIL);
   AFEND;
