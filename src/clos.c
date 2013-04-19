@@ -56,8 +56,8 @@ static int clos_apply(arc *c, value thr, value clos)
   env = CLOS_ENV(clos);
   /* Set up the registers to make this code execute */
   TIPP(thr) = &VINDEX(CODE_CODE(code), 0);
-  TENVR(thr) = env;
-  TFUNR(thr) = clos;
+  SENVR(thr, env);
+  SFUNR(thr, clos);
   /* Return to the trampoline to make it resume */
   return(TR_RESUME);
 }

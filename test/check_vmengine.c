@@ -30,7 +30,7 @@ arc *c;
 
 #define XCALL0(clos) do {			\
     TQUANTA(thr) = QUANTA;			\
-    TVALR(thr) = clos;				\
+    SVALR(thr, clos);				\
     TARGC(thr) = 0;				\
     __arc_thr_trampoline(c, thr, TR_FNAPP);	\
   } while (0)
@@ -38,7 +38,7 @@ arc *c;
 
 #define XCALL(clos, ...) do {			\
     TQUANTA(thr) = QUANTA;			\
-    TVALR(thr) = clos;				\
+    SVALR(thr, clos);				\
     TARGC(thr) = NARGS(__VA_ARGS__);		\
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
     __arc_thr_trampoline(c, thr, TR_FNAPP);	\
@@ -872,10 +872,10 @@ AFFDEF(ccctest)
   CPUSH(thr, INT2FIX(20));
   CPUSH(thr, INT2FIX(10));
   AFCALL(arc_mkaff(c, arc_callcc, CNIL), arc_mkaff(c, cccfn, CNIL));
-  TVALR(thr) = AFCRV;
-  TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
-  TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
-  TVALR(thr) = __arc_sub2(c, AV(arg), TVALR(thr));
+  SVALR(thr, AFCRV);
+  SVALR(thr, __arc_sub2(c, CPOP(thr), TVALR(thr)));
+  SVALR(thr, __arc_sub2(c, CPOP(thr), TVALR(thr)));
+  SVALR(thr, __arc_sub2(c, AV(arg), TVALR(thr)));
   ARETURN(TVALR(thr));
   AFEND;
 }
@@ -887,7 +887,7 @@ START_TEST(test_callcc)
 
   mycont = CNIL;
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, ccctest, arc_mkstringc(c, "doubler"));
+  SVALR(thr, arc_mkaff(c, ccctest, arc_mkstringc(c, "doubler")));
   CPUSH(thr, INT2FIX(30));
   TARGC(thr) = 1;
   __arc_thr_trampoline(c, thr, TR_FNAPP);
@@ -897,7 +897,7 @@ START_TEST(test_callcc)
 
   /* See what happens when we restore the continuation */
   thr = arc_mkthread(c);
-  TVALR(thr) = mycont;
+  SVALR(thr, mycont);
   CPUSH(thr, INT2FIX(4));
   TARGC(thr) = 1;
   __arc_thr_trampoline(c, thr, TR_FNAPP);
@@ -906,7 +906,7 @@ START_TEST(test_callcc)
 
   /* ... and again ... */
   thr = arc_mkthread(c);
-  TVALR(thr) = mycont;
+  SVALR(thr, mycont);
   CPUSH(thr, INT2FIX(3));
   TARGC(thr) = 1;
   __arc_thr_trampoline(c, thr, TR_FNAPP);

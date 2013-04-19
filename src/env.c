@@ -83,7 +83,7 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
   CPUSH(thr, TENVR(thr));
   esofs = envstart - TSBASE(thr);
   TSFN(thr) = TSP(thr);		/* start of stack after env */
-  TENVR(thr) = ((value)((long)(esofs << 4) | ENV_FLAG));
+  SENVR(thr, ((value)((long)(esofs << 4) | ENV_FLAG)));
 }
 
 #define SENV_PTR(stkbase, x) (((int)((env) >> 4)) + (stkbase))
@@ -178,7 +178,7 @@ void __arc_menv(arc *c, value thr, int n)
   /* If the current environment was on the heap, none of this black
      magic needs to be done.  It is enough to just set the environment
      register to point to the parent environment. */
-  TENVR(thr) = parentenv;
+  SENVR(thr, parentenv);
 }
 
 /* Convert a single stack environment into a heap-based environment */

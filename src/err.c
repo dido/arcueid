@@ -65,6 +65,7 @@ static AFFDEF(savetexh)
   /* (= old *exh) */
   __arc_putenv(c, thr, 1, 1, TEXH(thr));
   /* (= *exh (cons cont handler)) */
+  /* XXX - write barrier! */
   TEXH(thr) = cons(c, __arc_getenv(c, thr, 1, 0), __arc_getenv(c, thr, 2, 0));
   AFEND;
 }
@@ -74,6 +75,7 @@ static AFFDEF(restoretexh)
 {
   AFBEGIN;
   /* (= *exh old) */
+  /* XXX - write barrier! */
   TEXH(thr) = __arc_getenv(c, thr, 1, 1);
   AFEND;
 }
@@ -93,7 +95,7 @@ static AFFDEF(ccchandler)
   AFBEGIN;
   (void)old;
   (void)cont;
-  TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
+  SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
   /* (dynamic-wind ... thunk ...) */
   AFTCALL(arc_mkaff(c, arc_dynamic_wind, CNIL),
 	  arc_mkaff2(c, savetexh, CNIL, TENVR(thr)),
@@ -112,7 +114,7 @@ AFFDEF(arc_on_err)
      indirectly. */
   (void)handler;
   (void)thunk;
-  TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
+  SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
   AFCALL(arc_mkaff(c, arc_callcc, CNIL), arc_mkaff2(c, ccchandler, CNIL,
 						    TENVR(thr)));
   ret = AFCRV;

@@ -67,18 +67,18 @@ void arc_restorecont(arc *c, value thr, value cont)
   if (TYPE(cont) == T_FIXNUM) {
     /* A continuation on the stack is just an offset into the stack. */
     TSP(thr) = TSBASE(thr) + FIX2INT(cont);
-    TCONR(thr) = CPOP(thr);
+    SCONR(thr, CPOP(thr));
     TARGC(thr) = FIX2INT(CPOP(thr));
-    TFUNR(thr) = CPOP(thr);
-    TENVR(thr) = CPOP(thr);
+    SFUNR(thr, CPOP(thr));
+    SENVR(thr, CPOP(thr));
     offset = FIX2INT(CPOP(thr));
     TSFN(thr) = TSBASE(thr) + FIX2INT(CPOP(thr));
   } else {
     /* Heap-based continuations */
-    TFUNR(thr) = CONT_FUN(cont);
-    TENVR(thr) = CONT_ENV(cont);
+    SFUNR(thr, CONT_FUN(cont));
+    SENVR(thr, CONT_ENV(cont));
     TARGC(thr) = FIX2INT(CONT_ARGC(cont));
-    TCONR(thr) = CONT_CONT(cont);
+    SCONR(thr, CONT_CONT(cont));
     TSFN(thr) = TSP(thr);
     /* restore saved stack */
     if (TYPE(CONT_STK(cont)) == T_VECTOR) {
@@ -187,12 +187,12 @@ static int cont_apply(arc *c, value thr, value cont)
   /* Applying a continuation just means it goes on the continuation
      register and we make it go. */
   if (TARGC(thr) == 1)
-    TVALR(thr) = CPOP(thr);
+    SVALR(thr, CPOP(thr));
   else {
     arc_err_cstrfmt(c, "context expected 1 value, received %d values", TARGC(thr));
-    TVALR(thr) = CNIL;
+    SVALR(thr, CNIL);
   }
-  TCONR(thr) = cont;
+  SCONR(thr, cont);
   return(TR_RC);
 }
 

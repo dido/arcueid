@@ -168,7 +168,7 @@ START_TEST(test_heap_env)
   CPUSH(thr, INT2FIX(9));
   __arc_mkenv(c, thr, 3, 0);
 
-  TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
+  SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
 
   fail_unless(__arc_getenv(c, thr, 0, 0) == INT2FIX(7));
   fail_unless(__arc_getenv(c, thr, 0, 1) == INT2FIX(8));

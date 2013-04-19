@@ -50,13 +50,13 @@ jmp_buf errbuf;
 
 #define XCALL0(clos) do {				\
     TQUANTA(c->curthread) = QUANTA;			\
-    TVALR(c->curthread) = clos;				\
+    SVALR(c->curthread, clos);				\
     TARGC(c->curthread) = 0;				\
     __arc_thr_trampoline(c, c->curthread, TR_FNAPP);	\
   } while (0)
 
 #define XCALL(fname, ...) do {				\
-    TVALR(c->curthread) = arc_mkaff(c, fname, CNIL);	\
+    SVALR(c->curthread, arc_mkaff(c, fname, CNIL));	\
     TARGC(c->curthread) = NARGS(__VA_ARGS__);		\
     FOR_EACH(CPUSH_, __VA_ARGS__);			\
     __arc_thr_trampoline(c, c->curthread, TR_FNAPP);	\

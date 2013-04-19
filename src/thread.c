@@ -75,7 +75,10 @@ static void thread_marker(arc *c, value thr, int depth,
   /* The stack has to be treated specially.  In a gc cycle, we have
      to clear out the unused portions before marking the stack vector
      itself.  XXX - we could also do this by non-recursively marking
-     the stack vector itself and then marking only the used portions. */
+     the stack vector itself and then marking only the used portions.
+
+     XXX - write barrier!
+  */
   for (p = TSBASE(thr); p == TSP(thr); p++)
     *p = CNIL;
   mark(c, TSTACK(thr), depth);
@@ -91,10 +94,10 @@ value arc_mkthread(arc *c)
   value thr;
 
   thr = arc_mkobject(c, sizeof(struct vmthread_t), T_THREAD);
-  TFUNR(thr) = CNIL;
-  TENVR(thr) = CNIL;
-  TVALR(thr) = CNIL;
-  TCONR(thr) = CNIL;
+  SFUNR(thr, CNIL);
+  SENVR(thr, CNIL);
+  SVALR(thr, CNIL);
+  SCONR(thr, CNIL);
   TSTACK(thr) = arc_mkvector(c, c->stksize);
   TSBASE(thr) = &VINDEX(TSTACK(thr), 0);
   TSP(thr) = TSTOP(thr) = &VINDEX(TSTACK(thr), c->stksize-1);
@@ -131,7 +134,7 @@ value arc_thr_valr(arc *c, value thr)
 
 value arc_thr_set_valr(arc *c, value thr, value val)
 {
-  TVALR(thr) = val;
+  SVALR(thr, val);
   return(val);
 }
 
@@ -367,7 +370,7 @@ void arc_thread_dispatch(arc *c)
 	/* Wake up a sleeping thread if the wakeup time is reached */
 	if (__arc_milliseconds() >= TWAKEUP(thr)) {
 	  TSTATE(thr) = Tready;
-	  TVALR(thr) = CNIL;
+	  SVALR(thr, CNIL);
 	} else {
 	  sleepthreads++;
 	  if (TWAKEUP(thr) < minsleep)
@@ -456,7 +459,7 @@ value arc_spawn(arc *c, value thunk)
     return(CNIL);
   }
   thr = arc_mkthread(c);
-  TFUNR(thr) = TVALR(thr) = thunk;
+  SFUNR(thr, SVALR(thr, thunk));
   /* XXX - copy continuation marks from the spawning thread to the new
      thread if there is a parent thread. */
 

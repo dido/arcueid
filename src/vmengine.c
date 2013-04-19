@@ -51,7 +51,7 @@ static int apply_vr(arc *c, value thr)
 {
   typefn_t *tfn;
 
-  TFUNR(thr) = TVALR(thr);
+  SFUNR(thr, TVALR(thr));
   tfn = __arc_typefn(c, TVALR(thr));
   if (tfn == NULL || tfn->apply == NULL) {
     arc_err_cstrfmt(c, "cannot apply value");
@@ -234,14 +234,14 @@ int __arc_vmengine(arc *c, value thr)
       CPUSH(thr, TVALR(thr));
       NEXT;
     INST(ipop):
-      TVALR(thr) = CPOP(thr);
+      SVALR(thr, CPOP(thr));
       NEXT;
     INST(ildi):
-      TVALR(thr) = *TIPP(thr)++;
+      SVALR(thr, *TIPP(thr)++);
       NEXT;
     INST(ildl): {
 	value lidx = *TIPP(thr)++;
-	TVALR(thr) = CODE_LITERAL(CLOS_CODE(TFUNR(thr)), FIX2INT(lidx));
+	SVALR(thr, CODE_LITERAL(CLOS_CODE(TFUNR(thr)), FIX2INT(lidx)));
       }
       NEXT;
     INST(ildg):
@@ -253,14 +253,14 @@ int __arc_vmengine(arc *c, value thr)
 	/* XXX - should we use the more general hash lookup?  Don't think
 	   it should be possible to use anything besides symbols to index
 	   the global top-level environment. */
-	TVALR(thr) = arc_hash_lookup(c, c->genv, tmp);
+	SVALR(thr, arc_hash_lookup(c, c->genv, tmp));
 	if (TVALR(thr) == CUNBOUND) {
 	  tmpstr = arc_sym2name(c, tmp);
 	  cstr = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, tmpstr)) + 1));
 	  arc_str2cstr(c, tmpstr, cstr);
 	  /* arc_print_string(c, arc_prettyprint(c, tmp)); printf("\n"); */
 	  arc_err_cstrfmt(c, "Unbound symbol: _%s", cstr);
-	  TVALR(thr) = CNIL;
+	  SVALR(thr, CNIL);
 	}
       }
       NEXT;
@@ -275,7 +275,7 @@ int __arc_vmengine(arc *c, value thr)
 
 	ienv = FIX2INT(*TIPP(thr)++);
 	iindx = FIX2INT(*TIPP(thr)++);
-	TVALR(thr) = __arc_getenv(c, thr, ienv, iindx);
+	SVALR(thr, __arc_getenv(c, thr, ienv, iindx));
       }
       NEXT;
     INST(iste):
@@ -294,7 +294,7 @@ int __arc_vmengine(arc *c, value thr)
 
 	/* Compute the absolute target */
 	icofs = target - &VINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), 0);
-	TCONR(thr) = __arc_mkcont(c, thr, icofs);
+	SCONR(thr, __arc_mkcont(c, thr, icofs));
       }
       NEXT;
     INST(ienv):
@@ -382,45 +382,45 @@ int __arc_vmengine(arc *c, value thr)
       }
       NEXT;
     INST(itrue):
-      TVALR(thr) = CTRUE;
+      SVALR(thr, CTRUE);
       NEXT;
     INST(inil):
-      TVALR(thr) = CNIL;
+      SVALR(thr, CNIL);
       NEXT;
     INST(ihlt):
       TSTATE(thr) = Trelease;
       goto endquantum;
       NEXT;
     INST(iadd):
-      TVALR(thr) = __arc_add2(c, CPOP(thr), TVALR(thr));
+      SVALR(thr, __arc_add2(c, CPOP(thr), TVALR(thr)));
       NEXT;
     INST(isub):
-      TVALR(thr) = __arc_sub2(c, CPOP(thr), TVALR(thr));
+      SVALR(thr, __arc_sub2(c, CPOP(thr), TVALR(thr)));
       NEXT;
     INST(imul):
-      TVALR(thr) = __arc_mul2(c, CPOP(thr), TVALR(thr));
+      SVALR(thr, __arc_mul2(c, CPOP(thr), TVALR(thr)));
       NEXT;
     INST(idiv):
-      TVALR(thr) = __arc_div2(c, CPOP(thr), TVALR(thr));
+      SVALR(thr, __arc_div2(c, CPOP(thr), TVALR(thr)));
       NEXT;
     INST(icons):
-      TVALR(thr) = cons(c, CPOP(thr), TVALR(thr));
+      SVALR(thr, cons(c, CPOP(thr), TVALR(thr)));
       NEXT;
     INST(icar):
       if (NIL_P(TVALR(thr)))
-	TVALR(thr) = CNIL;
+	SVALR(thr, CNIL);
       else if (TYPE(TVALR(thr)) != T_CONS)
 	arc_err_cstrfmt(c, "can't take car of value");
       else
-	TVALR(thr) = car(TVALR(thr));
+	SVALR(thr, car(TVALR(thr)));
       NEXT;
     INST(icdr):
       if (NIL_P(TVALR(thr)))
-	TVALR(thr) = CNIL;
+	SVALR(thr, CNIL);
       else if (TYPE(TVALR(thr)) != T_CONS)
 	arc_err_cstrfmt(c, "can't take cdr of value");
       else
-	TVALR(thr) = cdr(TVALR(thr));
+	SVALR(thr, cdr(TVALR(thr)));
       NEXT;
     INST(iscar):
       scar(CPOP(thr), TVALR(thr));
@@ -429,17 +429,17 @@ int __arc_vmengine(arc *c, value thr)
       scdr(CPOP(thr), TVALR(thr));
       NEXT;
     INST(iis):
-      TVALR(thr) = arc_is2(c, TVALR(thr), CPOP(thr));
+      SVALR(thr, arc_is2(c, TVALR(thr), CPOP(thr)));
       NEXT;
     INST(idup):
-      TVALR(thr) = *(TSP(thr)+1);
+      SVALR(thr, *(TSP(thr)+1));
       NEXT;
     INST(icls):
-      TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
-      TVALR(thr) = arc_mkclos(c, TVALR(thr), TENVR(thr));
+      SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
+      SVALR(thr, arc_mkclos(c, TVALR(thr), TENVR(thr)));
       NEXT;
     INST(iconsr):
-      TVALR(thr) = cons(c, TVALR(thr), CPOP(thr));
+      SVALR(thr, cons(c, TVALR(thr), CPOP(thr)));
       NEXT;
     INST(imenv): {
 	int n = FIX2INT(*TIPP(thr)++);
@@ -450,19 +450,19 @@ int __arc_vmengine(arc *c, value thr)
       NEXT;
     INST(idcar):
       if (NIL_P(TVALR(thr)) || TVALR(thr) == CUNBOUND)
-	TVALR(thr) = CUNBOUND;
+	SVALR(thr, CUNBOUND);
       else if (TYPE(TVALR(thr)) != T_CONS)
 	arc_err_cstrfmt(c, "can't take car of value");
       else
-	TVALR(thr) = car(TVALR(thr));
+	SVALR(thr, car(TVALR(thr)));
       NEXT;
     INST(idcdr):
       if (NIL_P(TVALR(thr)) || TVALR(thr) == CUNBOUND)
-	TVALR(thr) = CUNBOUND;
+	SVALR(thr, CUNBOUND);
       else if (TYPE(TVALR(thr)) != T_CONS)
 	arc_err_cstrfmt(c, "can't take cdr of value");
       else
-	TVALR(thr) = cdr(TVALR(thr));
+	SVALR(thr, cdr(TVALR(thr)));
       NEXT;
     INST(ispl):
       {
@@ -470,7 +470,7 @@ int __arc_vmengine(arc *c, value thr)
 	/* Find the first cons in list whose cdr is not itself a cons.
 	   Join the list from the stack to it. */
 	if (list == CNIL) {
-	  TVALR(thr) = nlist;
+	  SVALR(thr, nlist);
 	} else {
 	  for (;;) {
 	    if (!CONS_P(cdr(list))) {
@@ -540,7 +540,7 @@ AFFDEF(arc_apply)
     }
   }
   TARGC(thr) = cargc;
-  TVALR(thr) = AV(fun);
+  SVALR(thr, AV(fun));
   __arc_menv(c, thr, cargc);
   return(TR_FNAPP);
   AFEND;
@@ -567,6 +567,7 @@ static AFFDEF(reroot)
   scdr(TCH(thr), AV(there));
   scar(AV(there), INT2FIX(0xdead));
   scdr(AV(there), CNIL);
+  /* XXX - write barrier! */
   TCH(thr) = AV(there);
   AFTCALL2(AV(before), CNIL);
   AFEND;
@@ -600,12 +601,12 @@ AFFDEF(arc_callcc)
   AVAR(tcr, func, tch);
   AFBEGIN;
   /* First move the continuations to the heap if needed */
-  TCONR(thr) = __arc_cont2heap(c, thr, TCONR(thr));
+  SCONR(thr, __arc_cont2heap(c, thr, TCONR(thr)));
   WV(tcr, TCONR(thr));
   WV(tch, TCH(thr));
   /* Save the environment of this call/cc invocation so contwrapper
      can have access to it later */
-  TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
+  SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
   /* This use of mkaff2 effectively makes contwrapper a nested
      function that has access to the environment of arc_callcc.  It
      needs the values of tcr and tch above. */

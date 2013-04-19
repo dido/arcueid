@@ -40,7 +40,7 @@ START_TEST(test_cons)
   fail_unless(arc_is2(c, list2, list1) == CNIL);
 
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso"));
+  SVALR(thr, arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso")));
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list2);
@@ -48,7 +48,7 @@ START_TEST(test_cons)
   fail_unless(TVALR(thr) == CTRUE);
 
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso"));
+  SVALR(thr, arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso")));
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list3);
@@ -69,7 +69,7 @@ START_TEST(test_circ_cons)
   car(cdr(cdr(list2))) = list2;
 
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso"));
+  SVALR(thr, arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso")));
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list2);
@@ -77,7 +77,7 @@ START_TEST(test_circ_cons)
   fail_unless(TVALR(thr) == CTRUE);
 
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso"));
+  SVALR(thr, arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso")));
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list3);
@@ -86,7 +86,7 @@ START_TEST(test_circ_cons)
 
   car(cdr(cdr(list3))) = list3;
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso"));
+  SVALR(thr, arc_mkaff(c, arc_iso, arc_mkstringc(c, "iso")));
   TARGC(thr) = 2;
   CPUSH(thr, list1);
   CPUSH(thr, list3);

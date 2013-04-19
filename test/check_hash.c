@@ -27,7 +27,7 @@ arc *c;
 #define CPUSH_(val) CPUSH(thr, val)
 
 #define XCALL(fname, ...) do {			\
-    TVALR(thr) = arc_mkaff(c, fname, CNIL);	\
+    SVALR(thr, arc_mkaff(c, fname, CNIL));	\
     TARGC(thr) = NARGS(__VA_ARGS__);		\
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
     __arc_thr_trampoline(c, thr, TR_FNAPP);	\

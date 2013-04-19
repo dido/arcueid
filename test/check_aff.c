@@ -58,7 +58,7 @@ START_TEST(test_aff_simple)
   value thr;
 
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, simple_aff, arc_mkstringc(c, "simple_aff"));
+  SVALR(thr, arc_mkaff(c, simple_aff, arc_mkstringc(c, "simple_aff")));
   TARGC(thr) = 0;
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == INT2FIX(31337));
@@ -70,7 +70,7 @@ START_TEST(test_aff_subtractor)
   value thr;
 
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, subtractor, arc_mkstringc(c, "subtractor"));
+  SVALR(thr, arc_mkaff(c, subtractor, arc_mkstringc(c, "subtractor")));
   CPUSH(thr, INT2FIX(3));
   CPUSH(thr, INT2FIX(2));
   TARGC(thr) = 2;
@@ -84,7 +84,7 @@ START_TEST(test_aff_doubler)
   value thr;
 
   thr = arc_mkthread(c);
-  TVALR(thr) = arc_mkaff(c, doubler, arc_mkstringc(c, "doubler"));
+  SVALR(thr, arc_mkaff(c, doubler, arc_mkstringc(c, "doubler")));
   CPUSH(thr, INT2FIX(5));
   CPUSH(thr, INT2FIX(2));
   TARGC(thr) = 2;

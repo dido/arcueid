@@ -24,7 +24,7 @@
 
 #define XCALL(fname, ...) do {			\
     c->curthread = thr;				\
-    TVALR(thr) = arc_mkaff(c, fname, CNIL);	\
+    SVALR(thr, arc_mkaff(c, fname, CNIL));	\
     TARGC(thr) = NARGS(__VA_ARGS__);		\
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
     __arc_thr_trampoline(c, thr, TR_FNAPP);	\
@@ -40,25 +40,25 @@ START_TEST(test_sio_readb)
 
   thr = arc_mkthread(c);
   sio = arc_instring(c, arc_mkstringc(c, "abc"), CNIL);
-  TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readb, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == INT2FIX(97));
 
-  TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readb, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == INT2FIX(98));
 
-  TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readb, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TVALR(thr) == INT2FIX(99));
 
-  TVALR(thr) = arc_mkaff(c, arc_readb, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readb, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);
@@ -72,27 +72,27 @@ START_TEST(test_sio_readc)
 
   thr = arc_mkthread(c);
   sio = arc_instring(c, arc_mkstringc(c, "以呂波"), CNIL);
-  TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readc, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TYPE(TVALR(thr)) == T_CHAR);
   fail_unless(arc_char2rune(c, TVALR(thr)) == 0x4ee5);
 
-  TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readc, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TYPE(TVALR(thr)) == T_CHAR);
   fail_unless(arc_char2rune(c, TVALR(thr)) == 0x5442);
 
-  TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readc, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   fail_unless(TYPE(TVALR(thr)) == T_CHAR);
   fail_unless(arc_char2rune(c, TVALR(thr)) == 0x6ce2);
-  TVALR(thr) = arc_mkaff(c, arc_readc, CNIL);
+  SVALR(thr, arc_mkaff(c, arc_readc, CNIL));
   TARGC(thr) = 1;
   CPUSH(thr, sio);
   __arc_thr_trampoline(c, thr, TR_FNAPP);

@@ -191,7 +191,7 @@ int __arc_affapply(arc *c, value thr, value cont, value func, ...)
      was passed.  If it is null, then the current continuation is used,
      as it is a tail call. */
   if (!NIL_P(cont))
-    TCONR(thr) = cont;
+    SCONR(thr, cont);
   va_start(ap, func);
   /* Push the arguments onto the stack. Look for the CLASTARG sentinel
      value. */
@@ -203,7 +203,7 @@ int __arc_affapply(arc *c, value thr, value cont, value func, ...)
   /* set the argument count */
   TARGC(thr) = argc;
   /* set the value register to the function to be called */
-  TVALR(thr) = func;
+  SVALR(thr, func);
   /* If this is a tail call, overwrite the current environment */
   if (NIL_P(cont))
     __arc_menv(c, thr, argc);
@@ -218,7 +218,7 @@ int __arc_affapply2(arc *c, value thr, value cont, value func, value argv)
      was passed.  If it is null, then the current continuation is used,
      as it is a tail call. */
   if (!NIL_P(cont))
-    TCONR(thr) = cont;
+    SCONR(thr, cont);
   /* Push the arguments onto the stack. */
   while (!NIL_P(argv)) {
     argc++;
@@ -229,7 +229,7 @@ int __arc_affapply2(arc *c, value thr, value cont, value func, value argv)
   /* set the argument count */
   TARGC(thr) = argc;
   /* set the value register to the function to be called */
-  TVALR(thr) = func;
+  SVALR(thr, func);
   /* If this is a tail call, overwrite the current environment */
   if (NIL_P(cont))
     __arc_menv(c, thr, argc);
@@ -277,8 +277,8 @@ static int cfunc_apply(arc *c, value thr, value cfn)
   if (rcfn->argc == -2) {
     /* Set up the thread with the initial information for AFFs */
     TIP(thr).aff_line = 0;	/* start at line 0 (start of function body) */
-    TENVR(thr) = rcfn->cfunc.aff_t.env; /* parent env */
-    TFUNR(thr) = cfn;
+    SENVR(thr, rcfn->cfunc.aff_t.env); /* parent env */
+    SFUNR(thr, cfn);
     /* return to the trampoline and make it resume from the beginning
        of the function now that everything is ready */
     return(TR_RESUME);
@@ -290,38 +290,38 @@ static int cfunc_apply(arc *c, value thr, value cfn)
     argv[i] = CPOP(thr);
   switch (rcfn->argc) {
   case -1:
-    TVALR(thr) = rcfn->cfunc.sff(c, argc, argv);
+    SVALR(thr, rcfn->cfunc.sff(c, argc, argv));
     break;
   case 0:
-    TVALR(thr) = rcfn->cfunc.sff(c);
+    SVALR(thr, rcfn->cfunc.sff(c));
     break;
   case 1:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0]));
     break;
   case 2:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0], argv[1]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0], argv[1]));
     break;
   case 3:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0], argv[1], argv[2]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0], argv[1], argv[2]));
     break;
   case 4:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3]));
     break;
   case 5:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
-				 argv[4]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
+			       argv[4]));
     break;
   case 6:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
-				 argv[4], argv[5]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
+			       argv[4], argv[5]));
     break;
   case 7:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
-				 argv[4], argv[5], argv[6]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
+			       argv[4], argv[5], argv[6]));
     break;
   case 8:
-    TVALR(thr) = rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
-				 argv[4], argv[5], argv[6], argv[7]);
+    SVALR(thr, rcfn->cfunc.sff(c, argv[0], argv[1], argv[2], argv[3],
+			      argv[4], argv[5], argv[6], argv[7]));
     break;
     /* XXX - extend this to perhaps 17 arguments just like Ruby */
   default:

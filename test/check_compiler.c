@@ -32,13 +32,13 @@ arc *c;
 
 #define XCALL0(clos) do {			\
     TQUANTA(thr) = QUANTA;			\
-    TVALR(thr) = clos;				\
+    SVALR(thr, clos);				\
     TARGC(thr) = 0;				\
     __arc_thr_trampoline(c, thr, TR_FNAPP);	\
   } while (0)
 
 #define XCALL(fname, ...) do {			\
-    TVALR(thr) = arc_mkaff(c, fname, CNIL);	\
+    SVALR(thr, arc_mkaff(c, fname, CNIL));	\
     TARGC(thr) = NARGS(__VA_ARGS__);		\
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
     __arc_thr_trampoline(c, thr, TR_FNAPP);	\

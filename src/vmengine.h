@@ -135,10 +135,51 @@ struct vmthread_t {
   value cmarks;			/* continuation marks */
 };
 
-#define TFUNR(t) (((struct vmthread_t *)REP(t))->funr)
-#define TENVR(t) (((struct vmthread_t *)REP(t))->envr)
-#define TVALR(t) (((struct vmthread_t *)REP(t))->valr)
-#define TCONR(t) (((struct vmthread_t *)REP(t))->conr)
+
+static inline value TFUNR(value t)
+{
+  return(((struct vmthread_t *)REP(t))->funr);
+}
+
+static inline value SFUNR(value t, value nv)
+{
+  ((struct vmthread_t *)REP(t))->funr = nv;
+  return(nv);
+}
+
+static inline value TENVR(value t)
+{
+  return(((struct vmthread_t *)REP(t))->envr);
+}
+
+static inline value SENVR(value t, value nv)
+{
+  ((struct vmthread_t *)REP(t))->envr = nv;
+  return(nv);
+}
+
+static inline value TVALR(value t)
+{
+  return((((struct vmthread_t *)REP(t))->valr));
+}
+
+static inline value SVALR(value t, value nv)
+{
+  (((struct vmthread_t *)REP(t))->valr) = nv;
+  return(nv);
+}
+
+static inline value TCONR(value t)
+{
+  return(((struct vmthread_t *)REP(t))->conr);
+}
+
+static inline value SCONR(value t, value nv)
+{
+  ((struct vmthread_t *)REP(t))->conr = nv;
+  return(nv);
+}
+
 #define TSP(t) (((struct vmthread_t *)REP(t))->spr)
 #define TSTACK(t) (((struct vmthread_t *)REP(t))->stack)
 #define TSBASE(t) (((struct vmthread_t *)REP(t))->stkbase)
@@ -161,6 +202,7 @@ struct vmthread_t {
 #define TCM(t) (((struct vmthread_t *)REP(t))->cmarks)
 
 #if 1
+/* XXX - this should incorporate write barrier code */
 #define CPUSH(thr, val) do { if (TSP(thr) <= TSBASE(thr)) { abort(); } (*(TSP(thr)--) = (val)); } while (0)
 #else
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
