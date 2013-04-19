@@ -86,7 +86,7 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
   SENVR(thr, ((value)((long)(esofs << 4) | ENV_FLAG)));
 }
 
-#define SENV_PTR(stkbase, x) (((int)((env) >> 4)) + (stkbase))
+#define SENV_PTR(stkbase, env) (((int)((env) >> 4)) + (stkbase))
 #define SENV_COUNT(base) (FIX2INT(*(base + 1)))
 
 #define VENV_NEXT(x) (VINDEX((x), 0))
@@ -155,21 +155,26 @@ value __arc_putenv(arc *c, value thr, int depth, int index, value val)
    garbage to be collected). */
 void __arc_menv(arc *c, value thr, int n)
 {
-  value *src, *dest;
-  value parentenv ;
+  value *src, *dest, *penv;
+  value parentenv;
+  int i;
 
   /* do nothing if we have no env */
   if (NIL_P(TENVR(thr)))
     return;
 
   parentenv = nextenv(c, thr, TENVR(thr));
-  if (TYPE(TENVR(thr)) == T_ENV) {
+  /* We should only bother if both the present environment and its
+     parent (which should be superseded) are both on the stack. */
+  if (TYPE(TENVR(thr)) == T_ENV && TYPE(parentenv) == T_ENV) {
+    penv = SENV_PTR(TSBASE(thr), parentenv);
+    for (i=0; i<SENV_COUNT(penv); i++)
+      __arc_wb(*envval(c, thr, 1, i), CNIL);
     /* source of our copy is the last value pushed on the stack */
     src = TSP(thr)+1;
     /* Destination of our copy is the (n-1)th element of the environment.
        May be larger or smaller than the actual size of the environment.
        Doesn't matter, as long as it remains inside the stack! */
-    /* XXX this is not subject to the write barrier.  Should it be? */
     dest = envval(c, thr, 0, n-1);
     /* use memmove because the new environment might be larger than the old
        one. */
