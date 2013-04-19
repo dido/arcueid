@@ -19,13 +19,13 @@
 #include "arcueid.h"
 #include "builtins.h"
 
-#define READ(fp, eof, val)				\
+#define READ(fp, eof, val)					\
   AFCALL(arc_mkaff(c, arc_sread, CNIL), fp, eof);	\
-  val = AFCRV
+  WV(val, AFCRV)
 
 #define READC(fp, val)					\
   AFCALL(arc_mkaff(c, arc_readc, CNIL), fp);		\
-  val = AFCRV
+  WV(val, AFCRV)
 
 value arc_ssyntax(arc *c, value x)
 {
@@ -54,44 +54,44 @@ static AFFDEF(expand_compose)
   Rune rch;
   AFBEGIN;
 
-  AV(sh) = arc_instring(c, AV(sym), CNIL);
-  AV(top) = AV(elt) = AV(last) = AV(negate) = CNIL;
-  AV(run) = CTRUE;
+  WV(sh, arc_instring(c, AV(sym), CNIL));
+  WV(top, WV(elt, WV(last, WV(negate, CNIL))));
+  WV(run, CTRUE);
   while (AV(run) == CTRUE) {
-    READC(AV(sh), AV(ch));
+    READC(AV(sh), ch);
     rch = (NIL_P(AV(ch))) ? -1 : arc_char2rune(c, AV(ch));
     if (rch == ':' || rch == -1) {
       if (!NIL_P(AV(elt)) && arc_strlen(c, AV(elt)) > 0) {
-	READ(arc_instring(c, AV(elt), CNIL), CNIL, AV(elt));
+	READ(arc_instring(c, AV(elt), CNIL), CNIL, elt);
       } else {
-	AV(elt) = CNIL;
+	WV(elt, CNIL);
       }
       if (AV(negate) == CTRUE) {
-	AV(elt) = (NIL_P(AV(elt))) ? ARC_BUILTIN(c, S_NO)
-	  : cons(c, ARC_BUILTIN(c, S_COMPLEMENT), cons(c, AV(elt), CNIL));
+	WV(elt, (NIL_P(AV(elt))) ? ARC_BUILTIN(c, S_NO)
+	   : cons(c, ARC_BUILTIN(c, S_COMPLEMENT), cons(c, AV(elt), CNIL)));
 	if (NIL_P(AV(ch)) && AV(top) == CNIL)
 	  ARETURN(AV(elt));
-	AV(negate) = CNIL;
+	WV(negate, CNIL);
       }
       if (NIL_P(AV(elt))) {
 	if (NIL_P(AV(ch)))
-	  AV(run) = CNIL;
+	  WV(run, CNIL);
 	continue;
       }
-      AV(elt) = cons(c, AV(elt), CNIL);
+      WV(elt, cons(c, AV(elt), CNIL));
       if (AV(last))
 	scdr(AV(last), AV(elt));
       else
-	AV(top) = AV(elt);
-      AV(last) = AV(elt);
-      AV(elt) = CNIL;
+	WV(top, AV(elt));
+      WV(last, AV(elt));
+      WV(elt, CNIL);
       if (NIL_P(AV(ch)))
-	AV(run) = CNIL;
+	WV(run, CNIL);
     } else if (rch == '~') {
-      AV(negate) = CTRUE;
+      WV(negate, CTRUE);
     } else {
-      AV(elt) = (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
-	: arc_strcatc(c, AV(elt), rch);
+      WV(elt, (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
+	 : arc_strcatc(c, AV(elt), rch));
     }
   }
   if (cdr(AV(top)) == CNIL)
@@ -108,34 +108,34 @@ static AFFDEF(expand_sexpr)
   Rune rch;
   AFBEGIN;
 
-  AV(sh) = arc_instring(c, AV(sym), CNIL);
-  AV(last) = AV(cur) = AV(elt) = AV(last) = CNIL;
-  AV(run) = CTRUE;
+  WV(sh, arc_instring(c, AV(sym), CNIL));
+  WV(last, WV(cur, WV(elt, WV(last, CNIL))));
+  WV(run, CTRUE);
   while (AV(run) == CTRUE) {
-    READC(AV(sh), AV(ch));
+    READC(AV(sh), ch);
     if (NIL_P(AV(ch))) {
-      AV(run) = CNIL;
+      WV(run, CNIL);
       continue;
     }
     rch = arc_char2rune(c, AV(ch));
     if (rch == '.' || rch == '!') {
-      AV(prevchar) = INT2FIX(rch);
+      WV(prevchar, INT2FIX(rch));
       if (NIL_P(AV(elt)) || arc_strlen(c, AV(elt)) <= 0)
 	continue;
-      READ(arc_instring(c, AV(elt), CNIL), CNIL, AV(elt));
+      READ(arc_instring(c, AV(elt), CNIL), CNIL, elt);
       if (NIL_P(AV(last)))
-	AV(last) = AV(elt);
+	WV(last, AV(elt));
       else if (FIX2INT(AV(prevchar)) == '!')
-	AV(last) = cons(c, AV(last), cons(c, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, AV(elt), CNIL)), CNIL));
+	WV(last, cons(c, AV(last), cons(c, cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, AV(elt), CNIL)), CNIL)));
       else
-	AV(last) = cons(c, AV(last), cons(c, AV(elt), CNIL));
-      AV(elt) = CNIL;
+	WV(last, cons(c, AV(last), cons(c, AV(elt), CNIL)));
+      WV(elt, CNIL);
       continue;
     }
-    AV(elt) = (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
-      : arc_strcatc(c, AV(elt), rch);
+    WV(elt, (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
+       : arc_strcatc(c, AV(elt), rch));
   }
-  READ(arc_instring(c, AV(elt), CNIL), CNIL, AV(elt));
+  READ(arc_instring(c, AV(elt), CNIL), CNIL, elt);
   if (AV(elt) == CNIL) {
     arc_err_cstrfmt(c, "Bad ssyntax %s", sym);
     return(CNIL);
@@ -159,36 +159,36 @@ static AFFDEF(expand_and)
   Rune rch;
   AFBEGIN;
 
-  AV(sh) = arc_instring(c, AV(sym), CNIL);
-  AV(top) = AV(elt) = AV(last) = CNIL;
-  AV(run) = CTRUE;
+  WV(sh, arc_instring(c, AV(sym), CNIL));
+  WV(top, WV(elt, WV(last, CNIL)));
+  WV(run, CTRUE);
   while (AV(run) == CTRUE) {
-    READC(AV(sh), AV(ch));
+    READC(AV(sh), ch);
     rch = (NIL_P(AV(ch))) ? -1 : arc_char2rune(c, AV(ch));
     if (rch == '&' || rch == -1) {
       if (!NIL_P(AV(elt)) && arc_strlen(c, AV(elt)) > 0) {
-	READ(arc_instring(c, AV(elt), CNIL), CNIL, AV(elt));
+	READ(arc_instring(c, AV(elt), CNIL), CNIL, elt);
       } else {
-	AV(elt) = CNIL;
+	WV(elt, CNIL);
       }
 
       if (NIL_P(AV(elt))) {
 	if (NIL_P(AV(ch)))
-	  AV(run) = CNIL;
+	  WV(run, CNIL);
 	continue;
       }
-      AV(elt) = cons(c, AV(elt), CNIL);
+      WV(elt, cons(c, AV(elt), CNIL));
       if (AV(last))
 	scdr(AV(last), AV(elt));
       else
-	AV(top) = AV(elt);
-      AV(last) = AV(elt);
-      AV(elt) = CNIL;
+	WV(top, AV(elt));
+      WV(last, AV(elt));
+      WV(elt, CNIL);
       if (NIL_P(AV(ch)))
-	AV(run) = CNIL;
+	WV(run, CNIL);
     } else {
-      AV(elt) = (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
-	: arc_strcatc(c, AV(elt), rch);
+      WV(elt, (NIL_P(AV(elt))) ? arc_mkstring(c, &rch, 1)
+	 : arc_strcatc(c, AV(elt), rch));
     }
   }
   if (cdr(AV(top)) == CNIL)

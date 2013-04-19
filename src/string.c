@@ -46,7 +46,7 @@ typedef struct {
 
 #define STRREP(v) ((string *)REP(v))
 
-#define FIXINC(x) (x) = INT2FIX(FIX2INT(x) + 1)
+#define FIXINC(x) WV(x, INT2FIX(FIX2INT(AV(x)) + 1))
 
 static char *escape_lookup[32] = {
   "\\u0000",
@@ -92,17 +92,17 @@ static AFFDEF(string_pprint)
   AFBEGIN;
 
   (void)visithash;
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
   if (NIL_P(AV(disp)))
     AFCALL(AV(wc), arc_mkchar(c, '\"'), AV(fp));
 
-  for (AV(i)=INT2FIX(0); FIX2INT(AV(i))<arc_strlen(c, AV(sexpr));
-       AV(i) = FIXINC(AV(i))) {
+  for (WV(i,INT2FIX(0)); FIX2INT(AV(i))<arc_strlen(c, AV(sexpr));
+       FIXINC(i)) {
     ch = arc_strindex(c, AV(sexpr), FIX2INT(AV(i)));
     if (ch < 32 && NIL_P(AV(disp))) {
-      AV(os) = arc_mkstringc(c, escape_lookup[ch]);
-      for (AV(j)=INT2FIX(0); arc_strindex(c, AV(os), FIX2INT(AV(j))) != 0;
-	   AV(j) = FIXINC(AV(j)))
+      WV(os, arc_mkstringc(c, escape_lookup[ch]));
+      for (WV(j,INT2FIX(0)); arc_strindex(c, AV(os), FIX2INT(AV(j))) != 0;
+	   FIXINC(j))
 	AFCALL(AV(wc), arc_mkchar(c, arc_strindex(c, AV(os), FIX2INT(AV(j)))),
 	       AV(fp));
     } else {
@@ -235,7 +235,7 @@ static AFFDEF(char_pprint)
   AFBEGIN;
   (void)visithash;
 
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
   /* in disp mode, we just print out the character as is */
   if (AV(disp) == CTRUE) {
     AFCALL(AV(wc), AV(sexpr), AV(fp));
@@ -244,8 +244,8 @@ static AFFDEF(char_pprint)
 
   /* in write mode, we need to go see if the character has an escape
      sequence, and do a lot of weird things besides... */
-  if (BOUND_P(AV(escape) = arc_hash_lookup(c, VINDEX(c->builtins, BI_charesc),
-				       AV(sexpr)))) {
+  if (BOUND_P(WV(escape, arc_hash_lookup(c, VINDEX(c->builtins, BI_charesc),
+					 AV(sexpr))))) {
     /* escape character */
     AFCALL(arc_mkaff(c, string_pprint, CNIL), arc_mkstringc(c, "#\\"), CTRUE,
 	   AV(fp));
@@ -579,7 +579,7 @@ static AFFDEF(string_xcoerce)
   }
 
   if (!BOUND_P(AV(arg)))
-    AV(arg) = INT2FIX(10);
+    WV(arg, INT2FIX(10));
 
   if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
     char *cstr, *endptr;

@@ -28,7 +28,7 @@ void __arc_vector_marker(arc *c, value v, int depth,
     markfn(c, VINDEX(v, i), depth);
 }
 
-#define FIXINC(x) (x) = INT2FIX(FIX2INT(x) + 1)
+#define FIXINC(x) WV(x, INT2FIX(FIX2INT(AV(x) + 1)))
 
 static AFFDEF(vector_pprint)
 {
@@ -38,19 +38,19 @@ static AFFDEF(vector_pprint)
   AFBEGIN;
 
   if (!BOUND_P(AV(visithash)))
-    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(visithash, arc_mkhash(c, ARC_HASHBITS));
 
   if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
     /* already visited at some point. Do not recurse further */
     AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), arc_mkstringc(c, "(...)"),
 	   CTRUE, AV(fp), AV(visithash));
   }
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
   AFCALL(AV(wc), arc_mkchar(c, '#'), AV(fp));
   AFCALL(AV(wc), arc_mkchar(c, '('), AV(fp));
 
-  for (AV(i)=INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(sexpr)); FIXINC(AV(i))) {
+  for (WV(i,INT2FIX(0)); FIX2INT(AV(i))<VECLEN(AV(sexpr)); FIXINC(i)) {
     value elem = VINDEX(AV(sexpr), FIX2INT(AV(i)));
 
     if (!NIL_P(__arc_visitp(c, elem, AV(visithash)))) {
@@ -96,9 +96,8 @@ AFFDEF(__arc_vector_isocmp)
   if (VECLEN(AV(v1)) != VECLEN(AV(v2)))
     ARETURN(CNIL);
   /* Recursive comparisons */
-  AV(iso2) = arc_mkaff(c, arc_iso2, CNIL);
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(v1));
-       AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+  WV(iso2, arc_mkaff(c, arc_iso2, CNIL));
+  for (WV(i, INT2FIX(0)); FIX2INT(AV(i))<VECLEN(AV(v1)); FIXINC(i)) {
     AFCALL(AV(iso2), VINDEX(AV(v1), AV(i)), VINDEX(AV(v2), AV(i)),
 	   AV(vh1), AV(vh2));
     if (NIL_P(AFCRV))
@@ -148,19 +147,18 @@ AFFDEF(vector_xhash)
   AFBEGIN;
 
   if (!BOUND_P(AV(visithash)))
-    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(visithash, arc_mkhash(c, ARC_HASHBITS));
 
   /* Already visited at some point.  Do not recurse further. */
   if (__arc_visit(c, AV(obj), AV(visithash)) != CNIL)
     ARETURN(AV(length));
 
   /* Visit each element */
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(obj));
-       AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+  for (WV(i, INT2FIX(0)); FIX2INT(AV(i))<VECLEN(AV(obj)); FIXINC(i)) {
     AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL),
 	   VINDEX(AV(obj), FIX2INT(AV(i))), AV(ehs),
 	   AV(visithash));
-    AV(length) = __arc_add2(c, AV(length), AFCRV);
+    WV(length, __arc_add2(c, AV(length), AFCRV));
   }
   ARETURN(AV(length));
   AFEND;

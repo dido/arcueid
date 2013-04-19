@@ -162,7 +162,7 @@ static AFFDEF(fixnum_xcoerce)
   }
 
   if (!BOUND_P(AV(arg)))
-    AV(arg) = INT2FIX(10);
+    WV(arg, INT2FIX(10));
 
   if (FIX2INT(AV(stype)) == T_STRING) {
     ARETURN(__arc_itoa(c, AV(obj), AV(arg), 0, 0));
@@ -675,7 +675,7 @@ static AFFDEF(bignum_xcoerce)
     ARETURN(arc_mkflonum(c, mpz_get_d(REPBNUM(AV(obj)))));
 
   if (!BOUND_P(AV(arg)))
-    AV(arg) = INT2FIX(10);
+    WV(arg, INT2FIX(10));
 
   if (FIX2INT(AV(stype)) == T_STRING) {
     char *str = mpz_get_str(NULL, FIX2INT(AV(arg)), REPBNUM(AV(obj)));
@@ -797,7 +797,7 @@ static AFFDEF(rational_xcoerce)
     value astr;
 
     if (!BOUND_P(AV(arg)))
-      AV(arg) = INT2FIX(10);
+      WV(arg, INT2FIX(10));
 
     str = mpq_get_str(NULL, FIX2INT(AV(arg)), REPRAT(AV(obj)));
     astr = arc_mkstringc(c, str);
@@ -1270,7 +1270,7 @@ AFFDEF(__arc_add)
     sum = CNIL;
   while (CONS_P(AV(list))) {
     sum = __arc_add2(c, sum, car(AV(list)));
-    AV(list) = cdr(AV(list));
+    WV(list, cdr(AV(list)));
   }
   if (!NIL_P(AV(list)))
     arc_err_cstrfmt(c, "proper list expected");
@@ -1291,12 +1291,12 @@ AFFDEF(__arc_sub)
   }
   if (arc_thr_argc(c, thr) > 1) {
     diff = car(AV(list));
-    AV(list) = cdr(AV(list));
+    WV(list, cdr(AV(list)));
   }
 
   while (CONS_P(AV(list))) {
     diff = __arc_sub2(c, diff, car(AV(list)));
-    AV(list) = cdr(AV(list));
+    WV(list, cdr(AV(list)));
   }
   if (!NIL_P(AV(list)))
     arc_err_cstrfmt(c, "proper list expected");
@@ -1312,7 +1312,7 @@ AFFDEF(__arc_mul)
   AFBEGIN;
   while (CONS_P(AV(list))) {
     prod = __arc_mul2(c, car(AV(list)), prod);
-    AV(list) = cdr(AV(list));
+    WV(list, cdr(AV(list)));
   }
   if (!NIL_P(AV(list)))
     arc_err_cstrfmt(c, "proper list expected");
@@ -1333,12 +1333,12 @@ AFFDEF(__arc_div)
   }
   if (arc_thr_argc(c, thr) > 1) {
     quot = car(AV(list));
-    AV(list) = cdr(AV(list));
+    WV(list, cdr(AV(list)));
   }
 
   while (CONS_P(AV(list))) {
     quot = __arc_div2(c, quot, car(AV(list)));
-    AV(list) = cdr(AV(list));
+    WV(list, cdr(AV(list)));
   }
   if (!NIL_P(AV(list)))
     arc_err_cstrfmt(c, "proper list expected");

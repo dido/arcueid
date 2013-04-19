@@ -63,9 +63,9 @@ static AFFDEF(savetexh)
 {
   AFBEGIN;
   /* (= old *exh) */
-  *__arc_getenv(c, thr, 1, 1) = TEXH(thr);
+  __arc_putenv(c, thr, 1, 1, TEXH(thr));
   /* (= *exh (cons cont handler)) */
-  TEXH(thr) = cons(c, *__arc_getenv(c, thr, 1, 0), *__arc_getenv(c, thr, 2, 0));
+  TEXH(thr) = cons(c, __arc_getenv(c, thr, 1, 0), __arc_getenv(c, thr, 2, 0));
   AFEND;
 }
 AFFEND
@@ -74,7 +74,7 @@ static AFFDEF(restoretexh)
 {
   AFBEGIN;
   /* (= *exh old) */
-  TEXH(thr) = *__arc_getenv(c, thr, 1, 1);
+  TEXH(thr) = __arc_getenv(c, thr, 1, 1);
   AFEND;
 }
 AFFEND
@@ -97,7 +97,7 @@ static AFFDEF(ccchandler)
   /* (dynamic-wind ... thunk ...) */
   AFTCALL(arc_mkaff(c, arc_dynamic_wind, CNIL),
 	  arc_mkaff2(c, savetexh, CNIL, TENVR(thr)),
-	  *__arc_getenv(c, thr, 1, 1), /* thunk from arc_on_err */
+	  __arc_getenv(c, thr, 1, 1), /* thunk from arc_on_err */
 	  arc_mkaff2(c, restoretexh, CNIL, TENVR(thr)));
   AFEND;
 }
@@ -148,7 +148,7 @@ AFFDEF(arc_err)
   AARG(str);
   AVAR(exc, cont, handler);
   AFBEGIN;
-  AV(exc) = arc_mkexception(c, AV(str));
+  WV(exc, arc_mkexception(c, AV(str)));
   if (NIL_P(TEXH(thr))) {
     /* if no exception handler is available, call the default error
        handler if one is set, and longjmp away.  The thread becomes
@@ -163,8 +163,8 @@ AFFDEF(arc_err)
      that an error was raised an the error handler needs to be
      called from arc_on_err.  The thread also becomes broken when
      this happens. */
-  AV(cont) = car(TEXH(thr));
-  AV(handler) = cdr(TEXH(thr));
+  WV(cont, car(TEXH(thr)));
+  WV(handler, cdr(TEXH(thr)));
   AFTCALL(AV(cont), AV(exc));
   AFEND;
 }
@@ -193,8 +193,8 @@ static AFFDEF(exception_pprint)
   AOARG(visithash);
   AVAR(dw, wc);
   AFBEGIN;
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
   AFCALL(AV(dw), arc_mkstringc(c, "#<exception: "), CTRUE, AV(fp), CNIL);
   AFCALL(AV(dw), arc_details(c, AV(sexpr)), AV(disp), AV(fp), AV(visithash));
   AFCALL(AV(wc), arc_mkchar(c, '>'), AV(fp));

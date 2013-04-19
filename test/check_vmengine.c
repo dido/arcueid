@@ -227,14 +227,14 @@ START_TEST(test_envs)
   clos = arc_mkclos(c, code, CNIL);
   thr = arc_mkthread(c);
   XCALL(clos, INT2FIX(1), INT2FIX(2), INT2FIX(3));
-  fail_unless(*__arc_getenv(c, thr, 0, 0) == INT2FIX(3));
-  fail_unless(*__arc_getenv(c, thr, 0, 1) == INT2FIX(2));
-  fail_unless(*__arc_getenv(c, thr, 0, 2) == INT2FIX(8));
-  fail_unless(*__arc_getenv(c, thr, 1, 0) == INT2FIX(1));
-  fail_unless(*__arc_getenv(c, thr, 1, 1) == INT2FIX(2));
-  fail_unless(*__arc_getenv(c, thr, 1, 2) == INT2FIX(3));
-  fail_unless(*__arc_getenv(c, thr, 1, 3) == CTRUE);
-  fail_unless(*__arc_getenv(c, thr, 1, 4) == CUNBOUND);
+  fail_unless(__arc_getenv(c, thr, 0, 0) == INT2FIX(3));
+  fail_unless(__arc_getenv(c, thr, 0, 1) == INT2FIX(2));
+  fail_unless(__arc_getenv(c, thr, 0, 2) == INT2FIX(8));
+  fail_unless(__arc_getenv(c, thr, 1, 0) == INT2FIX(1));
+  fail_unless(__arc_getenv(c, thr, 1, 1) == INT2FIX(2));
+  fail_unless(__arc_getenv(c, thr, 1, 2) == INT2FIX(3));
+  fail_unless(__arc_getenv(c, thr, 1, 3) == CTRUE);
+  fail_unless(__arc_getenv(c, thr, 1, 4) == CUNBOUND);
 }
 END_TEST
 
@@ -252,10 +252,10 @@ START_TEST(test_envr)
   XCALL(clos, CTRUE, INT2FIX(31337), INT2FIX(1337),
 	INT2FIX(1), INT2FIX(2), INT2FIX(3));
   fail_unless(TQUANTA(thr) == QUANTA-1);
-  fail_unless(*__arc_getenv(c, thr, 0, 0) == CTRUE);
-  fail_unless(*__arc_getenv(c, thr, 0, 1) == INT2FIX(31337));
-  fail_unless(*__arc_getenv(c, thr, 0, 2) == INT2FIX(1337));
-  rest = *__arc_getenv(c, thr, 0, 3);
+  fail_unless(__arc_getenv(c, thr, 0, 0) == CTRUE);
+  fail_unless(__arc_getenv(c, thr, 0, 1) == INT2FIX(31337));
+  fail_unless(__arc_getenv(c, thr, 0, 2) == INT2FIX(1337));
+  rest = __arc_getenv(c, thr, 0, 3);
   fail_unless(TYPE(rest) == T_CONS);
   fail_unless(car(rest) == INT2FIX(1));
   fail_unless(cadr(rest) == INT2FIX(2));
@@ -264,17 +264,17 @@ START_TEST(test_envr)
 
   /* required and all optional parameters only */
   XCALL(clos, CTRUE, INT2FIX(7839), INT2FIX(646));
-  fail_unless(*__arc_getenv(c, thr, 0, 0) == CTRUE);
-  fail_unless(*__arc_getenv(c, thr, 0, 1) == INT2FIX(7839));
-  fail_unless(*__arc_getenv(c, thr, 0, 2) == INT2FIX(646));
-  fail_unless(NIL_P(*__arc_getenv(c, thr, 0, 3)));
+  fail_unless(__arc_getenv(c, thr, 0, 0) == CTRUE);
+  fail_unless(__arc_getenv(c, thr, 0, 1) == INT2FIX(7839));
+  fail_unless(__arc_getenv(c, thr, 0, 2) == INT2FIX(646));
+  fail_unless(NIL_P(__arc_getenv(c, thr, 0, 3)));
 
   /* required and not all optional parameters only */
   XCALL(clos, CTRUE, INT2FIX(3838));
-  fail_unless(*__arc_getenv(c, thr, 0, 0) == CTRUE);
-  fail_unless(*__arc_getenv(c, thr, 0, 1) == INT2FIX(3838));
-  fail_unless(*__arc_getenv(c, thr, 0, 2) == CUNBOUND);
-  fail_unless(NIL_P(*__arc_getenv(c, thr, 0, 3)));
+  fail_unless(__arc_getenv(c, thr, 0, 0) == CTRUE);
+  fail_unless(__arc_getenv(c, thr, 0, 1) == INT2FIX(3838));
+  fail_unless(__arc_getenv(c, thr, 0, 2) == CUNBOUND);
+  fail_unless(NIL_P(__arc_getenv(c, thr, 0, 3)));
 }
 END_TEST
 

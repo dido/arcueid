@@ -62,17 +62,17 @@ static AFFDEF(cons_pprint)
   AVAR(wc, dw, osexpr);
   AFBEGIN;
 
-  AV(osexpr) = AV(sexpr);
+  WV(osexpr, AV(sexpr));
   if (!BOUND_P(AV(visithash)))
-    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(visithash, arc_mkhash(c, ARC_HASHBITS));
 
   if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
     /* already visited at some point. Do not recurse further */
     AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), arc_mkstringc(c, "(...)"),
 	   CTRUE, AV(fp), AV(visithash));
   }
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
   AFCALL(AV(wc), arc_mkchar(c, '('), AV(fp));
   while (TYPE(AV(sexpr)) == T_CONS) {
     if (!NIL_P(__arc_visitp(c, car(AV(sexpr)), AV(visithash)))) {
@@ -82,7 +82,7 @@ static AFFDEF(cons_pprint)
     } else {
       AFCALL(AV(dw), car(AV(sexpr)), AV(disp), AV(fp), AV(visithash));
     }
-    AV(sexpr) = cdr(AV(sexpr));
+    WV(sexpr, cdr(AV(sexpr)));
     if (!NIL_P(__arc_visitp(c, AV(sexpr), AV(visithash))))
       goto finish;		/* not sure if break works fine... */
     if (!NIL_P(AV(sexpr)))
@@ -132,7 +132,7 @@ static AFFDEF(cons_isocmp)
   if (__arc_visit2(c, AV(v2), AV(vh2), vhh1) != CNIL)
     ARETURN(CNIL);
   /* Recursive comparisons */
-  AV(iso2) = arc_mkaff(c, arc_iso2, CNIL);
+  WV(iso2, arc_mkaff(c, arc_iso2, CNIL));
   AFCALL(AV(iso2), car(AV(v1)), car(AV(v2)), AV(vh1), AV(vh2));
   if (NIL_P(AFCRV))
     ARETURN(CNIL);
@@ -189,7 +189,7 @@ AFFDEF(cons_xhash)
   AFBEGIN;
 
   if (!BOUND_P(AV(visithash)))
-    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(visithash, arc_mkhash(c, ARC_HASHBITS));
 
   /* Already visited at some point.  Do not recurse further. */
   if (__arc_visit(c, AV(obj), AV(visithash)) != CNIL)
@@ -198,7 +198,7 @@ AFFDEF(cons_xhash)
   /* Visit car */
   AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), car(AV(obj)), AV(ehs),
 	 AV(visithash));
-  AV(length) = __arc_add2(c, AV(length), AFCRV);
+  WV(length, __arc_add2(c, AV(length), AFCRV));
   /* Visit cdr */
   AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), cdr(AV(obj)), AV(ehs),
 	 AV(visithash));
@@ -316,17 +316,17 @@ static AFFDEF(cons_xcoerce)
     ARETURN(AV(obj));
 
   if (FIX2INT(AV(stype)) == T_STRING) {
-    AV(str) = arc_mkstringc(c, "");
+    WV(str, arc_mkstringc(c, ""));
     /* EXT: Note that this propagates the extra arg in recursive calls to
        coerce: arc3.1 and Anarki do not.  So in Arcueid you can do the
        following:
        (coerce '(10 11 12) 'string 16) => "abc"
        Same form causes an error in other Arc implementations.
      */
-    for (; CONS_P(AV(obj)); AV(obj) = cdr(AV(obj))) {
+    for (; CONS_P(AV(obj)); WV(obj, cdr(AV(obj)))) {
       AFCALL(arc_mkaff(c, arc_coerce, CNIL), car(AV(obj)),
 	     ARC_BUILTIN(c, S_STRING), AV(arg));
-      AV(str) = arc_strcat(c, AV(str), AFCRV);
+      WV(str, arc_strcat(c, AV(str), AFCRV));
     }
     if (!NIL_P(AV(obj))) {
       /* XXX - this is the behaviour of reference Arc.  Perhaps the final
@@ -343,7 +343,7 @@ static AFFDEF(cons_xcoerce)
 
     len = arc_list_length(c, AV(obj));
     vec = arc_mkvector(c, FIX2INT(len));
-    for (i=0; CONS_P(AV(obj)); AV(obj) = cdr(AV(obj)), i++)
+    for (i=0; CONS_P(AV(obj)); WV(obj, cdr(AV(obj))), i++)
       VINDEX(vec, i) = car(AV(obj));
     if (!NIL_P(AV(obj)))
       VINDEX(vec, i) = AV(obj);
@@ -353,7 +353,7 @@ static AFFDEF(cons_xcoerce)
   /* Assoc tables of the form ( ... (key . value) are the only type
      that can be converted into hashes. */
   if (FIX2INT(AV(stype)) == T_TABLE) {
-    AV(hash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(hash, arc_mkhash(c, ARC_HASHBITS));
 
     while (!NIL_P(AV(obj))) {
       value cell = car(AV(obj)), key, val;
@@ -364,7 +364,7 @@ static AFFDEF(cons_xcoerce)
       key = car(cell);
       val = cdr(cell);
       AFCALL(arc_mkaff(c, arc_xhash_insert, CNIL), AV(hash), key, val);
-      AV(obj) = cdr(AV(obj));
+      WV(obj, cdr(AV(obj)));
     }
     ARETURN(AV(hash));
   }

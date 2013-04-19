@@ -164,8 +164,8 @@ static AFFDEF(code_pprint)
   AFBEGIN;
   (void)visithash;
   (void)disp;
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
   AFCALL(AV(dw), arc_mkstringc(c, "#<procedure"), CTRUE, AV(fp), AV(visithash));
   src = CODE_SRC(AV(sexpr));
   if (!NIL_P(src)) {

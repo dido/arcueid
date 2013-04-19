@@ -70,7 +70,7 @@ AFFDEF(compile_something)
   AVAR(sio);
   AFBEGIN;
   TQUANTA(thr) = QUANTA;	/* needed so macros can execute */
-  AV(sio) = arc_instring(c, AV(something), CNIL);
+  WV(sio, arc_instring(c, AV(something), CNIL));
   AFCALL(arc_mkaff(c, arc_sread, CNIL), AV(sio), CNIL);
   sexpr = AFCRV;
   AFTCALL(arc_mkaff(c, arc_compile, CNIL), sexpr, arc_mkcctx(c), CNIL, CTRUE);

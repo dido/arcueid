@@ -81,7 +81,7 @@ static AFFDEF(pairwise)
     AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)), AV(vh1), AV(vh2));
     if (NIL_P(AFCRV))
       ARETURN(CNIL);
-    AV(lst) = cddr(AV(lst));
+    WV(lst, cddr(AV(lst)));
   }
   AFEND;
 }
@@ -388,14 +388,14 @@ static AFFDEF(tagged_pprint)
   AFBEGIN;
 
   if (!BOUND_P(AV(visithash)))
-    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(visithash, arc_mkhash(c, ARC_HASHBITS));
 
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
   if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
     /* already visited at some point. Do not recurse further */
     AFTCALL(AV(dw), arc_mkstringc(c, "(...)"), CTRUE, AV(fp), AV(visithash));
   }
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
 
   AFCALL(AV(dw), arc_mkstringc(c, "#(tagged "), CTRUE, AV(fp), AV(visithash));
   AFCALL(AV(dw), car(AV(sexpr)), AV(disp), AV(fp), AV(visithash));
@@ -552,7 +552,7 @@ static AFFDEF(pairwise2)
     AFCALL(AV(pred), car(AV(lst)), cadr(AV(lst)));
     if (NIL_P(AFCRV))
       ARETURN(CNIL);
-    AV(lst) = cdr(AV(lst));
+    WV(lst, cdr(AV(lst)));
   }
   AFEND;
 }

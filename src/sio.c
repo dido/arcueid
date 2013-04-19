@@ -193,7 +193,7 @@ AFFDEF(arc_instring2)
   AOARG(name);
   AFBEGIN;
   if (!BOUND_P(AV(name)))
-    AV(name) = CNIL;
+    WV(name, CNIL);
   ARETURN(arc_instring(c, AV(str), AV(name)));
   AFEND;
 }
@@ -204,7 +204,7 @@ AFFDEF(arc_outstring2)
   AOARG(name);
   AFBEGIN;
   if (!BOUND_P(AV(name)))
-    AV(name) = CNIL;
+    WV(name, CNIL);
   ARETURN(arc_outstring(c, AV(name)));
   AFEND;
 }

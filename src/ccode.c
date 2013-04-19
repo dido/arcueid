@@ -58,8 +58,8 @@ static AFFDEF(cfunc_pprint)
 
   (void)visithash;
   (void)disp;
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
   AFCALL(AV(dw), arc_mkstringc(c, "#<procedure"), CTRUE, AV(fp), AV(visithash));
   rep = (struct cfunc_t *)REP(AV(sexpr));
   if (!NIL_P(rep->name)) {
@@ -135,7 +135,7 @@ static void affenvr(arc *c, value thr, int minenv, int optenv, int dsenv)
        might have. */
     __arc_mkenv(c, thr, i, minenv + optenv - i + dsenv + 1);
     /* Store the rest parameter */
-    *__arc_getenv(c, thr, 0, minenv + optenv + dsenv) = rest;
+    __arc_putenv(c, thr, 0, minenv + optenv + dsenv, rest);
   }
 }
 

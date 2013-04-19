@@ -47,25 +47,25 @@ static int issym(Rune ch)
 }
 
 #define SCAN(fp, ch)				\
-  AFCALL(arc_mkaff(c, scan, CNIL), fp);		\
-  ch = AFCRV
+  AFCALL(arc_mkaff(c, scan, CNIL), fp);	\
+  WV(ch, AFCRV)
 
-#define READ(fp, eof, val)				\
+#define READ(fp, eof, val)					\
   AFCALL(arc_mkaff(c, arc_sread, CNIL), fp, eof);	\
-  val = AFCRV
+  WV(val, AFCRV)
 
 #define READC(fp, val)					\
-  AFCALL(arc_mkaff(c, arc_readc, CNIL), fp);		\
-  val = AFCRV;						\
-  if (NIL_P(val)) {					\
+  AFCALL(arc_mkaff(c, arc_readc, CNIL), fp);	\
+  WV(val, AFCRV);					\
+  if (NIL_P(AV(val))) {					\
     arc_err_cstrfmt(c, "unexpected end of source");	\
     ARETURN(CNIL);					\
   }
 
 #define READC2(fp, val, r)					\
-  AFCALL(arc_mkaff(c, arc_readc, CNIL), (fp));			\
-  (val) = AFCRV;						\
-  (r) = (NIL_P(val)) ? Runeerror : arc_char2rune(c, (val))	\
+  AFCALL(arc_mkaff(c, arc_readc, CNIL), fp);			\
+  WV(val, AFCRV);						\
+  r = (NIL_P(AV(val))) ? Runeerror : arc_char2rune(c, AV(val))	\
 
 #define READ_COMMENT(fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd, CNIL)
 
@@ -76,9 +76,9 @@ static AFFDEF(getsymbol)
   AVAR(buf, ch);
   Rune r;
   AFBEGIN;
-  AV(buf) = arc_outstring(c, CNIL);
+  WV(buf, arc_outstring(c, CNIL));
   for (;;) {
-    READC2(AV(fp), AV(ch), r);
+    READC2(AV(fp), ch, r);
     if (r == Runeerror)
       break;
     if (!issym(r)) {
@@ -100,38 +100,38 @@ AFFDEF(arc_sread)
   AFBEGIN;
   /* XXX - should put this in builtins somewhere? */
   for (;;) {
-    SCAN(AV(fp), AV(ch));
+    SCAN(AV(fp), ch);
     if (AV(ch) == CNIL)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
     /* cannot use switch here: interferes with the case statement implicitly
        created by AFBEGIN! */
     if (r == '(') {
-      AV(func) = arc_mkaff(c, read_list, CNIL);
+      WV(func, arc_mkaff(c, read_list, CNIL));
     } else if (r == ')') {
       arc_err_cstrfmt(c, "misplaced right paren");
       ARETURN(CNIL);
     } else if (r == '[') {
-      AV(func) = arc_mkaff(c, read_anonf, CNIL);
+      WV(func, arc_mkaff(c, read_anonf, CNIL));
     } else if (r == ']') {
       arc_err_cstrfmt(c, "misplaced right bracket");
       ARETURN(CNIL);
     } else if (r == '\'') {
-      AV(func) = arc_mkaff(c, read_quote, CNIL);
+      WV(func, arc_mkaff(c, read_quote, CNIL));
     } else if (r == '`') {
-      AV(func) = arc_mkaff(c, read_qquote, CNIL);
+      WV(func, arc_mkaff(c, read_qquote, CNIL));
     } else if (r == ',') {
-      AV(func) = arc_mkaff(c, read_comma, CNIL);
+      WV(func, arc_mkaff(c, read_comma, CNIL));
     } else if (r == '"') {
-      AV(func) = arc_mkaff(c, read_string, CNIL);
+      WV(func, arc_mkaff(c, read_string, CNIL));
     } else if (r == '#') {
-      AV(func) = arc_mkaff(c, read_char, CNIL);
+      WV(func, arc_mkaff(c, read_char, CNIL));
     } else if (r == ';') {
       READ_COMMENT(AV(fp));
       continue;
     } else {
       arc_ungetc_rune(c, r, AV(fp));
-      AV(func) = arc_mkaff(c, read_symbol, CNIL);
+      WV(func, arc_mkaff(c, read_symbol, CNIL));
     }
     AFTCALL(AV(func), AV(fp), AV(eof));
   }
@@ -148,7 +148,7 @@ static AFFDEF(scan)
   AFBEGIN;
   for (;;) {
     AFCALL(arc_mkaff(c, arc_readc, CNIL), AV(fp));
-    AV(ch) = AFCRV;
+    WV(ch, AFCRV);
     if (NIL_P(AV(ch)))
       ARETURN(CNIL);
     r = arc_char2rune(c, AV(ch));
@@ -168,9 +168,9 @@ static AFFDEF(read_list)
   Rune r;
   AFBEGIN;
 
-  AV(top) = AV(val) = AV(last) = AV(indot) = CNIL;
+  WV(top, WV(val, WV(last, WV(indot, CNIL))));
   for (;;) {
-    SCAN(AV(fp), AV(ch));
+    SCAN(AV(fp), ch);
     if (AV(ch) == CNIL)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
@@ -185,26 +185,26 @@ static AFFDEF(read_list)
       ARETURN(CNIL);
     }
     arc_ungetc_rune(c, r, AV(fp));
-    READ(AV(fp), AV(eof), AV(val));
+    READ(AV(fp), AV(eof), val);
     if (AV(val) == ARC_BUILTIN(c, S_DOT)) {
-      READ(AV(fp), AV(eof), AV(val));
+      READ(AV(fp), AV(eof), val);
       if (!NIL_P(AV(last))) {
 	scdr(AV(last), AV(val));
       } else {
 	arc_err_cstrfmt(c, "illegal use of .");
 	ARETURN(CNIL);
       }
-      AV(indot) = CTRUE;
+      WV(indot, CTRUE);
       continue;
     }
 
-    AV(val) = cons(c, AV(val), CNIL);
+    WV(val, cons(c, AV(val), CNIL));
     if (!NIL_P(AV(last))) {
       scdr(AV(last), AV(val));
     } else {
-      AV(top) = AV(val);
+      WV(top, AV(val));
     }
-    AV(last) = AV(val);
+    WV(last, AV(val));
   }
   AFEND;
 }
@@ -218,9 +218,9 @@ static AFFDEF(read_anonf)
   AVAR(top, val, last, ch);
   Rune r;
   AFBEGIN;
-  AV(top) = AV(val) = AV(last) = CNIL;
+  WV(top, WV(val, WV(last, CNIL)));
   for (;;) {
-    SCAN(AV(fp), AV(ch));
+    SCAN(AV(fp), ch);
     if (AV(ch) == CNIL)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
@@ -234,13 +234,13 @@ static AFFDEF(read_anonf)
 			cons(c, AV(top), CNIL))));
     }
     arc_ungetc_rune(c, r, AV(fp));
-    READ(AV(fp), AV(eof), AV(val));
-    AV(val) = cons(c, AV(val), CNIL);
+    READ(AV(fp), AV(eof), val);
+    WV(val, cons(c, AV(val), CNIL));
     if (!NIL_P(AV(last)))
       scdr(AV(last), AV(val));
     else
-      AV(top) = AV(val);
-    AV(last) = AV(val);
+      WV(top, AV(val));
+    WV(last, AV(val));
   }
   arc_err_cstrfmt(c, "unexpected end of source");
   ARETURN(CNIL);
@@ -255,7 +255,7 @@ static AFFDEF(readq)
   AARG(fp, qsym, eof);
   AVAR(val);
   AFBEGIN;
-  READ(AV(fp), AV(eof), AV(val));
+  READ(AV(fp), AV(eof), val);
   ARETURN(cons(c, AV(qsym), cons(c, AV(val), CNIL)));
   AFEND;
 }
@@ -286,7 +286,7 @@ static AFFDEF(read_comma)
   AVAR(ch);
   AFBEGIN;
 
-  READC(AV(fp), AV(ch))
+  READC(AV(fp), ch)
   r = arc_char2rune(c, AV(ch));
   /* unquote-splicing */
   if (r == '@') {
@@ -352,10 +352,10 @@ static AFFDEF(codestring)
      into the first half (ss) and the rest (rest).  Read the rest portion
      as though it were not part of the string. */
   len = arc_strlen(c, AV(s));
-  AV(ss) = arc_substr(c, AV(s), 0, i);
-  AV(rest) = arc_substr(c, AV(s), i+1, len);
-  AV(in) = arc_instring(c, AV(rest), CNIL);
-  READ(AV(in), CNIL, AV(expr));
+  WV(ss, arc_substr(c, AV(s), 0, i));
+  WV(rest, arc_substr(c, AV(s), i+1, len));
+  WV(in, arc_instring(c, AV(rest), CNIL));
+  READ(AV(in), CNIL, expr);
 
   /* Get the current position after reading. Break the string up
      again at that point, and pass the remainder of the string back
@@ -383,8 +383,8 @@ static AFFDEF(read_atstring)
   AFBEGIN;
   if (atpos(c, AV(s), 0) >= 0) {
     AFCALL(arc_mkaff(c, codestring, CNIL), AV(s));
-    AV(cs) = AFCRV;
-    for (AV(p)=AV(cs); AV(p); AV(p) = cdr(AV(p))) {
+    WV(cs, AFCRV);
+    for (WV(p, AV(cs)); AV(p); WV(p, cdr(AV(p)))) {
       if (TYPE(car(AV(p))) == T_STRING)
 	scar(AV(p), unescape_ats(c, car(AV(p))));
     }
@@ -402,12 +402,12 @@ AFFDEF(read_string)
   int digval;
   AVAR(ch, state, buf, escrune, digcount);
   AFBEGIN;
-  AV(state) = INT2FIX(1);
-  AV(buf) = arc_outstring(c, CNIL);
+  WV(state, INT2FIX(1));
+  WV(buf, arc_outstring(c, CNIL));
 
   ((void)eof);
   for (;;) {
-    READC(AV(fp), AV(ch));
+    READC(AV(fp), ch);
     r = arc_char2rune(c, AV(ch));
     if (AV(state) == INT2FIX(1)) {
       /* State 1: normal reading */
@@ -421,7 +421,7 @@ AFFDEF(read_string)
 
       if (r == '\\') {
 	/* escape character */
-	AV(state) = INT2FIX(2);
+	WV(state, INT2FIX(2));
 	continue;
       }
 
@@ -452,15 +452,15 @@ AFFDEF(read_string)
 	r = 0x000d;
       } else if (r == 'U' || r == 'u') {
 	/* unicode escape */
-	AV(escrune) = AV(digcount) = INT2FIX(0);
-	AV(state) = INT2FIX(3);
+	WV(escrune, WV(digcount, INT2FIX(0)));
+	WV(state, INT2FIX(3));
 	continue;
       } else {
 	arc_err_cstrfmt(c, "unknown escape code");
 	ARETURN(CNIL);
       }
       AFCALL(arc_mkaff(c, arc_writec, CNIL), arc_mkchar(c, r), AV(buf));
-      AV(state) = INT2FIX(1);
+      WV(state, INT2FIX(1));
       continue;
     }
 
@@ -471,7 +471,7 @@ AFFDEF(read_string)
 	AFCALL(arc_mkaff(c, arc_writec, CNIL),
 	       arc_mkchar(c, FIX2INT(AV(escrune))),
 	       AV(buf));
-	AV(state) = INT2FIX(1);
+	WV(state, INT2FIX(1));
 	continue;
       }
 
@@ -485,8 +485,8 @@ AFFDEF(read_string)
 	arc_err_cstrfmt(c, "invalid character in Unicode escape");
 	ARETURN(CNIL);
       }
-      AV(escrune) = INT2FIX(FIX2INT(AV(escrune)) * 16 + digval);
-      AV(digcount) = INT2FIX(FIX2INT(AV(digcount)) + 1);
+      WV(escrune, INT2FIX(FIX2INT(AV(escrune)) * 16 + digval));
+      WV(digcount, INT2FIX(FIX2INT(AV(digcount)) + 1));
       continue;
     }
 
@@ -516,7 +516,7 @@ static AFFDEF(read_char)
   AFBEGIN;
 
   ((void)eof);
-  READC(AV(fp), AV(ch));
+  READC(AV(fp), ch);
   r = arc_char2rune(c, AV(ch));
   if (r != '\\') {
     arc_err_cstrfmt(c, "invalid character constant");
@@ -524,7 +524,7 @@ static AFFDEF(read_char)
   }
 
   /* Special case for any special characters that are not valid symbols. */
-  READC(AV(fp), AV(ch));
+  READC(AV(fp), ch);
   r = arc_char2rune(c, AV(ch));
   if (!issym(r)) {
     ARETURN(arc_mkchar(c, r));
@@ -607,7 +607,7 @@ static AFFDEF(read_comment)
   AFBEGIN;
   ((void)eof);
   for (;;) {
-    READC2(AV(fp), AV(ch), r);
+    READC2(AV(fp), ch, r);
     if (r == Runeerror || ucisnl(r))
       break;
   }
@@ -625,7 +625,7 @@ static AFFDEF(read_symbol)
   AFBEGIN;
   (void)eof;
   AFCALL(arc_mkaff(c, getsymbol, CNIL), AV(fp));
-  AV(sym) = AFCRV;
+  WV(sym, AFCRV);
   if (arc_strcmp(c, AV(sym), arc_mkstringc(c, ".")) == 0)
     ARETURN(ARC_BUILTIN(c, S_DOT));
   /* Try to convert the symbol to a number */

@@ -53,7 +53,7 @@ static AFFDEF(thread_pprint)
   value outstr;
   AFBEGIN;
   (void)disp;
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
   len = snprintf(NULL, 0, "#<thread: %d>", TTID(AV(sexpr)));
   coutstr = (char *)alloca(sizeof(char)*(len+2));
   snprintf(coutstr, len+1, "#<thread: %d>", TTID(AV(sexpr)));
@@ -150,8 +150,8 @@ AFFDEF(arc_cmark)
   AARG(key);
   AVAR(cm, val);
   AFBEGIN;
-  AV(cm) = TCM(thr);
-  AV(val) = arc_hash_lookup(c, AV(cm), AV(key));
+  WV(cm, TCM(thr));
+  WV(val, arc_hash_lookup(c, AV(cm), AV(key)));
   if (AV(val) == CUNBOUND)
     ARETURN(CNIL);
   ARETURN(car(AV(val)));
@@ -165,11 +165,11 @@ AFFDEF(arc_scmark)
   AARG(key, val);
   AVAR(cm, bind);
   AFBEGIN;
-  AV(cm) = TCM(thr);
-  AV(bind) = arc_hash_lookup(c, AV(cm), AV(key));
+  WV(cm, TCM(thr));
+  WV(bind, arc_hash_lookup(c, AV(cm), AV(key)));
   if (AV(bind) == CUNBOUND)
-    AV(bind) = CNIL;
-  AV(bind) = cons(c, AV(val), AV(bind));
+    WV(bind, CNIL);
+  WV(bind, cons(c, AV(val), AV(bind)));
   arc_hash_insert(c, AV(cm), AV(key), AV(bind));
   ARETURN(val);
   AFEND;
@@ -181,12 +181,12 @@ AFFDEF(arc_ccmark)
   AARG(key);
   AVAR(cm, bind, val);
   AFBEGIN;
-  AV(cm) = TCM(thr);
-  AV(bind) = arc_hash_lookup(c, AV(cm), AV(key));
+  WV(cm, TCM(thr));
+  WV(bind, arc_hash_lookup(c, AV(cm), AV(key)));
   if (AV(bind) == CUNBOUND)
     ARETURN(CNIL);
-  AV(val) = car(AV(bind));
-  AV(bind) = cdr(AV(bind));
+  WV(val, car(AV(bind)));
+  WV(bind, cdr(AV(bind)));
   if (NIL_P(bind)) {
     arc_hash_delete(c, AV(cm), AV(key));
   } else {

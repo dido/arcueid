@@ -101,8 +101,8 @@ static AFFDEF(io_pprint)
   AVAR(dw, wc);
   AFBEGIN;
 
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
   if (TYPE(AV(sexpr)) == T_INPORT) {
     AFCALL(AV(dw), arc_mkstringc(c, "#<input-port:"), CTRUE,
 	   AV(fp), AV(visithash));
@@ -139,7 +139,7 @@ AFFDEF(arc_readb)
   AFBEGIN;
 
   if (!BOUND_P(AV(fd)))
-    STDIN(AV(fd));
+    STDIN(fd);
 
   IO_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
@@ -173,7 +173,7 @@ AFFDEF(arc_readc)
   AFBEGIN;
 
   if (!BOUND_P(AV(fd)))
-    STDIN(AV(fd));
+    STDIN(fd);
 
   IO_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
@@ -188,12 +188,12 @@ AFFDEF(arc_readc)
       ARETURN(CNIL);
     ARETURN(arc_mkchar(c, FIX2INT(AFCRV)));
   }
-  AV(buf) = arc_mkvector(c, UTFmax);
+  WV(buf, arc_mkvector(c, UTFmax));
   /* XXX - should put this in builtins */
-  AV(readb) = arc_mkaff(c, arc_readb, CNIL);
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < UTFmax; AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+  WV(readb, arc_mkaff(c, arc_readb, CNIL));
+  for (WV(i, INT2FIX(0)); FIX2INT(AV(i)) < UTFmax; WV(i, INT2FIX(FIX2INT(AV(i)) + 1))) {
     AFCALL(AV(readb), AV(fd));
-    AV(chr) = AFCRV;
+    WV(chr, AFCRV);
     if (NIL_P(AV(chr)))
       ARETURN(CNIL);
     VINDEX(AV(buf), FIX2INT(AV(i))) = AV(chr);
@@ -222,7 +222,7 @@ AFFDEF(arc_writeb)
   }
 
   if (!BOUND_P(AV(fd)))
-    STDOUT(AV(fd));
+    STDOUT(fd);
 
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
@@ -252,7 +252,7 @@ AFFDEF(arc_writec)
   }
 
   if (!BOUND_P(AV(fd)))
-    STDOUT(AV(fd));
+    STDOUT(fd);
 
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
@@ -261,14 +261,14 @@ AFFDEF(arc_writec)
 	    INT2FIX(arc_char2rune(c, AV(chr))));
   }
   /* XXX - should put this in builtins */
-  AV(writeb) = arc_mkaff(c, arc_writeb, CNIL);
+  WV(writeb, arc_mkaff(c, arc_writeb, CNIL));
   ch = arc_char2rune(c, AV(chr));
-  AV(nbytes) = INT2FIX(runetochar(cbuf, &ch));
+  WV(nbytes, INT2FIX(runetochar(cbuf, &ch)));
   /* Convert C char array into Arcueid vector of fixnums */
-  AV(buf) = arc_mkvector(c, FIX2INT(AV(nbytes)));
+  WV(buf, arc_mkvector(c, FIX2INT(AV(nbytes))));
   for (j=0; j<FIX2INT(AV(nbytes)); j++)
     VINDEX(AV(buf), j) = INT2FIX(cbuf[j]);
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i)) < FIX2INT(AV(nbytes)); AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
+  for (WV(i, INT2FIX(0)); FIX2INT(AV(i)) < FIX2INT(AV(nbytes)); WV(i, INT2FIX(FIX2INT(AV(i)) + 1))) {
     AFCALL(AV(writeb),VINDEX(AV(buf), FIX2INT(AV(i))), AV(fd));
   }
   ARETURN(AV(chr));
@@ -280,7 +280,7 @@ AFFDEF(arc_close)
 {
   ARARG(list);
   AFBEGIN;
-  for (; !NIL_P(AV(list)); AV(list) = cdr(AV(list))) {
+  for (; !NIL_P(AV(list)); WV(list, cdr(AV(list)))) {
     AFCALL(VINDEX(IO(car(AV(list)))->io_ops, IO_close), car(AV(list)));
   }
   ARETURN(CNIL);
@@ -301,7 +301,7 @@ AFFDEF(arc_stdin)
 {
   AVAR(fd);
   AFBEGIN;
-  STDIN(AV(fd));
+  STDIN(fd);
   ARETURN(AV(fd));
   AFEND;
 }
@@ -311,7 +311,7 @@ AFFDEF(arc_stdout)
 {
   AVAR(fd);
   AFBEGIN;
-  STDOUT(AV(fd));
+  STDOUT(fd);
   ARETURN(AV(fd));
   AFEND;
 }
@@ -321,7 +321,7 @@ AFFDEF(arc_stderr)
 {
   AVAR(fd);
   AFBEGIN;
-  STDERR(AV(fd));
+  STDERR(fd);
   ARETURN(AV(fd));
   AFEND;
 }
@@ -334,11 +334,11 @@ AFFDEF(__arc_disp_write)
   typefn_t *tfn;
   AFBEGIN;
   if (!BOUND_P(AV(outport)))
-    STDOUT(AV(outport));
+    STDOUT(outport);
   if (NIL_P(AV(arg)))
-    AV(arg) = ARC_BUILTIN(c, S_NIL);
+    WV(arg, ARC_BUILTIN(c, S_NIL));
   if (AV(arg) == CTRUE)
-    AV(arg) = ARC_BUILTIN(c, S_T);
+    WV(arg, ARC_BUILTIN(c, S_T));
   tfn = __arc_typefn(c, AV(arg));
   if (tfn == NULL || tfn->pprint == NULL) {
     arc_err_cstrfmt(c, "cannot display object of type %d", TYPE(AV(arg)));
@@ -389,7 +389,7 @@ AFFDEF(arc_ungetc)
   AOARG(fd);
   AFBEGIN;
   if (!BOUND_P(AV(fd)))
-    STDIN(AV(fd));
+    STDIN(fd);
   arc_ungetc_rune(c, arc_char2rune(c, AV(ch)), AV(fd));
   ARETURN(AV(ch));
   AFEND;
@@ -402,9 +402,9 @@ AFFDEF(arc_peekc)
   AVAR(ch);
   AFBEGIN;
   if (!BOUND_P(AV(fd)))
-    STDIN(AV(fd));
+    STDIN(fd);
   AFCALL(arc_mkaff(c, arc_readc, CNIL), AV(fd));
-  AV(ch) = AFCRV;
+  WV(ch, AFCRV);
   arc_ungetc_rune(c, arc_char2rune(c, AV(ch)), AV(fd));
   ARETURN(AV(ch));
   AFEND;

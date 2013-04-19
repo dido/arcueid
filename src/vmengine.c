@@ -275,7 +275,7 @@ int __arc_vmengine(arc *c, value thr)
 
 	ienv = FIX2INT(*TIPP(thr)++);
 	iindx = FIX2INT(*TIPP(thr)++);
-	TVALR(thr) = *__arc_getenv(c, thr, ienv, iindx);
+	TVALR(thr) = __arc_getenv(c, thr, ienv, iindx);
       }
       NEXT;
     INST(iste):
@@ -284,7 +284,7 @@ int __arc_vmengine(arc *c, value thr)
 
 	ienv = FIX2INT(*TIPP(thr)++);
 	iindx = FIX2INT(*TIPP(thr)++);
-	*__arc_getenv(c, thr, ienv, iindx) = TVALR(thr);
+	__arc_putenv(c, thr, ienv, iindx, TVALR(thr));
       }
       NEXT;
     INST(icont):
@@ -337,7 +337,7 @@ int __arc_vmengine(arc *c, value thr)
 	     might have. */
 	  __arc_mkenv(c, thr, i, minenv + optenv - i + dsenv + 1);
 	  /* Store the rest parameter */
-	  *__arc_getenv(c, thr, 0, minenv + optenv + dsenv) = rest;
+	  __arc_putenv(c, thr, 0, minenv + optenv + dsenv, rest);
 	}
       }
       NEXT;
@@ -516,7 +516,7 @@ AFFDEF(arc_apply)
     cargc++;
     argc--;
     CPUSH(thr, car(AV(argv)));
-    AV(argv) = cdr(AV(argv));
+    WV(argv, cdr(AV(argv)));
   }
 
   if (!(NIL_P(AV(argv)) || CONS_P(AV(argv)))) {
@@ -524,7 +524,7 @@ AFFDEF(arc_apply)
     ARETURN(CNIL);
   }
   if (!NIL_P(AV(argv))) {
-    AV(argv) = car(AV(argv));
+    WV(argv, car(AV(argv)));
     if (!(NIL_P(AV(argv)) || CONS_P(AV(argv)))) {
       arc_err_cstrfmt(c, "apply's last argument non-list (1)");
       ARETURN(CNIL);
@@ -532,7 +532,7 @@ AFFDEF(arc_apply)
     while (CONS_P(AV(argv))) {
       cargc++;
       CPUSH(thr, car(AV(argv)));
-      AV(argv) = cdr(AV(argv));
+      WV(argv, cdr(AV(argv)));
     }
     if (!NIL_P(AV(argv))) {
       arc_err_cstrfmt(c, "apply's last argument not proper list");
@@ -561,8 +561,8 @@ static AFFDEF(reroot)
   if (TCH(thr) == AV(there))
     ARETURN(CNIL);
   AFCALL(arc_mkaff(c, reroot, CNIL), cdr(AV(there)));
-  AV(before) = car(car(AV(there)));
-  AV(after) = cdr(car(AV(there)));
+  WV(before, car(car(AV(there))));
+  WV(after, cdr(car(AV(there))));
   scar(TCH(thr), cons(c, AV(after), AV(before)));
   scdr(TCH(thr), AV(there));
   scar(AV(there), INT2FIX(0xdead));
@@ -582,9 +582,9 @@ static AFFDEF(contwrapper)
   AFBEGIN;
   /* access the tcr variable in the environment of arc_callcc that
      created this closure, and reroot it */
-  AFCALL(arc_mkaff(c, reroot, CNIL), *__arc_getenv(c, thr, 1, 3));
+  AFCALL(arc_mkaff(c, reroot, CNIL), __arc_getenv(c, thr, 1, 3));
   /* call the continuation in the environment of arc_callcc */
-  cont = *__arc_getenv(c, thr, 1, 1);
+  cont = __arc_getenv(c, thr, 1, 1);
   /* special case -- when ccc is a tail call */
   if (NIL_P(cont))
     ARETURN(AV(arg));
@@ -601,15 +601,15 @@ AFFDEF(arc_callcc)
   AFBEGIN;
   /* First move the continuations to the heap if needed */
   TCONR(thr) = __arc_cont2heap(c, thr, TCONR(thr));
-  AV(tcr) = TCONR(thr);
-  AV(tch) = TCH(thr);
+  WV(tcr, TCONR(thr));
+  WV(tch, TCH(thr));
   /* Save the environment of this call/cc invocation so contwrapper
      can have access to it later */
   TENVR(thr) = __arc_env2heap(c, thr, TENVR(thr));
   /* This use of mkaff2 effectively makes contwrapper a nested
      function that has access to the environment of arc_callcc.  It
      needs the values of tcr and tch above. */
-  AV(func) = arc_mkaff2(c, contwrapper, CNIL, TENVR(thr));
+  WV(func, arc_mkaff2(c, contwrapper, CNIL, TENVR(thr)));
   /* Instead of passing the continuation directly, we pass it the
      contwrapper function, which takes care of calling reroot
      before restoring the continuation. */
@@ -624,11 +624,11 @@ AFFDEF(arc_dynamic_wind)
   AVAR(here, ret);
   AFBEGIN;
 
-  AV(here) = TCH(thr);
+  WV(here, TCH(thr));
   AFCALL(arc_mkaff(c, reroot, CNIL),
 	 cons(c, cons(c, AV(before), AV(after)), AV(here)));
   AFCALL2(AV(during), CNIL);
-  AV(ret) = AFCRV;
+  WV(ret, AFCRV);
   /* execute the after clauses if the during thunk returns normally */
   AFCALL(arc_mkaff(c, reroot, CNIL), AV(here));
   ARETURN(AV(ret));

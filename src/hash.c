@@ -238,20 +238,20 @@ static AFFDEF(hash_pprint)
   AFBEGIN;
 
   if (!BOUND_P(AV(visithash)))
-    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(visithash, arc_mkhash(c, ARC_HASHBITS));
 
   if (!NIL_P(__arc_visit(c, AV(sexpr), AV(visithash)))) {
     /* already visited at some point. Do not recurse further */
     AFTCALL(arc_mkaff(c, __arc_disp_write, CNIL), arc_mkstringc(c, "(...)"),
 	   CTRUE, AV(fp), AV(visithash));
   }
-  AV(wc) = arc_mkaff(c, arc_writec, CNIL);
-  AV(dw) = arc_mkaff(c, __arc_disp_write, CNIL);
+  WV(wc, arc_mkaff(c, arc_writec, CNIL));
+  WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
   AFCALL(AV(dw), arc_mkstringc(c, "#hash("), CTRUE, AV(fp), CNIL);
-  AV(state) = CNIL;
+  WV(state, CNIL);
   for (;;) {
     AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(sexpr), AV(state));
-    AV(state) = AFCRV;
+    WV(state, AFCRV);
     if (NIL_P(AV(state)))
       goto finished;
     AFCALL(AV(wc), arc_mkchar(c, '('), AV(fp));
@@ -327,14 +327,14 @@ static AFFDEF(hash_isocmp)
   /* Two hash tables must have identical numbers of entries to be isomorphic */
   if (HASH_NENTRIES(AV(v1)) != HASH_NENTRIES(AV(v2)))
     ARETURN(CNIL);
-  AV(tbl) = HASH_TABLE(AV(v1));
-  AV(iso2) = arc_mkaff(c, arc_iso2, CNIL);
-  for (AV(i) = INT2FIX(0); FIX2INT(AV(i))<VECLEN(AV(tbl));
-       AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
-    AV(e) = VINDEX(AV(tbl), FIX2INT(AV(i)));
+  WV(tbl, HASH_TABLE(AV(v1)));
+  WV(iso2, arc_mkaff(c, arc_iso2, CNIL));
+  for (WV(i, INT2FIX(0)); FIX2INT(AV(i))<VECLEN(AV(tbl));
+       WV(i, INT2FIX(FIX2INT(AV(i)) + 1))) {
+    WV(e, VINDEX(AV(tbl), FIX2INT(AV(i))));
     if (EMPTYP(AV(e)))
       continue;
-    AV(v2val) = arc_hash_lookup(c, AV(v2), BKEY(AV(e)));
+    WV(v2val, arc_hash_lookup(c, AV(v2), BKEY(AV(e))));
     AFCALL(AV(iso2), BVALUE(AV(e)), AV(v2val), AV(vh1), AV(vh2));
     if (NIL_P(AFCRV))
       ARETURN(CNIL);
@@ -655,7 +655,7 @@ AFFDEF(arc_xhash_increment)
   AFBEGIN;
 
   decode_hs(c, &hs, AV(ehs));
-  AV(length) = INT2FIX(1);
+  WV(length, INT2FIX(1));
   arc_hash_update(&hs, TYPE(AV(v)));
   if (TYPE(AV(v)) == T_FIXNUM)
     arc_hash_update(&hs, (unsigned long)FIX2INT(AV(v)));
@@ -667,7 +667,7 @@ AFFDEF(arc_xhash_increment)
   } else {
     tfn = __arc_typefn(c, AV(v));
     if (tfn->hash != NULL)
-      AV(length) = INT2FIX(tfn->hash(c, AV(v), &hs));
+      WV(length, INT2FIX(tfn->hash(c, AV(v), &hs)));
     else if (tfn->xhash != NULL) {
       encode_hs(c, AV(ehs), &hs);
       AFTCALL(arc_mkaff(c, tfn->xhash, CNIL), AV(v), AV(ehs), AV(length), AV(visithash));
@@ -690,9 +690,9 @@ AFFDEF(arc_xhash)
   value len;
   unsigned long final;
   AFBEGIN;
-  AV(ehs) = arc_mkvector(c, ENC_VEC_LEN);
+  WV(ehs, arc_mkvector(c, ENC_VEC_LEN));
   if (!BOUND_P(AV(level)))
-    AV(level) = INT2FIX(0);
+    WV(level, INT2FIX(0));
   arc_hash_init(&s, FIX2INT(AV(level)));
   encode_hs(c, AV(ehs), &s);
   AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), AV(v), AV(ehs));
@@ -713,10 +713,10 @@ AFFDEF(xhash_lookup)
   AFBEGIN;
   AFCALL(arc_mkaff(c, arc_xhash, CNIL), AV(key));
   hv = FIX2INT(AFCRV);
-  AV(index) = INT2FIX(hv & TABLEMASK(AV(hash)));
-  for (AV(i)=INT2FIX(0);; AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
-    AV(index) = INT2FIX((FIX2INT(AV(index)) + PROBE(FIX2INT(AV(i)))) & TABLEMASK(AV(hash)));
-    AV(e) = HASH_INDEX(AV(hash), FIX2INT(AV(index)));
+  WV(index, INT2FIX(hv & TABLEMASK(AV(hash))));
+  for (WV(i, INT2FIX(0));; WV(i, INT2FIX(FIX2INT(AV(i)) + 1))) {
+    WV(index, INT2FIX((FIX2INT(AV(index)) + PROBE(FIX2INT(AV(i)))) & TABLEMASK(AV(hash))));
+    WV(e, HASH_INDEX(AV(hash), FIX2INT(AV(index))));
     /* CUNBOUND means there was never any element at that index, so we
        can stop. */
     if (AV(e) == CUNBOUND)
@@ -755,7 +755,7 @@ AFFDEF(arc_xhash_insert)
   /* First, look for the key if a binding already exists for it */
   AFCALL(arc_mkaff(c, arc_xhash_lookup2, CNIL), AV(hash), AV(key));
   if (BOUND_P(AFCRV)) {
-    AV(e) = AFCRV;
+    WV(e, AFCRV);
     BVALUE(AV(e)) = AV(val);
     ARETURN(AV(val));
   }
@@ -765,10 +765,10 @@ AFFDEF(arc_xhash_insert)
     hashtable_expand(c, hash);
   SET_NENTRIES(AV(hash), HASH_NENTRIES(AV(hash))+1);
   AFCALL(arc_mkaff(c, arc_xhash, CNIL), AV(key));
-  AV(hv) = AFCRV;
-  AV(index) = INT2FIX(FIX2INT(AV(hv)) & TABLEMASK(AV(hash)));
-  for (AV(i)=INT2FIX(0);; AV(i) = INT2FIX(FIX2INT(AV(i)) + 1)) {
-    AV(e) = VINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index)));
+  WV(hv, AFCRV);
+  WV(index, INT2FIX(FIX2INT(AV(hv)) & TABLEMASK(AV(hash))));
+  for (WV(i, INT2FIX(0));; WV(i, INT2FIX(FIX2INT(AV(i)) + 1))) {
+    WV(e, VINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index))));
     /* If we see an empty bucket in our search, or if we see a bucket
        whose key is the same as the key specified, we have found the
        place where the element should go. */
@@ -779,14 +779,14 @@ AFFDEF(arc_xhash_insert)
       break;
     /* We found a bucket, but it is occupied by some other key. Continue
        probing. */
-    AV(index) = INT2FIX((FIX2INT(AV(index)) + PROBE(FIX2INT(AV(i)))) & TABLEMASK(AV(hash)));
+    WV(index, INT2FIX((FIX2INT(AV(index)) + PROBE(FIX2INT(AV(i)))) & TABLEMASK(AV(hash))));
   }
 
   if (EMPTYP(AV(e))) {
     /* No such key in the hash table yet.  Create a bucket and
        assign it to the table. */
-    AV(e) = mkhashbucket(c, AV(key), AV(val), FIX2INT(AV(index)), AV(hash),
-			 AV(hv));
+    WV(e, mkhashbucket(c, AV(key), AV(val), FIX2INT(AV(index)), AV(hash),
+		       AV(hv)));
     VINDEX(HASH_TABLE(AV(hash)), FIX2INT(AV(index))) = AV(e);
   } else {
     /* The key already exists.  Use the current bucket but change the
@@ -835,7 +835,7 @@ AFFDEF(arc_xhash_iter)
   value index, keyval, e;
   AFBEGIN;
   if (NIL_P(AV(state)))
-    AV(state) = cons(c, cons(c, CNIL, CNIL), INT2FIX(0));
+    WV(state, cons(c, cons(c, CNIL, CNIL), INT2FIX(0)));
   keyval = car(AV(state));
   index = cdr(AV(state));
   while (FIX2INT(index) < VECLEN(HASH_TABLE(AV(hash)))) {
@@ -859,10 +859,10 @@ AFFDEF(arc_xhash_map)
   AVAR(state);
   AFBEGIN;
 
-  AV(state) = CNIL;
+  WV(state, CNIL);
   for (;;) {
     AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(table), AV(state));
-    AV(state) = AFCRV;
+    WV(state, AFCRV);
     if (NIL_P(AV(state)))
       ARETURN(AV(table));
     AFCALL(AV(proc), car(car(AV(state))), cdr(car(AV(state))));
@@ -882,15 +882,15 @@ static AFFDEF(hash_xcoerce)
     ARETURN(AV(obj));
 
   if (FIX2INT(AV(stype)) == T_CONS) {
-    AV(list) = AV(state) = CNIL;
+    WV(list, WV(state, CNIL));
     for (;;) {
       AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(obj), AV(state));
-      AV(state) = AFCRV;
+      WV(state, AFCRV);
       if (NIL_P(AV(state))) {
 	ARETURN(AV(list));
       }
-      AV(list) = cons(c, cons(c, car(car(AV(state))), cdr(car(AV(state)))),
-		      AV(list));
+      WV(list, cons(c, cons(c, car(car(AV(state))), cdr(car(AV(state)))),
+		    AV(list)));
     }
     /* never get here? */
     ARETURN(AV(list));
@@ -908,28 +908,28 @@ AFFDEF(hash_xhash)
   AFBEGIN;
 
   if (!BOUND_P(AV(visithash)))
-    AV(visithash) = arc_mkhash(c, ARC_HASHBITS);
+    WV(visithash, arc_mkhash(c, ARC_HASHBITS));
 
   /* Already visited at some point.  Do not recurse further. */
   if (__arc_visit(c, AV(obj), AV(visithash)) != CNIL)
     ARETURN(AV(length));
 
   /* Iterate over all keys and values */
-  AV(state) = CNIL;
+  WV(state, CNIL);
   for (;;) {
     AFCALL(arc_mkaff(c, arc_xhash_iter, CNIL), AV(obj), AV(state));
-    AV(state) = AFCRV;
+    WV(state, AFCRV);
     if (NIL_P(AV(state))) {
       ARETURN(AV(length));
     }
     /* increment the hash over the key */
     AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), car(car(AV(state))),
 	   AV(ehs), AV(visithash));
-    AV(length) = __arc_add2(c, AV(length), AFCRV);
+    WV(length, __arc_add2(c, AV(length), AFCRV));
     /* increment the hash over the value */
     AFCALL(arc_mkaff(c, arc_xhash_increment, CNIL), cdr(car(AV(state))),
 	   AV(ehs), AV(visithash));
-    AV(length) = __arc_add2(c, AV(length), AFCRV);
+    WV(length, __arc_add2(c, AV(length), AFCRV));
   }
   /* never get here? */
   ARETURN(AV(length));

@@ -46,19 +46,19 @@ static AFFDEF(macex)
   do {
     if (!CONS_P(AV(e)))
       ARETURN(AV(e));
-    AV(op) = car(AV(e));
+    WV(op, car(AV(e)));
     /* I don't know if it's possible to make any other type of atom evaluate
        to a macro. */
     if (!SYMBOL_P(AV(op)))
       ARETURN(AV(e));
     /* Look up the symbol's binding in the global symbol table */
-    while (arc_type(c, AV(op) = arc_hash_lookup(c, c->genv, AV(op))) == T_SYMBOL)
+    while (arc_type(c, WV(op, arc_hash_lookup(c, c->genv, AV(op)))) == T_SYMBOL)
       ;
     if (arc_type(c, AV(op)) != ARC_BUILTIN(c, S_MAC))
       ARETURN(AV(e));		/* not a macro */
     AFCALL2(arc_rep(c, AV(op)), cdr(AV(e)));
-    AV(expansion) = AFCRV;
-    AV(e) = AV(expansion);
+    WV(expansion, AFCRV);
+    WV(e, AV(expansion));
   } while (AV(once) == CTRUE);
   AFEND;
 }
@@ -169,7 +169,7 @@ static AFFDEF(compile_if)
   /* this jump address will be the address of the jf instruction
      which we are about to generate.  We have to patch it with the
      address of the start of the else portion once we know it. */
-  AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+  WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
   arc_emit1(c, AV(ctx), ijf, INT2FIX(0));
   /* compile the then portion */
   AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(args)), AV(ctx),
@@ -177,7 +177,7 @@ static AFFDEF(compile_if)
   /* This second jump target should be patched with the address of the
      unconditional jump at the end.  It should be patched after the else
      portion is compiled. */
-  AV(jumpaddr2) = CCTX_VCPTR(AV(ctx));
+  WV(jumpaddr2, CCTX_VCPTR(AV(ctx)));
   arc_emit1(c, AV(ctx), ijmp, INT2FIX(0));
   /* patch jumpaddr so that it will jump to the address of the else
      portion which is about to be compiled */
@@ -203,7 +203,7 @@ static void add_env_name(arc *c, value envframe, value name, value idx)
   arc_hash_insert(c, envframe, idx, name);
 }
 
-#define FIXINC(x) (x) = INT2FIX(FIX2INT(x) + 1)
+#define FIXINC(x) (WV(x, INT2FIX(FIX2INT(AV(x)) + 1)))
 
 /* To perform a destructuring bind, we begin by assuming that the
    value to be unbound is in the value argument.  We traverse the
@@ -224,16 +224,16 @@ static AFFDEF(destructure)
   AVAR(frame, jumpaddr);
   AFBEGIN;
 
-  AV(frame) = car(AV(env));
+  WV(frame, car(AV(env)));
   if (TYPE(AV(arg)) == T_SYMBOL) {
-    AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+    WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
     arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
     arc_emit(c, AV(ctx), inil);
     arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
     arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
     add_env_name(c, AV(frame), AV(arg), AV(idx));
-    FIXINC(AV(idx));
+    FIXINC(idx);
     ARETURN(AV(idx));
   }
 
@@ -252,7 +252,7 @@ static AFFDEF(destructure)
 	ARETURN(AV(idx));
     }
     oargdef = (NIL_P(cddr(AV(arg)))) ? CNIL : car(cddr(AV(arg)));
-    AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+    WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
     arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
     /* compile the optional argument's definition */
     AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
@@ -260,7 +260,7 @@ static AFFDEF(destructure)
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
     arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
     add_env_name(c, AV(frame), cadr(AV(arg)), AV(idx));
-    FIXINC(AV(idx));
+    FIXINC(idx);
     ARETURN(AV(idx));
   }
 
@@ -269,7 +269,7 @@ static AFFDEF(destructure)
     arc_emit(c, AV(ctx), idcar);
     AFCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
 	   AV(env), AV(idx));
-    AV(idx) = AFCRV;
+    WV(idx, AFCRV);
     arc_emit(c, AV(ctx), ipop);
     arc_emit(c, AV(ctx), idcdr);
     AFTCALL(arc_mkaff(c, destructure, CNIL), cdr(AV(arg)), AV(ctx),
@@ -314,10 +314,10 @@ static AFFDEF(compile_args)
   if (SYMBOL_P(AV(args))) {
     /* if args is a single name, make an environment with a single
        name and a list containing the name of the sole argument. */
-    AV(nframe) = arc_mkhash(c, ARC_HASHBITS);
+    WV(nframe, arc_mkhash(c, ARC_HASHBITS));
     add_env_name(c, AV(nframe), AV(args), INT2FIX(0));
     arc_emit3(c, AV(ctx), ienvr, INT2FIX(0), INT2FIX(0), INT2FIX(0));
-    AV(env) = cons(c, AV(nframe), AV(env));
+    WV(env, cons(c, AV(nframe), AV(env)));
     ARETURN(AV(env));
   }
 
@@ -328,13 +328,13 @@ static AFFDEF(compile_args)
 
   /* Iterate over all of the args and obtain counts of each type of arg
      specified */
-  AV(regargs) = AV(dsbargs) = AV(optargs) = AV(idx) = INT2FIX(0);
-  AV(optargbegin) = AV(dsb) = CNIL;
-  AV(nframe) = arc_mkhash(c, ARC_HASHBITS);
-  AV(env) = cons(c, AV(nframe), AV(env));
+  WV(regargs, WV(dsbargs, WV(optargs, WV(idx, INT2FIX(0)))));
+  WV(optargbegin, WV(dsb, CNIL));
+  WV(nframe, arc_mkhash(c, ARC_HASHBITS));
+  WV(env, cons(c, AV(nframe), AV(env)));
   /* save address of env instruction -- we will need to patch it later to
      fill in the values, and we may even need to change it to an envr */
-  AV(envptr) = CCTX_VCPTR(AV(ctx));
+  WV(envptr, CCTX_VCPTR(AV(ctx)));
   arc_emit3(c, AV(ctx), ienv, INT2FIX(0), INT2FIX(0), INT2FIX(0));
   for (;;) {
     if (SYMBOL_P(car(AV(args)))) {
@@ -344,14 +344,14 @@ static AFFDEF(compile_args)
       }
       /* Ordinary symbol arg. */
       add_env_name(c, AV(nframe), car(AV(args)), AV(idx));
-      FIXINC(AV(idx));
-      FIXINC(AV(regargs));
+      FIXINC(idx);
+      FIXINC(regargs);
     } else if (CONS_P(car(AV(args)))
 	       && car(car(AV(args))) == ARC_BUILTIN(c, S_O)) {
       value oarg, oargname, oargdef;
 
       /* Optional arg */
-      AV(optargbegin) = CTRUE;
+      WV(optargbegin, CTRUE);
       oarg = car(AV(args));
       oargname = cadr(oarg);
       if (!SYMBOL_P(oargname)) {
@@ -362,7 +362,7 @@ static AFFDEF(compile_args)
       /* jump if bound check -- if we are bound, then don't overwrite
 	 the optional value  */
       arc_emit2(c, AV(ctx), ilde, INT2FIX(0), AV(idx));
-      AV(jumpaddr) = CCTX_VCPTR(AV(ctx));
+      WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
       arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
       /* compile the optional argument's definition */
       AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
@@ -370,20 +370,20 @@ static AFFDEF(compile_args)
       arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
       add_env_name(c, AV(nframe), cadr(car(AV(args))), AV(idx));
-      FIXINC(AV(idx));
-      FIXINC(AV(optargs));
+      FIXINC(idx);
+      FIXINC(optargs);
     } else if (CONS_P(car(AV(args)))) {
       /* We have a destructuring bind argument.  In this case, we have
 	 to store the index of the bind first.  We will generate
 	 instructions to perform unbinding later. */
-      AV(dsb) = cons(c, cons(c, car(AV(args)), AV(idx)), AV(dsb));
-      FIXINC(AV(idx));
-      FIXINC(AV(regargs));
+      WV(dsb, cons(c, cons(c, car(AV(args)), AV(idx)), AV(dsb)));
+      FIXINC(idx);
+      FIXINC(regargs);
     } else if (NIL_P(car(AV(args)))) {
       /* increment the index and the regular args without creating
 	 a name for the arg in that position if we see a nil. */
-      FIXINC(AV(idx));
-      FIXINC(AV(regargs));
+      FIXINC(idx);
+      FIXINC(regargs);
     } else {
       arc_err_cstrfmt(c, "invalid fn arg");
       ARETURN(AV(env));
@@ -394,16 +394,16 @@ static AFFDEF(compile_args)
       add_env_name(c, AV(nframe), cdr(AV(args)), AV(idx));
       /* change to envr instr. */
       VINDEX(CCTX_VCODE(AV(ctx)), FIX2INT(AV(envptr))) = INT2FIX(ienvr);
-      FIXINC(AV(idx));
+      FIXINC(idx);
       break;
     } else if (NIL_P(cdr(AV(args)))) {
       /* done */
       break;
     }
-    AV(args) = cdr(AV(args));
+    WV(args, cdr(AV(args)));
   }
 
-  AV(oldidx) = AV(idx);
+  WV(oldidx, AV(idx));
   while (!NIL_P(AV(dsb))) {
     value elem = car(AV(dsb));
 
@@ -414,10 +414,10 @@ static AFFDEF(compile_args)
        the names to which we do the destructuring. */
     AFCALL(arc_mkaff(c, destructure, CNIL),
 	   car(elem), AV(ctx), AV(env), AV(idx));
-    AV(idx) = AFCRV;
-    AV(dsb) = cdr(AV(dsb));
+    WV(idx, AFCRV);
+    WV(dsb, cdr(AV(dsb)));
   }
-  AV(dsbargs) = INT2FIX(FIX2INT(AV(idx)) - FIX2INT(AV(oldidx)));
+  WV(dsbargs, INT2FIX(FIX2INT(AV(idx)) - FIX2INT(AV(oldidx))));
 
   /* adjust the env instruction based on the number of args we
      actually have */
@@ -435,21 +435,21 @@ static AFFDEF(compile_fn)
   AVAR(args, body, nctx, nenv, newcode, stmts);
   AFBEGIN;
 
-  AV(stmts) = INT2FIX(0);
-  AV(args) = car(AV(expr));
-  AV(body) = cdr(AV(expr));
-  AV(nctx) = arc_mkcctx(c);
+  WV(stmts, INT2FIX(0));
+  WV(args, car(AV(expr)));
+  WV(body, cdr(AV(expr)));
+  WV(nctx, arc_mkcctx(c));
   AFCALL(arc_mkaff(c, compile_args, CNIL),
 	 AV(args), AV(nctx), AV(env));
-  AV(nenv) = AFCRV;
+  WV(nenv, AFCRV);
   /* the body of a fn works as an implicit do/progn */
-  for (; AV(body); AV(body) = cdr(AV(body))) {
+  for (; AV(body); WV(body, cdr(AV(body)))) {
     /* The last statement in the body gets compiled with the 
        continuation flag set true. */
     AFCALL(arc_mkaff(c, arc_compile, CNIL),
 	   car(AV(body)), AV(nctx), AV(nenv),
 	   (NIL_P(cdr(AV(body)))) ? CTRUE : CNIL);
-    AV(stmts) = INT2FIX(FIX2INT(AV(stmts)) + 1);
+    WV(stmts, INT2FIX(FIX2INT(AV(stmts)) + 1));
   }
   /* if we have an empty list of statements add a nil instruction */
   if (AV(stmts) == INT2FIX(0)) {
@@ -460,7 +460,7 @@ static AFFDEF(compile_fn)
      instruction in the present context to load it as a literal,
      then create a closure using the code object and the current
      environment. */
-  AV(newcode) = arc_cctx2code(c, AV(nctx));
+  WV(newcode, arc_cctx2code(c, AV(nctx)));
   arc_emit1(c, AV(ctx), ildl, find_literal(c, AV(ctx), AV(newcode)));
   arc_emit(c, AV(ctx), icls);
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
@@ -534,8 +534,8 @@ static AFFDEF(compile_assign)
   AFBEGIN;
   while (AV(expr) != CNIL) {
     AFCALL(arc_mkaff(c, macex, CNIL), car(AV(expr)), CTRUE);
-    AV(a) = AFCRV;
-    AV(val) = cadr(AV(expr));
+    WV(a, AFCRV);
+    WV(val, cadr(AV(expr)));
     if (AV(a) == CNIL) {
       arc_err_cstrfmt(c, "Can't rebind nil");
     } else if (AV(a) == ARC_BUILTIN(c, S_T)) {
@@ -543,7 +543,7 @@ static AFFDEF(compile_assign)
     } else {
       AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(val), AV(ctx),
 	     AV(env), CNIL);
-      AV(envvar) = find_var(c, AV(a), AV(env), &frameno, &idx);
+      WV(envvar, find_var(c, AV(a), AV(env), &frameno, &idx));
       if (AV(envvar) == CTRUE) {
 	arc_emit2(c, AV(ctx), iste, INT2FIX(frameno), INT2FIX(idx));
       } else {
@@ -551,7 +551,7 @@ static AFFDEF(compile_assign)
 	arc_emit1(c, AV(ctx), istg, find_literal(c, AV(ctx), AV(a)));
       }
     }
-    AV(expr) = cddr(AV(expr));
+    WV(expr, cddr(AV(expr)));
   }
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
   AFEND;
@@ -579,9 +579,9 @@ static int (*spform(arc *c, value ident))(arc *, value)
     AARG(expr, ctx, env, cont);						\
     AVAR(count);       							\
     AFBEGIN;								\
-    AV(expr) = cdr(AV(expr));						\
-    for (AV(count)=FIX2INT(0); AV(expr); AV(expr) = cdr(AV(expr)),      \
-	   FIXINC(AV(count))) {						\
+    WV(expr, cdr(AV(expr)));						\
+    for (WV(count, FIX2INT(0)); AV(expr); WV(expr, cdr(AV(expr))),	\
+	   FIXINC(count)) {						\
       AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(expr)),	        \
 	     AV(ctx), AV(env), CNIL);					\
       if (cdr(AV(expr)) != CNIL)					\
@@ -607,7 +607,7 @@ static AFFDEF(compile_inlinen)
   AARG(inst, expr, ctx, env, cont, base);
   AFBEGIN;
   AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(base), AV(ctx), AV(env), CNIL);
-  for (AV(expr) = cdr(AV(expr)); AV(expr); AV(expr) = cdr(AV(expr))) {
+  for (WV(expr, cdr(AV(expr))); AV(expr); WV(expr,cdr(AV(expr)))) {
     arc_emit(c, AV(ctx), ipush);
     AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(expr)), AV(ctx),
 	   AV(env), CNIL);
@@ -623,8 +623,8 @@ static AFFDEF(compile_inlinen2)
   AARG(inst, expr, ctx, env, cont, base);
   AVAR(xexpr, xelen);
   AFBEGIN;
-  AV(xexpr) = cdr(AV(expr));
-  AV(xelen) = arc_list_length(c, AV(xexpr));
+  WV(xexpr, cdr(AV(expr)));
+  WV(xelen, arc_list_length(c, AV(xexpr)));
   if (AV(xelen) == INT2FIX(0)) {
     arc_err_cstrfmt(c, "operator requires at least one argument");
     ARETURN(CNIL);
@@ -757,19 +757,19 @@ static AFFDEF(compile_apply)
   AVAR(fname, args, nahd, contaddr, nargs);
   AFBEGIN;
 
-  AV(fname) = car(AV(expr));
-  AV(args) = cdr(AV(expr));
+  WV(fname, car(AV(expr)));
+  WV(args, cdr(AV(expr)));
 
   /* There are two possible cases here.  If this is not a tail call,
      cont will be nil, so we need to make a continuation. */
   if (NIL_P(AV(cont))) {
-    AV(contaddr) = CCTX_VCPTR(AV(ctx));
+    WV(contaddr, CCTX_VCPTR(AV(ctx)));
     arc_emit1(c, AV(ctx), icont, FIX2INT(0));
   }
-  AV(nahd) = AV(args);
+  WV(nahd, AV(args));
   /* Traverse the arguments, compiling each and pushing them on the stack */
-  for (AV(nargs) = INT2FIX(0); AV(nahd); AV(nahd) = cdr(AV(nahd)),
-	 AV(nargs) = INT2FIX(FIX2INT(AV(nargs)) + 1)) {
+  for (WV(nargs, INT2FIX(0)); AV(nahd); WV(nahd, cdr(AV(nahd))),
+	 WV(nargs, INT2FIX(FIX2INT(AV(nargs)) + 1))) {
     AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(nahd)),
 	   AV(ctx), AV(env), CNIL);
     arc_emit(c, AV(ctx), ipush);
@@ -870,7 +870,7 @@ AFFDEF(arc_compile)
   AFBEGIN;
 
   AFCALL(arc_mkaff(c, macex, CNIL), AV(nexpr), CTRUE);
-  AV(expr) = AFCRV;
+  WV(expr, AFCRV);
   if (AV(expr) == ARC_BUILTIN(c, S_T) || AV(expr) == ARC_BUILTIN(c, S_NIL)
       || NIL_P(AV(expr)) || AV(expr) == CTRUE
       || TYPE(AV(expr)) == T_CHAR || TYPE(AV(expr)) == T_STRING
@@ -882,7 +882,7 @@ AFFDEF(arc_compile)
 
   if (SYMBOL_P(AV(expr))) {
     AFCALL(arc_mkaff(c, arc_ssexpand, CNIL), AV(expr));
-    AV(ssx) = AFCRV;
+    WV(ssx, AFCRV);
     if (NIL_P(AV(ssx))) {
       ARETURN(compile_ident(c, AV(expr), AV(ctx), AV(env), AV(cont)));
     }
@@ -935,7 +935,7 @@ AFFDEF(arc_eval)
   AVAR(ctx);
   value code, clos;
   AFBEGIN;
-  AV(ctx) = arc_mkcctx(c);
+  WV(ctx, arc_mkcctx(c));
   AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(expr), AV(ctx), CNIL, CTRUE);
   code = arc_cctx2code(c, AV(ctx));
   clos = arc_mkclos(c, code, CNIL);

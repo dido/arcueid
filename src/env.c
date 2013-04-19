@@ -110,7 +110,7 @@ static value nextenv(arc *c, value thr, value env)
 }
 
 /* Get a value from the environment pointer given. */
-value *__arc_getenv(arc *c, value thr, int depth, int index)
+static value *envval(arc *c, value thr, int depth, int index)
 {
   value *senv, *senvstart, env;
   int count;
@@ -132,6 +132,17 @@ value *__arc_getenv(arc *c, value thr, int depth, int index)
   count = SENV_COUNT(senv);
   senvstart = senv + count + 1;
   return(senvstart - index);
+}
+
+value __arc_getenv(arc *c, value thr, int depth, int index)
+{
+  return(*envval(c, thr, depth, index));
+}
+
+value __arc_putenv(arc *c, value thr, int depth, int index, value val)
+{
+  *envval(c, thr, depth, index) = val;
+  return(val);
 }
 
 /* Move n elements from the top of stack, overwriting the current
@@ -156,7 +167,8 @@ void __arc_menv(arc *c, value thr, int n)
     /* Destination of our copy is the (n-1)th element of the environment.
        May be larger or smaller than the actual size of the environment.
        Doesn't matter, as long as it remains inside the stack! */
-    dest = __arc_getenv(c, thr, 0, n-1);
+    /* XXX this is not subject to the write barrier! */
+    dest = envval(c, thr, 0, n-1);
     /* use memmove because the new environment might be larger than the old
        one. */
     memmove(dest, src, n*sizeof(value));

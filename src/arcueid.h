@@ -452,7 +452,8 @@ extern value arc_bindcstr(arc *c, const char *csym, value binding);
 
 /* Environments */
 extern void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
-extern value *__arc_getenv(arc *c, value thr, int depth, int index);
+extern value __arc_getenv(arc *c, value thr, int depth, int index);
+extern value __arc_putenv(arc *c, value thr, int depth, int index, value val);
 
 /* Numbers and arithmetic */
 extern value arc_string2num(arc *c, value str, int index, int rational);
@@ -551,7 +552,8 @@ extern value arc_bound(arc *c, value sym);
  case 0:;
 #define AFEND }
 
-#define AV(x) (*__arc_getenv(c, thr, 0, x))
+#define AV(x) (__arc_getenv(c, thr, 0, x))
+#define WV(x, y) (__arc_putenv(c, thr, 0, x, y))
 
 #define AFCALL(func, ...)						\
   do {									\

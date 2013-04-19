@@ -83,20 +83,20 @@ enum {
 
 #define STDIN(fd) do {							\
   AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDIN_FD));	\
-  fd = AFCRV;								\
-  if (NIL_P(fd))							\
-    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD)); } while (0)
+  WV(fd, AFCRV);							\
+  if (NIL_P(AV(fd)))							\
+    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD))); } while (0)
 
 #define STDOUT(fd) do {							\
   AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDOUT_FD));	\
-  fd = AFCRV;								\
-  if (NIL_P(fd))							\
-    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD)); } while (0)
+  WV(fd, AFCRV);							\
+  if (NIL_P(AV(fd)))							\
+    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD))); } while (0)
 
 #define STDERR(fd) do {							\
   AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDERR_FD));	\
-  fd = AFCRV;								\
-  if (NIL_P(fd))							\
-    fd = arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD)); } while (0)
+  WV(fd, AFCRV);							\
+  if (NIL_P(AV(fd)))							\
+    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD))); } while (0)
 
 #endif

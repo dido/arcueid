@@ -46,7 +46,7 @@ AFFDEF(doubler)
   AVAR(subf);
   AFBEGIN;
 
-  AV(subf) = arc_mkaff(c, subtractor, arc_mkstringc(c, "subtractor"));
+  WV(subf, arc_mkaff(c, subtractor, arc_mkstringc(c, "subtractor")));
   AFCALL(AV(subf), AV(a), AV(b));
   ARETURN(INT2FIX(2 * FIX2INT(AFCRV)));
   AFEND;
