@@ -61,8 +61,6 @@ void *alloca (size_t);
 #error Readline library found but no headers!
 #endif
 
-#endif
-
 /* Readline I/O module
 
    XXX - Once we have a loadable module interface this code needs to
@@ -295,6 +293,8 @@ value arc_readlineport(arc *c)
 }
 
 /* End Readline I/O module */
+
+#endif
 
 extern void __arc_print_string(arc *c, value ppstr);
 
