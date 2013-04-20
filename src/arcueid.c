@@ -908,7 +908,7 @@ void arc_init_builtins(arc *c)
   arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
   arc_bindsym(c, ARC_BUILTIN(c, S_T), CTRUE);
   arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
-  arc_bindsym(c, ARC_BUILTIN(c, S_ACHAN), arc_mkchan(c));
+  arc_bindcstr(c, "__achan__", arc_mkchan(c));
 }
 
 void arc_init(arc *c)
