@@ -465,12 +465,12 @@ notice and this notice are preserved.
        - [X] chan
        - [X] <- (recv-channel) *
        - [X] <-= (send-channel) *
-   - [ ] Networking [0/11]
-     - [ ] open-socket
+   - [-] Networking [3/11]
+     - [X] open-socket
      - [ ] getaddrinfo (Arcueid only)
      - [ ] socket (Arcueid extension)
-     - [ ] client-ip
-     - [ ] socket-accept
+     - [X] client-ip
+     - [X] socket-accept
      - [ ] socket-bind (Arcueid only)
      - [ ] socket-listen (Arcueid only)
      - [ ] socket-connect (Arcueid only)
@@ -552,9 +552,9 @@ notice and this notice are preserved.
      - [X] Exceptions
      - [X] Channels
      - [ ] Regular Expressions
-** TODO REPL [0/3]
-   - [ ] Simple non-readline REPL
-   - [ ] Read in an initial file for REPL
+** TODO REPL [2/3]
+   - [X] Simple non-readline REPL
+   - [X] Read in an initial file for REPL
    - [ ] Readline support
 ** TODO Formatted output
    In addition to Arc standard prf, there will also be a printf
