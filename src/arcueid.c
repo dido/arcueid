@@ -843,7 +843,12 @@ static struct {
   { "scmark", -2, arc_scmark },
   { "ccmark", -2, arc_ccmark },
   { "cmark", -2, arc_cmark },
+
   /* Networking */
+  { "open-socket", -2, arc_open_socket },
+  { "socket-accept", -2, arc_socket_accept },
+  { "client-ip", 1, arc_client_ip },
+
   /* File system operations */
   /* Error handling and continuations */
   { "ccc", -2, arc_callcc },
