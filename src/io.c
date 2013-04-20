@@ -156,7 +156,7 @@ AFFDEF(arc_readb)
   AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_ready), AV(fd));
   if (AFCRV == CNIL) {
     arc_err_cstrfmt(c, "port is not ready for reading");
-    return(CNIL);
+    ARETURN(CNIL);
   }
   AFTCALL(VINDEX(IO(AV(fd))->io_ops, IO_getb), AV(fd));
   AFEND;
@@ -229,7 +229,7 @@ AFFDEF(arc_writeb)
   AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_wready), AV(fd));
   if (AFCRV == CNIL) {
     arc_err_cstrfmt(c, "port is not ready for writing");
-    return(CNIL);
+    ARETURN(CNIL);
   }
   AFTCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd), AV(byte));
   AFEND;
@@ -375,6 +375,7 @@ void arc_init_io(arc *c)
   SVINDEX(c->builtins, BI_io, arc_mkvector(c, BI_io_last+1));
   __arc_init_sio(c); 
   __arc_init_fio(c);
+  __arc_init_sockio(c);
 }
 
 Rune arc_ungetc_rune(arc *c, Rune r, value fd)
