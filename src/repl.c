@@ -299,6 +299,7 @@ value arc_readlineport(arc *c)
 extern void __arc_print_string(arc *c, value ppstr);
 
 #define DEFAULT_LOADFILE PKGDATA "/arc.arc"
+#define DEFAULT_HISTORY_FILE ".arcueid_history"
 
 static void banner(void)
 {
@@ -385,6 +386,7 @@ int main(int argc, char **argv)
     arc_deinit(c);
     return(EXIT_FAILURE);
   }
+
   c->curthread = arc_mkthread(c);
   /* Load arc.arc into our system */
   arc_bindcstr(c, "initload-file", arc_mkstringc(c, loadstr));
@@ -417,10 +419,21 @@ int main(int argc, char **argv)
 #ifdef HAVE_LIBREADLINE
   {
     value rlfp;
+    char *homedir;
+
+    homedir = getenv("HOME");
+    if (homedir != NULL) {
+      char *histfile = alloca(sizeof(char)
+			      * (strlen(homedir)
+				 + strlen(DEFAULT_HISTORY_FILE) + 2));
+      sprintf(histfile, "%s/%s", homedir, DEFAULT_HISTORY_FILE);
+      read_history(histfile);
+    }
     printf("arc> ");
     rlfp = arc_readlineport(c);
     arc_bindcstr(c, "repl-readline", rlfp);
     arc_bindcstr(c, "rl-on-new-line-with-prompt", arc_mkccode(c, 0, arc_rl_on_new_line_with_prompt, CNIL));
+    /* Load history */
   }
 #endif
 
@@ -434,7 +447,14 @@ int main(int argc, char **argv)
   code = arc_cctx2code(c, cctx);
   clos = arc_mkclos(c, code, CNIL);
   arc_bindcstr(c, "repl-code*", clos);
+#ifdef HAVE_LIBREADLINE
+  if (setjmp(ejb) == 1) {
+    printf("arc> ");
+    rl_redisplay();
+  }
+#else
   setjmp(ejb);
+#endif
   clos = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "repl-code*"));
   if (TYPE(clos) != T_CLOS) {
     fprintf(stderr, "bad repl code\n");
@@ -443,6 +463,22 @@ int main(int argc, char **argv)
   }
   arc_spawn(c, clos);
   arc_thread_dispatch(c);
+
+#ifdef HAVE_LIBREADLINE
+  {
+    char *homedir;
+
+    homedir = getenv("HOME");
+    if (homedir != NULL) {
+      char *histfile = alloca(sizeof(char)
+			      * (strlen(homedir)
+				 + strlen(DEFAULT_HISTORY_FILE) + 2));
+      sprintf(histfile, "%s/%s", homedir, DEFAULT_HISTORY_FILE);
+      write_history(histfile);
+    }
+  }
+#endif
+
   arc_deinit(c);
   return(EXIT_SUCCESS);
 }
