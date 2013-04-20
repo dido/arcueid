@@ -502,6 +502,18 @@ value arc_dead(arc *c, value thr)
   return((TSTATE(thr) == Trelease || TSTATE(thr) == Tbroken) ? CTRUE : CNIL);
 }
 
+AFFDEF(arc_atomic_cell)
+{
+  AOARG(val);
+  AFBEGIN;
+  if (!BOUND_P(AV(val)))
+    ARETURN((TACELL(thr) == 0) ? CNIL : CTRUE);
+  TACELL(thr) = (NIL_P(AV(val))) ? 0 : 1;
+  ARETURN(AV(val));
+  AFEND;
+}
+AFFEND
+
 void arc_init_threads(arc *c)
 {
   c->vmthreads = CNIL;
