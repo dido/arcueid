@@ -400,6 +400,11 @@ extern value arc_inside(arc *c, value sio);
 extern int arc_infile(arc *c, value thr);
 extern int arc_outfile(arc *c, value thr);
 
+/* Network I/O */
+extern int arc_open_socket(arc *c, value thr);
+extern int arc_socket_accept(arc *c, value thr);
+extern value arc_client_ip(arc *c, value sock);
+
 /* stdin/stdout/stderr */
 extern int arc_stdin(arc *c, value thr);
 extern int arc_stdout(arc *c, value thr);
