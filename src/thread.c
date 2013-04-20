@@ -23,6 +23,8 @@
 #include <sys/time.h>
 #include "arcueid.h"
 #include "vmengine.h"
+#include "arith.h"
+#include "builtins.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -473,6 +475,26 @@ value arc_spawn(arc *c, value thunk)
   }
   return(thr);
 }
+
+AFFDEF(arc_sleep)
+{
+  AARG(sleeptime);
+  value timetowake;
+  AFBEGIN;
+
+  AFCALL(arc_mkaff(c, arc_coerce, CNIL), AV(sleeptime),
+	 ARC_BUILTIN(c, S_FLONUM));
+  timetowake = AFCRV;
+  if (REPFLO(timetowake) < 0.0) {
+    arc_err_cstrfmt(c, "negative sleep time");
+    return(CNIL);
+  }
+  TWAKEUP(thr) = __arc_milliseconds() + (unsigned long long)(REPFLO(timetowake)*1000.0);
+  TSTATE(thr) = Tsleep;
+  AYIELD();
+  AFEND;
+}
+AFFEND
 
 value arc_dead(arc *c, value thr)
 {
