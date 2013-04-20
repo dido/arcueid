@@ -496,6 +496,8 @@ extern value arc_break_thread(arc *c, value thr);
 extern value arc_kill_thread(arc *c, value thr);
 extern value arc_dead(arc *c, value thr);
 extern int arc_sleep(arc *c, value thr);
+extern int arc_atomic_cell(arc *c, value thr);
+
 extern int arc_join_thread(arc *c, value thr);
 extern value arc_mkchan(arc *c);
 extern int arc_recv_channel(arc *c, value thr);
