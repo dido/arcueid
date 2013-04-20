@@ -198,7 +198,6 @@ static AFFDEF(rl_getb)
 
     if (line_read && *line_read) {
       add_history(line_read);
-      rl_on_new_line();
       rlstr = arc_mkstringc(c, line_read);
       RLDATA(AV(rlio))->str = arc_strcatc(c, rlstr, '\n');
       WV(len, arc_strlen(c, RLDATA(AV(rlio))->str));
@@ -259,6 +258,11 @@ static AFFDEF(rl_close)
 }
 AFFEND
 
+static value arc_rl_on_new_line_with_prompt(arc *c)
+{
+  return(INT2FIX(rl_on_new_line_with_prompt()));
+}
+
 value arc_readlineport(arc *c)
 {
   value rlio;
@@ -283,6 +287,7 @@ value arc_readlineport(arc *c)
   rl_variable_bind("blink-matching-paren", "on");
   rl_basic_quote_characters = "\"";
   rl_basic_word_break_characters = "[]()!:~\"";
+  rl_already_prompted = 1;
   rl_callback_handler_install("arc> ", rl_lthandler);
   line_read = NULL;
   read_eof = 0;
@@ -411,13 +416,16 @@ int main(int argc, char **argv)
 					  arc_intern_cstr(c, "warranty")));
 #ifdef HAVE_LIBREADLINE
   {
-    value rlfp = arc_readlineport(c);
+    value rlfp;
+    printf("arc> ");
+    rlfp = arc_readlineport(c);
     arc_bindcstr(c, "repl-readline", rlfp);
+    arc_bindcstr(c, "rl-on-new-line-with-prompt", arc_mkccode(c, 0, arc_rl_on_new_line_with_prompt, CNIL));
   }
 #endif
 
 #ifdef HAVE_LIBREADLINE
-  replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn))))";
+  replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn) (disp \"arc> \") (rl-on-new-line-with-prompt))))";
 #else
   replcode = "(whiler e (do (disp \"arc> \") (read (stdin) nil)) nil (do (write (eval e)) (disp #\\u000a)))";
 #endif
