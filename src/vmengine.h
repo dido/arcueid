@@ -139,6 +139,7 @@ struct vmthread_t {
   jmp_buf errjmp;		 /* error jump point */
 
   value cmarks;			/* continuation marks */
+  int atomic_cell;		/* atomic cell -- do we hold the channel? */
 };
 
 
@@ -210,6 +211,7 @@ static inline value SCONR(value t, value nv)
 #define TEXH(t) (((struct vmthread_t *)REP(t))->exh)
 #define TEJMP(t) (((struct vmthread_t *)REP(t))->errjmp)
 #define TCM(t) (((struct vmthread_t *)REP(t))->cmarks)
+#define TACELL(t) (((struct vmthread_t *)REP(t))->atomic_cell)
 
 #if 1
 /* XXX - this should incorporate write barrier code */
