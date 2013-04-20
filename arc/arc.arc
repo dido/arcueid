@@ -326,17 +326,14 @@
 ;; We use the internal functions __acell__ (which retrieves the atomic
 ;; cell of the current thread) and __achan__  (which retrieves the global
 ;; channel used for atomic-invoke) to implement this.
-;; (def atomic-invoke (thunk)
-;;   (if (isnt (type thunk) 'fn) (err "atomic-invoke requires fn arg")
-;;       (__acell__) (thunk)
-;;       (do (__acell__ t)
-;; 	  (<-= (__achan__) t)
-;; 	  (protect (fn () (thunk))
-;; 		   (fn () (<- (__achan__))
-;; 		       (__acell__ nil))))))
-
-;; XXX - dummy definition of atomic-invoke until we get real threads
-(def atomic-invoke (thunk) (thunk))
+(def atomic-invoke (thunk)
+  (if (isnt (type thunk) 'fn) (err "atomic-invoke requires fn arg")
+      (__acell__) (thunk)
+      (do (__acell__ t)
+	  (<-= __achan__ t)
+	  (protect (fn () (thunk))
+		   (fn () (<- __achan__)
+		       (__acell__ nil))))))
 
 (mac atomic body
   `(atomic-invoke (fn () ,@body)))
