@@ -492,6 +492,7 @@ extern value arc_expt(arc *c, value a, value b);
 /* Threads and synchronisation */
 extern void arc_thread_dispatch(arc *c);
 extern value arc_spawn(arc *c, value thunk);
+extern value arc_dead(arc *c, value thr);
 extern value arc_mkchan(arc *c);
 extern int arc_recv_channel(arc *c, value thr);
 extern int arc_send_channel(arc *c, value thr);
