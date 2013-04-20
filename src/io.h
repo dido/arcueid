@@ -73,12 +73,14 @@ extern value __arc_allocio(arc *c, int type, struct typefn_t *tfn,
 
 extern void __arc_init_sio(arc *c);
 extern void __arc_init_fio(arc *c);
+extern void __arc_init_sockio(arc *c);
 extern void arc_init_io(arc *c);
 
 enum {
   BI_io_strio=0,
   BI_io_fp=1,
-  BI_io_last=1
+  BI_io_sock=2,
+  BI_io_last=2
 };
 
 #define STDIN(fd) do {							\
