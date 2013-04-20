@@ -115,6 +115,7 @@ value arc_mkthread(arc *c)
   TCM(thr) = arc_mkhash(c, ARC_HASHBITS);
   TEXH(thr) = CNIL;
   TCH(thr) = c->here;
+  TACELL(thr) = 0;
   return(thr);
 }
 
