@@ -29,4 +29,4 @@ noinst_HEADERS = alloc.h arith.h builtins.h io.h utf.h vmengine.h
 bin_PROGRAMS = arcueid
 arcueid_SOURCES = repl.c
 arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
-arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@
+arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@ @RLLIBS@
