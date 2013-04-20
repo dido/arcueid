@@ -846,6 +846,9 @@ static struct {
   { "ccmark", -2, arc_ccmark },
   { "cmark", -2, arc_cmark },
 
+  /* used by atomic-invoke */
+  { "__acell__", -2, arc_atomic_cell },
+
   /* Networking */
   { "open-socket", -2, arc_open_socket },
   { "socket-accept", -2, arc_socket_accept },
@@ -905,6 +908,7 @@ void arc_init_builtins(arc *c)
   arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
   arc_bindsym(c, ARC_BUILTIN(c, S_T), CTRUE);
   arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
+  arc_bindsym(c, ARC_BUILTIN(c, S_ACHAN), arc_mkchan(c));
 }
 
 void arc_init(arc *c)
