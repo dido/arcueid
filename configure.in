@@ -47,6 +47,7 @@ AC_FUNC_ALLOCA
 AC_ARG_WITH(readline, AC_HELP_STRING(--without-readline,disable readline support))
 if test xno != x$with_readline; then
    AX_LIB_READLINE
+   AC_SUBST(RLLIBS)
 fi
 
 AC_CHECK_SIZEOF(void *)
