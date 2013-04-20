@@ -82,7 +82,7 @@ notice and this notice are preserved.
 ** TODO memory management [1/2]
    - [X] memory allocator
 	 A BiBOP-based memory allocator. Keep things simple first.
-   - [ ] garbage collector [0/1]
+   - [-] garbage collector [1/2]
 	 A simple mark and sweep garbage collector for now. Keep things
 	 simple first.
      - [-] Garbage collection of data types [9/14]
@@ -104,6 +104,14 @@ notice and this notice are preserved.
        - [ ] Threads
        - [ ] Exceptions
        - [ ] Channels
+     - [X] Write barrier hooks
+     - [ ] Deferred allocation for BiBOP objects
+	   Basically what this means is that for a BiBOP object, do
+           not immediately pull it off of the free list.  Let it
+           remain technically free until the object has been seen by
+           the write barrier.  This amounts to a 1-bit reference
+           count, where overflowed reference counts are collected by
+           the tracing collector.
 ** DONE Arc reader [12/12]
    - [X] Lists
    - [X] Improper lists
@@ -452,13 +460,13 @@ notice and this notice are preserved.
      - [X] disp
      - [ ] flushout -- XXX this is a no-op
    - [-] Threads [1/2]
-     - [-] Creating and managing threads [1/8]
+     - [-] Creating and managing threads [3/8]
        - [X] new-thread (spawn)
        - [ ] break-thread
        - [ ] kill-thread
        - [ ] current-thread
-       - [ ] dead
-       - [ ] sleep
+       - [X] dead
+       - [X] sleep
        - [ ] atomic-invoke - implemented using channels
        - [ ] tjoin (not in standard Arc)
      - [X] Channels (cf. Limbo and CSP, Arcueid extension) [3/3]
