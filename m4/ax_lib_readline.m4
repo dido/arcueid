@@ -86,7 +86,7 @@ AC_DEFUN([AX_LIB_READLINE], [
   ])
 
   if test "$ax_cv_lib_readline" != "no"; then
-    LIBS="$LIBS $ax_cv_lib_readline"
+    RLLIBS="$ax_cv_lib_readline"
     AC_DEFINE(HAVE_LIBREADLINE, 1,
               [Define if you have a readline compatible library])
     AC_CHECK_HEADERS(readline.h readline/readline.h)
