@@ -515,6 +515,53 @@ AFFDEF(arc_atomic_cell)
 }
 AFFEND
 
+AFFDEF(arc_kill_thread)
+{
+  AARG(tthr);
+  AVAR(achan);
+  AFBEGIN;
+  TSTATE(AV(tthr)) = Tbroken;
+  if (TACELL(AV(tthr))) {
+    /* release atomic cell */
+    TACELL(AV(tthr)) = 0;
+    WV(achan, arc_gbind(c, "__achan__"));
+    if (BOUND_P(AV(achan))) {
+      AFCALL(arc_mkaff(c, arc_recv_channel, CNIL), AV(achan));
+    }
+  }
+  ARETURN(AV(tthr));
+  AFEND;
+}
+AFFEND
+
+/* If the thread is running, paused on I/O, or sleeping, this will cause
+   the thread to become running again and resume in a call to arc_err.
+   Note that unlike in reference Arc, it is possible to use on-err to
+   capture the break exception.
+
+   This function cannot break a thread that is waiting to send to
+   or receive from a channel. */
+value arc_break_thread(arc *c, value tthr)
+{
+  typefn_t *tfn;
+
+  /* do nothing if the thread is in either state */
+  if (!(TSTATE(tthr) == Tready || TSTATE(tthr) == Tsleep
+	|| TSTATE(tthr) == Tiowait))
+    return(tthr);
+
+  /* force the thread to become ready */
+  TSTATE(tthr) = Tready;
+
+  /* make the thread resume at a call to arc_err */
+  SVALR(tthr, arc_mkaff(c, arc_err, CNIL));
+  CPUSH(tthr, arc_mkstringc(c, "user break"));
+  SFUNR(tthr, TVALR(tthr));
+  tfn = __arc_typefn(c, TVALR(tthr));
+  tfn->apply(c, tthr, TVALR(tthr));
+  return(tthr);
+}
+
 void arc_init_threads(arc *c)
 {
   c->vmthreads = CNIL;
