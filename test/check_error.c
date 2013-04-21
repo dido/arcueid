@@ -87,12 +87,12 @@ AFFEND
   XCALL0(clos);					\
   ret = TVALR(c->curthread)
 
-static void errhandler(arc *c, value str)
+static void errhandler(arc *c, value thr, value str)
 {
   longjmp(errbuf, 1);
 }
 
-static void errhandler2(arc *c, value str)
+static void errhandler2(arc *c, value thr, value str)
 {
   fprintf(stderr, "Error\n");
   __arc_print_string(c, str);
