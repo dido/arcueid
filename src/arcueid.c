@@ -829,6 +829,7 @@ static struct {
   { "write", -2, arc_write },
   { "disp", -2, arc_disp },
   { "close", -2, arc_close },
+  { "flushout", 0, arc_flushout },
 
   /* Additional I/O functions */
   { "stdin", -2, arc_stdin },
