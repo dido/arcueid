@@ -89,6 +89,7 @@ static void thread_marker(arc *c, value thr, int depth,
   mark(c, TCH(thr), depth);
   mark(c, TEXH(thr), depth);
   mark(c, TCM(thr), depth);
+  mark(c, TRVCH(thr), depth);
 }
 
 value arc_mkthread(arc *c)
@@ -116,6 +117,7 @@ value arc_mkthread(arc *c)
   TEXH(thr) = CNIL;
   TCH(thr) = c->here;
   TACELL(thr) = 0;
+  TRVCH(thr) = arc_mkchan(c);
   return(thr);
 }
 
@@ -323,6 +325,9 @@ static void process_iowait(arc *c, value iowaitdata, int eptimeout)
 
 #endif
 
+extern value __arc_send_rvchan(arc *c, value chan, value val);
+extern int __arc_recv_rvchan(arc *c, value thr);
+
 /* Main dispatcher.  Will run each thread in the thread list for
    at most c->quanta cycles or until the thread leaves ready state.
    Also runs garbage collections periodically.  This should
@@ -345,9 +350,12 @@ void arc_thread_dispatch(arc *c)
     sleepthreads = runthreads = need_select = 0;
     minsleep = ULLONG_MAX;
     iowaitdata = CNIL;
+    /* XXX - see if we need more extensive use of the write barrier when
+       doing these thread manipulations */
     for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
 	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
       thr = car(c->vmqueue);
+      __arc_wb(c->curthread, thr);
       c->curthread = thr;
       ++nthreads;
       switch (TSTATE(thr)) {
@@ -362,6 +370,14 @@ void arc_thread_dispatch(arc *c)
 	  scdr(prev, cdr(c->vmqueue));
 	if (c->vmthrtail == c->vmqueue)
 	  c->vmthrtail = prev;
+
+	/* This will serve to wake up all the threads waiting on
+	   the return value channel of the thread, so they can pick
+	   up the return value now that it is available. */
+	if (TYPE(TRVCH(thr)) == T_CHAN)
+	  __arc_send_rvchan(c, TRVCH(thr), TVALR(thr));
+	__arc_wb(TRVCH(thr), TVALR(thr));
+	TRVCH(thr) = TVALR(thr);
 	break;
       case Talt:
       case Tsend:
@@ -560,6 +576,23 @@ value arc_break_thread(arc *c, value tthr)
   tfn = __arc_typefn(c, TVALR(tthr));
   tfn->apply(c, tthr, TVALR(tthr));
   return(tthr);
+}
+
+AFFDEF(arc_join_thread)
+{
+  AARG(jthr);
+  AFBEGIN;
+  while (TYPE(TRVCH(AV(jthr))) == T_CHAN) {
+    AFCALL(arc_mkaff(c, __arc_recv_rvchan, CNIL), TRVCH(AV(jthr)));
+  }
+  ARETURN(TRVCH(AV(jthr)));
+  AFEND;
+}
+AFFEND
+
+value arc_current_thread(arc *c)
+{
+  return(c->curthread);
 }
 
 void arc_init_threads(arc *c)
