@@ -149,6 +149,8 @@ value arc_details(arc *c, value ex)
   return(REP(ex)[0]);
 }
 
+extern int __arc_reroot(arc *c, value thr);
+
 AFFDEF(arc_err)
 {
   AARG(str);
@@ -159,9 +161,11 @@ AFFDEF(arc_err)
     /* if no exception handler is available, call the default error
        handler if one is set, and longjmp away.  The thread becomes
        broken if this happens. */
+    /* First we need to reroot to the root */
+    AFCALL(arc_mkaff(c, __arc_reroot, CNIL), c->here);
     TSTATE(thr) = Tbroken;
     if (c->errhandler != NULL)
-      c->errhandler(c, arc_details(c, AV(exc)));
+      c->errhandler(c, thr, arc_details(c, AV(exc)));
     longjmp(TEJMP(thr), 2);
   }
 
