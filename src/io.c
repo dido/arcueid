@@ -412,6 +412,12 @@ AFFDEF(arc_peekc)
 }
 AFFEND
 
+value arc_flushout(arc *c)
+{
+  fflush(NULL);
+  return(CTRUE);
+}
+
 typefn_t __arc_io_typefn__ = {
   io_marker,
   io_sweeper,
