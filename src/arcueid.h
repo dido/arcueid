@@ -399,6 +399,7 @@ extern value arc_inside(arc *c, value sio);
 /* File I/O */
 extern int arc_infile(arc *c, value thr);
 extern int arc_outfile(arc *c, value thr);
+extern value arc_flushout(arc *c);
 
 /* Network I/O */
 extern int arc_open_socket(arc *c, value thr);
