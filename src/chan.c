@@ -86,7 +86,7 @@ AFFDEF(arc_recv_channel)
   while (NIL_P(CHAN_HASDATA(AV(chan)))) {
     /* We have no value that can be received from the channel.  Enqueue
        the calling thread and freeze it into Trecv state.  This should
-       never happen with a recursive call arc_recv_channel. */
+       never happen with a recursive call to arc_recv_channel. */
     __arc_enqueue(c, thr, &XCHAN_RHEAD(AV(chan)), &XCHAN_RTAIL(AV(chan)));
     TSTATE(thr) = Trecv;
     AYIELD();
@@ -140,6 +140,46 @@ AFFDEF(arc_send_channel)
   AFEND;
 }
 AFFEND
+
+
+/* A thread's RVCHAN has slightly different behaviour from a normal
+   channel.  When such a channel is written to, all threads waiting
+   on it will wake up simultaneously. */
+AFFDEF(__arc_recv_rvchan)
+{
+  AARG(chan);
+  AFBEGIN;
+
+  TYPECHECK(AV(chan), T_CHAN);
+  while (NIL_P(CHAN_HASDATA(AV(chan)))) {
+    /* We have no value that can be received from the channel.  Enqueue
+       the calling thread and freeze it into Trecv state.  This should
+       never happen with a recursive call to arc_recv_channel. */
+    __arc_enqueue(c, thr, &XCHAN_RHEAD(AV(chan)), &XCHAN_RTAIL(AV(chan)));
+    TSTATE(thr) = Trecv;
+    AYIELD();
+  }
+
+  /* Return the channel data */
+  ARETURN(CHAN_DATA(AV(chan)));
+  AFEND;
+}
+AFFEND
+
+value __arc_send_rvchan(arc *c, value chan, value val)
+{
+  value xthr;
+
+  SCHAN_HASDATA(chan, CTRUE);
+  SCHAN_DATA(chan, val);
+  ;
+  while ((xthr = __arc_dequeue(c, &XCHAN_RHEAD(chan), &XCHAN_RTAIL(chan))) != CNIL) {
+    /* There is at least one thread waiting to receive on this channel.
+       Wake it up so it can receive. */
+    TSTATE(xthr) = Tready;
+  }
+  return(val);
+}
 
 typefn_t __arc_chan_typefn__ = {
   __arc_vector_marker,
