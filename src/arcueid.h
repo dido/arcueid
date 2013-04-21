@@ -157,7 +157,7 @@ struct arc {
   value here;			/* here variable (used for dynamic-wind) */
   value tracethread;		/* tracing thread */
   unsigned long quantum;	/* default quantum */
-  void (*errhandler)(struct arc *, value); /* catch-all error handler */
+  void (*errhandler)(struct arc *, value, value); /* catch-all error handler */
 
   /* declarations */
   int atstrings;		/* allow atstrings or not */
@@ -479,6 +479,7 @@ extern value arc_unintern(arc *c, value sym);
 extern value arc_bound(arc *c, value sym);
 extern value arc_bindsym(arc *c, value sym, value binding);
 extern value arc_bindcstr(arc *c, const char *csym, value binding);
+extern value arc_gbind(arc *c, const char *csym);
 
 /* Environments */
 extern void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
@@ -493,7 +494,7 @@ extern value arc_expt(arc *c, value a, value b);
 extern void arc_thread_dispatch(arc *c);
 extern value arc_spawn(arc *c, value thunk);
 extern value arc_break_thread(arc *c, value thr);
-extern value arc_kill_thread(arc *c, value thr);
+extern int arc_kill_thread(arc *c, value thr);
 extern value arc_dead(arc *c, value thr);
 extern int arc_sleep(arc *c, value thr);
 extern int arc_atomic_cell(arc *c, value thr);
