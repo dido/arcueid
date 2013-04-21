@@ -862,6 +862,10 @@ static struct {
 
   /* File system operations */
   { "dir", 1, arc_dir },
+  { "dir-exists", 1, arc_dir_exists },
+  { "file-exists", 1, arc_file_exists },
+  { "rmfile", 1, arc_rmfile },
+  { "mvfile", 2, arc_mvfile },
 
   /* Error handling and continuations */
   { "ccc", -2, arc_callcc },
