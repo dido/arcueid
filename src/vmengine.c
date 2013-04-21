@@ -553,14 +553,14 @@ AFFEND
 
    Many thanks to Ross Angle (rocketnia) for helping me to understand
    the Hanson-Lamping algorithm! */
-static AFFDEF(reroot)
+AFFDEF(__arc_reroot)
 {
   AARG(there);
   AVAR(before, after);
   AFBEGIN;
   if (TCH(thr) == AV(there))
     ARETURN(CNIL);
-  AFCALL(arc_mkaff(c, reroot, CNIL), cdr(AV(there)));
+  AFCALL(arc_mkaff(c, __arc_reroot, CNIL), cdr(AV(there)));
   WV(before, car(car(AV(there))));
   WV(after, cdr(car(AV(there))));
   scar(TCH(thr), cons(c, AV(after), AV(before)));
@@ -583,7 +583,7 @@ static AFFDEF(contwrapper)
   AFBEGIN;
   /* access the tcr variable in the environment of arc_callcc that
      created this closure, and reroot it */
-  AFCALL(arc_mkaff(c, reroot, CNIL), __arc_getenv(c, thr, 1, 3));
+  AFCALL(arc_mkaff(c, __arc_reroot, CNIL), __arc_getenv(c, thr, 1, 3));
   /* call the continuation in the environment of arc_callcc */
   cont = __arc_getenv(c, thr, 1, 1);
   /* special case -- when ccc is a tail call */
@@ -626,12 +626,12 @@ AFFDEF(arc_dynamic_wind)
   AFBEGIN;
 
   WV(here, TCH(thr));
-  AFCALL(arc_mkaff(c, reroot, CNIL),
+  AFCALL(arc_mkaff(c, __arc_reroot, CNIL),
 	 cons(c, cons(c, AV(before), AV(after)), AV(here)));
   AFCALL2(AV(during), CNIL);
   WV(ret, AFCRV);
   /* execute the after clauses if the during thunk returns normally */
-  AFCALL(arc_mkaff(c, reroot, CNIL), AV(here));
+  AFCALL(arc_mkaff(c, __arc_reroot, CNIL), AV(here));
   ARETURN(AV(ret));
   AFEND;
 }
