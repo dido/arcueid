@@ -448,7 +448,7 @@ notice and this notice are preserved.
              implement CIEL.
        - [ ] seek
        - [ ] tell
-   - [-] Additional I/O functions (src/io.c) [6/8]
+   - [-] Additional I/O functions (src/io.c) [7/8]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
      - [ ] pipe-from
@@ -458,7 +458,7 @@ notice and this notice are preserved.
      - [X] call-w/stdin
      - [X] call-w/stdout
      - [X] disp
-     - [ ] flushout -- XXX this is a no-op
+     - [X] flushout
    - [X] Threads [2/2]
      - [X] Creating and managing threads [8/8]
        - [X] new-thread (spawn)
