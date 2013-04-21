@@ -837,8 +837,10 @@ static struct {
   /* Threads */
   { "new-thread", 1, arc_spawn },
   { "spawn", 1, arc_spawn },
+  { "current-thread", 0, arc_current_thread },
   { "kill-thread", -2, arc_kill_thread },
   { "break-thread", 1, arc_break_thread },
+  { "join-thread", -2, arc_join_thread },
   { "sleep", -2, arc_sleep },
   { "dead", 1, arc_dead },
   { "chan", 0, arc_mkchan },
