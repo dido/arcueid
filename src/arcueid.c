@@ -830,6 +830,7 @@ static struct {
   { "disp", -2, arc_disp },
   { "close", -2, arc_close },
   { "flushout", 0, arc_flushout },
+  { "pipe-from", 1, arc_pipe_from },
 
   /* Additional I/O functions */
   { "stdin", -2, arc_stdin },
