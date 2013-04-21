@@ -318,12 +318,19 @@ static value warranty(arc *c)
   return(CNIL);
 }
 
-jmp_buf ejb;
+static jmp_buf ejb;
+static value replthread;
 
-static void errhandler(arc *c, value str)
+static void errhandler(arc *c, value thr, value str)
 {
   __arc_print_string(c, str);
-  longjmp(ejb, 1);
+#ifdef HAVE_LIBREADLINE
+  printf("arc> ");
+  rl_redisplay();
+#endif
+  if (thr == replthread)
+    longjmp(ejb, 1);
+  /* else just return */
 }
 
 #define QUANTA ULONG_MAX
@@ -447,21 +454,14 @@ int main(int argc, char **argv)
   code = arc_cctx2code(c, cctx);
   clos = arc_mkclos(c, code, CNIL);
   arc_bindcstr(c, "repl-code*", clos);
-#ifdef HAVE_LIBREADLINE
-  if (setjmp(ejb) == 1) {
-    printf("arc> ");
-    rl_redisplay();
-  }
-#else
   setjmp(ejb);
-#endif
   clos = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "repl-code*"));
   if (TYPE(clos) != T_CLOS) {
     fprintf(stderr, "bad repl code\n");
     arc_deinit(c);
     return(EXIT_FAILURE);
   }
-  arc_spawn(c, clos);
+  replthread = arc_spawn(c, clos);
   arc_thread_dispatch(c);
 
 #ifdef HAVE_LIBREADLINE
