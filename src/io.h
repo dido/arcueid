@@ -80,7 +80,8 @@ enum {
   BI_io_strio=0,
   BI_io_fp=1,
   BI_io_sock=2,
-  BI_io_last=2
+  BI_io_pfp=3,
+  BI_io_last=3
 };
 
 #define STDIN(fd) do {							\
