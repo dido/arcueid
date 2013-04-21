@@ -326,6 +326,7 @@ static void errhandler(arc *c, value thr, value str)
   __arc_print_string(c, str);
 #ifdef HAVE_LIBREADLINE
   printf("arc> ");
+  fflush(NULL);
   rl_redisplay();
 #endif
   if (thr == replthread)
@@ -419,8 +420,10 @@ int main(int argc, char **argv)
   }
   EXECUTE("(close initload)");
   c->gc(c);
+#if 0
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stdin, NULL, _IONBF, 0);
+#endif
   arc_bindcstr(c, "warranty", arc_mkccode(c, 0, warranty,
 					  arc_intern_cstr(c, "warranty")));
 #ifdef HAVE_LIBREADLINE
@@ -437,6 +440,7 @@ int main(int argc, char **argv)
       read_history(histfile);
     }
     printf("arc> ");
+    fflush(NULL);
     rlfp = arc_readlineport(c);
     arc_bindcstr(c, "repl-readline", rlfp);
     arc_bindcstr(c, "rl-on-new-line-with-prompt", arc_mkccode(c, 0, arc_rl_on_new_line_with_prompt, CNIL));
@@ -445,9 +449,9 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef HAVE_LIBREADLINE
-  replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn) (disp \"arc> \") (rl-on-new-line-with-prompt))))";
+  replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn) (disp \"arc> \") (flushout) (rl-on-new-line-with-prompt))))";
 #else
-  replcode = "(whiler e (do (disp \"arc> \") (read (stdin) nil)) nil (do (write (eval e)) (disp #\\u000a)))";
+  replcode = "(whiler e (do (disp \"arc> \") (flushout) (read (stdin) nil)) nil (do (write (eval e)) (disp #\\u000a)))";
 #endif
   COMPILE(replcode);
   cctx = TVALR(c->curthread);
