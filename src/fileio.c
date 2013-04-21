@@ -43,6 +43,7 @@ void *alloca (size_t);
 #endif
 
 static typefn_t fileio_tfn;
+static typefn_t procio_tfn;
 
 struct fileio_t {
   FILE *fp;
@@ -77,6 +78,19 @@ static AFFDEF(fio_closed_p)
   AFEND;
 }
 AFFEND
+
+static void pio_sweeper(arc *c, value v)
+{
+  /* DO NOT TRY TO CLOSE STDIN, STDOUT, OR STDERR! */
+  if (FIODATA(v)->fp == stdin || FIODATA(v)->fp == stdout
+      || FIODATA(v)->fp == stderr) {
+    return;
+  }
+  if (!FIODATA(v)->closed) {
+    pclose(FIODATA(v)->fp);
+    FIODATA(v)->closed = 1;
+  }
+}
 
 static AFFDEF(fio_ready)
 {
@@ -200,6 +214,19 @@ static AFFDEF(fio_tell)
 }
 AFFEND
 
+static AFFDEF(pio_close)
+{
+  AARG(fio);
+  AFBEGIN;
+  if (FIODATA(AV(fio))->closed == 0) {
+    pclose(FIODATA(AV(fio))->fp);
+    FIODATA(AV(fio))->closed = 1;
+  }
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
 static AFFDEF(fio_close)
 {
   AARG(fio);
@@ -285,6 +312,30 @@ AFFDEF(arc_outfile)
 }
 AFFEND
 
+/* XXX - when a file handle opened by pipe-from is up for gc it uses
+   fclose instead of pclose! */
+value arc_pipe_from(arc *c, value cmd)
+{
+  FILE *fp;
+  int len;
+  char *cmdstr;
+  value ffp;
+
+  TYPECHECK(cmd, T_STRING);
+  len = FIX2INT(arc_strutflen(c, cmd));
+  cmdstr = (char *)alloca(sizeof(char)*(len+1));
+  arc_str2cstr(c, cmd, cmdstr);
+
+  fp = popen(cmdstr, "r");
+  if (fp == NULL) {
+    int en = errno;
+    arc_err_cstrfmt(c, "pipe-from: error executing command \"%s\", (%s; errno=%d)", cmdstr, strerror(en), en);
+  }
+  ffp = mkfio(c, T_INPORT, fp, cmd);
+  IO(ffp)->io_ops = VINDEX(VINDEX(c->builtins, BI_io), BI_io_pfp);
+  IO(ffp)->io_tfn = &procio_tfn;
+  return(ffp);
+}
 
 void __arc_init_fio(arc *c)
 {
@@ -300,6 +351,18 @@ void __arc_init_fio(arc *c)
   SVINDEX(io_ops, IO_tell, arc_mkaff(c, fio_tell, CNIL));
   SVINDEX(io_ops, IO_close, arc_mkaff(c, fio_close, CNIL));
   SVINDEX(VINDEX(c->builtins, BI_io), BI_io_fp, io_ops);
+
+  io_ops = arc_mkvector(c, IO_last+1);
+  SVINDEX(io_ops, IO_closed_p, arc_mkaff(c, fio_closed_p, CNIL));
+  SVINDEX(io_ops, IO_ready, arc_mkaff(c, fio_ready, CNIL));
+  SVINDEX(io_ops, IO_wready, arc_mkaff(c, fio_wready, CNIL));
+  SVINDEX(io_ops, IO_getb, arc_mkaff(c, fio_getb, CNIL));
+  SVINDEX(io_ops, IO_putb, arc_mkaff(c, fio_putb, CNIL));
+  SVINDEX(io_ops, IO_seek, arc_mkaff(c, fio_seek, CNIL));
+  SVINDEX(io_ops, IO_tell, arc_mkaff(c, fio_tell, CNIL));
+  SVINDEX(io_ops, IO_close, arc_mkaff(c, pio_close, CNIL));
+  SVINDEX(VINDEX(c->builtins, BI_io), BI_io_pfp, io_ops);
+
   arc_bindsym(c, ARC_BUILTIN(c, S_STDIN_FD), mkfio(c, T_INPORT, stdin, CNIL));
   arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT_FD), mkfio(c, T_OUTPORT, stdout, CNIL));
   arc_bindsym(c, ARC_BUILTIN(c, S_STDERR_FD), mkfio(c, T_OUTPORT, stderr, CNIL));
@@ -308,6 +371,17 @@ void __arc_init_fio(arc *c)
 static typefn_t fileio_tfn = {
   fio_marker,
   fio_sweeper,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
+static typefn_t procio_tfn = {
+  fio_marker,
+  pio_sweeper,
   NULL,
   NULL,
   NULL,
