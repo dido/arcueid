@@ -208,7 +208,7 @@ notice and this notice are preserved.
     - [X] Exceptions
     - [X] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [11/19]
+** TODO Runtime Built-In Functions [12/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -489,12 +489,12 @@ notice and this notice are preserved.
 	   on systems that support them.  Only fall back to standard
 	   POSIX.1-2001 select(2) only if no alternatives are
 	   available.
-   - [ ] File system operations [0/5]
-     - [ ] dir
-     - [ ] dir-exists
-     - [ ] file-exists
-     - [ ] rmfile
-     - [ ] mvfile
+   - [X] File system operations [5/5]
+     - [X] dir
+     - [X] dir-exists
+     - [X] file-exists
+     - [X] rmfile
+     - [X] mvfile
    - [X] Error handling and continuations [6/6]
      - [X] details
      - [X] err
