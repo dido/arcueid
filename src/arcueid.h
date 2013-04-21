@@ -411,6 +411,13 @@ extern int arc_stdin(arc *c, value thr);
 extern int arc_stdout(arc *c, value thr);
 extern int arc_stderr(arc *c, value thr);
 
+/* file system operations */
+extern value arc_dir(arc *c, value dirname);
+extern value arc_dir_exists(arc *c, value dirname);
+extern value arc_file_exists(arc *c, value filename);
+extern value arc_rmfile(arc *c, value filename);
+extern value arc_mvfile(arc *c, value oldname, value newname);
+
 /* General I/O functions */
 extern int arc_readb(arc *c, value thr);
 extern int arc_readc(arc *c, value thr);
