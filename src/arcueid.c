@@ -837,6 +837,8 @@ static struct {
   /* Threads */
   { "new-thread", 1, arc_spawn },
   { "spawn", 1, arc_spawn },
+  { "kill-thread", -2, arc_kill_thread },
+  { "break-thread", 1, arc_break_thread },
   { "sleep", -2, arc_sleep },
   { "dead", 1, arc_dead },
   { "chan", 0, arc_mkchan },
@@ -889,6 +891,11 @@ value arc_bindcstr(arc *c, const char *csym, value binding)
 {
   value sym = arc_intern_cstr(c, csym);
   return(arc_bindsym(c, sym, binding));
+}
+
+value arc_gbind(arc *c, const char *csym)
+{
+  return(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, csym)));
 }
 
 void arc_init_builtins(arc *c)
