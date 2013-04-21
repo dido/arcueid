@@ -861,6 +861,8 @@ static struct {
   { "client-ip", 1, arc_client_ip },
 
   /* File system operations */
+  { "dir", 1, arc_dir },
+
   /* Error handling and continuations */
   { "ccc", -2, arc_callcc },
   { "dynamic-wind", -2, arc_dynamic_wind },
