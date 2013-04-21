@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stddef.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "arcueid.h"
 
 value arc_dir(arc *c, value dirname)
@@ -62,4 +63,71 @@ value arc_dir(arc *c, value dirname)
     dirlist = cons(c, arc_mkstringc(c, entry->d_name), dirlist);
   }
   return(dirlist);
+}
+
+value arc_dir_exists(arc *c, value dirname)
+{
+  char *utf_filename;
+  struct stat st;
+
+  TYPECHECK(dirname, T_STRING);
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, dirname)) + 1);
+  arc_str2cstr(c, dirname, utf_filename);
+  if (stat(utf_filename, &st) == -1) {
+    return(CNIL);
+  }
+  if (S_ISDIR(st.st_mode))
+    return(dirname);
+  return(CNIL);
+}
+
+value arc_file_exists(arc *c, value filename)
+{
+  char *utf_filename;
+  struct stat st;
+
+  TYPECHECK(filename, T_STRING);
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
+  arc_str2cstr(c, filename, utf_filename);
+  if (stat(utf_filename, &st) == -1) {
+    return(CNIL);
+  }
+  if (!S_ISDIR(st.st_mode))
+    return(filename);
+  return(CNIL);
+}
+
+value arc_rmfile(arc *c, value filename)
+{
+  char *utf_filename;
+  int en;
+
+  TYPECHECK(filename, T_STRING);
+  utf_filename = alloca(FIX2INT(arc_strutflen(c, filename)) + 1);
+  arc_str2cstr(c, filename, utf_filename);
+  if (unlink(utf_filename) < 0) {
+    en = errno;
+    arc_err_cstrfmt(c, "rmfile: cannot delete file \"%s\", (%s; errno=%d)", utf_filename, strerror(en), en);
+    return(CNIL);
+  }
+  return(CNIL);
+}
+
+value arc_mvfile(arc *c, value oldname, value newname)
+{
+  char *utf_oldname, *utf_newname;
+  int en;
+
+  TYPECHECK(oldname, T_STRING);
+  TYPECHECK(newname, T_STRING);
+  utf_oldname = alloca(FIX2INT(arc_strutflen(c, oldname)) + 1);
+  arc_str2cstr(c, oldname, utf_oldname);
+  utf_newname = alloca(FIX2INT(arc_strutflen(c, newname)) + 1);
+  arc_str2cstr(c, newname, utf_newname);
+  if (rename(utf_oldname, utf_newname) != 0) {
+    en = errno;
+    arc_err_cstrfmt(c, "mvfile: cannot move file \"%s\" to \"%s\", (%s; errno=%d)", utf_oldname, utf_newname, strerror(en), en);
+    return(CNIL);
+  }
+  return(CNIL);
 }
