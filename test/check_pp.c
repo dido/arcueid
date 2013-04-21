@@ -740,7 +740,7 @@ START_TEST(test_pp_exception)
 }
 END_TEST
 
-static void errhandler(arc *c, value str)
+static void errhandler(arc *c, value thr, value str)
 {
   fprintf(stderr, "Error\n");
   __arc_print_string(c, str);
