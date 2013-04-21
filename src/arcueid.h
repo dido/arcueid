@@ -493,10 +493,12 @@ extern value arc_expt(arc *c, value a, value b);
 /* Threads and synchronisation */
 extern void arc_thread_dispatch(arc *c);
 extern value arc_spawn(arc *c, value thunk);
+extern value arc_current_thread(arc *c);
 extern value arc_break_thread(arc *c, value thr);
 extern int arc_kill_thread(arc *c, value thr);
 extern value arc_dead(arc *c, value thr);
 extern int arc_sleep(arc *c, value thr);
+extern int arc_join_thread(arc *c, value thr);
 extern int arc_atomic_cell(arc *c, value thr);
 
 extern int arc_join_thread(arc *c, value thr);
