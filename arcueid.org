@@ -208,7 +208,7 @@ notice and this notice are preserved.
     - [X] Exceptions
     - [X] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [10/19]
+** TODO Runtime Built-In Functions [11/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -448,10 +448,10 @@ notice and this notice are preserved.
              implement CIEL.
        - [ ] seek
        - [ ] tell
-   - [-] Additional I/O functions (src/io.c) [7/8]
+   - [X] Additional I/O functions (src/io.c) [8/8]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
-     - [ ] pipe-from
+     - [X] pipe-from
      - [X] stdin
      - [X] stdout
      - [X] stderr
