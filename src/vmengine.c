@@ -601,8 +601,19 @@ static AFFDEF(contwrapper)
   AARG(arg);
   value cont;
   AFBEGIN;
-  /* access the tcr variable in the environment of arc_callcc that
+  /* access the tch variable in the environment of arc_callcc that
      created this closure, and reroot it */
+  /* First we check if this is an inter-thread continuation restoration
+     index 5 is the cthr value from arc_callcc */
+  if (thr != __arc_getenv(c, thr, 1, 5)) {
+    /* We have an inter-thread continuation restore.  We need to also
+       bring back whatever the TBCH and so forth were before. This is
+       not normally saved in a continuation except in this case. */
+    __arc_wb(TCH(thr), __arc_getenv(c, thr, 1, 3));
+    TCH(thr) = __arc_getenv(c, thr, 1, 3);
+    __arc_wb(TBCH(thr), __arc_getenv(c, thr, 1, 4));
+    TBCH(thr) = __arc_getenv(c, thr, 1, 4);
+  }
   AFCALL(arc_mkaff(c, __arc_reroot, CNIL), __arc_getenv(c, thr, 1, 3));
   /* call the continuation in the environment of arc_callcc */
   cont = __arc_getenv(c, thr, 1, 1);
@@ -618,12 +629,14 @@ AFFEND
 AFFDEF(arc_callcc)
 {
   AARG(thunk);
-  AVAR(tcr, func, tch);
+  AVAR(tcr, func, tch, tbch, cthr);
   AFBEGIN;
   /* First move the continuations to the heap if needed */
   SCONR(thr, __arc_cont2heap(c, thr, TCONR(thr)));
   WV(tcr, TCONR(thr));
   WV(tch, TCH(thr));
+  WV(tbch, TBCH(thr));
+  WV(cthr, thr);
   /* Save the environment of this call/cc invocation so contwrapper
      can have access to it later */
   SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
