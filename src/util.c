@@ -18,6 +18,7 @@
 */
 #include "arcueid.h"
 #include "utf.h"
+#include "arith.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -166,4 +167,35 @@ value __arc_dequeue(arc *c, value *head, value *tail)
     *tail = *head;
   }
   return(thr);
+}
+
+value __arc_ull2val(arc *c, unsigned long long ms)
+{
+  if (ms < FIXNUM_MAX) {
+    return(INT2FIX(ms));
+  } else {
+#ifdef HAVE_GMP_H
+    value msbn;
+
+#if SIZEOF_UNSIGNED_LONG_LONG == 8
+    /* feed value into the bignum 32 bits at a time */
+    msbn = arc_mkbignuml(c, (ms >> 32)&0xffffffff);
+    mpz_mul_2exp(REPBNUM(msbn), REPBNUM(msbn), 32);
+    mpz_add_ui(REPBNUM(msbn), REPBNUM(msbn), ms & 0xffffffff);
+#else
+    int i;
+
+    msbn = arc_mkbignuml(c, 0);
+    for (i=SIZEOF_UNSIGNED_LONG_LONG-1; i>=0; i--) {
+      mpz_mul_2exp(REP(msbn)._bignum, REP(msbn)._bignum, 8);
+      mpz_add_ui(REP(msbn)._bignum, REP(msbn)._bignum, (ms >> (i*8)) & 0xff);
+    }
+#endif
+    return(msbn);
+#else
+    /* floating point */
+    return(arc_mkflonum(c, (double)ms));
+#endif
+  }
+  return(CNIL);
 }
