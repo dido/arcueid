@@ -134,12 +134,13 @@ struct vmthread_t {
   unsigned long long wakeuptime; /* wakeup time */
   int waitfd;			 /* file descriptor to wait on */
   int waitrw;			 /* wait on read or write */
-  value here;			 /* the local root of the here */
   value exh;			 /* current exception handler */
   jmp_buf errjmp;		 /* error jump point */
 
   value cmarks;			/* continuation marks */
   value rvch;			/* return value channel */
+  value conthere;		/* here for this thread */
+  value baseconthere;		/* base cont here */
   int atomic_cell;		/* atomic cell -- do we hold the channel? */
 };
 
@@ -208,12 +209,14 @@ static inline value SCONR(value t, value nv)
 #define TWAKEUP(t) (((struct vmthread_t *)REP(t))->wakeuptime)
 #define TWAITFD(t) (((struct vmthread_t *)REP(t))->waitfd)
 #define TWAITRW(t) (((struct vmthread_t *)REP(t))->waitrw)
-#define TCH(t) (((struct vmthread_t *)REP(t))->here)
 #define TEXH(t) (((struct vmthread_t *)REP(t))->exh)
 #define TEJMP(t) (((struct vmthread_t *)REP(t))->errjmp)
 #define TCM(t) (((struct vmthread_t *)REP(t))->cmarks)
 #define TACELL(t) (((struct vmthread_t *)REP(t))->atomic_cell)
 #define TRVCH(t) (((struct vmthread_t *)REP(t))->rvch)
+
+#define TCH(t) (((struct vmthread_t *)REP(t))->conthere)
+#define TBCH(t) (((struct vmthread_t *)REP(t))->baseconthere)
 
 #if 1
 /* XXX - this should incorporate write barrier code */
