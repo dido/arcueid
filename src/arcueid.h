@@ -541,6 +541,7 @@ extern value arc_current_process_milliseconds(arc *c);
 extern value arc_setuid(arc *c, value uid);
 extern int arc_timedate(arc *c, value thr);
 extern int arc_system(arc *c, value thr);
+extern int arc_quit(arc *c, value thr);
 
 /* Miscellaneous functions */
 extern int arc_sref(arc *c, value thr);
