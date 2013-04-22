@@ -45,6 +45,7 @@
 #include <malloc.h>
 #include "arcueid.h"
 #include "alloc.h"
+#include "arith.h"
 
 /* Maximum size of objects subject to BiBOP allocation */
 #define MAX_BIBOP 512
@@ -60,13 +61,21 @@ struct mm_ctx {
 
   /* The allocated list */
   Bhdr *alloc_head;
+
+  /* propagator flag */
   int nprop;
+
+  /* GC statistics */
+  unsigned long long gc_milliseconds;
+  unsigned long long usedmem;
 };
 
 #define BIBOPFL(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_fl)
 #define BIBOPPG(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_pages)
 #define ALLOCHEAD(c) (((struct mm_ctx *)c->alloc_ctx)->alloc_head)
 #define NPROP(c) (((struct mm_ctx *)c->alloc_ctx)->nprop)
+#define GCMS(c) (((struct mm_ctx *)c->alloc_ctx)->gc_milliseconds)
+#define USEDMEM(c) (((struct mm_ctx *)c->alloc_ctx)->usedmem)
 
 static void *bibop_alloc(arc *c, size_t osize)
 {
@@ -342,7 +351,10 @@ static void gc(arc *c)
   struct cell *cp;
   void *pptr;
   typefn_t *tfn;
+  unsigned long long gcst, gcet;
 
+  USEDMEM(c) = 0;
+  gcst = __arc_milliseconds();
   c->markroots(c);
   /* Mark phase */
   while (NPROP(c)) {
@@ -360,6 +372,7 @@ static void gc(arc *c)
     cp = (struct cell *)B2D(ptr);
     if ((cp->_type & MARKFLAG) == MARKFLAG) {
       /* Marked object.  Previous pointer moves to this one. */
+      USEDMEM(c) += BSIZE(ptr);
       pptr = (void *)cp;
       /* clear the mark flag */
       cp->_type &= FLAGMASK;
@@ -375,6 +388,10 @@ static void gc(arc *c)
   }
 
   free_unused_bibop(c);
+
+  gcet = __arc_milliseconds();
+  GCMS(c) += (gcet - gcst);
+
 }
 
 /* Default root marker */
@@ -391,6 +408,16 @@ static void markroots(arc *c)
 #ifdef HAVE_TRACING
   __arc_markprop(c, c->tracethread);
 #endif
+}
+
+value arc_current_gc_milliseconds(arc *c)
+{
+  return(__arc_ull2val(c, GCMS(c)));
+}
+
+value arc_memory(arc *c)
+{
+  return(__arc_ull2val(c, USEDMEM(c)));
 }
 
 void arc_init_memmgr(arc *c)
@@ -411,4 +438,6 @@ void arc_init_memmgr(arc *c)
     BIBOPPG(c)[i] = NULL;
   }
   ALLOCHEAD(c) = NULL;
+  GCMS(c) = 0ULL;
+  USEDMEM(c) = 0ULL;
 }
