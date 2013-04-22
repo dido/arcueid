@@ -342,7 +342,7 @@ AFFDEF(arc_socket_accept)
   void *addr, *addr2;
   AFBEGIN;
 
-  TYPECHECK(sock, T_INPORT);
+  TYPECHECK(AV(sock), T_INPORT);
   /* XXX - find a way to verify that sock really is a socket */
 
   /* Check if it's open for reading.  If not it will block the thread */
