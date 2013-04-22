@@ -887,6 +887,9 @@ static struct {
 
   /* regular expressions */
   /* miscellaneous OS operations */
+  { "system", -2, arc_system },
+  { "quit", -2, arc_quit },
+  { "setuid", 1, arc_setuid },
   { "memory", 0, arc_memory },
   /* miscellaneous */
   { "sref", -2, arc_sref },
@@ -991,6 +994,8 @@ void arc_init(arc *c)
 
 void arc_deinit(arc *c)
 {
+  if (c->alloc_ctx == NULL)
+    return;
   c->symtable = CNIL;
   c->rsymtable = CNIL;
   c->genv = CNIL;
@@ -999,9 +1004,11 @@ void arc_deinit(arc *c)
   c->curthread = CNIL;
   c->vmthreads = CNIL;
   c->here = CNIL;
+  c->declarations = CNIL;
 #ifdef HAVE_TRACING
   c->tracethread = CNIL;
 #endif
   c->gc(c);
   free(c->alloc_ctx);
+  c->alloc_ctx = NULL;
 }
