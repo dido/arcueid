@@ -405,6 +405,7 @@ static void markroots(arc *c)
   __arc_markprop(c, c->curthread);
   __arc_markprop(c, c->vmthreads);
   __arc_markprop(c, c->here);
+  __arc_markprop(c, c->declarations);
 #ifdef HAVE_TRACING
   __arc_markprop(c, c->tracethread);
 #endif
