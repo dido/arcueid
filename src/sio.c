@@ -213,6 +213,8 @@ AFFEND
 value arc_inside(arc *c, value sio)
 {
   /* XXX type checks */
+  if (NIL_P(SIODATA(sio)->str))
+    return(arc_mkstringc(c, ""));
   return(SIODATA(sio)->str);
 }
 
