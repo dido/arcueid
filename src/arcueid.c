@@ -786,7 +786,7 @@ static struct {
   { "-", -2, __arc_sub },
   { "*", -2, __arc_mul },
   { "/", -2, __arc_div },
-  { "div", 2, __arc_idiv2 },
+  { "idiv", 2, __arc_idiv2 },
   { "real", 1, __arc_real },
   { "imag", 1, __arc_imag },
   { "conj", 1, __arc_conj },
