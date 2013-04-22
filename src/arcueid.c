@@ -892,6 +892,7 @@ static struct {
   { "sref", -2, arc_sref },
   { "len", 1, arc_len },
   { "arcueid-code-setname", 2, arc_code_setname },
+  { "declare", 2, arc_declare },
   {NULL, 0, NULL }
 };
 
@@ -916,6 +917,27 @@ value arc_gbind(arc *c, const char *csym)
   return(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, csym)));
 }
 
+value arc_declare(arc *c, value decl, value val)
+{
+  if (decl != ARC_BUILTIN(c, S_ATSTRINGS)) {
+    arc_err_cstrfmt(c, "unknown declaration");
+    return(CNIL);
+  }
+  if (NIL_P(val)) {
+    arc_hash_delete(c, c->declarations, decl);
+    return(CNIL);
+  }
+  arc_hash_insert(c, c->declarations, decl, CTRUE);
+  return(CTRUE);
+}
+
+value arc_declared(arc *c, value decl)
+{
+  if (BOUND_P(arc_hash_lookup(c, c->declarations, decl)))
+    return(CTRUE);
+  return(CNIL);
+}
+
 void arc_init_builtins(arc *c)
 {
   int i;
@@ -938,7 +960,6 @@ void arc_init_builtins(arc *c)
 
 void arc_init(arc *c)
 {
-  c->atstrings = 0;
   /* Initialise memory manager first */
   arc_init_memmgr(c);
   /* Initialise built-in data type definitions */
@@ -950,6 +971,9 @@ void arc_init(arc *c)
 
   /* Create builtins table */
   c->builtins = arc_mkvector(c, BI_last+1);
+
+  /* Create declarations table */
+  c->declarations = arc_mkhash(c, ARC_HASHBITS);
 
   /* Initialise symbol table and built-in symbols*/
   arc_init_symtable(c);
