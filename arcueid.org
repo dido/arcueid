@@ -208,7 +208,7 @@ notice and this notice are preserved.
     - [X] Exceptions
     - [X] Channels
     - [ ] Regular Expressions
-** TODO Runtime Built-In Functions [12/19]
+** TODO Runtime Built-In Functions [13/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -504,21 +504,21 @@ notice and this notice are preserved.
      - [X] dynamic-wind
    - [X] Strings [1/1]
      - [X] newstring
-   - [ ] Time [0/5]
-     - [ ] current-gc-milliseconds
-     - [ ] current-process-milliseconds
-     - [ ] msec
-     - [ ] seconds
-     - [ ] timedate
+   - [X] Time [5/5]
+     - [X] current-gc-milliseconds
+     - [X] current-process-milliseconds
+     - [X] msec
+     - [X] seconds
+     - [X] timedate
    - [ ] Regular Expressions (Arcueid extension) [0/3]
      - [ ] rxcompile
      - [ ] rxescape
      - [ ] rxmatch (=~)
-   - [ ] Miscellaneous OS operations [0/4]
+   - [-] Miscellaneous OS operations [1/4]
      - [ ] system
      - [ ] quit
      - [ ] setuid
-     - [ ] memory
+     - [X] memory
    - [-] Miscellaneous [4/5]
      - [X] sref *
      - [X] len
