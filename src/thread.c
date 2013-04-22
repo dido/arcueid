@@ -90,6 +90,8 @@ static void thread_marker(arc *c, value thr, int depth,
   mark(c, TEXH(thr), depth);
   mark(c, TCM(thr), depth);
   mark(c, TRVCH(thr), depth);
+  mark(c, TCH(thr), depth);
+  mark(c, TBCH(thr), depth);
 }
 
 value arc_mkthread(arc *c)
@@ -115,9 +117,10 @@ value arc_mkthread(arc *c)
   TWAITFD(thr) = CNIL;
   TCM(thr) = arc_mkhash(c, ARC_HASHBITS);
   TEXH(thr) = CNIL;
-  TCH(thr) = c->here;
   TACELL(thr) = 0;
   TRVCH(thr) = arc_mkchan(c);
+  TCH(thr) = cons(c, INT2FIX(0xdead), CNIL);
+  TBCH(thr) = TCH(thr);
   return(thr);
 }
 
@@ -603,7 +606,6 @@ void arc_init_threads(arc *c)
   c->curthread = CNIL;
   c->tid_nonce = 0;
   c->stksize = TSTKSIZE;
-  c->here = cons(c, INT2FIX(0xdead), CNIL);
   c->quantum = DEFAULT_QUANTUM;
 }
 
