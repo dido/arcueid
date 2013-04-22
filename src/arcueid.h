@@ -195,7 +195,7 @@ extern void __arc_null_sweeper(arc *c, value v);
 #define CLASTARG ((value)8)	/* last argument */
 
 #define IMMEDIATE_MASK 0x0f
-#define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
+#define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND || (value)(x) == T_ENV)
 #define NIL_P(v) ((v) == CNIL)
 #define BOUND_P(v) ((v) != CUNBOUND)
 
