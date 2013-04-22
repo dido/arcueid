@@ -392,7 +392,27 @@ int __arc_vmengine(arc *c, value thr)
       goto endquantum;
       NEXT;
     INST(iadd):
-      SVALR(thr, __arc_add2(c, CPOP(thr), TVALR(thr)));
+      {
+	/* I really hate how the + operator has been so overloaded */
+	value arg1, arg2;
+
+	arg1 = CPOP(thr);
+	arg2 = TVALR(thr);
+
+	if (TYPE(arg1) == T_STRING) {
+	  /* we fake a call to __arc_add2_string */
+	  SCONR(thr, __arc_mkcont(c, thr, TIPP(thr)
+				  - &XVINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))),
+					     0)));
+	  CPUSH(thr, arg1);
+	  CPUSH(thr, arg2);
+	  TARGC(thr) = 2;
+	  SVALR(thr, arc_mkaff(c, __arc_add2_string, CNIL));
+	  return(TR_FNAPP);
+	} else {
+	  SVALR(thr, __arc_add2(c, arg1, arg2));
+	}
+      }
       NEXT;
     INST(isub):
       SVALR(thr, __arc_sub2(c, CPOP(thr), TVALR(thr)));
