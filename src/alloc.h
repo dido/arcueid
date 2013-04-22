@@ -65,5 +65,8 @@ typedef struct Bhdr_t {
 #define MARKED(v) ((((((struct cell *)(v))->_type) & ~FLAGMASK) >> 6) == 1)
 
 extern void __arc_markprop(arc *c, value p);
+extern value arc_current_gc_milliseconds(arc *c);
+extern value arc_memory(arc *c);
+extern void arc_init_memmgr(arc *c);
 
 #endif
