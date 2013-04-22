@@ -162,7 +162,7 @@ AFFDEF(arc_err)
        handler if one is set, and longjmp away.  The thread becomes
        broken if this happens. */
     /* First we need to reroot to the root */
-    AFCALL(arc_mkaff(c, __arc_reroot, CNIL), c->here);
+    AFCALL(arc_mkaff(c, __arc_reroot, CNIL), TBCH(thr));
     TSTATE(thr) = Tbroken;
     if (c->errhandler != NULL)
       c->errhandler(c, thr, arc_details(c, AV(exc)));
