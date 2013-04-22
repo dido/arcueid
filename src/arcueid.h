@@ -463,6 +463,7 @@ extern Rune __arc_strgetc(arc *c, value str, int *index);
 extern void __arc_strungetc(arc *c, int *index);
 extern void __arc_enqueue(arc *c, value thr, value *head, value *tail);
 extern value __arc_dequeue(arc *c, value *head, value *tail);
+extern value __arc_ull2val(arc *c, unsigned long long ms);
 
 /* Output */
 extern int arc_write(arc *c, value thr);
@@ -538,6 +539,8 @@ extern value arc_seconds(arc *c);
 extern value arc_msec(arc *c);
 extern value arc_current_process_milliseconds(arc *c);
 extern value arc_setuid(arc *c, value uid);
+extern int arc_timedate(arc *c, value thr);
+extern int arc_system(arc *c, value thr);
 
 /* Miscellaneous functions */
 extern int arc_sref(arc *c, value thr);
