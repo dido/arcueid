@@ -160,7 +160,7 @@ struct arc {
   void (*errhandler)(struct arc *, value, value); /* catch-all error handler */
 
   /* declarations */
-  int atstrings;		/* allow atstrings or not */
+  value declarations;		/* declarations hash */
 };
 
 typedef struct arc arc;
@@ -546,6 +546,8 @@ extern int arc_system(arc *c, value thr);
 extern int arc_sref(arc *c, value thr);
 extern value arc_len(arc *c, value obj);
 extern value arc_bound(arc *c, value sym);
+extern value arc_declare(arc *c, value decl, value val);
+extern value arc_declared(arc *c, value decl);
 
 /* Arcueid Foreign Functions.  This is possibly the most insane abuse
    of the C preprocessor I have ever done.  The technique used for defining
