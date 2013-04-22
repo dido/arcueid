@@ -413,7 +413,7 @@ AFFDEF(read_string)
       /* State 1: normal reading */
       if (r == '\"') {
 	/* end of string */
-	if (c->atstrings) {
+	if (arc_declared(c, ARC_BUILTIN(c, S_ATSTRINGS))) {
 	  AFTCALL(arc_mkaff(c, read_atstring, CNIL), arc_inside(c, AV(buf)));
 	}
 	ARETURN(arc_inside(c, AV(buf)));
