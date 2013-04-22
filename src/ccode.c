@@ -78,6 +78,10 @@ static void cfunc_marker(arc *c, value v, int depth,
 			  void (*mark)(struct arc *, value, int))
 {
   mark(c, ((struct cfunc_t *)REP(v))->name, depth);
+  /* mark the saved environment as well for C functions */
+  if (((struct cfunc_t *)REP(v))->argc == -2) {
+    mark(c, ((struct cfunc_t *)REP(v))->cfunc.aff_t.env, depth);
+  }
 }
 
 static unsigned long cfunc_hash(arc *c, value v, arc_hs *s)
