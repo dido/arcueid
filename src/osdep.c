@@ -160,3 +160,27 @@ AFFDEF(arc_quit)
   AFEND;
 }
 AFFEND
+
+/* XXX - fix this so that we don't always return true, and
+   permit redirection of both stdin and stdout.  This basically works
+   as a wrapper for arc_pipe_from */
+AFFDEF(arc_system)
+{
+  AARG(cmd);
+  AVAR(pf);
+  AFBEGIN;
+  WV(pf, arc_pipe_from(c, AV(cmd)));
+  for (;;) {
+    AFCALL(arc_mkaff(c, arc_readc, CNIL), AV(pf));
+    if (NIL_P(AFCRV))
+      goto finished;
+    AFCALL(arc_mkaff(c, arc_writec, CNIL), AFCRV);
+  }
+ finished:
+  /* XXX - find out a way to get the original return value of the
+     command to return it properly. */
+  AFCALL(arc_mkaff(c, arc_close, CNIL), AV(pf));
+  ARETURN(CTRUE);
+  AFEND;
+}
+AFFEND
