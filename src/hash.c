@@ -762,7 +762,7 @@ AFFDEF(arc_xhash_insert)
 
   /* Not already bound, so we need to create a new binding */
   if (HASH_NENTRIES(AV(hash))+1 > HASH_LLIMIT(AV(hash)))
-    hashtable_expand(c, hash);
+    hashtable_expand(c, AV(hash));
   SET_NENTRIES(AV(hash), HASH_NENTRIES(AV(hash))+1);
   AFCALL(arc_mkaff(c, arc_xhash, CNIL), AV(key));
   WV(hv, AFCRV);
