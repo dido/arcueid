@@ -30,8 +30,8 @@ value arc_intern(arc *c, value name)
     /* do not allow nil or t to have a symbol value */
     if (symval == ARC_BUILTIN(c, S_NIL))
       symval = CNIL;
-    else if (symval == ARC_BUILTIN(c, S_T))
-      symval = CTRUE;
+    /*    else if (symval == ARC_BUILTIN(c, S_T)) 
+	  symval = CTRUE; */
     return(symval);
   }
 
