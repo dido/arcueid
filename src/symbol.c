@@ -85,7 +85,8 @@ static char *syms[] = { "fn", "_", "quote", "quasiquote", "unquote",
 			"scar", "scdr", "is", "+", "-", "*", "/",
 			"and", "apply", "chan", "AF_UNIX", "AF_INET",
 			"AF_INET6", "SOCK_STREAM", "SOCK_DGRAM",
-			"SOCK_RAW", "binary", "text", "append" };
+			"SOCK_RAW", "binary", "text", "append",
+			"atstrings" };
 
 static struct {
   char *str;
