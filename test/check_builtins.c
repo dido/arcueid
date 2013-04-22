@@ -803,7 +803,7 @@ START_TEST(test_div)
   value thr, cctx, clos, code, ret;
 
   thr = arc_mkthread(c);
-  TEST("(div 10 3)");
+  TEST("(idiv 10 3)");
   fail_unless(ret == INT2FIX(3));
 }
 END_TEST
