@@ -1003,7 +1003,6 @@ void arc_deinit(arc *c)
   c->typedesc = CNIL;
   c->curthread = CNIL;
   c->vmthreads = CNIL;
-  c->here = CNIL;
   c->declarations = CNIL;
 #ifdef HAVE_TRACING
   c->tracethread = CNIL;
