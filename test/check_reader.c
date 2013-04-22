@@ -389,7 +389,7 @@ START_TEST(test_read_atstring)
 {
   value str, sexpr, fp, thr;
 
-  c->atstrings = 1;
+  arc_declare(c, ARC_BUILTIN(c, S_ATSTRINGS), CTRUE);
   thr = arc_mkthread(c);
   str = arc_mkstringc(c, "\"now @@ escaped at-signs\"");
   fp = arc_instring(c, str, CNIL);
@@ -406,7 +406,7 @@ START_TEST(test_read_atstring)
   fail_unless(TYPE(sexpr) == T_CONS);
   /* XXX study what the cons cell this created actually contains */
 
-  c->atstrings = 0;
+  arc_declare(c, ARC_BUILTIN(c, S_ATSTRINGS), CNIL);
 }
 END_TEST
 
