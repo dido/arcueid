@@ -21,6 +21,7 @@
   readline, which is GPL.
 */
 #include <stdio.h>
+#include <stdlib.h>
 #include <getopt.h>
 #include <setjmp.h>
 #include <stdarg.h>
@@ -376,19 +377,42 @@ AFFEND
   clos = arc_mkclos(c, code, CNIL);		\
   XCALL0(clos);					\
   ret = TVALR(c->curthread)
+
+static arc *c, cc;
+
+void cleanup(void)
+{
+#ifdef HAVE_LIBREADLINE
+  {
+    char *homedir;
+
+    homedir = getenv("HOME");
+    if (homedir != NULL) {
+      char *histfile = alloca(sizeof(char)
+			      * (strlen(homedir)
+				 + strlen(DEFAULT_HISTORY_FILE) + 2));
+      sprintf(histfile, "%s/%s", homedir, DEFAULT_HISTORY_FILE);
+      write_history(histfile);
+      rl_callback_handler_remove();
+    }
+  }
+#endif
+
+  arc_deinit(c);
+}
   
 int main(int argc, char **argv)
 {
   value ret, cctx, code, clos;
   int i;
   char *replcode, *loadstr;
-  arc *c, cc;
 
   banner();
   loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
   c = &cc;
   c->errhandler = errhandler;
   arc_init(c);
+  atexit(cleanup);
   if (setjmp(ejb) == 1) {
     fprintf(stderr, "failed to load arc.arc\n");
     arc_deinit(c);
@@ -467,22 +491,5 @@ int main(int argc, char **argv)
   }
   replthread = arc_spawn(c, clos);
   arc_thread_dispatch(c);
-
-#ifdef HAVE_LIBREADLINE
-  {
-    char *homedir;
-
-    homedir = getenv("HOME");
-    if (homedir != NULL) {
-      char *histfile = alloca(sizeof(char)
-			      * (strlen(homedir)
-				 + strlen(DEFAULT_HISTORY_FILE) + 2));
-      sprintf(histfile, "%s/%s", homedir, DEFAULT_HISTORY_FILE);
-      write_history(histfile);
-    }
-  }
-#endif
-
-  arc_deinit(c);
   return(EXIT_SUCCESS);
 }
