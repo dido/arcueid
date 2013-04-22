@@ -221,6 +221,7 @@ static void add_env_name(arc *c, value envframe, value name, value idx)
 static AFFDEF(destructure)
 {
   AARG(arg, ctx, env, idx);
+  AOARG(optional);
   AVAR(frame, jumpaddr);
   AFBEGIN;
 
@@ -242,33 +243,38 @@ static AFFDEF(destructure)
     ARETURN(AV(idx));
   }
 
-  /* If we have an optional argument, we have to do some contortions */
-  if (car(AV(arg)) == ARC_BUILTIN(c, S_O) && !NIL_P(cdr(AV(arg))) &&
-      !NIL_P(cadr(AV(arg)))) {
-    value oargname, oargdef;
-    oargname = cadr(AV(arg));
-    if (!SYMBOL_P(oargname)) {
+  /* Optional arguments are only processed if the optional flag is set */
+  if (BOUND_P(AV(optional)) && !NIL_P(AV(optional))) {
+    /* If we have an optional argument, we have to do some contortions */
+    if (car(AV(arg)) == ARC_BUILTIN(c, S_O) && !NIL_P(cdr(AV(arg))) &&
+	!NIL_P(cadr(AV(arg)))) {
+      value oargname, oargdef;
+      oargname = cadr(AV(arg));
+      if (!SYMBOL_P(oargname)) {
 	arc_err_cstrfmt(c, "optional arg is not an identifier");
 	ARETURN(AV(idx));
-    }
-    oargdef = (NIL_P(cddr(AV(arg)))) ? CNIL : car(cddr(AV(arg)));
-    WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
-    arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
-    /* compile the optional argument's definition */
-    AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
-    arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
+      }
+      oargdef = (NIL_P(cddr(AV(arg)))) ? CNIL : car(cddr(AV(arg)));
+      WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
+      arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
+      /* compile the optional argument's definition */
+      AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
+      arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
-    arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
-    add_env_name(c, AV(frame), cadr(AV(arg)), AV(idx));
-    FIXINC(idx);
-    ARETURN(AV(idx));
+      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
+      add_env_name(c, AV(frame), cadr(AV(arg)), AV(idx));
+      FIXINC(idx);
+      ARETURN(AV(idx));
+    }
   }
 
+  /* an optional argument can only appear in the car of a destructuring
+     bind. */
   if (!NIL_P(car(AV(arg))) && !NIL_P(cdr(AV(arg)))) {
     arc_emit(c, AV(ctx), ipush);
     arc_emit(c, AV(ctx), idcar);
     AFCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
-	   AV(env), AV(idx));
+	   AV(env), AV(idx), CTRUE);
     WV(idx, AFCRV);
     arc_emit(c, AV(ctx), ipop);
     arc_emit(c, AV(ctx), idcdr);
@@ -277,7 +283,7 @@ static AFFDEF(destructure)
   } else if (!NIL_P(car(AV(arg))) && NIL_P(cdr(AV(arg)))) {
     arc_emit(c, AV(ctx), idcar);
     AFTCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
-	   AV(env), AV(idx));
+	    AV(env), AV(idx), CTRUE);
   } else if (NIL_P(car(AV(arg))) && !NIL_P(cdr(AV(arg)))) {
     arc_emit(c, AV(ctx), idcdr);
     AFTCALL(arc_mkaff(c, destructure, CNIL), cdr(AV(arg)), AV(ctx),
