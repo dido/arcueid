@@ -11,7 +11,7 @@
   (ensure-srvdirs)
   (map [apply new-bgthread _] pending-bgthreads*)
   (w/socket s port
-    (setuid 2) ; XXX switch from root to pg
+    ; (setuid 2) ; XXX switch from root to pg
     (prn "ready to serve port " port)
     (flushout)
     (= currsock* s)
