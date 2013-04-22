@@ -23,6 +23,8 @@
 #include "../src/arith.h"
 #include "../config.h"
 
+extern void __arc_print_string(arc *c, value ppstr);
+
 arc cc;
 arc *c;
 
@@ -384,7 +386,7 @@ START_TEST(test_compile_fn_basic)
 {
   value thr, cctx, clos, code;
 
-  thr = arc_mkthread(c);
+  c->curthread = thr = arc_mkthread(c);
 
   COMPILE("((fn (a b c) a) 1 2 3)");
   cctx = TVALR(thr);
@@ -436,7 +438,6 @@ START_TEST(test_compile_fn_basic)
   fail_unless(TYPE(TVALR(thr)) == T_CONS);
   fail_unless(car(TVALR(thr)) == INT2FIX(2));
   fail_unless(cadr(TVALR(thr)) == INT2FIX(3));
-
 }
 END_TEST
 
@@ -523,6 +524,27 @@ START_TEST(test_compile_fn_dsb)
 
   TEST("((fn (a (b . c) d) d) 1 '(2 3 4) 5)");
   fail_unless(ret == INT2FIX(5));
+
+  COMPILE("((fn ((i o ip)) i) (quote (1 2 3)))");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(1));
+
+  COMPILE("((fn ((i o ip)) o) (quote (1 2 3)))");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(2));
+
+  COMPILE("((fn ((i o ip)) ip) (quote (1 2 3)))");
+  cctx = TVALR(thr);
+  code = arc_cctx2code(c, cctx);
+  clos = arc_mkclos(c, code, CNIL);
+  XCALL0(clos);
+  fail_unless(TVALR(thr) == INT2FIX(3));
 
   /* Destructuring binds with optional arguments */
   TEST("((fn (a (b c (o d 123) e) f) d) 1 '(2 3 4) 4)");
@@ -706,6 +728,13 @@ START_TEST(test_compile_macro)
 }
 END_TEST
 
+static void errhandler(arc *c, value thr, value str)
+{
+  fprintf(stderr, "Error\n");
+  __arc_print_string(c, str);
+  abort();
+}
+
 int main(void)
 {
   int number_failed;
@@ -715,6 +744,7 @@ int main(void)
 
   c = &cc;
   arc_init(c);
+  c->errhandler = errhandler;
 
   tcase_add_test(tc_compiler, test_compile_nil);
   tcase_add_test(tc_compiler, test_compile_t);
