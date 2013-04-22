@@ -179,7 +179,7 @@ AFFDEF(arc_scmark)
     WV(bind, CNIL);
   WV(bind, cons(c, AV(val), AV(bind)));
   arc_hash_insert(c, AV(cm), AV(key), AV(bind));
-  ARETURN(val);
+  ARETURN(AV(val));
   AFEND;
 }
 AFFEND
@@ -195,7 +195,7 @@ AFFDEF(arc_ccmark)
     ARETURN(CNIL);
   WV(val, car(AV(bind)));
   WV(bind, cdr(AV(bind)));
-  if (NIL_P(bind)) {
+  if (NIL_P(AV(bind))) {
     arc_hash_delete(c, AV(cm), AV(key));
   } else {
     arc_hash_insert(c, AV(cm), AV(key), AV(bind));
