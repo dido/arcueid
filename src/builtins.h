@@ -103,6 +103,7 @@ enum builtin_syms {
   S_BINARY,			/* binary */
   S_TEXT,			/* text */
   S_APPEND,			/* append */
+  S_ATSTRINGS,			/* atstrings */
 
   S_THE_END			/* end of the line */
 };
