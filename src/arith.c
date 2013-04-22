@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include "arcueid.h"
 #include "arith.h"
+#include "builtins.h"
 #include "../config.h"
 #include "utf.h"
 
@@ -1167,6 +1168,17 @@ value __arc_mod2(arc *c, value arg1, value arg2)
   arc_err_cstrfmt(c, "Invalid types for modulus");
   return(CNIL);
 }
+
+AFFDEF(__arc_add2_string)
+{
+  AARG(arg1, arg2);
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, arc_coerce, CNIL), AV(arg2), ARC_BUILTIN(c, S_STRING));
+  WV(arg2, AFCRV);
+  ARETURN(arc_strcat(c, AV(arg1), AV(arg2)));
+  AFEND;
+}
+AFFEND
 
 value __arc_add2(arc *c, value arg1, value arg2)
 {
