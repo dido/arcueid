@@ -87,8 +87,18 @@ value arc_current_process_milliseconds(arc *c)
 
 value arc_setuid(arc *c, value uid)
 {
+  int rv;
+
   TYPECHECK(uid, T_FIXNUM);
-  return(INT2FIX(setuid(FIX2INT(uid))));
+  rv = setuid(FIX2INT(uid));
+  if (rv < 0) {
+    int en = errno;
+
+    arc_err_cstrfmt(c, "setuid error (%s; errno=%d)",
+		    strerror(en), en);
+    return(CNIL);
+  }
+  return(INT2FIX(rv));
 }
 
 AFFDEF(arc_timedate)
@@ -129,6 +139,24 @@ AFFDEF(arc_timedate)
 			    cons(c, INT2FIX(timep.tm_mon + 1),
 				 cons(c, INT2FIX(timep.tm_year + 1900), CNIL))))));
   ARETURN(fnv);
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_quit)
+{
+  AOARG(exitcode);
+  int ec;
+  AFBEGIN;
+
+  if (BOUND_P(AV(exitcode))) {
+    TYPECHECK(AV(exitcode), T_FIXNUM);
+    ec = FIX2INT(AV(exitcode));
+  } else {
+    ec = 0;
+  }
+  exit(ec);
+  ARETURN(CNIL);
   AFEND;
 }
 AFFEND
