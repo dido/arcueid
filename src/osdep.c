@@ -28,6 +28,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
+#include "builtins.h"
 #include "../config.h"
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -67,41 +68,12 @@ unsigned long long __arc_milliseconds(void)
 
 value arc_seconds(arc *c)
 {
-  return(arc_mkflonum(c, __arc_milliseconds()/1000.0));
+  return(__arc_ull2val(c, __arc_milliseconds() / 1000ULL));
 }
 
 value arc_msec(arc *c)
 {
-  unsigned long long ms;
-
-  ms = __arc_milliseconds();
-  if (ms < FIXNUM_MAX) {
-    return(INT2FIX(ms));
-  } else {
-#ifdef HAVE_GMP_H
-    value msbn;
-
-#if SIZEOF_UNSIGNED_LONG_LONG == 8
-    /* feed value into the bignum 32 bits at a time */
-    msbn = arc_mkbignuml(c, (ms >> 32)&0xffffffff);
-    mpz_mul_2exp(REPBNUM(msbn), REPBNUM(msbn), 32);
-    mpz_add_ui(REPBNUM(msbn), REPBNUM(msbn), ms & 0xffffffff);
-#else
-    int i;
-
-    msbn = arc_mkbignuml(c, 0);
-    for (i=SIZEOF_UNSIGNED_LONG_LONG-1; i>=0; i--) {
-      mpz_mul_2exp(REPBNUM(msbn), REPBNUM(msbn), 8);
-      mpz_add_ui(REPBNUM(msbn), REPBNUM(msbn), (ms >> (i*8)) & 0xff);
-    }
-#endif
-    return(msbn);
-#else
-    /* floating point */
-    return(arc_mkflonum(c, (double)ms));
-#endif
-  }
-  return(CNIL);
+  return(__arc_ull2val(c, __arc_milliseconds()));
 }
 
 value arc_current_process_milliseconds(arc *c)
@@ -118,3 +90,45 @@ value arc_setuid(arc *c, value uid)
   TYPECHECK(uid, T_FIXNUM);
   return(INT2FIX(setuid(FIX2INT(uid))));
 }
+
+AFFDEF(arc_timedate)
+{
+  AOARG(arg);
+  ARARG(ignored);
+  value fnv;
+  time_t tm;
+  struct tm timep;
+  AFBEGIN;
+  (void)ignored;
+
+  if (BOUND_P(AV(arg))) {
+    AFCALL(arc_mkaff(c, arc_coerce, CNIL), AV(arg),
+	   ARC_BUILTIN(c, S_FIXNUM));
+    fnv = AFCRV;
+    if (NIL_P(fnv)) {
+      AFCALL(arc_mkaff(c, arc_coerce, CNIL), AV(arg),
+	     ARC_BUILTIN(c, S_FLONUM));
+      fnv = AFCRV;
+      tm = (time_t)REPFLO(fnv);
+    } else {
+      tm = FIX2INT(fnv);
+    }
+  } else {
+    tm = __arc_milliseconds() / 1000ULL;
+  }
+
+  if (gmtime_r(&tm, &timep) == NULL) {
+    arc_err_cstrfmt(c, "error in gmtime");
+    ARETURN(CNIL);
+  }
+
+  fnv = cons(c, INT2FIX(timep.tm_sec),
+	     cons(c, INT2FIX(timep.tm_min),
+		  cons(c, INT2FIX(timep.tm_hour),
+		       cons(c, INT2FIX(timep.tm_mday),
+			    cons(c, INT2FIX(timep.tm_mon + 1),
+				 cons(c, INT2FIX(timep.tm_year + 1900), CNIL))))));
+  ARETURN(fnv);
+  AFEND;
+}
+AFFEND
