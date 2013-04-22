@@ -156,6 +156,13 @@ START_TEST(test_read_string)
   char *teststr;
 
   thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "\"\""), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_STRING);
+  fail_unless(arc_is2(c, arc_mkstringc(c, ""), sexpr) == CTRUE);
+
+  thr = arc_mkthread(c);
   sio = arc_instring(c, arc_mkstringc(c, "\"foo\""), CNIL);
   XCALL(arc_sread, sio, CNIL);
   sexpr = TVALR(thr);
