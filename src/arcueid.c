@@ -29,6 +29,7 @@
 #include "builtins.h"
 #include "io.h"
 #include "vmengine.h"
+#include "alloc.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -878,8 +879,15 @@ static struct {
   { "newstring", -2, arc_newstring },
 
   /* time */
+  { "current-gc-milliseconds", 0, arc_current_gc_milliseconds },
+  { "current-process-milliseconds", 0, arc_current_process_milliseconds },
+  { "seconds", 0, arc_seconds },
+  { "msec", 0, arc_msec },
+  { "timedate", -2, arc_timedate },
+
   /* regular expressions */
   /* miscellaneous OS operations */
+  { "memory", 0, arc_memory },
   /* miscellaneous */
   { "sref", -2, arc_sref },
   { "len", 1, arc_len },
