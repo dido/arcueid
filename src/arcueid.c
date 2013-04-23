@@ -143,7 +143,7 @@ AFFDEF(arc_iso2)
   AFBEGIN;
   /* An object is isomorphic to itself */
   if (AV(a) == AV(b))
-    return(CTRUE);
+    ARETURN(CTRUE);
 
   /* Objects with different types cannot be isomorphic */
   if (TYPE(AV(a)) != TYPE(AV(b)))
