@@ -4,7 +4,7 @@
 
 (= arcdir* "arc/" logdir* "arc/logs/" staticdir* "static/")
 
-(= quitsrv* nil breaksrv* nil) 
+(= quitsrv* nil breaksrv* t) 
 
 (def serve ((o port 8080))
   (wipe quitsrv*)
@@ -25,7 +25,7 @@
 (def ensure-srvdirs ()
   (map ensure-dir (list arcdir* logdir* staticdir*)))
 
-(= srv-noisy* nil)
+(= srv-noisy* t)
 
 ; http requests currently capped at 2 meg by socket-accept
 
@@ -56,12 +56,15 @@
             (++ (requests/ip* ip 0))
 	    (prn "starting to process " ruuid)
             (with (th1 nil th2 nil)
+	      (prn ruuid " starting thread 1")
               (= th1 (thread
+		       (prn ruuid " thread 1 started")
                        (after (do (prn "handling request " ruuid)
 				  (handle-request-thread i o ip ruuid)
 				  (prn "finished handling request " ruuid))
                               (close i o)
 			      (kill-thread th2))))
+	      (prn ruuid " starting thread 2")
               (= th2 (thread
                        (sleep threadlife*)
                        (unless (dead th1)
@@ -102,6 +105,7 @@
             (if (is (++ nls) 2) 
                 (let (type op args n cooks) (parseheader (rev lines))
                   (let t1 (msec)
+		    (prn "uuid: " ruuid "type: " type " op: " op " args: " args)
                     (case type
                       get  (respond o op args cooks ip ruuid)
                       post (handle-post i o op args n cooks ip)
