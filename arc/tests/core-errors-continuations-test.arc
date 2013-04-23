@@ -133,7 +133,7 @@
       ("error"
         (on-err (fn (ex) (+ "got error " (details ex)))
                 (fn () (/ 42 0)))
-        "got error /: division by zero" )
+        "got error Division by zero" )
 
       ("explicit error"
         (on-err (fn (ex) (+ "got error " (details ex)))
