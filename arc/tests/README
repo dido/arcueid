@@ -2,6 +2,11 @@ This directory contains Conan Dalton's unit tests for Arc.  These were
 originally intended for his Rainbow (Arc in Java), but they are
 supposedly universal and should work for any Arc implementation.
 
+To run the tests, do the following at the Arcueid prompt:
+
+(load "unit-test.arc")
+(rat)
+
 A few notes here:
 
 1. There are many places where the unit tests originally made absolute
