@@ -140,8 +140,6 @@ unsigned long arc_hash_increment(arc *c, value v, arc_hs *s)
   switch (TYPE(v)) {
   case T_NIL:
     break;
-  case T_TRUE:
-    break;
   case T_FIXNUM:
     arc_hash_update(s, (unsigned long)FIX2INT(v));
     break;
@@ -410,10 +408,19 @@ value arc_mkhash(arc *c, int hashbits)
   return(hash);
 }
 
-value arc_newtable(arc *c)
+AFFDEF(arc_newtable)
 {
-  return(arc_mkhash(c, ARC_HASHBITS));
+  AOARG(constructor);
+  AVAR(tbl);
+  AFBEGIN;
+  WV(tbl, arc_mkhash(c, ARC_HASHBITS));
+  if (BOUND_P(AV(constructor))) {
+    AFCALL(AV(constructor), AV(tbl));
+  }
+  ARETURN(AV(tbl));
+  AFEND;
 }
+AFFEND
 
 
 static void hashtable_expand(arc *c, value hash)
