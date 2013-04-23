@@ -245,6 +245,7 @@ static value mksocket(arc *c, int type, int sockfd, int ai_family, int socktype)
   IO(sock)->flags = 0;
   IO(sock)->io_ops = VINDEX(VINDEX(c->builtins, BI_io), BI_io_sock);
   IO(sock)->name = CNIL;
+  SOCKDATA(sock)->closed = 0;
   SOCKDATA(sock)->fd = sockfd;
   SOCKDATA(sock)->addr = NULL;
   SOCKDATA(sock)->ai_family = ai_family;
