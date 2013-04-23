@@ -909,7 +909,7 @@ AFFDEF(arc_macex)
 {
   AARG(e);
   AFBEGIN;
-  AFTCALL(arc_mkaff(c, macex, CNIL), AV(e), CNIL);
+  AFTCALL(arc_mkaff(c, macex, CNIL), AV(e), CTRUE);
   AFEND;
 }
 AFFEND
@@ -918,7 +918,7 @@ AFFDEF(arc_macex1)
 {
   AARG(e);
   AFBEGIN;
-  AFTCALL(arc_mkaff(c, macex, CNIL), AV(e), CTRUE);
+  AFTCALL(arc_mkaff(c, macex, CNIL), AV(e), CNIL);
   AFEND;
 }
 AFFEND
