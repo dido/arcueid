@@ -60,7 +60,7 @@ void __arc_append_cstring(arc *c, char *buf, value *ppstr)
   *ppstr = (*ppstr == CNIL) ? nstr : arc_strcat(c, *ppstr, nstr);
 }
 
-static value visitkey(value v)
+value __arc_visitkey(value v)
 {
   unsigned long myhash;
   arc_hs s;
@@ -81,7 +81,7 @@ value __arc_visit2(arc *c, value v, value hash, value mykeyval)
 {
   value keyval, val;
 
-  keyval = visitkey(v);
+  keyval = __arc_visitkey(v);
   if (mykeyval == CNIL)
     mykeyval = keyval;
 
@@ -101,13 +101,13 @@ value __arc_visitp(arc *c, value v, value hash)
 {
   value keyval;
 
-  keyval = visitkey(v);
+  keyval = __arc_visitkey(v);
   return((arc_hash_lookup(c, hash, keyval) == CUNBOUND) ? CNIL : CTRUE);
 }
 
 void __arc_unvisit(arc *c, value v, value hash)
 {
-  arc_hash_delete(c, hash, visitkey(v));
+  arc_hash_delete(c, hash, __arc_visitkey(v));
 }
 
 
