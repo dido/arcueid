@@ -723,7 +723,7 @@ AFFDEF(xhash_lookup)
       ARETURN(CUNBOUND);
     /* CUNDEF means that there was an element at that index, but it was
        deleted at some point, so we may need to continue probing. */
-    if (e == CUNDEF)
+    if (AV(e) == CUNDEF)
       continue;
     AFCALL(arc_mkaff(c, arc_iso, CNIL), BKEY(AV(e)), AV(key));
     if (AFCRV == CTRUE)
