@@ -272,6 +272,10 @@ static AFFDEF(flonum_xcoerce)
       value bn;
 
       bn = arc_mkbignuml(c, 0L);
+      if (isinf(REPFLO(AV(obj))) || isnan(REPFLO(AV(obj)))) {
+	arc_err_cstrfmt(c, "cannot coerce inf or nan");
+	ARETURN(CNIL);
+      }
       mpz_set_d(REPBNUM(bn), REPFLO(AV(obj)));
       ARETURN(bn);
 #else
@@ -770,7 +774,8 @@ static AFFDEF(rational_xcoerce)
   double drem;
 
   AFBEGIN;
-  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM) {
+  if (FIX2INT(AV(stype)) == T_FIXNUM || FIX2INT(AV(stype)) == T_BIGNUM
+      || FIX2INT(AV(stype)) == T_INT) {
     bignum = arc_mkbignuml(c, 0L);
     mpq_init(rem);
     mpz_tdiv_qr(REPBNUM(bignum), mpq_numref(rem),
