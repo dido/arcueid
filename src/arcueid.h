@@ -41,7 +41,7 @@ typedef struct {
 
 enum arc_types {
   T_NIL=0,
-  T_TRUE=1,
+  /*  T_TRUE=1, */
   T_FIXNUM=2,
   T_BIGNUM=3,
   T_FLONUM=4,
@@ -146,6 +146,7 @@ struct arc {
   int lastsym;			/* last symbol index created */
   value genv;			/* global environment */
   value builtins;		/* built-in data */
+  value ctrue;			/* true */
 
   /* Threading and scheduler */
   value vmthreads;		/* virtual machine thread objects (head) */
@@ -189,13 +190,15 @@ extern void __arc_null_sweeper(arc *c, value v);
 
 /* Special constants -- non-zero and non-fixnum constants */
 #define CNIL ((value)0)
-#define CTRUE ((value)2)
+/* #define CTRUE ((value)2) */
 #define CUNDEF ((value)4)	/* "tombstone" value */
 #define CUNBOUND ((value)6)	/* returned when a hash has no binding value */
 #define CLASTARG ((value)8)	/* last argument */
 
+#define CTRUE (c->ctrue)
+
 #define IMMEDIATE_MASK 0x0f
-#define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CTRUE || (value)(x) == CUNDEF || (value)(x) == CUNBOUND || ENV_P(x))
+#define IMMEDIATE_P(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL || (value)(x) == CUNDEF || (value)(x) == CUNBOUND)
 #define NIL_P(v) ((v) == CNIL)
 #define BOUND_P(v) ((v) != CUNBOUND)
 
@@ -227,8 +230,6 @@ static inline enum arc_types TYPE(value v)
     return(T_ENV);
   if (v == CNIL)
     return(T_NIL);
-  if (v == CTRUE)
-    return(T_TRUE);
   if (v == CUNDEF || v == CUNBOUND)
     return(T_NONE);
   if (!IMMEDIATE_P(v))
@@ -326,7 +327,7 @@ extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s);
 extern unsigned long arc_hash(arc *c, value v);
 extern value arc_mkhash(arc *c, int hashbits);
 extern value arc_mkwtable(arc *c, int hashbits);
-extern value arc_newtable(arc *c);
+extern int arc_newtable(arc *c, value thr);
 extern value arc_hash_lookup(arc *c, value tbl, value key);
 extern value arc_hash_lookup2(arc *c, value tbl, value key);
 extern value arc_hash_insert(arc *c, value hash, value key, value val);
