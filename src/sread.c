@@ -32,6 +32,61 @@ static int read_char(arc *c, value thr);
 static int read_comment(arc *c, value thr);
 static int read_symbol(arc *c, value thr);
 
+static value get_lineno(arc *c, value lndata)
+{
+  value linenum;
+
+  if (!BOUND_P(lndata))
+    return(CUNBOUND);
+
+  linenum = arc_hash_lookup(c, lndata, INT2FIX(-1));
+  if (NIL_P(linenum) || !BOUND_P(linenum))
+    linenum = INT2FIX(0);
+  return(linenum);
+}
+
+static value inc_lineno(arc *c, value lndata)
+{
+  value linenum;
+
+  if (!BOUND_P(lndata))
+    return(CUNBOUND);
+  linenum = get_lineno(c, lndata);
+  linenum = INT2FIX(FIX2INT(linenum) + 1);
+  arc_hash_insert(c, lndata, INT2FIX(-1), linenum);
+  return(linenum);
+}
+
+static value get_file(arc *c, value lndata)
+{
+  value file;
+
+  if (!BOUND_P(lndata))
+    return(CUNBOUND);
+  file = arc_hash_lookup(c, lndata, INT2FIX(-2));
+  if (!BOUND_P(file))
+    file = CNIL;
+  return(file);
+}
+
+static value set_file(arc *c, value lndata, value file)
+{
+  if (!BOUND_P(lndata))
+    return(CUNBOUND);
+  if (NIL_P(get_file(c, lndata)))
+    return(arc_hash_insert(c, lndata, INT2FIX(-2), file));
+  return(CNIL);
+}
+
+static value add_cons_lineno(arc *c, value lndata, value conscell,
+			     value linenum)
+{
+  if (!BOUND_P(lndata))
+    return(CNIL);
+  arc_hash_insert(c, lndata, __arc_visitkey(conscell), linenum);
+  return(conscell);
+}
+
 /* Is ch a valid character in a symbol? */
 static int issym(Rune ch)
 {
@@ -46,8 +101,8 @@ static int issym(Rune ch)
   return(1);
 }
 
-#define SCAN(fp, ch)				\
-  AFCALL(arc_mkaff(c, scan, CNIL), fp);	\
+#define SCAN(fp, lndata, ch)			\
+  AFCALL(arc_mkaff(c, scan, CNIL), fp, lndata);	\
   WV(ch, AFCRV)
 
 #define READ(fp, eof, val)					\
@@ -67,7 +122,7 @@ static int issym(Rune ch)
   WV(val, AFCRV);						\
   r = (NIL_P(AV(val))) ? Runeerror : arc_char2rune(c, AV(val))	\
 
-#define READ_COMMENT(fd) AFCALL(arc_mkaff(c, read_comment, CNIL), fd, CNIL)
+#define READ_COMMENT(fd, lndata) AFCALL(arc_mkaff(c, read_comment, CNIL), fd, CNIL, lndata)
 
 /* Read up to the first non-symbol character from fp */
 static AFFDEF(getsymbol)
@@ -95,15 +150,19 @@ AFFEND
 AFFDEF(arc_sread)
 {
   AARG(fp, eof);
-  AVAR(ch, func);
+  AOARG(lndata);
+  AVAR(ch, func, linenum);
   Rune r;
   AFBEGIN;
+
+  set_file(c, AV(lndata), fp);
   /* XXX - should put this in builtins somewhere? */
   for (;;) {
-    SCAN(AV(fp), ch);
+    SCAN(AV(fp), AV(lndata), ch);
     if (AV(ch) == CNIL)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
+    WV(linenum, get_lineno(c, AV(lndata)));
     /* cannot use switch here: interferes with the case statement implicitly
        created by AFBEGIN! */
     if (r == '(') {
@@ -127,13 +186,23 @@ AFFDEF(arc_sread)
     } else if (r == '#') {
       WV(func, arc_mkaff(c, read_char, CNIL));
     } else if (r == ';') {
-      READ_COMMENT(AV(fp));
+      READ_COMMENT(AV(fp), AV(lndata));
       continue;
     } else {
       arc_ungetc_rune(c, r, AV(fp));
       WV(func, arc_mkaff(c, read_symbol, CNIL));
     }
-    AFTCALL(AV(func), AV(fp), AV(eof));
+    if (BOUND_P(AV(lndata))) {
+      value result;
+
+      AFCALL(AV(func), AV(fp), AV(eof), AV(lndata));
+      result = AFCRV;
+      if (TYPE(result) == T_CONS)
+	add_cons_lineno(c, AV(lndata), result, AV(linenum));
+      ARETURN(result);
+    } else {
+      AFTCALL(AV(func), AV(fp), AV(eof));
+    }
   }
   AFEND;
 }
@@ -142,7 +211,7 @@ AFFEND
 /* Scan for the first non-blank character */
 static AFFDEF(scan)
 {
-  AARG(fp);
+  AARG(fp, lndata);
   Rune r;
   AVAR(ch);
   AFBEGIN;
@@ -152,6 +221,8 @@ static AFFDEF(scan)
     if (NIL_P(AV(ch)))
       ARETURN(CNIL);
     r = arc_char2rune(c, AV(ch));
+    if (BOUND_P(AV(lndata)) && ucisnl(r))
+      inc_lineno(c, AV(lndata));
     if (ucisspace(r))
       continue;
     break;
@@ -164,18 +235,19 @@ AFFEND
 static AFFDEF(read_list)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   AVAR(top, val, last, ch, indot);
   Rune r;
   AFBEGIN;
 
   WV(top, WV(val, WV(last, WV(indot, CNIL))));
   for (;;) {
-    SCAN(AV(fp), ch);
+    SCAN(AV(fp), AV(lndata), ch);
     if (AV(ch) == CNIL)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
     if (r == ';') {
-      READ_COMMENT(AV(fp));
+      READ_COMMENT(AV(fp), AV(lndata));
       continue;
     } else if (r == ')') {
       ARETURN(AV(top));
@@ -215,17 +287,18 @@ AFFEND
 static AFFDEF(read_anonf)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   AVAR(top, val, last, ch);
   Rune r;
   AFBEGIN;
   WV(top, WV(val, WV(last, CNIL)));
   for (;;) {
-    SCAN(AV(fp), ch);
+    SCAN(AV(fp), AV(lndata), ch);
     if (AV(ch) == CNIL)
       ARETURN(AV(eof));
     r = arc_char2rune(c, AV(ch));
     if (r == ';') {
-      READ_COMMENT(AV(fp));
+      READ_COMMENT(AV(fp), AV(lndata));
       continue;
     } else if (r == ']') {
       /* Complete the fn */
@@ -264,7 +337,9 @@ AFFEND
 static AFFDEF(read_quote)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   AFBEGIN;
+  (void)lndata;
   AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QUOTE), AV(eof));
   AFEND;
 }
@@ -273,7 +348,9 @@ AFFEND
 static AFFDEF(read_qquote)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   AFBEGIN;
+  (void)lndata;
   AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QQUOTE), AV(eof));
   AFEND;
 }
@@ -282,9 +359,11 @@ AFFEND
 static AFFDEF(read_comma)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   Rune r;
   AVAR(ch);
   AFBEGIN;
+  (void)lndata;
 
   READC(AV(fp), ch)
   r = arc_char2rune(c, AV(ch));
@@ -398,6 +477,7 @@ AFFEND
 AFFDEF(read_string)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   Rune r;
   int digval;
   AVAR(ch, state, buf, escrune, digcount);
@@ -423,6 +503,10 @@ AFFDEF(read_string)
 	/* escape character */
 	WV(state, INT2FIX(2));
 	continue;
+      }
+
+      if (ucisnl(r)) {
+	inc_lineno(c, AV(lndata));
       }
 
       /* Otherwise, just add the character to our string buffer */
@@ -509,13 +593,14 @@ AFFEND
 static AFFDEF(read_char)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   AVAR(ch);
   int alldigits, val, i, digit;
   Rune r;
   value tok, symch;
   AFBEGIN;
-
-  ((void)eof);
+  (void)lndata;
+  (void)eof;
   READC(AV(fp), ch);
   r = arc_char2rune(c, AV(ch));
   if (r != '\\') {
@@ -602,14 +687,19 @@ AFFEND
 static AFFDEF(read_comment)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   AVAR(ch);
   Rune r;
   AFBEGIN;
   ((void)eof);
   for (;;) {
     READC2(AV(fp), ch, r);
-    if (r == Runeerror || ucisnl(r))
+    if (r == Runeerror)
       break;
+    if (ucisnl(r)) {
+      inc_lineno(c, AV(lndata));
+      break;
+    }
   }
   ARETURN(CNIL);
   AFEND;
@@ -620,9 +710,11 @@ AFFEND
 static AFFDEF(read_symbol)
 {
   AARG(fp, eof);
+  AOARG(lndata);
   AVAR(sym);
   value num;
   AFBEGIN;
+  (void)lndata;
   (void)eof;
   AFCALL(arc_mkaff(c, getsymbol, CNIL), AV(fp));
   WV(sym, AFCRV);
