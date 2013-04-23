@@ -257,8 +257,9 @@ AFFDEF(arc_writec)
   IOW_TYPECHECK(AV(fd));
   CHECK_CLOSED(AV(fd));
   if (IO(AV(fd))->flags & IO_FLAG_GETB_IS_GETC) {
-    AFTCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd),
-	    INT2FIX(arc_char2rune(c, AV(chr))));
+    AFCALL(VINDEX(IO(AV(fd))->io_ops, IO_putb), AV(fd),
+	   INT2FIX(arc_char2rune(c, AV(chr))));
+    ARETURN(arc_mkchar(c, FIX2INT(AFCRV)));
   }
   /* XXX - should put this in builtins */
   WV(writeb, arc_mkaff(c, arc_writeb, CNIL));
