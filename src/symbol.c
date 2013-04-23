@@ -119,6 +119,7 @@ void arc_init_symtable(arc *c)
     arc_hash_insert(c, VINDEX(c->builtins, BI_charesc), str, chr);
     arc_hash_insert(c, VINDEX(c->builtins, BI_charesc), chr, str);
   }
+  c->ctrue = ARC_BUILTIN(c, S_T);
 }
 
 static AFFDEF(symbol_pprint)
