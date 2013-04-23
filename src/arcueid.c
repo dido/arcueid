@@ -206,7 +206,6 @@ value arc_type(arc *c, value obj)
 {
   switch (TYPE(obj)) {
   case T_NIL:
-  case T_TRUE:
   case T_SYMBOL:
     return(ARC_BUILTIN(c, S_SYM));
     break;
@@ -289,7 +288,6 @@ value arc_type_compat(arc *c, value obj)
 {
   switch (TYPE(obj)) {
   case T_NIL:
-  case T_TRUE:
   case T_SYMBOL:
     return(ARC_BUILTIN(c, S_SYM));
     break;
@@ -800,7 +798,7 @@ static struct {
   { "abs", 1, arc_abs },
 
   /* Table Operations */
-  { "table", 0, arc_newtable },
+  { "table", -2, arc_newtable },
   { "maptable", -2, arc_xhash_map },
 
   /* Evaluation */
@@ -964,6 +962,7 @@ void arc_init_builtins(arc *c)
 
 void arc_init(arc *c)
 {
+  c->ctrue = (value)2; /* stand-in for CTRUE until properly defined */
   /* Initialise memory manager first */
   arc_init_memmgr(c);
   /* Initialise built-in data type definitions */
