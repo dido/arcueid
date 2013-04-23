@@ -2,11 +2,16 @@ ARCUEID NEWS -- History of user-visible changes.       -*- outline -*-
 Copyright (C) 2010,2011,2012 Rafael R. Sevilla
 See the end for copying conditions.
 
-* Version 0.0.13 (2012-??-??)
+* Version 0.1.0 (2013-04-23)
 - Include Conan Dalton's Arc unit tests from Rainbow
 - Bug fixes in ssyntax handling (a.1 now works instead of passing a symbol)
 - Annotate will not annotate an object more than once against the same type
 - nil now accepted as a parameter (which ignores its param)
+- Internal overhaul of virtual machine code
+- Internal overhaul of C foreign function interface (using trampolining)
+- Garbage collection algorithm changed
+- A shot at using readline persistent history in the Arcueid REPL
+- Many more changes that come from a near ground-up rewrite
 
 * Version 0.0.12 (2012-02-29)
 - 32-bit compatibility fixes (allocation alignment issues mostly)
