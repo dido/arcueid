@@ -338,25 +338,29 @@ extern int __arc_recv_rvchan(arc *c, value thr);
    Terminates when no more threads are available.
 
    全く, this is beginning to look a lot a like the reactor pattern!
+
+   XXX - this code needs to be checked extensively for places where
+   barrier writes are needed.
 */
 void arc_thread_dispatch(arc *c)
 {
-  value thr, prev;
+  value thr;
   int nthreads, blockedthreads, iowait, sleepthreads, runthreads;
   int stoppedthreads, need_select;
   unsigned long long minsleep;
   value iowaitdata;
   int eptimeout;
+  value nvq, nvqt;
 
   for (;;) {
     nthreads = blockedthreads = iowait = stoppedthreads = 0;
     sleepthreads = runthreads = need_select = 0;
     minsleep = ULLONG_MAX;
     iowaitdata = CNIL;
+    nvq = nvqt = CNIL;
     /* XXX - see if we need more extensive use of the write barrier when
        doing these thread manipulations */
-    for (c->vmqueue = c->vmthreads, prev = CNIL; c->vmqueue;
-	 prev = c->vmqueue, c->vmqueue = cdr(c->vmqueue)) {
+    for (c->vmqueue = c->vmthreads; c->vmqueue; c->vmqueue = cdr(c->vmqueue)) {
       thr = car(c->vmqueue);
       __arc_wb(c->curthread, thr);
       c->curthread = thr;
@@ -367,13 +371,6 @@ void arc_thread_dispatch(arc *c)
       case Trelease:
       case Tbroken:
 	stoppedthreads++;
-	if (prev == CNIL)
-	  c->vmthreads = cdr(c->vmqueue);
-	else
-	  scdr(prev, cdr(c->vmqueue));
-	if (c->vmthrtail == c->vmqueue)
-	  c->vmthrtail = prev;
-
 	/* This will serve to wake up all the threads waiting on
 	   the return value channel of the thread, so they can pick
 	   up the return value now that it is available. */
@@ -381,6 +378,7 @@ void arc_thread_dispatch(arc *c)
 	  __arc_send_rvchan(c, TRVCH(thr), TVALR(thr));
 	__arc_wb(TRVCH(thr), TVALR(thr));
 	TRVCH(thr) = TVALR(thr);
+	goto no_enqueue;
 	break;
       case Talt:
       case Tsend:
@@ -397,9 +395,9 @@ void arc_thread_dispatch(arc *c)
 	  sleepthreads++;
 	  if (TWAKEUP(thr) < minsleep)
 	    minsleep = TWAKEUP(thr);
-	  continue;
+	  goto finish_thread;
 	}
-	/* fall through and let the thread run if so */
+	/* fall through and let the awakened thread run */
       case Tready:
 	/* let the thread run */
 	if (TQUANTA(thr) <= 0)
@@ -422,11 +420,16 @@ void arc_thread_dispatch(arc *c)
 	iowaitdata = cons(c, thr, iowaitdata);
 	break;
       }
-
+    finish_thread:
       if (RUNNABLE(thr))
 	runthreads++;
+      /* rebuild the queue if the thread is not broken or released */
+      __arc_enqueue(c, thr, &nvq, &nvqt);
+    no_enqueue:
+      ;
     }
-
+    c->vmthreads = nvq;
+    c->vmthrtail = nvqt;
     /* XXX - should we print a warning message if we abort when all
        threads are blocked?  I suppose it should be up to the caller
        to decide whether this is a bad thing or no.  It isn't an
@@ -481,6 +484,7 @@ value arc_spawn(arc *c, value thunk)
     return(CNIL);
   }
   thr = arc_mkthread(c);
+  TARGC(thr) = 0;
   SFUNR(thr, SVALR(thr, thunk));
   /* XXX - copy continuation marks from the spawning thread to the new
      thread if there is a parent thread. */
@@ -489,6 +493,8 @@ value arc_spawn(arc *c, value thunk)
      terminates right then and there and is never enqueued. */
   if (tfn->apply(c, thr, TVALR(thr)) != TR_RESUME) {
     TSTATE(thr) = Trelease;
+    __arc_wb(TRVCH(thr), TVALR(thr));
+    TRVCH(thr) = TVALR(thr);
   } else {
     /* Otherwise, queue the new thread and enqueue it in the dispatcher. */
     __arc_enqueue(c, thr, &c->vmthreads, &c->vmthrtail);
