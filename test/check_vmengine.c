@@ -437,7 +437,6 @@ START_TEST(test_true)
   XCALL0(clos);
   fail_unless(TQUANTA(thr) == QUANTA-1);
   fail_unless(TSTATE(thr) == Trelease);
-  fail_unless(TYPE(TVALR(thr)) == T_TRUE);
   fail_unless(TVALR(thr) == CTRUE);
 }
 END_TEST
