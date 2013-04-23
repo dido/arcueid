@@ -784,7 +784,7 @@ START_TEST(test_is)
 
   thr = arc_mkthread(c);
   TEST("(is 'a 'a)");
-  fail_unless(TYPE(ret) == T_TRUE);
+  fail_unless(ret == CTRUE);
 }
 END_TEST
 
@@ -794,7 +794,7 @@ START_TEST(test_iso)
 
   thr = arc_mkthread(c);
   TEST("(iso '(1 2 3) '(1 2 3))");
-  fail_unless(TYPE(ret) == T_TRUE);
+  fail_unless(ret == CTRUE);
 }
 END_TEST
 
