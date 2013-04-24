@@ -363,9 +363,12 @@ void __arc_init_fio(arc *c)
   SVINDEX(io_ops, IO_close, arc_mkaff(c, pio_close, CNIL));
   SVINDEX(VINDEX(c->builtins, BI_io), BI_io_pfp, io_ops);
 
-  arc_bindsym(c, ARC_BUILTIN(c, S_STDIN_FD), mkfio(c, T_INPORT, stdin, CNIL));
-  arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT_FD), mkfio(c, T_OUTPORT, stdout, CNIL));
-  arc_bindsym(c, ARC_BUILTIN(c, S_STDERR_FD), mkfio(c, T_OUTPORT, stderr, CNIL));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDIN_FD),
+	      mkfio(c, T_INPORT, stdin, arc_mkstringc(c, "(stdin)")));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDOUT_FD),
+	      mkfio(c, T_OUTPORT, stdout, arc_mkstringc(c, "(stdout)")));
+  arc_bindsym(c, ARC_BUILTIN(c, S_STDERR_FD),
+	      mkfio(c, T_OUTPORT, stderr, arc_mkstringc(c, "(stderr)")));
 }
 
 static typefn_t fileio_tfn = {
