@@ -60,7 +60,7 @@ static value inc_lineno(arc *c, value lndata)
     return(CUNBOUND);
   linenum = get_lineno(c, lndata);
   linenum = INT2FIX(FIX2INT(linenum) + 1);
-  arc_hash_insert(c, lndata, INT2FIX(-1), linenum);
+  set_lineno(c, lndata, linenum);
   return(linenum);
 }
 
@@ -94,9 +94,29 @@ static value add_cons_lineno(arc *c, value lndata, value conscell,
   return(conscell);
 }
 
+static value get_lineno2(arc *c, value lndata)
+{
+  value linenum;
+
+  if (!BOUND_P(lndata))
+    return(CUNBOUND);
+
+  linenum = arc_hash_lookup(c, lndata, INT2FIX(-3));
+  if (NIL_P(linenum) || !BOUND_P(linenum))
+    linenum = INT2FIX(1);
+  return(linenum);
+}
+
+static value set_lineno2(arc *c, value lndata, value lineno)
+{
+  if (BOUND_P(lndata))
+    arc_hash_insert(c, lndata, INT2FIX(-3), lineno);
+  return(CNIL);
+}
+
 value __arc_reset_lineno(arc *c, value lndata)
 {
-  return(set_lineno(c, lndata, INT2FIX(1)));
+  return(set_lineno2(c, lndata, INT2FIX(1)));
 }
 
 /* Gets the closest file and line number to obj. If obj is not
@@ -108,14 +128,14 @@ value __arc_get_fileline(arc *c, value lndata, value obj)
 
   if (!BOUND_P(lndata))
     return(CUNBOUND);
-  lineno = get_lineno(c, lndata);
+  lineno = get_lineno2(c, lndata);
   if (CONS_P(obj)) {
     value newln;
 
-    newln = arc_hash_lookup(c, lndata, obj);
+    newln = arc_hash_lookup(c, lndata, __arc_visitkey(obj));
     if (BOUND_P(newln)) {
       lineno = newln;
-      set_lineno(c, lndata, lineno);
+      set_lineno2(c, lndata, lineno);
     }
   }
   return(cons(c, get_file(c, lndata), lineno));
