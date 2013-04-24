@@ -433,12 +433,14 @@ extern int arc_write(arc *c, value thr);
 extern int arc_disp(arc *c, value thr);
 extern int __arc_disp_write(arc *c, value thr);
 extern value arc_pipe_from(arc *c, value cmd);
+extern value arc_portname(arc *c, value port);
 
 /* Continuations */
 extern value __arc_mkcont(arc *c, value thr, int offset);
 
 /* The reader */
 extern int arc_sread(arc *c, value thr);
+extern value __arc_get_file(arc *c, value lndata);
 
 /* Special syntax handling */
 extern value arc_ssyntax(arc *c, value x);
