@@ -364,9 +364,9 @@ extern value arc_thr_valr(arc *c, value thr);
 extern value arc_thr_set_valr(arc *c, value thr, value v);
 extern int arc_thr_argc(arc *c, value thr);
 extern value arc_thr_envr(arc *c, value thr);
-extern int arc_cmark(arc *c, value thr);
-extern int arc_scmark(arc *c, value thr);
-extern int arc_ccmark(arc *c, value thr);
+extern value arc_cmark(arc *c, value key);
+extern value arc_scmark(arc *c, value key, value val);
+extern value arc_ccmark(arc *c, value key);
 
 extern int arc_apply(arc *c, value thr);
 
@@ -440,7 +440,8 @@ extern value __arc_mkcont(arc *c, value thr, int offset);
 
 /* The reader */
 extern int arc_sread(arc *c, value thr);
-extern value __arc_get_file(arc *c, value lndata);
+extern value __arc_get_fileline(arc *c, value lndata, value obj);
+extern value __arc_reset_lineno(arc *c, value lndata);
 
 /* Special syntax handling */
 extern value arc_ssyntax(arc *c, value x);
