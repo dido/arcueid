@@ -85,20 +85,17 @@ enum {
 };
 
 #define STDIN(fd) do {							\
-  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDIN_FD));	\
-  WV(fd, AFCRV);							\
+  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDIN_FD)));			\
   if (NIL_P(AV(fd)))							\
     WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD))); } while (0)
 
 #define STDOUT(fd) do {							\
-  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDOUT_FD));	\
-  WV(fd, AFCRV);							\
+  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDOUT_FD)));			\
   if (NIL_P(AV(fd)))							\
     WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD))); } while (0)
 
 #define STDERR(fd) do {							\
-  AFCALL(arc_mkaff(c, arc_cmark, CNIL), ARC_BUILTIN(c, S_STDERR_FD));	\
-  WV(fd, AFCRV);							\
+  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDOUT_FD)));			\
   if (NIL_P(AV(fd)))							\
     WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD))); } while (0)
 
