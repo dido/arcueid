@@ -180,16 +180,52 @@ AFFDEF(arc_err)
 }
 AFFEND
 
-void arc_err_cstrfmt(arc *c, const char *fmt, ...)
+static void va_err_cstrfmt(arc *c, const char *fmt, va_list ap)
 {
-  va_list ap;
   char cstr[1000];
   value str;
 
+  vsnprintf(cstr, sizeof(char)*1000, fmt, ap);
+  str = arc_mkstringc(c, cstr);
+  /* This is how we can invoke arc_err from a non-AFF */
+  __arc_mkenv(c, c->curthread, 0, 0);	/* null env required */
+  __arc_affapply(c, c->curthread, CNIL, arc_mkaff(c, arc_err, CNIL), str,
+		 CLASTARG);
+  longjmp(TEJMP(c->curthread), 1);
+}
+
+void arc_err_cstrfmt(arc *c, const char *fmt, ...)
+{
+  va_list ap;
+
   va_start(ap, fmt);
+  va_err_cstrfmt(c, fmt, ap);
+  va_end(ap);
+}
+
+void arc_err_cstrfmt_line(arc *c, value fileline, const char *fmt, ...)
+{
+  va_list ap;
+  char *namestr;
+  char *filelinestr;
+  char cstr[1000];
+  value str;
+  int len;
+
+  va_start(ap, fmt);
+  if (!BOUND_P(fileline))
+    va_err_cstrfmt(c, fmt, ap);
+
+  namestr = alloca((FIX2INT(arc_strutflen(c, car(fileline))) + 2)*sizeof(char));
+  arc_str2cstr(c, car(fileline), namestr);
+  len = snprintf(NULL, 0, "%s:%ld: ", namestr, FIX2INT(cdr(fileline)));
+  filelinestr = alloca(sizeof(char)*(len+1));
+  snprintf(filelinestr, len+1, "%s:%ld: ", namestr, FIX2INT(cdr(fileline)));
+
   vsnprintf(cstr, sizeof(char)*1000, fmt, ap);
   va_end(ap);
   str = arc_mkstringc(c, cstr);
+  str = arc_strcat(c, arc_mkstringc(c, filelinestr), str);
   /* This is how we can invoke arc_err from a non-AFF */
   __arc_mkenv(c, c->curthread, 0, 0);	/* null env required */
   __arc_affapply(c, c->curthread, CNIL, arc_mkaff(c, arc_err, CNIL), str,
