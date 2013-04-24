@@ -41,7 +41,7 @@ static value get_lineno(arc *c, value lndata)
 
   linenum = arc_hash_lookup(c, lndata, INT2FIX(-1));
   if (NIL_P(linenum) || !BOUND_P(linenum))
-    linenum = INT2FIX(0);
+    linenum = INT2FIX(1);
   return(linenum);
 }
 
@@ -57,7 +57,7 @@ static value inc_lineno(arc *c, value lndata)
   return(linenum);
 }
 
-static value get_file(arc *c, value lndata)
+value __arc_get_file(arc *c, value lndata)
 {
   value file;
 
@@ -73,7 +73,7 @@ static value set_file(arc *c, value lndata, value file)
 {
   if (!BOUND_P(lndata))
     return(CUNBOUND);
-  if (NIL_P(get_file(c, lndata)))
+  if (NIL_P(__arc_get_file(c, lndata)))
     return(arc_hash_insert(c, lndata, INT2FIX(-2), file));
   return(CNIL);
 }
@@ -105,8 +105,8 @@ static int issym(Rune ch)
   AFCALL(arc_mkaff(c, scan, CNIL), fp, lndata);	\
   WV(ch, AFCRV)
 
-#define READ(fp, eof, val)					\
-  AFCALL(arc_mkaff(c, arc_sread, CNIL), fp, eof);	\
+#define READ(fp, eof, lndata, val)				\
+  AFCALL(arc_mkaff(c, arc_sread, CNIL), fp, eof, lndata);	\
   WV(val, AFCRV)
 
 #define READC(fp, val)					\
@@ -155,7 +155,7 @@ AFFDEF(arc_sread)
   Rune r;
   AFBEGIN;
 
-  set_file(c, AV(lndata), fp);
+  set_file(c, AV(lndata), arc_portname(c, AV(fp)));
   /* XXX - should put this in builtins somewhere? */
   for (;;) {
     SCAN(AV(fp), AV(lndata), ch);
@@ -257,9 +257,9 @@ static AFFDEF(read_list)
       ARETURN(CNIL);
     }
     arc_ungetc_rune(c, r, AV(fp));
-    READ(AV(fp), AV(eof), val);
+    READ(AV(fp), AV(eof), AV(lndata), val);
     if (AV(val) == ARC_BUILTIN(c, S_DOT)) {
-      READ(AV(fp), AV(eof), val);
+      READ(AV(fp), AV(eof), AV(lndata), val);
       if (!NIL_P(AV(last))) {
 	scdr(AV(last), AV(val));
       } else {
@@ -307,7 +307,7 @@ static AFFDEF(read_anonf)
 			cons(c, AV(top), CNIL))));
     }
     arc_ungetc_rune(c, r, AV(fp));
-    READ(AV(fp), AV(eof), val);
+    READ(AV(fp), AV(eof), AV(lndata), val);
     WV(val, cons(c, AV(val), CNIL));
     if (!NIL_P(AV(last)))
       scdr(AV(last), AV(val));
@@ -325,10 +325,10 @@ AFFEND
    form covered by the provided qsym. */
 static AFFDEF(readq)
 {
-  AARG(fp, qsym, eof);
+  AARG(fp, qsym, eof, lndata);
   AVAR(val);
   AFBEGIN;
-  READ(AV(fp), AV(eof), val);
+  READ(AV(fp), AV(eof), AV(lndata), val);
   ARETURN(cons(c, AV(qsym), cons(c, AV(val), CNIL)));
   AFEND;
 }
@@ -340,7 +340,8 @@ static AFFDEF(read_quote)
   AOARG(lndata);
   AFBEGIN;
   (void)lndata;
-  AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QUOTE), AV(eof));
+  AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QUOTE),
+	  AV(eof), AV(lndata));
   AFEND;
 }
 AFFEND
@@ -351,7 +352,8 @@ static AFFDEF(read_qquote)
   AOARG(lndata);
   AFBEGIN;
   (void)lndata;
-  AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QQUOTE), AV(eof));
+  AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_QQUOTE),
+	  AV(eof), AV(lndata));
   AFEND;
 }
 AFFEND
@@ -370,12 +372,12 @@ static AFFDEF(read_comma)
   /* unquote-splicing */
   if (r == '@') {
     AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp),
-	   ARC_BUILTIN(c, S_UNQUOTESP), AV(eof));
+	    ARC_BUILTIN(c, S_UNQUOTESP), AV(eof), AV(lndata));
   }
   /* normal unquote. */
   arc_ungetc_rune(c, r, AV(fp));
   AFTCALL(arc_mkaff(c, readq, CNIL), AV(fp), ARC_BUILTIN(c, S_UNQUOTE),
-	  AV(eof));
+	  AV(eof), AV(lndata));
   AFEND;
 }
 AFFEND
@@ -418,7 +420,7 @@ static value unescape_ats(arc *c, value s)
 /* Break up a string s into a list of fragments delimited by the @'s. */
 static AFFDEF(codestring)
 {
-  AARG(s);
+  AARG(s, lndata);
   int i, len, rlen;
   AVAR(ss, rest, in, expr);
   AFBEGIN;
@@ -434,7 +436,7 @@ static AFFDEF(codestring)
   WV(ss, arc_substr(c, AV(s), 0, i));
   WV(rest, arc_substr(c, AV(s), i+1, len));
   WV(in, arc_instring(c, AV(rest), CNIL));
-  READ(AV(in), CNIL, expr);
+  READ(AV(in), CNIL, AV(lndata), expr);
 
   /* Get the current position after reading. Break the string up
      again at that point, and pass the remainder of the string back
@@ -443,7 +445,7 @@ static AFFDEF(codestring)
   i = FIX2INT(AFCRV);
   rlen = arc_strlen(c, AV(rest));
   AFCALL(arc_mkaff(c, codestring, CNIL),
-	 arc_substr(c, AV(rest), i, rlen));
+	 arc_substr(c, AV(rest), i, rlen), AV(lndata));
   /* We then combine the pre-@-sign portion of the string (ss),
      the post-@-sign portion (that became sexpr after reading), and the
      results of the recursive call to codestring on the portion of the
@@ -457,11 +459,11 @@ AFFEND
 
 static AFFDEF(read_atstring)
 {
-  AARG(s);
+  AARG(s, lndata);
   AVAR(cs, p);
   AFBEGIN;
   if (atpos(c, AV(s), 0) >= 0) {
-    AFCALL(arc_mkaff(c, codestring, CNIL), AV(s));
+    AFCALL(arc_mkaff(c, codestring, CNIL), AV(s), AV(lndata));
     WV(cs, AFCRV);
     for (WV(p, AV(cs)); AV(p); WV(p, cdr(AV(p)))) {
       if (TYPE(car(AV(p))) == T_STRING)
@@ -494,7 +496,8 @@ AFFDEF(read_string)
       if (r == '\"') {
 	/* end of string */
 	if (arc_declared(c, ARC_BUILTIN(c, S_ATSTRINGS))) {
-	  AFTCALL(arc_mkaff(c, read_atstring, CNIL), arc_inside(c, AV(buf)));
+	  AFTCALL(arc_mkaff(c, read_atstring, CNIL),
+		  arc_inside(c, AV(buf)), AV(lndata));
 	}
 	ARETURN(arc_inside(c, AV(buf)));
       }
