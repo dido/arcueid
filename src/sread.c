@@ -45,6 +45,13 @@ static value get_lineno(arc *c, value lndata)
   return(linenum);
 }
 
+static value set_lineno(arc *c, value lndata, value lineno)
+{
+  if (BOUND_P(lndata))
+    arc_hash_insert(c, lndata, INT2FIX(-1), lineno);
+  return(CNIL);
+}
+
 static value inc_lineno(arc *c, value lndata)
 {
   value linenum;
@@ -57,7 +64,7 @@ static value inc_lineno(arc *c, value lndata)
   return(linenum);
 }
 
-value __arc_get_file(arc *c, value lndata)
+value get_file(arc *c, value lndata)
 {
   value file;
 
@@ -73,7 +80,7 @@ static value set_file(arc *c, value lndata, value file)
 {
   if (!BOUND_P(lndata))
     return(CUNBOUND);
-  if (NIL_P(__arc_get_file(c, lndata)))
+  if (NIL_P(get_file(c, lndata)))
     return(arc_hash_insert(c, lndata, INT2FIX(-2), file));
   return(CNIL);
 }
@@ -85,6 +92,33 @@ static value add_cons_lineno(arc *c, value lndata, value conscell,
     return(CNIL);
   arc_hash_insert(c, lndata, __arc_visitkey(conscell), linenum);
   return(conscell);
+}
+
+value __arc_reset_lineno(arc *c, value lndata)
+{
+  return(set_lineno(c, lndata, INT2FIX(1)));
+}
+
+/* Gets the closest file and line number to obj. If obj is not
+   found in the lndata table, returns the last value it returned
+   (which is probably close enough) */
+value __arc_get_fileline(arc *c, value lndata, value obj)
+{
+  value lineno;
+
+  if (!BOUND_P(lndata))
+    return(CUNBOUND);
+  lineno = get_lineno(c, lndata);
+  if (CONS_P(obj)) {
+    value newln;
+
+    newln = arc_hash_lookup(c, lndata, obj);
+    if (BOUND_P(newln)) {
+      lineno = newln;
+      set_lineno(c, lndata, lineno);
+    }
+  }
+  return(cons(c, get_file(c, lndata), lineno));
 }
 
 /* Is ch a valid character in a symbol? */
