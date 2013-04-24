@@ -569,7 +569,7 @@ START_TEST(test_ssyntax_and)
   fail_unless(TYPE(car(cdr(cdr(sexpr)))) == T_SYMBOL);
   fail_unless(car(cdr(cdr(sexpr))) == arc_intern(c, arc_mkstringc(c, "bob")));
 
- thr = arc_mkthread(c);
+  thr = arc_mkthread(c);
   sym = arc_intern_cstr(c, "alice&bob&carol");
   XCALL(arc_ssexpand, sym);
   sexpr = TVALR(thr);
@@ -581,6 +581,28 @@ START_TEST(test_ssyntax_and)
   fail_unless(car(cdr(cdr(sexpr))) == arc_intern(c, arc_mkstringc(c, "bob")));
   fail_unless(TYPE(car(cdr(cdr(cdr(sexpr))))) == T_SYMBOL);
   fail_unless(car(cdr(cdr(cdr(sexpr)))) == arc_intern(c, arc_mkstringc(c, "carol")));
+}
+END_TEST
+
+START_TEST(test_read_with_line_numbers)
+{
+  value thr, sio, sexpr, lndata, lninf;
+
+  thr = arc_mkthread(c);
+  lndata = arc_mkhash(c, ARC_HASHBITS);
+  sio = arc_instring(c, arc_mkstringc(c, "(a\n(b c)\n(d e)\nf)"), CNIL);
+  XCALL(arc_sread, sio, CNIL, lndata);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  lninf = arc_hash_lookup(c, lndata, __arc_visitkey(sexpr));
+  fail_unless(lninf == INT2FIX(1));
+  fail_unless(car(sexpr) == arc_intern_cstr(c, "a"));
+  fail_unless(TYPE(cadr(sexpr)) == T_CONS);
+  lninf = arc_hash_lookup(c, lndata, __arc_visitkey(cadr(sexpr)));
+  fail_unless(lninf == INT2FIX(2));
+  fail_unless(TYPE(car(cddr(sexpr))) == T_CONS);
+  lninf = arc_hash_lookup(c, lndata, __arc_visitkey(car(cddr(sexpr))));
+  fail_unless(lninf == INT2FIX(3));
 }
 END_TEST
 
@@ -609,6 +631,7 @@ int main(void)
   tcase_add_test(tc_reader, test_ssyntax_compose_complement);
   tcase_add_test(tc_reader, test_ssyntax_structure_access);
   tcase_add_test(tc_reader, test_ssyntax_and);
+  tcase_add_test(tc_reader, test_read_with_line_numbers);
 
   suite_add_tcase(s, tc_reader);
   sr = srunner_create(s);
