@@ -419,6 +419,11 @@ value arc_flushout(arc *c)
   return(CTRUE);
 }
 
+value arc_portname(arc *c, value port)
+{
+  return(IO(port)->name);
+}
+
 typefn_t __arc_io_typefn__ = {
   io_marker,
   io_sweeper,
