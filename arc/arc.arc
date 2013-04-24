@@ -1519,10 +1519,11 @@
 )
 
 (def load (file)
-  (w/infile f file
-    (w/uniq eof
-      (whiler e (read f eof) eof
-        (eval e)))))
+  (let lndata (table)
+    (w/infile f file
+      (w/uniq eof
+	(whiler e (sread f eof lndata) eof
+		(eval e lndata))))))
 
 (def positive (x)
   (and (number x) (> x 0)))
