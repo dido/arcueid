@@ -848,9 +848,9 @@ static struct {
   { "chan", 0, arc_mkchan },
   { "<-", -2, arc_recv_channel },
   { "<-=", -2, arc_send_channel },
-  { "scmark", -2, arc_scmark },
-  { "ccmark", -2, arc_ccmark },
-  { "cmark", -2, arc_cmark },
+  { "scmark", 2, arc_scmark },
+  { "ccmark", 1, arc_ccmark },
+  { "cmark", 1, arc_cmark },
 
   /* used by atomic-invoke */
   { "__acell__", -2, arc_atomic_cell },
