@@ -156,58 +156,49 @@ value arc_thr_envr(arc *c, value thr)
   return(TENVR(thr));
 }
 
-AFFDEF(arc_cmark)
+value arc_cmark(arc *c, value key)
 {
-  AARG(key);
-  AVAR(cm, val);
-  AFBEGIN;
-  WV(cm, TCM(thr));
-  WV(val, arc_hash_lookup(c, AV(cm), AV(key)));
-  if (AV(val) == CUNBOUND)
-    ARETURN(CNIL);
-  ARETURN(car(AV(val)));
-  AFEND;
-}
-AFFEND
+  value cm, val;
 
-/* Do not use these functions outside the call-w/cmark macro */
-AFFDEF(arc_scmark)
-{
-  AARG(key, val);
-  AVAR(cm, bind);
-  AFBEGIN;
-  WV(cm, TCM(thr));
-  WV(bind, arc_hash_lookup(c, AV(cm), AV(key)));
-  if (AV(bind) == CUNBOUND)
-    WV(bind, CNIL);
-  WV(bind, cons(c, AV(val), AV(bind)));
-  arc_hash_insert(c, AV(cm), AV(key), AV(bind));
-  ARETURN(AV(val));
-  AFEND;
+  cm = TCM(c->curthread);
+  val = arc_hash_lookup(c, cm, key);
+  if (!BOUND_P(val))
+    return(CNIL);
+  return(car(val));
 }
-AFFEND
 
-AFFDEF(arc_ccmark)
+/* These functions should normally not be used outside the
+   call-w/cmark macro */
+value arc_scmark(arc *c, value key, value val)
 {
-  AARG(key);
-  AVAR(cm, bind, val);
-  AFBEGIN;
-  WV(cm, TCM(thr));
-  WV(bind, arc_hash_lookup(c, AV(cm), AV(key)));
-  if (AV(bind) == CUNBOUND)
-    ARETURN(CNIL);
-  WV(val, car(AV(bind)));
-  WV(bind, cdr(AV(bind)));
-  if (NIL_P(AV(bind))) {
-    arc_hash_delete(c, AV(cm), AV(key));
+  value cm, bind;
+
+  cm = TCM(c->curthread);
+  bind = arc_hash_lookup(c, cm, key);
+  if (!BOUND_P(bind))
+    bind = CNIL;
+  bind = cons(c, val, bind);
+  arc_hash_insert(c, cm, key, bind);
+  return(val);
+}
+
+value arc_ccmark(arc *c, value key)
+{
+  value cm, bind, val;
+
+  cm = TCM(c->curthread);
+  bind = arc_hash_lookup(c, cm, key);
+  if (!BOUND_P(bind))
+    return(CNIL);
+  val = car(bind);
+  bind = cdr(bind);
+  if (NIL_P(bind)) {
+    arc_hash_delete(c, cm, key);
   } else {
-    arc_hash_insert(c, AV(cm), AV(key), AV(bind));
+    arc_hash_insert(c, cm, key, bind);
   }
-  ARETURN(AV(val));
-  AFEND;
+  return(val);
 }
-AFFEND
-
 
 #ifdef HAVE_SYS_EPOLL_H
 
