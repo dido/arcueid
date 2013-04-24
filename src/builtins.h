@@ -104,6 +104,7 @@ enum builtin_syms {
   S_TEXT,			/* text */
   S_APPEND,			/* append */
   S_ATSTRINGS,			/* atstrings */
+  S_LNDATA,			/* lndata */
 
   S_THE_END			/* end of the line */
 };
