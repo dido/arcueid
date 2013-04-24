@@ -33,6 +33,7 @@ arc *c;
 #define CPUSH_(val) CPUSH(thr, val)
 
 #define XCALL0(clos) do {			\
+    c->curthread = thr;				\
     TQUANTA(thr) = QUANTA;			\
     SVALR(thr, clos);				\
     TARGC(thr) = 0;				\
@@ -40,6 +41,7 @@ arc *c;
   } while (0)
 
 #define XCALL(fname, ...) do {			\
+    c->curthread = thr;				\
     SVALR(thr, arc_mkaff(c, fname, CNIL));	\
     TARGC(thr) = NARGS(__VA_ARGS__);		\
     FOR_EACH(CPUSH_, __VA_ARGS__);		\
