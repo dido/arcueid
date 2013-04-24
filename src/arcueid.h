@@ -530,6 +530,7 @@ extern void arc_deinit(arc *c);
 
 /* Error handling */
 extern void arc_err_cstrfmt(arc *c, const char *fmt, ...);
+extern void arc_err_cstrfmt_line(arc *c, value fileline, const char *fmt, ...);
 extern int arc_callcc(arc *c, value thr);
 extern int arc_dynamic_wind(arc *c, value thr);
 extern int arc_err(arc *c, value thr);
