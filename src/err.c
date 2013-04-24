@@ -213,8 +213,10 @@ void arc_err_cstrfmt_line(arc *c, value fileline, const char *fmt, ...)
   int len;
 
   va_start(ap, fmt);
-  if (!BOUND_P(fileline))
+  if (!BOUND_P(fileline)) {
     va_err_cstrfmt(c, fmt, ap);
+    return;
+  }
 
   namestr = alloca((FIX2INT(arc_strutflen(c, car(fileline))) + 2)*sizeof(char));
   arc_str2cstr(c, car(fileline), namestr);
