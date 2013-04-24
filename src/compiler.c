@@ -20,6 +20,17 @@
 #include "builtins.h"
 #include "vmengine.h"
 
+/* Get the closest line number for obj */
+static value get_lineno(arc *c, value obj)
+{
+  value lndata;
+
+  lndata = arc_cmark(c, ARC_BUILTIN(c, S_LNDATA));
+  if (NIL_P(lndata))
+    return(CUNBOUND);
+  return(__arc_get_fileline(c, lndata, obj));
+}
+
 /* Macro expansion.  This will look for any macro applications in e
    and attempt to expand them.
 
@@ -239,7 +250,7 @@ static AFFDEF(destructure)
   }
 
   if (TYPE(AV(arg)) != T_CONS) {
-    arc_err_cstrfmt(c, "invalid fn arg");
+    arc_err_cstrfmt_line(c, get_lineno(c, AV(arg)), "invalid fn arg");
     ARETURN(AV(idx));
   }
 
@@ -251,7 +262,8 @@ static AFFDEF(destructure)
       value oargname, oargdef;
       oargname = cadr(AV(arg));
       if (!SYMBOL_P(oargname)) {
-	arc_err_cstrfmt(c, "optional arg is not an identifier");
+	arc_err_cstrfmt_line(c, get_lineno(c, car(AV(arg))),
+			     "optional arg is not an identifier");
 	ARETURN(AV(idx));
       }
       oargdef = (NIL_P(cddr(AV(arg)))) ? CNIL : car(cddr(AV(arg)));
@@ -328,7 +340,7 @@ static AFFDEF(compile_args)
   }
 
   if (!CONS_P(AV(args))) {
-    arc_err_cstrfmt(c, "invalid fn arg");
+    arc_err_cstrfmt_line(c, get_lineno(c, AV(args)), "invalid fn arg");
     ARETURN(AV(env));
   }
 
@@ -345,7 +357,8 @@ static AFFDEF(compile_args)
   for (;;) {
     if (SYMBOL_P(car(AV(args)))) {
       if (AV(optargbegin) == CTRUE) {
-	arc_err_cstrfmt(c, "non-optional arg found after optional args");
+	arc_err_cstrfmt_line(c, get_lineno(c, AV(args)),
+			     "non-optional arg found after optional args");
 	ARETURN(AV(env));
       }
       /* Ordinary symbol arg. */
@@ -361,7 +374,8 @@ static AFFDEF(compile_args)
       oarg = car(AV(args));
       oargname = cadr(oarg);
       if (!SYMBOL_P(oargname)) {
-	arc_err_cstrfmt(c, "optional arg is not an identifier");
+	arc_err_cstrfmt_line(c, get_lineno(c, oarg),
+			     "optional arg is not an identifier");
 	ARETURN(AV(env));
       }
       oargdef = (NIL_P(cddr(oarg))) ? CNIL : car(cddr(oarg));
@@ -391,7 +405,7 @@ static AFFDEF(compile_args)
       FIXINC(idx);
       FIXINC(regargs);
     } else {
-      arc_err_cstrfmt(c, "invalid fn arg");
+      arc_err_cstrfmt_line(c, get_lineno(c, AV(args)), "invalid fn arg");
       ARETURN(AV(env));
     }
 
@@ -543,9 +557,9 @@ static AFFDEF(compile_assign)
     WV(a, AFCRV);
     WV(val, cadr(AV(expr)));
     if (AV(a) == CNIL) {
-      arc_err_cstrfmt(c, "Can't rebind nil");
+      arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)), "can't rebind nil");
     } else if (AV(a) == ARC_BUILTIN(c, S_T)) {
-      arc_err_cstrfmt(c, "Can't rebind t");
+      arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)), "Can't rebind t");
     } else {
       AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(val), AV(ctx),
 	     AV(env), CNIL);
@@ -594,8 +608,9 @@ static int (*spform(arc *c, value ident))(arc *, value)
 	arc_emit(c, AV(ctx), ipush);					\
     }									\
     if (AV(count) != INT2FIX(nargs)) {					\
-      arc_err_cstrfmt(c, "inline procedure expects %d arguments (%d passed)", \
-		      nargs, FIX2INT(AV(count)));			\
+      arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)),			\
+			   "inline procedure expects %d arguments (%d passed)", \
+			   nargs, FIX2INT(AV(count)));			\
     } else {								\
       arc_emit(c, AV(ctx), instr);					\
     }									\
@@ -632,7 +647,8 @@ static AFFDEF(compile_inlinen2)
   WV(xexpr, cdr(AV(expr)));
   WV(xelen, arc_list_length(c, AV(xexpr)));
   if (AV(xelen) == INT2FIX(0)) {
-    arc_err_cstrfmt(c, "operator requires at least one argument");
+    arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)),
+			 "operator requires at least one argument");
     ARETURN(CNIL);
   } else if (AV(xelen) == INT2FIX(1)) {
     AFTCALL(arc_mkaff(c, compile_inlinen, CNIL), AV(inst),
@@ -745,7 +761,8 @@ static AFFDEF(compile_complement)
   cargs = cdr(AV(expr));
 
   if (!NIL_P(cdr(complemented))) {
-    arc_err_cstrfmt(c, "complement: wrong number of arguments (1 required)");
+    arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)),
+			 "complement: wrong number of arguments (1 required)");
     return(CNIL);
   }
   complemented = car(complemented);
@@ -875,6 +892,8 @@ AFFDEF(arc_compile)
   AVAR(expr, ssx);
   AFBEGIN;
 
+  /* Get the line number associated with the current sexpr */
+  get_lineno(c, AV(nexpr));
   AFCALL(arc_mkaff(c, macex, CNIL), AV(nexpr), CTRUE);
   WV(expr, AFCRV);
   if (AV(expr) == ARC_BUILTIN(c, S_T) || AV(expr) == ARC_BUILTIN(c, S_NIL)
@@ -899,7 +918,7 @@ AFFDEF(arc_compile)
     AFTCALL(arc_mkaff(c, compile_list, CNIL), AV(expr), AV(ctx),
 	    AV(env), AV(cont));
   }
-  arc_err_cstrfmt(c, "invalid_expression");
+  arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)), "invalid_expression");
   ARETURN(AV(ctx));
   AFEND;
 }
@@ -935,14 +954,60 @@ value arc_uniq(arc *c)
   return(arc_intern_cstr(c, buffer));
 }
 
+/* What we do here is store the line number hash inside a continuation
+   mark named lndata.  This use of dynamic-wind ensures that the
+   continuation mark gets cleared should the compilation end for
+   whatever reason. */
+static AFFDEF(beforethunk)
+{
+  value lndata;
+  AFBEGIN;
+  lndata = __arc_getenv(c, thr, 1, 1);
+  if (BOUND_P(lndata))
+    arc_scmark(c, ARC_BUILTIN(c, S_LNDATA), lndata);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(duringthunk)
+{
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, arc_compile, CNIL),
+	  __arc_getenv(c, thr, 1, 0), /* AV(expr) */
+	  __arc_getenv(c, thr, 1, 2), /* AV(ctx) */
+	  CNIL, CTRUE);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(afterthunk)
+{
+  value lndata;
+  AFBEGIN;
+  lndata = __arc_getenv(c, thr, 1, 1);
+  if (BOUND_P(lndata))
+    arc_ccmark(c, ARC_BUILTIN(c, S_LNDATA));
+  AFEND;
+}
+AFFEND
+
 AFFDEF(arc_eval)
 {
   AARG(expr);
+  AOARG(lndata);
   AVAR(ctx);
   value code, clos;
   AFBEGIN;
+  (void)expr;
+  __arc_reset_lineno(c, AV(lndata));
   WV(ctx, arc_mkcctx(c));
+  AFCALL(arc_mkaff(c, arc_dynamic_wind, CNIL),
+	 arc_mkaff2(c, beforethunk, CNIL, TENVR(thr)),
+	 arc_mkaff2(c, duringthunk, CNIL, TENVR(thr)),
+	 arc_mkaff2(c, afterthunk, CNIL, TENVR(thr)));
+  /*
   AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(expr), AV(ctx), CNIL, CTRUE);
+  */
   code = arc_cctx2code(c, AV(ctx));
   clos = arc_mkclos(c, code, CNIL);
   return(__arc_affapply(c, thr, CNIL, clos, CLASTARG));
