@@ -279,7 +279,7 @@ value arc_readlineport(arc *c)
   SVINDEX(io_ops, IO_tell, arc_mkaff(c, rl_tell, CNIL));
   SVINDEX(io_ops, IO_close, arc_mkaff(c, rl_close, CNIL));
   IO(rlio)->io_ops = io_ops;
-  IO(rlio)->name = arc_mkstringc(c, "readline");
+  IO(rlio)->name = arc_mkstringc(c, "(repl)");
   RLDATA(rlio)->closed = 0;
   RLDATA(rlio)->idx = 0;
   RLDATA(rlio)->str = CNIL;
