@@ -31,6 +31,17 @@ static value get_lineno(arc *c, value obj)
   return(__arc_get_fileline(c, lndata, obj));
 }
 
+/* Given a symbol op, return the macro corresponding to it, if any.  If
+   it is not a macro, return nil. */
+static int ismacro(arc *c, value op)
+{
+  while (arc_type(c, op = arc_hash_lookup(c, c->genv, op)) == T_SYMBOL)
+    ;
+  if (arc_type(c, op) == ARC_BUILTIN(c, S_MAC))
+    return(op);
+  return(CNIL);
+}
+
 /* Macro expansion.  This will look for any macro applications in e
    and attempt to expand them.
 
@@ -62,11 +73,11 @@ static AFFDEF(macex)
        to a macro. */
     if (!SYMBOL_P(AV(op)))
       ARETURN(AV(e));
-    /* Look up the symbol's binding in the global symbol table */
-    while (arc_type(c, WV(op, arc_hash_lookup(c, c->genv, AV(op)))) == T_SYMBOL)
-      ;
-    if (arc_type(c, AV(op)) != ARC_BUILTIN(c, S_MAC))
+
+    WV(op, ismacro(c, AV(op)));
+    if (NIL_P(AV(op)))
       ARETURN(AV(e));		/* not a macro */
+
     AFCALL2(arc_rep(c, AV(op)), cdr(AV(e)));
     WV(expansion, AFCRV);
     WV(e, AV(expansion));
@@ -82,13 +93,15 @@ static value compile_continuation(arc *c, value ctx, value cont)
   return(ctx);
 }
 
+extern void __arc_print_string(arc *c, value ppstr);
+
 /* Find a literal lit in ctx.  If not found, create it and add it to the
    literals in the ctx. */
 static value find_literal(arc *c, value ctx, value lit)
 {
   value lits;
-
   int i;
+
   lits = CCTX_LITS(ctx);
   if (!NIL_P(lits)) {
     for (i=0; i<VECLEN(lits); i++) {
@@ -292,7 +305,7 @@ static AFFDEF(destructure)
     arc_emit(c, AV(ctx), ipop, get_lineno(c, AV(arg)));
     arc_emit(c, AV(ctx), idcdr, get_lineno(c, AV(arg)));
     AFTCALL(arc_mkaff(c, destructure, CNIL), cdr(AV(arg)), AV(ctx),
-	    AV(env), AV(idx), get_lineno(c, AV(arg)));
+	    AV(env), AV(idx), CNIL);
   } else if (!NIL_P(car(AV(arg))) && NIL_P(cdr(AV(arg)))) {
     arc_emit(c, AV(ctx), idcar, get_lineno(c, AV(arg)));
     AFTCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
@@ -788,10 +801,20 @@ static AFFDEF(compile_apply)
 {
   AARG(expr, ctx, env, cont);
   AVAR(fname, args, nahd, contaddr, nargs);
+  value mac;
   AFBEGIN;
 
   WV(fname, car(AV(expr)));
   WV(args, cdr(AV(expr)));
+
+  /* Check to see if this is a macro application */
+  if (SYMBOL_P(AV(fname)) && !NIL_P(mac = ismacro(c, AV(fname)))) {
+    /* Apply the macro by calling it.  Compile the results. */
+    AFCALL2(arc_rep(c, mac), AV(args));
+    AFTCALL(arc_mkaff(c, arc_compile, CNIL), AFCRV, AV(ctx), AV(env), AV(cont));
+    /* tail call: doesn't return -- never gets here */
+    ARETURN(AV(ctx));
+  }
 
   /* There are two possible cases here.  If this is not a tail call,
      cont will be nil, so we need to make a continuation. */
@@ -857,38 +880,65 @@ AFFEND
 static AFFDEF(compile_list)
 {
   AARG(nexpr, ctx, env, cont);
+  AVAR(expr, xs);
   int (*fun)(arc *, value) = NULL;
-  value expr;
   AFBEGIN;
 
-  expr = AV(nexpr);
-  if ((fun = spform(c, car(expr))) != NULL) {
+  /* Special forms: if/fn/quote/quasiquote/assign */
+  if ((fun = spform(c, car(AV(nexpr)))) != NULL) {
     AFTCALL(arc_mkaff(c, fun, CNIL), cdr(AV(nexpr)), AV(ctx), AV(env),
 	    AV(cont));
   }
 
-  if ((fun = inline_func(c, car(expr))) != NULL) {
-    AFTCALL(arc_mkaff(c, fun, CNIL), AV(nexpr), AV(ctx), AV(env), AV(cont));
+  /* expand all ssyntax within the expression if it isn't a special form */
+  WV(expr, CNIL);
+  WV(xs, AV(nexpr));
+  while (!NIL_P(AV(xs))) {
+    value result = CNIL;
+
+    if (SYMBOL_P(car(AV(xs)))) {
+      AFCALL(arc_mkaff(c, arc_ssexpand, CNIL), car(AV(xs)));
+      result = AFCRV;
+    }
+    if (NIL_P(result))
+      result = car(AV(xs));
+    WV(expr, cons(c, result, AV(expr)));
+    WV(xs, cdr(AV(xs)));
   }
+  WV(expr, arc_list_reverse(c, AV(expr)));
+
+  /* Inline functions (cons, car, cdr, +, -, *, /) */
+  if ((fun = inline_func(c, car(AV(expr)))) != NULL) {
+    AFTCALL(arc_mkaff(c, fun, CNIL), AV(expr), AV(ctx), AV(env), AV(cont));
+  }
+
+  /*  the next three clauses could be removed without changing semantics
+      ... except that they work for macros (so prob should do this for
+      every elt of expr, not just the car)
+      (this is also a comment in ac.scm, as this is exactly the same logic) 
+  */
+
   /* compose in a functional position */
-  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPOSE)) {
-    AFTCALL(arc_mkaff(c, compile_compose, CNIL), AV(nexpr), AV(ctx), AV(env),
+  if (CONS_P(car(AV(expr)))
+      && car(car(AV(expr))) == ARC_BUILTIN(c, S_COMPOSE)) {
+    AFTCALL(arc_mkaff(c, compile_compose, CNIL), AV(expr), AV(ctx), AV(env),
 	    AV(cont));
   }
 
   /* complement in a functional position */
-  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_COMPLEMENT)) {
-    AFTCALL(arc_mkaff(c, compile_complement, CNIL), AV(nexpr), AV(ctx),
+  if (CONS_P(car(AV(expr)))
+      && car(car(AV(expr))) == ARC_BUILTIN(c, S_COMPLEMENT)) {
+    AFTCALL(arc_mkaff(c, compile_complement, CNIL), AV(expr), AV(ctx),
 	    AV(env), AV(cont));
   }
 
   /* andf in a functional position */
-  if (CONS_P(car(expr)) && car(car(expr)) == ARC_BUILTIN(c, S_ANDF)) {
-    AFTCALL(arc_mkaff(c, compile_andf, CNIL), AV(nexpr), AV(ctx),
+  if (CONS_P(car(AV(expr))) && car(car(AV(expr))) == ARC_BUILTIN(c, S_ANDF)) {
+    AFTCALL(arc_mkaff(c, compile_andf, CNIL), AV(expr), AV(ctx),
 	    AV(env), AV(cont));
   }
 
-  AFTCALL(arc_mkaff(c, compile_apply, CNIL), AV(nexpr), AV(ctx), AV(env),
+  AFTCALL(arc_mkaff(c, compile_apply, CNIL), AV(expr), AV(ctx), AV(env),
 	  AV(cont));
   AFEND;
 }
@@ -904,8 +954,8 @@ AFFDEF(arc_compile)
 
   /* Get the line number associated with the current sexpr */
   get_lineno(c, AV(nexpr));
-  AFCALL(arc_mkaff(c, macex, CNIL), AV(nexpr), CTRUE);
-  WV(expr, AFCRV);
+  WV(expr, AV(nexpr));
+
   if (AV(expr) == ARC_BUILTIN(c, S_T) || AV(expr) == ARC_BUILTIN(c, S_NIL)
       || NIL_P(AV(expr)) || AV(expr) == CTRUE
       || TYPE(AV(expr)) == T_CHAR || TYPE(AV(expr)) == T_STRING
@@ -924,6 +974,7 @@ AFFDEF(arc_compile)
     AFTCALL(arc_mkaff(c, arc_compile, CNIL), AV(ssx), AV(ctx),
 	    AV(env), AV(cont));
   }
+
   if (CONS_P(AV(expr))) {
     AFTCALL(arc_mkaff(c, compile_list, CNIL), AV(expr), AV(ctx),
 	    AV(env), AV(cont));
