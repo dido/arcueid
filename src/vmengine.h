@@ -84,18 +84,21 @@ enum vminst {
 /* Function name */
 #define SRC_FUNCNAME (-2)
 
-extern void arc_emit(arc *c, value cctx, enum vminst inst);
-extern void arc_emit1(arc *c, value cctx, enum vminst inst, value arg);
+extern void arc_emit(arc *c, value cctx, enum vminst inst, value fl);
+extern void arc_emit1(arc *c, value cctx, enum vminst inst, value arg,
+		      value fl);
 extern void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1,
-		      value arg2);
+		      value arg2, value fl);
 extern void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1,
-		      value arg2, value arg3);
+		      value arg2, value arg3, value fl);
 extern int arc_literal(arc *c, value cctx, value literal);
 extern value arc_mkcode(arc *c, int ncodes, int nlits);
 extern value arc_code_setsrc(arc *c, value code, value src);
 extern value arc_code_setname(arc *c, value code, value name);
 extern value arc_cctx2code(arc *c, value cctx);
 extern value arc_mkcctx(arc *c);
+extern value arc_cctx_mksrc(arc *c, value cctx);
+extern value __arc_code_lineno(arc *c, value fun, value *ipptr);
 
 enum threadstate {
   Talt,				/* blocked in alt instruction */
@@ -246,11 +249,14 @@ static inline value SCONR(value t, value nv)
 #define CCTX_VCODE(cctx) (VINDEX(cctx, 1))
 #define CCTX_LPTR(cctx) (VINDEX(cctx, 2))
 #define CCTX_LITS(cctx) (VINDEX(cctx, 3))
+#define CCTX_SRC(cctx) (VINDEX(cctx, 4))
+#define CCTX_SIZE 5
 
 #define SCCTX_VCPTR(cctx, val) (SVINDEX(cctx, 0, val))
 #define SCCTX_VCODE(cctx, val) (SVINDEX(cctx, 1, val))
 #define SCCTX_LPTR(cctx, val) (SVINDEX(cctx, 2, val))
 #define SCCTX_LITS(cctx, val) (SVINDEX(cctx, 3, val))
+#define SCCTX_SRC(cctx, val) (SVINDEX(cctx, 4, val))
 
 /* Continuations are vectors with the following items as indexes:
 
