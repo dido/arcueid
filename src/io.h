@@ -95,7 +95,7 @@ enum {
     WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD))); } while (0)
 
 #define STDERR(fd) do {							\
-  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDOUT_FD)));			\
+  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDERR_FD)));			\
   if (NIL_P(AV(fd)))							\
     WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD))); } while (0)
 
