@@ -505,6 +505,12 @@ START_TEST(test_in)
 
   TEST("(in 1 1 2 3)");
   fail_unless(ret == CTRUE);
+
+  TEST("(~in 1 0 2 3)");
+  fail_unless(ret == CTRUE);
+
+  TEST("(~in 1 1 2 3)");
+  fail_unless(ret == CNIL);
 }
 END_TEST
 
