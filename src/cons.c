@@ -306,6 +306,16 @@ value arc_list_length(arc *c, value list)
   return(n);
 }
 
+value arc_list_reverse(arc *c, value xs)
+{
+  value acc = CNIL;
+
+  while (xs != CNIL) {
+    acc = cons(c, car(xs), acc);
+    xs = cdr(xs);
+  }
+  return(acc);
+}
 
 static AFFDEF(cons_xcoerce)
 {
