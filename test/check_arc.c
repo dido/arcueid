@@ -293,6 +293,12 @@ START_TEST(test_and)
 
   TEST("(and nil 3 4)");
   fail_unless(ret == CNIL);
+
+  TEST("(odd&idfn 1)");
+  fail_unless(ret == INT2FIX(1));
+
+  TEST("(idfn&odd 1)");
+  fail_unless(ret == CTRUE);
 }
 END_TEST
 
