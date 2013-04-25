@@ -868,6 +868,7 @@ static AFFDEF(compile_andf)
   body = CNIL;
   for (andfuncs = cdr(car(AV(expr))); andfuncs; andfuncs = cdr(andfuncs))
     body = cons(c, cons(c, car(andfuncs), uniqs), body);
+  body = arc_list_reverse(c, body);
   body = cons(c, cons(c, ARC_BUILTIN(c, S_AND), body), CNIL);
   body = cons(c, cons(c, ARC_BUILTIN(c, S_FN),
 		      cons(c, uniqs, body)), andargs);
