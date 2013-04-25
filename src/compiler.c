@@ -78,7 +78,7 @@ AFFEND
 static value compile_continuation(arc *c, value ctx, value cont)
 {
   if (!NIL_P(cont))
-    arc_emit(c, ctx, iret);
+    arc_emit(c, ctx, iret, get_lineno(c, CNIL));
   return(ctx);
 }
 
@@ -104,13 +104,13 @@ static value find_literal(arc *c, value ctx, value lit)
 static value compile_literal(arc *c, value lit, value ctx, value cont)
 {
   if (lit == ARC_BUILTIN(c, S_NIL) || lit == CNIL) {
-    arc_emit(c, ctx, inil);
+    arc_emit(c, ctx, inil, get_lineno(c, CNIL));
   } else if (lit == ARC_BUILTIN(c, S_T) || lit == CTRUE) {
-    arc_emit(c, ctx, itrue);
+    arc_emit(c, ctx, itrue, get_lineno(c, CNIL));
   } else if (FIXNUM_P(lit)) {
-    arc_emit1(c, ctx, ildi, lit);
+    arc_emit1(c, ctx, ildi, lit, get_lineno(c, CNIL));
   } else {
-    arc_emit1(c, ctx, ildl, find_literal(c, ctx, lit));
+    arc_emit1(c, ctx, ildl, find_literal(c, ctx, lit), get_lineno(c, CNIL));
   }
   return(compile_continuation(c, ctx, cont));
 }
@@ -144,11 +144,12 @@ static value compile_ident(arc *c, value ident, value ctx, value env,
 
   /* look for the variable in the environment first */
   if (find_var(c, ident, env, &level, &offset) == CTRUE) {
-    arc_emit2(c, ctx, ilde, INT2FIX(level), INT2FIX(offset));
+    arc_emit2(c, ctx, ilde, INT2FIX(level), INT2FIX(offset),
+	      get_lineno(c, CNIL));
   } else {
     /* If the variable is not bound in the current environment, it's
        a global symbol. */
-    arc_emit1(c, ctx, ildg, find_literal(c, ctx, ident));
+    arc_emit1(c, ctx, ildg, find_literal(c, ctx, ident), get_lineno(c, CNIL));
   }
   return(compile_continuation(c, ctx, cont));
 
@@ -161,7 +162,7 @@ static AFFDEF(compile_if)
   AFBEGIN;
   /* if we run out of arguments, the last value becomes nil */
   if (NIL_P(AV(args))) {
-    arc_emit(c, AV(ctx), inil);
+    arc_emit(c, AV(ctx), inil, get_lineno(c, AV(args)));
     ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
   }
 
@@ -181,7 +182,7 @@ static AFFDEF(compile_if)
      which we are about to generate.  We have to patch it with the
      address of the start of the else portion once we know it. */
   WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
-  arc_emit1(c, AV(ctx), ijf, INT2FIX(0));
+  arc_emit1(c, AV(ctx), ijf, INT2FIX(0), get_lineno(c, AV(args)));
   /* compile the then portion */
   AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(args)), AV(ctx),
 	 AV(env), CNIL);
@@ -189,7 +190,7 @@ static AFFDEF(compile_if)
      unconditional jump at the end.  It should be patched after the else
      portion is compiled. */
   WV(jumpaddr2, CCTX_VCPTR(AV(ctx)));
-  arc_emit1(c, AV(ctx), ijmp, INT2FIX(0));
+  arc_emit1(c, AV(ctx), ijmp, INT2FIX(0), get_lineno(c, AV(args)));
   /* patch jumpaddr so that it will jump to the address of the else
      portion which is about to be compiled */
   arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)),
@@ -239,11 +240,11 @@ static AFFDEF(destructure)
   WV(frame, car(AV(env)));
   if (TYPE(AV(arg)) == T_SYMBOL) {
     WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
-    arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
-    arc_emit(c, AV(ctx), inil);
+    arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0), get_lineno(c, AV(arg)));
+    arc_emit(c, AV(ctx), inil, get_lineno(c, AV(arg)));
     arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
-    arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
+    arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx), get_lineno(c, AV(arg)));
     add_env_name(c, AV(frame), AV(arg), AV(idx));
     FIXINC(idx);
     ARETURN(AV(idx));
@@ -268,12 +269,12 @@ static AFFDEF(destructure)
       }
       oargdef = (NIL_P(cddr(AV(arg)))) ? CNIL : car(cddr(AV(arg)));
       WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
-      arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
+      arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0), get_lineno(c, AV(arg)));
       /* compile the optional argument's definition */
       AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
       arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
-      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
+      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx), get_lineno(c, AV(arg)));
       add_env_name(c, AV(frame), cadr(AV(arg)), AV(idx));
       FIXINC(idx);
       ARETURN(AV(idx));
@@ -283,21 +284,21 @@ static AFFDEF(destructure)
   /* an optional argument can only appear in the car of a destructuring
      bind. */
   if (!NIL_P(car(AV(arg))) && !NIL_P(cdr(AV(arg)))) {
-    arc_emit(c, AV(ctx), ipush);
-    arc_emit(c, AV(ctx), idcar);
+    arc_emit(c, AV(ctx), ipush, get_lineno(c, AV(arg)));
+    arc_emit(c, AV(ctx), idcar, get_lineno(c, AV(arg)));
     AFCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
 	   AV(env), AV(idx), CTRUE);
     WV(idx, AFCRV);
-    arc_emit(c, AV(ctx), ipop);
-    arc_emit(c, AV(ctx), idcdr);
+    arc_emit(c, AV(ctx), ipop, get_lineno(c, AV(arg)));
+    arc_emit(c, AV(ctx), idcdr, get_lineno(c, AV(arg)));
     AFTCALL(arc_mkaff(c, destructure, CNIL), cdr(AV(arg)), AV(ctx),
-	    AV(env), AV(idx));
+	    AV(env), AV(idx), get_lineno(c, AV(arg)));
   } else if (!NIL_P(car(AV(arg))) && NIL_P(cdr(AV(arg)))) {
-    arc_emit(c, AV(ctx), idcar);
+    arc_emit(c, AV(ctx), idcar, get_lineno(c, AV(arg)));
     AFTCALL(arc_mkaff(c, destructure, CNIL), car(AV(arg)), AV(ctx),
 	    AV(env), AV(idx), CTRUE);
   } else if (NIL_P(car(AV(arg))) && !NIL_P(cdr(AV(arg)))) {
-    arc_emit(c, AV(ctx), idcdr);
+    arc_emit(c, AV(ctx), idcdr, get_lineno(c, AV(arg)));
     AFTCALL(arc_mkaff(c, destructure, CNIL), cdr(AV(arg)), AV(ctx),
 	    AV(env), AV(idx));
   }
@@ -334,7 +335,8 @@ static AFFDEF(compile_args)
        name and a list containing the name of the sole argument. */
     WV(nframe, arc_mkhash(c, ARC_HASHBITS));
     add_env_name(c, AV(nframe), AV(args), INT2FIX(0));
-    arc_emit3(c, AV(ctx), ienvr, INT2FIX(0), INT2FIX(0), INT2FIX(0));
+    arc_emit3(c, AV(ctx), ienvr, INT2FIX(0), INT2FIX(0), INT2FIX(0),
+	      get_lineno(c, AV(args)));
     WV(env, cons(c, AV(nframe), AV(env)));
     ARETURN(AV(env));
   }
@@ -353,7 +355,8 @@ static AFFDEF(compile_args)
   /* save address of env instruction -- we will need to patch it later to
      fill in the values, and we may even need to change it to an envr */
   WV(envptr, CCTX_VCPTR(AV(ctx)));
-  arc_emit3(c, AV(ctx), ienv, INT2FIX(0), INT2FIX(0), INT2FIX(0));
+  arc_emit3(c, AV(ctx), ienv, INT2FIX(0), INT2FIX(0), INT2FIX(0),
+	    get_lineno(c, AV(args)));
   for (;;) {
     if (SYMBOL_P(car(AV(args)))) {
       if (AV(optargbegin) == CTRUE) {
@@ -381,12 +384,13 @@ static AFFDEF(compile_args)
       oargdef = (NIL_P(cddr(oarg))) ? CNIL : car(cddr(oarg));
       /* jump if bound check -- if we are bound, then don't overwrite
 	 the optional value  */
-      arc_emit2(c, AV(ctx), ilde, INT2FIX(0), AV(idx));
+      arc_emit2(c, AV(ctx), ilde, INT2FIX(0), AV(idx), get_lineno(c, oarg));
       WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
-      arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0));
+      arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0), get_lineno(c, oarg));
       /* compile the optional argument's definition */
       AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
-      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx));
+      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx),
+		get_lineno(c, car(AV(args))));
       arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
       add_env_name(c, AV(nframe), cadr(car(AV(args))), AV(idx));
@@ -429,7 +433,7 @@ static AFFDEF(compile_args)
 
     /* To begin a destructuring bind, we first load the value of the
        argument to be destructured ... */
-    arc_emit2(c, AV(ctx), ilde, FIX2INT(0), cdr(elem));
+    arc_emit2(c, AV(ctx), ilde, FIX2INT(0), cdr(elem), get_lineno(c, AV(args)));
     /* ... then we generate car and cdr instructions to reach each of
        the names to which we do the destructuring. */
     AFCALL(arc_mkaff(c, destructure, CNIL),
@@ -459,6 +463,8 @@ static AFFDEF(compile_fn)
   WV(args, car(AV(expr)));
   WV(body, cdr(AV(expr)));
   WV(nctx, arc_mkcctx(c));
+  /* copy the CODE_SRC from the original ctx to this one */
+  SCCTX_SRC(AV(nctx), CCTX_SRC(AV(ctx)));
   AFCALL(arc_mkaff(c, compile_args, CNIL),
 	 AV(args), AV(nctx), AV(env));
   WV(nenv, AFCRV);
@@ -473,16 +479,17 @@ static AFFDEF(compile_fn)
   }
   /* if we have an empty list of statements add a nil instruction */
   if (AV(stmts) == INT2FIX(0)) {
-    arc_emit(c, AV(nctx), inil);
-    arc_emit(c, AV(nctx), iret);
+    arc_emit(c, AV(nctx), inil, get_lineno(c, cdr(AV(expr))));
+    arc_emit(c, AV(nctx), iret, get_lineno(c, cdr(AV(expr))));
   }
   /* convert the new context into a code object and generate an
      instruction in the present context to load it as a literal,
      then create a closure using the code object and the current
      environment. */
   WV(newcode, arc_cctx2code(c, AV(nctx)));
-  arc_emit1(c, AV(ctx), ildl, find_literal(c, AV(ctx), AV(newcode)));
-  arc_emit(c, AV(ctx), icls);
+  arc_emit1(c, AV(ctx), ildl, find_literal(c, AV(ctx), AV(newcode)),
+	    get_lineno(c, AV(expr)));
+  arc_emit(c, AV(ctx), icls, get_lineno(c, AV(expr)));
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
   AFEND;
 }
@@ -524,9 +531,10 @@ static AFFDEF(qquote)
        argument, and then generate code to cons them together,
        or splice them together if the return so indicates. */
     AFCALL(arc_mkaff(c, qquote, CNIL), cdr(AV(expr)), AV(ctx), AV(env));
-    arc_emit(c, AV(ctx), ipush);
+    arc_emit(c, AV(ctx), ipush, get_lineno(c, AV(expr)));
     AFCALL(arc_mkaff(c, qquote, CNIL), car(AV(expr)), AV(ctx), AV(env));
-    arc_emit(c, AV(ctx), (NIL_P(AFCRV)) ? iconsr : ispl);
+    arc_emit(c, AV(ctx), (NIL_P(AFCRV)) ? iconsr : ispl,
+	     get_lineno(c, AV(expr)));
     ARETURN(CNIL);
   }
 
@@ -565,10 +573,12 @@ static AFFDEF(compile_assign)
 	     AV(env), CNIL);
       WV(envvar, find_var(c, AV(a), AV(env), &frameno, &idx));
       if (AV(envvar) == CTRUE) {
-	arc_emit2(c, AV(ctx), iste, INT2FIX(frameno), INT2FIX(idx));
+	arc_emit2(c, AV(ctx), iste, INT2FIX(frameno), INT2FIX(idx),
+		  get_lineno(c, AV(expr)));
       } else {
 	/* global symbol */
-	arc_emit1(c, AV(ctx), istg, find_literal(c, AV(ctx), AV(a)));
+	arc_emit1(c, AV(ctx), istg, find_literal(c, AV(ctx), AV(a)),
+		  get_lineno(c, AV(expr)));
       }
     }
     WV(expr, cddr(AV(expr)));
@@ -605,14 +615,14 @@ static int (*spform(arc *c, value ident))(arc *, value)
       AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(expr)),	        \
 	     AV(ctx), AV(env), CNIL);					\
       if (cdr(AV(expr)) != CNIL)					\
-	arc_emit(c, AV(ctx), ipush);					\
+	arc_emit(c, AV(ctx), ipush, get_lineno(c, AV(expr)));		\
     }									\
     if (AV(count) != INT2FIX(nargs)) {					\
       arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)),			\
 			   "inline procedure expects %d arguments (%d passed)", \
 			   nargs, FIX2INT(AV(count)));			\
     } else {								\
-      arc_emit(c, AV(ctx), instr);					\
+      arc_emit(c, AV(ctx), instr, get_lineno(c, AV(expr)));		\
     }									\
     AFEND;								\
     ARETURN(compile_continuation(c, AV(ctx), AV(cont)));		\
@@ -629,10 +639,10 @@ static AFFDEF(compile_inlinen)
   AFBEGIN;
   AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(base), AV(ctx), AV(env), CNIL);
   for (WV(expr, cdr(AV(expr))); AV(expr); WV(expr,cdr(AV(expr)))) {
-    arc_emit(c, AV(ctx), ipush);
+    arc_emit(c, AV(ctx), ipush, get_lineno(c, AV(expr)));
     AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(expr)), AV(ctx),
 	   AV(env), CNIL);
-    arc_emit(c, AV(ctx), AV(inst));
+    arc_emit(c, AV(ctx), AV(inst), get_lineno(c, AV(expr)));
   }
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
   AFEND;
@@ -787,7 +797,7 @@ static AFFDEF(compile_apply)
      cont will be nil, so we need to make a continuation. */
   if (NIL_P(AV(cont))) {
     WV(contaddr, CCTX_VCPTR(AV(ctx)));
-    arc_emit1(c, AV(ctx), icont, FIX2INT(0));
+    arc_emit1(c, AV(ctx), icont, FIX2INT(0), get_lineno(c, AV(expr)));
   }
   WV(nahd, AV(args));
   /* Traverse the arguments, compiling each and pushing them on the stack */
@@ -795,7 +805,7 @@ static AFFDEF(compile_apply)
 	 WV(nargs, INT2FIX(FIX2INT(AV(nargs)) + 1))) {
     AFCALL(arc_mkaff(c, arc_compile, CNIL), car(AV(nahd)),
 	   AV(ctx), AV(env), CNIL);
-    arc_emit(c, AV(ctx), ipush);
+    arc_emit(c, AV(ctx), ipush, get_lineno(c, AV(expr)));
   }
   /* compile the function name, which should load it into the value register */
   AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(fname), AV(ctx), AV(env), CNIL);
@@ -803,10 +813,10 @@ static AFFDEF(compile_apply)
   /* If this is a tail call, create a menv instruction to overwrite the
      current environment just before performing the application */
   if (!NIL_P(AV(cont))) {
-    arc_emit1(c, AV(ctx), imenv, AV(nargs));
+    arc_emit1(c, AV(ctx), imenv, AV(nargs), get_lineno(c, AV(expr)));
   }
   /* create the apply instruction that will perform the application */
-  arc_emit1(c, AV(ctx), iapply, AV(nargs));
+  arc_emit1(c, AV(ctx), iapply, AV(nargs), get_lineno(c, AV(expr)));
   /* If we are not a tail call, fix the continuation address */
   if (NIL_P(AV(cont))) {
     arc_jmpoffset(c, AV(ctx), FIX2INT(AV(contaddr)),
@@ -1001,6 +1011,8 @@ AFFDEF(arc_eval)
   (void)expr;
   __arc_reset_lineno(c, AV(lndata));
   WV(ctx, arc_mkcctx(c));
+  if (BOUND_P(AV(lndata)))
+    arc_cctx_mksrc(c, AV(ctx));
   AFCALL(arc_mkaff(c, arc_dynamic_wind, CNIL),
 	 arc_mkaff2(c, beforethunk, CNIL, TENVR(thr)),
 	 arc_mkaff2(c, duringthunk, CNIL, TENVR(thr)),
