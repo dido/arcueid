@@ -31,9 +31,16 @@ value arc_mkcctx(arc *c)
 {
   value cctx;
 
-  cctx = arc_mkvector(c, 4);
+  cctx = arc_mkvector(c, CCTX_SIZE);
   SCCTX_VCPTR(cctx, SCCTX_LITS(cctx, INT2FIX(0)));
   SCCTX_VCODE(cctx, SCCTX_LITS(cctx, CNIL));
+  SCCTX_SRC(cctx, CNIL);
+  return(cctx);
+}
+
+value arc_cctx_mksrc(arc *c, value cctx)
+{
+  SCCTX_SRC(cctx, arc_mkhash(c, ARC_HASHBITS));
   return(cctx);
 }
 
@@ -73,11 +80,24 @@ static value __resize_literals(arc *c, value cctx)
 
 #define VMCODEP(cctx) ((Inst *)(&VINDEX(VINDEX(cctx, 1), FIX2INT(VINDEX(cctx, 0)))))
 
-void arc_emit(arc *c, value cctx, enum vminst inst)
+/* Add line number information */
+static void add_lninfo(arc *c, value cctx, value lineno)
+{
+  value src, vptr;
+
+  src = CCTX_SRC(cctx);
+  if (NIL_P(src) || !BOUND_P(lineno) || NIL_P(lineno))
+    return;
+  vptr = CCTX_VCPTR(cctx);
+  arc_hash_insert(c, src, vptr, lineno);
+}
+
+void arc_emit(arc *c, value cctx, enum vminst inst, value fl)
 {
   value vcode;
   int vptr;
 
+  add_lninfo(c, cctx, fl);
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr >= VECLEN(vcode))
@@ -86,11 +106,12 @@ void arc_emit(arc *c, value cctx, enum vminst inst)
   SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
-void arc_emit1(arc *c, value cctx, enum vminst inst, value arg)
+void arc_emit1(arc *c, value cctx, enum vminst inst, value arg, value fl)
 {
   value vcode;
   int vptr;
 
+  add_lninfo(c, cctx, fl);
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr+1 >= VECLEN(vcode))
@@ -100,11 +121,13 @@ void arc_emit1(arc *c, value cctx, enum vminst inst, value arg)
   SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
-void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
+void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
+	       value fl)
 {
   value vcode;
   int vptr;
 
+  add_lninfo(c, cctx, fl);
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr+2 >= VECLEN(vcode))
@@ -116,11 +139,12 @@ void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2)
 }
 
 void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
-	       value arg3)
+	       value arg3, value fl)
 {
   value vcode;
   int vptr;
 
+  add_lninfo(c, cctx, fl);
   vptr = FIX2INT(CCTX_VCPTR(cctx));
   vcode = CCTX_VCODE(cctx);
   if (NIL_P(vcode) || vptr+3 >= VECLEN(vcode))
@@ -224,6 +248,20 @@ value arc_code_setname(arc *c, value code, value name)
   return(orgcode);
 }
 
+value __arc_code_lineno(arc *c, value fun, value *ipptr)
+{
+  int vptr;
+  value code;
+
+  if (TYPE(fun) != T_CLOS)
+    return(CUNBOUND);
+  code = CLOS_CODE(fun);
+  if (TYPE(CODE_SRC(code)) != T_TABLE)
+    return(CUNBOUND);
+  vptr = ipptr - &XVINDEX(CODE_CODE(code), 0);
+  return(arc_hash_lookup(c, CODE_SRC(code), INT2FIX(vptr)));
+}
+
 value arc_cctx2code(arc *c, value cctx)
 {
   value func;
@@ -233,6 +271,7 @@ value arc_cctx2code(arc *c, value cctx)
 	 FIX2INT(CCTX_VCPTR(cctx))*sizeof(value));
   memcpy(&XCODE_LITERAL(func, 0), &XVINDEX(CCTX_LITS(cctx), 0),
 	 FIX2INT(CCTX_LPTR(cctx))*sizeof(value));
+  SCODE_SRC(func, CCTX_SRC(cctx));
   return(func);
 }
 
