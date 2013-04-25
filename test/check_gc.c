@@ -605,8 +605,8 @@ START_TEST(test_gc_fn)
 
   cctx = arc_mkcctx(c);
   lptr = arc_literal(c, cctx, arc_mkflonum(c, 3.1415926535));
-  arc_emit1(c, cctx, ildl, INT2FIX(lptr));
-  arc_emit(c, cctx, ihlt);
+  arc_emit1(c, cctx, ildl, INT2FIX(lptr), CNIL);
+  arc_emit(c, cctx, ihlt, CNIL);
   code = arc_cctx2code(c, cctx);
 
   /* The code object created should consist of the following:
