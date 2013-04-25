@@ -268,6 +268,7 @@ static inline value scdr(value x, value y)
 
 extern value cons(arc *c, value x, value y);
 extern value arc_list_append(value list1, value val);
+extern value arc_list_reverse(arc *c, value xs);
 extern value arc_list_length(arc *c, value list);
 extern value arc_car(arc *c, value x);
 extern value arc_cdr(arc *c, value x);
