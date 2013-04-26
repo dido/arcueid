@@ -780,6 +780,7 @@ static struct {
   { "scdr", 2, arc_scdr },
   { "list", -2, arc_list },	/* moved from arc.arc */
   { "dlist", -2, arc_dlist },
+  { "append", -2, arc_append },
 
   /* Math Operations */
   { "+", -2, __arc_add },
