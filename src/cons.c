@@ -274,6 +274,27 @@ value arc_scdr(arc *c, value x, value y)
   return(scdr(x, y));
 }
 
+AFFDEF(arc_list)
+{
+  ARARG(arg);
+  AFBEGIN;
+  ARETURN(AV(arg));
+  AFEND;
+}
+AFFEND;
+
+AFFDEF(arc_dlist)
+{
+  ARARG(xs);
+  AFBEGIN;
+  if (NIL_P(cdr(AV(xs))))
+    ARETURN(car(AV(xs)));
+  AFCALL2(arc_mkaff(c, arc_dlist, CNIL), cdr(AV(xs)));
+  ARETURN(cons(c, car(AV(xs)), AFCRV));
+  AFEND;
+}
+AFFEND;
+
 value arc_list_append(value list1, value val)
 {
   value list;
@@ -288,6 +309,27 @@ value arc_list_append(value list1, value val)
   scdr(list, val);
   return(list1);
 }
+
+/* like join, except it can create dotted lists if the last arg is an atom */
+AFFDEF(arc_append)
+{
+  AVAR(a);
+  ARARG(args);
+  AFBEGIN;
+  if (NIL_P(AV(args)))
+    ARETURN(CNIL);
+  if (NIL_P(cdr(AV(args))))
+    ARETURN(car(AV(args)));
+  WV(a, car(AV(args)));
+  if (NIL_P(AV(a)))
+    AFTCALL2(arc_mkaff(c, arc_append, CNIL), cdr(AV(args)));
+  AFCALL(arc_mkaff(c, arc_apply, CNIL),
+	 arc_mkaff(c, arc_append, CNIL),
+	 cdr(AV(a)), cdr(AV(args)));
+  ARETURN(cons(c, car(AV(a)), AFCRV));
+  AFEND;
+}
+AFFEND
 
 value arc_list_length(arc *c, value list)
 {
