@@ -220,6 +220,14 @@ extern void __arc_null_sweeper(arc *c, value v);
 		      || (TYPE(x) == (T_FLONUM)) || (TYPE(x) == (T_RATIONAL)) \
 		      || (TYPE(x) == (T_COMPLEX)))
 
+#define LITERAL_P(x) ((x) == ARC_BUILTIN(c, S_T)			\
+		      || (x) == ARC_BUILTIN(c, S_NIL)			\
+		      || NIL_P((x)) || (x) == CTRUE			\
+		      || TYPE((x)) == T_CHAR || TYPE((x)) == T_STRING	\
+		      || TYPE((x)) == T_FIXNUM || TYPE((x)) == T_BIGNUM	\
+		      || TYPE((x)) == T_FLONUM || TYPE((x)) == T_RATIONAL \
+		      || TYPE((x)) == T_RATIONAL || TYPE((x)) == T_COMPLEX)
+
 static inline enum arc_types TYPE(value v)
 {
   if (FIXNUM_P(v))
@@ -267,6 +275,8 @@ static inline value scdr(value x, value y)
 #define CONS_P(x) (TYPE(x) == T_CONS)
 
 extern value cons(arc *c, value x, value y);
+extern int arc_list(arc *c, value thr);
+extern int arc_dlist(arc *c, value thr);
 extern value arc_list_append(value list1, value val);
 extern value arc_list_reverse(arc *c, value xs);
 extern value arc_list_length(arc *c, value list);
