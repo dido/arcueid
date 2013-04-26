@@ -123,6 +123,27 @@ START_TEST(test_read_qquote)
   fail_unless(car(cdr(qexpr)) == arc_intern_cstr(c, "c"));
   fail_unless(TYPE(car(cdr(cdr(qexpr)))) == T_SYMBOL);
   fail_unless(car(cdr(cdr(qexpr))) == arc_intern_cstr(c, "d"));
+
+  /* This should expand to
+     (quasiquote (quasiquote (+ 1 (unquote (unquote-splicing (list 2 3))) 4)))
+   */
+  thr = arc_mkthread(c);
+  sio = arc_instring(c, arc_mkstringc(c, "``(+ 1 ,,@(list 2 3) 4)"), CNIL);
+  XCALL(arc_sread, sio, CNIL);
+  sexpr = TVALR(thr);
+  fail_unless(TYPE(sexpr) == T_CONS);
+  fail_unless(car(sexpr) == ARC_BUILTIN(c, S_QQUOTE));
+  fail_unless(TYPE(cadr(sexpr)) == T_CONS);
+  fail_unless(car(cadr(sexpr)) == ARC_BUILTIN(c, S_QQUOTE));
+  fail_unless(TYPE(cadr(cadr(sexpr))) == T_CONS);
+  fail_unless(car(cadr(cadr(sexpr))) == arc_intern_cstr(c, "+"));
+  fail_unless(cadr(cadr(cadr(sexpr))) == INT2FIX(1));
+  fail_unless(car(car(cddr(cadr(cadr(sexpr))))) == ARC_BUILTIN(c, S_UNQUOTE));
+  fail_unless(car(cadr(car(cddr(cadr(cadr(sexpr)))))) == ARC_BUILTIN(c, S_UNQUOTESP));
+  fail_unless(car(cadr(cadr(car(cddr(cadr(cadr(sexpr))))))) == arc_intern_cstr(c, "list"));
+  fail_unless(cadr(cadr(cadr(car(cddr(cadr(cadr(sexpr))))))) == INT2FIX(2));
+  fail_unless(car(cddr(cadr(cadr(car(cddr(cadr(cadr(sexpr)))))))) == INT2FIX(3));
+  fail_unless(cadr(cddr(cadr(cadr(sexpr)))) == INT2FIX(4));
 }
 END_TEST
 
