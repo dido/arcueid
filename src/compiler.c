@@ -519,6 +519,159 @@ static AFFDEF(compile_quote)
 }
 AFFEND
 
+#if 0
+
+/* This implementation of quasiquote more or less follows Common Lisp
+   semantics, and is not compatible with reference Arc, which doesn't seem
+   to handle nested quasiquotes in a reasonable manner.  It is based on
+   code provided by fallintothis:
+
+   https://bitbucket.org/fallintothis/qq/src/04a5dfbc592e5bed58b7a12fbbc34dcd5f5f254f/qq.arc?at=default
+   http://arclanguage.org/item?id=9962
+*/
+static int qqexpand(arc *c, value thr);
+
+/* Test whether the given expr may yield multiple list epelements.  Note:
+   not only does ,@x splice, but so does ,,@x (unlike in reference Arc) */
+static AFFDEF(splicing)
+{
+  AARG(expr);
+  AFBEGIN;
+  if (!CONS_P(AV(expr)))
+    ARETURN(CNIL);
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP))
+    ARETURN(CTRUE);
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE))
+    AFTCALL(arc_mkaff(c, splicing, CNIL), cadr(AV(expr)));
+  ARETURN(CNIL);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(qqcons)
+{
+  AARG(expr1, expr2);
+  value operator;
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, splicing, CNIL), AV(expr1));
+  operator = (NIL_P(AFCRV)) ? ARC_BUILTIN(c, S_DLIST), ARC_BUILTIN(c, S_CONS);
+  /* XXX unoptimised version -- we'll add in other optimisations later */
+  ARETURN(cons(c, operator, cons(c, AV(expr1), cons(c, AV(expr2), CNIL))));
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(qqlist)
+{
+  AARG(expr);
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, qqcons, CNIL), AV(expr), CNIL);
+  AFEND;
+}
+AFFEND
+
+/* Do the transformations for elements in qq-expand-list that aren't the
+   dotted tail.  Also, handle nested quasiquotes. */
+static AFFDEF(qqtransform)
+{
+  AARG(expr);
+  AVAR(expansion);
+  AFBEGIN;
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE))
+    AFTCALL(arc_mkaff(c, qqlist, CNIL), cadr(AV(expr)));
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP))
+    ARETURN(cadr(AV(expr)));
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_QQUOTE)) {
+    AFCALL(arc_mkaff(c, qqexpand, CNIL), cadr(AV(expr)));
+    WV(expansion, AFCRV);
+    AFTCALL(arc_mkaff(c, qqlist, CNIL),
+	    cons(c, ARC_BUILTIN(c, S_QQUOTE),
+		 cons(c, AV(expansion), CNIL)));
+  }
+  AFCALL(arc_mkaff(c, qqexpand, CNIL), AV(expr));
+  AFTCALL(arc_mkaff(c, qqlist, CNIL), AFCRV);
+  AFEND;
+}
+AFFEND
+
+/*  Produce a list of forms suitable for append.
+    Note: if we see 'unquote or 'unquote-splicing in the middle of a list, we
+    assume it's from dotting, since (a . (unquote b)) == (a unquote b).
+    This is a "problem" if the user does something like `(a unquote b c d),
+    which we interpret as `(a . ,b). */
+static AFFDEF(qqexpandlist)
+{
+  AARG(expr);
+  AVAR(trans);
+  AFBEGIN;
+  if (!CONS_P(AV(expr))) {
+    ARETURN(cons(c,
+		 cons(c, ARC_BUILTIN(c, S_QUOTE),
+		      cons(c, AV(expr), CNIL)), CNIL));
+  }
+
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE))
+    ARETURN(cons(c, cadr(AV(expr)), CNIL));
+
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP)) {
+    arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)), "invalid use of unquote-splicing");
+    ARETURN(CNIL);
+  }
+  AFCALL(arc_mkaff(c, qqtransform, CNIL), car(AV(expr)));
+  WV(trans, AFCRV);
+  AFCALL(arc_mkaff(c, qqexpandlist, CNIL), cdr(AV(expr)));
+  ARETURN(cons(c, AV(trans), AFCRV));
+  AFEND;
+}
+AFFEND
+
+/* The behaviour is more or less dictated by the Common Lisp Hyperspec's
+   general description of backquote:
+   `atom/nil -->  'atom/nil
+   `,expr     -->  expr
+   `,@expr    -->  error
+   ``expr     -->  `expr-expanded
+   `list-expr -->  expand each element & handle dotted tails:
+   `(x1 x2 ... xn)     -->  (append y1 y2 ... yn)
+   `(x1 x2 ... . xn)   -->  (append y1 y2 ... 'xn)
+   `(x1 x2 ... . ,xn)  -->  (append y1 y2 ... xn)
+   `(x1 x2 ... . ,@xn) -->  error
+   where each yi is the output of (qq-transform xi).
+*/
+static AFFDEF(qqexpand)
+{
+  AARG(expr);
+  AFBEGIN;
+  if (!CONS_P(AV(expr)))
+    ARETURN(cons(c, ARC_BUILTIN(c, S_QUOTE), cons(c, AV(expr), CNIL)));
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE))
+    ARETURN(cadr(AV(expr)));
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP)) {
+    arc_err_cstrfmt_line(c, get_lineno(c, AV(expr)), "invalid use of unquote-splicing");
+    ARETURN(CNIL);
+  }
+  if (car(AV(expr)) == ARC_BUILTIN(c, S_QQUOTE)) {
+    AFCALL(arc_mkaff(c, qqexpand, CNIL), cadr(AV(expr)));
+    ARETURN(cons(c, ARC_BUILTIN(c, S_QQUOTE), cons(c, AFCRV, CNIL)));
+  }
+  AFCALL(arc_mkaff(c, qqexpandlist, CNIL), AV(expr));
+  AFTCALL(arc_mkaff(c, qqappends, CNIL), AFCRV);
+  AFEND;
+}
+AFFEND
+
+static AFFDEF(compile_quasiquote)
+{
+  AARG(expr, ctx, env, cont);
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, qqexpand, CNIL), car(AV(expr)));
+  AFTCALL(arc_mkaff(c, arc_compile, CNIL), AFCRV, AV(ctx), AV(env), AV(cont));
+  AFEND;
+}
+AFFEND
+
+#endif
+
 static AFFDEF(qquote)
 {
   AARG(expr, ctx, env);
@@ -957,12 +1110,7 @@ AFFDEF(arc_compile)
   get_lineno(c, AV(nexpr));
   WV(expr, AV(nexpr));
 
-  if (AV(expr) == ARC_BUILTIN(c, S_T) || AV(expr) == ARC_BUILTIN(c, S_NIL)
-      || NIL_P(AV(expr)) || AV(expr) == CTRUE
-      || TYPE(AV(expr)) == T_CHAR || TYPE(AV(expr)) == T_STRING
-      || TYPE(AV(expr)) == T_FIXNUM || TYPE(AV(expr)) == T_BIGNUM
-      || TYPE(AV(expr)) == T_FLONUM || TYPE(AV(expr)) == T_RATIONAL
-      || TYPE(AV(expr)) == T_RATIONAL || TYPE(AV(expr)) == T_COMPLEX) {
+  if (LITERAL_P(AV(expr))) {
     ARETURN(compile_literal(c, AV(expr), AV(ctx), AV(cont)));
   }
 
