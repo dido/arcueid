@@ -778,6 +778,8 @@ static struct {
   { "cons", 2, cons },
   { "scar", 2, arc_scar },
   { "scdr", 2, arc_scdr },
+  { "list", -2, arc_list },	/* moved from arc.arc */
+  { "dlist", -2, arc_dlist },
 
   /* Math Operations */
   { "+", -2, __arc_add },
