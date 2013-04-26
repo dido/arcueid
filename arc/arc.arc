@@ -55,8 +55,8 @@
 (def atom (x) (no (acons x)))
 
 ; Arcueid's rest args are always nil terminated lists
-
-(def list args args)
+; list is now defined in core
+; (def list args args)
 
 (def copylist (xs)
   (if (no xs) 
