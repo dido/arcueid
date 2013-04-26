@@ -585,7 +585,6 @@ START_TEST(test_compile_qquote)
   thr = arc_mkthread(c);
 
   TEST("((fn (a b) `(0 ,a ,@b 5 6)) 1 '(2 3 4))");
-  fail_unless(TYPE(ret) == T_CONS);
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == INT2FIX(0));
   fail_unless(car(cdr(ret)) == INT2FIX(1));
@@ -594,6 +593,16 @@ START_TEST(test_compile_qquote)
   fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(4));
   fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(5));
   fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(ret))))))) == INT2FIX(6));
+
+  TEST("(assign list (fn args args))");
+  TEST("``(+ 1 ,,@(list 2 3) 4)");
+  fail_unless(CONS_P(ret));
+  fail_unless(car(ret) == arc_intern_cstr(c, "+"));
+  fail_unless(cadr(ret) == INT2FIX(1));
+  fail_unless(car(cddr(ret)) == INT2FIX(2));
+  fail_unless(cadr(cddr(ret)) == INT2FIX(3));
+  fail_unless(car(cddr(cddr(ret))) == INT2FIX(4));
+  fail_unless(NIL_P(cdr(cddr(cddr(ret)))));
 }
 END_TEST
 
