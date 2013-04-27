@@ -781,6 +781,8 @@ static struct {
   { "list", -2, arc_list },	/* moved from arc.arc */
   { "dlist", -2, arc_dlist },
   { "append", -2, arc_append },
+  { "reduce", -2, arc_reduce },
+  { "rreduce", -2, arc_rreduce },
 
   /* Math Operations */
   { "+", -2, __arc_add },
