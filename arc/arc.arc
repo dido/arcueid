@@ -1484,15 +1484,15 @@
       (when (> v n) (= winner k n v)))
     (list winner n)))
 
-(def reduce (f xs)
-  (if (cddr xs)
-      (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
-      (apply f xs)))
+;; (def reduce (f xs)
+;;   (if (cddr xs)
+;;       (reduce f (cons (f (car xs) (cadr xs)) (cddr xs)))
+;;       (apply f xs)))
 
-(def rreduce (f xs)
-  (if (cddr xs)
-      (f (car xs) (rreduce f (cdr xs)))
-      (apply f xs)))
+;; (def rreduce (f xs)
+;;   (if (cddr xs)
+;;       (f (car xs) (rreduce f (cdr xs)))
+;;       (apply f xs)))
 
 (let argsym (uniq)
 
