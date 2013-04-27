@@ -331,6 +331,41 @@ AFFDEF(arc_append)
 }
 AFFEND
 
+AFFDEF(arc_reduce)
+{
+  AARG(f, xs);
+  AFBEGIN;
+  if (!CONS_P(AV(xs))) {
+    arc_err_cstrfmt(c, "arg 2 of reduce must be a list");
+    ARETURN(CNIL);
+  }
+  if (!NIL_P(cdr(AV(xs))) && !NIL_P(cddr(AV(xs)))) {
+    AFCALL(AV(f), car(AV(xs)), cadr(AV(xs)));
+    AFTCALL(arc_mkaff(c, arc_reduce, CNIL), AV(f),
+	    cons(c, AFCRV, cddr(AV(xs))));
+  }
+  AFCALL2(AV(f), AV(xs));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_rreduce)
+{
+  AARG(f, xs);
+  AFBEGIN;
+  if (!CONS_P(AV(xs))) {
+    arc_err_cstrfmt(c, "arg 2 of rreduce must be a list");
+    ARETURN(CNIL);
+  }
+  if (!NIL_P(cdr(AV(xs))) && !NIL_P(cddr(AV(xs)))) {
+    AFCALL(arc_mkaff(c, arc_rreduce, CNIL), AV(f), cdr(AV(xs)));
+    AFTCALL(AV(f), car(AV(xs)), AFCRV);
+  }
+  AFCALL2(AV(f), AV(xs));
+  AFEND;
+}
+AFFEND
+
 value arc_list_length(arc *c, value list)
 {
   value n;
