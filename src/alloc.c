@@ -276,6 +276,13 @@ static void mark(arc *c, value v, int depth)
   if (IMMEDIATE_P(v) || MARKED(v))
     return;
 
+  /* special case: for a negative depth, just mark the object, do not
+     recurse into it.  Presently used for thread stack marker. */
+  if (depth < 0) {
+    MARK(v);
+    return;
+  }
+
   if (depth > MAX_MARK_RECURSION_DEPTH) {
     /* Stop recursion, and mark the object with the propagator flag
        so that the next iteration scan can pick it up. */
