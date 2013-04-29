@@ -322,6 +322,8 @@ AFFDEF(arc_open_socket)
     ARETURN(CNIL);
   }
 
+  freeaddrinfo(servinfo);
+
   if (listen(sockfd, 10) < 0) {
     int en = errno;
     arc_err_cstrfmt(c, "open-socket: error listening (%s; errno=%d)", strerror(en), en);
