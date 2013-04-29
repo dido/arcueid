@@ -197,6 +197,7 @@ static AFFDEF(rl_getb)
 
     if (line_read && *line_read) {
       add_history(line_read);
+      next_history();		/* not sure why this is needed... */
       rlstr = arc_mkstringc(c, line_read);
       RLDATA(AV(rlio))->str = arc_strcatc(c, rlstr, '\n');
       WV(len, arc_strlen(c, RLDATA(AV(rlio))->str));
@@ -283,6 +284,7 @@ value arc_readlineport(arc *c)
   RLDATA(rlio)->closed = 0;
   RLDATA(rlio)->idx = 0;
   RLDATA(rlio)->str = CNIL;
+  using_history();
   rl_variable_bind("blink-matching-paren", "on");
   rl_basic_quote_characters = "\"";
   rl_basic_word_break_characters = "[]()!:~\"";
@@ -393,6 +395,7 @@ void cleanup(void)
 				 + strlen(DEFAULT_HISTORY_FILE) + 2));
       sprintf(histfile, "%s/%s", homedir, DEFAULT_HISTORY_FILE);
       write_history(histfile);
+      clear_history();
       rl_callback_handler_remove();
     }
   }
