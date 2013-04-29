@@ -73,11 +73,11 @@ static void sock_sweeper(arc *c, value v)
 {
   if (!SOCKDATA(v)->closed) {
     close(SOCKDATA(v)->fd);
-    /* XXX: error handling here? */
-    if (SOCKDATA(v)->addr != NULL) {
-      free(SOCKDATA(v)->addr);
-      SOCKDATA(v)->addr = NULL;
-    }
+  }
+  /* XXX: error handling here? */
+  if (SOCKDATA(v)->addr != NULL) {
+    free(SOCKDATA(v)->addr);
+    SOCKDATA(v)->addr = NULL;
   }
 }
 
