@@ -949,6 +949,7 @@ void arc_init_builtins(arc *c)
 {
   int i;
   value cfunc;
+  value quasiquote;
 
   for (i=0; fntable[i].fname != NULL; i++) {
     value name = arc_intern_cstr(c, fntable[i].fname);
@@ -959,6 +960,9 @@ void arc_init_builtins(arc *c)
     arc_bindsym(c, name, cfunc);
   }
 
+  quasiquote = arc_mkaff(c, arc_quasiquote, ARC_BUILTIN(c, S_QQUOTE));
+  quasiquote = arc_annotate(c, ARC_BUILTIN(c, S_MAC), quasiquote);
+  arc_bindsym(c, ARC_BUILTIN(c, S_QQUOTE), quasiquote);
   arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
   arc_bindsym(c, ARC_BUILTIN(c, S_T), CTRUE);
   arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
