@@ -106,6 +106,7 @@ enum builtin_syms {
   S_ATSTRINGS,			/* atstrings */
   S_LNDATA,			/* lndata */
   S_DLIST,			/* dlist */
+  S_EVAL,			/* eval */
 
   S_THE_END			/* end of the line */
 };
