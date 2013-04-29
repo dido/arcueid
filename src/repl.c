@@ -203,6 +203,7 @@ static AFFDEF(rl_getb)
       WV(len, arc_strlen(c, RLDATA(AV(rlio))->str));
       RLDATA(AV(rlio))->idx = 0;
     }
+    free(line_read);		/* not sure if this should be done... */
     line_read = NULL;
   }
   ARETURN(INT2FIX(arc_strindex(c, RLDATA(AV(rlio))->str, RLDATA(AV(rlio))->idx++)));
