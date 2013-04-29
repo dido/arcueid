@@ -464,6 +464,7 @@ extern int arc_ssexpand(arc *c, value thr);
 /* The compiler */
 extern int arc_compile(arc *c, value thr);
 extern int arc_eval(arc *c, value thr);
+extern int arc_quasiquote(arc *c, value thr);
 
 /* Macros */
 extern int arc_macex(arc *c, value thr);
