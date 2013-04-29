@@ -594,7 +594,6 @@ START_TEST(test_compile_qquote)
   fail_unless(car(cdr(cdr(cdr(cdr(cdr(ret)))))) == INT2FIX(5));
   fail_unless(car(cdr(cdr(cdr(cdr(cdr(cdr(ret))))))) == INT2FIX(6));
 
-  TEST("(assign list (fn args args))");
   TEST("``(+ 1 ,,@(list 2 3) 4)");
   fail_unless(CONS_P(ret));
   fail_unless(car(ret) == arc_intern_cstr(c, "+"));
