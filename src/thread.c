@@ -74,16 +74,13 @@ static void thread_marker(arc *c, value thr, int depth,
   mark(c, TENVR(thr), depth);
   mark(c, TVALR(thr), depth);
   mark(c, TCONR(thr), depth);
-  /* The stack has to be treated specially.  In a gc cycle, we have
-     to clear out the unused portions before marking the stack vector
-     itself.  XXX - we could also do this by non-recursively marking
-     the stack vector itself and then marking only the used portions.
+  /* The stack has to be treated specially.  We have to mark the used
+     portions of the stack only, and the stack itself has to be marked
+     non-recursively thereafter.
   */
-  for (p = TSBASE(thr); p == TSP(thr); p++) {
-    __arc_wb(*p, CNIL);
-    *p = CNIL;
-  }
-  mark(c, TSTACK(thr), depth);
+  for (p = TSP(thr)+1; p < TSTOP(thr); p++)
+    mark(c, *p, depth);
+  mark(c, TSTACK(thr), -1); /* negative depth means mark only the object */
 
   mark(c, TWAITFD(thr), depth);
   mark(c, TCH(thr), depth);
@@ -105,7 +102,7 @@ value arc_mkthread(arc *c)
   SCONR(thr, CNIL);
   TSTACK(thr) = arc_mkvector(c, c->stksize);
   TSBASE(thr) = &XVINDEX(TSTACK(thr), 0);
-  TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), c->stksize-1);
+  TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), VECLEN(TSTACK(thr))-1);
   TIP(thr).ipptr = NULL;
   TARGC(thr) = 0;
 
