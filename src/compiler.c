@@ -519,8 +519,6 @@ static AFFDEF(compile_quote)
 }
 AFFEND
 
-#if 0
-
 /* This implementation of quasiquote more or less follows Common Lisp
    semantics, and is not compatible with reference Arc, which doesn't seem
    to handle nested quasiquotes in a reasonable manner.  It is based on
@@ -548,14 +546,45 @@ static AFFDEF(splicing)
 }
 AFFEND
 
+static AFFDEF(qqappend)
+{
+  AARG(expr1);
+  AOARG(expr2);
+  AFBEGIN;
+  if (!BOUND_P(AV(expr2)))
+    WV(expr2, CNIL);
+  /* XXX unoptimized version as before */
+  ARETURN(cons(c, ARC_BUILTIN(c, S_APPEND),
+	       cons(c, AV(expr1), cons(c, AV(expr2), CNIL))));
+  AFEND;
+}
+AFFEND						 
+
+static AFFDEF(qqappends)
+{
+  AARG(exprs);
+  AFBEGIN;
+  AFCALL(arc_mkaff(c, arc_rreduce, CNIL),
+	 arc_mkaff(c, qqappend, CNIL),
+	 AV(exprs));
+  WV(exprs, AFCRV);
+  AFCALL(arc_mkaff(c, splicing, CNIL), AFCRV);
+  if (NIL_P(AFCRV))
+    ARETURN(AV(exprs));
+  ARETURN(cons(c, ARC_BUILTIN(c, S_APPEND), cons(c, AV(exprs), CNIL)));
+  AFEND;
+}
+AFFEND
+
 static AFFDEF(qqcons)
 {
   AARG(expr1, expr2);
   value operator;
   AFBEGIN;
   AFCALL(arc_mkaff(c, splicing, CNIL), AV(expr1));
-  operator = (NIL_P(AFCRV)) ? ARC_BUILTIN(c, S_DLIST), ARC_BUILTIN(c, S_CONS);
-  /* XXX unoptimised version -- we'll add in other optimisations later */
+  operator = (NIL_P(AFCRV)) ? ARC_BUILTIN(c, S_CONS) :  ARC_BUILTIN(c, S_DLIST);
+  /* XXX unoptimised version -- this results in the list being evaluated at
+     runtime, well, more or less in the same way as the old code had... */
   ARETURN(cons(c, operator, cons(c, AV(expr1), cons(c, AV(expr2), CNIL))));
   AFEND;
 }
@@ -577,11 +606,11 @@ static AFFDEF(qqtransform)
   AARG(expr);
   AVAR(expansion);
   AFBEGIN;
-  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE))
+  if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE))
     AFTCALL(arc_mkaff(c, qqlist, CNIL), cadr(AV(expr)));
-  if (car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP))
+  if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP))
     ARETURN(cadr(AV(expr)));
-  if (car(AV(expr)) == ARC_BUILTIN(c, S_QQUOTE)) {
+  if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_QQUOTE)) {
     AFCALL(arc_mkaff(c, qqexpand, CNIL), cadr(AV(expr)));
     WV(expansion, AFCRV);
     AFTCALL(arc_mkaff(c, qqlist, CNIL),
@@ -652,7 +681,9 @@ static AFFDEF(qqexpand)
   }
   if (car(AV(expr)) == ARC_BUILTIN(c, S_QQUOTE)) {
     AFCALL(arc_mkaff(c, qqexpand, CNIL), cadr(AV(expr)));
-    ARETURN(cons(c, ARC_BUILTIN(c, S_QQUOTE), cons(c, AFCRV, CNIL)));
+    ARETURN(cons(c, ARC_BUILTIN(c, S_EVAL),
+		 cons(c, cons(c, ARC_BUILTIN(c, S_QQUOTE),
+			      cons(c, AFCRV, CNIL)), CNIL)));
   }
   AFCALL(arc_mkaff(c, qqexpandlist, CNIL), AV(expr));
   AFTCALL(arc_mkaff(c, qqappends, CNIL), AFCRV);
@@ -660,62 +691,11 @@ static AFFDEF(qqexpand)
 }
 AFFEND
 
-static AFFDEF(compile_quasiquote)
+AFFDEF(arc_quasiquote)
 {
-  AARG(expr, ctx, env, cont);
+  AARG(expr);
   AFBEGIN;
-  AFCALL(arc_mkaff(c, qqexpand, CNIL), car(AV(expr)));
-  AFTCALL(arc_mkaff(c, arc_compile, CNIL), AFCRV, AV(ctx), AV(env), AV(cont));
-  AFEND;
-}
-AFFEND
-
-#endif
-
-static AFFDEF(qquote)
-{
-  AARG(expr, ctx, env);
-  AFBEGIN;
-  if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTE)) {
-    AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(expr)), AV(ctx),
-	   AV(env), CNIL);
-    /* no splice */
-    ARETURN(CNIL);
-  }
-
-  if (CONS_P(AV(expr)) && car(AV(expr)) == ARC_BUILTIN(c, S_UNQUOTESP)) {
-    AFCALL(arc_mkaff(c, arc_compile, CNIL), cadr(AV(expr)), AV(ctx),
-	   AV(env), CNIL);
-    /* splice */
-    ARETURN(CTRUE);
-  }
-
-  if (CONS_P(AV(expr))) {
-    /* If we see a cons, we need to recurse into the cdr of the
-       argument first, generating the code for that, then push
-       the result, then generate the code for the car of the
-       argument, and then generate code to cons them together,
-       or splice them together if the return so indicates. */
-    AFCALL(arc_mkaff(c, qquote, CNIL), cdr(AV(expr)), AV(ctx), AV(env));
-    arc_emit(c, AV(ctx), ipush, get_lineno(c, AV(expr)));
-    AFCALL(arc_mkaff(c, qquote, CNIL), car(AV(expr)), AV(ctx), AV(env));
-    arc_emit(c, AV(ctx), (NIL_P(AFCRV)) ? iconsr : ispl,
-	     get_lineno(c, AV(expr)));
-    ARETURN(CNIL);
-  }
-
-  compile_literal(c, AV(expr), AV(ctx), CNIL);
-  ARETURN(CNIL);
-  AFEND;
-}
-AFFEND
-
-static AFFDEF(compile_quasiquote)
-{
-  AARG(expr, ctx, env, cont);
-  AFBEGIN;
-  AFCALL(arc_mkaff(c, qquote, CNIL), car(AV(expr)), AV(ctx), AV(env));
-  ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
+  AFTCALL(arc_mkaff(c, qqexpand, CNIL), AV(expr));
   AFEND;
 }
 AFFEND
@@ -762,8 +742,7 @@ static int (*spform(arc *c, value ident))(arc *, value)
     return(compile_fn);
   if (ARC_BUILTIN(c, S_QUOTE) == ident)
     return(compile_quote);
-  if (ARC_BUILTIN(c, S_QQUOTE) == ident)
-    return(compile_quasiquote);
+  /* Note: quasiquote is now defined as a true macro */
   if (ARC_BUILTIN(c, S_ASSIGN) == ident)
     return(compile_assign);
   return(NULL);
@@ -966,7 +945,7 @@ static AFFDEF(compile_apply)
     AFCALL2(arc_rep(c, mac), AV(args));
     AFTCALL(arc_mkaff(c, arc_compile, CNIL), AFCRV, AV(ctx), AV(env), AV(cont));
     /* tail call: doesn't return -- never gets here */
-    ARETURN(AV(ctx));
+    ARETURN(AFCRV);
   }
 
   /* There are two possible cases here.  If this is not a tail call,
