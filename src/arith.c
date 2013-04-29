@@ -1808,7 +1808,8 @@ value __arc_str2int(arc *c, value obj, value base, int strptr, int limit)
   /* save the pointer so we can check later if anything happened */
   save = strptr;
   res = INT2FIX(0);
-  for (r = arc_strindex(c, obj, strptr); strptr < limit; r = arc_strindex(c, obj, ++strptr)) {
+  while (strptr < limit) {
+    r = arc_strindex(c, obj, strptr);
     if (isdigit(r))
       r -= '0';
     else if (isalpha(r))
@@ -1819,6 +1820,7 @@ value __arc_str2int(arc *c, value obj, value base, int strptr, int limit)
       goto noconv;
     res = __arc_mul2(c, res, base);
     res = __arc_add2(c, res, INT2FIX(r));
+    ++strptr;
   }
 
   /* check if anything actually happened */
