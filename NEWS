@@ -5,6 +5,9 @@ See the end for copying conditions.
 * Version 0.1.2 (2013-??-??)
 - Expand nested quasiquotes using Common Lisp semantics
 - Cleanup readline (hopefully)
+- Memory leaks in dir and open-socket plugged
+- Thread GC marker revised
+- Further stability fixes
 
 * Version 0.1.1 (2013-04-25)
 - Modify order of evaluation of functions when the andf operator is compiled
