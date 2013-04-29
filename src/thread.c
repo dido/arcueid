@@ -533,6 +533,7 @@ AFFDEF(arc_kill_thread)
   AARG(tthr);
   AVAR(achan);
   AFBEGIN;
+  TYPECHECK(AV(tthr), T_THREAD);
   TSTATE(AV(tthr)) = Tbroken;
   if (TACELL(AV(tthr))) {
     /* release atomic cell */
