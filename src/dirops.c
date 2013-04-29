@@ -62,6 +62,7 @@ value arc_dir(arc *c, value dirname)
       continue;
     dirlist = cons(c, arc_mkstringc(c, entry->d_name), dirlist);
   }
+  closedir(dirp);
   return(dirlist);
 }
 
