@@ -131,7 +131,7 @@ struct arc {
   void (*free)(struct arc *, void *, void *); /* should be used only by gc */
 
   /* Garbage collector entry point */
-  void (*gc)(struct arc *);
+  int (*gc)(struct arc *);
   void (*markroots)(struct arc *);
 
   void *alloc_ctx;		/* allocation/gc context */
