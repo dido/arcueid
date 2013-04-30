@@ -151,7 +151,6 @@ struct arc {
   /* Threading and scheduler */
   value vmthreads;		/* virtual machine thread objects (head) */
   value vmthrtail;		/* virtual machine thread objects (tail) */
-  value vmqueue;		/* virtual machine run queue */
   value curthread;		/* current thread */
   int tid_nonce;		/* nonce for thread IDs */
   int stksize;			/* default stack size for threads */
