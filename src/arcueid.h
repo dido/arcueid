@@ -607,13 +607,13 @@ extern value arc_declared(arc *c, value decl);
 
 #define AFFEND while (0); return(TR_RC); }
 
-#define ADEFARG(x) char x = __nargs__++
+#define ADEFARG(x) const char x = __nargs__++
 
-#define AOPTARG(x) char x = __nargs__ +  __optargs__++
+#define AOPTARG(x) const char x = __nargs__ +  __optargs__++
 
-#define ARARG(x) char x = __nargs__ + __optargs__ + __localvars__; __restarg__ = 1
+#define ARARG(x) const char x = __nargs__ + __optargs__ + __localvars__; __restarg__ = 1
 
-#define ADEFVAR(x) char x = __nargs__ + __optargs__ + __localvars__++;
+#define ADEFVAR(x) const char x = __nargs__ + __optargs__ + __localvars__++;
 
 #define AARG(...) FOR_EACH(ADEFARG, __VA_ARGS__)
 
