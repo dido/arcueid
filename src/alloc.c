@@ -352,7 +352,7 @@ static void free_unused_bibop(arc *c)
 }
 
 /* Basic mark/sweep garbage collector */
-static void gc(arc *c)
+static int gc(arc *c)
 {
   Bhdr *ptr;
   struct cell *cp;
@@ -398,7 +398,7 @@ static void gc(arc *c)
 
   gcet = __arc_milliseconds();
   GCMS(c) += (gcet - gcst);
-
+  return(1);
 }
 
 /* Default root marker */
