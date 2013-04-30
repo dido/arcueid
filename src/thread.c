@@ -337,19 +337,19 @@ void arc_thread_dispatch(arc *c)
   int stoppedthreads, need_select;
   unsigned long long minsleep;
   value iowaitdata;
-  int eptimeout;
-  value nvq, nvqt;
+  int eptimeout, gcstatus=0;
+  value vmqueue, prev;
 
   for (;;) {
     nthreads = blockedthreads = iowait = stoppedthreads = 0;
     sleepthreads = runthreads = need_select = 0;
     minsleep = ULLONG_MAX;
     iowaitdata = CNIL;
-    nvq = nvqt = CNIL;
+    prev = CNIL;
     /* XXX - see if we need more extensive use of the write barrier when
        doing these thread manipulations */
-    for (c->vmqueue = c->vmthreads; c->vmqueue; c->vmqueue = cdr(c->vmqueue)) {
-      thr = car(c->vmqueue);
+    for (vmqueue = c->vmthreads; vmqueue; vmqueue = cdr(vmqueue)) {
+      thr = car(vmqueue);
       __arc_wb(c->curthread, thr);
       c->curthread = thr;
       ++nthreads;
@@ -366,7 +366,18 @@ void arc_thread_dispatch(arc *c)
 	  __arc_send_rvchan(c, TRVCH(thr), TVALR(thr));
 	__arc_wb(TRVCH(thr), TVALR(thr));
 	TRVCH(thr) = TVALR(thr);
-	goto no_enqueue;
+	/* unlink the thread from the queue */
+	if (prev == CNIL) {
+	  __arc_wb(c->vmthreads, cdr(vmqueue));
+	  c->vmthreads = cdr(vmqueue);
+	} else {
+	  scdr(prev, cdr(vmqueue));
+	}
+	if (NIL_P(cdr(vmqueue))) {
+	  __arc_wb(c->vmthrtail, prev);
+	  c->vmthrtail = prev;
+	}
+	goto finished;
 	break;
       case Talt:
       case Tsend:
@@ -411,13 +422,10 @@ void arc_thread_dispatch(arc *c)
     finish_thread:
       if (RUNNABLE(thr))
 	runthreads++;
-      /* rebuild the queue if the thread is not broken or released */
-      __arc_enqueue(c, thr, &nvq, &nvqt);
-    no_enqueue:
+      prev = vmqueue;
+    finished:
       ;
     }
-    c->vmthreads = nvq;
-    c->vmthrtail = nvqt;
     /* XXX - should we print a warning message if we abort when all
        threads are blocked?  I suppose it should be up to the caller
        to decide whether this is a bad thing or no.  It isn't an
@@ -428,7 +436,11 @@ void arc_thread_dispatch(arc *c)
     /* We have now finished running all threads.  See if we need to
        do some post-cleanup work */
     if (need_select) {
-      if ((iowait + blockedthreads) == nthreads) {
+      if (gcstatus == 0) {
+	/* do not wait if the garbage collector reports it still needs
+	   to do something. */
+	eptimeout = 0;
+      } else if ((iowait + blockedthreads) == nthreads) {
 	/* If all threads are blocked on I/O or are waiting on channels,
 	   make epoll wait indefinitely until I/O is possible. */
 	eptimeout = -1;
@@ -456,7 +468,7 @@ void arc_thread_dispatch(arc *c)
     }
     /* Perform garbage collection: should be done after every cycle
        with VCGC, as though it were a thread in our scheduler. */
-    c->gc(c);
+    gcstatus = c->gc(c);
     /* XXX - detect deadlock */
   }
 }
@@ -597,7 +609,6 @@ void arc_init_threads(arc *c)
 {
   c->vmthreads = CNIL;
   c->vmthrtail = CNIL;
-  c->vmqueue = CNIL;
   c->curthread = CNIL;
   c->tid_nonce = 0;
   c->stksize = TSTKSIZE;
