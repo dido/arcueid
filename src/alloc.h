@@ -49,20 +49,64 @@ typedef struct Bhdr_t {
 #define B2D(bp) ((void *)((bp)->_data + BPAD))
 #define D2B(b, dp) (b) = (Bhdr *)(((char *)(dp)) - (char *)(((Bhdr *)0)->_data + BPAD))
 #define B2NB(b) ((Bhdr *)(b)->_next)
-#define BSSIZE(bp, size) ((bp)->_size = ((size) << 1))
-#define BSIZE(bp) ((bp)->_size >> 1)
+
+/* The size of a block includes not just the size but the following
+   information in the low-order bits
+
+   0 - Allocated or not flag (used only for BiBOP objects)
+   1-2 - The object's GC colour.  A colour of 3 is the propagator.
+   3+ - The object's actual size
+ */
+#define BSSIZE(bp, size) (bp)->_size = ((((bp)->_size) & 0x03) | ((size) << 3))
+#define BSIZE(bp) ((bp)->_size >> 3)
+
+/* Allocated flag */
 #define BALLOC(bp) ((bp)->_size |= (0x1))
 #define BFREE(bp) ((bp)->_size &= ~(0x1))
 #define BALLOCP(bp) ((bp->_size & 0x1) == 0x1)
 
-/* Garbage collector */
-#define FLAGMASK 0x3f
-#define PROPFLAG 0xc0
-#define MARKFLAG 0x40
+/* Colour */
+#define BSCOLOUR(bp, colour) (bp)->_size = ((((bp)->_size) & ~0x06) | ((colour) << 1))
+#define BCOLOUR(bp) ((((bp)->_size) >> 1) & 0x03)
 
-#define MARK(v) ((((struct cell *)(v))->_type) = (((((struct cell *)(v))->_type) & FLAGMASK) | MARKFLAG))
+/* Maximum size of objects subject to BiBOP allocation */
+#define MAX_BIBOP 512
 
-#define MARKED(v) ((((((struct cell *)(v))->_type) & ~FLAGMASK) >> 6) == 1)
+/* Number of objects in each BiBOP page */
+#define BIBOP_PAGE_SIZE 64
+
+struct mm_ctx {
+  /* The BiBOP free lists */
+  Bhdr *bibop_fl[MAX_BIBOP+1];
+  /* The actual BiBOP pages */
+  Bhdr *bibop_pages[MAX_BIBOP+1];
+
+  /* The allocated list */
+  Bhdr *alloc_head;
+
+  /* GC statistics */
+  unsigned long long gc_milliseconds;
+  unsigned long long usedmem;
+
+  /* variables used by VCGC */
+  int gcquantum;		/* garbage collector visit max */
+  unsigned long long gcepochs;	/* number of GC epochs */
+  unsigned long long gccolour;	/* current GC colour */
+  unsigned long long gcnruns;	/* number of GC runs */
+  Bhdr *gcptr;			/* running pointer used by collector */
+  void *gcpptr;			/* previous pointer */
+  int visit;			/* visited node count for gc */
+};
+
+#define MMVAR(c, var) (((struct mm_ctx *)c->alloc_ctx)->var)
+#define BIBOPFL(c) (MMVAR(c, bibop_fl))
+#define BIBOPPG(c) (MMVAR(c, bibop_pages))
+#define ALLOCHEAD(c) (MMVAR(c, alloc_head))
+#define GCMS(c) (MMVAR(c, gc_milliseconds))
+#define USEDMEM(c) (MMVAR(c, usedmem))
+#define VISIT(c) (MMVAR(c, visit))
+#define GCPTR(c) (MMVAR(c, gcptr))
+#define GCPPTR(c) (MMVAR(c, gcpptr))
 
 extern void __arc_markprop(arc *c, value p);
 extern value arc_current_gc_milliseconds(arc *c);
