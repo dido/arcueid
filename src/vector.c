@@ -195,7 +195,7 @@ value arc_mkvector(arc *c, int length)
   vec = arc_mkobject(c, (length+1)*sizeof(value), T_VECTOR);
   REP(vec)[0] = INT2FIX(length);
   for (i=0; i<length; i++)
-    SVINDEX(vec, i, CNIL);
+    XVINDEX(vec, i) = CNIL;
   return(vec);
 }
 
