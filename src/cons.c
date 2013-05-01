@@ -212,8 +212,8 @@ value cons(arc *c, value x, value y)
   value cv;
 
   cv = arc_mkobject(c, 2*sizeof(value), T_CONS);
-  scar(cv, x);
-  scdr(cv, y);
+  car(cv) = x;
+  cdr(cv) = y;
   return(cv);
 }
 
