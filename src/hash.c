@@ -404,7 +404,7 @@ value arc_mkhash(arc *c, int hashbits)
   HASH_TABLE(hash) = hv;
   
   for (i=0; i<HASHSIZE(hashbits); i++)
-    SVINDEX(HASH_TABLE(hash), i, CUNBOUND);
+    XVINDEX(HASH_TABLE(hash), i) = CUNBOUND;
   return(hash);
 }
 
@@ -432,7 +432,7 @@ static void hashtable_expand(arc *c, value hash)
   newtbl = arc_mkvector(c, HASHSIZE(nhashbits));
   ((struct cell *)newtbl)->_type = T_TABLEVEC;
   for (i=0; i<HASHSIZE(nhashbits); i++)
-    SVINDEX(newtbl, i, CUNBOUND);
+    XVINDEX(newtbl, i) = CUNBOUND;
   oldtbl = HASH_TABLE(hash);
   /* Search for active keys and move them into the new table */
   for (i=0; i<VECLEN(oldtbl); i++) {
@@ -447,7 +447,7 @@ static void hashtable_expand(arc *c, value hash)
     for (j=0; !EMPTYP(VINDEX(newtbl, index)); j++)
       index = (index + PROBE(j)) & HASHMASK(nhashbits);
     BTABLE(e) = newtbl;
-    SVINDEX(newtbl, index, e);
+    XVINDEX(newtbl, index) =  e;
     SBINDEX(e, index);		/* change index */
     SVINDEX(oldtbl, i, CUNBOUND);
   }
@@ -952,7 +952,7 @@ static void wtable_marker(arc *c, value v, int depth,
 {
   value tbl = HASH_TABLE(v);
 
-  MARK(tbl);
+  markfn(c, tbl, -1);
 }
 
 /* Make a weak table */
