@@ -47,35 +47,15 @@
 #include "alloc.h"
 #include "arith.h"
 
-/* Maximum size of objects subject to BiBOP allocation */
-#define MAX_BIBOP 512
+static int nprop;		/* propagator flag */
+static int mutator;		/* current mutator colour */
+static int marker;		/* current marker colour */
+static int sweeper;		/* current sweeper colour */
 
-/* Number of objects in each BiBOP page */
-#define BIBOP_PAGE_SIZE 64
+#define PROPAGATOR 3		/* default propagator colour */
 
-struct mm_ctx {
-  /* The BiBOP free lists */
-  Bhdr *bibop_fl[MAX_BIBOP+1];
-  /* The actual BiBOP pages */
-  Bhdr *bibop_pages[MAX_BIBOP+1];
-
-  /* The allocated list */
-  Bhdr *alloc_head;
-
-  /* propagator flag */
-  int nprop;
-
-  /* GC statistics */
-  unsigned long long gc_milliseconds;
-  unsigned long long usedmem;
-};
-
-#define BIBOPFL(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_fl)
-#define BIBOPPG(c) (((struct mm_ctx *)c->alloc_ctx)->bibop_pages)
-#define ALLOCHEAD(c) (((struct mm_ctx *)c->alloc_ctx)->alloc_head)
-#define NPROP(c) (((struct mm_ctx *)c->alloc_ctx)->nprop)
-#define GCMS(c) (((struct mm_ctx *)c->alloc_ctx)->gc_milliseconds)
-#define USEDMEM(c) (((struct mm_ctx *)c->alloc_ctx)->usedmem)
+#define SETMARK(b) if (BCOLOUR(b) != mutator) { BSCOLOUR(b, PROPAGATOR); nprop = 1; }
+#define MARKPROP(v) if (!IMMEDIATE_P(v)) { Bhdr *p; D2B(p, (void *)(v)); SETMARK(p); }
 
 static void *bibop_alloc(arc *c, size_t osize)
 {
@@ -118,8 +98,10 @@ static void *bibop_alloc(arc *c, size_t osize)
       bptr += actual;
     }
   }
+  USEDMEM(c) += osize;
   BSSIZE(h, osize);
   BALLOC(h);
+  BSCOLOUR(h, mutator);		/* set to mutator colour by default */
   h->_next = ALLOCHEAD(c);
   ALLOCHEAD(c) = h;
   return(B2D(h));
@@ -141,14 +123,14 @@ static void *alloc(arc *c, size_t osize)
     fprintf(stderr, "FATAL: failed to allocate memory\n");
     exit(1);
   }
+  USEDMEM(c) += osize;
   BSSIZE(h, osize);
   BALLOC(h);
+  BSCOLOUR(h, mutator);		/* set to mutator colour by default */
   h->_next = ALLOCHEAD(c);
   ALLOCHEAD(c) = h;
   return(B2D(h));
 }
-
-#undef __FREE_DEBUGGING__
 
 /* Freeing a block requires one know the previous block in the alloc
    list.  Probably only feasible to use for the garbage collector's
@@ -167,11 +149,7 @@ static void free_block(arc *c, void *blk, void *prevblk)
     p->_next = B2NB(h);
   }
 
-#ifdef __FREE_DEBUGGING__
-  /* clear any data in the block */
-  memset(blk, 0, BSIZE(h));
-#endif
-
+  USEDMEM(c) -= BSIZE(h);
   if (BSIZE(h) <= MAX_BIBOP) {
     /* For BiBOP allocated objects, freeing them just means putting the
        object back into the free list for the object size. */
@@ -231,32 +209,22 @@ static void sysfree(void *ptr)
 
 /* The actual garbage collector */
 
-/* The write barrier.  As of now, this does nothing. */
+/* The write barrier.  As required by VCGC, this marks the destination
+   with the propagator. */
 inline void __arc_wb(value dest, value src)
 {
-}
-
-/* Mark a value with the propagator flag */
-void __arc_markprop(arc *c, value p)
-{
-  struct cell *cp;
-
-  if (IMMEDIATE_P(p))
-    return;
-
-  cp = (struct cell *)p;
-  cp->_type = (cp->_type & FLAGMASK) | PROPFLAG;
-  NPROP(c) = 1;
+  MARKPROP(dest);
 }
 
 /* Maximum recursion depth for marking */
-#define MAX_MARK_RECURSION_DEPTH 16
+#define MAX_MARK_RECURSION 16
 
 static void mark(arc *c, value v, int depth)
 {
   typefn_t *tfn;
+  Bhdr *h;
 
-  if (TYPE(v) == T_SYMBOL) {
+  if (TYPE(v) == T_SYMBOL && !NIL_P(c->symtable) && !NIL_P(c->rsymtable)) {
     value symid, name, bucket;
 
     /* Symbol marking is done by marking the hash buckets in the
@@ -273,27 +241,27 @@ static void mark(arc *c, value v, int depth)
   }
 
   /* Other types of immediate values obviously cannot be marked */
-  if (IMMEDIATE_P(v) || MARKED(v))
+  if (IMMEDIATE_P(v))
     return;
 
-  /* special case: for a negative depth, just mark the object, do not
-     recurse into it.  Presently used for thread stack marker. */
+  D2B(h, (void *)v);
+
+  /* special case: for a negative depth, just mark the object
+     with mutator colour, do not recurse into it.  Presently used for
+     thread stack marker. */
   if (depth < 0) {
-    MARK(v);
+    --VISIT(c);
+    BSCOLOUR(h, mutator);
     return;
   }
 
-  if (depth > MAX_MARK_RECURSION_DEPTH) {
-    /* Stop recursion, and mark the object with the propagator flag
-       so that the next iteration scan can pick it up. */
-    __arc_markprop(c, v);
-    return;
+  SETMARK(h);
+  if (--VISIT(c) >= 0 && depth < MAX_MARK_RECURSION) {
+    BSCOLOUR(h, mutator);
+    /* Recurse into the object's structure at increased depth */
+    tfn = __arc_typefn(c, v);
+    tfn->marker(c, v, depth+1, mark);
   }
-
-  tfn = __arc_typefn(c, v);
-  MARK(v);
-  /* Recurse into the object's structure at increased depth */
-  tfn->marker(c, v, depth+1, mark);
 }
 
 /* Go over all the allocated BiBOP pages and find ones which are
@@ -351,69 +319,73 @@ static void free_unused_bibop(arc *c)
   }
 }
 
-/* Basic mark/sweep garbage collector */
+/* VCGC */
+
 static int gc(arc *c)
 {
-  Bhdr *ptr;
-  struct cell *cp;
-  void *pptr;
-  typefn_t *tfn;
+  value v;
   unsigned long long gcst, gcet;
+  int retval = 0;
+  typefn_t *tfn;
 
-  USEDMEM(c) = 0;
   gcst = __arc_milliseconds();
-  c->markroots(c);
-  /* Mark phase */
-  while (NPROP(c)) {
-    /* Look for objects marked with propagator */
-    NPROP(c) = 0;
-    for (ptr = ALLOCHEAD(c); ptr; ptr = B2NB(ptr)) {
-      cp = (struct cell *)B2D(ptr);
-      if ((cp->_type & PROPFLAG) == PROPFLAG)
-	mark(c, (value)cp, 0);
-    }
+  if (GCPTR(c) == NULL) {
+    GCPTR(c) = ALLOCHEAD(c);
+    GCPPTR(c) = CNIL;
   }
 
-  /* Sweep phase */
-  for (ptr = ALLOCHEAD(c), pptr = NULL; ptr;) {
-    cp = (struct cell *)B2D(ptr);
-    if ((cp->_type & MARKFLAG) == MARKFLAG) {
-      /* Marked object.  Previous pointer moves to this one. */
-      USEDMEM(c) += BSIZE(ptr);
-      pptr = (void *)cp;
-      /* clear the mark flag */
-      cp->_type &= FLAGMASK;
-      ptr = B2NB(ptr);
-    } else {
-      /* Was not marked during the marking phase. Sweep it away! */
-      tfn = __arc_typefn(c, (value)cp);
-      tfn->sweeper(c, (value)cp);
-      ptr = B2NB(ptr);
-      c->free(c, (void *)cp, pptr);
-      /* We don't update pptr in this case, it remains the same */
+  for (VISIT(c) = MMVAR(c, gcquantum); VISIT(c) > 0;) {
+    if (GCPTR(c) == NULL)
+      break;			/* last heap block */
+    v = (value)B2D(GCPTR(c));
+    if (BCOLOUR(GCPTR(c)) == PROPAGATOR) {
+      /* Recursively mark propagators */
+      mark(c, v, 0);
+    } else if (BCOLOUR(GCPTR(c)) == sweeper) {
+      tfn = __arc_typefn(c, v);
+      tfn->sweeper(c, v);
+      GCPTR(c) = B2NB(GCPTR(c));
+      c->free(c, (void *)v, GCPPTR(c));
+      continue;
     }
+    GCPPTR(c) = (void *)v;
+    GCPTR(c) = B2NB(GCPTR(c));
   }
 
-  free_unused_bibop(c);
+  if (GCPTR(c) != NULL)		/* completed iteration? */
+    goto endgc;
 
+  if (nprop == 0) { 		/* completed the epoch? */
+    MMVAR(c, gcepochs)++;
+    MMVAR(c, gccolour)++;
+    mutator = MMVAR(c, gccolour) % 3;
+    marker = (MMVAR(c, gccolour) - 1) % 3;
+    sweeper = (MMVAR(c, gccolour) - 2) % 3;
+    c->markroots(c);
+    retval = 1;
+    free_unused_bibop(c);
+    malloc_trim(0);
+  }
+  nprop = 0;
+ endgc:
   gcet = __arc_milliseconds();
-  GCMS(c) += (gcet - gcst);
-  return(1);
+  GCMS(c) += gcet - gcst;
+  return(retval);
 }
 
 /* Default root marker */
 static void markroots(arc *c)
 {
-  __arc_markprop(c, c->symtable);
-  __arc_markprop(c, c->rsymtable);
-  __arc_markprop(c, c->genv);
-  __arc_markprop(c, c->builtins);
-  __arc_markprop(c, c->typedesc);
-  __arc_markprop(c, c->curthread);
-  __arc_markprop(c, c->vmthreads);
-  __arc_markprop(c, c->declarations);
+  MARKPROP(c->symtable);
+  MARKPROP(c->rsymtable);
+  MARKPROP(c->genv);
+  MARKPROP(c->builtins);
+  MARKPROP(c->typedesc);
+  MARKPROP(c->curthread);
+  MARKPROP(c->vmthreads);
+  MARKPROP(c->declarations);
 #ifdef HAVE_TRACING
-  __arc_markprop(c, c->tracethread);
+  MARKPROP(c->tracethread);
 #endif
 }
 
@@ -439,7 +411,6 @@ void arc_init_memmgr(arc *c)
   c->free = free_block;
   c->alloc_ctx = (struct mm_ctx *)malloc(sizeof(struct mm_ctx));
 
-  NPROP(c) = 0;
   for (i=0; i<=MAX_BIBOP; i++) {
     BIBOPFL(c)[i] = NULL;
     BIBOPPG(c)[i] = NULL;
@@ -447,4 +418,11 @@ void arc_init_memmgr(arc *c)
   ALLOCHEAD(c) = NULL;
   GCMS(c) = 0ULL;
   USEDMEM(c) = 0ULL;
+
+  nprop = 0;
+  MMVAR(c, gcepochs) = 0;
+  MMVAR(c, gccolour) = 0;
+  mutator = 0;
+  marker = 1;
+  sweeper = 2;
 }
