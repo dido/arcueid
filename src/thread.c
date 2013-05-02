@@ -43,7 +43,7 @@
 void *alloca (size_t);
 #endif
 
-#define DEFAULT_QUANTUM 65536
+#define DEFAULT_QUANTUM 4096
 
 static AFFDEF(thread_pprint)
 {
