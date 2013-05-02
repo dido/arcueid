@@ -421,7 +421,9 @@ void arc_init_memmgr(arc *c)
 
   nprop = 0;
   MMVAR(c, gcepochs) = 0;
-  MMVAR(c, gccolour) = 0;
+  MMVAR(c, gccolour) = 3;
+  MMVAR(c, gcquantum) = 8192;	/* default GC quantum */
+  GCPTR(c) = NULL;
   mutator = 0;
   marker = 1;
   sweeper = 2;
