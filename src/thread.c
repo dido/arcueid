@@ -96,10 +96,10 @@ value arc_mkthread(arc *c)
   value thr;
 
   thr = arc_mkobject(c, sizeof(struct vmthread_t), T_THREAD);
-  SFUNR(thr, CNIL);
-  SENVR(thr, CNIL);
-  SVALR(thr, CNIL);
-  SCONR(thr, CNIL);
+  ((struct vmthread_t *)REP(thr))->funr = CNIL;
+  ((struct vmthread_t *)REP(thr))->envr = CNIL;
+  ((struct vmthread_t *)REP(thr))->valr = CNIL;
+  ((struct vmthread_t *)REP(thr))->conr = CNIL;
   TSTACK(thr) = arc_mkvector(c, c->stksize);
   TSBASE(thr) = &XVINDEX(TSTACK(thr), 0);
   TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), VECLEN(TSTACK(thr))-1);
