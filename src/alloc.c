@@ -51,11 +51,29 @@ static int nprop;		/* propagator flag */
 static int mutator;		/* current mutator colour */
 static int marker;		/* current marker colour */
 static int sweeper;		/* current sweeper colour */
+static arc *__arc_handle=NULL;	/* current arc handle */
 
 #define PROPAGATOR 3		/* default propagator colour */
 
 #define SETMARK(b) if (BCOLOUR(b) != mutator) { BSCOLOUR(b, PROPAGATOR); nprop = 1; }
-#define MARKPROP(v) if (!IMMEDIATE_P(v)) { Bhdr *p; D2B(p, (void *)(v)); SETMARK(p); }
+static inline void MARKPROP(value v)
+{
+  if (TYPE(v) == T_SYMBOL) {
+    value symid, name, bucket;
+    arc *c = __arc_handle;
+
+    symid = INT2FIX(SYM2ID(v));
+    bucket = arc_hash_lookup2(c, c->rsymtable, symid);
+    MARKPROP(bucket);
+    name = REP(bucket)[2];	/* XXX - this is problematic */
+    bucket = arc_hash_lookup2(c, c->symtable, name);
+    MARKPROP(bucket);
+    return;
+  }
+  if (!IMMEDIATE_P(v)) {
+    Bhdr *p; D2B(p, (void *)(v)); SETMARK(p);
+  }
+}
 
 static void *bibop_alloc(arc *c, size_t osize)
 {
@@ -427,4 +445,5 @@ void arc_init_memmgr(arc *c)
   mutator = 0;
   marker = 1;
   sweeper = 2;
+  __arc_handle = c;
 }
