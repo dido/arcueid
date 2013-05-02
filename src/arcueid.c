@@ -1016,7 +1016,13 @@ void arc_deinit(arc *c)
 #ifdef HAVE_TRACING
   c->tracethread = CNIL;
 #endif
-  c->gc(c);
+  /* perform three iterations to clear */
+  while (c->gc(c) == 0)
+    ;
+  while (c->gc(c) == 0)
+    ;
+  while (c->gc(c) == 0)
+    ;
   free(c->alloc_ctx);
   c->alloc_ctx = NULL;
 }
