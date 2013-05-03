@@ -31,6 +31,7 @@
    characters and for full RFC 2279 compliance, but its fundamentals
    seem to be sound.  */
 
+#include <string.h>
 #include "utf.h"
 
 /* Definitions from Plan 9/Inferno UTF-8 library */
@@ -266,4 +267,31 @@ int fullrune(char *str, int n)
     }
   }
   return(0);
+}
+
+char *utfrune(char *s, long c)
+{
+  long c1;
+  Rune r;
+  int n;
+
+  if(c < Runesync)		/* not part of utf sequence */
+    return strchr(s, c);
+
+  for(;;) {
+    c1 = *(unsigned char*)s;
+    if(c1 < Runeself) {	/* one byte rune */
+      if(c1 == 0)
+	return 0;
+      if(c1 == c)
+	return s;
+      s++;
+      continue;
+    }
+    n = chartorune(&r, s);
+    if(r == c)
+      return s;
+    s += n;
+  }
+  return 0;
 }
