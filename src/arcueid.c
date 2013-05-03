@@ -705,6 +705,7 @@ extern typefn_t __arc_clos_typefn__;
 extern typefn_t __arc_exception_typefn__;
 extern typefn_t __arc_chan_typefn__;
 typefn_t __arc_tagged_typefn__;
+extern typefn_t __arc_regex_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -745,6 +746,7 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_CONT] = &__arc_cont_typefn__;
   c->typefns[T_CLOS] = &__arc_clos_typefn__;
   c->typefns[T_EXCEPTION] = &__arc_exception_typefn__;
+  c->typefns[T_REGEXP] = &__arc_regex_typefn__;
 }
 
 static struct {
@@ -890,6 +892,9 @@ static struct {
   { "timedate", -2, arc_timedate },
 
   /* regular expressions */
+  { "regex", 1, arc_mkregexp },
+  { "rxmatch", 2, arc_regexp_match },
+
   /* miscellaneous OS operations */
   { "system", -2, arc_system },
   { "quit", -2, arc_quit },
