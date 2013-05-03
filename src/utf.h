@@ -34,6 +34,8 @@
 #include <ctype.h>
 #include "arcueid.h"
 
+#define	nelem(x)	(sizeof(x)/sizeof((x)[0]))
+
 enum
 {
   UTFmax = 6,	     /* maximum bytes per rune, as per RFC 2279 */
@@ -46,6 +48,7 @@ extern int chartorune(Rune *rune, const char *str);
 extern int utflen(const char *s);
 extern int runetochar(char *str, Rune *rune);
 extern int fullrune(char *str, int n);
+extern char *utfrune(char *s, long c);
 
 static inline int ucisspace(Rune cc)
 {
