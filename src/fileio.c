@@ -19,12 +19,14 @@
   File I/O support functions.
 */
 
+#include "../config.h"
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include "arcueid.h"
 #include "builtins.h"
 #include "io.h"
+#include "arith.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -181,19 +183,31 @@ static AFFDEF(fio_seek)
   AARG(fio, offset, whence);
   AFBEGIN;
   if (!(FIX2INT(AV(whence)) == SEEK_SET || FIX2INT(AV(whence)) == SEEK_CUR ||
-	FIX2INT(AV(whence)) == SEEK_END))
+	FIX2INT(AV(whence)) == SEEK_END)) {
+    arc_err_cstrfmt(c, "invalid whence");
     ARETURN(CNIL);
+  }
 
 #ifdef HAVE_FSEEKO
-  /* XXX - this does not provide the ability to seek in full 64-bit
-     large files! */
-  ARETURN(INT2FIX(fseeko(FIODATA(AV(fio))->fp)),
-	  (long long)FIX2INT(AV(offset)),
-	  FIX2INT(AV(whence)));
+  {
+    long long noff;
+
+    if (__arc_val2ll(c, AV(offset), &noff)) {
+      ARETURN(INT2FIX(fseeko(FIODATA(AV(fio))->fp, (off_t)noff, FIX2INT(AV(whence)))));
+    } else {
+      arc_err_cstrfmt(c, "cannot convert specified offset");
+    }
+  }
 #else
-  ARETURN(INT2FIX(fseek(FIODATA(AV(fio))->fp,
-			(long)FIX2INT(AV(offset)),
-			FIX2INT(AV(whence)))));
+  {
+    long noff;
+
+    if (__arc_val2long(c, AV(offset), &noff)) {
+      ARETURN(INT2FIX(fseek(FIODATA(AV(fio))->fp, noff, FIX2INT(AV(whence)))));
+    } else {
+      arc_err_cstrfmt(c, "cannot convert specified offset");
+    }
+  }
 #endif
   AFEND;
 }
@@ -204,11 +218,15 @@ static AFFDEF(fio_tell)
   AARG(fio);
   AFBEGIN;
 #ifdef HAVE_FSEEKO
-  /* XXX - this does not provide the ability to seek in full 64-bit
-     large files! */
-  ARETURN(INT2FIX(ftello(FIODATA(AV(fio))->fp)));
+  off_t offset;
+
+  offset = ftello(FIODATA(AV(fio))->fp);
+  ARETURN(__arc_ll2val(c, (long long)offset));
 #else
-  ARETURN(INT2FIX(ftell(FIODATA(AV(fio))->fp)));
+  long offset;
+
+  offset = ftell(FIODATA(AV(fio))->fp);
+  ARETURN(__arc_long2val(c, offset));
 #endif
   AFEND;
 }
