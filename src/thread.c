@@ -82,7 +82,6 @@ static void thread_marker(arc *c, value thr, int depth,
     mark(c, *p, depth);
   mark(c, TSTACK(thr), -1); /* negative depth means mark only the object */
 
-  mark(c, TWAITFD(thr), depth);
   mark(c, TCH(thr), depth);
   mark(c, TEXH(thr), depth);
   mark(c, TCM(thr), depth);
