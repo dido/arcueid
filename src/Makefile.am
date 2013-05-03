@@ -22,10 +22,12 @@ libarcueid_la_SOURCES = alloc.c arith.c arcueid.c ccode.c chan.c \
 	clos.c codegen.c compiler.c cons.c cont.c dirops.c env.c \
 	err.c fileio.c hash.c io.c mathfns.c net.c osdep.c sio.c \
 	sread.c ssyntax.c string.c symbol.c thread.c util.c utf.c \
-	vector.c vmengine.c
+	vector.c vmengine.c re.c regaux.c regcomp.c regerror.c \
+	rregexec.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h arith.h builtins.h io.h utf.h vmengine.h
+noinst_HEADERS = alloc.h arith.h builtins.h io.h utf.h vmengine.h \
+	regcomp.h regexp.h
 bin_PROGRAMS = arcueid
 arcueid_SOURCES = repl.c
 arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
