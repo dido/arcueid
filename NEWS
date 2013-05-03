@@ -8,6 +8,9 @@ See the end for copying conditions.
 - Memory leaks in dir and open-socket plugged
 - Thread GC marker revised
 - Further stability fixes
+- VCGC now used from older basic mark-sweep GC
+- large files should work on 32-bit systems (bets are off without readline)
+- Regular expression support
 
 * Version 0.1.1 (2013-04-25)
 - Modify order of evaluation of functions when the andf operator is compiled
