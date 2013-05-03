@@ -78,4 +78,10 @@ extern int arc_rand(arc *c, value thr);
 extern value arc_trunc(arc *c, value v);
 extern value arc_abs(arc *c, value v);
 
+extern int __arc_val2ll(arc *c, value v, long long *llval);
+extern value __arc_ll2val(arc *c, long long ll);
+
+extern int __arc_val2long(arc *c, value v, long *llval);
+extern value __arc_long2val(arc *c, long ll);
+
 #endif
