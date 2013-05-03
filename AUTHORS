@@ -1,5 +1,5 @@
 ARCUEID AUTHORS -- Information about the authors.
-Copyright (C) 2009 Rafael R. Sevilla
+Copyright (C) 2013 Rafael R. Sevilla
 See the end for copying conditions.
 
 The copyright holder for Arcueid is Rafael R. Sevilla, 7th Floor YL
@@ -14,6 +14,12 @@ Inferno's lib9, originally written by Rob Pike and Ken Thompson,
 modified by Rafael Sevilla to handle astral plane characters in full
 compliance with RFC 2279.  Copyright (c) 1994-1999 Lucent Technologies
 Inc.  Revisions Copyright (c) 2000-2007 Vita Nuova Holdings Limited
+(www.vitanuova.com).
+
+The regular expression code in regaux.c, regcomp.c, regerror.c,
+regexec.c, and regsub.c is ultimately derived from the libregexp from
+Bell Labs Inferno.  Copyright (c) 1994-1999 Lucent Technologies
+Inc.  Revisions Copyright (c) 2000-2003 Vita Nuova Holdings Limited
 (www.vitanuova.com).
 
 The hash functions used in hash.c are the hash functions proposed by
