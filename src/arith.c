@@ -23,6 +23,7 @@
 #include <complex.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 #include "arcueid.h"
 #include "arith.h"
 #include "builtins.h"
@@ -1960,6 +1961,117 @@ value __arc_str2flo(arc *c, value obj, value b, int strptr, int limit)
   return(res);
  noconv:
   return(CNIL);
+}
+
+int __arc_val2ll(arc *c, value v, long long *llval)
+{
+  if (TYPE(v) == T_FIXNUM) {
+    *llval = FIX2INT(v);
+    return(1);
+  }
+
+  if (TYPE(v) == T_FLONUM) {
+    if (REPFLO(v) < LLONG_MAX && REPFLO(v) > LLONG_MIN) {
+      *llval = (long long)REPFLO(v);
+      return(1);
+    }
+    return(0);
+  }
+
+#ifdef HAVE_GMP_H
+  if (TYPE(v) == T_BIGNUM) {
+    char buf[22];
+    int len;
+
+    len = gmp_snprintf(buf, sizeof(buf), "%Zd", REPBNUM(v));
+    if (len >= sizeof(buf))
+      return(0);			/* too big, failed */
+    *llval = strtoll(buf, NULL, 10);
+    if (errno == ERANGE || (errno != 0 && *llval == 0))
+      return(0);			/* too big, failed */
+    return(1);			/* successful */
+  }
+#endif
+  /* Can't convert other types */
+  return(0);
+}
+
+value __arc_ll2val(arc *c, long long ll)
+{
+  if (ll <= FIXNUM_MAX && ll >= FIXNUM_MIN)
+    return(FIX2INT(ll));
+
+#ifdef HAVE_GMP_H
+  {
+    char buf[24];
+    value bn = arc_mkbignuml(c, 0L);
+    /* the 24-byte buffer should be more than sufficient for any valid
+       long long, sign or none. */
+    snprintf(buf, sizeof(buf), "%lld", ll);
+    mpz_set_str(REPBNUM(bn), buf, 10);
+    return(bn);
+  }
+#else
+  /* flonum conversion without GMP */
+  return(mkflonum(c, (double)ll));
+#endif
+}
+
+int __arc_val2long(arc *c, value v, long *lval)
+{
+  if (TYPE(v) == T_FIXNUM) {
+    if (FIX2INT(v) <= LONG_MAX && FIX2INT(v) >= LONG_MIN) {
+      *lval = FIX2INT(v);
+      return(1);
+    }
+    return(0);
+  }
+
+  if (TYPE(v) == T_FLONUM) {
+    if (REPFLO(v) < LONG_MAX && REPFLO(v) > LONG_MIN) {
+      *lval = (long)REPFLO(v);
+      return(1);
+    }
+    return(0);
+  }
+
+#ifdef HAVE_GMP_H
+  if (TYPE(v) == T_BIGNUM) {
+    char buf[11];
+    int len;
+
+    len = gmp_snprintf(buf, sizeof(buf), "%Zd", REPBNUM(v));
+    if (len >= sizeof(buf))
+      return(0);			/* too big, failed */
+    *lval = strtol(buf, NULL, 10);
+    if (errno == ERANGE || (errno != 0 && *lval == 0))
+      return(0);		/* too big, failed */
+    return(1);			/* successful */
+  }
+#endif
+  /* Can't convert other types */
+  return(0);
+}
+
+value __arc_long2val(arc *c, long l)
+{
+  if (l <= FIXNUM_MAX && l >= FIXNUM_MIN)
+    return(FIX2INT(l));
+
+#ifdef HAVE_GMP_H
+  {
+    char buf[12];
+    value bn = arc_mkbignuml(c, 0L);
+    /* the 12-byte buffer should be more than sufficient for any valid
+       long, sign or none. */
+    snprintf(buf, sizeof(buf), "%ld", l);
+    mpz_set_str(REPBNUM(bn), buf, 10);
+    return(bn);
+  }
+#else
+  /* flonum conversion without GMP */
+  return(mkflonum(c, (double)l));
+#endif
 }
 
 typefn_t __arc_fixnum_typefn__ = {
