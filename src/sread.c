@@ -763,13 +763,63 @@ static AFFDEF(read_comment)
 }
 AFFEND
 
+/* See if the "symbol" can be parsed as a regex.  A regex
+   must begin with the / character, and must end either with
+   a /, /m, /i, /im, or /mi.  Returns the regex if this is
+   true, or CNIL if the string could not be parsed as a regular
+   expression.
+*/
+static value arc_string2regex(arc *c, value sym)
+{
+  Rune ch;
+  int len, multiline, casefold, endch, i;
+  unsigned int flags;
+  value rxstr;
+
+  len = arc_strlen(c, sym);
+  if (len < 2)
+    return(CNIL);		/* a regex must be at least 2 chars */
+
+  if (arc_strindex(c, sym, 0) != '/')
+    return(CNIL);		/* does not begin with a slash */
+
+  endch = len-1;
+  multiline = casefold = 0;
+  for (i=0; i<2; i++) {
+    ch = arc_strindex(c, sym, endch);
+    if (ch == '/') {
+      break;
+    } else if (ch == 'm' && !multiline) {
+      multiline = 1;
+      endch--;
+    } else if (ch == 'i' && !casefold) {
+      casefold = 1;
+      endch--;
+    } else {
+      return(CNIL);
+    }
+  }
+  /* If we get here, endch must be a slash.  The regular expression
+     will be the portion of sym from 1 up to endch-1, so the length
+     of the regular expression will be endch-1 */
+  rxstr = arc_mkstringlen(c, endch-1);
+  for (i=0; i<endch-1; i++)
+    arc_strsetindex(c, rxstr, i, arc_strindex(c, sym, i+1));
+  flags = 0;
+  if (multiline)
+    flags |= REGEXP_MULTILINE;
+  if (casefold)
+    flags |= REGEXP_CASEFOLD;
+  return(arc_mkregexp(c, rxstr, flags));
+}
+
 /* parse a symbol name or number */
 static AFFDEF(read_symbol)
 {
   AARG(fp, eof);
   AOARG(lndata);
   AVAR(sym);
-  value num;
+  value num, rx;
   AFBEGIN;
   (void)lndata;
   (void)eof;
@@ -781,6 +831,9 @@ static AFFDEF(read_symbol)
   num = arc_string2num(c, AV(sym), 0, 0);
   if (!NIL_P(num))
     ARETURN(num);
+  rx = arc_string2regex(c, AV(sym));
+  if (!NIL_P(rx))
+    ARETURN(rx);
   /* If that doesn't work, well, just intern the symbol and toss it
      out there. */
   ARETURN(arc_intern(c, AV(sym)));  
