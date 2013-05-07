@@ -226,7 +226,8 @@ extern void __arc_null_sweeper(arc *c, value v);
 		      || TYPE((x)) == T_CHAR || TYPE((x)) == T_STRING	\
 		      || TYPE((x)) == T_FIXNUM || TYPE((x)) == T_BIGNUM	\
 		      || TYPE((x)) == T_FLONUM || TYPE((x)) == T_RATIONAL \
-		      || TYPE((x)) == T_RATIONAL || TYPE((x)) == T_COMPLEX)
+		      || TYPE((x)) == T_RATIONAL || TYPE((x)) == T_COMPLEX \
+		      || TYPE((x)) == T_REGEXP)
 
 static inline enum arc_types TYPE(value v)
 {
