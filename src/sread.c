@@ -20,6 +20,7 @@
 #include "arcueid.h"
 #include "builtins.h"
 #include "utf.h"
+#include "io.h"
 
 static int scan(arc *c, value thr);
 static int read_list(arc *c, value thr);
