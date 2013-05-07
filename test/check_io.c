@@ -19,6 +19,7 @@
 #include <check.h>
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
+#include "../src/io.h"
 
 #define CPUSH_(val) CPUSH(thr, val)
 
