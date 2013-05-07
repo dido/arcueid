@@ -24,7 +24,7 @@
 #define REGEXP_MULTILINE 1
 #define REGEXP_CASEFOLD 2
 
-extern int arc_mkregexp(arc *c, value thr);
+extern value arc_mkregexp(arc *c, value s, unsigned int flags);
 extern value arc_regexp_match(arc *c, value regexp, value str);
 
 #endif
