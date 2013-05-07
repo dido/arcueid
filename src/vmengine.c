@@ -253,7 +253,7 @@ int __arc_vmengine(arc *c, value thr)
 	/* XXX - should we use the more general hash lookup?  Don't think
 	   it should be possible to use anything besides symbols to index
 	   the global top-level environment. */
-	SVALR(thr, arc_hash_lookup(c, c->genv, tmp));
+	SVALR(thr, arc_gbind(c, tmp));
 	if (TVALR(thr) == CUNBOUND) {
 	  tmpstr = arc_sym2name(c, tmp);
 	  cstr = alloca(sizeof(char)*(FIX2INT(arc_strutflen(c, tmpstr)) + 1));
@@ -265,9 +265,9 @@ int __arc_vmengine(arc *c, value thr)
       }
       NEXT;
     INST(istg):
-      arc_hash_insert(c, c->genv, CODE_LITERAL(CLOS_CODE(TFUNR(thr)),
-					       FIX2INT(*TIPP(thr)++)),
-		      TVALR(thr));
+      arc_bindsym(c, CODE_LITERAL(CLOS_CODE(TFUNR(thr)),
+				  FIX2INT(*TIPP(thr)++)),
+		  TVALR(thr));
       NEXT;
     INST(ilde):
       {
