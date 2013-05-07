@@ -309,12 +309,6 @@ extern value arc_strutflen(arc *c, value str);
 extern value arc_strchr(arc *c, value str, Rune ch);
 extern int arc_newstring(arc *c, value thr);
 
-#define REGEXP_MULTILINE 1
-#define REGEXP_CASEFOLD 2
-
-extern value arc_mkregexp(arc *c, value s, unsigned int flags);
-extern value arc_regexp_match(arc *c, value regexp, value str);
-
 /* Definitions for vectors */
 #define VECLEN(x) (FIX2INT(REP(x)[0]))
 #define XVINDEX(x, i) (REP(x)[i+1])
