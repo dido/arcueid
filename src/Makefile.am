@@ -21,12 +21,13 @@ libarcueid_la_LDFLAGS = -version-info 0:0:0
 libarcueid_la_SOURCES = alloc.c arith.c arcueid.c ccode.c chan.c \
 	clos.c codegen.c compiler.c cons.c cont.c dirops.c env.c \
 	err.c fileio.c hash.c io.c mathfns.c net.c osdep.c re.c \
-	regaux.c regcomp.c rregexec.c sio.c sread.c ssyntax.c string.c \
-	symbol.c thread.c util.c utf.c vector.c vmengine.c 
+	sio.c sread.c ssyntax.c string.c symbol.c thread.c \
+	util.c utf.c vector.c vmengine.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h arith.h builtins.h io.h utf.h vmengine.h \
-	regcomp.h regexp.h
+noinst_HEADERS = alloc.h arith.h builtins.h compiler.h hash.h io.h \
+	osdep.h utf.h vmengine.h
+
 bin_PROGRAMS = arcueid
 arcueid_SOURCES = repl.c
 arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
