@@ -488,7 +488,7 @@ int main(int argc, char **argv)
   clos = arc_mkclos(c, code, CNIL);
   arc_bindcstr(c, "repl-code*", clos);
   setjmp(ejb);
-  clos = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "repl-code*"));
+  clos = arc_gbind_cstr(c, "repl-code*");
   if (TYPE(clos) != T_CLOS) {
     fprintf(stderr, "bad repl code\n");
     arc_deinit(c);
