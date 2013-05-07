@@ -767,29 +767,24 @@ static AFFDEF(read_comment)
 }
 AFFEND
 
-/* See if the "symbol" can be parsed as a regex.  A regex
+/* See if the "symbol" can be parsed as a regex. A regex
    must begin with the / character, and must end either with
-   a /, /m, /i, /im, or /mi.  Returns the regex if this is
+   a /, /m, /i, /im, or /mi. Returns the regex if this is
    true, or CNIL if the string could not be parsed as a regular
-   expression.
-*/
-AFFDEF(arc_string2regex)
+   expression. */
+static value arc_string2regex(arc *c, value sym)
 {
-  AARG(ssym);
-  value sym;
   Rune ch;
   int len, multiline, casefold, endch, i;
   unsigned int flags;
   value rxstr;
-  AFBEGIN;
 
-  sym = AV(ssym);
   len = arc_strlen(c, sym);
   if (len < 2)
-    ARETURN(CNIL);		/* a regex must be at least 2 chars */
+    return(CNIL);	/* a regex must be at least 2 chars */
 
   if (arc_strindex(c, sym, 0) != '/')
-    ARETURN(CNIL);		/* does not begin with a slash */
+    return(CNIL);	/* does not begin with a slash */
 
   endch = len-1;
   multiline = casefold = 0;
@@ -804,10 +799,10 @@ AFFDEF(arc_string2regex)
       casefold = 1;
       endch--;
     } else {
-      ARETURN(CNIL);
+      return(CNIL);
     }
   }
-  /* If we get here, endch must be a slash.  The regular expression
+  /* If we get here, endch must be a slash. The regular expression
      will be the portion of sym from 1 up to endch-1, so the length
      of the regular expression will be endch-1 */
   rxstr = arc_mkstringlen(c, endch-1);
@@ -818,10 +813,8 @@ AFFDEF(arc_string2regex)
     flags |= REGEXP_MULTILINE;
   if (casefold)
     flags |= REGEXP_CASEFOLD;
-  AFTCALL(arc_mkaff(c, arc_mkregexp, CNIL), rxstr, INT2FIX(flags));
-  AFEND;
+  return(arc_mkregexp(c, rxstr, flags));
 }
-AFFEND
 
 /* parse a symbol name or number */
 static AFFDEF(read_symbol)
