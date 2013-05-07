@@ -46,6 +46,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "arith.h"
+#include "osdep.h"
 
 static int nprop;		/* propagator flag */
 static int mutator;		/* current mutator colour */
