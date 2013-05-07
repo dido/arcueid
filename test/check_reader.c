@@ -21,6 +21,7 @@
 #include "../src/vmengine.h"
 #include "../src/builtins.h"
 #include "../src/arith.h"
+#include "../src/io.h"
 #include "../config.h"
 
 arc cc;
