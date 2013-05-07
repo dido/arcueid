@@ -22,6 +22,7 @@
 #include "utf.h"
 #include "arith.h"
 #include "builtins.h"
+#include "hash.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
