@@ -37,12 +37,11 @@
 /*
  * Parser Information
  */
-typedef
-struct Node
+typedef struct Node
 {
-	Reinst*	first;
-	Reinst*	last;
-}Node;
+  Reinst *first;
+  Reinst *last;
+} Node;
 
 Reprog	RePrOg;
 
@@ -56,7 +55,9 @@ static	int	subidstack[NSTACK];	/* parallel to atorstack */
 static	int*	subidp;
 static	int	lastwasand;	/* Last token was operand */
 static	int	nbra;
-static	char*	exprp;		/* pointer to next character in source expression */
+static arc *c;			/* local copy of Arc handle */
+static value exstr;		/* string to be parsed */
+static int exstrptr;		/* current string pointer */
 static	int	lexdone;
 static	int	nclass;
 static	Reclass*classp;
@@ -357,60 +358,56 @@ newclass(void)
 	return &(classp[nclass++]);
 }
 
-static	int
-nextc(Rune *rp)
+static int nextc(Rune *rp)
 {
-	if(lexdone){
-		*rp = 0;
-		return 1;
-	}
-	exprp += chartorune(rp, exprp);
-	if(*rp == L'\\'){
-		exprp += chartorune(rp, exprp);
-		return 1;
-	}
-	if(*rp == 0)
-		lexdone = 1;
-	return 0;
+  if (lexdone) {
+    *rp = 0;
+    return(1);
+  }
+  *rp = arc_strindex(c, exstr, exstrptr++);
+  if(*rp == L'\\') {
+    *rp = arc_strindex(c, exstr, exstrptr++);
+    return(1);
+  }
+  return(0);
 }
 
-static	int
-lex(int literal, int dot_type)
+static int lex(int literal, int dot_type)
 {
-	int quoted;
+  int quoted;
 
-	quoted = nextc(&yyrune);
-	if(literal || quoted){
-		if(yyrune == 0)
-			return END;
-		return RUNE;
-	}
+  quoted = nextc(&yyrune);
+  if (literal || quoted) {
+    if (yyrune == 0)
+      return(END);
+    return(RUNE);
+  }
 
-	switch(yyrune){
-	case 0:
-		return END;
-	case L'*':
-		return STAR;
-	case L'?':
-		return QUEST;
-	case L'+':
-		return PLUS;
-	case L'|':
-		return OR;
-	case L'.':
-		return dot_type;
-	case L'(':
-		return LBRA;
-	case L')':
-		return RBRA;
-	case L'^':
-		return BOL;
-	case L'$':
-		return EOL;
-	case L'[':
-		return bldcclass();
-	}
-	return RUNE;
+  switch(yyrune){
+  case 0:
+    return END;
+  case L'*':
+    return STAR;
+  case L'?':
+    return QUEST;
+  case L'+':
+    return PLUS;
+  case L'|':
+    return OR;
+  case L'.':
+    return dot_type;
+  case L'(':
+    return LBRA;
+  case L')':
+    return RBRA;
+  case L'^':
+    return BOL;
+  case L'$':
+    return EOL;
+  case L'[':
+    return bldcclass();
+  }
+  return RUNE;
 }
 
 static int
@@ -499,88 +496,86 @@ bldcclass(void)
 	return type;
 }
 
-static	Reprog*
-regcomp1(char *s, int literal, int dot_type)
+static Reprog *regcomp1(arc *cc, value rs, int literal, int dot_type)
 {
-	int token;
-	Reprog *pp;
+  int token;
+  Reprog *pp;
 
-	/* get memory for the program */
-	pp = (Reprog *)malloc(sizeof(Reprog) + 6*sizeof(Reinst)*strlen(s));
-	if(pp == 0) {
-	  fprintf(stderr, "out of memory\n");
-	  return 0;
-	}
-	freep = pp->firstinst;
-	classp = pp->class;
-	errors = 0;
+  /* get memory for the program */
+  pp = (Reprog *)malloc(sizeof(Reprog) + 6*sizeof(Reinst)*arc_strlen(cc, rs));
+  if(pp == 0) {
+    fprintf(stderr, "out of memory\n");
+    return 0;
+  }
+  freep = pp->firstinst;
+  classp = pp->class;
+  errors = 0;
 
-	if(setjmp(regkaboom))
-		goto out;
+  if (setjmp(regkaboom))
+    goto out;
 
-	/* go compile the sucker */
-	lexdone = 0;
-	exprp = s;
-	nclass = 0;
-	nbra = 0;
-	atorp = atorstack;
-	andp = andstack;
-	subidp = subidstack;
-	lastwasand = FALSE;
-	cursubid = 0;
+  /* go compile the sucker */
+  c = cc;
+  lexdone = 0;
+  exstr = rs;
+  exstrptr = 0;
+  nclass = 0;
+  nbra = 0;
+  atorp = atorstack;
+  andp = andstack;
+  subidp = subidstack;
+  lastwasand = FALSE;
+  cursubid = 0;
 
-	/* Start with a low priority operator to prime parser */
-	pushator(START-1);
-	while((token = lex(literal, dot_type)) != END){
-		if((token&0300) == OPERATOR)
-			operator(token);
-		else
-			operand(token);
-	}
+  /* Start with a low priority operator to prime parser */
+  pushator(START-1);
+  while((token = lex(literal, dot_type)) != END){
+    if((token&0300) == OPERATOR)
+      operator(token);
+    else
+      operand(token);
+  }
 
-	/* Close with a low priority operator */
-	evaluntil(START);
+  /* Close with a low priority operator */
+  evaluntil(START);
 
-	/* Force END */
-	operand(END);
-	evaluntil(START);
+  /* Force END */
+  operand(END);
+  evaluntil(START);
 #ifdef DEBUG
-	dumpstack();
+  dumpstack();
 #endif
-	if(nbra)
-		rcerror("unmatched left paren");
-	--andp;	/* points to first and only operand */
-	pp->startinst = andp->first;
+  if (nbra)
+    rcerror("unmatched left paren");
+  --andp;	/* points to first and only operand */
+  pp->startinst = andp->first;
 #ifdef DEBUG
-	dump(pp);
+  dump(pp);
 #endif
-	pp = optimize(pp);
+  pp = optimize(pp);
 #ifdef DEBUG
-	print("start: %d\n", andp->first-pp->firstinst);
-	dump(pp);
+  print("start: %d\n", andp->first-pp->firstinst);
+  dump(pp);
 #endif
 out:
-	if(errors){
-		free(pp);
-		pp = 0;
-	}
-	return pp;
+  if (errors) {
+    free(pp);
+    pp = 0;
+  }
+  return(pp);
 }
 
-extern	Reprog*
-regcomp(char *s)
+Reprog *regcomp(arc *c, value s)
 {
-	return regcomp1(s, 0, ANY);
+  return(regcomp1(c, s, 0, ANY));
 }
 
-extern	Reprog*
-regcomplit(char *s)
+Reprog *regcomplit(arc *c, value s)
 {
-	return regcomp1(s, 1, ANY);
+  return(regcomp1(c, s, 1, ANY));
 }
 
-extern	Reprog*
-regcompnl(char *s)
+Reprog *regcompnl(arc *c, value s)
 {
-	return regcomp1(s, 0, ANYNL);
+  return(regcomp1(c, s, 0, ANYNL));
 }
