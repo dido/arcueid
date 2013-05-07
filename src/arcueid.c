@@ -891,10 +891,6 @@ static struct {
   { "msec", 0, arc_msec },
   { "timedate", -2, arc_timedate },
 
-  /* regular expressions */
-  { "regex", 1, arc_mkregexp },
-  { "rxmatch", 2, arc_regexp_match },
-
   /* miscellaneous OS operations */
   { "system", -2, arc_system },
   { "quit", -2, arc_quit },
