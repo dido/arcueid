@@ -110,24 +110,23 @@ operand(int t)
 	lastwasand = TRUE;
 }
 
-static	void
-operator(int t)
+static void operator(int t)
 {
-	if(t==RBRA && --nbra<0)
-		rcerror("unmatched right paren");
-	if(t==LBRA){
-		if(++cursubid >= NSUBEXP)
-			rcerror ("too many subexpressions");
-		nbra++;
-		if(lastwasand)
-			operator(CAT);
-	} else
-		evaluntil(t);
-	if(t != RBRA)
-		pushator(t);
-	lastwasand = FALSE;
-	if(t==STAR || t==QUEST || t==PLUS || t==RBRA)
-		lastwasand = TRUE;	/* these look like operands */
+  if (t==RBRA && --nbra<0)
+    rcerror("unmatched right paren");
+  if (t==LBRA) {
+    if(++cursubid >= NSUBEXP)
+      rcerror("too many subexpressions");
+    nbra++;
+    if (lastwasand)
+      operator(CAT);
+  } else
+    evaluntil(t);
+  if (t != RBRA)
+    pushator(t);
+  lastwasand = FALSE;
+  if (t==STAR || t==QUEST || t==PLUS || t==RBRA)
+    lastwasand = TRUE;	/* these look like operands */
 }
 
 static	void
@@ -161,13 +160,12 @@ pushand(Reinst *f, Reinst *l)
 	andp++;
 }
 
-static	void
-pushator(int t)
+static void pushator(int t)
 {
-	if(atorp >= &atorstack[NSTACK])
-		cant("operator stack overflow");
-	*atorp++ = t;
-	*subidp++ = cursubid;
+  if (atorp >= &atorstack[NSTACK])
+    cant("operator stack overflow");
+  *atorp++ = t;
+  *subidp++ = cursubid;
 }
 
 static	Node*
@@ -192,69 +190,68 @@ popator(void)
 	return *--atorp;
 }
 
-static	void
-evaluntil(int pri)
+static void evaluntil(int pri)
 {
-	Node *op1, *op2;
-	Reinst *inst1, *inst2;
+  Node *op1, *op2;
+  Reinst *inst1, *inst2;
 
-	while(pri==RBRA || atorp[-1]>=pri){
-		switch(popator()){
-		default:
-			rcerror("unknown operator in evaluntil");
-			break;
-		case LBRA:		/* must have been RBRA */
-			op1 = popand('(');
-			inst2 = newinst(RBRA);
-			inst2->u1.subid = *subidp;
-			op1->last->u2.next = inst2;
-			inst1 = newinst(LBRA);
-			inst1->u1.subid = *subidp;
-			inst1->u2.next = op1->first;
-			pushand(inst1, inst2);
-			return;
-		case OR:
-			op2 = popand('|');
-			op1 = popand('|');
-			inst2 = newinst(NOP);
-			op2->last->u2.next = inst2;
-			op1->last->u2.next = inst2;
-			inst1 = newinst(OR);
-			inst1->u1.right = op1->first;
-			inst1->u2.left = op2->first;
-			pushand(inst1, inst2);
-			break;
-		case CAT:
-			op2 = popand(0);
-			op1 = popand(0);
-			op1->last->u2.next = op2->first;
-			pushand(op1->first, op2->last);
-			break;
-		case STAR:
-			op2 = popand('*');
-			inst1 = newinst(OR);
-			op2->last->u2.next = inst1;
-			inst1->u1.right = op2->first;
-			pushand(inst1, inst1);
-			break;
-		case PLUS:
-			op2 = popand('+');
-			inst1 = newinst(OR);
-			op2->last->u2.next = inst1;
-			inst1->u1.right = op2->first;
-			pushand(op2->first, inst1);
-			break;
-		case QUEST:
-			op2 = popand('?');
-			inst1 = newinst(OR);
-			inst2 = newinst(NOP);
-			inst1->u2.left = inst2;
-			inst1->u1.right = op2->first;
-			op2->last->u2.next = inst2;
-			pushand(inst1, inst2);
-			break;
-		}
-	}
+  while (pri==RBRA || atorp[-1]>=pri) {
+    switch (popator()) {
+    default:
+      rcerror("unknown operator in evaluntil");
+      break;
+    case LBRA:		/* must have been RBRA */
+      op1 = popand('(');
+      inst2 = newinst(RBRA);
+      inst2->u1.subid = *subidp;
+      op1->last->u2.next = inst2;
+      inst1 = newinst(LBRA);
+      inst1->u1.subid = *subidp;
+      inst1->u2.next = op1->first;
+      pushand(inst1, inst2);
+      return;
+    case OR:
+      op2 = popand('|');
+      op1 = popand('|');
+      inst2 = newinst(NOP);
+      op2->last->u2.next = inst2;
+      op1->last->u2.next = inst2;
+      inst1 = newinst(OR);
+      inst1->u1.right = op1->first;
+      inst1->u2.left = op2->first;
+      pushand(inst1, inst2);
+      break;
+    case CAT:
+      op2 = popand(0);
+      op1 = popand(0);
+      op1->last->u2.next = op2->first;
+      pushand(op1->first, op2->last);
+      break;
+    case STAR:
+      op2 = popand('*');
+      inst1 = newinst(OR);
+      op2->last->u2.next = inst1;
+      inst1->u1.right = op2->first;
+      pushand(inst1, inst1);
+      break;
+    case PLUS:
+      op2 = popand('+');
+      inst1 = newinst(OR);
+      op2->last->u2.next = inst1;
+      inst1->u1.right = op2->first;
+      pushand(op2->first, inst1);
+      break;
+    case QUEST:
+      op2 = popand('?');
+      inst1 = newinst(OR);
+      inst2 = newinst(NOP);
+      inst1->u2.left = inst2;
+      inst1->u1.right = op2->first;
+      op2->last->u2.next = inst2;
+      pushand(inst1, inst2);
+      break;
+    }
+  }
 }
 
 static	Reprog*
@@ -369,7 +366,7 @@ static int nextc(Rune *rp)
     *rp = arc_strindex(c, exstr, exstrptr++);
     return(1);
   }
-  if (exstrptr >= arc_strlen(c, exstr)) {
+  if (exstrptr > arc_strlen(c, exstr)) {
     *rp = 0;
     lexdone = 1;
   }
@@ -387,7 +384,7 @@ static int lex(int literal, int dot_type)
     return(RUNE);
   }
 
-  switch(yyrune){
+  switch (yyrune) {
   case 0:
     return END;
   case L'*':
@@ -507,7 +504,7 @@ static Reprog *regcomp1(arc *cc, value rs, int literal, int dot_type)
 
   /* get memory for the program */
   pp = (Reprog *)malloc(sizeof(Reprog) + 6*sizeof(Reinst)*arc_strlen(cc, rs));
-  if(pp == 0) {
+  if (pp == 0) {
     fprintf(stderr, "out of memory\n");
     return 0;
   }
@@ -533,8 +530,8 @@ static Reprog *regcomp1(arc *cc, value rs, int literal, int dot_type)
 
   /* Start with a low priority operator to prime parser */
   pushator(START-1);
-  while((token = lex(literal, dot_type)) != END){
-    if((token&0300) == OPERATOR)
+  while ((token = lex(literal, dot_type)) != END) {
+    if ((token&0300) == OPERATOR)
       operator(token);
     else
       operand(token);
