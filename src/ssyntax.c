@@ -18,6 +18,7 @@
 */
 #include "arcueid.h"
 #include "builtins.h"
+#include "io.h"
 
 #define READ(fp, eof, val)					\
   AFCALL(arc_mkaff(c, arc_sread, CNIL), fp, eof);	\
