@@ -23,6 +23,7 @@
 #include "../src/arith.h"
 #include "../src/io.h"
 #include "../src/compiler.h"
+#include "../src/hash.h"
 #include "../config.h"
 
 arc cc;
