@@ -22,6 +22,7 @@
 
 #include "arcueid.h"
 #include "utf.h"
+#include "vmengine.h"
 
 /* These are the basic functions that all I/O derived objects should
    make available.  All of these should be AFFs.
@@ -83,21 +84,6 @@ enum {
   BI_io_pfp=3,
   BI_io_last=3
 };
-
-#define STDIN(fd) do {							\
-  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDIN_FD)));			\
-  if (NIL_P(AV(fd)))							\
-    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD))); } while (0)
-
-#define STDOUT(fd) do {							\
-  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDOUT_FD)));			\
-  if (NIL_P(AV(fd)))							\
-    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD))); } while (0)
-
-#define STDERR(fd) do {							\
-  WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDERR_FD)));			\
-  if (NIL_P(AV(fd)))							\
-    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD))); } while (0)
 
 /* String Port I/O */
 extern value arc_instring(arc *c, value str, value name);
