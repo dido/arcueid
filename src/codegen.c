@@ -25,6 +25,7 @@
 #include <string.h>
 #include "arcueid.h"
 #include "vmengine.h"
+#include "hash.h"
 
 /* Create an empty code generation context. This is just a plain vector */
 value arc_mkcctx(arc *c)
