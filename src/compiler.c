@@ -20,6 +20,7 @@
 #include "builtins.h"
 #include "vmengine.h"
 #include "compiler.h"
+#include "hash.h"
 
 /* Get the closest line number for obj */
 static value get_lineno(arc *c, value obj)
