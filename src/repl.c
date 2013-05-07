@@ -33,6 +33,7 @@
 #include "builtins.h"
 #include "utf.h"
 #include "io.h"
+#include "compiler.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
