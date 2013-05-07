@@ -162,7 +162,7 @@ START_TEST(test_ldg)
 
   cctx = arc_mkcctx(c);
   lptr = arc_literal(c, cctx, sym);
-  arc_hash_insert(c, c->genv, sym, INT2FIX(31337));
+  arc_bindsym(c, sym, INT2FIX(31337));
   arc_emit1(c, cctx, ildg, INT2FIX(lptr), CNIL);
   arc_emit(c, cctx, ihlt, CNIL);
   code = arc_cctx2code(c, cctx);
@@ -184,7 +184,7 @@ START_TEST(test_stg)
 
   cctx = arc_mkcctx(c);
   lptr = arc_literal(c, cctx, sym);
-  arc_hash_insert(c, c->genv, sym, INT2FIX(0));
+  arc_bindsym(c, sym, INT2FIX(0));
   arc_emit1(c, cctx, ildi, INT2FIX(31337), CNIL);
   arc_emit1(c, cctx, istg, INT2FIX(lptr), CNIL);
   arc_emit(c, cctx, ihlt, CNIL);
@@ -194,7 +194,7 @@ START_TEST(test_stg)
   XCALL0(clos);
   fail_unless(TQUANTA(thr) == QUANTA-2);
   fail_unless(TSTATE(thr) == Trelease);
-  fail_unless(arc_hash_lookup(c, c->genv, sym) == INT2FIX(31337));
+  fail_unless(arc_gbind(c, sym) == INT2FIX(31337));
 }
 END_TEST
 
