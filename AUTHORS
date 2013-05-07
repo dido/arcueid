@@ -16,13 +16,7 @@ compliance with RFC 2279.  Copyright (c) 1994-1999 Lucent Technologies
 Inc.  Revisions Copyright (c) 2000-2007 Vita Nuova Holdings Limited
 (www.vitanuova.com).
 
-The regular expression code in regaux.c, regcomp.c, regerror.c,
-regexec.c, and regsub.c is ultimately derived from the libregexp from
-Bell Labs Inferno.  Copyright (c) 1994-1999 Lucent Technologies
-Inc.  Revisions Copyright (c) 2000-2003 Vita Nuova Holdings Limited
-(www.vitanuova.com).
-
-The hash functions used in hash.c are the hash functions proposed by
+ The hash functions used in hash.c are the hash functions proposed by
 Bob Jenkins (lookup3.c on 32-bit and lookup8.c on 64-bit builds).  See
 http://www.burtleburtle.net/bob/hash/index.html for more details.
 
