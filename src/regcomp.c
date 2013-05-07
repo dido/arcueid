@@ -369,6 +369,10 @@ static int nextc(Rune *rp)
     *rp = arc_strindex(c, exstr, exstrptr++);
     return(1);
   }
+  if (exstrptr >= arc_strlen(c, exstr)) {
+    *rp = 0;
+    lexdone = 1;
+  }
   return(0);
 }
 
