@@ -30,6 +30,7 @@
 #include "io.h"
 #include "vmengine.h"
 #include "alloc.h"
+#include "compiler.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
