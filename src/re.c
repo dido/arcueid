@@ -18,7 +18,6 @@
 */
 #include <string.h>
 #include "arcueid.h"
-#include "regexp.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -37,7 +36,7 @@ void *alloca (size_t);
 #endif
 
 struct regexp_t {
-  Reprog *rp;
+  void *rp;
   value rxstr;
 };
 
@@ -55,7 +54,10 @@ static void regex_sweeper(arc *c, value regexp)
   struct regexp_t *rxdata;
 
   rxdata = (struct regexp_t *)REP(regexp);
-  free(rxdata->rp);
+  if (rxdata->rp != NULL) {
+    free(rxdata->rp);
+    rxdata->rp = NULL;
+  }
   rxdata->rxstr = CNIL;
 }
 
@@ -106,6 +108,7 @@ extern char __arc_regex_error[];
 
 value arc_mkregexp(arc *c, value s, unsigned int flags)
 {
+#if 0
   char *cstr;
   value regexp;
   struct regexp_t *rxdata;
@@ -122,10 +125,14 @@ value arc_mkregexp(arc *c, value s, unsigned int flags)
     return(CNIL);
   }
   return(regexp);
+#endif
+  arc_err_cstrfmt(c, "no regular expression support");
+  return(CNIL);
 }
 
 value arc_regexp_match(arc *c, value regexp, value str)
 {
+#if 0
   Reprog *rp;
   Rune *runes;
   Resub rs[10];
@@ -146,6 +153,8 @@ value arc_regexp_match(arc *c, value regexp, value str)
     /* XXX - do something about regex captures */
     return(INT2FIX(rv));
   }
+  return(CNIL);
+#endif
   return(CNIL);
 }
 
