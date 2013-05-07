@@ -102,6 +102,8 @@ static AFFDEF(regex_pprint)
 }
 AFFEND
 
+extern char __arc_regex_error[];
+
 value arc_mkregexp(arc *c, value s)
 {
   char *cstr;
@@ -114,6 +116,10 @@ value arc_mkregexp(arc *c, value s)
   cstr = (char *)alloca(FIX2INT(arc_strutflen(c, s))*sizeof(char));
   arc_str2cstr(c, s, cstr);
   rxdata->rp = regcomp(cstr);
+  if (rxdata->rp == NULL) {
+    arc_err_cstrfmt(c, __arc_regex_error);
+    return(CNIL);
+  }
   return(regexp);
 }
 
