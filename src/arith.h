@@ -57,7 +57,6 @@ extern value (*__arc_coercefn(arc *c, value val))(arc *, value, enum arc_types);
 extern value __arc_bignum_fixnum(arc *c, value n);
 extern value __arc_rational_int(arc *c, value n);
 
-
 extern value arc_numcmp(arc *c, value v1, value v2);
 extern value arc_exact(arc *c, value v);
 
@@ -83,5 +82,7 @@ extern value __arc_ll2val(arc *c, long long ll);
 
 extern int __arc_val2long(arc *c, value v, long *llval);
 extern value __arc_long2val(arc *c, long ll);
+
+extern value arc_string2num(arc *c, value str, int index, int rational);
 
 #endif
