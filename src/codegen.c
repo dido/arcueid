@@ -93,7 +93,7 @@ static void add_lninfo(arc *c, value cctx, value lineno)
   arc_hash_insert(c, src, vptr, lineno);
 }
 
-void arc_emit(arc *c, value cctx, enum vminst inst, value fl)
+void arc_emit(arc *c, value cctx, int inst, value fl)
 {
   value vcode;
   int vptr;
@@ -107,7 +107,7 @@ void arc_emit(arc *c, value cctx, enum vminst inst, value fl)
   SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
-void arc_emit1(arc *c, value cctx, enum vminst inst, value arg, value fl)
+void arc_emit1(arc *c, value cctx, int inst, value arg, value fl)
 {
   value vcode;
   int vptr;
@@ -122,7 +122,7 @@ void arc_emit1(arc *c, value cctx, enum vminst inst, value arg, value fl)
   SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
-void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
+void arc_emit2(arc *c, value cctx, int inst, value arg1, value arg2,
 	       value fl)
 {
   value vcode;
@@ -139,7 +139,7 @@ void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
   SCCTX_VCPTR(cctx, INT2FIX(vptr));
 }
 
-void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1, value arg2,
+void arc_emit3(arc *c, value cctx, int inst, value arg1, value arg2,
 	       value arg3, value fl)
 {
   value vcode;
