@@ -32,6 +32,7 @@
 #include "alloc.h"
 #include "compiler.h"
 #include "../config.h"
+#include "osdep.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
