@@ -26,6 +26,7 @@
 #include "arith.h"
 #include "builtins.h"
 #include "osdep.h"
+#include "hash.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -550,7 +551,7 @@ AFFDEF(arc_kill_thread)
   if (TACELL(AV(tthr))) {
     /* release atomic cell */
     TACELL(AV(tthr)) = 0;
-    WV(achan, arc_gbind(c, "__achan__"));
+    WV(achan, arc_gbind_cstr(c, "__achan__"));
     if (BOUND_P(AV(achan))) {
       AFCALL(arc_mkaff(c, arc_recv_channel, CNIL), AV(achan));
     }
