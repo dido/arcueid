@@ -22,6 +22,7 @@
 #include "../src/builtins.h"
 #include "../src/arith.h"
 #include "../src/io.h"
+#include "../src/compiler.h"
 #include "../config.h"
 
 arc cc;
