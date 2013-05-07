@@ -23,6 +23,7 @@
 #include "io.h"
 #include "arith.h"
 #include "hash.h"
+#include "re.h"
 
 static int scan(arc *c, value thr);
 static int read_list(arc *c, value thr);
@@ -772,19 +773,23 @@ AFFEND
    true, or CNIL if the string could not be parsed as a regular
    expression.
 */
-static value arc_string2regex(arc *c, value sym)
+AFFDEF(arc_string2regex)
 {
+  AARG(ssym);
+  value sym;
   Rune ch;
   int len, multiline, casefold, endch, i;
   unsigned int flags;
   value rxstr;
+  AFBEGIN;
 
+  sym = AV(ssym);
   len = arc_strlen(c, sym);
   if (len < 2)
-    return(CNIL);		/* a regex must be at least 2 chars */
+    ARETURN(CNIL);		/* a regex must be at least 2 chars */
 
   if (arc_strindex(c, sym, 0) != '/')
-    return(CNIL);		/* does not begin with a slash */
+    ARETURN(CNIL);		/* does not begin with a slash */
 
   endch = len-1;
   multiline = casefold = 0;
@@ -799,7 +804,7 @@ static value arc_string2regex(arc *c, value sym)
       casefold = 1;
       endch--;
     } else {
-      return(CNIL);
+      ARETURN(CNIL);
     }
   }
   /* If we get here, endch must be a slash.  The regular expression
@@ -813,8 +818,10 @@ static value arc_string2regex(arc *c, value sym)
     flags |= REGEXP_MULTILINE;
   if (casefold)
     flags |= REGEXP_CASEFOLD;
-  return(arc_mkregexp(c, rxstr, flags));
+  AFTCALL(arc_mkaff(c, arc_mkregexp, CNIL), rxstr, INT2FIX(flags));
+  AFEND;
 }
+AFFEND
 
 /* parse a symbol name or number */
 static AFFDEF(read_symbol)
