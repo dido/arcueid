@@ -708,7 +708,7 @@ extern typefn_t __arc_clos_typefn__;
 extern typefn_t __arc_exception_typefn__;
 extern typefn_t __arc_chan_typefn__;
 typefn_t __arc_tagged_typefn__;
-extern typefn_t __arc_regex_typefn__;
+extern typefn_t __arc_regexp_typefn__;
 
 void arc_init_datatypes(arc *c)
 {
@@ -749,7 +749,7 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_CONT] = &__arc_cont_typefn__;
   c->typefns[T_CLOS] = &__arc_clos_typefn__;
   c->typefns[T_EXCEPTION] = &__arc_exception_typefn__;
-  c->typefns[T_REGEXP] = &__arc_regex_typefn__;
+  c->typefns[T_REGEXP] = &__arc_regexp_typefn__;
 }
 
 static struct {
