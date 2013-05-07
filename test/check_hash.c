@@ -20,6 +20,7 @@
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/arith.h"
+#include "../src/hash.h"
 
 arc cc;
 arc *c;
