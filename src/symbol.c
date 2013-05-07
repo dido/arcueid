@@ -19,6 +19,7 @@
 #include "arcueid.h"
 #include "builtins.h"
 #include "compiler.h"
+#include "hash.h"
 
 value arc_intern(arc *c, value name)
 {
