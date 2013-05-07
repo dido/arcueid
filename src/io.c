@@ -69,17 +69,17 @@ void *alloca (size_t);
 #define STDIN(fd) do {							\
   WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDIN_FD)));			\
   if (NIL_P(AV(fd)))							\
-    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDIN_FD))); } while (0)
+    WV(fd, arc_gbind(c, ARC_BUILTIN(c, S_STDIN_FD))); } while (0)
 
 #define STDOUT(fd) do {							\
   WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDOUT_FD)));			\
   if (NIL_P(AV(fd)))							\
-    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDOUT_FD))); } while (0)
+    WV(fd, arc_gbind(c, ARC_BUILTIN(c, S_STDOUT_FD))); } while (0)
 
 #define STDERR(fd) do {							\
   WV(fd, arc_cmark(c, ARC_BUILTIN(c, S_STDERR_FD)));			\
   if (NIL_P(AV(fd)))							\
-    WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD))); } while (0)
+    WV(fd, arc_gbind(c, ARC_BUILTIN(c, S_STDERR_FD))); } while (0)
 
 /* Make a bare I/O object.  Note that one must populate the io_ops structure
    to be able to use it. */
