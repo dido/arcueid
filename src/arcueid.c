@@ -31,6 +31,7 @@
 #include "vmengine.h"
 #include "alloc.h"
 #include "compiler.h"
+#include "hash.h"
 #include "../config.h"
 #include "osdep.h"
 
@@ -922,9 +923,14 @@ value arc_bindcstr(arc *c, const char *csym, value binding)
   return(arc_bindsym(c, sym, binding));
 }
 
-value arc_gbind(arc *c, const char *csym)
+value arc_gbind_cstr(arc *c, const char *csym)
 {
   return(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, csym)));
+}
+
+value arc_gbind(arc *c, value sym)
+{
+  return(arc_hash_lookup(c, c->genv, sym));
 }
 
 value arc_declare(arc *c, value decl, value val)
