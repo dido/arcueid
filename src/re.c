@@ -109,17 +109,13 @@ extern char __arc_regex_error[];
 
 value arc_mkregexp(arc *c, value s, unsigned int flags)
 {
-  char *cstr;
   value regexp;
   struct regexp_t *rxdata;
 
   regexp = arc_mkobject(c, sizeof(struct regexp_t), T_REGEXP);
   rxdata = (struct regexp_t *)REP(regexp);
   rxdata->rxstr = s;
-  cstr = (char *)alloca(FIX2INT(arc_strutflen(c, s))*sizeof(char));
-  arc_str2cstr(c, s, cstr);
-  /* XXX - do something about the flags */
-  rxdata->rp = regcomp(cstr);
+  rxdata->rp = regcomp(c, s);
   if (rxdata->rp == NULL) {
     arc_err_cstrfmt(c, __arc_regex_error);
     return(CNIL);
