@@ -230,7 +230,7 @@ START_TEST(test_compile_gsym)
   value sym = arc_intern_cstr(c, "foo");
 
   /* global symbol binding for foo */
-  arc_hash_insert(c, c->genv, sym, INT2FIX(31337));
+  arc_bindsym(c, sym, INT2FIX(31337));
   thr = arc_mkthread(c);
 
   COMPILE("foo");
@@ -373,7 +373,7 @@ START_TEST(test_compile_apply)
   value sym = arc_intern_cstr(c, "foo");
 
   /* global symbol binding for foo */
-  arc_hash_insert(c, c->genv, sym, arc_mkaff(c, testfunc, CNIL));
+  arc_bindsym(c, sym, arc_mkaff(c, testfunc, CNIL));
   thr = arc_mkthread(c);
 
   COMPILE("(foo (foo 1 2) (foo 3 4))");
@@ -613,9 +613,9 @@ START_TEST(test_compile_assign)
 
   thr = arc_mkthread(c);
   TEST("(assign leet 1337 eleet 31337)");
-  ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "leet"));
+  ret = arc_gbind_cstr(c, "leet");
   fail_unless(ret == INT2FIX(1337));
-  ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "eleet"));
+  ret = arc_gbind_cstr(c, "eleet");
   fail_unless(ret == INT2FIX(31337));
 
   /* local variable assignment */
