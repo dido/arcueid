@@ -341,26 +341,10 @@ extern int __arc_vector_isocmp(arc *c, value thr);
 /* Definitions for hash tables */
 /* Default initial number of bits for hashes */
 #define ARC_HASHBITS 6
-extern void arc_hash_init(arc_hs *s, unsigned long level);
 extern void arc_hash_update(arc_hs *s, unsigned long val);
-extern unsigned long arc_hash_final(arc_hs *s, unsigned long len);
 extern unsigned long arc_hash_increment(arc *c, value v, arc_hs *s);
-extern unsigned long arc_hash(arc *c, value v);
 extern value arc_mkhash(arc *c, int hashbits);
-extern value arc_mkwtable(arc *c, int hashbits);
-extern int arc_newtable(arc *c, value thr);
-extern value arc_hash_lookup(arc *c, value tbl, value key);
-extern value arc_hash_lookup2(arc *c, value tbl, value key);
-extern value arc_hash_insert(arc *c, value hash, value key, value val);
-extern value arc_hash_delete(arc *c, value hash, value key);
-extern int arc_hash_length(arc *c, value hash);
-extern int arc_xhash_lookup(arc *c, value thr);
-extern int arc_xhash_lookup2(arc *c, value thr);
-extern int arc_xhash_delete(arc *c, value thr);
-extern int arc_xhash_insert(arc *c, value thr);
 extern int arc_xhash_increment(arc *c, value thr);
-extern int arc_xhash_iter(arc *c, value thr);
-extern int arc_xhash_map(arc *c, value thr);
 
 /* Type handling functions */
 extern typefn_t *__arc_typefn(arc *c, value v);
@@ -377,22 +361,7 @@ extern int arc_coerce(arc *c, value thr);
     return(CNIL);							\
   }
 
-/* Thread definitions and functions */
-extern value arc_mkthread(arc *c);
-extern void arc_thr_push(arc *c, value thr, value v);
-extern value arc_thr_pop(arc *c, value thr);
-extern value arc_thr_valr(arc *c, value thr);
-extern value arc_thr_set_valr(arc *c, value thr, value v);
-extern int arc_thr_argc(arc *c, value thr);
-extern value arc_thr_envr(arc *c, value thr);
-extern value arc_cmark(arc *c, value key);
-extern value arc_scmark(arc *c, value key, value val);
-extern value arc_ccmark(arc *c, value key);
-
-extern int arc_apply(arc *c, value thr);
-
-/* Foreign function API */
-
+/* Definitions for AFFs */
 extern value arc_mkccode(arc *c, int argc, value (*cfunc)(),
 			 value name);
 extern value arc_mkaff(arc *c, int (*aff)(arc *, value), value name);
@@ -406,77 +375,26 @@ extern int __arc_affiowait(arc *c, value thr, int line, int fd, int rw);
 extern void __arc_affenv(arc *c, value thr, int nargs, int optargs,
 			 int localvars, int rest);
 extern int __arc_affip(arc *c, value thr);
+extern value arc_thr_valr(arc *c, value thr);
+extern value arc_thr_set_valr(arc *c, value thr, value v);
+extern int arc_thr_argc(arc *c, value thr);
+extern int arc_apply(arc *c, value thr);
+extern void arc_thr_push(arc *c, value thr, value v);
+extern value arc_thr_pop(arc *c, value thr);
 
-/* Closures */
-extern value arc_mkclos(arc *c, value code, value env);
-
-/* String Port I/O */
-extern value arc_instring(arc *c, value str, value name);
-extern value arc_outstring(arc *c, value name);
-extern int arc_instring2(arc *c, value thr);
-extern int arc_outstring2(arc *c, value thr);
-extern value arc_inside(arc *c, value sio);
-
-/* File I/O */
-extern int arc_infile(arc *c, value thr);
-extern int arc_outfile(arc *c, value thr);
-extern value arc_flushout(arc *c);
-
-/* Network I/O */
-extern int arc_open_socket(arc *c, value thr);
-extern int arc_socket_accept(arc *c, value thr);
-extern value arc_client_ip(arc *c, value sock);
-
-/* stdin/stdout/stderr */
-extern int arc_stdin(arc *c, value thr);
-extern int arc_stdout(arc *c, value thr);
-extern int arc_stderr(arc *c, value thr);
-
-/* file system operations */
-extern value arc_dir(arc *c, value dirname);
-extern value arc_dir_exists(arc *c, value dirname);
-extern value arc_file_exists(arc *c, value filename);
-extern value arc_rmfile(arc *c, value filename);
-extern value arc_mvfile(arc *c, value oldname, value newname);
-
-/* General I/O functions */
-extern int arc_readb(arc *c, value thr);
-extern int arc_readc(arc *c, value thr);
-extern int arc_writeb(arc *c, value thr);
+/* Basic I/O */
+extern int __arc_disp_write(arc *c, value thr);
 extern int arc_writec(arc *c, value thr);
-extern int arc_close(arc *c, value thr);
-extern int arc_peekc(arc *c, value thr);
-extern int arc_ungetc(arc *c, value thr);
-extern int arc_seek(arc *c, value thr);
-extern int arc_tell(arc *c, value thr);
-extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 extern int arc_write(arc *c, value thr);
 extern int arc_disp(arc *c, value thr);
-extern int __arc_disp_write(arc *c, value thr);
-extern value arc_pipe_from(arc *c, value cmd);
-extern value arc_portname(arc *c, value port);
-
-/* Continuations */
-extern value __arc_mkcont(arc *c, value thr, int offset);
 
 /* The reader */
 extern int arc_sread(arc *c, value thr);
 extern value __arc_get_fileline(arc *c, value lndata, value obj);
 extern value __arc_reset_lineno(arc *c, value lndata);
 
-/* Special syntax handling */
-extern value arc_ssyntax(arc *c, value x);
-extern int arc_ssexpand(arc *c, value thr);
-
-/* The compiler */
-extern int arc_compile(arc *c, value thr);
-extern int arc_eval(arc *c, value thr);
-extern int arc_quasiquote(arc *c, value thr);
-
-/* Macros */
-extern int arc_macex(arc *c, value thr);
-extern int arc_macex1(arc *c, value thr);
-extern value arc_uniq(arc *c);
+/* Continuations -- used for AFFs */
+extern value __arc_mkcont(arc *c, value thr, int offset);
 
 /* Utility functions */
 extern void __arc_append_buffer_close(arc *c, Rune *buf, int *idx,
@@ -490,10 +408,6 @@ extern void __arc_enqueue(arc *c, value thr, value *head, value *tail);
 extern value __arc_dequeue(arc *c, value *head, value *tail);
 extern value __arc_ull2val(arc *c, unsigned long long ms);
 
-/* Output */
-extern int arc_write(arc *c, value thr);
-extern int arc_disp(arc *c, value thr);
-
 extern value arc_mkobject(arc *c, size_t size, int type);
 extern value arc_is2(arc *c, value a, value b);
 extern int arc_is(arc *c, value thr);
@@ -506,7 +420,6 @@ extern value __arc_visitp(arc *c, value v, value hash);
 extern void __arc_unvisit(arc *c, value v, value hash);
 extern value arc_cmp(arc *c, value v1, value v2);
 
-
 /* Symbols */
 extern value arc_intern(arc *c, value name);
 extern value arc_intern_cstr(arc *c, const char *name);
@@ -515,32 +428,13 @@ extern value arc_unintern(arc *c, value sym);
 extern value arc_bound(arc *c, value sym);
 extern value arc_bindsym(arc *c, value sym, value binding);
 extern value arc_bindcstr(arc *c, const char *csym, value binding);
-extern value arc_gbind(arc *c, const char *csym);
+extern value arc_gbind_cstr(arc *c, const char *csym);
+extern value arc_gbind(arc *c, value sym);
 
 /* Environments */
 extern void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
 extern value __arc_getenv(arc *c, value thr, int depth, int index);
 extern value __arc_putenv(arc *c, value thr, int depth, int index, value val);
-
-/* Numbers and arithmetic */
-extern value arc_string2num(arc *c, value str, int index, int rational);
-extern value arc_expt(arc *c, value a, value b);
-
-/* Threads and synchronisation */
-extern void arc_thread_dispatch(arc *c);
-extern value arc_spawn(arc *c, value thunk);
-extern value arc_current_thread(arc *c);
-extern value arc_break_thread(arc *c, value thr);
-extern int arc_kill_thread(arc *c, value thr);
-extern value arc_dead(arc *c, value thr);
-extern int arc_sleep(arc *c, value thr);
-extern int arc_join_thread(arc *c, value thr);
-extern int arc_atomic_cell(arc *c, value thr);
-
-extern int arc_join_thread(arc *c, value thr);
-extern value arc_mkchan(arc *c);
-extern int arc_recv_channel(arc *c, value thr);
-extern int arc_send_channel(arc *c, value thr);
 
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
@@ -559,16 +453,6 @@ extern int arc_err(arc *c, value thr);
 extern int arc_on_err(arc *c, value thr);
 extern value arc_mkexception(arc *c, value str);
 extern value arc_details(arc *c, value ex);
-
-/* OS-dependent functions */
-extern unsigned long long __arc_milliseconds(void);
-extern value arc_seconds(arc *c);
-extern value arc_msec(arc *c);
-extern value arc_current_process_milliseconds(arc *c);
-extern value arc_setuid(arc *c, value uid);
-extern int arc_timedate(arc *c, value thr);
-extern int arc_system(arc *c, value thr);
-extern int arc_quit(arc *c, value thr);
 
 /* Miscellaneous functions */
 extern int arc_sref(arc *c, value thr);
