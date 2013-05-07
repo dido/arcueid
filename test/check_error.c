@@ -22,6 +22,7 @@
 #include "../src/arcueid.h"
 #include "../src/vmengine.h"
 #include "../src/builtins.h"
+#include "../src/compiler.h"
 #include "../src/io.h"
 
 #ifdef HAVE_ALLOCA_H
