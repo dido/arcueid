@@ -30,6 +30,7 @@
 #include "../src/builtins.h"
 #include "../src/compiler.h"
 #include "../src/io.h"
+#include "../src/hash.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
