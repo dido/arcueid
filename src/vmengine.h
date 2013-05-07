@@ -291,4 +291,29 @@ extern void __arc_menv(arc *c, value thr, int n);
 extern void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv);
 extern value __arc_cont2heap(arc *c, value thr, value cont);
 
+/* Closures */
+extern value arc_mkclos(arc *c, value code, value env);
+
+/* Continuation Marks */
+extern value arc_cmark(arc *c, value key);
+extern value arc_scmark(arc *c, value key, value val);
+extern value arc_ccmark(arc *c, value key);
+
+/* Thread control */
+extern value arc_mkthread(arc *c);
+extern void arc_thread_dispatch(arc *c);
+extern value arc_spawn(arc *c, value thunk);
+extern value arc_current_thread(arc *c);
+extern value arc_break_thread(arc *c, value thr);
+extern int arc_kill_thread(arc *c, value thr);
+extern value arc_dead(arc *c, value thr);
+extern int arc_sleep(arc *c, value thr);
+extern int arc_atomic_cell(arc *c, value thr);
+extern int arc_join_thread(arc *c, value thr);
+
+/* Channels */
+extern value arc_mkchan(arc *c);
+extern int arc_recv_channel(arc *c, value thr);
+extern int arc_send_channel(arc *c, value thr);
+
 #endif
