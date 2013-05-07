@@ -99,4 +99,97 @@ enum {
   if (NIL_P(AV(fd)))							\
     WV(fd, arc_hash_lookup(c, c->genv, ARC_BUILTIN(c, S_STDERR_FD))); } while (0)
 
+/* String Port I/O */
+extern value arc_instring(arc *c, value str, value name);
+extern value arc_outstring(arc *c, value name);
+extern int arc_instring2(arc *c, value thr);
+extern int arc_outstring2(arc *c, value thr);
+extern value arc_inside(arc *c, value sio);
+
+/* File I/O */
+extern int arc_infile(arc *c, value thr);
+extern int arc_outfile(arc *c, value thr);
+extern value arc_flushout(arc *c);
+
+/* Network I/O */
+extern int arc_open_socket(arc *c, value thr);
+extern int arc_socket_accept(arc *c, value thr);
+extern value arc_client_ip(arc *c, value sock);
+
+/* stdin/stdout/stderr */
+extern int arc_stdin(arc *c, value thr);
+extern int arc_stdout(arc *c, value thr);
+extern int arc_stderr(arc *c, value thr);
+
+/* file system operations */
+extern value arc_dir(arc *c, value dirname);
+extern value arc_dir_exists(arc *c, value dirname);
+extern value arc_file_exists(arc *c, value filename);
+extern value arc_rmfile(arc *c, value filename);
+extern value arc_mvfile(arc *c, value oldname, value newname);
+
+/* General I/O functions */
+extern int arc_readb(arc *c, value thr);
+extern int arc_readc(arc *c, value thr);
+extern int arc_writeb(arc *c, value thr);
+extern int arc_writec(arc *c, value thr);
+extern int arc_close(arc *c, value thr);
+extern int arc_peekc(arc *c, value thr);
+extern int arc_ungetc(arc *c, value thr);
+extern int arc_seek(arc *c, value thr);
+extern int arc_tell(arc *c, value thr);
+extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
+extern int arc_write(arc *c, value thr);
+extern int arc_disp(arc *c, value thr);
+extern int __arc_disp_write(arc *c, value thr);
+extern value arc_pipe_from(arc *c, value cmd);
+extern value arc_portname(arc *c, value port);
+
+/* String Port I/O */
+extern value arc_instring(arc *c, value str, value name);
+extern value arc_outstring(arc *c, value name);
+extern int arc_instring2(arc *c, value thr);
+extern int arc_outstring2(arc *c, value thr);
+extern value arc_inside(arc *c, value sio);
+
+/* File I/O */
+extern int arc_infile(arc *c, value thr);
+extern int arc_outfile(arc *c, value thr);
+extern value arc_flushout(arc *c);
+
+
+/* Network I/O */
+extern int arc_open_socket(arc *c, value thr);
+extern int arc_socket_accept(arc *c, value thr);
+extern value arc_client_ip(arc *c, value sock);
+
+/* stdin/stdout/stderr */
+extern int arc_stdin(arc *c, value thr);
+extern int arc_stdout(arc *c, value thr);
+extern int arc_stderr(arc *c, value thr);
+
+/* file system operations */
+extern value arc_dir(arc *c, value dirname);
+extern value arc_dir_exists(arc *c, value dirname);
+extern value arc_file_exists(arc *c, value filename);
+extern value arc_rmfile(arc *c, value filename);
+extern value arc_mvfile(arc *c, value oldname, value newname);
+
+/* General I/O functions */
+extern int arc_readb(arc *c, value thr);
+extern int arc_readc(arc *c, value thr);
+extern int arc_writeb(arc *c, value thr);
+extern int arc_writec(arc *c, value thr);
+extern int arc_close(arc *c, value thr);
+extern int arc_peekc(arc *c, value thr);
+extern int arc_ungetc(arc *c, value thr);
+extern int arc_seek(arc *c, value thr);
+extern int arc_tell(arc *c, value thr);
+extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
+extern int arc_write(arc *c, value thr);
+extern int arc_disp(arc *c, value thr);
+extern int __arc_disp_write(arc *c, value thr);
+extern value arc_pipe_from(arc *c, value cmd);
+extern value arc_portname(arc *c, value port);
+
 #endif
