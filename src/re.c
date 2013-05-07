@@ -177,7 +177,7 @@ static int regex_apply(arc *c, value thr, value rx)
   return(TR_RC);
 }
 
-typefn_t __arc_regex_typefn__ = {
+typefn_t __arc_regexp_typefn__ = {
   regex_marker,
   regex_sweeper,
   regex_pprint,
