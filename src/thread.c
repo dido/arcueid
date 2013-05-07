@@ -25,6 +25,7 @@
 #include "vmengine.h"
 #include "arith.h"
 #include "builtins.h"
+#include "osdep.h"
 #include "../config.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -120,17 +121,6 @@ value arc_mkthread(arc *c)
   return(thr);
 }
 
-void arc_thr_push(arc *c, value thr, value v)
-{
-  /* XXX this should do overflow checks */
-  CPUSH(thr, v);
-}
-
-value arc_thr_pop(arc *c, value thr)
-{
-  return(CPOP(thr));
-}
-
 value arc_thr_valr(arc *c, value thr)
 {
   return(TVALR(thr));
@@ -140,6 +130,17 @@ value arc_thr_set_valr(arc *c, value thr, value val)
 {
   SVALR(thr, val);
   return(val);
+}
+
+void arc_thr_push(arc *c, value thr, value v)
+{
+  /* XXX this should do overflow checks */
+  CPUSH(thr, v);
+}
+
+value arc_thr_pop(arc *c, value thr)
+{
+  return(CPOP(thr));
 }
 
 int arc_thr_argc(arc *c, value thr)
