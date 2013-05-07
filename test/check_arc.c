@@ -496,11 +496,11 @@ START_TEST(test_when)
 
   TEST("(when t (assign whentest 123))");
   fail_unless(ret == INT2FIX(123));
-  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+  fail_unless(arc_gbind_cstr(c, "whentest") == INT2FIX(123));
 
   TEST("(when nil (assign whentest 456))");
   fail_unless(NIL_P(ret));
-  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+  fail_unless(arc_gbind_cstr(c, "whentest") == INT2FIX(123));
 }
 END_TEST
 
@@ -528,11 +528,11 @@ START_TEST(test_unless)
 
   TEST("(unless nil (assign whentest 123))");
   fail_unless(ret == INT2FIX(123));
-  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+  fail_unless(arc_gbind_cstr(c, "whentest") == INT2FIX(123));
 
   TEST("(unless t (assign whentest 456))");
   fail_unless(NIL_P(ret));
-  fail_unless(arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "whentest")) == INT2FIX(123));
+  fail_unless(arc_gbind_cstr(c, "whentest") == INT2FIX(123));
 }
 END_TEST
 
@@ -1020,7 +1020,7 @@ START_TEST(test_pushpop)
 
   TEST("(do (= stack nil) (push 1 stack) (push 2 stack) (push 3 stack))");
   fail_unless(CONS_P(ret));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  stack = arc_gbind_cstr(c, "stack");
   fail_unless(CONS_P(stack));
   fail_unless(car(stack) == INT2FIX(3));
   fail_unless(car(cdr(stack)) == INT2FIX(2));
@@ -1028,20 +1028,20 @@ START_TEST(test_pushpop)
 
   TEST("(pop stack)");
   fail_unless(ret == INT2FIX(3));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  stack = arc_gbind_cstr(c, "stack");
   fail_unless(CONS_P(stack));
   fail_unless(car(stack) == INT2FIX(2));
   fail_unless(car(cdr(stack)) == INT2FIX(1));
 
   TEST("(pop stack)");
   fail_unless(ret == INT2FIX(2));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  stack = arc_gbind_cstr(c, "stack");
   fail_unless(CONS_P(stack));
   fail_unless(car(stack) == INT2FIX(1));
 
   TEST("(pop stack)");
   fail_unless(ret == INT2FIX(1));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "stack"));
+  stack = arc_gbind_cstr(c, "stack");
   fail_unless(NIL_P(stack));
 
 }
@@ -1117,7 +1117,7 @@ START_TEST(test_pushnew)
   fail_unless(car(cdr(ret)) == INT2FIX(2));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  stack = arc_gbind_cstr(c, "pnstack");
   fail_unless(CONS_P(stack));
   fail_unless(car(stack) == INT2FIX(1));
   fail_unless(car(cdr(stack)) == INT2FIX(2));
@@ -1129,7 +1129,7 @@ START_TEST(test_pushnew)
   fail_unless(car(cdr(ret)) == INT2FIX(2));
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(0));
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(3));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  stack = arc_gbind_cstr(c, "pnstack");
   fail_unless(CONS_P(stack));
   fail_unless(car(stack) == INT2FIX(1));
   fail_unless(car(cdr(stack)) == INT2FIX(2));
@@ -1142,7 +1142,7 @@ START_TEST(test_pushnew)
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(0));
   fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(3));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  stack = arc_gbind_cstr(c, "pnstack");
   fail_unless(CONS_P(stack));
   fail_unless(car(stack) == INT2FIX(4));
   fail_unless(car(cdr(stack)) == INT2FIX(1));
@@ -1156,7 +1156,7 @@ START_TEST(test_pushnew)
   fail_unless(car(cdr(cdr(ret))) == INT2FIX(2));
   fail_unless(car(cdr(cdr(cdr(ret)))) == INT2FIX(0));
   fail_unless(car(cdr(cdr(cdr(cdr(ret))))) == INT2FIX(3));
-  stack = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "pnstack"));
+  stack = arc_gbind_cstr(c, "pnstack");
   fail_unless(CONS_P(stack));
   fail_unless(car(stack) == INT2FIX(0));
   fail_unless(car(cdr(stack)) == INT2FIX(1));
@@ -1478,7 +1478,7 @@ START_TEST(test_w_infile)
 
   TEST("(w/infile f \"check_arc.c\" (= myinfile f) (readline f))");
   fail_unless(TYPE(ret) == T_STRING);
-  ret = arc_hash_lookup(c, c->genv, arc_intern_cstr(c, "myinfile"));
+  ret = arc_gbind_cstr(c, "myinfile");
   fail_unless(TYPE(ret) == T_INPORT);
 }
 END_TEST
