@@ -104,7 +104,7 @@ AFFEND
 
 extern char __arc_regex_error[];
 
-value arc_mkregexp(arc *c, value s)
+value arc_mkregexp(arc *c, value s, unsigned int flags)
 {
   char *cstr;
   value regexp;
@@ -115,6 +115,7 @@ value arc_mkregexp(arc *c, value s)
   rxdata->rxstr = s;
   cstr = (char *)alloca(FIX2INT(arc_strutflen(c, s))*sizeof(char));
   arc_str2cstr(c, s, cstr);
+  /* XXX - do something about the flags */
   rxdata->rp = regcomp(cstr);
   if (rxdata->rp == NULL) {
     arc_err_cstrfmt(c, __arc_regex_error);
