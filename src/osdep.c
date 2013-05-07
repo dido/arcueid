@@ -30,6 +30,7 @@
 #include "arith.h"
 #include "builtins.h"
 #include "io.h"
+#include "osdep.h"
 #include "../config.h"
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
