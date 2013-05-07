@@ -84,12 +84,12 @@ enum vminst {
 /* Function name */
 #define SRC_FUNCNAME (-2)
 
-extern void arc_emit(arc *c, value cctx, enum vminst inst, value fl);
-extern void arc_emit1(arc *c, value cctx, enum vminst inst, value arg,
+extern void arc_emit(arc *c, value cctx, int inst, value fl);
+extern void arc_emit1(arc *c, value cctx, int inst, value arg,
 		      value fl);
-extern void arc_emit2(arc *c, value cctx, enum vminst inst, value arg1,
+extern void arc_emit2(arc *c, value cctx, int inst, value arg1,
 		      value arg2, value fl);
-extern void arc_emit3(arc *c, value cctx, enum vminst inst, value arg1,
+extern void arc_emit3(arc *c, value cctx, int inst, value arg1,
 		      value arg2, value arg3, value fl);
 extern int arc_literal(arc *c, value cctx, value literal);
 extern value arc_mkcode(arc *c, int ncodes, int nlits);
