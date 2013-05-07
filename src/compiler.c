@@ -19,6 +19,7 @@
 #include "arcueid.h"
 #include "builtins.h"
 #include "vmengine.h"
+#include "compiler.h"
 
 /* Get the closest line number for obj */
 static value get_lineno(arc *c, value obj)
