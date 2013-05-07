@@ -23,11 +23,13 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "utf.h"
 #include "regexp.h"
 #include "regcomp.h"
+#include "arcueid.h"
 
 #define	TRUE	1
 #define	FALSE	0
@@ -71,13 +73,13 @@ static	void	evaluntil(int);
 static	int	bldcclass(void);
 
 static jmp_buf regkaboom;
+char __arc_regex_error[132];
 
-static	void
-rcerror(char *s)
+static void rcerror(char *s)
 {
-	errors++;
-	regerror(s);
-	longjmp(regkaboom, 1);
+  errors++;
+  strncpy(__arc_regex_error, s, sizeof(__arc_regex_error)/sizeof(char));
+  longjmp(regkaboom, 1);
 }
 
 static	Reinst*
@@ -505,9 +507,9 @@ regcomp1(char *s, int literal, int dot_type)
 
 	/* get memory for the program */
 	pp = (Reprog *)malloc(sizeof(Reprog) + 6*sizeof(Reinst)*strlen(s));
-	if(pp == 0){
-		regerror("out of memory");
-		return 0;
+	if(pp == 0) {
+	  fprintf(stderr, "out of memory\n");
+	  return 0;
 	}
 	freep = pp->firstinst;
 	classp = pp->class;
