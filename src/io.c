@@ -336,6 +336,15 @@ AFFDEF(arc_tell)
 }
 AFFEND
 
+AFFDEF(arc_rewind)
+{
+  AARG(fp);
+  AFBEGIN;
+  AFTCALL(arc_mkaff(c, arc_seek, CNIL), AV(fp), INT2FIX(0), INT2FIX(SEEK_SET));
+  AFEND;
+}
+AFFEND
+
 AFFDEF(arc_stdin)
 {
   AVAR(fd);
