@@ -120,6 +120,11 @@ static AFFDEF(sio_seek)
   int len, noffset;
   AFBEGIN;
 
+  if (!FIXNUM_P(AV(offset))) {
+    arc_err_cstrfmt(c, "invalid seek offset for sio (must be fixnum)");
+    ARETURN(CNIL);
+  }
+
   len = arc_strlen(c, SIODATA(AV(sio))->str);
   switch (FIX2INT(AV(whence))) {
   case SEEK_SET:
@@ -132,6 +137,7 @@ static AFFDEF(sio_seek)
     noffset = len - FIX2INT(AV(offset));
     break;
   default:
+    arc_err_cstrfmt(c, "invalid seek whence argument");
     ARETURN(CNIL);
   }
   if (noffset >= len || noffset < 0)
