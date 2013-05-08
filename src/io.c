@@ -304,6 +304,29 @@ AFFDEF(arc_close)
 }
 AFFEND
 
+AFFDEF(arc_seek)
+{
+  AARG(fp, offset);
+  AOARG(whence);
+  AFBEGIN;
+
+  if (!BOUND_P(AV(whence)))
+    WV(whence, INT2FIX(SEEK_SET));
+  if (AV(whence) == ARC_BUILTIN(c, S_SEEK_SET))
+    WV(whence, INT2FIX(SEEK_SET));
+  else if (AV(whence) == ARC_BUILTIN(c, S_SEEK_CUR))
+    WV(whence, INT2FIX(SEEK_CUR));
+  else if (AV(whence) == ARC_BUILTIN(c, S_SEEK_END))
+    WV(whence, INT2FIX(SEEK_END));
+  else if (!FIXNUM_P(AV(whence))) {
+    arc_err_cstrfmt(c, "invalid seek whence argument");
+    ARETURN(CNIL);
+  }
+  AFTCALL(VINDEX(IO(AV(fp))->io_ops, IO_seek), AV(fp), AV(offset), AV(whence));
+  AFEND;
+}
+AFFEND
+
 AFFDEF(arc_tell)
 {
   AARG(fp);
