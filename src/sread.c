@@ -182,25 +182,103 @@ static int issym(Rune ch)
 
 #define READ_COMMENT(fd, lndata) AFCALL(arc_mkaff(c, read_comment, CNIL), fd, CNIL, lndata)
 
-/* Read up to the first non-symbol character from fp */
+/* Read up to the first non-symbol character from fp.
+   This also serves to read a regex, which is something of the
+   form r/.../ */
 static AFFDEF(getsymbol)
 {
   AARG(fp);
-  AVAR(buf, ch);
+  AVAR(buf, ch, state, casefold, multiline);
   Rune r;
   AFBEGIN;
   WV(buf, arc_outstring(c, CNIL));
+  WV(state, INT2FIX(0));
+  WV(casefold, CNIL);
+  WV(multiline, CNIL);
   for (;;) {
     READC2(AV(fp), ch, r);
-    if (r == Runeerror)
-      break;
-    if (!issym(r)) {
-      arc_ungetc_rune(c, r, AV(fp));
-      break;
+
+    if (AV(state) == INT2FIX(0)) {
+      /* We transition to state 1 if we see an r, meaning it might
+	 possibly be a regular expression.  Transition to state 5
+	 otherwise: it can't be a regex. */
+      WV(state, (r == 'r') ? INT2FIX(1) : INT2FIX(5));
+    } else if (AV(state) == INT2FIX(1)) {
+      if (r == '/') {
+	/* We are reading a regular expression.  Transition to state 2
+	   and clear the buffer. */
+	WV(state, INT2FIX(2));
+	WV(buf, arc_outstring(c, CNIL));
+	continue;
+      } else {
+	/* We are not reading a regex.  Transition to state 5. */
+	WV(state, INT2FIX(5));
+      }
     }
+
+    if (AV(state) == INT2FIX(2)) {
+      /* We are reading the body of a regex. If we see a /, we should
+	 have the possible flags of the regex to follow.  Do not write
+	 the / to the buffer. */
+      if (r == '/') {
+	WV(state, INT2FIX(4));
+	continue;
+      }
+      if (r == '\\') {
+	/* Backslash.  This is the regex escape state.  Write the slash
+	   and stay in that state to the next character. */
+	WV(state, INT2FIX(3));
+      }
+
+      if (r == Runeerror) {
+	arc_err_cstrfmt(c, "unexpected end of source while reading regex");
+	ARETURN(CNIL);
+      }
+    } else if (AV(state) == INT2FIX(3)) {
+      /* regex escape state.  Go back to state 2 */
+      WV(state, INT2FIX(2));
+    } else if (AV(state) == INT2FIX(4)) {
+      /* state 4, reading regex flags */
+      if (r == 'i' && NIL_P(AV(casefold)))
+	WV(casefold, CTRUE);
+      else if (r == 'm' && NIL_P(AV(multiline)))
+	WV(multiline, CTRUE);
+      else if (r == 'i' || r == 'm') {
+	arc_err_cstrfmt(c, "regular expression flags used more than once");
+	ARETURN(CNIL);
+      } else			/* any other character ends */
+	goto finished;
+      continue;
+    } else if (r == Runeerror) {
+      goto finished;		/* end of string */
+    } else if (!issym(r)) {
+      arc_ungetc_rune(c, r, AV(fp));
+      goto finished;		/* no more to read */
+    }
+    /* write character to buffer */
     AFCALL(arc_mkaff(c, arc_writec, CNIL), AV(ch), AV(buf));
   }
-  ARETURN(arc_inside(c, AV(buf)));
+ finished:
+  /* If the final state was state 5, we have a normal symbol or
+     number.  Return it. */
+  if (AV(state) == INT2FIX(5))
+    ARETURN(arc_inside(c, AV(buf)));
+
+  /* If our final state is state 4, we read a regex. */
+  if (AV(state) == INT2FIX(4)) {
+    value rxstr = arc_inside(c, AV(buf));
+    unsigned int flags = 0;
+
+    if (AV(casefold))
+      flags |= REGEXP_CASEFOLD;
+    if (AV(multiline))
+      flags |= REGEXP_MULTILINE;
+    ARETURN(arc_mkregexp(c, rxstr, flags));
+  }
+
+  /* never get here */
+  arc_err_cstrfmt(c, "invalid state while parsing symbol");
+  ARETURN(CNIL);
   AFEND;
 }
 AFFEND
@@ -767,76 +845,26 @@ static AFFDEF(read_comment)
 }
 AFFEND
 
-/* See if the "symbol" can be parsed as a regex. A regex
-   must begin with the / character, and must end either with
-   a /, /m, /i, /im, or /mi. Returns the regex if this is
-   true, or CNIL if the string could not be parsed as a regular
-   expression. */
-static value arc_string2regex(arc *c, value sym)
-{
-  Rune ch;
-  int len, multiline, casefold, endch, i;
-  unsigned int flags;
-  value rxstr;
-
-  len = arc_strlen(c, sym);
-  if (len < 2)
-    return(CNIL);	/* a regex must be at least 2 chars */
-
-  if (arc_strindex(c, sym, 0) != '/')
-    return(CNIL);	/* does not begin with a slash */
-
-  endch = len-1;
-  multiline = casefold = 0;
-  for (i=0; i<2; i++) {
-    ch = arc_strindex(c, sym, endch);
-    if (ch == '/') {
-      break;
-    } else if (ch == 'm' && !multiline) {
-      multiline = 1;
-      endch--;
-    } else if (ch == 'i' && !casefold) {
-      casefold = 1;
-      endch--;
-    } else {
-      return(CNIL);
-    }
-  }
-  /* If we get here, endch must be a slash. The regular expression
-     will be the portion of sym from 1 up to endch-1, so the length
-     of the regular expression will be endch-1 */
-  rxstr = arc_mkstringlen(c, endch-1);
-  for (i=0; i<endch-1; i++)
-    arc_strsetindex(c, rxstr, i, arc_strindex(c, sym, i+1));
-  flags = 0;
-  if (multiline)
-    flags |= REGEXP_MULTILINE;
-  if (casefold)
-    flags |= REGEXP_CASEFOLD;
-  return(arc_mkregexp(c, rxstr, flags));
-}
-
 /* parse a symbol name or number */
 static AFFDEF(read_symbol)
 {
   AARG(fp, eof);
   AOARG(lndata);
   AVAR(sym);
-  value num, rx;
+  value num;
   AFBEGIN;
   (void)lndata;
   (void)eof;
   AFCALL(arc_mkaff(c, getsymbol, CNIL), AV(fp));
   WV(sym, AFCRV);
+  if (TYPE(AV(sym)) == T_REGEXP)
+    return(AV(sym));
   if (arc_strcmp(c, AV(sym), arc_mkstringc(c, ".")) == 0)
     ARETURN(ARC_BUILTIN(c, S_DOT));
   /* Try to convert the symbol to a number */
   num = arc_string2num(c, AV(sym), 0, 0);
   if (!NIL_P(num))
     ARETURN(num);
-  rx = arc_string2regex(c, AV(sym));
-  if (!NIL_P(rx))
-    ARETURN(rx);
   /* If that doesn't work, well, just intern the symbol and toss it
      out there. */
   ARETURN(arc_intern(c, AV(sym)));  
