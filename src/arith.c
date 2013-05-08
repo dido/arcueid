@@ -1999,7 +1999,7 @@ int __arc_val2ll(arc *c, value v, long long *llval)
 value __arc_ll2val(arc *c, long long ll)
 {
   if (ll <= FIXNUM_MAX && ll >= FIXNUM_MIN)
-    return(FIX2INT(ll));
+    return(INT2FIX(ll));
 
 #ifdef HAVE_GMP_H
   {
@@ -2056,7 +2056,7 @@ int __arc_val2long(arc *c, value v, long *lval)
 value __arc_long2val(arc *c, long l)
 {
   if (l <= FIXNUM_MAX && l >= FIXNUM_MIN)
-    return(FIX2INT(l));
+    return(INT2FIX(l));
 
 #ifdef HAVE_GMP_H
   {
