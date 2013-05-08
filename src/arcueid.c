@@ -841,6 +841,9 @@ static struct {
   { "force-close", -2, arc_close },
   { "flushout", 0, arc_flushout },
   { "pipe-from", 1, arc_pipe_from },
+  { "seek", -2, arc_seek },
+  { "tell", -2, arc_tell },
+  { "rewind", -2, arc_rewind },
 
   /* Additional I/O functions */
   { "stdin", -2, arc_stdin },
