@@ -112,7 +112,7 @@ notice and this notice are preserved.
            the write barrier.  This amounts to a 1-bit reference
            count, where overflowed reference counts are collected by
            the tracing collector.
-** DONE Arc reader [12/12]
+** DONE Arc reader [13/13]
    - [X] Lists
    - [X] Improper lists
    - [X] Bracketed functions
@@ -128,6 +128,7 @@ notice and this notice are preserved.
      - [X] Flonum
      - [X] Rational
      - [X] Complex
+   - [X] Regexps
    - [X] Atstrings
 ** DONE Arc compiler [5/5]
    - [X] Literal expressions [9/9]
@@ -173,7 +174,7 @@ notice and this notice are preserved.
        - [X] Complement (~)
        - [X] Structure access (. and !)
        - [X] And (&)
-** TODO basic data types [16/17]
+** DONE basic data types [17/17]
     - [X] Nil
     - [X] True
     - [X] Numeric Types [5/5]
@@ -207,7 +208,7 @@ notice and this notice are preserved.
     - [X] Threads
     - [X] Exceptions
     - [X] Channels
-    - [ ] Regular Expressions
+    - [X] Regular Expressions
 ** TODO Runtime Built-In Functions [15/19]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
@@ -510,10 +511,11 @@ notice and this notice are preserved.
      - [X] msec
      - [X] seconds
      - [X] timedate
-   - [ ] Regular Expressions (Arcueid extension) [0/3]
-     - [ ] rxcompile
-     - [ ] rxescape
-     - [ ] rxmatch (=~)
+   - [-] Regular Expressions (Arcueid extension) [1/4]
+     - [X] regular expression input in the reader
+     - [ ] regular expression matching
+     - [ ] regcomp (compile a regular expression from a string)
+     - [ ] regescape (escape regex characters from a string)
    - [X] Miscellaneous OS operations [4/4]
      - [X] system
      - [X] quit
@@ -535,9 +537,9 @@ notice and this notice are preserved.
 ** DONE Baseline environment (arc.arc) [2/2]
    - [X] Load all arc.arc functions
    - [X] Test behaviour of all arc.arc functions
-** TODO pretty printer [1/2]
+** DONE pretty printer [2/2]
    - [X] Framework for disp and write
-   - [-] Printers for various types [16/17]
+   - [X] Printers for various types [17/17]
      - [X] nil
      - [X] t
      - [X] Numeric Types [5/5]
@@ -559,7 +561,7 @@ notice and this notice are preserved.
      - [X] Threads
      - [X] Exceptions
      - [X] Channels
-     - [ ] Regular Expressions
+     - [X] Regular Expressions
 ** DONE REPL [3/3]
    - [X] Simple non-readline REPL
    - [X] Read in an initial file for REPL
