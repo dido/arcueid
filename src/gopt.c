@@ -21,8 +21,9 @@ read http://www.purposeful.co.uk/tfl/
 #include <stdlib.h>
 #include <string.h>
 #include "gopt.h"
+#include "../config.h"
 
-#ifdef USE_SYSEXITS
+#ifdef HAVE_SYSEXITS_H
 #include <sysexits.h>
 #else
 #define EX_OSERR EXIT_FAILURE
