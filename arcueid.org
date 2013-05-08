@@ -79,10 +79,10 @@ notice and this notice are preserved.
       - [X] vector
       - [X] table
       - [X] string
-** TODO memory management [1/2]
+** DONE memory management [2/2]
    - [X] memory allocator
 	 A BiBOP-based memory allocator. Keep things simple first.
-   - [-] garbage collector [2/3]
+   - [X] garbage collector [2/2]
 	 A simple mark and sweep garbage collector for now. Keep things
 	 simple first.
      - [X] Garbage collection of data types [14/14]
@@ -105,13 +105,6 @@ notice and this notice are preserved.
        - [X] Exceptions
        - [X] Channels
      - [X] Write barrier hooks
-     - [ ] Deferred allocation for BiBOP objects
-	   Basically what this means is that for a BiBOP object, do
-           not immediately pull it off of the free list.  Let it
-           remain technically free until the object has been seen by
-           the write barrier.  This amounts to a 1-bit reference
-           count, where overflowed reference counts are collected by
-           the tracing collector.
 ** DONE Arc reader [13/13]
    - [X] Lists
    - [X] Improper lists
