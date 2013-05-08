@@ -184,7 +184,7 @@ static AFFDEF(fio_seek)
   AFBEGIN;
   if (!(FIX2INT(AV(whence)) == SEEK_SET || FIX2INT(AV(whence)) == SEEK_CUR ||
 	FIX2INT(AV(whence)) == SEEK_END)) {
-    arc_err_cstrfmt(c, "invalid whence");
+    arc_err_cstrfmt(c, "invalid seek whence argument");
     ARETURN(CNIL);
   }
 
@@ -195,7 +195,7 @@ static AFFDEF(fio_seek)
     if (__arc_val2ll(c, AV(offset), &noff)) {
       ARETURN(INT2FIX(fseeko(FIODATA(AV(fio))->fp, (off_t)noff, FIX2INT(AV(whence)))));
     } else {
-      arc_err_cstrfmt(c, "cannot convert specified offset");
+      arc_err_cstrfmt(c, "invalid seek offset");
     }
   }
 #else
@@ -205,7 +205,7 @@ static AFFDEF(fio_seek)
     if (__arc_val2long(c, AV(offset), &noff)) {
       ARETURN(INT2FIX(fseek(FIODATA(AV(fio))->fp, noff, FIX2INT(AV(whence)))));
     } else {
-      arc_err_cstrfmt(c, "cannot convert specified offset");
+      arc_err_cstrfmt(c, "invalid seek offset");
     }
   }
 #endif
