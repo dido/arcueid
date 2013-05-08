@@ -246,8 +246,14 @@ static AFFDEF(getsymbol)
       else if (r == 'i' || r == 'm') {
 	arc_err_cstrfmt(c, "regular expression flags used more than once");
 	ARETURN(CNIL);
-      } else			/* any other character ends */
+      } else if (ucisspace(r)) {
+	/* whitespace ends parsing of the regex */
 	goto finished;
+      } else {
+	/* any other character is considered an invalid flag */
+	arc_err_cstrfmt(c, "invalid regular expression flag %c", r);
+	ARETURN(CNIL);
+      }
       continue;
     } else if (r == Runeerror) {
       goto finished;		/* end of string */
