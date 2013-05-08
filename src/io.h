@@ -171,6 +171,7 @@ extern int arc_peekc(arc *c, value thr);
 extern int arc_ungetc(arc *c, value thr);
 extern int arc_seek(arc *c, value thr);
 extern int arc_tell(arc *c, value thr);
+extern int arc_rewind(arc *c, value thr);
 extern Rune arc_ungetc_rune(arc *c, Rune r, value fd);
 extern int arc_write(arc *c, value thr);
 extern int arc_disp(arc *c, value thr);
