@@ -49,21 +49,25 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
   {{{
     const char* const *arg_p= argv + 1;
     size_t opt_count= 1;
-    for( ; *arg_p; ++arg_p )
-      if( '-' == (*arg_p)[0] && (*arg_p)[1] )
-        if( '-' == (*arg_p)[1] )
-          if( (*arg_p)[2] )
+    for( ; *arg_p; ++arg_p ) {
+      if( '-' == (*arg_p)[0] && (*arg_p)[1] ) {
+        if( '-' == (*arg_p)[1] ) {
+          if( (*arg_p)[2] ) {
             ++opt_count;
-          else
+          } else {
             break;
-        else {
+	  }
+        } else {
           const opt_spec_t *opt_spec_p= opt_specs;
-          for( ; opt_spec_p-> key; ++opt_spec_p )
-            if( strchr( opt_spec_p-> shorts, (*arg_p)[1] )){
+          for( ; opt_spec_p-> key; ++opt_spec_p ) {
+            if( strchr( opt_spec_p-> shorts, (*arg_p)[1] )) {
               opt_count+= opt_spec_p-> flags & GOPT_ARG ? 1 : strlen( (*arg_p) + 1 );
               break;
             }
+	  }
         }
+      }
+    }
     opts= malloc( opt_count * sizeof(opt_t) );
   }}}
   {
@@ -131,7 +135,7 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
               next_option-> arg= strchr( (*arg_p) + 2, '=' ) + 1;
               if( (char*)0 + 1 == next_option-> arg ){
                 ++arg_p;
-                if( !*arg_p || '-' == (*arg_p)[0] && (*arg_p)[1] ){
+                if ((!*arg_p || ('-' == (*arg_p)[0])) && (*arg_p)[1]) {
                   fprintf( stderr, "%s: --%s: option requires an option argument\n", argv[0], (*(arg_p-1)) + 2 );
                   free( opts );
                   exit( EX_USAGE );
@@ -179,7 +183,7 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
                   
                   else {
                     ++arg_p;
-                    if( !*arg_p || '-' == (*arg_p)[0] && (*arg_p)[1] ){
+                    if( !*arg_p || ('-' == (*arg_p)[0] && (*arg_p)[1])) {
                       fprintf( stderr, "%s: -%c: option requires an option argument\n", argv[0], *short_opt );
                       free( opts );
                       exit( EX_USAGE );
@@ -196,9 +200,11 @@ void *gopt_sort( int *argc, const char **argv, const void *opt_specs ){
             fprintf( stderr, "%s: -%c: unknown option\n", argv[0], *short_opt );
             free( opts );
             exit( EX_USAGE );
-            continue_2: 0;
+	  continue_2:
+	    ;
           }
-          break_2: 0;
+          break_2:
+	  ;
         }}}
       else
         *next_operand++= *arg_p;
