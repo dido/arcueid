@@ -95,6 +95,7 @@ static AFFDEF(regex_pprint)
   (void)disp;
   WV(dw, arc_mkaff(c, __arc_disp_write, CNIL));
   WV(wc, arc_mkaff(c, arc_writec, CNIL));
+  AFCALL(AV(wc), arc_mkchar(c, 'r'), AV(fp));
   AFCALL(AV(wc), arc_mkchar(c, '/'), AV(fp));
 
   rxdata = (struct regexp_t *)REP(AV(sexpr));
