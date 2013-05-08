@@ -107,6 +107,9 @@ enum builtin_syms {
   S_LNDATA,			/* lndata */
   S_DLIST,			/* dlist */
   S_EVAL,			/* eval */
+  S_SEEK_SET,			/* SEEK_SET */
+  S_SEEK_CUR,			/* SEEK_CUR */
+  S_SEEK_END,			/* SEEK_END */
 
   S_THE_END			/* end of the line */
 };
