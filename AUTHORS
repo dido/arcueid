@@ -44,6 +44,9 @@ Robert Morris.
 The test suite in arc/tests comes from Rainbow and is Copyright (c)
 2008 Conan Dalton.
 
+The gopt option parsing library (gopt.c/gopt.h) used by the REPL to
+parse command line arguments is written by Tom Vajzovic.
+
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
