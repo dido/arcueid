@@ -629,33 +629,3 @@ notice and this notice are preserved.
    implementation of the algorithms for doing these things appears to
    be ICU4C (http://site.icu-project.org).  See if we can adapt the
    code or use it as a library.
-* Limitations that should be lifted
-** Macro expansion
-   - Macros cannot use threading primitives. Attempting to do so with
-     the current version of arc_macapply will cause an immediate
-     deadlock because macros are executed single threaded as the only
-     thread available.
-   - Garbage collection not performed during macro execution.  This
-     requires some fairly careful work to ensure that local variables
-     inside the compiler do not get garbage collected.
-   - Macros can be anything but a CC4 function.  CC4 functions make some
-     subtle interplay between the virtual machine and all that and can
-     be somewhat difficult to handle.
-** Compilation
-   - We need to do tail call optimization somehow!
-   - We need to do something about the kludge involved in reversing
-     arguments for evaluation order.  Compiling a function application
-     will push the arguments in the order in which they appear (so
-     they appear on the stack in reverse order), but the compiler
-     generates code to bind arguments on the stack as if they were
-     pushed in the opposite order!  In order to fix this we have
-     modified the virtual machine to reverse the order of all
-     arguments in arc_apply. This is a really ugly kludge and should
-     be cleaned up.
-** Complex Rationals
-   Apparently Arc has a complex rational numeric type:
-   e.g. (sqrt -1/4) => 0+1/2i.
-   At present Arcueid has no plans to support such creatures, and
-   (sqrt -1/4) will produce 0+0.5i instead.  I suppose this is an
-   artifact of numeric tower support in MzScheme/Racket, given the
-   paucity of functions to otherwise support complex numbers in Arc.
