@@ -19,6 +19,7 @@
 #include <string.h>
 #include "arcueid.h"
 #include "regexp.h"
+#include "re.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -39,6 +40,7 @@ void *alloca (size_t);
 struct regexp_t {
   void *rp;
   value rxstr;
+  unsigned int flags;
 };
 
 static void regex_marker(arc *c, value regexp, int depth,
@@ -101,6 +103,12 @@ static AFFDEF(regex_pprint)
   rxdata = (struct regexp_t *)REP(AV(sexpr));
   AFCALL(AV(dw), rxdata->rxstr, CTRUE, AV(fp), AV(visithash));
   AFCALL(AV(wc),  arc_mkchar(c, '/'), AV(fp));
+  rxdata = (struct regexp_t *)REP(AV(sexpr));
+  if (rxdata->flags & REGEXP_MULTILINE)
+    AFCALL(AV(wc),  arc_mkchar(c, 'm'), AV(fp));
+  rxdata = (struct regexp_t *)REP(AV(sexpr));
+  if (rxdata->flags & REGEXP_CASEFOLD)
+    AFCALL(AV(wc),  arc_mkchar(c, 'i'), AV(fp));
   ARETURN(CNIL);
   AFEND;
 }
@@ -117,6 +125,7 @@ value arc_mkregexp(arc *c, value s, unsigned int flags)
   rxdata = (struct regexp_t *)REP(regexp);
   rxdata->rxstr = s;
   rxdata->rp = regcomp(c, s);
+  rxdata->flags = flags;
   if (rxdata->rp == NULL) {
     arc_err_cstrfmt(c, __arc_regex_error);
     return(CNIL);
