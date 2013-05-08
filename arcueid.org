@@ -209,7 +209,7 @@ notice and this notice are preserved.
     - [X] Exceptions
     - [X] Channels
     - [X] Regular Expressions
-** TODO Runtime Built-In Functions [15/19]
+** TODO Runtime Built-In Functions [17/20]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
    - [X] Initialization for binding runtime primitives to global symbols
@@ -409,7 +409,7 @@ notice and this notice are preserved.
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
      - [X] uniq
-   - [-] Basic I/O primitives (src/io.c) [4/5]
+   - [X] Basic I/O primitives (src/io.c) [5/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
      - [X] Input [5/5]
@@ -443,12 +443,12 @@ notice and this notice are preserved.
        - [X] instring
        - [X] outstring
        - [X] inside
-     - [ ] Seeking / telling [0/2]
+     - [X] Seeking / telling [2/2]
              Note that these essential functions are not available in
              PG-Arc for some reason but will probably be necessary to
              implement CIEL.
-       - [ ] seek
-       - [ ] tell
+       - [X] seek
+       - [X] tell
    - [X] Additional I/O functions (src/io.c) [8/8]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
@@ -474,12 +474,13 @@ notice and this notice are preserved.
        - [X] chan
        - [X] <- (recv-channel) *
        - [X] <-= (send-channel) *
-   - [-] Networking [3/11]
+   - [X] Networking [3/3]
      - [X] open-socket
-     - [ ] getaddrinfo (Arcueid only)
-     - [ ] socket (Arcueid extension)
      - [X] client-ip
      - [X] socket-accept
+   - [ ] Networking Extensions (Arcueid extension) [0/8]
+     - [ ] getaddrinfo (Arcueid only)
+     - [ ] socket (Arcueid extension)
      - [ ] socket-bind (Arcueid only)
      - [ ] socket-listen (Arcueid only)
      - [ ] socket-connect (Arcueid only)
@@ -511,11 +512,12 @@ notice and this notice are preserved.
      - [X] msec
      - [X] seconds
      - [X] timedate
-   - [-] Regular Expressions (Arcueid extension) [1/4]
+   - [-] Regular Expressions (Arcueid extension) [1/3]
      - [X] regular expression input in the reader
-     - [ ] regular expression matching
+     - [-] regular expression matching [1/2]
+       - [X] Basic matching
+       - [ ] Substring captures
      - [ ] regcomp (compile a regular expression from a string)
-     - [ ] regescape (escape regex characters from a string)
    - [X] Miscellaneous OS operations [4/4]
      - [X] system
      - [X] quit
