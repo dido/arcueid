@@ -529,12 +529,12 @@ notice and this notice are preserved.
      - [X] bound
      - [X] arcueid-code-setname
      - [X] declare
-** TODO Threading [0/6]
-   - [ ] Basic scheduling
-   - [ ] Suspend threads on I/O
-   - [ ] Synchronization
+** TODO Threading [4/6]
+   - [X] Basic scheduling
+   - [X] Suspend threads on I/O
+   - [X] Synchronization
    - [ ] Deadlock detection
-   - [ ] Thread control
+   - [X] Thread control
    - [ ] alt mechanism
 ** DONE Baseline environment (arc.arc) [2/2]
    - [X] Load all arc.arc functions
