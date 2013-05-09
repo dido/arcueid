@@ -34,6 +34,7 @@
 #include "hash.h"
 #include "../config.h"
 #include "osdep.h"
+#include "regexp.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -888,6 +889,7 @@ static struct {
 
   /* strings */
   { "newstring", -2, arc_newstring },
+  { "regcomp", -2, arc_regcomp },
 
   /* time */
   { "current-gc-milliseconds", 0, arc_current_gc_milliseconds },
