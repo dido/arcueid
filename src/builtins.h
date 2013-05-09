@@ -111,6 +111,7 @@ enum builtin_syms {
   S_SEEK_CUR,			/* SEEK_CUR */
   S_SEEK_END,			/* SEEK_END */
   S_LOADPATH,			/* loadpath* */
+  S_RXMATCH,			/* regex match */
 
   S_THE_END			/* end of the line */
 };
