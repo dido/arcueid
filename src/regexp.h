@@ -79,5 +79,6 @@ extern int rregexec(arc *, Reprog *, value, Resub *, int);
 #define REGEXP_CASEFOLD 2
 
 extern value arc_mkregexp(arc *c, value s, unsigned int flags);
+extern int arc_regcomp(arc *c, value thr);
 extern value arc_regexp_match(arc *c, value regexp, value str);
 
