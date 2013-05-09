@@ -35,6 +35,7 @@
 #include "io.h"
 #include "compiler.h"
 #include "../config.h"
+#include "gopt.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
