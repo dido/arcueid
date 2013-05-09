@@ -19,7 +19,6 @@
 #include <string.h>
 #include "arcueid.h"
 #include "regexp.h"
-#include "re.h"
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
@@ -133,28 +132,35 @@ value arc_mkregexp(arc *c, value s, unsigned int flags)
   return(regexp);
 }
 
+#define MAX_RS 32
+
 value arc_regexp_match(arc *c, value regexp, value str)
 {
   Reprog *rp;
-  Rune *runes;
-  Resub rs[10];
+  Resub rs[MAX_RS];
   int i, rv;
   struct regexp_t *rxdata;
+  value subexprs = CNIL;
 
   rxdata = (struct regexp_t *)REP(regexp);
   rp = rxdata->rp;
-  /* XXX - we need to hack the Plan 9 regex lib so as to handle strings
-     based on length.  As it is we can't handle a string with nulls in
-     it. */
-  runes =(Rune *)alloca(sizeof(Rune)*(arc_strlen(c, str) + 1));
-  for (i=0; i<arc_strlen(c, str); i++)
-    runes[i] = arc_strindex(c, str, i);
-  runes[i] = 0;			/* null terminator */
-  memset(rs, 0, sizeof(Resub)*10);
-  if ((rv = rregexec(rp, runes, rs, 10)) > 0) {
-    /* XXX - do something about regex captures */
-    return(INT2FIX(rv));
+  for (i=0; i<MAX_RS; i++)
+    rs[i].csp = rs[i].cep = -1;
+  if ((rv = rregexec(c, rp, str, rs, 10)) >= 0) {
+    /* handle substring matches */
+    for (i=MAX_RS-1; i>=0; i--) {
+      value sstr;
+
+      if (rs[i].csp < 0)
+	continue;
+      sstr = arc_substr(c, str, rs[i].csp, rs[i].cep);
+      subexprs = cons(c, sstr, subexprs);
+    }
+    return(cons(c, INT2FIX(rv), cons(c, subexprs, CNIL)));
   }
+  if (rv == -1)
+    return(CNIL);
+  arc_err_cstrfmt(c, "out of relist space");
   return(CNIL);
 }
 
