@@ -1,6 +1,6 @@
 /*
-	Copyright © 1994-1999 Lucent Technologies Inc.
-	Revisions Copyright © 2000-2003 Vita Nuova Holdings Limited
+	Copyright (c) 1994-1999 Lucent Technologies Inc.
+	Revisions Copyright (c) 2000-2003 Vita Nuova Holdings Limited
 	(www.vitanuova.com).
 
   Permission is hereby granted, free of charge, to any person
@@ -29,28 +29,19 @@ typedef struct Reclass		Reclass;
 typedef struct Reinst		Reinst;
 typedef struct Reprog		Reprog;
 
-/*
- *	Sub expression matches
- */
-struct Resub{
-	union
-	{
-		char *sp;
-		Rune *rsp;
-	}s;
-	union
-	{
-		char *ep;
-		Rune *rep;
-	}e;
+/* Sub expression matches.  These are string indexes rather than pointers
+   as in the original. */
+struct Resub {
+  int csp;
+  int cep;
 };
 
 /*
  *	character class, each pair of rune's defines a range
  */
-struct Reclass{
-	Rune	*end;
-	Rune	spans[64];
+struct Reclass {
+  Rune *end;
+  Rune spans[64];
 };
 
 /*
@@ -82,4 +73,11 @@ struct Reprog {
 extern Reprog *regcomp(arc *, value);
 extern Reprog *regcomplit(arc *, value);
 extern Reprog *regcompnl(arc *, value);
-extern int rregexec(Reprog*, Rune*, Resub*, int);
+extern int rregexec(arc *, Reprog *, value, Resub *, int);
+
+#define REGEXP_MULTILINE 1
+#define REGEXP_CASEFOLD 2
+
+extern value arc_mkregexp(arc *c, value s, unsigned int flags);
+extern value arc_regexp_match(arc *c, value regexp, value str);
+
