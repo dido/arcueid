@@ -42,6 +42,9 @@ AC_HEADER_STDC
 MATH_LIBS=-lm
 AC_CHECK_HEADERS(math.h,, AC_MSG_FAILURE([Math library header seems to be missing.]))
 
+AC_CHECK_HEADERS(sysexits.h)
+AC_CHECK_HEADERS(pwd.h)
+
 AC_FUNC_ALLOCA
 
 AC_ARG_WITH(readline, AC_HELP_STRING(--without-readline,disable readline support))
