@@ -32,20 +32,19 @@
 /*
  *  save a new match in mp
  */
-extern void
-_renewmatch(Resub *mp, int ms, Resublist *sp)
+extern void _renewmatch(Resub *mp, int ms, Resublist *sp)
 {
-	int i;
+  int i;
 
-	if(mp==0 || ms<=0)
-		return;
-	if(mp[0].s.sp==0 || sp->m[0].s.sp<mp[0].s.sp ||
-	   (sp->m[0].s.sp==mp[0].s.sp && sp->m[0].e.ep>mp[0].e.ep)){
-		for(i=0; i<ms && i<NSUBEXP; i++)
-			mp[i] = sp->m[i];
-		for(; i<ms; i++)
-			mp[i].s.sp = mp[i].e.ep = 0;
-	}
+  if (mp==0 || ms<=0)
+    return;
+  if (mp[0].csp==-1 || sp->m[0].csp<mp[0].csp
+      || (sp->m[0].csp==mp[0].csp && sp->m[0].cep>mp[0].cep)) {
+    for (i=0; i<ms && i<NSUBEXP; i++)
+      mp[i] = sp->m[i];
+    for(; i<ms; i++)
+      mp[i].csp = mp[i].cep = -1;
+  }
 }
 
 /*
@@ -55,70 +54,51 @@ _renewmatch(Resub *mp, int ms, Resublist *sp)
  */
 extern Relist*
 _renewthread(Relist *lp,	/* _relist to add to */
-	Reinst *ip,		/* instruction to add */
-	Resublist *sep)		/* pointers to subexpressions */
+	     Reinst *ip,	/* instruction to add */
+	     Resublist *sep)	/* pointers to subexpressions */
 {
-	Relist *p;
+  Relist *p;
 
-	for(p=lp; p->inst; p++){
-		if(p->inst == ip){
-			if((sep)->m[0].s.sp < p->se.m[0].s.sp)
-				p->se = *sep;
-			return 0;
-		}
-	}
-	p->inst = ip;
+  for (p=lp; p->inst; p++) {
+    if (p->inst == ip) {
+      if ((sep)->m[0].csp < p->se.m[0].csp)
 	p->se = *sep;
-	(++p)->inst = 0;
-	return p;
-}
+      return(0);
+    }
+  }
 
-/*
- * same as renewthread, but called with
- * initial empty start pointer.
- */
-extern Relist*
-_renewemptythread(Relist *lp,	/* _relist to add to */
-	Reinst *ip,		/* instruction to add */
-	char *sp)		/* pointers to subexpressions */
-{
-	Relist *p;
-
-	for(p=lp; p->inst; p++){
-		if(p->inst == ip){
-			if(sp < p->se.m[0].s.sp) {
-				memset((void *)&p->se, 0, sizeof(p->se));
-				p->se.m[0].s.sp = sp;
-			}
-			return 0;
-		}
-	}
-	p->inst = ip;
-	memset((void *)&p->se, 0, sizeof(p->se));
-	p->se.m[0].s.sp = sp;
-	(++p)->inst = 0;
-	return p;
+  p->inst = ip;
+  p->se = *sep;
+  (++p)->inst = 0;
+  return(p);
 }
 
 extern Relist*
 _rrenewemptythread(Relist *lp,	/* _relist to add to */
-	Reinst *ip,		/* instruction to add */
-	Rune *rsp)		/* pointers to subexpressions */
+		   Reinst *ip,	/* instruction to add */
+		   int csp)	/* pointers to subexpressions */
 {
-	Relist *p;
+  Relist *p;
+  int i;
 
-	for(p=lp; p->inst; p++){
-		if(p->inst == ip){
-			if(rsp < p->se.m[0].s.rsp) {
-				memset((void *)&p->se, 0, sizeof(p->se));
-				p->se.m[0].s.rsp = rsp;
-			}
-			return 0;
-		}
-	}
-	p->inst = ip;
+  for (p=lp; p->inst; p++) {
+    if (p->inst == ip) {
+      if (csp < p->se.m[0].csp) {
 	memset((void *)&p->se, 0, sizeof(p->se));
-	p->se.m[0].s.rsp = rsp;
-	(++p)->inst = 0;
-	return p;
+	p->se.m[0].csp = csp;
+	p->se.m[0].cep = -1;
+      }
+      return(0);
+    }
+  }
+
+  p->inst = ip;
+  for (i=0; i<NSUBEXP; i++) {
+    p->se.m[i].csp = -1;
+    p->se.m[i].cep = -1;
+  }
+  p->se.m[0].csp = csp;
+  p->se.m[0].cep = -1;
+  (++p)->inst = 0;
+  return p;
 }
