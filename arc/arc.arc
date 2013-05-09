@@ -1725,6 +1725,17 @@
       0
       (/ (count test xs) (len xs))))
 
+; Regular expression match.  This attempts to bind variables that simulate
+; the effect of regular expression matches in Perl, viz.:
+; $0-$n - regular expression captures.  At most nine
+; $$ - position in the string of the capture
+;
+; We can bind several more variables as well later on.
+;
+(mac re (regexp string . body)
+  `(let ($$ ($0 $1 $2 $3 $4 $5 $6 $7 $8 $9)) (,regexp ,string) ,@body))
+
+
 ; any logical reason I can't say (push x (if foo y z)) ?
 ;   eval would have to always ret 2 things, the val and where it came from
 ; idea: implicit tables of tables; setf empty field, becomes table
