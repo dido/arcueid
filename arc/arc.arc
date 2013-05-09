@@ -1732,7 +1732,11 @@
 ;
 ; We can bind several more variables as well later on.
 ;
-(mac re (regexp string . body)
+; NOTE: =~ should be subject to the rules of ssyntax, but we
+; special-cased this and it appears as just an ordinary symbol to
+; Arcueid's reader.
+;
+(mac =~ (regexp string . body)
   `(let ($$ ($0 $1 $2 $3 $4 $5 $6 $7 $8 $9)) (,regexp ,string) ,@body))
 
 
