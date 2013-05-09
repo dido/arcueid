@@ -224,6 +224,10 @@ AFFDEF(arc_ssexpand)
 
   if (TYPE(AV(sym)) != T_SYMBOL)
     ARETURN(AV(sym));
+
+  if (AV(sym) == ARC_BUILTIN(c, S_RXMATCH))
+    ARETURN(CNIL);
+
   x = arc_sym2name(c, AV(sym));
   AFTCALL(arc_mkaff(c, expand_ssyntax, CNIL), x);
   AFEND;
