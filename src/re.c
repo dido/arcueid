@@ -132,6 +132,20 @@ value arc_mkregexp(arc *c, value s, unsigned int flags)
   return(regexp);
 }
 
+AFFDEF(arc_regcomp)
+{
+  AARG(s);
+  AOARG(flags);
+  AFBEGIN;
+  if (!BOUND_P(AV(flags)))
+    WV(flags, INT2FIX(0));
+  TYPECHECK(AV(s), T_STRING);
+  TYPECHECK(AV(flags), T_FIXNUM);
+  ARETURN(arc_mkregexp(c, AV(s), FIX2INT(AV(flags))));
+  AFEND;
+}
+AFFEND
+
 #define MAX_RS 32
 
 value arc_regexp_match(arc *c, value regexp, value str)
