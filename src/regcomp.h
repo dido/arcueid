@@ -1,6 +1,6 @@
 /*
-	Copyright © 1994-1999 Lucent Technologies Inc.
-	Revisions Copyright © 2000-2003 Vita Nuova Holdings Limited
+	Copyright (c) 1994-1999 Lucent Technologies Inc.
+	Revisions Copyright (c) 2000-2003 Vita Nuova Holdings Limited
 	(www.vitanuova.com).
 
   Permission is hereby granted, free of charge, to any person
@@ -29,14 +29,14 @@
  */
 #define NSUBEXP 32
 typedef struct Resublist	Resublist;
-struct	Resublist
+struct Resublist
 {
-	Resub	m[NSUBEXP];
+  Resub	m[NSUBEXP];
 };
 
 /* max character classes per program */
-extern Reprog	RePrOg;
-#define	NCLASS	(sizeof(RePrOg.class)/sizeof(Reclass))
+extern Reprog RePrOg;
+#define	NCLASS (sizeof(RePrOg.class)/sizeof(Reclass))
 
 /* max rune ranges per character class */
 #define NCCRUNE	(sizeof(Reclass)/sizeof(Rune))
@@ -69,26 +69,33 @@ extern Reprog	RePrOg;
 /*
  *  regexec execution lists
  */
-#define LISTSIZE	10
+#define LISTSIZE	100
 #define BIGLISTSIZE	(10*LISTSIZE)
+
 typedef struct Relist	Relist;
+
 struct Relist
 {
   Reinst *inst;		   /* Reinstruction of the thread */
   Resublist se;		   /* matched subexpressions in this thread */
 };
+
 typedef struct Reljunk	Reljunk;
+
 struct	Reljunk
 {
+  struct arc *c;
   Relist *relist[2];
   Relist *reliste[2];
   int starttype;
   Rune startchar;
-  Rune *rstarts;
-  Rune *reol;
+  int rstarts;
+  value str;
+  int bol;
+  int reol;
+  int matchstart;
 };
 
 extern Relist*	_renewthread(Relist*, Reinst*, Resublist*);
 extern void	_renewmatch(Resub*, int, Resublist*);
-extern Relist*	_renewemptythread(Relist*, Reinst*, char*);
-extern Relist*	_rrenewemptythread(Relist*, Reinst*, Rune*);
+extern Relist*	_rrenewemptythread(Relist*, Reinst*, int);
