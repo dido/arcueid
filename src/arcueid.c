@@ -126,7 +126,6 @@ static AFFDEF(is2)
 }
 AFFEND
 
-
 AFFDEF(arc_is)
 {
   ARARG(list);
@@ -972,12 +971,16 @@ void arc_init_builtins(arc *c)
     arc_bindsym(c, name, cfunc);
   }
 
+  /* Quasiquote is a macro written as a C extension */
   quasiquote = arc_mkaff(c, arc_quasiquote, ARC_BUILTIN(c, S_QQUOTE));
   quasiquote = arc_annotate(c, ARC_BUILTIN(c, S_MAC), quasiquote);
   arc_bindsym(c, ARC_BUILTIN(c, S_QQUOTE), quasiquote);
+
+  /* Bind nil, T, and sig */
   arc_bindsym(c, ARC_BUILTIN(c, S_NIL), CNIL);
   arc_bindsym(c, ARC_BUILTIN(c, S_T), CTRUE);
   arc_bindsym(c, ARC_BUILTIN(c, S_SIG), arc_mkhash(c, 12));
+  arc_bindsym(c, ARC_BUILTIN(c, S_LOADPATH), CNIL);
   arc_bindcstr(c, "__achan__", arc_mkchan(c));
 }
 
