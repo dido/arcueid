@@ -23,7 +23,16 @@
 #include <stddef.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include "arcueid.h"
+#include "../config.h"
+
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
+
+/* XXX - this should be redefined for DOS-style paths */
+#define isdirsep(x) ((x) == '/')
 
 value arc_dir(arc *c, value dirname)
 {
@@ -132,3 +141,72 @@ value arc_mvfile(arc *c, value oldname, value newname)
   }
   return(CNIL);
 }
+
+#if 0
+
+static void path_next(arc *c, value str, int *index)
+{
+  while (!isdirsep(arc_strindex(c, str, *index)))
+    (*index)++;
+}
+
+static int is_absolute_path(arc *c, value path)
+{
+  /* XXX - handle DOS-style paths */
+  if (arc_strindex(c, path) == '/')
+    return(1);
+  return(0);
+}
+
+AFFDEF(arc_expand_path)
+{
+  AARG(fname);
+  AOARG(dname);
+  value buf;
+  int ptr, b;
+  AFBEGIN;
+
+  TYPECHECK(AV(fname), T_STRING);
+  ptr = 0;
+  if (arc_strindex(c, AV(fname), 0) == '~') {
+    if (arc_strlen(c, AV(fname)) == 1
+	|| isdirsep(arc_strindex(c, AV(fname), 1))) {
+      const char *dir = getenv("HOME");
+      value homedir;
+
+      if (!dir) {
+	arc_err_cstrfmt(c, "couldn't find HOME environment");
+	ARETURN(CNIL);
+      }
+      homedir = arc_mkstringc(c, dir);
+      buf = homedir;
+      ptr++;
+    } else {
+      char *str;
+      value uname;
+#ifdef HAVE_PWD_H
+      struct passwd *pwptr;
+      ptr++;
+#endif
+      b = ptr;
+      path_next(c, AV(fname), &ptr);
+      uname = arc_substr(c, AV(fname), b, ptr-1);
+      str = (char *)alloca(FIX2INT(arc_strutflen(c, uname))*sizeof(char));
+      arc_str2cstr(c, uname, str);
+#ifdef HAVE_PWD_H
+      pwptr = getpwnam(str);
+      if (!pwptr) {
+	endpwent();
+	arc_err_cstrfmt("user %s doesn't exist", str);
+	ARETURN(CNIL);
+      }
+      homedir = arc_mkstringc(c, pwptr->pw_dir);
+      ptr += arc_strlen(homedir);
+      endpwent();
+#endif
+    }
+  }
+  AFEND;
+}
+AFFEND
+#endif
