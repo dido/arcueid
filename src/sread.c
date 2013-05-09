@@ -23,7 +23,7 @@
 #include "io.h"
 #include "arith.h"
 #include "hash.h"
-#include "re.h"
+#include "regexp.h"
 
 static int scan(arc *c, value thr);
 static int read_list(arc *c, value thr);
