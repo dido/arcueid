@@ -324,8 +324,29 @@ static value warranty(arc *c)
   return(CNIL);
 }
 
+static void help(void)
+{
+  printf("Usage: arcueid [OPTION]... [FILE]...\n");
+  printf("Evaluate Arc code, interactively or from a script.\n\n");
+  printf("  -I, --include=PATH    add PATH to the load path (may be used\n");
+  printf("                        more than once)\n");
+  printf("  --init-load           init load file (defaults to %s)\n",
+	 DEFAULT_LOADFILE);
+  printf("  -l, --load=FILE       load FILE before dropping into the REPL\n");
+  printf("                        (may be used more than once)\n");
+  printf("  -q, --quiet           do not display banner on startup\n");
+  printf("  -h, --help            display this help and exit\n");
+  printf("  -v, --version         output version information and exit\n");
+}
+
 static jmp_buf ejb;
-static value replthread;
+static value replthread=CNIL;
+
+static void errhandler2(arc *c, value thr, value str)
+{
+  __arc_print_string(c, str);
+  exit(EXIT_FAILURE);
+}
 
 static void errhandler(arc *c, value thr, value str)
 {
@@ -407,29 +428,77 @@ void cleanup(void)
   arc_deinit(c);
 }
   
-int main(int argc, char **argv)
+int main(int argc, const char **argv)
 {
   value ret, cctx, code, clos;
-  char *replcode, *loadstr;
+  int i;
+  char *replcode;
+  const char *loadstr, *ls;
+  void *options =
+    gopt_sort(&argc, argv,
+	      gopt_start(gopt_option('h', 0, gopt_shorts('h', '?'),
+				     gopt_longs("help")),
+			 gopt_option('v', 0, gopt_shorts('v'),
+				     gopt_longs("version")),
+			 gopt_option('q', 0, gopt_shorts('q'),
+				     gopt_longs("quiet")),
+			 gopt_option('L', GOPT_ARG, gopt_shorts(0),
+				     gopt_longs("init-load")),
+			 gopt_option('I', GOPT_ARG|GOPT_REPEAT,
+				     gopt_shorts('I'),
+				     gopt_longs("include")),
+			 gopt_option('l', GOPT_ARG|GOPT_REPEAT,
+				     gopt_shorts('l'),
+				     gopt_longs("load"))));
 
-  banner();
-  loadstr = (argc > 1) ? argv[1] : DEFAULT_LOADFILE;
+  (void)ret;
+  if (gopt(options, 'h')) {
+    help();
+    exit(EXIT_SUCCESS);
+  }
+
+  if (gopt(options, 'v')) {
+    printf("%s (Arc 3.1 compatible)\n", PACKAGE_STRING);
+    exit(EXIT_SUCCESS);
+  }
+
+  if (!gopt(options, 'q'))
+    banner();
+
+  loadstr = DEFAULT_LOADFILE;
+  if (gopt_arg(options, 'L', &ls))
+    loadstr = ls;
+
   c = &cc;
-  c->errhandler = errhandler;
+  c->errhandler = errhandler2;
   arc_init(c);
   atexit(cleanup);
 
   c->curthread = arc_mkthread(c);
   /* Load arc.arc into our system */
-  EXECUTE("(loadpath-add \".\")");
   arc_bindcstr(c, "initload-file", arc_mkstringc(c, loadstr));
   EXECUTE("(load initload-file)");
-  if (!NIL_P(ret)) {
-    fprintf(stderr, "failed to load arc.arc\n");
-    arc_deinit(c);
-    return(EXIT_FAILURE);
-  }
+  c->errhandler = errhandler;
   c->gc(c);
+
+  /* add load path dirs */
+  arc_loadpath_add(c, arc_mkstringc(c, PKGDATA));
+  for (i=0;; i++) {
+    const char *path;
+    path = gopt_arg_i(options, 'I', i);
+    if (path == NULL)
+      break;
+    arc_loadpath_add(c, arc_mkstringc(c, path));
+  }
+
+  /* load extra files */
+  for (i=0;; i++) {
+    const char *loadfile;
+    loadfile = gopt_arg_i(options, 'l', i);
+    if (loadfile == NULL)
+      break;
+    XCALL(arc_load, arc_mkstringc(c, loadfile));
+  }
 #if 0
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stdin, NULL, _IONBF, 0);
