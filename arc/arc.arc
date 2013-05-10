@@ -1518,12 +1518,13 @@
        (pr ,@(parse-format str))))
 )
 
-(def load (file)
-  (let lndata (table)
-    (w/infile f file
-      (w/uniq eof
-	(whiler e (sread f eof lndata) eof
-		(eval e lndata))))))
+;; now defined internally
+;; (def load (file)
+;;   (let lndata (table)
+;;     (w/infile f file
+;;       (w/uniq eof
+;; 	(whiler e (sread f eof lndata) eof
+;; 		(eval e lndata))))))
 
 (def positive (x)
   (and (number x) (> x 0)))
