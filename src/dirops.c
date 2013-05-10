@@ -52,6 +52,8 @@ void *alloca (size_t);
 /* XXX - this should be redefined for DOS-style paths */
 #define isdirsep(x) ((x) == '/')
 
+#define DIR_SEP '/'
+
 value arc_dir(arc *c, value dirname)
 {
   char *utf_filename;
@@ -181,20 +183,29 @@ value arc_realpath(arc *c, value opath)
   return(npath);
 }
 
+/* this should be less naive */
+value arc_pathjoin2(arc *c, value p1, value p2)
+{
+  TYPECHECK(p1, T_STRING);
+  TYPECHECK(p2, T_STRING);
+  p1 = arc_strcatc(c, p1, DIR_SEP);
+  return(arc_strcat(c, p1, p2));
+}
+
+int __arc_is_absolute_path(arc *c, value path)
+{
+  /* XXX - handle DOS-style paths */
+  if (arc_strindex(c, path, 0) == '/')
+    return(1);
+  return(0);
+}
+
 #if 0
 
 static void path_next(arc *c, value str, int *index)
 {
   while (!isdirsep(arc_strindex(c, str, *index)))
     (*index)++;
-}
-
-static int is_absolute_path(arc *c, value path)
-{
-  /* XXX - handle DOS-style paths */
-  if (arc_strindex(c, path) == '/')
-    return(1);
-  return(0);
 }
 
 AFFDEF(arc_expand_path)
