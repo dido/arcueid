@@ -160,6 +160,13 @@ extern value arc_dir_exists(arc *c, value dirname);
 extern value arc_file_exists(arc *c, value filename);
 extern value arc_rmfile(arc *c, value filename);
 extern value arc_mvfile(arc *c, value oldname, value newname);
+extern value arc_realpath(arc *c, value opath);
+extern value arc_pathjoin2(arc *c, value p1, value p2);
+extern int __arc_is_absolute_path(arc *c, value path);
+
+/* loader */
+extern value arc_loadpath_add(arc *c, value path);
+extern int arc_load(arc *c, value thr);
 
 /* General I/O functions */
 extern int arc_readb(arc *c, value thr);
