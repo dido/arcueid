@@ -43,10 +43,6 @@ value arc_loadpath_add(arc *c, value path)
   value loadpath, lp;
 
   TYPECHECK(path, T_STRING);
-  if (NIL_P(arc_dir_exists(c, path))) {
-    arc_err_cstrfmt(c, "can't add non-existent directory to loadpath*");
-    return(CNIL);
-  }
   loadpath = arc_gbind(c, ARC_BUILTIN(c, S_LOADPATH));
   if (!BOUND_P(loadpath))
     loadpath = CNIL;
