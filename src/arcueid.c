@@ -1,3 +1,4 @@
+
 /* 
   Copyright (C) 2013 Rafael R. Sevilla
 
@@ -879,6 +880,11 @@ static struct {
   { "file-exists", 1, arc_file_exists },
   { "rmfile", 1, arc_rmfile },
   { "mvfile", 2, arc_mvfile },
+  { "realpath", 1, arc_realpath },
+
+  /* loader */
+  { "loadpath-add", 1, arc_loadpath_add },
+  { "load", -2, arc_load },
 
   /* Error handling and continuations */
   { "ccc", -2, arc_callcc },
