@@ -410,7 +410,6 @@ void cleanup(void)
 int main(int argc, char **argv)
 {
   value ret, cctx, code, clos;
-  int i;
   char *replcode, *loadstr;
 
   banner();
@@ -419,36 +418,17 @@ int main(int argc, char **argv)
   c->errhandler = errhandler;
   arc_init(c);
   atexit(cleanup);
-  if (setjmp(ejb) == 1) {
+
+  c->curthread = arc_mkthread(c);
+  /* Load arc.arc into our system */
+  EXECUTE("(loadpath-add \".\")");
+  arc_bindcstr(c, "initload-file", arc_mkstringc(c, loadstr));
+  EXECUTE("(load initload-file)");
+  if (!NIL_P(ret)) {
     fprintf(stderr, "failed to load arc.arc\n");
     arc_deinit(c);
     return(EXIT_FAILURE);
   }
-
-  c->curthread = arc_mkthread(c);
-  /* Load arc.arc into our system */
-  arc_bindcstr(c, "initload-file", arc_mkstringc(c, loadstr));
-  EXECUTE("(assign initload (infile initload-file))");
-  if (NIL_P(ret))
-    longjmp(ejb, 1);
-  i=0;
-  for (;;) {
-    i++;
-    EXECUTE("(assign sexpr (sread initload nil))");
-    if (ret == CNIL)
-      break;
-    /*
-    printf("%d: ", i);
-    EXECUTE("(disp sexpr)");
-    EXECUTE("(disp #\\u000a)");
-    */
-    /*
-    EXECUTE("(disp (eval sexpr))");
-    EXECUTE("(disp #\\u000a)");
-    */
-    EXECUTE("(eval sexpr)");
-  }
-  EXECUTE("(close initload)");
   c->gc(c);
 #if 0
   setvbuf(stdout, NULL, _IONBF, 0);
