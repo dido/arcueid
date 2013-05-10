@@ -24,11 +24,29 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <limits.h>
+#include <stdlib.h>
 #include "arcueid.h"
 #include "../config.h"
 
 #ifdef HAVE_PWD_H
 #include <pwd.h>
+#endif
+
+#ifdef HAVE_ALLOCA_H
+# include <alloca.h>
+#elif defined __GNUC__
+#ifndef alloca
+# define alloca __builtin_alloca
+#endif
+#elif defined _AIX
+# define alloca __alloca
+#elif defined _MSC_VER
+# include <malloc.h>
+# define alloca _alloca
+#else
+# include <stddef.h>
+void *alloca (size_t);
 #endif
 
 /* XXX - this should be redefined for DOS-style paths */
@@ -142,6 +160,27 @@ value arc_mvfile(arc *c, value oldname, value newname)
   return(CNIL);
 }
 
+/* XXX - make a version that doesn't exclusively use realpath(3),
+   for systems that don't support it. */
+value arc_realpath(arc *c, value opath)
+{
+  char *cspath, *epath;
+  value npath;
+  int en;
+
+  cspath = (char *)alloca(FIX2INT(arc_strutflen(c, opath))*sizeof(char));
+  arc_str2cstr(c, opath, cspath);
+  epath = realpath(cspath, NULL);
+  if (epath == NULL) {
+    en = errno;
+    arc_err_cstrfmt(c, "error expanding path \"%s\", (%s; errno=%d)", cspath, strerror(en), en);
+    return(CNIL);
+  }
+  npath = arc_mkstringc(c, epath);
+  free(epath);
+  return(npath);
+}
+
 #if 0
 
 static void path_next(arc *c, value str, int *index)
@@ -161,7 +200,6 @@ static int is_absolute_path(arc *c, value path)
 AFFDEF(arc_expand_path)
 {
   AARG(fname);
-  AOARG(dname);
   value buf;
   int ptr, b;
   AFBEGIN;
