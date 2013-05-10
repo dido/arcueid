@@ -124,7 +124,7 @@ AC_CHECK_FUNCS(clock_gettime, [], [
   ])
 ])
 
-AC_CHECK_FUNCS(posix_memalign)
+AC_CHECK_FUNCS(posix_memalign realpath)
 
 AC_ARG_ENABLE([mmap], [AS_HELP_STRING([--disable-mmap], [disable usage of mmap for memory allocation (fallback to malloc)])], [], [enable_mmap=yes])
 if test "x$enable_mmap" != xno; then
