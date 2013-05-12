@@ -538,7 +538,16 @@ int main(int argc, const char **argv)
     /* Load history */
   }
 #endif
-
+  gopt_free(options);
+  if (argc > 1 && evalcode == replcode) {
+    /* load and execute file specified on command line with no -e options */
+    if (setjmp(ejb) != 0) {
+      arc_deinit(c);
+      return(EXIT_FAILURE);
+    }
+    XCALL(arc_load, arc_mkstringc(c, argv[1]));
+    return(EXIT_SUCCESS);
+  }
   COMPILE(evalcode);
   cctx = TVALR(c->curthread);
   code = arc_cctx2code(c, cctx);
