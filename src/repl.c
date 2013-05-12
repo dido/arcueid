@@ -328,6 +328,7 @@ static void help(void)
 {
   printf("Usage: arcueid [OPTION]... [FILE]...\n");
   printf("Evaluate Arc code, interactively or from a script.\n\n");
+  printf("  -e, --eval=CODE       evaluate code and exit\n");
   printf("  -I, --include=PATH    add PATH to the load path (may be used\n");
   printf("                        more than once)\n");
   printf("  --init-load           init load file (defaults to %s)\n",
@@ -427,19 +428,26 @@ void cleanup(void)
 
   arc_deinit(c);
 }
+
+#ifdef HAVE_LIBREADLINE
+const char *replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn) (disp \"arc> \") (flushout) (rl-on-new-line-with-prompt))))";
+#else
+const char *replcode = "(whiler e (do (disp \"arc> \") (flushout) (read (stdin) nil)) nil (do (write (eval e)) (disp #\\u000a)))";
+#endif
   
 int main(int argc, const char **argv)
 {
   value ret, cctx, code, clos;
   int i;
-  char *replcode;
-  const char *loadstr, *ls;
+  const char *evalcode, *loadstr, *ls;
   void *options =
     gopt_sort(&argc, argv,
 	      gopt_start(gopt_option('h', 0, gopt_shorts('h', '?'),
 				     gopt_longs("help")),
 			 gopt_option('v', 0, gopt_shorts('v'),
 				     gopt_longs("version")),
+			 gopt_option('e', GOPT_ARG, gopt_shorts('e'),
+				     gopt_longs("eval")),
 			 gopt_option('q', 0, gopt_shorts('q'),
 				     gopt_longs("quiet")),
 			 gopt_option('L', GOPT_ARG, gopt_shorts(0),
@@ -505,8 +513,12 @@ int main(int argc, const char **argv)
 #endif
   arc_bindcstr(c, "warranty", arc_mkccode(c, 0, warranty,
 					  arc_intern_cstr(c, "warranty")));
+
+  if (!gopt_arg(options, 'e', &evalcode))
+    evalcode = replcode;
+
 #ifdef HAVE_LIBREADLINE
-  {
+  if (evalcode == replcode) {
     value rlfp;
     char *homedir;
 
@@ -527,20 +539,22 @@ int main(int argc, const char **argv)
   }
 #endif
 
-#ifdef HAVE_LIBREADLINE
-  replcode = "(w/uniq eof (whiler e (read repl-readline eof) eof (do (write (eval e)) (prn) (disp \"arc> \") (flushout) (rl-on-new-line-with-prompt))))";
-#else
-  replcode = "(whiler e (do (disp \"arc> \") (flushout) (read (stdin) nil)) nil (do (write (eval e)) (disp #\\u000a)))";
-#endif
-  COMPILE(replcode);
+  COMPILE(evalcode);
   cctx = TVALR(c->curthread);
   code = arc_cctx2code(c, cctx);
   clos = arc_mkclos(c, code, CNIL);
-  arc_bindcstr(c, "repl-code*", clos);
-  setjmp(ejb);
-  clos = arc_gbind_cstr(c, "repl-code*");
-  if (TYPE(clos) != T_CLOS) {
-    fprintf(stderr, "bad repl code\n");
+  if (evalcode == replcode) {
+    /* restart the repl on an unhandled exception */
+    arc_bindcstr(c, "repl-code*", clos);
+    setjmp(ejb);
+    clos = arc_gbind_cstr(c, "repl-code*");
+    if (TYPE(clos) != T_CLOS) {
+      fprintf(stderr, "bad repl code\n");
+      arc_deinit(c);
+      return(EXIT_FAILURE);
+    }
+  } else if (setjmp(ejb) != 0) {
+    /* if other code, just shut down */
     arc_deinit(c);
     return(EXIT_FAILURE);
   }
