@@ -11,6 +11,8 @@ See the end for copying conditions.
 - VCGC now used from older basic mark-sweep GC
 - large files should work on 32-bit systems (bets are off without readline)
 - Regular expression support
+- Load is now built into the interpreter and load paths are supported
+- Command line cleanup, shebang script support
 
 * Version 0.1.1 (2013-04-25)
 - Modify order of evaluation of functions when the andf operator is compiled
