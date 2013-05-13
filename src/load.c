@@ -70,6 +70,7 @@ value arc_loadpath_add(arc *c, value path)
    1 1 - lpath
    1 2 - lf
    1 3 - fp
+   1 4 - lndata
  */
 static AFFDEF(beforethunk)
 {
@@ -80,6 +81,7 @@ static AFFDEF(beforethunk)
 AFFEND
 
 #define LOAD_FP __arc_getenv(c, thr, 1, 3)
+#define LNDATA __arc_getenv(c, thr, 1, 4)
 
 static AFFDEF(duringthunk)
 {
@@ -89,11 +91,11 @@ static AFFDEF(duringthunk)
   WV(eval, arc_mkaff(c, arc_eval, CNIL));
   /* This performs the actual load. */
   for (;;) {
-    AFCALL(AV(sread), LOAD_FP, CNIL);
+    AFCALL(AV(sread), LOAD_FP, CNIL, LNDATA);
     WV(sexpr, AFCRV);
     if (NIL_P(AV(sexpr)))
       ARETURN(CNIL);		/* finished */
-    AFCALL(AV(eval), AV(sexpr));
+    AFCALL(AV(eval), AV(sexpr), LNDATA);
   }
   AFEND;
 }
@@ -112,13 +114,14 @@ AFFEND
 AFFDEF(arc_load)
 {
   AARG(loadfile);
-  AVAR(lpath, ldf, fp);
+  AVAR(lpath, ldf, fp, lndata);
   AFBEGIN;
 
   /* Try to load a file specified as an absolute path directly */
   if (__arc_is_absolute_path(c, AV(loadfile))) {
     AFCALL(arc_mkaff(c, arc_infile, CNIL), AV(loadfile));
     WV(fp, AFCRV);
+    WV(lndata, arc_mkhash(c, ARC_HASHBITS));
     AFCALL(arc_mkaff(c, arc_dynamic_wind, CNIL),
 	   arc_mkaff2(c, beforethunk, CNIL, TENVR(thr)),
 	   arc_mkaff2(c, duringthunk, CNIL, TENVR(thr)),
@@ -140,6 +143,7 @@ AFFDEF(arc_load)
     /* The actual load takes place in the duringthunk. The
        after thunk will take care of closing the file
        whatever happens. */
+    WV(lndata, arc_mkhash(c, ARC_HASHBITS));
     AFCALL(arc_mkaff(c, arc_dynamic_wind, CNIL),
 	   arc_mkaff2(c, beforethunk, CNIL, TENVR(thr)),
 	   arc_mkaff2(c, duringthunk, CNIL, TENVR(thr)),
