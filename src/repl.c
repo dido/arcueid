@@ -438,9 +438,11 @@ const char *replcode = "(whiler e (do (disp \"arc> \") (flushout) (read (stdin) 
 int main(int argc, const char **argv)
 {
   value ret, cctx, code, clos;
-  int i;
+  int i, scriptmode;
   const char *evalcode, *loadstr, *ls;
-  void *options =
+  void *options;
+
+  options =
     gopt_sort(&argc, argv,
 	      gopt_start(gopt_option('h', 0, gopt_shorts('h', '?'),
 				     gopt_longs("help")),
@@ -455,10 +457,11 @@ int main(int argc, const char **argv)
 			 gopt_option('I', GOPT_ARG|GOPT_REPEAT,
 				     gopt_shorts('I'),
 				     gopt_longs("include")),
+			 gopt_option('s', 0, gopt_shorts('s'),
+				     gopt_longs("script")),
 			 gopt_option('l', GOPT_ARG|GOPT_REPEAT,
 				     gopt_shorts('l'),
 				     gopt_longs("load"))));
-
   (void)ret;
   if (gopt(options, 'h')) {
     help();
@@ -470,12 +473,20 @@ int main(int argc, const char **argv)
     exit(EXIT_SUCCESS);
   }
 
-  if (!gopt(options, 'q'))
+  scriptmode = gopt(options, 's');
+
+  if (!gopt(options, 'q') && !scriptmode)
     banner();
 
+  /* We have three ways to get at the load file.  First of all, the
+     REPL checks the --init-load argument.  If not, then it checks
+     the environment variable $ARCUEID_INIT. */
   loadstr = DEFAULT_LOADFILE;
-  if (gopt_arg(options, 'L', &ls))
+  if (gopt_arg(options, 'L', &ls)) {
     loadstr = ls;
+  } else if ((ls = getenv("ARCUEID_INIT"))) {
+    loadstr = ls;
+  }
 
   c = &cc;
   c->errhandler = errhandler2;
@@ -483,7 +494,7 @@ int main(int argc, const char **argv)
   atexit(cleanup);
 
   c->curthread = arc_mkthread(c);
-  /* Load arc.arc into our system */
+  /* Load arc.arc into our system. */
   arc_bindcstr(c, "initload-file", arc_mkstringc(c, loadstr));
   EXECUTE("(load initload-file)");
   c->errhandler = errhandler;
@@ -499,7 +510,7 @@ int main(int argc, const char **argv)
     arc_loadpath_add(c, arc_mkstringc(c, path));
   }
 
-  /* load extra files */
+  /* load extra loads via -l switch */
   for (i=0;; i++) {
     const char *loadfile;
     loadfile = gopt_arg_i(options, 'l', i);
@@ -507,15 +518,33 @@ int main(int argc, const char **argv)
       break;
     XCALL(arc_load, arc_mkstringc(c, loadfile));
   }
+
+  if (!gopt_arg(options, 'e', &evalcode))
+    evalcode = replcode;
+
+  gopt_free(options);
+
+  if (argc > 1 && evalcode == replcode) {
+    /* load and execute file specified on command line with no -e options */
+    if (setjmp(ejb) != 0) {
+      arc_deinit(c);
+      return(EXIT_FAILURE);
+    }
+
+    arc_bindcstr(c, "evalfile*", arc_mkstringc(c, argv[1]));
+    if (scriptmode) {
+      evalcode = "(let lndata (table) (w/infile f evalfile* (readline f) (w/uniq eof (whiler e (sread f eof lndata) eof (eval e lndata)))))";
+    } else {
+      evalcode = "(let lndata (table) (w/infile f evalfile* (w/uniq eof (whiler e (sread f eof lndata) eof (eval e lndata)))))";
+    }
+  }
+
 #if 0
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stdin, NULL, _IONBF, 0);
 #endif
   arc_bindcstr(c, "warranty", arc_mkccode(c, 0, warranty,
 					  arc_intern_cstr(c, "warranty")));
-
-  if (!gopt_arg(options, 'e', &evalcode))
-    evalcode = replcode;
 
 #ifdef HAVE_LIBREADLINE
   if (evalcode == replcode) {
@@ -538,16 +567,6 @@ int main(int argc, const char **argv)
     /* Load history */
   }
 #endif
-  gopt_free(options);
-  if (argc > 1 && evalcode == replcode) {
-    /* load and execute file specified on command line with no -e options */
-    if (setjmp(ejb) != 0) {
-      arc_deinit(c);
-      return(EXIT_FAILURE);
-    }
-    XCALL(arc_load, arc_mkstringc(c, argv[1]));
-    return(EXIT_SUCCESS);
-  }
   COMPILE(evalcode);
   cctx = TVALR(c->curthread);
   code = arc_cctx2code(c, cctx);
