@@ -1738,7 +1738,7 @@
 ; Arcueid's reader.
 ;
 (mac =~ (regexp string . body)
-  `(let ($$ ($0 $1 $2 $3 $4 $5 $6 $7 $8 $9)) (,regexp ,string) ,@body))
+  `(let ($$ ($0 $1 $2 $3 $4 $5 $6 $7 $8 $9)) (,regexp ,string) (if $$ (do ,@body))))
 
 
 ; any logical reason I can't say (push x (if foo y z)) ?
