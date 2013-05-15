@@ -213,7 +213,7 @@ static AFFDEF(compile_if)
   /* compile the else portion, which should be treated as though it were
      an if as well */
   AFCALL(arc_mkaff(c, compile_if, CNIL), cddr(AV(args)), AV(ctx),
-	 AV(env), CNIL);
+	 AV(env), AV(cont));
   /* Fix the target address of the conditional jump at the end of the
      then portion (jumpaddr2) */
   arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr2)),
