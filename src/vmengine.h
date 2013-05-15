@@ -21,6 +21,7 @@
 #define _VMENGINE_H_
 
 #include <setjmp.h>
+#include <assert.h>
 
 enum vminst {
   inop=0,
@@ -223,7 +224,7 @@ static inline value SCONR(value t, value nv)
 
 #if 1
 /* XXX - this should incorporate write barrier code */
-#define CPUSH(thr, val) do { if (TSP(thr) <= TSBASE(thr)) { abort(); } (*(TSP(thr)--) = (val)); } while (0)
+#define CPUSH(thr, val) do { assert(TSP(thr) > TSBASE(thr)); (*(TSP(thr)--) = (val)); } while (0)
 #else
 #define CPUSH(thr, val) (*(TSP(thr)--) = (val))
 #endif
