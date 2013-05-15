@@ -60,7 +60,7 @@ static arc *__arc_handle=NULL;	/* current arc handle */
 #define SETMARK(b) if (BCOLOUR(b) != mutator) { BSCOLOUR(b, PROPAGATOR); nprop = 1; }
 static inline void MARKPROP(value v)
 {
-  if (TYPE(v) == T_SYMBOL) {
+  if (SYMBOL_P(v)) {
     value symid, name, bucket;
     arc *c = __arc_handle;
 
@@ -244,7 +244,7 @@ static void mark(arc *c, value v, int depth)
   typefn_t *tfn;
   Bhdr *h;
 
-  if (TYPE(v) == T_SYMBOL && !NIL_P(c->symtable) && !NIL_P(c->rsymtable)) {
+  if (SYMBOL_P(v) && !NIL_P(c->symtable) && !NIL_P(c->rsymtable)) {
     value symid, name, bucket;
 
     /* Symbol marking is done by marking the hash buckets in the
@@ -442,7 +442,7 @@ void arc_init_memmgr(arc *c)
   nprop = 0;
   MMVAR(c, gcepochs) = 0;
   MMVAR(c, gccolour) = 3;
-  MMVAR(c, gcquantum) = 8192;	/* default GC quantum */
+  MMVAR(c, gcquantum) = 768;	/* default GC quantum */
   GCPTR(c) = NULL;
   mutator = 0;
   marker = 1;
