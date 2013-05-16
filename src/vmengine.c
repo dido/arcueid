@@ -488,7 +488,8 @@ int __arc_vmengine(arc *c, value thr)
       SVALR(thr, *(TSP(thr)+1));
       NEXT;
     INST(icls):
-      SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
+      if (ENV_P(TENVR(thr)))
+	SENVR(thr, __arc_env2heap(c, thr, TENVR(thr)));
       SVALR(thr, arc_mkclos(c, TVALR(thr), TENVR(thr)));
       NEXT;
     INST(iconsr):
