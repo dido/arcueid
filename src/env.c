@@ -142,8 +142,35 @@ value __arc_getenv(arc *c, value thr, int depth, int index)
 
 value __arc_putenv(arc *c, value thr, int depth, int index, value val)
 {
-  __arc_wb(*envval(c, thr, depth, index), val);
-  *envval(c, thr, depth, index) = val;
+  value *ptr = envval(c, thr, depth, index);
+  __arc_wb(*ptr, val);
+  *ptr = val;
+  return(val);
+}
+
+inline value __arc_getenv0(arc *c, value thr, int iindx)
+{
+  if (ENV_P(TENVR(thr))) {
+    value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+    int count = FIX2INT(*(base + 1));
+    return(*(base + count + 1 - iindx));
+  }
+  return(XVINDEX(TENVR(thr), iindx+1));
+}
+
+inline value __arc_putenv0(arc *c, value thr, int iindx, value val)
+{
+  value *ptr;
+
+  if (ENV_P(TENVR(thr))) {
+    value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+    int count = FIX2INT(*(base + 1));
+    ptr = (base + count + 1 - iindx);
+  } else {
+    ptr = &XVINDEX(TENVR(thr), iindx+1);
+  }
+  __arc_wb(*ptr, val);
+  *ptr = val;
   return(val);
 }
 
