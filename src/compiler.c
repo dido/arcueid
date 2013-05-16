@@ -159,8 +159,13 @@ static value compile_ident(arc *c, value ident, value ctx, value env,
 
   /* look for the variable in the environment first */
   if (find_var(c, ident, env, &level, &offset) == CTRUE) {
-    arc_emit2(c, ctx, ilde, INT2FIX(level), INT2FIX(offset),
-	      get_lineno(c, CNIL));
+    if (level == 0) {
+      arc_emit1(c, ctx, ilde0, INT2FIX(offset),
+		get_lineno(c, CNIL));
+    } else {
+      arc_emit2(c, ctx, ilde, INT2FIX(level), INT2FIX(offset),
+		get_lineno(c, CNIL));
+    }
   } else {
     /* If the variable is not bound in the current environment, it's
        a global symbol. */
@@ -259,7 +264,7 @@ static AFFDEF(destructure)
     arc_emit(c, AV(ctx), inil, get_lineno(c, AV(arg)));
     arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
-    arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx), get_lineno(c, AV(arg)));
+    arc_emit1(c, AV(ctx), iste0, AV(idx), get_lineno(c, AV(arg)));
     add_env_name(c, AV(frame), AV(arg), AV(idx));
     FIXINC(idx);
     ARETURN(AV(idx));
@@ -289,7 +294,7 @@ static AFFDEF(destructure)
       AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
       arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
-      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx), get_lineno(c, AV(arg)));
+      arc_emit1(c, AV(ctx), iste0, AV(idx), get_lineno(c, AV(arg)));
       add_env_name(c, AV(frame), cadr(AV(arg)), AV(idx));
       FIXINC(idx);
       ARETURN(AV(idx));
@@ -404,7 +409,7 @@ static AFFDEF(compile_args)
       arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0), get_lineno(c, oarg));
       /* compile the optional argument's definition */
       AFCALL(arc_mkaff(c, arc_compile, CNIL), oargdef, AV(ctx), AV(env), CNIL);
-      arc_emit2(c, AV(ctx), iste, INT2FIX(0), AV(idx),
+      arc_emit1(c, AV(ctx), iste0, AV(idx),
 		get_lineno(c, car(AV(args))));
       arc_jmpoffset(c, AV(ctx), FIX2INT(AV(jumpaddr)), 
 		    FIX2INT(CCTX_VCPTR(AV(ctx))));
@@ -721,8 +726,12 @@ static AFFDEF(compile_assign)
 	     AV(env), CNIL);
       WV(envvar, find_var(c, AV(a), AV(env), &frameno, &idx));
       if (AV(envvar) == CTRUE) {
-	arc_emit2(c, AV(ctx), iste, INT2FIX(frameno), INT2FIX(idx),
-		  get_lineno(c, AV(expr)));
+	if (frameno == 0) {
+	  arc_emit1(c, AV(ctx), iste0, INT2FIX(idx), get_lineno(c, AV(expr)));
+	} else {
+	  arc_emit2(c, AV(ctx), iste, INT2FIX(frameno), INT2FIX(idx),
+		    get_lineno(c, AV(expr)));
+	}
       } else {
 	/* global symbol */
 	arc_emit1(c, AV(ctx), istg, find_literal(c, AV(ctx), AV(a)),
