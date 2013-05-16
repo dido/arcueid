@@ -98,7 +98,7 @@ static value nextcont(arc *c, value thr, value cont)
 {
   value *sp;
 
-  if (TYPE(cont) == T_FIXNUM) {
+  if (FIXNUM_P(cont)) {
     sp = TSBASE(thr) + FIX2INT(cont);
     return (*(sp + 1));
   }
@@ -109,7 +109,7 @@ static value *contenv(arc *c, value thr, value cont)
 {
   value *sp;
 
-  if (TYPE(cont) == T_FIXNUM) {
+  if (FIXNUM_P(cont)) {
     sp = TSBASE(thr) + FIX2INT(cont);
     return(sp + 4);
   }
@@ -120,12 +120,13 @@ static value *contenv(arc *c, value thr, value cont)
    register so oldenv always points to nenv */
 void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv)
 {
-  value cont;
+  value cont, *ce;
 
   for (cont=TCONR(thr); !NIL_P(cont); cont = nextcont(c, thr, cont)) {
-    if (*contenv(c, thr, cont) == oldenv) {
-      __arc_wb(*contenv(c, thr, cont), nenv);
-      *contenv(c, thr, cont) = nenv;
+    ce = contenv(c, thr, cont);
+    if (*ce == oldenv) {
+      __arc_wb(*ce, nenv);
+      *ce = nenv;
     }
   }
 }
