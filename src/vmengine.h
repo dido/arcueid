@@ -61,7 +61,9 @@ enum vminst {
   imenv=101,
   idcar=38,
   idcdr=39,
-  ispl=40
+  ispl=40,
+  ilde0=105,
+  iste0=106
 };
 
 #define CODE_CODE(c) (VINDEX((c), 0))
