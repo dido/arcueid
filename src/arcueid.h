@@ -429,6 +429,8 @@ extern value arc_gbind(arc *c, value sym);
 extern void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
 extern value __arc_getenv(arc *c, value thr, int depth, int index);
 extern value __arc_putenv(arc *c, value thr, int depth, int index, value val);
+extern inline value __arc_getenv0(arc *c, value thr, int iindx);
+extern inline value __arc_putenv0(arc *c, value thr, int iindx, value val);
 
 /* Initialization functions */
 extern void arc_init_memmgr(arc *c);
@@ -512,8 +514,8 @@ extern value arc_declared(arc *c, value decl);
  case 0:;
 #define AFEND }
 
-#define AV(x) (__arc_getenv(c, thr, 0, x))
-#define WV(x, y) (__arc_putenv(c, thr, 0, x, y))
+#define AV(x) (__arc_getenv0(c, thr, x))
+#define WV(x, y) (__arc_putenv0(c, thr, x, y))
 
 #define AFCALL(func, ...)						\
   do {									\
