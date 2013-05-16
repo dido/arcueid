@@ -62,10 +62,11 @@ static int clos_apply(arc *c, value thr, value clos)
   return(TR_RESUME);
 }
 
-/* Convert a closure */
+/* Move a closure's environment to the heap if it is on the stack */
 void __arc_clos_env2heap(arc *c, value thr, value clos)
 {
-  scdr(clos, __arc_env2heap(c, thr, cdr(clos)));
+  if (ENV_P(cdr(clos)))
+    scdr(clos, __arc_env2heap(c, thr, cdr(clos)));
 }
 
 typefn_t __arc_clos_typefn__ = {
