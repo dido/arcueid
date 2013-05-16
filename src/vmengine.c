@@ -287,6 +287,39 @@ int __arc_vmengine(arc *c, value thr)
 	__arc_putenv(c, thr, ienv, iindx, TVALR(thr));
       }
       NEXT;
+    INST(ilde0):
+      {
+	int iindx;
+	value val;
+
+	iindx = FIX2INT(*TIPP(thr)++);
+	if (ENV_P(TENVR(thr))) {
+	  value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+	  int count = FIX2INT(*(base + 1));
+	  val = *(base + count + 1 - iindx);
+	} else {
+	  val = XVINDEX(TENVR(thr), iindx+1);
+	}
+	SVALR(thr, val);
+      }
+      NEXT;
+    INST(iste0):
+      {
+	value *ptr;
+	int iindx;
+
+	iindx = FIX2INT(*TIPP(thr)++);
+	if (ENV_P(TENVR(thr))) {
+	  value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+	  int count = FIX2INT(*(base + 1));
+	  ptr = (base + count + 1 - iindx);
+	} else {
+	  ptr = &XVINDEX(TENVR(thr), iindx+1);
+	}
+	__arc_wb(*ptr, TVALR(thr));
+	*ptr = TVALR(thr);
+      }
+      NEXT;
     INST(icont):
       {
 	int icofs = FIX2INT(*TIPP(thr)++);
