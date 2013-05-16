@@ -814,7 +814,7 @@ START_TEST(test_funarg)
   arc_emit3(c, cctx, ienv, INT2FIX(1), INT2FIX(0), INT2FIX(0), CNIL);
   arc_emit2(c, cctx, ilde, INT2FIX(1), INT2FIX(0), CNIL); /* a */
   arc_emit(c, cctx, ipush, CNIL);
-  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0), CNIL); /* c */
+  arc_emit1(c, cctx, ilde0, INT2FIX(0), CNIL); /* c */
   arc_emit(c, cctx, iadd, CNIL);
   arc_emit(c, cctx, iret, CNIL);
   c1 = arc_cctx2code(c, cctx);
@@ -824,13 +824,13 @@ START_TEST(test_funarg)
   arc_emit3(c, cctx, ienv, INT2FIX(2), INT2FIX(0), INT2FIX(0), CNIL);
   arc_emit1(c, cctx, ildl, INT2FIX(lptr), CNIL);
   arc_emit(c, cctx, icls, CNIL);
-  arc_emit2(c, cctx, iste, INT2FIX(0), INT2FIX(1), CNIL); /* b */
-  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(0), CNIL); /* a */
+  arc_emit1(c, cctx, iste0, INT2FIX(1), CNIL); /* b */
+  arc_emit1(c, cctx, ilde0, INT2FIX(0), CNIL); /* a */
   arc_emit(c, cctx, ipush, CNIL);
   arc_emit1(c, cctx, ildi, INT2FIX(1), CNIL);
   arc_emit(c, cctx, iadd, CNIL);
-  arc_emit2(c, cctx, iste, INT2FIX(0), INT2FIX(0), CNIL); /* a */
-  arc_emit2(c, cctx, ilde, INT2FIX(0), INT2FIX(1), CNIL); /* b */
+  arc_emit1(c, cctx, iste0, INT2FIX(0), CNIL); /* a */
+  arc_emit1(c, cctx, ilde0, INT2FIX(1), CNIL); /* b */
   arc_emit(c, cctx, iret, CNIL);
 
   code = arc_cctx2code(c, cctx);
