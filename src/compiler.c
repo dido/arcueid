@@ -158,6 +158,7 @@ static value compile_ident(arc *c, value ident, value ctx, value env,
   int level, offset;
 
   /* look for the variable in the environment first */
+  level = offset = 0;
   if (find_var(c, ident, env, &level, &offset) == CTRUE) {
     if (level == 0) {
       arc_emit1(c, ctx, ilde0, INT2FIX(offset),
@@ -724,6 +725,7 @@ static AFFDEF(compile_assign)
     } else {
       AFCALL(arc_mkaff(c, arc_compile, CNIL), AV(val), AV(ctx),
 	     AV(env), CNIL);
+      idx = frameno = 0;
       WV(envvar, find_var(c, AV(a), AV(env), &frameno, &idx));
       if (AV(envvar) == CTRUE) {
 	if (frameno == 0) {
