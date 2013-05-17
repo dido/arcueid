@@ -18,18 +18,14 @@
 */
 /* TODO:
 
-   1. Find a way to allow memory allocated for BiBOP pages to be returned
-      to the operating system.  As it is, only memory not allocated by the
-      BiBOP scheme (i.e. objects larger than MAX_BIBOP bytes) can be
-      returned to the OS.  A few schemes for doing this are possible,
-      but extra overhead is a concern.  Obvious ways of doing this add
-      unacceptable levels of space and/or time overhead.
-
-   2. Make BiBOP page sizes adaptive based on their size and adjust
+   1. Make BiBOP page sizes adaptive based on their size and adjust
       dynamically.
-   3. A better garbage collector of some kind... Good question on what
-      to use.  Current algorithm is just a simple mark and sweep
-      collector.
+
+   2. Defer actual allocation of a BiBOP object until after the write
+      barrier sees the object.  This amounts to a limited 1-bit
+      reference count.  Of course, objects like I/O objects and
+      strings that contain internal pointers should immediately be
+      allocated.
  */
 
 #include "../config.h"
@@ -277,6 +273,7 @@ static void mark(arc *c, value v, int depth)
 
   SETMARK(h);
   if (--VISIT(c) >= 0 && depth < MAX_MARK_RECURSION) {
+    MMVAR(c, gce)--;
     BSCOLOUR(h, mutator);
     /* Recurse into the object's structure at increased depth */
     tfn = __arc_typefn(c, v);
@@ -359,30 +356,45 @@ static int gc(arc *c)
       break;			/* last heap block */
     v = (value)B2D(GCPTR(c));
     if (BCOLOUR(GCPTR(c)) == PROPAGATOR) {
+      MMVAR(c, gce)--;
       /* Recursively mark propagators */
       mark(c, v, 0);
     } else if (BCOLOUR(GCPTR(c)) == sweeper) {
+      MMVAR(c, gce)++;
       tfn = __arc_typefn(c, v);
       tfn->sweeper(c, v);
       GCPTR(c) = B2NB(GCPTR(c));
       c->free(c, (void *)v, GCPPTR(c));
       continue;
+    } else {
+      MMVAR(c, gct)++;
     }
     GCPPTR(c) = (void *)v;
     GCPTR(c) = B2NB(GCPTR(c));
   }
 
+  MMVAR(c, gcquantum) = (GCMAXQUANTA - GCQUANTA)/2 + ((GCMAXQUANTA - GCQUANTA)/20)*100*MMVAR(c, gce)/MMVAR(c, gct);
+  if (MMVAR(c, gcquantum) < GCQUANTA)
+    MMVAR(c, gcquantum) = GCQUANTA;
+
+  if (MMVAR(c, gcquantum) > GCMAXQUANTA)
+    MMVAR(c, gcquantum) = GCMAXQUANTA;
+
+  /* printf("gct = %d, gce = %d, quanta = %d\n", MMVAR(c, gct), MMVAR(c, gce), MMVAR(c, gcquantum)); */
   if (GCPTR(c) != NULL)		/* completed iteration? */
     goto endgc;
 
   if (nprop == 0) { 		/* completed the epoch? */
+    retval = (MMVAR(c, gccolour) % 3) == 0;
+    /* printf("epoch %lld ended, retval = %d\n", MMVAR(c, gcepochs), retval); */
     MMVAR(c, gcepochs)++;
     MMVAR(c, gccolour)++;
     mutator = MMVAR(c, gccolour) % 3;
     marker = (MMVAR(c, gccolour) - 1) % 3;
     sweeper = (MMVAR(c, gccolour) - 2) % 3;
+    MMVAR(c, gce) = 0;
+    MMVAR(c, gct) = 1;
     c->markroots(c);
-    retval = 1;
     free_unused_bibop(c);
     malloc_trim(0);
   }
@@ -442,7 +454,9 @@ void arc_init_memmgr(arc *c)
   nprop = 0;
   MMVAR(c, gcepochs) = 0;
   MMVAR(c, gccolour) = 3;
-  MMVAR(c, gcquantum) = 768;	/* default GC quantum */
+  MMVAR(c, gcquantum) = GCQUANTA;	/* default GC quantum */
+  MMVAR(c, gce) = 0;
+  MMVAR(c, gct) = 1;
   GCPTR(c) = NULL;
   mutator = 0;
   marker = 1;
