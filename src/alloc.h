@@ -22,6 +22,9 @@
 
 #include "arcueid.h"
 
+#define GCQUANTA 64
+#define GCMAXQUANTA GCQUANTA*64
+
 /* Memory block header */
 typedef struct Bhdr_t {
   unsigned long _size;		/* low bit of _size is alloc/free flag */
@@ -96,6 +99,8 @@ struct mm_ctx {
   Bhdr *gcptr;			/* running pointer used by collector */
   void *gcpptr;			/* previous pointer */
   int visit;			/* visited node count for gc */
+  int gce;
+  int gct;
 };
 
 #define MMVAR(c, var) (((struct mm_ctx *)c->alloc_ctx)->var)
