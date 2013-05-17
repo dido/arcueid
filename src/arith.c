@@ -1307,6 +1307,7 @@ AFFDEF(__arc_sub)
 		    arc_thr_argc(c, thr));
     return(CNIL);
   }
+  diff = INT2FIX(0);
   if (arc_thr_argc(c, thr) > 1) {
     diff = car(AV(list));
     WV(list, cdr(AV(list)));
@@ -1349,6 +1350,7 @@ AFFDEF(__arc_div)
 		    arc_thr_argc(c, thr));
     return(CNIL);
   }
+  quot = INT2FIX(1);
   if (arc_thr_argc(c, thr) > 1) {
     quot = car(AV(list));
     WV(list, cdr(AV(list)));
@@ -1396,10 +1398,13 @@ static value rune2dig(Rune r, int radix)
   if (!ucisalnum(r))
     return(CNIL);
   rl = tolower(r);
+
   if (rl >= 0x30 && rl <= 0x39)
     v = rl - 0x30;
   else if (rl >= 0x61 && rl <= 0x7a)
     v = (rl - 0x61) + 10;
+  else
+    return(CNIL);
   if (v > radix)
     return(CNIL);
   return(INT2FIX(v));
