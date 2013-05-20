@@ -405,7 +405,7 @@ static AFFDEF(compile_args)
       oargdef = (NIL_P(cddr(oarg))) ? CNIL : car(cddr(oarg));
       /* jump if bound check -- if we are bound, then don't overwrite
 	 the optional value  */
-      arc_emit2(c, AV(ctx), ilde, INT2FIX(0), AV(idx), get_lineno(c, oarg));
+      arc_emit1(c, AV(ctx), ilde0, AV(idx), get_lineno(c, oarg));
       WV(jumpaddr, CCTX_VCPTR(AV(ctx)));
       arc_emit1(c, AV(ctx), ijbnd, INT2FIX(0), get_lineno(c, oarg));
       /* compile the optional argument's definition */
@@ -454,7 +454,7 @@ static AFFDEF(compile_args)
 
     /* To begin a destructuring bind, we first load the value of the
        argument to be destructured ... */
-    arc_emit2(c, AV(ctx), ilde, FIX2INT(0), cdr(elem), get_lineno(c, AV(args)));
+    arc_emit1(c, AV(ctx), ilde0, cdr(elem), get_lineno(c, AV(args)));
     /* ... then we generate car and cdr instructions to reach each of
        the names to which we do the destructuring. */
     AFCALL(arc_mkaff(c, destructure, CNIL),
@@ -511,6 +511,7 @@ static AFFDEF(compile_fn)
   arc_emit1(c, AV(ctx), ildl, find_literal(c, AV(ctx), AV(newcode)),
 	    get_lineno(c, AV(expr)));
   arc_emit(c, AV(ctx), icls, get_lineno(c, AV(expr)));
+
   ARETURN(compile_continuation(c, AV(ctx), AV(cont)));
   AFEND;
 }
