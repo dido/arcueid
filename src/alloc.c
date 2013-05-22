@@ -45,6 +45,10 @@
 #include "osdep.h"
 #include "hash.h"
 
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+
 static int nprop;		/* propagator flag */
 static int mutator;		/* current mutator colour */
 static int marker;		/* current marker colour */
@@ -396,7 +400,9 @@ static int gc(arc *c)
     MMVAR(c, gct) = 1;
     c->markroots(c);
     free_unused_bibop(c);
+#ifdef HAVE_MALLOC_TRIM
     malloc_trim(0);
+#endif
   }
   nprop = 0;
  endgc:
