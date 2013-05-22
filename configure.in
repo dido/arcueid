@@ -44,6 +44,7 @@ AC_CHECK_HEADERS(math.h,, AC_MSG_FAILURE([Math library header seems to be missin
 
 AC_CHECK_HEADERS(sysexits.h)
 AC_CHECK_HEADERS(pwd.h)
+AC_CHECK_HEADERS(malloc.h)
 
 AC_FUNC_ALLOCA
 
@@ -124,13 +125,7 @@ AC_CHECK_FUNCS(clock_gettime, [], [
   ])
 ])
 
-AC_CHECK_FUNCS(posix_memalign realpath)
-
-AC_ARG_ENABLE([mmap], [AS_HELP_STRING([--disable-mmap], [disable usage of mmap for memory allocation (fallback to malloc)])], [], [enable_mmap=yes])
-if test "x$enable_mmap" != xno; then
-   AC_CHECK_HEADERS(sys/mman.h)
-   AC_FUNC_MMAP
-fi
+AC_CHECK_FUNCS(posix_memalign realpath malloc_trim)
 
 AC_ARG_WITH(epoll, AC_HELP_STRING(--without-epoll,disable epoll support (Linux only)))
 dnl System type checks.
