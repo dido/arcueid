@@ -389,7 +389,17 @@ AFFDEF(__arc_disp_write)
     WV(arg, ARC_BUILTIN(c, S_T));
   tfn = __arc_typefn(c, AV(arg));
   if (tfn == NULL || tfn->pprint == NULL) {
-    arc_err_cstrfmt(c, "cannot display object of type %d", TYPE(AV(arg)));
+    static const char *utype = "#<unknown-type %d>";
+    char *strrep;
+    int len;
+    value vstr;
+
+    len = snprintf(NULL, 0, utype, TYPE(AV(arg)));
+    strrep = alloca(sizeof(char)*(len+1));
+    snprintf(strrep, len+1, utype, TYPE(AV(arg)));
+    vstr = arc_mkstringc(c, strrep);
+
+    AFTCALL(arc_mkaff(c, arc_disp, CNIL), vstr, AV(outport));
     ARETURN(CNIL);
   }
   AFTCALL(arc_mkaff(c, tfn->pprint, CNIL), AV(arg), AV(disp), AV(outport),
