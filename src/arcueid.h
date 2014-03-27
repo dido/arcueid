@@ -457,6 +457,9 @@ extern value arc_bound(arc *c, value sym);
 extern value arc_declare(arc *c, value decl, value val);
 extern value arc_declared(arc *c, value decl);
 
+/* disassembler */
+extern value __arc_disasm_inst(arc *c, value *base, value *inst, int *instlen);
+
 /* Arcueid Foreign Functions.  This is possibly the most insane abuse
    of the C preprocessor I have ever done.  The technique used for defining
    parameters and variables using variadic macros used here is inspired by
