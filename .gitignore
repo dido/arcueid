@@ -56,3 +56,5 @@ basecomp.*
 .gdb_history
 test/tmp/*.txt
 arc/news/arc
+ar-lib
+test-driver
