@@ -17,7 +17,7 @@
 #
 lib_LTLIBRARIES = libarcueid.la
 
-libarcueid_la_LDFLAGS = -version-info 0:0:0
+libarcueid_la_LDFLAGS = -Wl,--no-as-needed -version-info 0:0:0
 libarcueid_la_SOURCES = alloc.c arith.c arcueid.c ccode.c chan.c \
 	clos.c codegen.c compiler.c cons.c cont.c dirops.c disasm.c \
 	env.c err.c fileio.c gopt.c hash.c io.c load.c mathfns.c \
@@ -31,6 +31,7 @@ noinst_HEADERS = alloc.h arith.h builtins.h compiler.h disasm.h \
 	vmengine.h
 
 bin_PROGRAMS = arcueid
+arcueid_LDFLAGS = -Wl,--no-as-needed
 arcueid_SOURCES = repl.c
 arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
 arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@ @RLLIBS@
