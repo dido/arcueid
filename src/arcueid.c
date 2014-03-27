@@ -753,6 +753,19 @@ void arc_init_datatypes(arc *c)
   c->typefns[T_REGEXP] = &__arc_regexp_typefn__;
 }
 
+#ifdef HAVE_TRACING
+extern int __arc_vmtrace;
+extern void __arc_init_tracing(arc *c);
+
+value arc_trace(arc *c, value trmode)
+{
+  __arc_vmtrace = !(NIL_P(trmode));
+  __arc_init_tracing(c);
+  return((__arc_vmtrace) ? CTRUE : CNIL);
+}
+
+#endif
+
 static struct {
   char *fname;
   int argc;
@@ -914,6 +927,9 @@ static struct {
   { "len", 1, arc_len },
   { "arcueid-code-setname", 2, arc_code_setname },
   { "declare", 2, arc_declare },
+#ifdef HAVE_TRACING
+  { "trace", 1, arc_trace },
+#endif
   {NULL, 0, NULL }
 };
 
