@@ -139,20 +139,29 @@ int __arc_vmtrace = 0;
 static void printobj(arc *c, value obj)
 {
   CPUSH(c->tracethread, obj);
-  TVALR(c->tracethread) = arc_mkaff(c, arc_write, CNIL);
+  SVALR(c->tracethread, arc_mkaff(c, arc_write, CNIL));
+  TARGC(c->tracethread) = 1;
+  __arc_thr_trampoline(c, c->tracethread, TR_FNAPP);
+}
+
+static void printstr(arc *c, value obj)
+{
+  CPUSH(c->tracethread, obj);
+  SVALR(c->tracethread, arc_mkaff(c, arc_disp, CNIL));
   TARGC(c->tracethread) = 1;
   __arc_thr_trampoline(c, c->tracethread, TR_FNAPP);
 }
 
 static void dump_registers(arc *c, value thr)
 {
-  value *sv, env;
+  value *sv;
 
   printf("VALR = ");
   printobj(c, TVALR(thr));
 
   printf("\t\tFUNR = ");
   printobj(c, TFUNR(thr));
+  printf("\nSTACK = [");
   for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
     printobj(c, *sv);
     printf(" ");
@@ -162,20 +171,22 @@ static void dump_registers(arc *c, value thr)
 
 static inline void trace(arc *c, value thr)
 {
-  char str[256];
-  value disasm;
+  value disasm, *base;
 
   dump_registers(c, thr);
-  disasm = __arc_disasm_inst(c, TIPP(thr) - &VINDEX(VINDEX(TFUNR(thr), 0), 0),
-			     TIPP(thr), TFUNR(thr));
-  printobj(c, disasm);
+  base = &XVINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), 0);
+  disasm = __arc_disasm_inst(c, base, TIPP(thr), NULL);
+  printstr(c, disasm);
   printf("\n- ");
-  fgets(str, 256, stdin);
+#ifdef HAVE_LIBREADLINE
+#else
+#endif
 }
 
 void __arc_init_tracing(arc *c)
 {
-  c->tracethread = arc_mkthread(c);
+  if (NIL_P(c->tracethread))
+    c->tracethread = arc_mkthread(c);
 }
 
 #endif
@@ -189,7 +200,7 @@ void __arc_init_tracing(arc *c)
 #define NEXT {							\
     if (--TQUANTA(thr) <= 0)					\
       goto endquantum;						\
-    if (vmtrace)						\
+    if (__arc_vmtrace)						\
       trace(c, thr);						\
     goto *(JTBASE + jumptbl[*TIPP(thr)++]); }
 #else
@@ -219,8 +230,10 @@ int __arc_vmengine(arc *c, value thr)
 
 #ifdef HAVE_THREADED_INTERPRETER
 #ifdef HAVE_TRACING
-  if (vmtrace)
+  if (__arc_vmtrace) {
+    __arc_init_tracing(c);
     trace(c, thr);
+  }
 #endif
   goto *(void *)(JTBASE + jumptbl[*TIPP(thr)++]);
 #else
@@ -385,6 +398,9 @@ int __arc_vmengine(arc *c, value thr)
     INST(iret):
       /* Return to the trampoline, and make it restore the current
 	 continuation in the continuation register */
+      /* Check to see if we are returning a closure.  If we are,
+	 check to see if the closure environment is still on the
+	 stack.  Move it to the heap if it is */
       return(TR_RC);
       NEXT;
     INST(ijmp):
