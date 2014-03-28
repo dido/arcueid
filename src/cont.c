@@ -135,7 +135,7 @@ void __arc_update_cont_envs(arc *c, value thr, value oldenv, value nenv)
    referenced by the continuation to the heap as well. */
 static value heap_cont(arc *c, value thr, value cont)
 {
-  value *sp, *tsfn, ncont;
+  value *sp, *tsfn, ncont, env;
   int sslen, i;
 
   if (TYPE(cont) == T_CONT)
@@ -149,8 +149,11 @@ static value heap_cont(arc *c, value thr, value cont)
   CONT_ARGC(ncont) = *(sp+2);
   __arc_wb(CONT_FUN(ncont), *(sp+3));
   CONT_FUN(ncont) = *(sp+3);
-  __arc_wb(CONT_ENV(ncont), __arc_env2heap(c, thr, *(sp+4)));
-  CONT_ENV(ncont) = __arc_env2heap(c, thr, *(sp+4));
+  env = __arc_env2heap(c, thr, *(sp+4));
+  __arc_wb(CONT_ENV(ncont), env);
+  CONT_ENV(ncont) = env;
+  if (TENVR(thr) == *(sp+4))
+    SENVR(thr, env);
   __arc_wb(CONT_OFS(ncont), *(sp+5));
   CONT_OFS(ncont) = *(sp+5);
   /* save the stack up to the saved TSFN */
@@ -165,21 +168,19 @@ static value heap_cont(arc *c, value thr, value cont)
 /* Move a continuation and all its parent continuations into the heap. */
 value __arc_cont2heap(arc *c, value thr, value cont)
 {
-  value ncont = cont, oldcont;
+  value oldcont, initcont;
 
-  /* Do nothing if the continuation is already on the heap */
-  if (TYPE(cont) == T_CONT || NIL_P(cont))
-    return(cont);
-
-  cont = CNIL;
+  oldcont = initcont = CNIL;
   do {
-    oldcont = ncont;
-    ncont = heap_cont(c, thr, oldcont);
-    if (NIL_P(cont))
-      cont = ncont;
-    ncont = nextcont(c, thr, ncont);
-  } while (!NIL_P(ncont));
-  return(cont);
+    cont = heap_cont(c, thr, cont);
+    if (NIL_P(initcont))
+      initcont = cont;
+    if (!NIL_P(oldcont))
+      CONT_CONT(oldcont) = cont;
+    oldcont = cont;
+    cont = nextcont(c, thr, cont);
+  } while (!NIL_P(cont));
+  return(initcont);
 }
 
 #if 0
