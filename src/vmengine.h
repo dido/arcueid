@@ -118,6 +118,7 @@ enum threadstate {
 #define RUNNABLE(thr) (TSTATE(thr) == Tready || TSTATE(thr) == Tcritical)
 
 struct vmthread_t {
+  struct arc *c;
   value funr;			/* function pointer register */
   value envr;			/* environment register */
   value valr;			/* value of most recent instruction */
@@ -224,16 +225,18 @@ static inline value SCONR(value t, value nv)
 #define TCH(t) (((struct vmthread_t *)REP(t))->conthere)
 #define TBCH(t) (((struct vmthread_t *)REP(t))->baseconthere)
 
-#if 1
-/* XXX - this should incorporate write barrier code */
-#define CPUSH(thr, val) do { assert(TSP(thr) > TSBASE(thr)); (*(TSP(thr)--) = (val)); } while (0)
-#else
-#define CPUSH(thr, val) (*(TSP(thr)--) = (val))
-#endif
+extern void __arc_stackcheck(value thr);
+
+#define CPUSH(thr, val) do {						\
+    assert(TSP(thr) >= TSBASE(thr));					\
+    if (TSP(thr) == TSBASE(thr))					\
+      __arc_stackcheck(thr);						\
+    (*(TSP(thr)--) = (val));						\
+  } while (0)
 
 #define CPOP(thr) (*(++TSP(thr)))
 /* Default thread stack size */
-#define TSTKSIZE 65536
+#define TSTKSIZE 1024
 
 /* A code generation context (cctx) is a vector with the following
    items as indexes:
