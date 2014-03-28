@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 #include "arcueid.h"
 #include "vmengine.h"
 #include "arith.h"
@@ -97,6 +98,7 @@ value arc_mkthread(arc *c)
   value thr;
 
   thr = arc_mkobject(c, sizeof(struct vmthread_t), T_THREAD);
+  ((struct vmthread_t *)REP(thr))->c = c;
   ((struct vmthread_t *)REP(thr))->funr = CNIL;
   ((struct vmthread_t *)REP(thr))->envr = CNIL;
   ((struct vmthread_t *)REP(thr))->valr = CNIL;
@@ -626,3 +628,30 @@ typefn_t __arc_thread_typefn__ = {
   NULL,
   NULL
 };
+
+void __arc_stackcheck(value thr)
+{
+  arc *c;
+  value cont, env;
+  int mvcount;
+
+  assert(TSP(thr) >= TSBASE(thr));
+  /* stack is fine, nothing to do */
+  if (TSP(thr) > TSBASE(thr))
+    return;
+  c = ((struct vmthread_t *)REP(thr))->c;
+  /* If the stack fills up, first thing we try to do is move all
+     continuations and environments from the stack to the heap.
+     If this still doesn't free up enough stack space, we have
+     to grow the stack. */
+  cont = __arc_cont2heap(c, thr, TCONR(thr));
+  SCONR(thr, cont);
+  env = __arc_env2heap(c, thr, TENVR(thr));
+  SENVR(thr, env);
+  /* Now, everything below TSFN is continuations and environments that
+     have been moved to the heap.  We ought to be able to safely move
+     everything from TSFN to TSP such that TSFN is TSTOP. */
+  mvcount = TSFN(thr) - TSP(thr);
+  memmove(TSTOP(thr) - mvcount, TSFN(thr), mvcount*sizeof(value));
+  TSP(thr) = TSTOP(thr) - mvcount;
+}
