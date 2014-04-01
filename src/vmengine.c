@@ -142,6 +142,7 @@ static void printobj(arc *c, value obj)
   SVALR(c->tracethread, arc_mkaff(c, arc_write, CNIL));
   TARGC(c->tracethread) = 1;
   __arc_thr_trampoline(c, c->tracethread, TR_FNAPP);
+  TSP(c->tracethread) = TSTOP(c->tracethread);
 }
 
 static void printstr(arc *c, value obj)
@@ -150,18 +151,23 @@ static void printstr(arc *c, value obj)
   SVALR(c->tracethread, arc_mkaff(c, arc_disp, CNIL));
   TARGC(c->tracethread) = 1;
   __arc_thr_trampoline(c, c->tracethread, TR_FNAPP);
+  TSP(c->tracethread) = TSTOP(c->tracethread);
 }
 
 static void dump_registers(arc *c, value thr)
 {
   value *sv;
-
   printf("VALR = ");
   printobj(c, TVALR(thr));
 
-  printf("\t\tFUNR = ");
+  printf("\tFUNR = ");
   printobj(c, TFUNR(thr));
+
+  printf("\tENVR = ");
+  printobj(c, TENVR(thr));
+
   printf("\nSTACK = [");
+
   for (sv = TSTOP(thr); sv != TSP(thr); sv--) {
     printobj(c, *sv);
     printf(" ");
@@ -177,10 +183,7 @@ static inline void trace(arc *c, value thr)
   base = &XVINDEX(CODE_CODE(CLOS_CODE(TFUNR(thr))), 0);
   disasm = __arc_disasm_inst(c, base, TIPP(thr), NULL);
   printstr(c, disasm);
-  printf("\n- ");
-#ifdef HAVE_LIBREADLINE
-#else
-#endif
+  printf("\n");
 }
 
 void __arc_init_tracing(arc *c)
