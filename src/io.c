@@ -389,14 +389,14 @@ AFFDEF(__arc_disp_write)
     WV(arg, ARC_BUILTIN(c, S_T));
   tfn = __arc_typefn(c, AV(arg));
   if (tfn == NULL || tfn->pprint == NULL) {
-    static const char *utype = "#<unknown-type %d>";
+    static const char *utype = "#<unknown-type %d %p>";
     char *strrep;
     int len;
     value vstr;
 
-    len = snprintf(NULL, 0, utype, TYPE(AV(arg)));
+    len = snprintf(NULL, 0, utype, TYPE(AV(arg)), (void *)AV(arg));
     strrep = alloca(sizeof(char)*(len+1));
-    snprintf(strrep, len+1, utype, TYPE(AV(arg)));
+    snprintf(strrep, len+1, utype, TYPE(AV(arg)), (void *)AV(arg));
     vstr = arc_mkstringc(c, strrep);
 
     AFTCALL(arc_mkaff(c, arc_disp, CNIL), vstr, AV(outport));
