@@ -49,14 +49,14 @@ value __arc_mkcont(arc *c, value thr, int offset)
 {
   value cont, tsfn;
 
-  tsfn = INT2FIX(TSFN(thr) - TSBASE(thr));
+  tsfn = INT2FIX(TSTOP(thr) - TSFN(thr));
   CPUSH(thr, tsfn);
   CPUSH(thr, INT2FIX(offset));
   CPUSH(thr, TENVR(thr));
   CPUSH(thr, TFUNR(thr));
   CPUSH(thr, INT2FIX(TARGC(thr)));
   CPUSH(thr, TCONR(thr));
-  cont = INT2FIX(TSP(thr) - TSBASE(thr));
+  cont = INT2FIX(TSTOP(thr) - TSP(thr));
   return(cont);
 }
 
@@ -66,13 +66,13 @@ void arc_restorecont(arc *c, value thr, value cont)
 
   if (TYPE(cont) == T_FIXNUM) {
     /* A continuation on the stack is just an offset into the stack. */
-    TSP(thr) = TSBASE(thr) + FIX2INT(cont);
+    TSP(thr) = TSTOP(thr) - FIX2INT(cont);
     SCONR(thr, CPOP(thr));
     TARGC(thr) = FIX2INT(CPOP(thr));
     SFUNR(thr, CPOP(thr));
     SENVR(thr, CPOP(thr));
     offset = FIX2INT(CPOP(thr));
-    TSFN(thr) = TSBASE(thr) + FIX2INT(CPOP(thr));
+    TSFN(thr) = TSTOP(thr) - FIX2INT(CPOP(thr));
   } else {
     /* Heap-based continuations */
     SFUNR(thr, CONT_FUN(cont));
@@ -99,7 +99,7 @@ static value nextcont(arc *c, value thr, value cont)
   value *sp;
 
   if (FIXNUM_P(cont)) {
-    sp = TSBASE(thr) + FIX2INT(cont);
+    sp = TSTOP(thr) - FIX2INT(cont);
     return (*(sp + 1));
   }
   return(CONT_CONT(cont));
@@ -110,7 +110,7 @@ static value *contenv(arc *c, value thr, value cont)
   value *sp;
 
   if (FIXNUM_P(cont)) {
-    sp = TSBASE(thr) + FIX2INT(cont);
+    sp = TSTOP(thr) - FIX2INT(cont);
     return(sp + 4);
   }
   return(&CONT_ENV(cont));
@@ -142,7 +142,7 @@ static value heap_cont(arc *c, value thr, value cont)
     return(cont);
 
   ncont = mkcont(c);
-  sp = TSBASE(thr) + FIX2INT(cont);
+  sp = TSTOP(thr) - FIX2INT(cont);
   __arc_wb(CONT_CONT(ncont), *(sp+1));
   CONT_CONT(ncont) = *(sp+1);
   __arc_wb(CONT_ARGC(ncont), *(sp+2));
@@ -157,7 +157,7 @@ static value heap_cont(arc *c, value thr, value cont)
   __arc_wb(CONT_OFS(ncont), *(sp+5));
   CONT_OFS(ncont) = *(sp+5);
   /* save the stack up to the saved TSFN */
-  tsfn = TSBASE(thr) + FIX2INT(*(sp+6));
+  tsfn = TSTOP(thr) - FIX2INT(*(sp+6));
   sslen = tsfn - (sp + 6);
   CONT_STK(ncont) = arc_mkvector(c, sslen);
   for (i=0; i<sslen; i++)
