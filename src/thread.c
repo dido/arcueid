@@ -22,6 +22,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
+#include <assert.h>
 #include "arcueid.h"
 #include "vmengine.h"
 #include "arith.h"
@@ -629,13 +630,13 @@ typefn_t __arc_thread_typefn__ = {
   NULL
 };
 
-void __arc_stackcheck(value thr)
+inline void __arc_stackcheck(value thr)
 {
   arc *c;
   value cont, env;
   int mvcount;
 
-  assert(TSP(thr) >= TSBASE(thr));
+  assert(TSP(thr) > TSBASE(thr));
   /* stack is fine, nothing to do */
   if (TSP(thr) > TSBASE(thr))
     return;
