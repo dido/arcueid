@@ -81,12 +81,12 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
   CPUSH(thr, INT2FIX(prevsize+extrasize));
   envstart = TSP(thr);
   CPUSH(thr, TENVR(thr));
-  esofs = envstart - TSBASE(thr);
+  esofs = TSTOP(thr) - envstart;
   TSFN(thr) = TSP(thr);		/* start of stack after env */
   SENVR(thr, ((value)((long)(esofs << 4) | ENV_FLAG)));
 }
 
-#define SENV_PTR(stkbase, env) (((int)((env) >> 4)) + (stkbase))
+#define SENV_PTR(stktop, env) ((stktop) - ((int)((env) >> 4)))
 #define SENV_COUNT(base) (FIX2INT(*(base + 1)))
 
 #define VENV_NEXT(x) (VINDEX((x), 0))
@@ -106,7 +106,7 @@ static value nextenv(arc *c, value thr, value env)
 
   /* We have a stack-based environment.  Get the address of the
      environment pointer from the stack. */
-  envptr = SENV_PTR(TSBASE(thr), env);
+  envptr = SENV_PTR(TSTOP(thr), env);
   return(*envptr);
 }
 
@@ -129,7 +129,7 @@ static value *envval(arc *c, value thr, int depth, int index)
     return(&VENV_INDEX(env, index));
 
   /* For a stack-based environment, we have to do some gymnastics */
-  senv = SENV_PTR(TSBASE(thr), env);
+  senv = SENV_PTR(TSTOP(thr), env);
   count = SENV_COUNT(senv);
   senvstart = senv + count + 1;
   return(senvstart - index);
@@ -151,7 +151,7 @@ value __arc_putenv(arc *c, value thr, int depth, int index, value val)
 inline value __arc_getenv0(arc *c, value thr, int iindx)
 {
   if (ENV_P(TENVR(thr))) {
-    value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+    value *base = SENV_PTR(TSTOP(thr), TENVR(thr));
     int count = FIX2INT(*(base + 1));
     return(*(base + count + 1 - iindx));
   }
@@ -163,7 +163,7 @@ inline value __arc_putenv0(arc *c, value thr, int iindx, value val)
   value *ptr;
 
   if (ENV_P(TENVR(thr))) {
-    value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+    value *base = SENV_PTR(TSTOP(thr), TENVR(thr));
     int count = FIX2INT(*(base + 1));
     ptr = (base + count + 1 - iindx);
   } else {
@@ -206,7 +206,7 @@ void __arc_menv(arc *c, value thr, int n)
     /* Run the write barrier on the environment that is about to be
        overwritten.  Required for most incremental and concurrent GC
        algorithms. */
-    penv = SENV_PTR(TSBASE(thr), TENVR(thr));
+    penv = SENV_PTR(TSTOP(thr), TENVR(thr));
     for (i=0; i<SENV_COUNT(penv); i++)
       __arc_wb(*envval(c, thr, 0, i), CNIL);
     /* source of our copy is the last value pushed on the stack */
@@ -233,7 +233,7 @@ static value heap_env(arc *c, value thr, value env)
   value *senv, *senvstart, henv;
   int count, i;
 
-  senv = SENV_PTR(TSBASE(thr), env);
+  senv = SENV_PTR(TSTOP(thr), env);
   count = SENV_COUNT(senv);
   henv = VENV_CREATE(c, count);
   senvstart = senv + count + 1;
