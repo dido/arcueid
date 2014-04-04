@@ -225,7 +225,7 @@ static inline value SCONR(value t, value nv)
 #define TCH(t) (((struct vmthread_t *)REP(t))->conthere)
 #define TBCH(t) (((struct vmthread_t *)REP(t))->baseconthere)
 
-extern void __arc_stackcheck(value thr);
+extern inline void __arc_stackcheck(value thr);
 
 #define CPUSH(thr, val) do {						\
     assert(TSP(thr) >= TSBASE(thr));					\
@@ -236,7 +236,7 @@ extern void __arc_stackcheck(value thr);
 
 #define CPOP(thr) (*(++TSP(thr)))
 /* Default thread stack size */
-#define TSTKSIZE 1024
+#define TSTKSIZE 65536
 
 /* A code generation context (cctx) is a vector with the following
    items as indexes:
