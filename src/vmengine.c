@@ -310,7 +310,7 @@ int __arc_vmengine(arc *c, value thr)
 
 	iindx = FIX2INT(*TIPP(thr)++);
 	if (ENV_P(TENVR(thr))) {
-	  value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+	  value *base = TSTOP(thr) - ((int)(TENVR(thr) >> 4));
 	  int count = FIX2INT(*(base + 1));
 	  val = *(base + count + 1 - iindx);
 	} else {
@@ -326,7 +326,7 @@ int __arc_vmengine(arc *c, value thr)
 
 	iindx = FIX2INT(*TIPP(thr)++);
 	if (ENV_P(TENVR(thr))) {
-	  value *base = TSBASE(thr) + ((int)(TENVR(thr) >> 4));
+	  value *base = TSTOP(thr) - ((int)(TENVR(thr) >> 4));
 	  int count = FIX2INT(*(base + 1));
 	  ptr = (base + count + 1 - iindx);
 	} else {
