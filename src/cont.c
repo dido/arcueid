@@ -171,7 +171,7 @@ value __arc_cont2heap(arc *c, value thr, value cont)
   value oldcont, initcont;
 
   oldcont = initcont = CNIL;
-  do {
+  while (!NIL_P(cont)) {
     cont = heap_cont(c, thr, cont);
     if (NIL_P(initcont))
       initcont = cont;
@@ -179,7 +179,7 @@ value __arc_cont2heap(arc *c, value thr, value cont)
       CONT_CONT(oldcont) = cont;
     oldcont = cont;
     cont = nextcont(c, thr, cont);
-  } while (!NIL_P(cont));
+  };
   return(initcont);
 }
 
