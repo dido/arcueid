@@ -636,7 +636,7 @@ inline void __arc_stackcheck(value thr)
   value cont, env;
   int mvcount;
 
-  assert(TSP(thr) > TSBASE(thr));
+  assert(TSP(thr) >= TSBASE(thr));
   /* stack is fine, nothing to do */
   if (TSP(thr) > TSBASE(thr))
     return;
@@ -653,6 +653,9 @@ inline void __arc_stackcheck(value thr)
      have been moved to the heap.  We ought to be able to safely move
      everything from TSFN to TSP such that TSFN is TSTOP. */
   mvcount = TSFN(thr) - TSP(thr);
-  memmove(TSTOP(thr) - mvcount, TSFN(thr), mvcount*sizeof(value));
+  memmove(TSTOP(thr) - mvcount, TSP(thr), mvcount*sizeof(value));
   TSP(thr) = TSTOP(thr) - mvcount;
+  /* XXX - if initial stack size is set too low, or under certain
+     circumstances doing this may be insufficient to free up enough
+     stack space.  May be necesary to resize the stack. */
 }
