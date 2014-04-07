@@ -106,7 +106,7 @@ value arc_mkthread(arc *c)
   ((struct vmthread_t *)REP(thr))->conr = CNIL;
   TSTACK(thr) = arc_mkvector(c, c->stksize);
   TSBASE(thr) = &XVINDEX(TSTACK(thr), 0);
-  TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), VECLEN(TSTACK(thr))-1);
+  TSFN(thr) = TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), VECLEN(TSTACK(thr))-1);
   TIP(thr).ipptr = NULL;
   TARGC(thr) = 0;
 
@@ -657,5 +657,6 @@ inline void __arc_stackcheck(value thr)
   TSP(thr) = TSTOP(thr) - mvcount;
   /* XXX - if initial stack size is set too low, or under certain
      circumstances doing this may be insufficient to free up enough
-     stack space.  May be necesary to resize the stack. */
+     stack space.  May be necessary to resize the stack.  */
+  assert(TSP(thr) > TSBASE(thr));
 }
