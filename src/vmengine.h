@@ -236,7 +236,7 @@ extern inline void __arc_stackcheck(value thr);
 
 #define CPOP(thr) (*(++TSP(thr)))
 /* Default thread stack size */
-#define TSTKSIZE 65536
+#define TSTKSIZE 16384
 
 /* A code generation context (cctx) is a vector with the following
    items as indexes:
