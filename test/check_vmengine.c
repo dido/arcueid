@@ -914,6 +914,23 @@ START_TEST(test_callcc)
 }
 END_TEST
 
+START_TEST(test_stackresize)
+{
+  value thr;
+  int oldstksize = c->stksize, i;
+
+#define MAXNUM 7
+
+  c->stksize = 8;
+  thr = arc_mkthread(c);
+  c->stksize = oldstksize;
+  for (i=0; i<=MAXNUM; i++)
+    CPUSH(thr, INT2FIX(i));
+  for (i=MAXNUM; i>=0; i--)
+    fail_unless(FIX2INT(CPOP(thr)) == i);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -955,6 +972,7 @@ int main(void)
 
   tcase_add_test(tc_vm, test_funarg);
   tcase_add_test(tc_vm, test_callcc);
+  tcase_add_test(tc_vm, test_stackresize);
 
   suite_add_tcase(s, tc_vm);
   sr = srunner_create(s);

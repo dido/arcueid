@@ -106,7 +106,7 @@ value arc_mkthread(arc *c)
   ((struct vmthread_t *)REP(thr))->conr = CNIL;
   TSTACK(thr) = arc_mkvector(c, c->stksize);
   TSBASE(thr) = &XVINDEX(TSTACK(thr), 0);
-  TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), VECLEN(TSTACK(thr))-1);
+  TSFN(thr) = TSP(thr) = TSTOP(thr) = &XVINDEX(TSTACK(thr), VECLEN(TSTACK(thr))-1);
   TIP(thr).ipptr = NULL;
   TARGC(thr) = 0;
 
@@ -630,6 +630,31 @@ typefn_t __arc_thread_typefn__ = {
   NULL
 };
 
+static value vector_doubledown(arc *c, value curr)
+{
+  value new;
+  int currlen, i;
+
+  currlen = VECLEN(curr);
+  new = arc_mkvector(c, currlen*2);
+  for (i=0; i<currlen; i++)
+    SVINDEX(new, currlen+i, XVINDEX(curr, i));
+  return(new);
+}
+
+static void grow_stack(arc *c, value thr)
+{
+  value old_stack;
+  int tsfnofs;
+
+  tsfnofs = TSTOP(thr) - TSFN(thr);
+  old_stack = TSTACK(thr);
+  TSTACK(thr) = vector_doubledown(c, old_stack);
+  TSBASE(thr) = &XVINDEX(TSTACK(thr), 0);
+  TSTOP(thr) = &XVINDEX(TSTACK(thr), VECLEN(TSTACK(thr))-1);
+  TSFN(thr) = TSTOP(thr) - tsfnofs;
+}
+
 inline void __arc_stackcheck(value thr)
 {
   arc *c;
@@ -655,8 +680,9 @@ inline void __arc_stackcheck(value thr)
   mvcount = TSFN(thr) - TSP(thr);
   memmove(TSTOP(thr) - mvcount, TSP(thr), mvcount*sizeof(value));
   TSP(thr) = TSTOP(thr) - mvcount;
-
   /* XXX - if initial stack size is set too low, or under certain
      circumstances doing this may be insufficient to free up enough
-     memory. */
+     stack space.  May be necessary to resize the stack.  */
+  if (TSP(thr) <= TSBASE(thr));
+  grow_stack(c, thr);
 }
