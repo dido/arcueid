@@ -20,6 +20,7 @@
   (let expr (macex nexpr)
     (if (no expr) (do (acc-gen ctx 'inil) (acc-cont ctx cont))
 	(is expr t) (do (acc-gen ctx 'itrue) (acc-cont ctx cont))
+	(ssyntax expr) (ac (ssexpand expr) ctx env cont)
 	(fixnump expr) (do (acc-gen expr ctx env cont) (acc-cont ctx cont))
 	(isa expr 'sym) (acc-sym expr ctx env cont)
 	(atom expr) (acc-literal expr ctx env cont)
@@ -45,13 +46,15 @@
 		   (acc-gen ctx 'ildg (acc-getliteral expr ctx))))
 	  (acc-cont ctx cont))))
 
+;; XXX - we need to handle atstrings
 (def acc-literal (expr ctx env cont)
   (acc-gen ctx 'ildl (acc-getliteral expr ctx))
   (acc-cont ctx cont))
 
 (def acc-call (expr ctx env cont)
   (if (is (car expr) 'quote) (acc-getliteral (cadr expr) ctx)
-      (is (car expr) 'quasiquote) (acc-qq expr ctx env cont)
+      ;; quasiquote is a macro, see below
+      ;; (is (car expr) 'quasiquote) (acc-qq expr ctx env cont)
       (is (car expr) 'if) (acc-if (cdr expr) ctx env cont)
       (is (car expr) 'fn) (acc-fn (cadr expr) (cddr expr) ctx env cont)
       (is (car expr) 'assign) (acc-assign (cdr expr) ctx env cont)
@@ -104,3 +107,4 @@
 			   (acc-gen ctx 'istg (acc-getliteral a ctx)))))
 	      (self (cddr x))))) expr)
   (acc-cont ctx cont))
+
