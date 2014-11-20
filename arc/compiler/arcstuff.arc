@@ -17,6 +17,8 @@
 ;;
 ;; Some functions normally defined in ac.scm rewritten in pure Arc
 
+
+;; Pure Arc ssyntax
 (def ssyntax (x)
   (let sscharp
       (afn (str i)
@@ -30,6 +32,18 @@
 	 (no (or (is x '+) (is x '++) (is x '_)))
 	 (let name (coerce x 'string)
 	   (sscharp name (- (len name) 1))))))
+
+;; Pure Arc ssexpand
+(def ssexpand (sym)
+  ;; XXX - these sub-functions need to be defined
+  (with (insymp (afn (char sym))
+		expand-compose (afn (sym))
+		expand-sexpr (afn (sym))
+		expand-and (afn (sym)))
+    ((if (or (insymp #\: sym) (insymp #\~ sym)) expand-compose
+	 (or (insymp #\. sym) (insymp #\! sym)) expand-sexpr
+	 (insymp #\& sym) expand-and
+	 (error "Unknown ssyntax" sym)) sym)))
 
 ;; https://bitbucket.org/fallintothis/qq/raw/04a5dfbc592e5bed58b7a12fbbc34dcd5f5
 ;; CL-style quasiquote (ported from GNU clisp 2.47, backquote.lisp).
