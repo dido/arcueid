@@ -33,29 +33,36 @@
 ;;       (<= val 2147483648)))
 
 ;; This definition will cause the compiler to NEVER generate ldi instructions!
-;; All numbers will be considered bignums.
+;; All numbers will be considered bignums and will generate literals.
 ;; (def fixnump (val) nil)
 
-;; This should be defined by the runtime. The contex argument is a compiler
-;; context, which is in most Arcueid runtimes an opaque type that can only
-;; be manipulated by other runtime functions.  For development and
-;; bootstrapping purposes, we let it be a cons cell whose car is a list of
-;; instructions and whose cdr is a list of literals used in the code being
-;; generated.
+;; Create a new compilation context.  In the Arcueid runtime this is an
+;; opaque type that can only be manipulated by other runtime functions.
+;; For development and bootstrapping purposes, we let it be a cons cell
+;; whose car is a list of instructions and whose cdr is a list of
+;; literals used in the code being generated.
+(def acc-context ()
+  (cons nil nil))
+
+;; Generate code given an opcode symbol and its arguments.  Should be defined
+;; in the runtime.
 (def acc-gen (ctx opcode . args)
   (do (= (car ctx) (join (car ctx) (cons opcode args) nil))
       ctx))
 
-;; Another runtime funtion. Returns current offset for code generation
+;; Returns current offset for code generation.  Should be defined in the
+;; runtime.
 (def acc-codeptr (ctx)
   (len (car ctx)))
 
-;; Patch an opcode at the provided offset
+;; Patch an opcode at the provided offset.  Should be defined in the runtime.
 (def acc-patch (ctx offset value)
   (= ((car ctx) offset) value))
 
 ;; If the literal +lit+ is not found in the literal list of the context,
-;; it will add the literal to the context.
+;; it will add the literal to the context. Otherwise it will return the
+;; offset of the literal in the literal list.  Should be defined in the
+;; runtime.
 (def acc-getliteral (lit ctx)
   (let literals (cdr ctx)
     (aif ((afn (lit literals idx)
