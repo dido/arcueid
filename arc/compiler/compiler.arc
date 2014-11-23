@@ -120,6 +120,14 @@
 ;; Compile arguments. This will add instructions to do destructuring binds
 ;; as they are required.  It will return the new environment that has
 ;; the new arguments thus created.
+;; A function's environment is constructed as follows:
+;; 1. The caller pushes any arguments to the function.
+;; 2. The env/envr instruction adds unbound values for any optional
+;;    arguments, as well as slots for destructuring bind arguments.
+;; 3. Code to assign default values for optional arguments and to
+;;    perform destructuring binds is executed.
+;; This is quite possibly the most complicated part of any Arc
+;; implementation.
 (def acc-args (args ctx env)
   (if (no args) env	     ; just return the original env if no args
       (isa args 'sym)
@@ -128,19 +136,20 @@
       (do1 (cons (list (list args 0)) env)
 	   (acc-gen ctx 'ienvr 0 0 0))
       (~isa args 'cons) (acc-compile-error "invalid fn arg")
-      ;; Iterate over all the args, obtaining counts of each type of
-      ;; argument.  Ordinary args are processed here as well.
       (let envaddr (acc-codeptr ctx)
 	(acc-gen ctx 'ienv (len regargs) 0 0)
 	(let (nenv regargc dsbargc oargc restarg)
-	  (acc-processargs args env ctx)
+	  ;; Destructuring binds appear after all arguments, but before
+	  ;; a possible rest argument, so we count all args except for
+	  ;; the last.
+	  (let dsbi ((afn (a l) (if (atom a) l (self (cdr a) (+ 1 l)))) args 0)
+	    (acc-processargs args env ctx dsbi))
 	  ;; After processing the arguments, we need to patch the instruction
 	  ;; as needed.
 	  (acc-patch ctx (+ 1 envaddr) regargc)
 	  (acc-patch ctx (+ 2 envaddr) dsbargc)
 	  (acc-patch ctx (+ 3 envaddr) oargc)
-	  ;; If we have a restarg, change the instruction as well, and
-	  ;; add the rest argument to the new env.
+	  ;; If we have a restarg, change the instruction to envr too
 	  (if restarg (acc-patch ctx envaddr 'ienvr))
 	  (cons nenv env)))))
 
@@ -156,7 +165,7 @@
 ;; Arcueid produces an error with this construction.  I see the former
 ;; as a bug in reference Arc and since Arcueid is not supposed to be
 ;; a bug-compatible implementation of reference Arc, I'm not fixing this.
-(def acc-processargs (args env ctx (o nenv) (o idx 0)
+(def acc-processargs (args env ctx dsbidx (o nenv) (o idx 0)
 			   (o regargc 0) (o dsbargc 0)
 			   (o optargc 0))
   (if (no args)
@@ -164,21 +173,23 @@
       (list nenv regargc dsbargc optargc nil)
       ;; rest argument specified
       (isa args 'sym)
-      ;; Add the rest argument to the new env by consing it.
-      (list (cons (list args idx) nenv) regargc dsbargc optargc t)
+      ;; Add the rest argument to the new env by consing it.  It will
+      ;; have an index after the last destructuring bind arg.
+      (list (cons (list args dsbidx) nenv) regargc dsbargc optargc t)
       ;; Blank argument
       (~car args)
       ;; If we have a blank argument, the index increments, as does the
       ;; number of regular arguments, but no new name is bound in the
       ;; environment for that index.
-      (acc-processargs (cdr args) ctx nenv (+ 1 idx) (+ 1 regargc)
+      (acc-processargs (cdr args) ctx dsbidx nenv (+ 1 idx) (+ 1 regargc)
 		       dsbargc optargc)
       ;; Normal, named argument.
       (isa (car args) 'sym)
       ;; Add the name to the assoc with the current idx and
       ;; move forward.
       (if (is optargc 0)
-	  (acc-processargs (cdr args) env ctx (cons (list (car args) idx) nenv)
+	  (acc-processargs (cdr args) env ctx dsbidx
+			   (cons (list (car args) idx) nenv)
 			   (+ 1 idx) (+ 1 regargc) dsbargc optargc)
 	  (acc-compile-error "non-optional arg found after optional args"))
       ;; Optional argument.
@@ -186,21 +197,21 @@
       ;; For an optional argument, we need to load its value first and
       ;; then check to see if the argument is bound.
       (let (nil name default) (car args)
-	   (acc-gen 'ilde0 idx)
+	   (acc-gen ctx 'ilde0 idx)
 	   (let jumpaddr (acc-codeptr ctx)
-	     (acc-gen 'ijbnd 0)
+	     (acc-gen ctx 'ijbnd 0)
 	     ;; Compile default
 	     (acc default ctx (cons nenv env) nil)
-	     (acc-gen 'iste idx)
+	     (acc-gen ctx 'iste idx)
 	     (acc-patch ctx (+ jumpaddr 1) (- (acc-codeptr ctx) jumpaddr))
-	     (acc-processargs (cdr args) env ctx (cons (list name idx) nenv)
+	     (acc-processargs (cdr args) env ctx dsbidx
+			      (cons (list name idx) nenv)
 			      (+ 1 idx) regargc dsbargc (+ 1 optargc))))
       ;; Destructuring bind argument.
       (isa (car args) 'cons)
       (if (is optarg 0)
-	  (apply acc-processargs
-		 (acc-destructure (car args) (cdr args)
-				  env ctx nenv idx regargc dsbargc optargc))
+	  (acc-dsbind (car args) (cdr args) env ctx nenv dsbdix idx
+		     regargc dsbargc optargc)
 	  (acc-compile-error "non-optional arg found after optional args"))
       (acc-compile-error "invalid fn arg")))
 
@@ -216,6 +227,59 @@
 ;;    cell if one is not null.  In any case, we push the argument onto
 ;;    the stack (so we can pop it again later) generate a car or cdr
 ;;    instruction, and then call ourselves recursively with it.
-(def acc-destructure (dsarg restargs env ctx nenv idx regargc dsbargc optargc)
-  ;; XXX - fill me in!
-)
+;;
+(def acc-dsbind (dsarg restargs env ctx nenv dsbidx idx regargc dsbargc optargc)
+  (acc-gen ctx 'ilde0 idx)
+  (let (ndsbidx ndsbargc nenv) (acc-destructure dsarg env ctx nenv dsbidx
+						dsbargc)
+       (acc-processargs restargs env ctx dsbidx nenv idx regargc ndsbargc
+			optargc)))
+
+;; This does the actual work of destructuring an argument. It assumes
+;; that the argument that is being destructured is in the value register.
+;; The value to be unbound is in dsarg.  Two things can happen:
+;;
+;; 1. We find a symbol.  In this case, we emit an iste instruction that
+;;    stores the value thus unbound.
+;; 2. We find a cons cell.  We will decide to visit the car and cdr of
+;;    that cell if one is not null.  In any case, we push the current
+;;    value register onto the stack (so we can pop it again later) and
+;;    emit a car or cdr instruction as needed, and then recurse into it.
+;; XXX - we need to handle the case of optional arguments inside a
+;; destructuring bind.
+(def acc-destructure (dsarg env ctx nenv dsbidx dsbargc)
+  (if (no dsarg)
+      (acc-compile-error "internal compiler error")
+
+      ;; Regular symbol arg
+      (isa dsarg 'sym)
+      (do (acc-gen ctx 'iste0 dsbidx)
+	  (list (+ 1 dsbidx) (+ 1 dsbargc) (cons (list dsarg dsbidx) nenv)))
+
+      ;; non-conses after here are not valid
+      (no (isa dsarg 'cons))
+      (acc-compile-error "invalid fn arg")
+
+      ;; Both car and cdr are not null. We need to recurse both.
+      (and (~no (car dsarg)) (~no (cdr dsarg)))
+      (do (acc-gen ctx 'ipush)
+	  (acc-gen ctx 'idcar)
+	  (let (ndsbidx ndsbargc nnenv)
+	    (acc-destructure (car dsarg) env ctx nenv dsbidx dsbargc)
+	    (acc-gen ctx 'ipop)
+	    (acc-gen ctx 'idcdr)
+	    (acc-destructure (cdr dsarg) env ctx nnenv ndsbidx ndsbargc)))
+
+      ;; only car is not null, cdr is null
+      (and (~no (car dsarg)) (no (cdr dsarg)))
+      (do (acc-gen ctx 'idcar)
+	  (acc-destructure (car dsarg) env ctx nenv dsbidx dsbargc))
+
+      ;; car is null, cdr is not null
+      (and (no (car dsarg)) (~no (cdr dsarg)))
+      (do (acc-gen ctx 'idcdr)
+	  (acc-destructure (cdr dsarg) env ctx nenv dsbidx dsbargc))
+
+      ;; never get here
+      (acc-compile-error "internal compiler error")))
+
