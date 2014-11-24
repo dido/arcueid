@@ -73,3 +73,9 @@
 	 (do1 (len literals)
 	      (= (cdr ctx) (join literals (cons lit nil)))))))
 
+;; Ought to be built-in.  This is defined in terms of $ functions supported
+;; by Anarki.
+(def substring (s n (o e))
+  (if no.e
+      ($ (substring s n))
+      ($ (substring s n e))))
