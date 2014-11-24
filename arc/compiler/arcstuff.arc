@@ -33,53 +33,65 @@
 	 (let name (coerce x 'string)
 	   (sscharp name (- (len name) 1))))))
 
-;; Ought to be built-in. Looks horribly inefficient.
-(def tokens (s (o sep whitec))
+;; Ought to be built-in maybe. Looks horribly inefficient.
+(def sstokens (s (o sep whitec) (o keepsep))
   (let test testify.sep
     (rev:map [coerce _ 'string]
              (map rev
                   (loop (cs  (coerce s 'cons)
 			     toks  nil
-			     tok  nil)
+			     tok  nil
+			     lastsep nil)
 			(if no.cs
-			    (consif tok toks)
+			    (consif tok (consif lastsep toks))
 			    (test car.cs)
-			    (recur cdr.cs (consif tok toks) nil)
-			    (recur cdr.cs toks (cons car.cs tok))))))))
-
-;; Ought to be built-in.  As it is we use a Racket function here.
-(def substring (s n (o e))
-  (if no.e
-      ($ (substring s n))
-      ($ (substring s n e))))
+			    (recur cdr.cs
+				   (consif tok (consif lastsep toks))
+				   nil (if keepsep (coerce car.cs 'string)
+					   lastsep))
+			    (recur cdr.cs toks (cons car.cs tok) lastsep)))))))
 
 ;; Pure Arc ssexpand.  
-(def ssexpand (sym)
+(def ssexpand (s)
   ;; XXX - these sub-functions need to be defined
-  (with (insymp
-	 (afn (char sym (o index 0))
-	      (if (isa sym 'sym) (self char (coerce sym 'string) 0)
-		  (>= index (len sym)) nil
-		  (is char (sym index)) t
-		  (self char sym (+ 1 index)))))
+  (withs
+   (insymp
+    (afn (char s (o index 0))
+	 (if (isa s 'sym) (self char (coerce s 'string) 0)
+	     (>= index (len s)) nil
+	     (is char (s index)) t
+	     (self char s (+ 1 index))))
     expand-compose
-    (fn (sym)
-	 (let elts (map [if (is #\~ (_ 0))
-			    (if (is (len _) 1) 'no
-				`(complement ,(coerce (substring _ 1) 'sym)))
-			    (coerce _ 'sym)] (tokens (coerce sym 'string) #\:))
-	   (if (no (cdr elts)) (car elts)
-	       (cons 'compose elts))))
-    expand-sexpr (afn (sym))
-    expand-and
-    (fn (sym)
-	(let elts (map [coerce _ 'sym] (tokens (coerce sym 'string) #\&))
+    (fn (s)
+	(let elts (map [if (is #\~ (_ 0))
+			   (if (is (len _) 1) 'no
+			       `(complement ,(sym (substring _ 1))))
+			   (sym _)] (sstokens (string s) #\:))
 	  (if (no (cdr elts)) (car elts)
-	      (cons 'andf elts))))
-    ((if (or (insymp #\: sym) (insymp #\~ sym)) expand-compose
-	 (or (insymp #\. sym) (insymp #\! sym)) expand-sexpr
-	 (insymp #\& sym) expand-and
-	 (error "Unknown ssyntax" sym)) sym)))
+	      (cons 'compose elts))))
+    build-sexpr
+    (afn (toks orig)
+	 (if no.toks 'get
+	     (no (cdr toks)) (sym (car toks))
+	     (list (self (cddr toks) orig)
+		   (if (is (cadr toks) "!")
+		       (list 'quote (sym (car toks)))
+		       (or (is (car toks) ".") (is (car toks) "!"))
+		       (err "Bad ssyntax" orig)
+		       (sym (car toks))))))
+    expand-sexpr
+    (fn (s)
+	(build-sexpr (rev (sstokens (coerce s 'string)
+				  [or (is _ #\.) (is _ #\!)] t)) s))
+    expand-and
+    (fn (s)
+	(let elts (map [sym _] (sstokens (string s) #\&))
+	  (if (no (cdr elts)) (car elts)
+	      (cons 'andf elts)))))
+   ((if (or (insymp #\: s) (insymp #\~ s)) expand-compose
+	(or (insymp #\. s) (insymp #\! s)) expand-sexpr
+	(insymp #\& s) expand-and
+	(error "Unknown ssyntax" s)) s)))
 
 ;; https://bitbucket.org/fallintothis/qq/raw/04a5dfbc592e5bed58b7a12fbbc34dcd5f5
 ;; CL-style quasiquote (ported from GNU clisp 2.47, backquote.lisp).
