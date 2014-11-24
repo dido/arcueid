@@ -202,7 +202,7 @@
 	     (acc-gen ctx 'ijbnd 0)
 	     ;; Compile default
 	     (acc default ctx (cons nenv env) nil)
-	     (acc-gen ctx 'iste idx)
+	     (acc-gen ctx 'iste0 idx)
 	     (acc-patch ctx (+ jumpaddr 1) (- (acc-codeptr ctx) jumpaddr))
 	     (acc-processargs (cdr args) env ctx dsbidx
 			      (cons (list name idx) nenv)
@@ -245,27 +245,45 @@
 ;;    that cell if one is not null.  In any case, we push the current
 ;;    value register onto the stack (so we can pop it again later) and
 ;;    emit a car or cdr instruction as needed, and then recurse into it.
-;; XXX - we need to handle the case of optional arguments inside a
-;; destructuring bind.
-(def acc-destructure (dsarg env ctx nenv dsbidx dsbargc)
-  (if (no dsarg)
+;; Note that there are no restrictions on optional parts of a destructuring
+;; bind, unlike at the top level.
+(def acc-destructure (dsarg env ctx nenv dsbidx dsbargc (o optflag))
+  (if (no dsarg)			;shouldn't happen
       (acc-compile-error "internal compiler error")
 
       ;; Regular symbol arg
       (isa dsarg 'sym)
-      (do (acc-gen ctx 'iste0 dsbidx)
-	  (list (+ 1 dsbidx) (+ 1 dsbargc) (cons (list dsarg dsbidx) nenv)))
+      (if optarg
+	  (acc-compile-error "non-optional arg found after optional args")
+	  (do (acc-gen ctx 'iste0 dsbidx)
+	      (list (+ 1 dsbidx) (+ 1 dsbargc)
+		    (cons (list dsarg dsbidx) nenv))))
 
       ;; non-conses after here are not valid
       (no (isa dsarg 'cons))
       (acc-compile-error "invalid fn arg")
+
+      ;; Optional argument. Only permitted in cars.
+      (and optflag (is (car dsarg) 'o))
+      (with ((nil name default) dsarg jumpaddr (acc-codeptr ctx))
+	;; Check with jbnd if a value was available when the sequence
+	;; of dcar/dcdr instructions leading up to it tried to unbind it.
+	(acc-gen ctx 'ijbnd 0)
+	;; then compile the default's definition using any environment
+	;; variables already available.
+	(acc default ctx (cons nenv env) nil)
+	;; store either the value produced by the sequence of unbind
+	;; instructions or by the default value if not available.
+	(acc-gen ctx 'iste0 dsbidx)
+	(acc-patch ctx (+ jumpaddr 1) (- (acc-codeptr ctx) jumpaddr))
+	(list (+ 1 dsbidx) (+ 1 dsbargc) (cons (list name dsbidx) nenv)))
 
       ;; Both car and cdr are not null. We need to recurse both.
       (and (~no (car dsarg)) (~no (cdr dsarg)))
       (do (acc-gen ctx 'ipush)
 	  (acc-gen ctx 'idcar)
 	  (let (ndsbidx ndsbargc nnenv)
-	    (acc-destructure (car dsarg) env ctx nenv dsbidx dsbargc)
+	    (acc-destructure (car dsarg) env ctx nenv dsbidx dsbargc t)
 	    (acc-gen ctx 'ipop)
 	    (acc-gen ctx 'idcdr)
 	    (acc-destructure (cdr dsarg) env ctx nnenv ndsbidx ndsbargc)))
@@ -273,7 +291,7 @@
       ;; only car is not null, cdr is null
       (and (~no (car dsarg)) (no (cdr dsarg)))
       (do (acc-gen ctx 'idcar)
-	  (acc-destructure (car dsarg) env ctx nenv dsbidx dsbargc))
+	  (acc-destructure (car dsarg) env ctx nenv dsbidx dsbargc t))
 
       ;; car is null, cdr is not null
       (and (no (car dsarg)) (~no (cdr dsarg)))
