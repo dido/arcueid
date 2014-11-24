@@ -33,13 +33,45 @@
 	 (let name (coerce x 'string)
 	   (sscharp name (- (len name) 1))))))
 
-;; Pure Arc ssexpand
+;; Ought to be built-in. Looks horribly inefficient.
+(def tokens (s (o sep whitec))
+  (let test testify.sep
+    (rev:map [coerce _ 'string]
+             (map rev
+                  (loop (cs  (coerce s 'cons)
+			     toks  nil
+			     tok  nil)
+			(if no.cs
+			    (consif tok toks)
+			    (test car.cs)
+			    (recur cdr.cs (consif tok toks) nil)
+			    (recur cdr.cs toks (cons car.cs tok))))))))
+
+;; Ought to be built-in.  As it is we use a Racket function here.
+(def substring (s n (o e))
+  (if no.e
+      ($ (substring s n))
+      ($ (substring s n e))))
+
+;; Pure Arc ssexpand.  
 (def ssexpand (sym)
   ;; XXX - these sub-functions need to be defined
-  (with (insymp (afn (char sym))
-		expand-compose (afn (sym))
-		expand-sexpr (afn (sym))
-		expand-and (afn (sym)))
+  (with (insymp
+	 (afn (char sym (o index 0))
+	      (if (isa sym 'sym) (self char (coerce sym 'string) 0)
+		  (>= index (len sym)) nil
+		  (is char (sym index)) t
+		  (self char sym (+ 1 index)))))
+    expand-compose
+    (fn (sym)
+	 (let elts (map [if (is #\~ (_ 0))
+			    (if (is (len _) 1) 'no
+				`(complement ,(coerce (substring _ 1) 'sym)))
+			    (coerce _ 'sym)] (tokens (coerce sym 'string) #\:))
+	   (if (no (cdr elts)) (car elts)
+	       (cons 'compose elts))))
+    expand-sexpr (afn (sym))
+    expand-and (afn (sym)))
     ((if (or (insymp #\: sym) (insymp #\~ sym)) expand-compose
 	 (or (insymp #\. sym) (insymp #\! sym)) expand-sexpr
 	 (insymp #\& sym) expand-and
