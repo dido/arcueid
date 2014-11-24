@@ -71,7 +71,11 @@
 	   (if (no (cdr elts)) (car elts)
 	       (cons 'compose elts))))
     expand-sexpr (afn (sym))
-    expand-and (afn (sym)))
+    expand-and
+    (fn (sym)
+	(let elts (map [coerce _ 'sym] (tokens (coerce sym 'string) #\&))
+	  (if (no (cdr elts)) (car elts)
+	      (cons 'andf elts))))
     ((if (or (insymp #\: sym) (insymp #\~ sym)) expand-compose
 	 (or (insymp #\. sym) (insymp #\! sym)) expand-sexpr
 	 (insymp #\& sym) expand-and
