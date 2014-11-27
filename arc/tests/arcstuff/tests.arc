@@ -19,4 +19,5 @@
 ;; comment this out when running on Arcueid
 (load "../../bootstrap.arc")
 
-(= tests '(ssyntax-test))
+(= tests '(ssyntax-test
+	   quasiquote-test))
