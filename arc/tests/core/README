@@ -1,0 +1,19 @@
+This directory contains Conan Dalton's unit tests for Arc.  These were
+originally intended for his Rainbow (Arc in Java), but they are
+supposedly universal and should work for any Arc implementation.
+
+A few notes here:
+
+1. There are many places where the unit tests originally made absolute
+   comparisons of floating point numbers.  Anyone who does numerical
+   programming often enough quickly learns not to do that, and do an
+   (< (abs (- x y)) tol) where tol is a tolerance that should be
+   sufficiently small.  I have modified things so as to use this
+   pattern (with a tolerance of 1e-6 generally).
+2. One of the things these tests have shown is that Arcueid's
+   straightforward numerical conversion algorithms leave much to be
+   desired.  They are less accurate than the ones used by MzScheme or
+   Rainbow.
+
+We don't use very sophisticated numerical conversion algorithms
+(yet).  Perhaps someday someone (probably me) will code these in.
