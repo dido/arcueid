@@ -18,79 +18,80 @@
 (register-test
  '(suite "SSyntax Tests"
 	 ("recognises compose"
-	  (ssyntax 'a:b)
+	  (arc-ssyntax 'a:b)
 	  t)
 
 	 ("recognises complement and compose"
-	  (ssyntax '~a:b)
+	  (arc-ssyntax '~a:b)
 	  t)
 
 	 ("recognises complement alone"
-	  (ssyntax '~a)
+	  (arc-ssyntax '~a)
 	  t)
 
 	 ("recognises list"
-	  (ssyntax 'a.b)
+	  (arc-ssyntax 'a.b)
 	  t)
 
 	 ("recognises list-quoted"
-	  (ssyntax 'a!b)
+	  (arc-ssyntax 'a!b)
 	  t)
 
 	 ("andf"
-	  (ssyntax 'a&b)
+	  (arc-ssyntax 'a&b)
 	  t)
 
 	 ("andf"
-	  (ssyntax '&a&b&)
+	  (arc-ssyntax '&a&b&)
 	  t)))
+
 (register-test
  '(suite "ssexpand"
 	 ("expand compose"
-	  (ssexpand 'x:y)
+	  (arc-ssexpand 'x:y)
 	  (compose x y))
 
 	 ("expand complement"
-	  (ssexpand '~p)
+	  (arc-ssexpand '~p)
 	  (complement p))
 
 	 ("expand compose/complement"
-	  (ssexpand 'p:~q:r)
+	  (arc-ssexpand 'p:~q:r)
 	  (compose p (complement q) r) )
 
 	 ("expand compose/complement"
-	  (ssexpand '~p:q:r)
+	  (arc-ssexpand '~p:q:r)
 	  (compose (complement p) q r) )
 
 	 ("expand compose with numbers"
-	  (ssexpand 'x:1.2)
+	  (arc-ssexpand 'x:1.2)
 	  (compose x 1.2))              ; bizarre but true
 
 	 ("expand compose with numbers"
-	  (type ((ssexpand 'x:1.2) 2))
+	  (type ((arc-ssexpand 'x:1.2) 2))
 	  num)                          ; bizarre but true
 
 	 ("expand list"
-	  (ssexpand '*.a.b)
+	  (arc-ssexpand '*.a.b)
 	  ((* a) b))
 
 	 ("expand quoted list"
-	  (ssexpand 'cons!a!b)
+	  (arc-ssexpand 'cons!a!b)
 	  ((cons (quote a)) (quote b)) )
 
 	 ("expand chained dots and bangs"
-	  (ssexpand 'a.b!c.d)
+	  (arc-ssexpand 'a.b!c.d)
 	  (((a b) (quote c)) d))
 
 	 ("ssexpand with initial dot"
-	  (ssexpand '.a.b.c)
+	  (arc-ssexpand '.a.b.c)
 	  (((get a) b) c))
 
 	 ("ssexpand with initial quote"
-	  (ssexpand '!a.b.c)
+	  (arc-ssexpand '!a.b.c)
 	  (((get (quote a)) b) c))
 
 	 ("andf"
-	  (ssexpand 'a&b)
+	  (arc-ssexpand 'a&b)
 	  (andf a b))))
 
