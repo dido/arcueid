@@ -93,6 +93,15 @@
 	(insymp #\& s) expand-and
 	(error "Unknown ssyntax" s)) s)))
 
+;; Pure Arc macex
+(def macex (e)
+  (if (atom e)
+      e
+      (let op (and (atom (car e)) (eval (car e)))
+        (if (isa op 'mac)
+            (apply (rep op) (cdr e))
+            e))))
+
 ;; https://bitbucket.org/fallintothis/qq/raw/04a5dfbc592e5bed58b7a12fbbc34dcd5f5
 ;; CL-style quasiquote (ported from GNU clisp 2.47, backquote.lisp).
 ;; Rewritten to be more Arc-like May 2010
@@ -124,9 +133,7 @@
 (def qq-dotted-splice-error (expr)
   (err (+ "The syntax `(... . ,@" (tostring:write expr) ") is invalid")))
 
-
 ;; Quasiquotation
-f254f/qq.arc
 
 (mac quasiquote (expr)
   (qq-expand expr))
