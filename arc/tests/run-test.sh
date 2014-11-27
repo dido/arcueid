@@ -4,6 +4,6 @@ cd $1
 echo "Running tests in $1"
 cat << EOT | $ARC
 (load "../unit-test.arc")
-(load "runtest.arc")
+(load "tests.arc")
 (rat)
 EOT
