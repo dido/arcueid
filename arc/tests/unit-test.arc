@@ -67,3 +67,9 @@
 (def execute-tests (desc tests results)
   (execute-test desc (car tests) results)
   (if (cdr tests) (execute-tests desc (cdr tests) results)))
+
+(def rat ((o tst tests))
+  (assign all-tests nil)
+  (let loader [load (string _ ".arc")]
+    (map loader tst))
+    (run-all-tests))
