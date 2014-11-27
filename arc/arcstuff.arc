@@ -94,13 +94,13 @@
 	(error "Unknown ssyntax" s)) s)))
 
 ;; Pure Arc macex
-(def macex (e)
-  (if (atom e)
-      e
-      (let op (and (atom (car e)) (eval (car e)))
-        (if (isa op 'mac)
-            (apply (rep op) (cdr e))
-            e))))
+;; (def macex (e)
+;;   (if (atom e)
+;;       e
+;;       (let op (and (atom (car e)) (eval (car e)))
+;;         (if (isa op 'mac)
+;;             (apply (rep op) (cdr e))
+;;             e))))
 
 ;; https://bitbucket.org/fallintothis/qq/raw/04a5dfbc592e5bed58b7a12fbbc34dcd5f5
 ;; CL-style quasiquote (ported from GNU clisp 2.47, backquote.lisp).
@@ -108,171 +108,171 @@
 
 ;; Like join, except it can create dotted lists if the last arg is an atom
 
-(def append args
-  (if (no args)
-       nil
-      (no (cdr args))
-       (car args)
-      (let a (car args)
-        (if (no a)
-            (apply append (cdr args))
-            (cons (car a) (apply append (cdr a) (cdr args)))))))
+;; (def append args
+;;   (if (no args)
+;;        nil
+;;       (no (cdr args))
+;;        (car args)
+;;       (let a (car args)
+;;         (if (no a)
+;;             (apply append (cdr args))
+;;             (cons (car a) (apply append (cdr a) (cdr args)))))))
 
-;; Like list, except that the last cons of the constructed list is dotted
+;; ;; Like list, except that the last cons of the constructed list is dotted
 
-(def dotted-list xs
-  (if (no (cdr xs))
-      (car xs)
-      (rreduce cons xs)))
+;; (def dotted-list xs
+;;   (if (no (cdr xs))
+;;       (car xs)
+;;       (rreduce cons xs)))
 
-(def proper (xs) (and (alist xs) (~dotted xs)))
+;; (def proper (xs) (and (alist xs) (~dotted xs)))
 
-(def qq-non-list-splice-error (expr)
-  (err (+ "The syntax `,@" (tostring:write expr) " is invalid")))
+;; (def qq-non-list-splice-error (expr)
+;;   (err (+ "The syntax `,@" (tostring:write expr) " is invalid")))
 
-(def qq-dotted-splice-error (expr)
-  (err (+ "The syntax `(... . ,@" (tostring:write expr) ") is invalid")))
+;; (def qq-dotted-splice-error (expr)
+;;   (err (+ "The syntax `(... . ,@" (tostring:write expr) ") is invalid")))
 
-;; Quasiquotation
+;; ;; Quasiquotation
 
-(mac quasiquote (expr)
-  (qq-expand expr))
+;; (mac quasiquote (expr)
+;;   (qq-expand expr))
 
-;; Since quasiquote handles 'unquote and 'unquote-splicing, we can define those
-;; as macros down to errors, as they're automatically outside of a quasiquote.
+;; ;; Since quasiquote handles 'unquote and 'unquote-splicing, we can define those
+;; ;; as macros down to errors, as they're automatically outside of a quasiquote.
 
-(mac unquote (expr)
-  (list 'err "unquote not allowed outside of a quasiquote:" expr))
+;; (mac unquote (expr)
+;;   (list 'err "unquote not allowed outside of a quasiquote:" expr))
 
-(mac unquote-splicing (expr)
-  (list 'err "unquote-splicing not allowed outside of a quasiquote:" expr))
-
-
-;; Recursive Expansion Engine
-
-;; The behaviour is more-or-less dictated by the Common Lisp HyperSpec's general
-;; description of backquote:
-;;
-;;   `atom/nil -->  'atom/nil
-;;   `,expr     -->  expr
-;;   `,@expr    -->  error
-;;   ``expr     -->  `expr-expanded
-;;   `list-expr -->  expand each element & handle dotted tails:
-;;       `(x1 x2 ... xn)     -->  (append y1 y2 ... yn)
-;;       `(x1 x2 ... . xn)   -->  (append y1 y2 ... 'xn)
-;;       `(x1 x2 ... . ,xn)  -->  (append y1 y2 ... xn)
-;;       `(x1 x2 ... . ,@xn) -->  error
-;;     where each yi is the output of (qq-transform xi).
-
-(def qq-expand (expr)
-  (if (atom expr)
-      (list 'quote expr)
-      (case (car expr)
-        unquote          (cadr expr)
-        unquote-splicing (qq-non-list-splice-error (cadr expr))
-        quasiquote       (list 'quasiquote (qq-expand (cadr expr)))
-                         (qq-appends (qq-expand-list expr)))))
-
-;; Produce a list of forms suitable for append.
-;; Note: if we see 'unquote or 'unquote-splicing in the middle of a list, we
-;; assume it's from dotting, since (a . (unquote b)) == (a unquote b).
-;; This is a "problem" if the user does something like `(a unquote b c d), which
-;; we interpret as `(a . ,b).
-
-(def qq-expand-list (expr)
-  (and expr
-       (if (atom expr)
-           (list (list 'quote expr))
-           (case (car expr)
-             unquote          (list (cadr expr))
-             unquote-splicing (qq-dotted-splice-error (cadr expr))
-                              (cons (qq-transform (car expr))
-                                    (qq-expand-list (cdr expr)))))))
-
-;; Do the transformations for elements in qq-expand-list that aren't the dotted
-;; tail.  Also, handle nested quasiquotes.
-
-(def qq-transform (expr)
-  (case (acons&car expr)
-    unquote          (qq-list (cadr expr))
-    unquote-splicing (cadr expr)
-    quasiquote       (qq-list (list 'quasiquote (qq-expand (cadr expr))))
-                     (qq-list (qq-expand expr))))
+;; (mac unquote-splicing (expr)
+;;   (list 'err "unquote-splicing not allowed outside of a quasiquote:" expr))
 
 
-;; Expansion Optimizer
+;; ;; Recursive Expansion Engine
 
-;; This is mainly woven through qq-cons and qq-append.  It can run in a
-;; non-optimized mode (where lists are always consed at run-time), or
-;; optimizations can be done that reduce run-time consing / simplify the
-;; macroexpansion.  For example,
-;;   `(,(foo) ,(bar)) 
-;;      non-optimized --> (append (cons (foo) nil) (cons (bar) nil))
-;;      optimized     --> (list (foo) (bar))
+;; ;; The behaviour is more-or-less dictated by the Common Lisp HyperSpec's general
+;; ;; description of backquote:
+;; ;;
+;; ;;   `atom/nil -->  'atom/nil
+;; ;;   `,expr     -->  expr
+;; ;;   `,@expr    -->  error
+;; ;;   ``expr     -->  `expr-expanded
+;; ;;   `list-expr -->  expand each element & handle dotted tails:
+;; ;;       `(x1 x2 ... xn)     -->  (append y1 y2 ... yn)
+;; ;;       `(x1 x2 ... . xn)   -->  (append y1 y2 ... 'xn)
+;; ;;       `(x1 x2 ... . ,xn)  -->  (append y1 y2 ... xn)
+;; ;;       `(x1 x2 ... . ,@xn) -->  error
+;; ;;     where each yi is the output of (qq-transform xi).
 
-;; Optimization is enabled by default, but can be turned off for debugging.
+;; (def qq-expand (expr)
+;;   (if (atom expr)
+;;       (list 'quote expr)
+;;       (case (car expr)
+;;         unquote          (cadr expr)
+;;         unquote-splicing (qq-non-list-splice-error (cadr expr))
+;;         quasiquote       (list 'quasiquote (qq-expand (cadr expr)))
+;;                          (qq-appends (qq-expand-list expr)))))
 
-(set optimize-cons* optimize-append*)
+;; ;; Produce a list of forms suitable for append.
+;; ;; Note: if we see 'unquote or 'unquote-splicing in the middle of a list, we
+;; ;; assume it's from dotting, since (a . (unquote b)) == (a unquote b).
+;; ;; This is a "problem" if the user does something like `(a unquote b c d), which
+;; ;; we interpret as `(a . ,b).
 
-(def toggle-optimize ()
-  (= optimize-cons*   (no optimize-cons*)
-     optimize-append* (no optimize-append*)))
+;; (def qq-expand-list (expr)
+;;   (and expr
+;;        (if (atom expr)
+;;            (list (list 'quote expr))
+;;            (case (car expr)
+;;              unquote          (list (cadr expr))
+;;              unquote-splicing (qq-dotted-splice-error (cadr expr))
+;;                               (cons (qq-transform (car expr))
+;;                                     (qq-expand-list (cdr expr)))))))
 
-;; Test whether the given expr may yield multiple list elements.
-;; Note: not only does ,@x splice, but so does ,,@x (unlike in vanilla Arc)
+;; ;; Do the transformations for elements in qq-expand-list that aren't the dotted
+;; ;; tail.  Also, handle nested quasiquotes.
 
-(def splicing (expr)
-  (case (acons&car expr)
-    unquote-splicing t
-    unquote          (splicing (cadr expr))))
+;; (def qq-transform (expr)
+;;   (case (acons&car expr)
+;;     unquote          (qq-list (cadr expr))
+;;     unquote-splicing (cadr expr)
+;;     quasiquote       (qq-list (list 'quasiquote (qq-expand (cadr expr))))
+;;                      (qq-list (qq-expand expr))))
 
-(def splicing->non (expr)
-  (if (splicing expr) (list 'append expr) expr))
 
-(def quoted-non-splice (expr)
-  (and (caris expr 'quote)
-       (single (cdr expr))
-       (~splicing (cadr expr))))
+;; ;; Expansion Optimizer
 
-(def qq-cons (expr1 expr2)
-  ;; assume expr2 is non-splicing
-  (let operator (if (splicing expr1) 'dotted-list 'cons)
-    (if (no optimize-cons*)
-         (list operator expr1 expr2)
-        (and (~splicing expr1) (literal expr1) (no expr2))
-         (list 'quote (list (eval expr1)))
-        (no expr2)
-         (list 'list expr1)
-        (atom expr2)
-         (list operator expr1 expr2)
-        (caris expr2 'list)
-         (dotted-list 'list expr1 (cdr expr2))
-        (and (quoted-non-splice expr1) (quoted-non-splice expr2))
-         (list 'quote (cons (cadr expr1) (cadr expr2)))
-        (list operator expr1 expr2))))
+;; ;; This is mainly woven through qq-cons and qq-append.  It can run in a
+;; ;; non-optimized mode (where lists are always consed at run-time), or
+;; ;; optimizations can be done that reduce run-time consing / simplify the
+;; ;; macroexpansion.  For example,
+;; ;;   `(,(foo) ,(bar)) 
+;; ;;      non-optimized --> (append (cons (foo) nil) (cons (bar) nil))
+;; ;;      optimized     --> (list (foo) (bar))
 
-(def qq-list (expr) (qq-cons expr nil))
+;; ;; Optimization is enabled by default, but can be turned off for debugging.
 
-(def qq-append (expr1 (o expr2))
-  (if (no optimize-append*)
-       (list 'append expr1 expr2)
-      (no expr1)
-       expr2
-      (no expr2)
-       expr1
-      (caris expr1 'list)
-       (if (single expr1)
-            expr2
-           (single (cdr expr1))
-            (qq-cons (cadr expr1) expr2)
-           (cons 'dotted-list (append (cdr expr1) (list expr2))))
-      (and (quoted-non-splice expr1)
-           (proper (cadr expr1))
-           (~caris (cadr expr1) 'unquote)) ; since unquote expects only 1 arg
-       (rreduce (fn (x xs) (qq-cons (list 'quote x) xs))
-                (+ (cadr expr1) (list (splicing->non expr2))))
-      (caris expr2 'append)
-       (dotted-list 'append expr1 (cdr expr2))
-      (list 'append expr1 expr2)))
+;; (set optimize-cons* optimize-append*)
 
-(def qq-appends (exprs) (splicing->non (rreduce qq-append exprs)))
+;; (def toggle-optimize ()
+;;   (= optimize-cons*   (no optimize-cons*)
+;;      optimize-append* (no optimize-append*)))
+
+;; ;; Test whether the given expr may yield multiple list elements.
+;; ;; Note: not only does ,@x splice, but so does ,,@x (unlike in vanilla Arc)
+
+;; (def splicing (expr)
+;;   (case (acons&car expr)
+;;     unquote-splicing t
+;;     unquote          (splicing (cadr expr))))
+
+;; (def splicing->non (expr)
+;;   (if (splicing expr) (list 'append expr) expr))
+
+;; (def quoted-non-splice (expr)
+;;   (and (caris expr 'quote)
+;;        (single (cdr expr))
+;;        (~splicing (cadr expr))))
+
+;; (def qq-cons (expr1 expr2)
+;;   ;; assume expr2 is non-splicing
+;;   (let operator (if (splicing expr1) 'dotted-list 'cons)
+;;     (if (no optimize-cons*)
+;;          (list operator expr1 expr2)
+;;         (and (~splicing expr1) (literal expr1) (no expr2))
+;;          (list 'quote (list (eval expr1)))
+;;         (no expr2)
+;;          (list 'list expr1)
+;;         (atom expr2)
+;;          (list operator expr1 expr2)
+;;         (caris expr2 'list)
+;;          (dotted-list 'list expr1 (cdr expr2))
+;;         (and (quoted-non-splice expr1) (quoted-non-splice expr2))
+;;          (list 'quote (cons (cadr expr1) (cadr expr2)))
+;;         (list operator expr1 expr2))))
+
+;; (def qq-list (expr) (qq-cons expr nil))
+
+;; (def qq-append (expr1 (o expr2))
+;;   (if (no optimize-append*)
+;;        (list 'append expr1 expr2)
+;;       (no expr1)
+;;        expr2
+;;       (no expr2)
+;;        expr1
+;;       (caris expr1 'list)
+;;        (if (single expr1)
+;;             expr2
+;;            (single (cdr expr1))
+;;             (qq-cons (cadr expr1) expr2)
+;;            (cons 'dotted-list (append (cdr expr1) (list expr2))))
+;;       (and (quoted-non-splice expr1)
+;;            (proper (cadr expr1))
+;;            (~caris (cadr expr1) 'unquote)) ; since unquote expects only 1 arg
+;;        (rreduce (fn (x xs) (qq-cons (list 'quote x) xs))
+;;                 (+ (cadr expr1) (list (splicing->non expr2))))
+;;       (caris expr2 'append)
+;;        (dotted-list 'append expr1 (cdr expr2))
+;;       (list 'append expr1 expr2)))
+
+;; (def qq-appends (exprs) (splicing->non (rreduce qq-append exprs)))
