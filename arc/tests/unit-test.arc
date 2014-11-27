@@ -67,19 +67,3 @@
 (def execute-tests (desc tests results)
   (execute-test desc (car tests) results)
   (if (cdr tests) (execute-tests desc (cdr tests) results)))
-
-(def rat ()
-  (assign all-tests nil)
-  (let loader [load (string _ ".arc")]
-    (map loader '(foundation-test
-                  misc-tests
-                  core-errors-continuations-test
-                  ; core-evaluation-test
-                  core-lists-test
-                  core-macros-test
-                  core-maths-test
-                  core-predicates-test
-                  core-special-forms-test
-                  core-typing-test))
-                  ;; parser-test))
-    (run-all-tests)))
