@@ -65,27 +65,27 @@
     (fn (s)
 	(let elts (map [if (is #\~ (_ 0))
 			   (if (is (len _) 1) 'no
-			       `(complement ,(sym (substring _ 1))))
-			   (sym _)] (sstokens (string s) #\:))
+			       `(complement ,(readstring1 (substring _ 1))))
+			   (readstring1 _)] (sstokens (string s) #\:))
 	  (if (no (cdr elts)) (car elts)
 	      (cons 'compose elts))))
     build-sexpr
     (afn (toks orig)
 	 (if no.toks 'get
-	     (no (cdr toks)) (sym (car toks))
+	     (no (cdr toks)) (readstring1 (car toks))
 	     (list (self (cddr toks) orig)
 		   (if (is (cadr toks) "!")
-		       (list 'quote (sym (car toks)))
+		       (list 'quote (readstring1 (car toks)))
 		       (or (is (car toks) ".") (is (car toks) "!"))
 		       (err "Bad ssyntax" orig)
-		       (sym (car toks))))))
+		       (readstring1 (car toks))))))
     expand-sexpr
     (fn (s)
 	(build-sexpr (rev (sstokens (coerce s 'string)
 				  [or (is _ #\.) (is _ #\!)] t)) s))
     expand-and
     (fn (s)
-	(let elts (map [sym _] (sstokens (string s) #\&))
+	(let elts (map [readstring1 _] (sstokens (string s) #\&))
 	  (if (no (cdr elts)) (car elts)
 	      (cons 'andf elts)))))
    ((if (or (insymp #\: s) (insymp #\~ s)) expand-compose
