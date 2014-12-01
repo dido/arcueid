@@ -16,18 +16,20 @@
 ;; License along with this library; if not, see <http://www.gnu.org/licenses/>
 (mac plusall args `(+ ,@args))
 (mac overwrite (after) `(+ ,after 3))
+(= x '(a b c))
+(= a 10 b 20 c 30)
+(= aa (list 10) bb (list 20) cc (list 30))
+(= xx '(aa bb cc))
 
 (register-test
  '(suite "quasiquote"
-      (suite "quasiquote"
-        ("quasi-quotation"
+	 ("quasi-quotation"
           '`qqfoo
           (quasiquote qqfoo))
 
-        ("unquote"
+	 ("unquote"
           ',uqfoo
-          (unquote uqfoo)
-        )
+          (unquote uqfoo))
 
         ("unquote-splicing"
           ',@uqsfoo
@@ -37,9 +39,11 @@
           `qqqfoo
           qqqfoo )
 
+	;; Changed from C. Dalton's tests because Arcueid expands
+	;; nested quasiquotes.
         ("quasi-quote quasi-quote"
 	 ``double-qq
-	 `double-qq )
+	 'double-qq )
 
         ("quasiquotation unquote is identity"
 	 ( (fn (x) `,x) "foo" )
@@ -65,9 +69,10 @@
 	 `(,@(cons 3 (cons 4 nil)) a b c ,(+ 0 5))
 	 (3 4 a b c 5) )
 
-        ("don't expand nested quasiquotes"
+	;; Expansion of nested qq's
+        ("expand nested quasiquotes"
 	 `(* 17 ,(plusall 1 2 3) `(+ 1 ,(plusall 1 2 3)))
-	 (* 17 6 `(+ 1 ,(plusall 1 2 3))))
+	 (* 17 6 (list '+ '1 (plusall 1 2 3))))
 
         ("quasiquote uses local namespace"
 	 ((fn (x) (overwrite (+ x x))) 7)
@@ -75,9 +80,57 @@
 
         ("nested quasiquote with double unquote"
 	 ((fn (qqq) `(a b qqq ,qqq `(a b qqq ,qqq ,,qqq))) 'qoo)
-	 (a b qqq qoo `(a b qqq ,qqq ,qoo)))
+	 (a b qqq qoo (list 'a 'b 'qqq qqq qoo)))
 
+	;; Changed from Dalton's tests again
         ("more nested quasiquote"
 	 ((fn (x) ``,,x) 'y)
-	 `,y))))
-	 
+	 y)
+
+	;; Additional tests from Fallintothis
+
+	("Basic quasiquote test"
+	 `(x ,x ,@x foo ,(cadr  x) bar ,(cdr x) baz ,@(cdr x) ,@ x)
+	 (x (a b c) a b c foo b bar (b c) baz b c a b c))
+
+	;; XXX - seems that nesting on-errs doesn't work with
+	;; Anarki at least.  So we depend on the unit test framework's
+	;; 
+	("Splicing quasiquote error"
+	 `,@x
+	 "Error thrown: The syntax `,@x is invalid")
+
+	("Locally bound symbols in quasiquotes"
+	 (let lst '(a b c d)
+	   `(foo `(bar ,@',(map (fn (sym) `(baz ',sym ,sym)) lst))))
+	 (foo '(bar (baz 'a a) (baz 'b b) (baz 'c c) (baz 'd d))))
+
+	("Quotes with nothing unquoted"
+	 `(1 2 3 4)
+	 (1 2 3 4))
+
+	("Basic unquote-splicing"
+	 `(,@x)
+	 (a b c))
+
+	("Basic unquotation"
+	 `(,a ,b, c)
+	 (10 20 30))
+
+	("Double unquote"
+	 (eval ``(,,@x))
+	 (10 20 30))
+
+	("Unquote/unquote splicing"
+	 (eval ``(,,@(map (fn (z) `(list ',z)) x)))
+	 ((a) (b) (c)))
+
+	("Double unquote splicing"
+	 (eval ``(,@,@(map (fn (z) `(list ',z)) x)))
+	 (a b c))
+
+	("Triply nested quasiquotes"
+	 (eval (eval ```(,,@,@(map (fn (z) `(list ',z)) x))))
+	 (10 20 30))
+))
+
