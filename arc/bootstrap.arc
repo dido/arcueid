@@ -74,8 +74,15 @@
 	      (= (cdr ctx) (join literals (cons lit nil)))))))
 
 ;; Ought to be built-in.  This is defined in terms of $ functions supported
-;; by Anarki.
+;; by Anarki for bootstrap purposes.
 (def substring (s n (o e))
   (if no.e
       ($ (substring s n))
       ($ (substring s n e))))
+
+(def newlinec (c)
+  (in c #\return #\newline #\u0085 #\page #\u2028 #\u2029))
+
+;; Make a regex.  Used only for parsing.
+(def mkregexp (rx flags)
+  (annotate 'regexp (cons rx flags)))
