@@ -94,8 +94,8 @@
 	 (x (a b c) a b c foo b bar (b c) baz b c a b c))
 
 	;; XXX - seems that nesting on-errs doesn't work with
-	;; Anarki at least.  So we depend on the unit test framework's
-	;; 
+	;; Anarki at least.  So we depend on the unit test
+	;; framework's error detection.
 	("Splicing quasiquote error"
 	 `,@x
 	 "Error thrown: The syntax `,@x is invalid")
@@ -129,8 +129,33 @@
 	 (eval ``(,@,@(map (fn (z) `(list ',z)) x)))
 	 (a b c))
 
-	("Triply nested quasiquotes"
+	("Triply nested quasiquotes 1"
 	 (eval (eval ```(,,@,@(map (fn (z) `(list ',z)) x))))
 	 (10 20 30))
+
+	("Triply nested quasiquotes 2"
+	 (eval (eval ```(,,@,@(map (fn (z) `(list ',z)) xx))))
+	 ((10) (20) (30)))
+
+	("Triply nested quasiquotes 3"
+	 (eval (eval ```(,@,@,@(map (fn (z) `(list ',z)) xx))))
+	 (10 20 30))
+
+	("Triply nested quasiquotes 4"
+	 (eval (eval ```(alpha ,@,@,@(map (fn (z) `(list ',z)) xx) omega)))
+	 (alpha 10 20 30 omega))
+
+	("Repeated macro expansion cancels all commas and backquotes 1"
+	 ``````````,,,,,,,,,,'x
+	 x)
+
+	("Repeated macro expansion cancels all commas and backquotes 2"
+	 ``````````,',',',',',',',',','x
+	 '''''''''x)
+
+	("Repeated macro expansion cancels all commas and backquotes 3"
+	 (let x 3 `````(,(,(,(,(,(++ x)))))) x)
+	 4)
+
 ))
 
