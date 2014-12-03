@@ -22,7 +22,16 @@
 	  "foo")
 
 	 ("Tokenise two symbols separated by spaces"
-	  (w/instring fp "foo bar " (list (do1 (getsymbol fp) (scan fp))
+	  (w/instring fp "foo 123 " (list (do1 (getsymbol fp) (scan fp))
 					 (getsymbol fp)))
-	  ("foo" "bar"))
-))
+	  ("foo" "123"))
+
+	 ("Read a simple regex"
+	  (w/instring fp "r/foo/" (let rx (getsymbol fp)
+				    (list (type rx)
+					  (rep rx))))
+	  (regexp ("foo" . 0)))
+
+	 ("Read two symbols with numeric conversion"
+	  (w/instring fp "foo 123 " (list (zread fp) (zread fp)))
+	  (foo 123))))
