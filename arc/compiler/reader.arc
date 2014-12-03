@@ -110,3 +110,28 @@
     (aif (isa mysym 'regexp) mysym
 	 (string->num mysym) it
 	 (sym mysym))))
+
+(def readlist (fp eof)
+  (readc fp)			;remove opening paren that got us here
+  (loop (top nil last nil indot nil)
+	(scan fp)
+	(let ch (peekc fp)
+	  (if (no ch) eof
+	      (case ch
+		#\; (do (readcomment fp) (recur top last indot))
+		#\) top
+		#\.
+		(if indot (err "illegal use of .")
+		    (do (readc fp) (recur top last 1)))
+		(let val (zread fp eof)
+		  (if (is indot 1)
+		      (if (no last) (err "illegal use of .")
+			  (do (scdr last val)
+			      (recur top last 2)))
+		      (is indot 2) (err "illegal use of .")
+		      (no last)
+		      (let mytop (cons val nil)
+			(recur mytop mytop indot))
+		      (let mylast (cons val nil)
+			(scdr last mylast)
+			(recur top mylast indot)))))))))
