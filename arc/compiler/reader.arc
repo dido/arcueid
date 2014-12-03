@@ -32,7 +32,7 @@
 	  ((case ch
 	     #\( readlist
 	     #\) (err "misplaced right paren")
-	     #\[ readanonf
+	     #\[ readbrfn
 	     #\] (err "misplaced left paren")
 	     #\' readquote
 	     #\` readqquote
@@ -135,3 +135,24 @@
 		      (let mylast (cons val nil)
 			(scdr last mylast)
 			(recur top mylast indot)))))))))
+
+;; Read an Arc square bracketed anonymous function. This expands
+;; [ ... _ ... ] to (fn (_) (... _ ...))
+(def readbrfn (fp eof)
+  (readc fp)			; remove opening bracket that got us here
+  (loop (top nil last nil)
+	(scan fp)
+	(let ch (peekc fp)
+	  (if (no ch) eof
+	      (case ch
+		#\; (do (readcomment fp) (recur top last))
+		#\]
+		;; complete the fn
+		`(fn (_) ,top)
+		(let val (zread fp eof)
+		  (if (no last)
+		      (let mytop (cons val nil)
+			(recur mytop mytop))
+		      (let mylast (cons val nil)
+			(scdr last mylast)
+			(recur top mylast)))))))))
