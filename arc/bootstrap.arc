@@ -86,3 +86,7 @@
 ;; Make a regex.  Used only for parsing.
 (def mkregexp (rx flags)
   (annotate 'regexp (cons rx flags)))
+
+;; Uses Racket's string->number
+(def string->num (s)
+  ($ (let ((n (string->number s))) (if n n 'nil))))
