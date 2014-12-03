@@ -34,4 +34,20 @@
 
 	 ("Read two symbols with numeric conversion"
 	  (w/instring fp "foo 123 " (list (zread fp) (zread fp)))
-	  (foo 123))))
+	  (foo 123))
+
+	 ("Read a simple list"
+	  (w/instring fp " (1 2 3 ) " (zread fp))
+	  (1 2 3))
+
+	 ("Read a dotted list"
+	  (w/instring fp "(1 2 . 3)" (zread fp))
+	  (1 2 . 3))
+
+	 ("Errors if dot is not followed by only one element"
+	  (w/instring fp "(1 2 . 3 4)" (zread fp))
+	  "Error thrown: illegal use of .")
+
+	 ("Errors if dot is the first"
+	  (w/instring fp "(. 3 4)" (zread fp))
+	  "Error thrown: illegal use of .")))
