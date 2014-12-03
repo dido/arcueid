@@ -43,9 +43,10 @@
 	     readsym) fp eof))))
 
 ;; Valid characters in symbols are any non-whitespace, and anything that
-;; is not a parenthesis, square bracket, quote, or semicolon.
+;; is not a parenthesis, square bracket, quote, comma, or semicolon.
+;; 
 (def symc (ch)
-  (no (or (whitec ch) (in ch #\( #\) #\' #\; #\[ #\]))))
+  (no (or (whitec ch) (in ch #\( #\) #\' #\, #\; #\[ #\]))))
 
 ;; Read a symbol from fp.  Should return a string or a regex.
 (def getsymbol (fp)
@@ -103,3 +104,9 @@
 	      (do (readc fp)
 		  (writec ch buf)
 		  (recur newstate (peekc fp) buf rxflags))))))
+
+(def readsym (fp eof)
+  (let mysym (getsymbol fp)
+    (aif (isa mysym 'regexp) mysym
+	 (string->num mysym) it
+	 (sym mysym))))
