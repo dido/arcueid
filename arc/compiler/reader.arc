@@ -49,24 +49,24 @@
 
 ;; Read a symbol from fp.  Should return a string or a regex.
 (def getsymbol (fp)
-  (loop (state 0 ch (peekc fp) buf (outstring) rxflags)
+  (loop (state 0 ch (peekc fp) buf (outstring) rxflags 0)
 	(let newstate
 	    (case state
 	      ;; Check if ch is r. If it does, transition to state 1,
 	      ;; (possible read regex) else state 5
-	      0 (if (is ch #\r) 2 5)
+	      0 (if (is ch #\r) 1 5)
 	      ;; Check if ch is '/'. If so, we are reading a regex,
 	      ;; transition to state 2 and clear the buffer.  If not,
 	      ;; go to state 5.
 	      1
 	      (if (is ch #\/) (do (readc fp)
-				  (recur 2 (peekc fp) (outstring) rxflags))
+				  (list 2 (peekc fp) (outstring) rxflags))
 		  5)
 	      ;; Reading the body of the regex.
 	      2
 	      ;; If we see a /, we should have the possible flags of the regex
 	      ;; to follow.  Do not write that / to the buffer.
-	      (if (is ch #\/) (do (readc fp) (recur 4 (peekc fp) buf rxflags))
+	      (if (is ch #\/) (do (readc fp) (list 4 (peekc fp) buf rxflags))
 		  ;; backslash, this is regex escape state.  Write the slash
 		  ;; and stay in that state for the next character
 		  (is ch #\\) 3
@@ -79,9 +79,9 @@
 	      4
 	      ;; State 4, reading regex flags
 	      (if (and (is ch #\i) (is (/ rxflags 2) 0))
-		  (do (readc fp) (recur 4 (peekc fp) buf (+ rxflags 2)))
+		  (do (readc fp) (list 4 (peekc fp) buf (+ rxflags 2)))
 		  (and (is ch #\m) (is (mod rxflags 2) 0))
-		  (do (readc fp) (recur 4 (peekc fp) buf (+ rxflags 1)))
+		  (do (readc fp) (list 4 (peekc fp) buf (+ rxflags 1)))
 		  (or (is ch #\i) (is ch #\m)) (err "Regular expression flags used more than once")
 		  (or (no ch) (whitec ch)) 7
 		  (err "invalid regular expression flag" ch))
@@ -95,7 +95,11 @@
 	  (if (is newstate 6) (inside buf) ; return contents of buffer
 	      ;; create new regex based on buffer
 	      (is newstate 7) (mkregexp (inside buf) rxflags)
-	      ;; Otherwise, keep looping.
+	      ;; Otherwise, keep looping. If newstate is a list, bind it
+	      ;; so as to get new parameters for recursion. Otherwise,
+	      ;; recur with the default values.
+	      (isa newstate 'cons)
+	      (let (ns nc nbuf nrxf) newstate (recur ns nc nbuf nrxf))
 	      (do (readc fp)
 		  (writec ch buf)
 		  (recur newstate (peekc fp) buf rxflags))))))
