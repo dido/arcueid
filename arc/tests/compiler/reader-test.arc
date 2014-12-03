@@ -50,4 +50,9 @@
 
 	 ("Errors if dot is the first"
 	  (w/instring fp "(. 3 4)" (zread fp))
-	  "Error thrown: illegal use of .")))
+	  "Error thrown: illegal use of .")
+
+	 ("Read a bracket function"
+	  (w/instring fp "[idfn _]" (zread fp))
+	  (fn (_) (idfn _)))
+))
