@@ -26,7 +26,7 @@
 	    (whitec r) (do (readc fp) (recur (peekc fp)))
 	    r)))
 
-(def read (src (o eof nil))
+(def zread (src (o eof nil))
   (let fp (if (isa src 'string) (instring src) src)
     (loop (ch (scan fp))
 	  ((case ch
@@ -40,8 +40,14 @@
 	     #\" readstring
 	     #\# readchar
 	     #\; (do (readcomment fp) (recur (scan fp)))
-	     readsym) fp eof)))
+	     readsym) fp eof))))
 
+;; Valid characters in symbols are any non-whitespace, and anything that
+;; is not a parenthesis, square bracket, quote, or semicolon.
+(def symc (ch)
+  (no (or (whitec ch) (in ch #\( #\) #\' #\; #\[ #\]))))
+
+;; Read a symbol from fp.  Should return a string or a regex.
 (def getsymbol (fp)
   (loop (state 0 ch (peekc fp) buf (outstring) rxflags)
 	(let newstate
@@ -77,21 +83,19 @@
 		  (and (is ch #\m) (is (mod rxflags 2) 0))
 		  (do (readc fp) (recur 4 (peekc fp) buf (+ rxflags 1)))
 		  (or (is ch #\i) (is ch #\m)) (err "Regular expression flags used more than once")
-		  (whitec ch) (recur 7 ch buf rxflags)
+		  (or (no ch) (whitec ch)) 7
 		  (err "invalid regular expression flag" ch))
 	      5
 	      ;; State 5, reading a normal symbol
-	      (if (no (symc ch))
-		  (recur 6 ch buf rxflags))
+	      (if (or (no ch) (no (symc ch))) 6
+		  5)
 	      (err "FATAL: Invalid parsing state"))
-	  (readc fp)
-	  ;; Write character to buffer
-	  (writec ch buf)
-	  (if (is newstate 6)
-	      ;; Terminal state, the buffer contains a symbol or
-	      ;; a number, return it
-	      (inside buf)
-	      (is newstate 7)
-	      ;; Terminal state, the buffer contains a regex
-	      (mkregexp (inside buf) rxflags)
-	      (recur newstate (peekc fp) buf rxflags)))))
+	  ;; Terminal states are 6 and 7.  Return a string or regex
+	  ;; based on the buffer.
+	  (if (is newstate 6) (inside buf) ; return contents of buffer
+	      ;; create new regex based on buffer
+	      (is newstate 7) (mkregexp (inside buf) rxflags)
+	      ;; Otherwise, keep looping.
+	      (do (readc fp)
+		  (writec ch buf)
+		  (recur newstate (peekc fp) buf rxflags))))))
