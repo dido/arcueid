@@ -17,19 +17,12 @@
 ;;
 ;; An Arc reader that depends on only the presence of the readc function.
 
-
-;; Scan for the first non-blank character.  The non-blank character will
-;; not be removed from fp.
-(def scan (fp)
-  (loop (r (peekc fp))
-	(if (no r) nil
-	    (whitec r) (do (readc fp) (recur (peekc fp)))
-	    r)))
-
+;; Parse one s-expression from src.  Returns the s-expression.
 (def zread (src (o eof nil))
   (let fp (if (isa src 'string) (instring src) src)
-    (loop (ch (scan fp))
-	  ((case ch
+    ((loop (ch (scan fp))
+	   (case ch
+	     nil readeof
 	     #\( readlist
 	     #\) (err "misplaced right paren")
 	     #\[ readbrfn
@@ -40,7 +33,18 @@
 	     #\" readstring
 	     #\# readchar
 	     #\; (do (readcomment fp) (recur (scan fp)))
-	     readsym) fp eof))))
+	     readsym)) fp eof)))
+
+;; Scan for the first non-blank character.  The non-blank character will
+;; not be removed from fp.
+(def scan (fp)
+  (loop (r (peekc fp))
+	(if (no r) nil
+	    (whitec r) (do (readc fp) (recur (peekc fp)))
+	    r)))
+
+(def readeof (fp eof)
+  eof)
 
 ;; Valid characters in symbols are any non-whitespace, and anything that
 ;; is not a parenthesis, square bracket, quote, comma, or semicolon.
@@ -156,3 +160,10 @@
 		      (let mylast (cons val nil)
 			(scdr last mylast)
 			(recur top mylast)))))))))
+
+;; Read comments. Keep reading until we reach the end of line or end of
+;; file.
+(def readcomment (fp)
+  (loop (r (readc fp))
+	(if (or (no r) (in r #\return #\newline)) r
+	    (recur (readc fp)))))
