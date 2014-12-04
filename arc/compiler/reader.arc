@@ -27,8 +27,8 @@
 	     #\) (err "misplaced right paren")
 	     #\[ readbrfn
 	     #\] (err "misplaced left paren")
-	     #\' readquote
-	     #\` readqquote
+	     #\' (do (readc fp) (fn (f e) (readquote f e 'quote)))
+	     #\` (do (readc fp) (fn (f e) (readquote f e 'quasiquote)))
 	     #\, readcomma
 	     #\" readstring
 	     #\# readchar
@@ -167,3 +167,13 @@
   (loop (r (readc fp))
 	(if (or (no r) (in r #\return #\newline)) r
 	    (recur (readc fp)))))
+
+;; Read some quote qsym.
+(def readquote (fp eof qsym)
+  (let val (zread fp eof) (cons qsym (cons val nil))))
+
+(def readcomma (fp eof)
+  (readc fp)			;remove the comma
+  (let qsym (if (is (peekc fp) #\@) (do (readc fp) 'unquote-splicing)
+		'unquote)
+    (readquote fp eof qsym)))
