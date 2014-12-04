@@ -67,4 +67,48 @@
 	 ("Read a bracket function with a comment inside"
 	  (w/instring fp "[a _; comment here\n; more comment\nb; lorem ipsum\n c]" (zread fp))
 	  (fn (_) (a _ b c)))
+
+	 ("Read empty"
+	  (w/instring fp "" (zread fp))
+	  nil)
+
+	 ("Read comments only"
+	  (w/instring fp "; lorem ipsum dolor\n; sit amet" (zread fp))
+	  nil)
+
+	 ("Read a quoted symbol"
+	  (w/instring fp "'abc" (zread fp))
+	  (quote abc))
+
+	 ("Read a quoted list"
+	  (w/instring fp "'(a b c)" (zread fp))
+	  (quote (a b c)))
+
+	 ("Read a quoted bracket function"
+	  (w/instring fp "'[idfn _]" (zread fp))
+	  (quote (fn (_) (idfn _))))
+
+	 ("Read a quasiquoted symbol"
+	  (w/instring fp "`abc" (zread fp))
+	  (quasiquote abc))
+
+	 ("Read a quasiquoted list"
+	  (w/instring fp "`(a b c)" (zread fp))
+	  (quasiquote (a b c)))
+
+	 ("Read unquote sym"
+	  (w/instring fp ",z" (zread fp))
+	  (unquote z))
+
+	 ("Read unquote list"
+	  (w/instring fp ",(a b c)" (zread fp))
+	  (unquote (a b c)))
+
+	 ("Read unquote splicing sym"
+	  (w/instring fp ",@@z" (zread fp))
+	  (unquote-splicing z))
+
+	 ("Read unquote-splicing list"
+	  (w/instring fp ",@@(a b c)" (zread fp))
+	  (unquote-splicing (a b c)))
 ))
