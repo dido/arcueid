@@ -55,4 +55,16 @@
 	 ("Read a bracket function"
 	  (w/instring fp "[idfn _]" (zread fp))
 	  (fn (_) (idfn _)))
+
+	 ("Read something that appears after a long, multiline comment"
+	  (w/instring fp "; a comment\n; more commentary\n; lorem ipsum dolor sit amet\nfoo" (zread fp))
+	  foo)
+
+	 ("Read a list with a comment in between"
+	  (w/instring fp "(a ; comment here\n; more comment\nb; lorem ipsum\n c)" (zread fp))
+	  (a b c))
+
+	 ("Read a bracket function with a comment inside"
+	  (w/instring fp "[a _; comment here\n; more comment\nb; lorem ipsum\n c]" (zread fp))
+	  (fn (_) (a _ b c)))
 ))
