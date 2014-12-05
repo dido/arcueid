@@ -188,37 +188,39 @@
 	   (err (+ "bad character constant: #\\" sym))))))
 
 ;; Read a string.
-(def readstring (fp eof)
+(def readstring (fp eof (o endch #\") (o metachar (fn (ch buf) nil)))
   (readc fp)
   (loop (state 0 ch (peekc fp) buf (outstring) digits nil)
 	(case state
 	  ;; normal characters
-	  0 (case ch
-	      #\" (recur 1 (readc fp) buf digits)
-	      #\\ (do (readc fp) (recur 2 (peekc fp) buf digits))
-	      (do (writec (readc fp) buf)
-		  (recur state (peekc fp) buf digits)))
+	  0 (if (is ch endch)
+		(recur 1 (readc fp) buf digits)
+		(is ch #\\) (do (readc fp) (recur 2 (peekc fp) buf digits))
+		(do (writec (readc fp) buf)
+		    (recur state (peekc fp) buf digits)))
 	  ;; end of string
 	  1 (inside buf)
 	  ;; escape sequence
 	  2 (let addesc [do (readc fp) (writec _ buf)
 			    (recur 0 (peekc fp) buf digits)]
-	      (case ch
-		#\a (addesc #\u0007)
-		#\b (addesc #\backspace)
-		#\t (addesc #\tab)
-		#\n (addesc #\newline)
-		#\v (addesc #\vtab)
-		#\f (addesc #\page)
-		#\r (addesc #\return)
-		#\e (addesc #\u001b)
-		#\" (addesc #\")
-		#\' (addesc #\')
-		#\\ (addesc #\\)
-		#\u (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 4)))
-		#\U (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 8)))
-		(if (and (digit ch) (< ch #\8)) (recur 3 ch buf (list 0 0))
-		    (err (+ "unknown escape sequence \\" ch " in string")))))
+	      (if (is ch endch) (addesc endch)
+		  (case ch
+		    #\a (addesc #\u0007)
+		    #\b (addesc #\backspace)
+		    #\t (addesc #\tab)
+		    #\n (addesc #\newline)
+		    #\v (addesc #\vtab)
+		    #\f (addesc #\page)
+		    #\r (addesc #\return)
+		    #\e (addesc #\u001b)
+		    #\' (addesc #\')
+		    #\\ (addesc #\\)
+		    #\u (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 4)))
+		    #\U (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 8)))
+		    (if (metachar ch buf)
+			(do (readc fp) (recur 0 (peekc fp) buf digits))
+			(and (digit ch) (< ch #\8)) (recur 3 ch buf (list 0 0))
+			(err (+ "unknown escape sequence \\" ch " in string"))))))
 	  ;; octal escape sequence
 	  3
 	  (let (value ndigits) digits
@@ -245,3 +247,29 @@
 		(do (writec (coerce value 'char) buf)
 		    (recur 0 ch buf nil))))
 	  (err "FATAL: invalid readstring state"))))
+
+;; Unique to Arcueid.  Not supported by regular Arc.
+(def readregex (fp eof)
+  ;; This metachar function permits recognition of the regular expression
+  ;; escape sequences.  Otherwise, the only way to enter them would be to
+  ;; prefix them with double rather than single slashes.
+  (withs (metachar
+	  (fn (ch buf)
+	      (if (in ch #\[ #\^ #\$ #\. #\| #\? #\* #\+ #\( #\) #\{ #\})
+		  (do (writec #\\ buf) (writec ch buf) t)
+		  nil))
+	  rx (readstring fp eof #\/ metachar))
+	 ;; Now we have to determine what flags are defined.  Arcueid
+	 ;; recognises the i and m flags which denote case-insensitive
+	 ;; and multiline regexes respectively.  They may only be specified
+	 ;; exactly once.
+	 (loop (iflag nil mflag nil)
+	       (case (peekc fp)
+		 #\i (if iflag (err "case-insensitive flag specified more than once")
+			 (do (readc fp) (recur t mflag)))
+		 #\m (if mflag (err "multiline flag specified more than once")
+			 (do (readc fp) (recur iflag t)))
+		 (if (and iflag mflag) (mkregexp rx 3)
+		     iflag (mkregexp rx 2)
+		     mflag (mkregexp rx 1)
+		     (mkregexp rx 0))))))
