@@ -116,7 +116,7 @@
 	(scan fp)
 	(let ch (peekc fp)
 	  (if (no ch) eof
-	      (is ch #\]) `(fn (_) ,top)
+	      (is ch #\]) (do (readc fp) `(fn (_) ,top))
 	      (ccc (fn (k)
 		       (let val (zread fp eof
 				       [if (is _ #\]) (k `(fn (_), top))
