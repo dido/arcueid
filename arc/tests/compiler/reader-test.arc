@@ -163,4 +163,9 @@
 	 ("Read unquote-splicing list"
 	  (w/instring fp ",@@(a b c)" (zread fp))
 	  (unquote-splicing (a b c)))
+
+	 ("Read characters"
+	  (w/instring fp "(#\\a #\\b #\\c #\\nul #\\backspace #\\tab #\\newline #\\linefeed #\\vtab #\\page #\\return #\\space #\\rubout #\\377 #\\u9f8d #\\龍)" (zread fp))
+	  (#\a #\b #\c #\nul #\backspace #\tab #\newline #\linefeed #\vtab #\page #\return #\space #\rubout #\377 #\u9f8d #\龍))
+		      
 ))
