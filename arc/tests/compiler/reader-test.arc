@@ -167,5 +167,16 @@
 	 ("Read characters"
 	  (w/instring fp "(#\\a #\\b #\\c #\\nul #\\backspace #\\tab #\\newline #\\linefeed #\\vtab #\\page #\\return #\\space #\\rubout #\\377 #\\u9f8d #\\龍)" (zread fp))
 	  (#\a #\b #\c #\nul #\backspace #\tab #\newline #\linefeed #\vtab #\page #\return #\space #\rubout #\377 #\u9f8d #\龍))
-		      
+
+	 ("Read a string"
+	  (w/instring fp "\"cwm fjord bank glyphs vext quiz 龍\\a\\b\\t\\n\\v\\f\\r\\e\\\"\\'\\\\\"" (zread fp))
+	  "cwm fjord bank glyphs vext quiz 龍\a\b\t\n\v\f\r\e\"\'\\")
+
+	 ("Octal escape sequences"
+	  (w/instring fp "\"\\377\1234\\728\"" (zread fp))
+	  "\377S4:8")
+
+	 ("Unicode escape sequences"
+	  (w/instring fp "\"\\u9f8dd\u1d107\U1d107\U00009f8de\"" (zread fp))
+	  "龍dᴐ7𝄇龍e")
 ))
