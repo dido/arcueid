@@ -16,7 +16,8 @@
 ;; License along with this library; if not, see <http://www.gnu.org/licenses/>
 ;;
 ;; An Arc reader that depends on only the presence of the readc and peekc
-;; functions.
+;; functions.  Instring and outstring are also used.
+;;
 
 ;; Parse one s-expression from src.  Returns the s-expression.
 (def zread (src (o eof nil) (o rparen [err "misplaced " _]))
@@ -166,21 +167,81 @@
 (def readchar (fp eof)
   (readc fp)
   (let sym (getsymbol fp)
-    (if (is (len sym) 1) (sym 0)
-	(case sym
-	  "null" #\null
-	  "nul" #\nul
-	  "backspace" #\backspace
-	  "tab" #\tab
-	  "newline" #\newline
-	  "linefeed" #\linefeed
-	  "vtab" #\vtab
-	  "page" #\page
-	  "return" #\return
-	  "space" #\space
-	  "rubout" #\rubout
-	  (aif (or (string->num sym 8)
-		   (and (in (sym 0) #\u #\U)
-			(string->num (substring sym 1) 16)))
-	       (coerce it 'char)
-	       (err (+ "bad character constant: #\\" sym)))))))
+    (case sym
+      "null" #\null
+      "nul" #\nul
+      "backspace" #\backspace
+      "tab" #\tab
+      "newline" #\newline
+      "linefeed" #\linefeed
+      "vtab" #\vtab
+      "page" #\page
+      "return" #\return
+      "space" #\space
+      "rubout" #\rubout
+      (aif (or (string->num sym 8)
+	       (and (in (sym 0) #\u #\U)
+		    (string->num (substring sym 1) 16)))
+	   (coerce it 'char)		; Unicode escape
+	   (is (len sym 1))
+	   (sym 0)			; plain char
+	   (err (+ "bad character constant: #\\" sym))))))
+
+;; Read a string.
+(def readstring (fp eof)
+  (readc fp)
+  (loop (state 0 ch (peekc fp) buf (outstring) digits nil)
+	(case state
+	  ;; normal characters
+	  0 (case ch
+	      #\" (recur 1 (readc fp) buf digits)
+	      #\\ (do (readc fp) (recur 2 (peekc fp) buf digits))
+	      (do (writec (readc fp) buf)
+		  (recur state (peekc fp) buf digits)))
+	  ;; end of string
+	  1 (inside buf)
+	  ;; escape sequence
+	  2 (let addesc [do (readc fp) (writec _ buf)
+			    (recur 0 (peekc fp) buf digits)]
+	      (case ch
+		#\a (addesc #\u0007)
+		#\b (addesc #\backspace)
+		#\t (addesc #\tab)
+		#\n (addesc #\newline)
+		#\v (addesc #\vtab)
+		#\f (addesc #\page)
+		#\r (addesc #\return)
+		#\e (addesc #\u001b)
+		#\" (addesc #\")
+		#\' (addesc #\')
+		#\\ (addesc #\\)
+		#\u (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 4)))
+		#\U (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 8)))
+		(if (and (digit ch) (< ch #\8)) (recur 3 ch buf (list 0 0))
+		    (err (+ "unknown escape sequence \\" ch " in string")))))
+	  ;; octal escape sequence
+	  3
+	  (let (value ndigits) digits
+	    (if (and (digit ch) (< ch #\8) (< ndigits 3))
+		(do (readc fp)
+		    (recur state (peekc fp) buf
+			   (list (+ (* value 8) (- (int ch) 48))
+				 (+ ndigits 1))))
+		;; terminate
+		(do (writec (coerce value 'char) buf)
+		    (recur 0 ch buf nil))))
+	  4
+	  (if (hexdigit ch) (recur 5 ch buf digits)
+	      (err "no hex digit following Unicode escape in string"))
+	  5
+	  (let (value ndigits max) digits
+	    (if (and (< ndigits max) (hexdigit ch))
+		(let val (if (digit ch)
+			     (- (int ch) 48)
+			     (- (int:downcase ch) 87))
+		  (readc fp)
+		  (recur state (peekc fp) buf
+			 (list (+ (* value 16) val) (+ ndigits 1) max)))
+		(do (writec (coerce value 'char) buf)
+		    (recur 0 ch buf nil))))
+	  (err "FATAL: invalid readstring state"))))
