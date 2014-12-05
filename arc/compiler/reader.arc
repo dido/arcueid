@@ -86,27 +86,26 @@
   (loop (top nil last nil indot nil)
 	(scan fp)
 	(let ch (peekc fp)
-	  (if (no ch) eof
-	      (case ch
-		#\) (do (readc fp) top)
-		#\. (if indot (err "illegal use of .")
-			(do (readc fp) (recur top last 1)))
-		(ccc
-		 (fn (k)
-		     (let val (zread fp eof
-				     [if (is _ #\)) (k top)
-					 (err "misplaced " _)])
-		       (if (is indot 1)
-			   (if (no last) (err "illegal use of .")
-			       (do (scdr last val)
-				   (recur top last 2)))
-			   (is indot 2) (err "illegal use of .")
-			   (no last)
-			   (let mytop (cons val nil)
-			     (recur mytop mytop indot))
-			   (let mylast (cons val nil)
-			     (scdr last mylast)
-			     (recur top mylast indot)))))))))))
+	  (if (no ch) (err "unterminated list meets end of file")
+	      (is ch #\.)
+	      (if indot (err "illegal use of .")
+		  (do (readc fp) (recur top last 1)))
+	      (ccc
+	       (fn (k)
+		   (let val (zread fp eof
+				   [if (is _ #\)) (k top)
+				       (err "misplaced " _)])
+		     (if (is indot 1)
+			 (if (no last) (err "illegal use of .")
+			     (do (scdr last val)
+				 (recur top last 2)))
+			 (is indot 2) (err "illegal use of .")
+			 (no last)
+			 (let mytop (cons val nil)
+			   (recur mytop mytop indot))
+			 (let mylast (cons val nil)
+			   (scdr last mylast)
+			   (recur top mylast indot))))))))))
 
 ;; Read an Arc square bracketed anonymous function. This expands
 ;; [ ... _ ... ] to (fn (_) (... _ ...))
@@ -115,8 +114,7 @@
   (loop (top nil last nil)
 	(scan fp)
 	(let ch (peekc fp)
-	  (if (no ch) eof
-	      (is ch #\]) (do (readc fp) `(fn (_) ,top))
+	  (if (no ch) (err "unterminated bracket fn meets end of file")
 	      (ccc (fn (k)
 		       (let val (zread fp eof
 				       [if (is _ #\]) (k `(fn (_), top))
