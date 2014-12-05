@@ -26,12 +26,6 @@
 					 (getsymbol fp)))
 	  ("foo" "123"))
 
-	 ;; ("Read a simple regex"
-	 ;;  (w/instring fp "#r/foo/" (let rx (getsymbol fp)
-	 ;; 			    (list (type rx)
-	 ;; 				  (rep rx))))
-	 ;;  (regexp ("foo" . 0)))
-
 	 ("Read two symbols with numeric conversion"
 	  (w/instring fp "foo 123 " (list (zread fp) (zread fp)))
 	  (foo 123))
@@ -179,4 +173,36 @@
 	 ("Unicode escape sequences"
 	  (w/instring fp "\"\\u9f8dd\u1d107\U1d107\U00009f8de\"" (zread fp))
 	  "龍dᴐ7𝄇龍e")
+
+	 ("Basic regex"
+	  (w/instring fp "#/foo\\[/" (let rx (zread fp)
+				    (list (type rx)
+					  (rep rx))))
+	  (regexp ("foo\\[" . 0)))
+
+	 ("Regex with multiline flag"
+	  (w/instring fp "#/foo\\[/m" (let rx (zread fp)
+				    (list (type rx)
+					  (rep rx))))
+	  (regexp ("foo\\[" . 1)))
+
+	 ("Regex with case insensitive flag"
+	  (w/instring fp "#/foo\\[/i" (let rx (zread fp)
+				    (list (type rx)
+					  (rep rx))))
+	  (regexp ("foo\\[" . 2)))
+
+	 ("Regex with both multiline and insensitive flags"
+	  (w/instring fp "#/foo\\[/mi" (let rx (zread fp)
+				    (list (type rx)
+					  (rep rx))))
+	  (regexp ("foo\\[" . 3)))
+
+	 ("Regex with both insensitive and multiline flags"
+	  (w/instring fp "#/foo\\[/im" (let rx (zread fp)
+				    (list (type rx)
+					  (rep rx))))
+	  (regexp ("foo\\[" . 3)))
+
+
 ))
