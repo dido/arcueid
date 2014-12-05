@@ -88,5 +88,5 @@
   (annotate 'regexp (cons rx flags)))
 
 ;; Uses Racket's string->number
-(def string->num (s)
-  ($ (let ((n (string->number s))) (if n n 'nil))))
+(def string->num (s (o radix 10))
+  ($ (let ((n (string->number s radix))) (if n n 'nil))))
