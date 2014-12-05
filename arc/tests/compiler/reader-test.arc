@@ -27,7 +27,7 @@
 	  ("foo" "123"))
 
 	 ;; ("Read a simple regex"
-	 ;;  (w/instring fp "r/foo/" (let rx (getsymbol fp)
+	 ;;  (w/instring fp "#r/foo/" (let rx (getsymbol fp)
 	 ;; 			    (list (type rx)
 	 ;; 				  (rep rx))))
 	 ;;  (regexp ("foo" . 0)))
@@ -60,12 +60,36 @@
 	  (w/instring fp "; a comment\n; more commentary\n; lorem ipsum dolor sit amet\nfoo" (zread fp))
 	  foo)
 
+	 ("Read something that appears after a long, multiline comment (style 2)"
+	  (w/instring fp "#! a comment\n#! more commentary\n#! lorem ipsum dolor sit amet\nfoo" (zread fp))
+	  foo)
+
+	 ("Read something that appears after a block comment"
+	  (w/instring fp "#| a comment\nmore commentary\nlorem ipsum dolor sit amet|#foo" (zread fp))
+	  foo)
+
 	 ("List with comments interspersed"
 	  (w/instring fp "(a ; comment here\n; more comment\nb; lorem ipsum\n c ; another comment\n)" (zread fp))
 	  (a b c))
-	  
+
+	 ("List with comments interspersed (style 2)"
+	  (w/instring fp "(a #! comment here\n#! more comment\nb #! lorem ipsum\n c ; another comment\n)" (zread fp))
+	  (a b c))
+
+	 ("List with block comments"
+	  (w/instring fp "(a #| comment here\nmore comment |#b #| lorem ipsum |#c #| another comment |#)" (zread fp))
+	  (a b c))
+
 	 ("Bracket function with comments interspersed"
 	  (w/instring fp "[a _; comment here\n; more comment\nb; lorem ipsum\n c; more comments\n]" (zread fp))
+	  (fn (_) (a _ b c)))
+
+	 ("Bracket function with comments interspersed (style 2)"
+	  (w/instring fp "[a _ #! comment here\n#! more comment\nb #! lorem ipsum\n c #! more comments\n]" (zread fp))
+	  (fn (_) (a _ b c)))
+
+	 ("Bracket function with block comments"
+	  (w/instring fp "[a _ #| comment here\nmore comment |#b #| lorem ipsum |#c #| another comment |#]" (zread fp))
 	  (fn (_) (a _ b c)))
 
 	 ("Read empty"
