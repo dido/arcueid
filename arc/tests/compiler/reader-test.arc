@@ -26,11 +26,11 @@
 					 (getsymbol fp)))
 	  ("foo" "123"))
 
-	 ("Read a simple regex"
-	  (w/instring fp "r/foo/" (let rx (getsymbol fp)
-				    (list (type rx)
-					  (rep rx))))
-	  (regexp ("foo" . 0)))
+	 ;; ("Read a simple regex"
+	 ;;  (w/instring fp "r/foo/" (let rx (getsymbol fp)
+	 ;; 			    (list (type rx)
+	 ;; 				  (rep rx))))
+	 ;;  (regexp ("foo" . 0)))
 
 	 ("Read two symbols with numeric conversion"
 	  (w/instring fp "foo 123 " (list (zread fp) (zread fp)))
@@ -60,12 +60,12 @@
 	  (w/instring fp "; a comment\n; more commentary\n; lorem ipsum dolor sit amet\nfoo" (zread fp))
 	  foo)
 
-	 ("Read a list with a comment in between"
-	  (w/instring fp "(a ; comment here\n; more comment\nb; lorem ipsum\n c)" (zread fp))
+	 ("List with comments interspersed"
+	  (w/instring fp "(a ; comment here\n; more comment\nb; lorem ipsum\n c ; another comment\n)" (zread fp))
 	  (a b c))
-
-	 ("Read a bracket function with a comment inside"
-	  (w/instring fp "[a _; comment here\n; more comment\nb; lorem ipsum\n c]" (zread fp))
+	  
+	 ("Bracket function with comments interspersed"
+	  (w/instring fp "[a _; comment here\n; more comment\nb; lorem ipsum\n c; more comments\n]" (zread fp))
 	  (fn (_) (a _ b c)))
 
 	 ("Read empty"
