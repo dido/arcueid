@@ -136,7 +136,12 @@
 	    (recur (readc fp)))))
 
 ;; Read block comments.  Keep reading and just ignore everything until
-;; we see a #|
+;; we see a |#
+(def readblockcomment (fp)
+  (readc fp)
+  (loop (r (readc fp))
+	(if (and (is r #\|) (is (peekc fp) #\#)) (readc fp)
+	    (recur (readc fp)))))
 
 ;; Read some quote qsym.
 (def readquote (fp eof qsym)
