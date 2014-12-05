@@ -25,9 +25,9 @@
 	   (case ch
 	     nil readeof
 	     #\( readlist
-	     #\) (rparen ch)
+	     #\) (rparen (readc fp))
 	     #\[ readbrfn
-	     #\] (rparen ch)
+	     #\] (rparen (readc fp))
 	     #\' (do (readc fp) (fn (f e) (readquote f e 'quote)))
 	     #\` (do (readc fp) (fn (f e) (readquote f e 'quasiquote)))
 	     #\, readcomma
@@ -38,7 +38,7 @@
 		       #\\ readchar
 		       #\| (do (readblockcomment fp) (recur (scan fp)))
 		       #\! (do (readcomment fp) (recur (scan fp)))
-		       #\; (do (readsexprcomment fp) (recur (scan fp)))
+		       #\; (do (readsexprcomment fp eof) (recur (scan fp)))
 		       ;; #\( readvector
 		       #'< (do (readc fp)
 			       (if (is (peekc fp) #\<) readheredoc
@@ -88,7 +88,7 @@
 	(let ch (peekc fp)
 	  (if (no ch) eof
 	      (case ch
-		#\) top
+		#\) (do (readc fp) top)
 		#\. (if indot (err "illegal use of .")
 			(do (readc fp) (recur top last 1)))
 		(ccc
@@ -132,16 +132,27 @@
 ;; file.
 (def readcomment (fp)
   (loop (r (readc fp))
-	(if (or (no r) (in r #\return #\newline)) r
+	(if (or (no r) (in r #\return #\newline #\u2028 #\u2029)) r
 	    (recur (readc fp)))))
 
 ;; Read block comments.  Keep reading and just ignore everything until
-;; we see a |#
+;; we see a |#.
 (def readblockcomment (fp)
   (readc fp)
-  (loop (r (readc fp))
-	(if (and (is r #\|) (is (peekc fp) #\#)) (readc fp)
-	    (recur (readc fp)))))
+  (loop (r (readc fp) nestlevel 0)
+	(if (and (is r #\|) (is (peekc fp) #\#))
+	    (do (readc fp)
+		(if (is nestlevel 0)
+		    (peekc fp)
+		    (recur (readc fp) (- nestlevel 1))))
+	    (and (is r #\#) (is (peekc fp) #\|))
+	    (do (readc fp) (recur (readc fp) (+ nestlevel 1)))
+	    (recur (readc fp) nestlevel))))
+
+;; Read a sexpr comment.  Does a single read and ignores it.
+(def readsexprcomment (fp eof)
+  (readc fp)			; remove the extra #\;
+  (zread fp eof))
 
 ;; Read some quote qsym.
 (def readquote (fp eof qsym)
