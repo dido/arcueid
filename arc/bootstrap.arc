@@ -90,3 +90,6 @@
 ;; Uses Racket's string->number
 (def string->num (s (o radix 10))
   ($ (let ((n (string->number s radix))) (if n n 'nil))))
+
+;; Strange that this was omitted
+(def hexdigit (c) (or (digit c) (<= #\a c #\f) (<= #\A c #\F)))
