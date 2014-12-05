@@ -161,3 +161,26 @@
   (let qsym (if (is (peekc fp) #\@) (do (readc fp) 'unquote-splicing)
 		'unquote)
     (readquote fp eof qsym)))
+
+;; Read a character.  XXX -- no limits yet on digits for Unicode escapes
+(def readchar (fp eof)
+  (readc fp)
+  (let sym (getsymbol fp)
+    (if (is (len sym) 1) (sym 0)
+	(case sym
+	  "null" #\null
+	  "nul" #\nul
+	  "backspace" #\backspace
+	  "tab" #\tab
+	  "newline" #\newline
+	  "linefeed" #\linefeed
+	  "vtab" #\vtab
+	  "page" #\page
+	  "return" #\return
+	  "space" #\space
+	  "rubout" #\rubout
+	  (aif (or (string->num sym 8)
+		   (and (in (sym 0) #\u #\U)
+			(string->num (substring sym 1) 16)))
+	       (coerce it 'char)
+	       (err (+ "bad character constant: #\\" sym)))))))
