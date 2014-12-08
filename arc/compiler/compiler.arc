@@ -18,13 +18,51 @@
 
 (def acc (nexpr ctx env cont)
   (let expr (macex nexpr)
-    (if (no expr) (do (acc-gen ctx 'inil) (acc-cont ctx cont))
-	(is expr t) (do (acc-gen ctx 'itrue) (acc-cont ctx cont))
-	(ssyntax expr) (ac (ssexpand expr) ctx env cont)
-	(fixnump expr) (do (acc-gen ctx 'ildi expr) (acc-cont ctx cont))
-	(isa expr 'sym) (acc-sym expr ctx env cont)
-	(atom expr) (acc-literal expr ctx env cont)
-	(isa expr 'cons) (acc-call expr ctx env cont)
+    (if (no expr)
+	(do (acc-gen ctx 'inil) (acc-cont ctx cont))
+	(is expr t)
+	(do (acc-gen ctx 'itrue) (acc-cont ctx cont))
+
+	(ssyntax expr)
+	(ac (ssexpand expr) ctx env cont)
+
+	(fixnump expr)
+	(do (acc-gen ctx 'ildi expr) (acc-cont ctx cont))
+
+	(isa expr 'sym)
+	(acc-sym expr ctx env cont)
+
+	(atom expr)
+	(acc-literal expr ctx env cont)
+
+	(is (car expr) 'if)
+	(acc-if (cdr expr) ctx env cont)
+
+	(is (car expr) 'quote)
+	(do (acc-gen ctx 'ildl (acc-getliteral (cadr expr) ctx))
+	    (acc-cont ctx cont))
+
+	;; Note: quasiquote is a macro, and is handled by the macro code
+	(is (car expr) 'fn)
+	(acc-fn (cadr expr) (cddr expr) ctx env cont)
+
+	(is (car expr) 'assign)
+	(acc-assign (cdr expr) ctx env cont)
+	;; the next three clauses could be removed without changing semantics
+	;; ... except that they work for macros (so prob should do this for
+	;; every elt of s, not just the car)
+	(is (car (car expr)) 'compose)
+	(acc (acc-decompose (cdar expr) (cdr expr)) ctx env cont)
+
+	(is (car (car expr)) 'complement)
+	(acc (list 'no (cons (cadar expr) (cdr expr))) ctx env cont)
+
+	(is (car (car expr)) 'andf)
+	(acc (acc-andf expr) ctx env cont)
+
+	(isa expr 'cons)
+	(acc-call (car expr) (cdr expr) ctx env cont)
+
 	(acc-compile-error "invalid expression" expr))))
 
 (def acc-cont (ctx cont)
@@ -42,21 +80,30 @@
   (acc-gen ctx 'ildl (acc-getliteral expr ctx))
   (acc-cont ctx cont))
 
-(def acc-call (expr ctx env cont)
-  (if (is (car expr) 'quote) (acc-getliteral (cadr expr) ctx)
-      ;; quasiquote is a macro, see below
-      ;; (is (car expr) 'quasiquote) (acc-qq expr ctx env cont)
-      (is (car expr) 'if) (acc-if (cdr expr) ctx env cont)
-      (is (car expr) 'fn) (acc-fn (cadr expr) (cddr expr) ctx env cont)
-      (is (car expr) 'assign) (acc-assign (cdr expr) ctx env cont)
-      ;; the next three clauses could be removed without changing semantics
-      ;; ... except that they work for macros (so prob should do this for
-      ;; every elt of s, not just the car)
-      (is (car (car expr)) 'compose) (acc (acc-decompose (cdar expr) (cdr expr)) ctx env cont)
-      (is (car (car expr)) 'complement) (acc (list 'no (cons (cadar expr) (cdr expr))) ctx env cont)
-      (is (car (car expr)) 'andf) (acc (acc-andf expr) ctx env cont)
-      (isa expr 'cons) (acc-call (car expr) (cdr expr) ctx env cont)
-      ((acc-compile-error "Bad object in expression" expr))))
+(def acc-call (fname args ctx env cont)
+  ;; First case, macro call.  Apply the macro by calling it
+  (if (and (isa fname 'sym) (macrop fname))
+      (acc (apply fname args) ctx env cont)
+      ;; Ordinary function call, do the following things:
+      ;; 1. If cont is nil, create a new continuation with icont, otherwise
+      ;;    tail call, no continuation.
+      ;; 2. Compile each argument plus a push instruction.
+      ;; 3. Compile the function name, loading it into the valr
+      ;; 4. On tail calls, generate imenv to overwrite current env with
+      ;;    values on stack.
+      ;; 4. Generate apply instruction.
+      ;; 5. If not a tail call, adjust offset of icont.
+      (with (contaddr (if (no cont) (do (acc-gen ctx 'icont 0)
+					(acc-codeptr ctx)))
+	     nargs (len args))
+	(each arg args
+	      (acc arg ctx env nil)
+	      (acc-gen ctx 'ipush))
+	(acc fname ctx env nil)
+	(if cont (acc-gen ctx 'imenv nargs))
+	(acc-gen ctx 'iapply nargs)
+	(if contaddr (acc-patch ctx (+ contaddr 1)
+				(- (acc-codeptr ctx) contaddr))))))
 
 (def acc-decompose (fns args)
   (if (no fns) `((fn vals (car vals)) ,@args)
@@ -75,7 +122,7 @@
 		(do (acc (car args) ctx env nil)
 		    (let jumpaddr (acc-codeptr ctx)
 		      (acc-gen ctx 'ijf 0)
-		      (compile (cadr args) ctx env nil)
+		      (acc (cadr args) ctx env nil)
 		      (let jumpaddr2 (acc-codeptr ctx)
 			(acc-gen ctx 'ijmp 0)
 			(acc-patch ctx (+ jumpaddr 1) (- (acc-codeptr ctx) jumpaddr))
@@ -83,7 +130,7 @@
 			(self (cddr args))
 			;; fix target address of jump
 			(acc-patch ctx (+ jumpaddr2 1)
-				   (- (code-ptr ctx) jumpaddr2))))))) expr)
+				   (- (acc-codeptr ctx) jumpaddr2))))))) expr)
       (acc-cont ctx cont)))
 
 (def acc-assign (expr ctx env cont)
