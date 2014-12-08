@@ -15,8 +15,20 @@
 ;; You should have received a copy of the GNU Lesser General Public
 ;; License along with this library; if not, see <http://www.gnu.org/licenses/>
 ;;
-;; An Arc reader that depends on only the presence of the readc and peekc
-;; functions.  Instring and outstring are also used.
+;; This version of the Arc reader depends only on the following foundation
+;; I/O functions being present:
+;;
+;; 1. instring
+;; 2. outstring
+;; 3. readc
+;; 4. peekc
+;; 5. writec
+;;
+;; Still unimplemented that are present in reference Arc (most of them
+;; artefacts of the Racket reader):
+;; 1. #i/#e/#x/#o/#d/#b prefixes for numbers
+;; 2. #<< syntax for here documents
+;; 3. Vectors (obviously not supported by reference Arc)
 ;;
 
 ;; Parse one s-expression from src.  Returns the s-expression.
@@ -41,9 +53,11 @@
 		       #\! (do (readcomment fp) (recur (scan fp)))
 		       #\; (do (readsexprcomment fp eof) (recur (scan fp)))
 		       ;; #\( readvector
-		       #'< (do (readc fp)
-			       (if (is (peekc fp) #\<) readheredoc
-				   (fn (fp eof) (readsym fp eof "#<"))))
+		       ;; #\< (do (readc fp)
+		       ;; 	       (if (is (peekc fp) #\<)
+		       ;; 		   (do (readc fp)
+		       ;; 		       readheredoc)
+		       ;; 		   (fn (fp eof) (readsym fp eof "#<"))))
 		       #\/ readregex
 		       (fn (fp eof) (readsym fp eof "#"))))
 	     #\; (do (readcomment fp) (recur (scan fp)))
@@ -78,8 +92,7 @@
 ;; return the symbol or a number if the symbol can be parsed as a number.
 (def readsym (fp eof (o prefix ""))
   (let mysym (+ prefix (getsymbol fp))
-    (aif (isa mysym 'regexp) mysym
-	 (string->num mysym) it
+    (aif (string->num mysym) it
 	 (sym mysym))))
 
 (def readlist (fp eof)
@@ -131,7 +144,7 @@
 ;; file.
 (def readcomment (fp)
   (loop (r (readc fp))
-	(if (or (no r) (in r #\return #\newline #\u2028 #\u2029)) r
+	(if (or (no r) (newlinec r)) r
 	    (recur (readc fp)))))
 
 ;; Read block comments.  Keep reading and just ignore everything until
@@ -273,3 +286,23 @@
 		     iflag (mkregexp rx 2)
 		     mflag (mkregexp rx 1)
 		     (mkregexp rx 0))))))
+
+;; (def readheredoc (fp eof)
+;;   ;; first, read the terminator string. Include the newline at the end.
+;;   (let terminator 
+;;       (loop (ch (peekc fp) buf (outstring))
+;; 	    (if (newlinec ch) (do (readc fp) (inside buf))
+;; 		(do (writec (readc fp) buf)
+;; 		    (recur (peekc fp) buf))))
+;;     ;; Now we have a state machine that will proceed until we see
+;;     ;; the terminator string on a line by itself
+;;     (loop (ch (peekc fp) str "" obuf (outstring))
+;; 	  (if (no ch) (err "unterminated heredoc meets end of file")
+;; 	      (newlinec ch) (let outstr (inside obuf)
+;; 			      (if (is outstr terminator) str
+;; 				  (do (readc fp)
+;; 				      (recur (peekc fp)
+;; 					     (+ str (inside obuf))
+;; 					     (outstring)))))
+;; 	      (do (writec (readc fp) obuf)
+;; 		  (recur (peekc fp) str obuf))))))
