@@ -21,7 +21,7 @@
     (if (no expr) (do (acc-gen ctx 'inil) (acc-cont ctx cont))
 	(is expr t) (do (acc-gen ctx 'itrue) (acc-cont ctx cont))
 	(ssyntax expr) (ac (ssexpand expr) ctx env cont)
-	(fixnump expr) (do (acc-gen expr ctx env cont) (acc-cont ctx cont))
+	(fixnump expr) (do (acc-gen ctx 'ildi expr) (acc-cont ctx cont))
 	(isa expr 'sym) (acc-sym expr ctx env cont)
 	(atom expr) (acc-literal expr ctx env cont)
 	(isa expr 'cons) (acc-call expr ctx env cont)
