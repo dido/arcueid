@@ -16,7 +16,9 @@
 ;; License along with this library; if not, see <http://www.gnu.org/licenses/>
 ;;
 (load "../../compiler/reader.arc")
+(load "../../compiler/compiler.arc")
 ;; comment this out when running on Arcueid
 (load "../../bootstrap.arc")
 
-(= tests '(reader-test))
+(= tests '(reader-test
+	   compiler-test))
