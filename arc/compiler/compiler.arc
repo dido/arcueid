@@ -148,15 +148,16 @@
 
 (def acc-fn (args body ctx env cont)
   (withs (nctx (acc-context) nenv (acc-args args nctx env))
-	 (if (no body) (do (acc-gen nctx 'inil) (acc-gen nctx 'iret))
-	     ((afn (body)
-		   (acc (car body) nctx nenv (no:cdr body))
-		   (self:cdr body)) body))
-	 ;; Make a literal with the new code object from the new compilation
-	 ;; context, and turn it into a closure.
-	 (acc-gen ctx 'ildl (acc-getliteral (acc-ctx2code nctx) ctx))
-	 (acc-gen ctx 'icls)
-	 (acc-cont ctx cont)))
+    (if (no body) (do (acc-gen nctx 'inil) (acc-gen nctx 'iret))
+	((afn (body)
+	   (if (no body) nil
+	       (do (acc (car body) nctx nenv (no:cdr body))
+		   (self:cdr body)))) body))
+    ;; Make a literal with the new code object from the new compilation
+    ;; context, and turn it into a closure.
+    (acc-gen ctx 'ildl (acc-getliteral (acc-ctx2code nctx) ctx))
+    (acc-gen ctx 'icls)
+    (acc-cont ctx cont)))
 
 ;; Find an environment frame number and offset given a variable name
 (def acc-find-var (var env (o level 0))
@@ -184,13 +185,13 @@
 	   (acc-gen ctx 'ienvr 0 0 0))
       (~isa args 'cons) (acc-compile-error "invalid fn arg")
       (let envaddr (acc-codeptr ctx)
-	(acc-gen ctx 'ienv (len regargs) 0 0)
+	(acc-gen ctx 'ienv 0 0 0)
 	(let (nenv regargc dsbargc oargc restarg)
-	  ;; Destructuring binds appear after all arguments, but before
-	  ;; a possible rest argument, so we count all args except for
-	  ;; the last.
-	  (let dsbi ((afn (a l) (if (atom a) l (self (cdr a) (+ 1 l)))) args 0)
-	    (acc-processargs args env ctx dsbi))
+	    ;; Destructuring binds appear after all arguments, but before
+	    ;; a possible rest argument, so we count all args except for
+	    ;; the last.
+	    (let dsbi ((afn (a l) (if (atom a) l (self (cdr a) (+ 1 l)))) args 0)
+	      (acc-processargs args env ctx dsbi))
 	  ;; After processing the arguments, we need to patch the instruction
 	  ;; as needed.
 	  (acc-patch ctx (+ 1 envaddr) regargc)
