@@ -69,4 +69,32 @@
 	 ("lambda abstraction, basic"
 	  (acc  '(fn (x) x) (acc-context) nil nil)
 	  ((ildl 0 icls) ((ienv 1 0 0 ilde 0 0 iret))))
+
+	 ("lambda abstraction, null"
+	  (acc '(fn (x) ) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienv 1 0 0 inil iret))))
+
+	 ("lambda abstraction multiple args 1"
+	  (acc '(fn (x y z) x) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienv 3 0 0 ilde 0 0 iret))))
+
+	 ("lambda abstraction multiple args 2"
+	  (acc '(fn (x y z) y) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienv 3 0 0 ilde 0 1 iret))))
+
+	 ("lambda abstraction multiple args 3"
+	  (acc '(fn (x y z) z) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienv 3 0 0 ilde 0 2 iret))))
+
+	 ("lambda abstraction rest args 1"
+	  (acc '(fn (x . y) x) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienvr 1 0 0 ilde 0 0 iret))))
+
+	 ("lambda abstraction rest args 2"
+	  (acc '(fn (x . y) y) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienvr 1 0 0 ilde 0 1 iret))))
+
+	 ("lambda abstraction destructuring binds"
+	  (acc '(fn (x (y z) w) x) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienv 2 2 0 ilde0 1 ipush idcar iste0 3 ipop idcdr idcar iste0 4 ilde 0 0 iret))))
 ))
