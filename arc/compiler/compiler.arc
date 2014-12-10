@@ -257,8 +257,8 @@
 			      (+ 1 idx) regargc dsbargc (+ 1 optargc))))
       ;; Destructuring bind argument.
       (isa (car args) 'cons)
-      (if (is optarg 0)
-	  (acc-dsbind (car args) (cdr args) env ctx nenv dsbdix idx
+      (if (is optargc 0)
+	  (acc-dsbind (car args) (cdr args) env ctx nenv dsbidx idx
 		     regargc dsbargc optargc)
 	  (acc-compile-error "non-optional arg found after optional args"))
       (acc-compile-error "invalid fn arg")))
@@ -301,13 +301,11 @@
 
       ;; Regular symbol arg
       (isa dsarg 'sym)
-      (if optarg
-	  (acc-compile-error "non-optional arg found after optional args")
-	  (do (acc-gen ctx 'iste0 dsbidx)
-	      (list (+ 1 dsbidx) (+ 1 dsbargc)
-		    (cons (list dsarg dsbidx) nenv))))
+      (do (acc-gen ctx 'iste0 dsbidx)
+	  (list (+ 1 dsbidx) (+ 1 dsbargc)
+		(cons (list dsarg dsbidx) nenv)))
 
-      ;; non-conses after here are not valid
+      ;; non-conses other than symbols are not valid
       (no (isa dsarg 'cons))
       (acc-compile-error "invalid fn arg")
 
