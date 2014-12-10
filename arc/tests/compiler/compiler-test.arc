@@ -65,4 +65,8 @@
 	 ("quote"
 	  (acc ''foo (acc-context) nil nil)
 	  ((ildl 0) . (foo)))
+
+	 ("lambda abstraction, basic"
+	  (acc  '(fn (x) x) (acc-context) nil nil)
+	  ((ildl 0 icls) ((ienv 1 0 0 ilde 0 0 iret))))
 ))
