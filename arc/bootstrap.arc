@@ -55,6 +55,10 @@
 (def acc-codeptr (ctx)
   (len (car ctx)))
 
+;; Use for testing only!
+(def acc-ctx2code (ctx)
+  ctx)
+
 ;; Patch an opcode at the provided offset.  Should be defined in the runtime.
 (def acc-patch (ctx offset value)
   (= ((car ctx) offset) value))
