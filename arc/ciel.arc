@@ -1,4 +1,4 @@
-;; Copyright (C) 2013 Rafael R. Sevilla
+;; Copyright (C) 2014 Rafael R. Sevilla
 ;;
 ;; This file is part of Arcueid
 ;;

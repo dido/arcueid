@@ -97,4 +97,9 @@
 	 ("lambda abstraction destructuring binds"
 	  (acc '(fn (x (y z) w) x) (acc-context) nil nil)
 	  ((ildl 0 icls) ((ienv 2 2 0 ilde0 1 ipush idcar iste0 3 ipop idcdr idcar iste0 4 ilde 0 0 iret))))
+
+	 ("lambda abstraction with optional args"
+	  (acc '(fn (x (o y)) y) (acc-context ) nil nil)
+	  ((ildl 0 icls) ((ienv 1 0 1 ilde0 1 ijbnd 5 inil iste0 1 ilde 0 1 iret))))
+
 ))
