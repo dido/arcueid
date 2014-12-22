@@ -30,7 +30,7 @@ import java.util.Random;
  * next higher POT size.
  * @author Nathan Sweet */
 public class LongMap<V> {
-	private static final int PRIME1 = 0xbe1f14b1;
+//	private static final int PRIME1 = 0xbe1f14b1;
 	private static final int PRIME2 = 0xb4b82e39;
 	private static final int PRIME3 = 0xced1c241;
 	private static final int EMPTY = 0;
@@ -48,9 +48,9 @@ public class LongMap<V> {
 	private int stashCapacity;
 	private int pushIterations;
 
-	private Entries entries1, entries2;
-	private Values values1, values2;
-	private Keys keys1, keys2;
+	private Entries<V> entries1, entries2;
+	private Values<V> values1, values2;
+	private Keys<V> keys1, keys2;
 
 	public static int nextPowerOfTwo (int value) {
 		if (value == 0) return 1;
@@ -84,6 +84,7 @@ public class LongMap<V> {
 
 	/** Creates a new map with the specified initial capacity and load factor. This map will hold initialCapacity * loadFactor items
 	 * before growing the backing table. */
+	@SuppressWarnings("unchecked")
 	public LongMap (int initialCapacity, float loadFactor) {
 		if (initialCapacity < 0) throw new IllegalArgumentException("initialCapacity must be >= 0: " + initialCapacity);
 		if (initialCapacity > 1 << 30) throw new IllegalArgumentException("initialCapacity is too large: " + initialCapacity);
@@ -513,6 +514,7 @@ public class LongMap<V> {
 		if (sizeNeeded >= threshold) resize(nextPowerOfTwo((int)(sizeNeeded / loadFactor)));
 	}
 
+	@SuppressWarnings("unchecked")
 	private void resize (int newSize) {
 		int oldEndIndex = capacity + stashSize;
 
@@ -581,8 +583,8 @@ public class LongMap<V> {
 	 * time this method is called. Use the {@link Entries} constructor for nested or multithreaded iteration. */
 	public Entries<V> entries () {
 		if (entries1 == null) {
-			entries1 = new Entries(this);
-			entries2 = new Entries(this);
+			entries1 = new Entries<V>(this);
+			entries2 = new Entries<V>(this);
 		}
 		if (!entries1.valid) {
 			entries1.reset();
@@ -600,8 +602,8 @@ public class LongMap<V> {
 	 * time this method is called. Use the {@link Entries} constructor for nested or multithreaded iteration. */
 	public Values<V> values () {
 		if (values1 == null) {
-			values1 = new Values(this);
-			values2 = new Values(this);
+			values1 = new Values<V>(this);
+			values2 = new Values<V>(this);
 		}
 		if (!values1.valid) {
 			values1.reset();
@@ -617,10 +619,10 @@ public class LongMap<V> {
 
 	/** Returns an iterator for the keys in the map. Remove is supported. Note that the same iterator instance is returned each time
 	 * this method is called. Use the {@link Entries} constructor for nested or multithreaded iteration. */
-	public Keys keys () {
+	public Keys<V> keys () {
 		if (keys1 == null) {
-			keys1 = new Keys(this);
-			keys2 = new Keys(this);
+			keys1 = new Keys<V>(this);
+			keys2 = new Keys<V>(this);
 		}
 		if (!keys1.valid) {
 			keys1.reset();
@@ -696,9 +698,9 @@ public class LongMap<V> {
 	}
 
 	static public class Entries<V> extends MapIterator<V> implements Iterable<Entry<V>>, Iterator<Entry<V>> {
-		private Entry<V> entry = new Entry();
+		private Entry<V> entry = new Entry<V>();
 
-		public Entries (LongMap map) {
+		public Entries (LongMap<V> map) {
 			super(map);
 		}
 
@@ -756,8 +758,8 @@ public class LongMap<V> {
 
 	}
 
-	static public class Keys extends MapIterator {
-		public Keys (LongMap map) {
+	static public class Keys<V> extends MapIterator<V> {
+		public Keys (LongMap<V> map) {
 			super(map);
 		}
 
