@@ -1,6 +1,9 @@
 package org.arcueid_arc.nekoarc.types;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+
+import org.arcueid_arc.nekoarc.util.IndexPhantomReference;
 import org.arcueid_arc.nekoarc.util.LongMap;
 import org.arcueid_arc.nekoarc.util.MurmurHash;
 
@@ -8,6 +11,25 @@ public class Symbol extends Atom
 {
 	public final String symbol;
 	private static final LongMap<WeakReference<Symbol>> symtable = new LongMap<WeakReference<Symbol>>();
+	private static final ReferenceQueue<Symbol> rq = new ReferenceQueue<Symbol>();
+
+	static {
+		// Thread that removes phantom references to fixnums
+		new Thread() {
+			public void run()
+			{
+				for (;;) {
+					try {
+						@SuppressWarnings("unchecked")
+						IndexPhantomReference<Symbol> ipr = (IndexPhantomReference<Symbol>) rq.remove();
+						symtable.remove(ipr.index);
+					} catch (InterruptedException e) {
+					}
+				}
+			}
+		}.start();
+	}
+	
 
 	private Symbol(String s)
 	{
@@ -33,6 +55,7 @@ public class Symbol extends Atom
 		}
 		sym = new Symbol(s);
 		symtable.put(hc, new WeakReference<Symbol>(sym));
+		new IndexPhantomReference<Symbol>(sym, rq, hc);
 		return(sym);
 	}
 }
