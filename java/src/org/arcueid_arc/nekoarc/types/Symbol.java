@@ -2,6 +2,7 @@ package org.arcueid_arc.nekoarc.types;
 
 import java.lang.ref.WeakReference;
 import org.arcueid_arc.nekoarc.util.LongMap;
+import org.arcueid_arc.nekoarc.util.MurmurHash;
 
 public class Symbol extends Atom
 {
@@ -15,9 +16,10 @@ public class Symbol extends Atom
 
 	private static long hash(String s)
 	{
-		return((long)s.hashCode());
+//		return((long)s.hashCode());
+		return(MurmurHash.hash(s));
 	}
-	
+
 	public static Symbol intern(String s)
 	{
 		Symbol sym;
