@@ -21,7 +21,7 @@ public class MurmurHash
 	/**
 	 * Hash a string, using default seed (hexadecimal pi, look I have nothing up my sleeve).
 	 */
-	public static long hash(String str)
+	public static long hash(final String str)
 	{
 		return(hash(str, 0x3243F6A8885A308DL));
 	}
@@ -31,7 +31,7 @@ public class MurmurHash
 	 * @param str the string to hash
 	 * @param seed the seed for the hash
 	 */
-	public static long hash(String str, long seed)
+	public static long hash(final String str, long seed)
 	{
 		final byte[] data;
 
@@ -61,7 +61,7 @@ public class MurmurHash
 		return(hash(tmpdata, seed));
 	}
 
-	private static long getblock(byte[] data, int i)
+	public static long getblock(byte[] data, int i)
 	{
 		return((((long) data[i + 0] & 0x00000000000000FFL) << 0)
 				| (((long) data[i + 1] & 0x00000000000000FFL) << 8)
@@ -76,24 +76,22 @@ public class MurmurHash
 	private static void bmix(State state)
 	{
 		state.k1 *= state.c1;
-		state.k1 = (state.k1 << 23) | (state.k1 >>> 64 - 23);
+		state.k1 = (state.k1 << 31) | (state.k1 >>> (64 - 31));
 		state.k1 *= state.c2;
 		state.h1 ^= state.k1;
-		state.h1 += state.h2;
 
-		state.h2 = (state.h2 << 41) | (state.h2 >>> 64 - 41);
+		state.h1 = (state.h1 << 27) | (state.h1 >>> (64 - 27));
+		state.h1 += state.h2;
+		state.h1 = state.h1*5 + 0x52dce729;
 
 		state.k2 *= state.c2;
-		state.k2 = (state.k2 << 23) | (state.k2 >>> 64 - 23);
+		state.k2 = (state.k2 << 33) | (state.k2 >>> (64 - 33));
 		state.k2 *= state.c1;
+		
 		state.h2 ^= state.k2;
+		state.h2 = (state.h2 << 31) | (state.h2 >>> (64 - 31));
 		state.h2 += state.h1;
-
-		state.h1 = state.h1 * 3 + 0x52dce729;
-		state.h2 = state.h2 * 3 + 0x38495ab5;
-
-		state.c1 = state.c1 * 5 + 0x7b7d159c;
-		state.c2 = state.c2 * 5 + 0x6bce6396;
+		state.h2 = state.h2 * 5 + 0x38495ab5;
 	}
 
 	private static long fmix(long k)
@@ -108,16 +106,16 @@ public class MurmurHash
 
 	public static long hash(final byte[] data, long seed)
 	{
-		state.h1 = 0x9368e53c2f6af274L ^ seed;
-		state.h2 = 0x586dcd208f7cd3fdL ^ seed;
+		// state.h1 = 0x9368e53c2f6af274L ^ seed;
+		// state.h2 = 0x586dcd208f7cd3fdL ^ seed;
+		state.h1 = state.h2 = seed;
 
 		state.c1 = 0x87c37b91114253d5L;
 		state.c2 = 0x4cf5ad432745937fL;
-
+	
 		for (int i = 0; i < data.length / 16; i++) {
 			state.k1 = getblock(data, i * 2 * 8);
 			state.k2 = getblock(data, (i * 2 + 1) * 8);
-
 			bmix(state);
 		}
 
@@ -132,6 +130,10 @@ public class MurmurHash
 			case 11: state.k2 ^= (long) data[tail + 10] << 16;
 			case 10: state.k2 ^= (long) data[tail + 9] << 8;
 			case 9: state.k2 ^= (long) data[tail + 8] << 0;
+			state.k2 *= state.c2;
+			state.k2 = (state.k2 << 33) | (state.k2 >>> (64 - 33));
+			state.k2 *= state.c1;
+			state.h2 ^= state.k2;
 			case 8: state.k1 ^= (long) data[tail + 7] << 56;
 			case 7: state.k1 ^= (long) data[tail + 6] << 48;
 			case 6: state.k1 ^= (long) data[tail + 5] << 40;
@@ -140,9 +142,13 @@ public class MurmurHash
 			case 3: state.k1 ^= (long) data[tail + 2] << 16;
 			case 2: state.k1 ^= (long) data[tail + 1] << 8;
 			case 1: state.k1 ^= (long) data[tail + 0] << 0;
-			bmix(state);
+			state.k1 *= state.c1;
+			state.k1 = (state.k1 << 31) | (state.k1 >>> (64 - 31));
+			state.k1 *= state.c2;
+			state.h1 ^= state.k1;
 		}
 
+		state.h1 ^= data.length;
 		state.h2 ^= data.length;
 
 	    state.h1 += state.h2;
