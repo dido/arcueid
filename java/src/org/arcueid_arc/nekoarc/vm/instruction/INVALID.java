@@ -1,14 +1,14 @@
 package org.arcueid_arc.nekoarc.vm.instruction;
 
-import org.arcueid_arc.nekoarc.NekoArcException;
+import org.arcueid_arc.nekoarc.InvalidInstructionException;
 import org.arcueid_arc.nekoarc.vm.VirtualMachine;
 
 public class INVALID implements Instruction {
 
 	@Override
-	public void invoke(VirtualMachine vm) throws NekoArcException
+	public void invoke(VirtualMachine vm) throws InvalidInstructionException
 	{
-		throw new NekoArcException();
+		throw new InvalidInstructionException();
 	}
 
 }
