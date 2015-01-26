@@ -1,6 +1,7 @@
 package org.arcueid_arc.nekoarc.vm;
 
 import org.arcueid_arc.nekoarc.NekoArcException;
+import org.arcueid_arc.nekoarc.Nil;
 import org.arcueid_arc.nekoarc.types.ArcObject;
 import org.arcueid_arc.nekoarc.vm.instruction.*;
 
@@ -11,11 +12,12 @@ public class VirtualMachine
 	private int ip;					// instruction pointer
 	private byte[] code;
 	private boolean runnable;
+	private ArcObject acc;			// accumulator
 	private static final INVALID NOINST = new INVALID();
 	private static final Instruction[] jmptbl = {
-		new NOP(),
-		new PUSH(),
-		new POP(),
+		new NOP(),		// 0x00
+		new PUSH(),		// 0x01
+		new POP(),		// 0x02
 		NOINST,
 		NOINST,
 		NOINST,
@@ -26,34 +28,34 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		NOINST,
-		new RET(),
+		new RET(),		// 0x0d
 		NOINST,
 		NOINST,
 		NOINST,
 		NOINST,
-		new TRUE(),
-		new NIL(),
-		new HLT(),
-		new ADD(),
-		new SUB(),
-		new MUL(),
-		new DIV(),
-		new CONS(),
-		new CAR(),
-		new CDR(),
-		new SCAR(),
-		new SCDR(),
+		new TRUE(),		// 0x12
+		new NIL(),		// 0x13
+		new HLT(),		// 0x14
+		new ADD(),		// 0x15
+		new SUB(),		// 0x16
+		new MUL(),		// 0x17
+		new DIV(),		// 0x18
+		new CONS(),		// 0x19
+		new CAR(),		// 0x1a
+		new CDR(),		// 0x1b
+		new SCAR(),		// 0x1c
+		new SCDR(),		// 0x1d
 		NOINST,
-		new IS(),
+		new IS(),		// 0x1f
 		NOINST,
 		NOINST,
-		new DUP(),
-		new CLS(),
-		new CONSR(),
+		new DUP(),		// 0x22
+		new CLS(),		// 0x23
+		new CONSR(),		// 0x24
 		NOINST,
-		new DCAR(),
-		new DCDR(),
-		new SPL(),
+		new DCAR(),		// 0x26
+		new DCDR(),		// 0x27
+		new SPL(),		// 0x28
 		NOINST,
 		NOINST,
 		NOINST,
@@ -80,21 +82,21 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		NOINST,
-		new LDL(),
-		new LDI(),
-		new LDG(),
-		new STG(),
+		new LDL(),		// 0x43
+		new LDI(),		// 0x44
+		new LDG(),		// 0x45
+		new STG(),		// 0x46
 		NOINST,
 		NOINST,
 		NOINST,
 		NOINST,
 		NOINST,
-		new APPLY(),
+		new APPLY(),		// 0x4c
 		NOINST,
-		new JMP(),
-		new JT(),
-		new JF(),
-		new JBND(),
+		new JMP(),		// 0x4e
+		new JT(),		// 0x4f
+		new JF(),		// 0x50
+		new JBND(),		// 0x51
 		NOINST,
 		NOINST,
 		NOINST,
@@ -114,12 +116,12 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		NOINST,
-		new MENV(),
+		new MENV(),		// 0x65
 		NOINST,
 		NOINST,
 		NOINST,
-		new LDE0(),
-		new STE0(),
+		new LDE0(),		// 0x69
+		new STE0(),		// 0x6a
 		NOINST,
 		NOINST,
 		NOINST,
@@ -148,9 +150,9 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		NOINST,
-		new LDE(),
-		new STE(),
-		new CONT(),
+		new LDE(),		// 0x87
+		new STE(),		// 0x88
+		new CONT(),		// 0x89
 		NOINST,
 		NOINST,
 		NOINST,
@@ -215,8 +217,8 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		NOINST,
-		new ENV(),
-		new ENVR(),
+		new ENV(),		// 0xca
+		new ENVR(),		// 0xcb
 		NOINST,
 		NOINST,
 		NOINST,
@@ -271,6 +273,7 @@ public class VirtualMachine
 		NOINST,
 	};
 
+	
 	public VirtualMachine(int stacksize)
 	{
 		sp = 0;
@@ -278,6 +281,7 @@ public class VirtualMachine
 		ip = 0;
 		code = null;
 		runnable = true;
+		setAcc(Nil.NIL);
 	}
 
 	public void load(final byte[] instructions, int ip)
@@ -323,5 +327,30 @@ public class VirtualMachine
 			val = (val << 8) | data;
 		}
 		return((int)((val << 1) >> 1));
+	}
+
+	public ArcObject getAcc()
+	{
+		return acc;
+	}
+
+	public void setAcc(ArcObject acc)
+	{
+		this.acc = acc;
+	}
+
+	public boolean runnable()
+	{
+		return(this.runnable);
+	}
+
+	public int getIp()
+	{
+		return ip;
+	}
+
+	public void setIp(int ip)
+	{
+		this.ip = ip;
 	}
 }
