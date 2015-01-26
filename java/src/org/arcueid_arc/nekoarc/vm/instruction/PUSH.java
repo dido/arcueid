@@ -3,12 +3,12 @@ package org.arcueid_arc.nekoarc.vm.instruction;
 import org.arcueid_arc.nekoarc.NekoArcException;
 import org.arcueid_arc.nekoarc.vm.VirtualMachine;
 
-public class PUSH implements Instruction {
-
+public class PUSH implements Instruction
+{
 	@Override
-	public void invoke(VirtualMachine vm) throws NekoArcException {
-		// TODO Auto-generated method stub
-
+	public void invoke(VirtualMachine vm) throws NekoArcException
+	{
+		vm.push(vm.getAcc());
 	}
 
 }
