@@ -8,6 +8,6 @@ public class NIL implements Instruction
 	@Override
 	public void invoke(VirtualMachine vm)
 	{
-		vm.push(Nil.NIL);
+		vm.setAcc(Nil.NIL);
 	}
 }
