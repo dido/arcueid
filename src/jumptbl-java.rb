@@ -17,7 +17,7 @@ end
 puts "private static final Instruction[] jmptbl = {"
 0.upto(255) do |opcode|
   if instructions.has_key?(opcode)
-    puts "new #{instructions[opcode]}(),"
+    puts "new #{instructions[opcode]}(),\t\t// #{"0x%02x" % opcode}"
   else
     puts "NOINST,"
   end
