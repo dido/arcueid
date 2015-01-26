@@ -9,6 +9,6 @@ public class LDI implements Instruction
 	public void invoke(VirtualMachine vm)
 	{
 		long value = vm.instArg();
-		vm.push(Fixnum.get(value));
+		vm.setAcc(Fixnum.get(value));
 	}
 }
