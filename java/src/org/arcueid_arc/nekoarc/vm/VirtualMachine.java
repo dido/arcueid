@@ -317,14 +317,14 @@ public class VirtualMachine
 			jmptbl[code[ip++]].invoke(this);
 	}
 
+	// Little endian
 	public int instArg()
 	{
 		long val = 0;
-		ip++;
 		int data;
 		for (int i=0; i<4; i++) {
 			data = (((int)code[ip++]) & 0xff);
-			val = (val << 8) | data;
+			val |= data << i*8;
 		}
 		return((int)((val << 1) >> 1));
 	}
