@@ -52,6 +52,24 @@ public class VirtualMachineTest {
 	}
 
 	@Test
+	public void testInstArg()
+	{
+		byte data[] = { 0x01, 0x00, 0x00, 0x00 };
+		VirtualMachine vm = new VirtualMachine(1024);
+
+		vm.load(data, 0);
+		assertEquals(1, vm.instArg());
+		
+		byte data2[] = { (byte) 0xff, 0x00, 0x00, 0x00 };
+		vm.load(data2, 0);
+		assertEquals(255, vm.instArg());
+
+		byte data3[] = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
+		vm.load(data3, 0);
+		assertEquals(-1, vm.instArg());
+	}
+
+	@Test
 	public void testLDI() throws NekoArcException
 	{
 		// ldi 1; hlt
@@ -63,7 +81,7 @@ public class VirtualMachineTest {
 		vm.run();
 		assertFalse(vm.runnable());
 		assertEquals(Fixnum.get(1), vm.getAcc());
-		assertEquals(2, vm.getIp());
+		assertEquals(6, vm.getIp());
 		
 	}
 }
