@@ -67,6 +67,16 @@ public class VirtualMachineTest {
 		byte data3[] = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 		vm.load(data3, 0);
 		assertEquals(-1, vm.instArg());
+
+		byte data4[] = { (byte) 0x5d, (byte) 0xc3, (byte) 0x1f, (byte) 0x21 };
+		vm.load(data4, 0);
+		assertEquals(555729757, vm.instArg());
+		
+		// two's complement negative
+		byte data5[] = { (byte) 0xa3, (byte) 0x3c, (byte) 0xe0, (byte) 0xde };
+		vm.load(data5, 0);
+		assertEquals(-555729757, vm.instArg());
+
 	}
 
 	@Test
