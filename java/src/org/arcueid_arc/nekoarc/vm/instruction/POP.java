@@ -6,9 +6,9 @@ import org.arcueid_arc.nekoarc.vm.VirtualMachine;
 public class POP implements Instruction {
 
 	@Override
-	public void invoke(VirtualMachine vm) throws NekoArcException {
-		// TODO Auto-generated method stub
-
+	public void invoke(VirtualMachine vm) throws NekoArcException
+	{
+		vm.setAcc(vm.pop());
 	}
 
 }
