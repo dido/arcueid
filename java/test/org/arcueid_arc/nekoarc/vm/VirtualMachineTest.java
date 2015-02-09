@@ -114,4 +114,21 @@ public class VirtualMachineTest {
 		assertEquals(6, vm.getIp());		
 	}
 
+	@Test
+	public void testPUSH() throws NekoArcException
+	{
+		// ldi 0; hlt
+		byte inst[] = { 0x44, (byte) 0x5d, (byte) 0xc3, (byte) 0x1f, (byte) 0x21, 0x01,
+				0x44, (byte) 0xa3, (byte) 0x3c, (byte) 0xe0, (byte) 0xde, 0x14 };
+		VirtualMachine vm = new VirtualMachine(1024);
+		vm.load(inst, 0);
+		vm.setAcc(Nil.NIL);
+		assertTrue(vm.runnable());
+		vm.run();
+		assertFalse(vm.runnable());
+		assertEquals(Fixnum.get(-555729757), vm.getAcc());
+		assertEquals(Fixnum.get(555729757), vm.pop());
+		assertEquals(12, vm.getIp());
+	}
+
 }
