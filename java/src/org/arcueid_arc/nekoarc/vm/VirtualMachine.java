@@ -351,18 +351,23 @@ public class VirtualMachine
 		return(this.runnable);
 	}
 
-	public int getIp()
+	public ArcObject literal(int offset)
+	{
+		return(literals[offset]);
+	}
+
+	public int getIP()
 	{
 		return ip;
 	}
 
-	public void setIp(int ip)
+	public void setIP(int ip)
 	{
 		this.ip = ip;
 	}
 
-	public ArcObject literal(int offset)
+	public int getSP()
 	{
-		return(literals[offset]);
+		return(sp);
 	}
 }
