@@ -4,7 +4,9 @@ import static org.junit.Assert.*;
 
 import org.arcueid_arc.nekoarc.NekoArcException;
 import org.arcueid_arc.nekoarc.Nil;
+import org.arcueid_arc.nekoarc.types.ArcObject;
 import org.arcueid_arc.nekoarc.types.Fixnum;
+import org.arcueid_arc.nekoarc.types.Symbol;
 import org.junit.Test;
 
 public class VirtualMachineTest {
@@ -94,4 +96,22 @@ public class VirtualMachineTest {
 		assertEquals(6, vm.getIp());
 		
 	}
+
+	@Test
+	public void testLDL() throws NekoArcException
+	{
+		// ldl 0; hlt
+		byte inst[] = { 0x43, 0x00, 0x00, 0x00, 0x00, 0x14 };
+		ArcObject literals[] = new ArcObject[1];
+		literals[0] = Symbol.intern("foo");
+		VirtualMachine vm = new VirtualMachine(1024);
+		vm.load(inst, 0, literals);
+		vm.setAcc(Nil.NIL);
+		assertTrue(vm.runnable());
+		vm.run();
+		assertFalse(vm.runnable());
+		assertEquals(Symbol.intern("foo"), vm.getAcc());
+		assertEquals(6, vm.getIp());		
+	}
+
 }
