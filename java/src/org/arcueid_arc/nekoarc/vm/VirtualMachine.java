@@ -13,6 +13,7 @@ public class VirtualMachine
 	private byte[] code;
 	private boolean runnable;
 	private ArcObject acc;			// accumulator
+	private ArcObject[] literals;
 	private static final INVALID NOINST = new INVALID();
 	private static final Instruction[] jmptbl = {
 		new NOP(),		// 0x00
@@ -284,10 +285,16 @@ public class VirtualMachine
 		setAcc(Nil.NIL);
 	}
 
-	public void load(final byte[] instructions, int ip)
+	public void load(final byte[] instructions, int ip, final ArcObject[] literals)
 	{
 		this.code = instructions;
+		this.literals = literals;
 		this.ip = ip;
+	}
+
+	public void load(final byte[] instructions, int ip)
+	{
+		load(instructions, ip, null);
 	}
 
 	public void halt()
@@ -352,5 +359,10 @@ public class VirtualMachine
 	public void setIp(int ip)
 	{
 		this.ip = ip;
+	}
+
+	public ArcObject literal(int offset)
+	{
+		return(literals[offset]);
 	}
 }
