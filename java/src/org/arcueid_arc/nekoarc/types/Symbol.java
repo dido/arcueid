@@ -3,6 +3,8 @@ package org.arcueid_arc.nekoarc.types;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+import org.arcueid_arc.nekoarc.Nil;
+import org.arcueid_arc.nekoarc.True;
 import org.arcueid_arc.nekoarc.util.IndexPhantomReference;
 import org.arcueid_arc.nekoarc.util.LongMap;
 import org.arcueid_arc.nekoarc.util.MurmurHash;
@@ -42,11 +44,16 @@ public class Symbol extends Atom
 		return(MurmurHash.hash(s));
 	}
 
-	public static Symbol intern(String s)
+	public static ArcObject intern(String s)
 	{
 		Symbol sym;
 		long hc = hash(s);
 
+		if (s.equals("t"))
+			return(True.T);
+		if (s.equals("nil"))
+			return(Nil.NIL);
+	
 		if (symtable.containsKey(hc)) {
 			WeakReference<Symbol> wref = symtable.get(hc);
 			sym = wref.get();
