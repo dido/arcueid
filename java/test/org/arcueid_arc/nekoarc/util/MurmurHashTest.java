@@ -2,6 +2,7 @@ package org.arcueid_arc.nekoarc.util;
 
 import static org.junit.Assert.*;
 
+import org.arcueidarc.nekoarc.util.MurmurHash;
 import org.junit.Test;
 
 public class MurmurHashTest {

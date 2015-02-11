@@ -2,12 +2,13 @@ package org.arcueid_arc.nekoarc.vm;
 
 import static org.junit.Assert.*;
 
-import org.arcueid_arc.nekoarc.NekoArcException;
-import org.arcueid_arc.nekoarc.Nil;
-import org.arcueid_arc.nekoarc.True;
-import org.arcueid_arc.nekoarc.types.ArcObject;
-import org.arcueid_arc.nekoarc.types.Fixnum;
-import org.arcueid_arc.nekoarc.types.Symbol;
+import org.arcueidarc.nekoarc.NekoArcException;
+import org.arcueidarc.nekoarc.Nil;
+import org.arcueidarc.nekoarc.True;
+import org.arcueidarc.nekoarc.types.ArcObject;
+import org.arcueidarc.nekoarc.types.Fixnum;
+import org.arcueidarc.nekoarc.types.Symbol;
+import org.arcueidarc.nekoarc.vm.VirtualMachine;
 import org.junit.Test;
 
 public class VirtualMachineTest {
