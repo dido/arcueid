@@ -1,5 +1,5 @@
 package org.arcueidarc.nekoarc.types;
 
-public class Atom extends ArcObject
+public abstract class Atom extends ArcObject
 {
 }
