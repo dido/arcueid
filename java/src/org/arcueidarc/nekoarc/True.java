@@ -1,6 +1,7 @@
 package org.arcueidarc.nekoarc;
 
 import org.arcueidarc.nekoarc.types.ArcObject;
+import org.arcueidarc.nekoarc.types.Symbol;
 
 public class True extends ArcObject
 {
@@ -8,5 +9,10 @@ public class True extends ArcObject
 
 	private True()
 	{
+	}
+
+	public ArcObject type()
+	{
+		return(Symbol.TYPE);
 	}
 }
