@@ -8,9 +8,13 @@ import org.arcueidarc.nekoarc.util.LongMap;
 
 public class Fixnum extends Atom
 {
+	public final ArcObject TYPE = Symbol.intern("fixnum");
 	public final long fixnum;
 	private static final LongMap<WeakReference<Fixnum>> table = new LongMap<WeakReference<Fixnum>>();
 	private static final ReferenceQueue<Fixnum> rq = new ReferenceQueue<Fixnum>();
+	public static final Fixnum ZERO = get(0);
+	public static final Fixnum ONE = get(1);
+	public static final Fixnum TEN = get(10);
 
 	static {
 		// Thread that removes phantom references to fixnums
@@ -47,5 +51,11 @@ public class Fixnum extends Atom
 		table.put(x, new WeakReference<Fixnum>(f, rq));
 		new IndexPhantomReference<Fixnum>(f, rq, x);
 		return(f);
+	}
+
+	@Override
+	public ArcObject type()
+	{
+		return(TYPE);
 	}
 }

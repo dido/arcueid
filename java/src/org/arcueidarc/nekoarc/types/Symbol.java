@@ -11,6 +11,7 @@ import org.arcueidarc.nekoarc.util.MurmurHash;
 
 public class Symbol extends Atom
 {
+	public static final ArcObject TYPE = Symbol.intern("sym");
 	public final String symbol;
 	private static final LongMap<WeakReference<Symbol>> symtable = new LongMap<WeakReference<Symbol>>();
 	private static final ReferenceQueue<Symbol> rq = new ReferenceQueue<Symbol>();
@@ -64,5 +65,11 @@ public class Symbol extends Atom
 		symtable.put(hc, new WeakReference<Symbol>(sym));
 		new IndexPhantomReference<Symbol>(sym, rq, hc);
 		return(sym);
+	}
+
+	@Override
+	public ArcObject type()
+	{
+		return(TYPE);
 	}
 }
