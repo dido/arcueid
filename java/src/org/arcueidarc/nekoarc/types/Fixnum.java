@@ -3,6 +3,7 @@ package org.arcueidarc.nekoarc.types;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
+import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.util.IndexPhantomReference;
 import org.arcueidarc.nekoarc.util.LongMap;
 
@@ -57,5 +58,15 @@ public class Fixnum extends Atom
 	public ArcObject type()
 	{
 		return(TYPE);
+	}
+
+	public static Fixnum cast(ArcObject arg, ArcObject caller)
+	{
+		if (arg instanceof Flonum) {
+			return(Fixnum.get((long)((Flonum)arg).flonum));
+		} else if (arg instanceof Fixnum) {
+			return((Fixnum)arg);
+		}
+		throw new NekoArcException("Wrong argument type, caller " + caller + " expected a Fixnum, got " + arg);
 	}
 }
