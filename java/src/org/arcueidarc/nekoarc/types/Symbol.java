@@ -32,7 +32,6 @@ public class Symbol extends Atom
 			}
 		}.start();
 	}
-	
 
 	private Symbol(String s)
 	{
@@ -43,6 +42,11 @@ public class Symbol extends Atom
 	{
 //		return((long)s.hashCode());
 		return(MurmurHash.hash(s));
+	}
+
+	public long hash()
+	{
+		return(hash(this.symbol));
 	}
 
 	public static ArcObject intern(String s)
@@ -72,4 +76,5 @@ public class Symbol extends Atom
 	{
 		return(TYPE);
 	}
+
 }
