@@ -3,6 +3,8 @@ package org.arcueidarc.nekoarc.vm;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.types.ArcObject;
+import org.arcueidarc.nekoarc.types.Symbol;
+import org.arcueidarc.nekoarc.util.ObjectMap;
 import org.arcueidarc.nekoarc.vm.instruction.*;
 
 public class VirtualMachine
@@ -274,6 +276,7 @@ public class VirtualMachine
 		NOINST,
 	};
 
+	private ObjectMap<Symbol, ArcObject> genv = new ObjectMap<Symbol, ArcObject>();
 	
 	public VirtualMachine(int stacksize)
 	{
@@ -369,5 +372,19 @@ public class VirtualMachine
 	public int getSP()
 	{
 		return(sp);
+	}
+
+	// add or replace a global binding
+	public ArcObject bind(Symbol sym, ArcObject binding)
+	{
+		genv.put(sym, binding);
+		return(binding);
+	}
+
+	public ArcObject value(Symbol sym)
+	{
+		if (!genv.containsKey(sym))
+			throw new NekoArcException("Unbound symbol " + sym);
+		return(genv.get(sym));
 	}
 }
