@@ -1,5 +1,9 @@
 package org.arcueidarc.nekoarc.types;
 
+import org.arcueidarc.nekoarc.NekoArcException;
+import org.arcueidarc.nekoarc.Nil;
+import org.arcueidarc.nekoarc.vm.VirtualMachine;
+
 public class Cons extends ArcObject
 {
 	public static final ArcObject TYPE = Symbol.intern("cons");
@@ -33,6 +37,51 @@ public class Cons extends ArcObject
 	public ArcObject cdr()
 	{
 		return(cdr);
+	}
+
+	@Override
+	public ArcObject scar(ArcObject ncar)
+	{
+		this.car = ncar;
+		return(ncar);
+	}
+
+	@Override
+	public ArcObject sref(ArcObject value, ArcObject idx)
+	{
+		Fixnum index = Fixnum.cast(idx, this);
+		return(nth(index.fixnum).scar(value));
+	}
+
+	@SuppressWarnings("serial")
+	static class OOB extends RuntimeException {
+	}
+
+	public Cons nth(long idx)
+	{
+		try {
+			return((Cons)nth(this, idx));
+		} catch (OOB oob) {
+			throw new NekoArcException("Error: index " + idx + " too large for list " + this);
+		}
+	}
+
+	private static ArcObject nth(ArcObject c, long idx)
+	{
+		while (idx > 0) {
+			if (c.cdr() instanceof Nil)
+				throw new OOB();
+			c = c.cdr();
+			idx--;
+		}
+		return(c);
+	}
+
+	@Override
+	public void invoke(VirtualMachine vm, Cons args)
+	{
+		Fixnum idx = Fixnum.cast(args.car(), this);
+		vm.setAcc(this.nth(idx.fixnum).car());
 	}
 }
 
