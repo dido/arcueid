@@ -1,4 +1,4 @@
-package org.arcueid_arc.nekoarc.util;
+package org.arcueidarc.nekoarc.util;
 
 import static org.junit.Assert.*;
 
