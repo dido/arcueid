@@ -2,10 +2,6 @@ package org.arcueidarc.nekoarc.vm;
 
 import static org.junit.Assert.*;
 
-import org.arcueidarc.nekoarc.NekoArcException;
-import org.arcueidarc.nekoarc.Nil;
-import org.arcueidarc.nekoarc.types.ArcObject;
-import org.arcueidarc.nekoarc.types.Symbol;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 import org.junit.Test;
 
