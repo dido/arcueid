@@ -69,4 +69,11 @@ public class Fixnum extends Atom
 		}
 		throw new NekoArcException("Wrong argument type, caller " + caller + " expected a Fixnum, got " + arg);
 	}
+
+	@Override
+	public ArcObject add(ArcObject ae)
+	{
+		Fixnum addend = Fixnum.cast(ae, this);
+		return(Fixnum.get(this.fixnum + addend.fixnum));
+	}
 }
