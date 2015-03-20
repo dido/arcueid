@@ -41,4 +41,9 @@ public abstract class ArcObject
 	{
 		throw new NekoArcException("Cannot invoke object of type " + type());
 	}
+
+	public String toString()
+	{
+		throw new NekoArcException("Type " + type() + " has no string representation");
+	}
 }
