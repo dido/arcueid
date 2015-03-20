@@ -34,4 +34,10 @@ public class Flonum extends Atom
 		Flonum addend = Flonum.cast(ae, this);
 		return(new Flonum(this.flonum + addend.flonum));
 	}
+
+	@Override
+	public String toString()
+	{
+		return(String.valueOf(flonum));
+	}
 }

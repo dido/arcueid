@@ -80,4 +80,10 @@ public class Fixnum extends Atom
 		Fixnum addend = Fixnum.cast(ae, this);
 		return(Fixnum.get(this.fixnum + addend.fixnum));
 	}
+
+	@Override
+	public String toString()
+	{
+		return(String.valueOf(fixnum));
+	}
 }
