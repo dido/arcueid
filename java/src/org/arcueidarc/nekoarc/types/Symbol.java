@@ -77,4 +77,9 @@ public class Symbol extends Atom
 		return(TYPE);
 	}
 
+	@Override
+	public String toString()
+	{
+		return(this.symbol);
+	}
 }
