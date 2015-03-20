@@ -27,7 +27,7 @@ public abstract class ArcObject
 
 	public ArcObject add(ArcObject other)
 	{
-		throw new NekoArcException("add not implemented for " + type() + " " + this);
+		throw new NekoArcException("add not implemented for " + this.type() + " " + this);
 	}
 
 	public long len()
