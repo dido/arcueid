@@ -11,10 +11,10 @@ import org.arcueidarc.nekoarc.util.MurmurHash;
 
 public class Symbol extends Atom
 {
-	public static final ArcObject TYPE = Symbol.intern("sym");
 	public final String symbol;
 	private static final LongMap<WeakReference<Symbol>> symtable = new LongMap<WeakReference<Symbol>>();
 	private static final ReferenceQueue<Symbol> rq = new ReferenceQueue<Symbol>();
+	public static final ArcObject TYPE = Symbol.intern("sym");
 
 	static {
 		// Thread that removes phantom references to fixnums
@@ -58,7 +58,7 @@ public class Symbol extends Atom
 			return(True.T);
 		if (s.equals("nil"))
 			return(Nil.NIL);
-	
+
 		if (symtable.containsKey(hc)) {
 			WeakReference<Symbol> wref = symtable.get(hc);
 			sym = wref.get();
