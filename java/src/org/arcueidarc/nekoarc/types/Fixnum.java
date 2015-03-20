@@ -73,6 +73,10 @@ public class Fixnum extends Atom
 	@Override
 	public ArcObject add(ArcObject ae)
 	{
+		if (ae instanceof Flonum) {
+			Flonum fnum = Flonum.cast(this, this);
+			return(fnum.add(ae));
+		}
 		Fixnum addend = Fixnum.cast(ae, this);
 		return(Fixnum.get(this.fixnum + addend.fixnum));
 	}
