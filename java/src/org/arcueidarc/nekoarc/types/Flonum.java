@@ -2,7 +2,7 @@ package org.arcueidarc.nekoarc.types;
 
 import org.arcueidarc.nekoarc.NekoArcException;
 
-public class Flonum extends Atom
+public class Flonum extends Numeric
 {
 	public static final ArcObject TYPE = Symbol.intern("flonum");
 	public double flonum;
@@ -33,5 +33,11 @@ public class Flonum extends Atom
 	{
 		Flonum addend = Flonum.cast(ae, this);
 		return(new Flonum(this.flonum + addend.flonum));
+	}
+
+	@Override
+	public Numeric negate()
+	{
+		return(new Flonum(-this.flonum));
 	}
 }
