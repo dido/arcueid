@@ -40,4 +40,10 @@ public class Flonum extends Numeric
 	{
 		return(new Flonum(-this.flonum));
 	}
+
+	@Override
+	public String toString()
+	{
+		return(String.valueOf(flonum));
+	}
 }

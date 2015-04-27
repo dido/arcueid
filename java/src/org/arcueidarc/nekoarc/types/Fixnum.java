@@ -7,7 +7,7 @@ import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.util.IndexPhantomReference;
 import org.arcueidarc.nekoarc.util.LongMap;
 
-public class Fixnum extends Numeric
+public class Fixnum extends Atom
 {
 	public final ArcObject TYPE = Symbol.intern("fixnum");
 	public final long fixnum;
@@ -79,11 +79,5 @@ public class Fixnum extends Numeric
 		}
 		Fixnum addend = Fixnum.cast(ae, this);
 		return(Fixnum.get(this.fixnum + addend.fixnum));
-	}
-
-	@Override
-	public Numeric negate()
-	{
-		return(Fixnum.get(-this.fixnum));
 	}
 }
