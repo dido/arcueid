@@ -35,6 +35,12 @@ public class Flonum extends Numeric
 		return(new Flonum(this.flonum + addend.flonum));
 	}
 
+	public Flonum mul(Numeric f)
+	{
+		Flonum factor = Flonum.cast(f, this);
+		return(new Flonum(this.flonum * factor.flonum));
+	}
+
 	@Override
 	public Numeric negate()
 	{
