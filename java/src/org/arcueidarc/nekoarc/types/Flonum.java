@@ -41,6 +41,13 @@ public class Flonum extends Numeric
 		return(new Flonum(this.flonum * factor.flonum));
 	}
 
+
+	public Flonum div(Numeric d)
+	{
+		Flonum divisor = Flonum.cast(d, this);
+		return(new Flonum(this.flonum / divisor.flonum));
+	}
+
 	@Override
 	public Numeric negate()
 	{

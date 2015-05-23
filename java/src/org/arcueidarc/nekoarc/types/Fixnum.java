@@ -98,4 +98,15 @@ public class Fixnum extends Numeric
 		Fixnum ffactor = Fixnum.cast(factor, this);
 		return(Fixnum.get(this.fixnum * ffactor.fixnum));
 	}
+
+	@Override
+	public Numeric div(Numeric divisor)
+	{
+		if (divisor instanceof Flonum) {
+			Flonum self = Flonum.cast(this, this);
+			return(self.div(divisor));
+		}
+		Fixnum fdivisor = Fixnum.cast(divisor, this);
+		return(Fixnum.get(this.fixnum / fdivisor.fixnum));
+	}
 }
