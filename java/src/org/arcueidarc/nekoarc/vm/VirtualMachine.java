@@ -35,7 +35,7 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		NOINST,
-		NOINST,
+		new NO(),		// 0x11
 		new TRUE(),		// 0x12
 		new NIL(),		// 0x13
 		new HLT(),		// 0x14
