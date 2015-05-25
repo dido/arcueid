@@ -1,0 +1,19 @@
+package org.arcueidarc.nekoarc.vm.instruction;
+
+import org.arcueidarc.nekoarc.NekoArcException;
+import org.arcueidarc.nekoarc.Nil;
+import org.arcueidarc.nekoarc.True;
+import org.arcueidarc.nekoarc.vm.VirtualMachine;
+
+public class NO implements Instruction
+{
+	@Override
+	public void invoke(VirtualMachine vm) throws NekoArcException
+	{
+		if (vm.getAcc() instanceof Nil)
+			vm.setAcc(True.T);
+		else
+			vm.setAcc(Nil.NIL);
+	}
+
+}
