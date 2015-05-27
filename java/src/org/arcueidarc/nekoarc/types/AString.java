@@ -30,4 +30,10 @@ public class AString extends ArcObject
 	{
 		return(string);
 	}
+
+	@Override
+	public boolean is(ArcObject other)
+	{
+		return(this == other || ((other instanceof AString) && string.equals(((AString)other).string)));
+	}
 }
