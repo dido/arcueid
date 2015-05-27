@@ -20,6 +20,12 @@ public abstract class ArcObject
 		throw new NekoArcException("Can't set car of " + this.type());
 	}
 
+	public ArcObject scdr(ArcObject ncar)
+	{
+		throw new NekoArcException("Can't set car of " + this.type());
+	}
+
+	
 	public ArcObject sref(ArcObject value, ArcObject index)
 	{
 		throw new NekoArcException("Can't sref" + this + "( a " + this.type() + "), other args were " + value + ", " + index);
