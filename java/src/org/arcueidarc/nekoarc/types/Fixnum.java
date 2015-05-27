@@ -109,4 +109,10 @@ public class Fixnum extends Numeric
 		Fixnum fdivisor = Fixnum.cast(divisor, this);
 		return(Fixnum.get(this.fixnum / fdivisor.fixnum));
 	}
+
+	@Override
+	public String toString()
+	{
+		return(String.valueOf(fixnum));
+	}
 }
