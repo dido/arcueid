@@ -20,4 +20,10 @@ public class Nil extends Cons
 	{
 		return(rep);
 	}
+
+	@Override
+	public boolean is(ArcObject other)
+	{
+		return(this == other || (other instanceof Nil));
+	}
 }
