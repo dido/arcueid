@@ -47,6 +47,13 @@ public class Cons extends ArcObject
 	}
 
 	@Override
+	public ArcObject scdr(ArcObject ncdr)
+	{
+		this.cdr = ncdr;
+		return(ncdr);
+	}
+	
+	@Override
 	public ArcObject sref(ArcObject value, ArcObject idx)
 	{
 		Fixnum index = Fixnum.cast(idx, this);
