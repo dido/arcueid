@@ -59,4 +59,10 @@ public class Flonum extends Numeric
 	{
 		return(String.valueOf(flonum));
 	}
+
+	@Override
+	public boolean is(ArcObject other)
+	{
+		return(this == other || ((other instanceof Flonum) && flonum == (((Flonum)other).flonum)));
+	}
 }
