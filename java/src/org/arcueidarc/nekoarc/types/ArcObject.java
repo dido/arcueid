@@ -22,7 +22,7 @@ public abstract class ArcObject
 
 	public ArcObject scdr(ArcObject ncar)
 	{
-		throw new NekoArcException("Can't set car of " + this.type());
+		throw new NekoArcException("Can't set cdr of " + this.type());
 	}
 
 	
@@ -51,5 +51,11 @@ public abstract class ArcObject
 	public String toString()
 	{
 		throw new NekoArcException("Type " + type() + " has no string representation");
+	}
+
+	// default implementation
+	public boolean is(ArcObject other)
+	{
+		return(this == other);
 	}
 }
