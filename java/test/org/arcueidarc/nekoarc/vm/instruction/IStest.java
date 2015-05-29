@@ -12,7 +12,8 @@ import org.arcueidarc.nekoarc.types.Symbol;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 import org.junit.Test;
 
-public class IStest {
+public class IStest
+{
 
 	@Test
 	public void testSameFixnums()
@@ -204,5 +205,26 @@ public class IStest {
 		assertEquals(Nil.NIL, vm.getAcc());
 		assertEquals(13, vm.getIP());
 	}
-	
+
+	@Test
+	public void testNils()
+	{
+		// ldl 0; push; ldl 1; is; hlt
+		byte inst[] = { 0x43, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+				0x01,
+				0x43, (byte) 0x01, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+				0x1f,
+				0x14};
+		ArcObject literals[] = new ArcObject[2];
+		literals[0] = Nil.NIL;
+		literals[1] = Nil.EMPTY_LIST;
+		VirtualMachine vm = new VirtualMachine(1024);
+		vm.load(inst, 0, literals);
+		vm.setAcc(Fixnum.get(0));
+		assertTrue(vm.runnable());
+		vm.run();
+		assertFalse(vm.runnable());
+		assertEquals(True.T, vm.getAcc());
+		assertEquals(13, vm.getIP());
+	}
 }
