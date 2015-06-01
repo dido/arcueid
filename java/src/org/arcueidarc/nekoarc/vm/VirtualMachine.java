@@ -1,7 +1,9 @@
 package org.arcueidarc.nekoarc.vm;
 
+import org.arcueidarc.nekoarc.Env;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
+import org.arcueidarc.nekoarc.Unbound;
 import org.arcueidarc.nekoarc.types.ArcObject;
 import org.arcueidarc.nekoarc.types.Symbol;
 import org.arcueidarc.nekoarc.util.ObjectMap;
@@ -10,12 +12,14 @@ import org.arcueidarc.nekoarc.vm.instruction.*;
 public class VirtualMachine
 {
 	private int sp;					// stack pointer
+	private Env env;			// environment pointer
 	private ArcObject[] stack;		// stack
 	private int ip;					// instruction pointer
 	private byte[] code;
 	private boolean runnable;
 	private ArcObject acc;			// accumulator
 	private ArcObject[] literals;
+	private int argc;				// argument counter for current function
 	private static final INVALID NOINST = new INVALID();
 	private static final Instruction[] jmptbl = {
 		new NOP(),		// 0x00
@@ -285,6 +289,7 @@ public class VirtualMachine
 		ip = 0;
 		code = null;
 		runnable = true;
+		env = null;
 		setAcc(Nil.NIL);
 	}
 
@@ -386,5 +391,56 @@ public class VirtualMachine
 		if (!genv.containsKey(sym))
 			throw new NekoArcException("Unbound symbol " + sym);
 		return(genv.get(sym));
+	}
+
+	public int argc()
+	{
+		return(argc);
+	}
+
+	/* Create a stack-based environment. */
+	public void mkenv(int prevsize, int extrasize)
+	{
+		// Add the extra environment entries
+		for (int i=0; i<extrasize; i++)
+			push(Unbound.UNBOUND);
+		int count = prevsize + extrasize;
+		int envstart = sp - count;
+		env = new Env(env, envstart, count);
+	}
+
+	private Env findenv(int depth)
+	{
+		Env cenv = env;
+
+		while (depth-- > 0 && cenv != null)
+			cenv = cenv.prevEnv();
+		return(cenv);
+	}
+
+	public ArcObject getenv(int depth, int index)
+	{
+		Env cenv = findenv(depth);
+		if (cenv == null)
+			throw new NekoArcException("environment depth exceeded");
+		return(cenv.getEnv(this, index));
+	}
+
+	public ArcObject setenv(int depth, int index, ArcObject value)
+	{
+		Env cenv = findenv(depth);
+		if (cenv == null)
+			throw new NekoArcException("environment depth exceeded");
+		return(cenv.setEnv(this, index, value));
+	}
+
+	public ArcObject stackIndex(int index)
+	{
+		return(stack[index]);
+	}
+
+	public ArcObject setStackIndex(int index, ArcObject value)
+	{
+		return(stack[index] = value);
 	}
 }
