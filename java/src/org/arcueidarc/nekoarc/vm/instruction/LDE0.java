@@ -8,10 +8,7 @@ public class LDE0 implements Instruction
 	@Override
 	public void invoke(VirtualMachine vm) throws NekoArcException
 	{
-		int indx;
-
-		indx = vm.instArg();
-		vm.setAcc(vm.getenv(0, indx));
+		vm.setAcc(vm.getenv(0, vm.smallInstArg() & 0xff));
 	}
 
 }

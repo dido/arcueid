@@ -9,9 +9,9 @@ public class ENV implements Instruction
 	public void invoke(VirtualMachine vm) throws NekoArcException
 	{
 		int minenv, dsenv, optenv;
-		minenv = vm.instArg();
-		dsenv = vm.instArg();
-		optenv = vm.instArg();
+		minenv = vm.smallInstArg() & 0xff;
+		dsenv = vm.smallInstArg() & 0xff;
+		optenv = vm.smallInstArg() & 0xff;
 		if (vm.argc() < minenv)
 			throw new NekoArcException("too few arguments, at least " + minenv + " required, " + vm.argc() + " passed");
 		if (vm.argc() > minenv + optenv)

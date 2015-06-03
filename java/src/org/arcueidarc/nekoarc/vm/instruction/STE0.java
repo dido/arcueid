@@ -8,8 +8,7 @@ public class STE0 implements Instruction
 	@Override
 	public void invoke(VirtualMachine vm) throws NekoArcException
 	{
-		int indx = vm.instArg();
-		vm.setenv(0, indx, vm.getAcc());
+		vm.setenv(0, vm.instArg() & 0xff, vm.getAcc());
 	}
 
 }
