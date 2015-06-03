@@ -332,7 +332,7 @@ public class VirtualMachine
 			jmptbl[code[ip++]].invoke(this);
 	}
 
-	// Little endian
+	// Four-byte instruction arguments (most everything else). Little endian.
 	public int instArg()
 	{
 		long val = 0;
@@ -342,6 +342,12 @@ public class VirtualMachine
 			val |= data << i*8;
 		}
 		return((int)((val << 1) >> 1));
+	}
+
+	// one-byte instruction arguments (LDE/STE/ENV, etc.)
+	public byte smallInstArg()
+	{
+		return(code[ip++]);
 	}
 
 	public ArcObject getAcc()
