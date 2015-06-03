@@ -36,9 +36,17 @@ public class VirtualMachineTest
 		byte data5[] = { (byte) 0xa3, (byte) 0x3c, (byte) 0xe0, (byte) 0xde };
 		vm.load(data5, 0);
 		assertEquals(-555729757, vm.instArg());
-
 	}
 
+	@Test
+	public void testSmallInstArg()
+	{
+		byte data[] = { (byte) 0x12, (byte) 0xff };
+		VirtualMachine vm = new VirtualMachine(1024);
+		vm.load(data, 0);
+		assertEquals(0x12, vm.smallInstArg());
+		assertEquals(-1, vm.smallInstArg());
+	}
 	@Test
 	public void testEnv() throws NekoArcException
 	{
