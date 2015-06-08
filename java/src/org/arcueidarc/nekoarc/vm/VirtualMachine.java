@@ -331,7 +331,7 @@ public class VirtualMachine
 		throws NekoArcException
 	{
 		while (runnable)
-			jmptbl[code[ip++]].invoke(this);
+			jmptbl[(int)code[ip++] & 0xff].invoke(this);
 	}
 
 	// Four-byte instruction arguments (most everything else). Little endian.
@@ -404,6 +404,11 @@ public class VirtualMachine
 	public int argc()
 	{
 		return(argc);
+	}
+
+	public int setargc(int ac)
+	{
+		return(argc = ac);
 	}
 
 	/* Create a stack-based environment. */
