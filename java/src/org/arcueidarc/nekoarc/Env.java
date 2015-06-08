@@ -1,36 +1,57 @@
 package org.arcueidarc.nekoarc;
 
 import org.arcueidarc.nekoarc.types.ArcObject;
+import org.arcueidarc.nekoarc.types.Fixnum;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
-public class Env
+/** Stack-based environments. This is a singleton, as it's only used to make accessing
+ * 	stack-based environments easier.
+ */
+public class Env implements Environment
 {
-	private Env prev;
-	private int start, size;
+	private ArcObject prev;
+	private Fixnum start, size;
+	private static Env env = new Env();
+	private VirtualMachine vm;
 
-	public Env(Env p, int st, int sz)
+	private Env()
 	{
-		prev = p;
-		start = st;
-		size = sz;
 	}
 
-	public Env prevEnv()
+	@Override
+	public Environment prevEnv()
 	{
-		return(prev);
+		return(env(vm, prev));
 	}
 
-	public ArcObject getEnv(VirtualMachine vm, int index) throws NekoArcException
+	public ArcObject getEnv(int index) throws NekoArcException
 	{
-		if (index > size)
+		if (index > size.fixnum)
 			throw new NekoArcException("stack environment index exceeded");
-		return(vm.stackIndex(start + index));
+		return(vm.stackIndex((int)start.fixnum + index));
 	}
 
-	public ArcObject setEnv(VirtualMachine vm, int index, ArcObject value)
+	public ArcObject setEnv(int index, ArcObject value)
 	{
-		if (index > size)
+		if (index > size.fixnum)
 			throw new NekoArcException("stack environment index exceeded");
-		return(vm.setStackIndex(start + index, value));
+		return(vm.setStackIndex((int)start.fixnum + index, value));
+	}
+
+	private void fromStack(VirtualMachine vm, int index)
+	{
+		this.vm = vm;
+		start = (Fixnum)vm.stackIndex(index);
+		size = (Fixnum)vm.stackIndex(index+1);
+		prev = vm.stackIndex(index+2);
+	}
+
+	public static Environment env(VirtualMachine vm, ArcObject envr)
+	{
+		if (envr instanceof Fixnum) {
+			env.fromStack(vm, (int)((Fixnum)envr).fixnum);
+			return(env);
+		}
+		return((Environment)envr);
 	}
 }

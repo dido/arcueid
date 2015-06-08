@@ -1,10 +1,12 @@
 package org.arcueidarc.nekoarc.vm;
 
 import org.arcueidarc.nekoarc.Env;
+import org.arcueidarc.nekoarc.Environment;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.Unbound;
 import org.arcueidarc.nekoarc.types.ArcObject;
+import org.arcueidarc.nekoarc.types.Fixnum;
 import org.arcueidarc.nekoarc.types.Symbol;
 import org.arcueidarc.nekoarc.util.ObjectMap;
 import org.arcueidarc.nekoarc.vm.instruction.*;
@@ -12,7 +14,7 @@ import org.arcueidarc.nekoarc.vm.instruction.*;
 public class VirtualMachine
 {
 	private int sp;					// stack pointer
-	private Env env;			// environment pointer
+	private ArcObject env;			// environment pointer
 	private ArcObject[] stack;		// stack
 	private int ip;					// instruction pointer
 	private byte[] code;
@@ -412,12 +414,18 @@ public class VirtualMachine
 			push(Unbound.UNBOUND);
 		int count = prevsize + extrasize;
 		int envstart = sp - count;
-		env = new Env(env, envstart, count);
+		
+		/* Stack environments are basically Fixnum pointers into the stack. */
+		int envptr = sp;
+		push(Fixnum.get(envstart));		// envptr
+		push(Fixnum.get(count));		// envptr + 1
+		push(env);						// envptr + 2
+		env = Fixnum.get(envptr);
 	}
 
-	private Env findenv(int depth)
+	private Environment findenv(int depth)
 	{
-		Env cenv = env;
+		Environment cenv = Env.env(this, env);
 
 		while (depth-- > 0 && cenv != null)
 			cenv = cenv.prevEnv();
@@ -426,18 +434,18 @@ public class VirtualMachine
 
 	public ArcObject getenv(int depth, int index)
 	{
-		Env cenv = findenv(depth);
+		Environment cenv = findenv(depth);
 		if (cenv == null)
 			throw new NekoArcException("environment depth exceeded");
-		return(cenv.getEnv(this, index));
+		return(cenv.getEnv(index));
 	}
 
 	public ArcObject setenv(int depth, int index, ArcObject value)
 	{
-		Env cenv = findenv(depth);
+		Environment cenv = findenv(depth);
 		if (cenv == null)
 			throw new NekoArcException("environment depth exceeded");
-		return(cenv.setEnv(this, index, value));
+		return(cenv.setEnv(index, value));
 	}
 
 	public ArcObject stackIndex(int index)
