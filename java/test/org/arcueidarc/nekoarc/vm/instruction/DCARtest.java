@@ -60,6 +60,7 @@ public class DCARtest
 		vm.run();
 		assertFalse(vm.runnable());
 		assertTrue(vm.getAcc().is(Unbound.UNBOUND));
-		assertEquals(7, vm.getIP());			}
+		assertEquals(7, vm.getIP());
+	}
 
 }
