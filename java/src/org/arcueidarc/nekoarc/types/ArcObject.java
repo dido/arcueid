@@ -43,7 +43,7 @@ public abstract class ArcObject
 
 	public abstract ArcObject type();
 
-	public void invoke(VirtualMachine vm, Cons args)
+	public void apply(VirtualMachine vm)
 	{
 		throw new NekoArcException("Cannot invoke object of type " + type());
 	}
