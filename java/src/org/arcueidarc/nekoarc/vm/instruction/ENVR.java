@@ -4,6 +4,7 @@ import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.types.ArcObject;
 import org.arcueidarc.nekoarc.types.Cons;
+import org.arcueidarc.nekoarc.vm.Instruction;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public class ENVR implements Instruction

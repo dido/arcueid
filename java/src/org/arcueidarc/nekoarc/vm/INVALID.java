@@ -1,7 +1,6 @@
-package org.arcueidarc.nekoarc.vm.instruction;
+package org.arcueidarc.nekoarc.vm;
 
 import org.arcueidarc.nekoarc.InvalidInstructionException;
-import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public class INVALID implements Instruction {
 

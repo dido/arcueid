@@ -2,6 +2,7 @@ package org.arcueidarc.nekoarc.vm.instruction;
 
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.True;
+import org.arcueidarc.nekoarc.vm.Instruction;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public class TRUE implements Instruction

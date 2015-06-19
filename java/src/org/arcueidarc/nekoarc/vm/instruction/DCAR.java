@@ -3,6 +3,7 @@ package org.arcueidarc.nekoarc.vm.instruction;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.Unbound;
+import org.arcueidarc.nekoarc.vm.Instruction;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 // just like CAR, except that it works on nil and unbound, producing unbound.
