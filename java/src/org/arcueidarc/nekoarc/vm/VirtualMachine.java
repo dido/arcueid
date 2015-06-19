@@ -15,6 +15,7 @@ public class VirtualMachine
 {
 	private int sp;					// stack pointer
 	private ArcObject env;			// environment pointer
+	private ArcObject cont;			// continuation pointer
 	private ArcObject[] stack;		// stack
 	private int ip;					// instruction pointer
 	private byte[] code;
@@ -292,6 +293,7 @@ public class VirtualMachine
 		code = null;
 		runnable = true;
 		env = null;
+		cont = Nil.NIL;
 		setAcc(Nil.NIL);
 	}
 
@@ -461,5 +463,32 @@ public class VirtualMachine
 	public ArcObject setStackIndex(int index, ArcObject value)
 	{
 		return(stack[index] = value);
+	}
+
+	// Make a continuation on the stack. The new continuation is saved in the continuation register.
+	public void makecont(int ipoffset)
+	{
+		int newip = ip + ipoffset;
+		push(Fixnum.get(newip));
+		push(env);
+		push(cont);
+		cont = Fixnum.get(sp);
+	}
+
+	// Restore continuation
+	public void restorecont()
+	{
+		if (cont instanceof Fixnum) {
+			sp = (int)((Fixnum)cont).fixnum;
+			cont = pop();
+			setEnv(pop());
+			setIP((int)((Fixnum)pop()).fixnum);
+		}
+		throw new NekoArcException("invalid continuation");
+	}
+
+	public void setEnv(ArcObject env)
+	{
+		this.env = env; 
 	}
 }
