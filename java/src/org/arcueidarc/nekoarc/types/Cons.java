@@ -85,10 +85,13 @@ public class Cons extends ArcObject
 	}
 
 	@Override
-	public void invoke(VirtualMachine vm, Cons args)
+	public void apply(VirtualMachine vm)
 	{
-		Fixnum idx = Fixnum.cast(args.car(), this);
+		if (vm.argc() != 1)
+			throw new NekoArcException("expected 1 argument, given " + vm.argc());			
+		Fixnum idx = Fixnum.cast(vm.pop(), this);
 		vm.setAcc(this.nth(idx.fixnum).car());
+		vm.restorecont();
 	}
 }
 
