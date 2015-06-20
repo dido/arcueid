@@ -52,6 +52,8 @@ public class Env implements Environment
 			env.fromStack(vm, (int)((Fixnum)envr).fixnum);
 			return(env);
 		}
+		if (envr.is(Nil.NIL))
+			return(null);
 		return((Environment)envr);
 	}
 }
