@@ -23,8 +23,7 @@ public class Cons extends ArcObject
 	@Override
 	public ArcObject type()
 	{
-		// TODO Auto-generated method stub
-		return null;
+		return(TYPE);
 	}
 
 	@Override
