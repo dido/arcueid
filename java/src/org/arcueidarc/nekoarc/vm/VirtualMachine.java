@@ -1,6 +1,5 @@
 package org.arcueidarc.nekoarc.vm;
 
-import org.arcueidarc.nekoarc.Env;
 import org.arcueidarc.nekoarc.Environment;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
@@ -284,7 +283,7 @@ public class VirtualMachine
 	};
 
 	private ObjectMap<Symbol, ArcObject> genv = new ObjectMap<Symbol, ArcObject>();
-	
+
 	public VirtualMachine(int stacksize)
 	{
 		sp = 0;
@@ -430,29 +429,52 @@ public class VirtualMachine
 		env = Fixnum.get(envptr);
 	}
 
-	private Environment findenv(int depth)
+	private ArcObject findenv(int depth)
 	{
-		Environment cenv = Env.env(this, env);
+		ArcObject cenv = env;
 
-		while (depth-- > 0 && cenv != null)
-			cenv = cenv.prevEnv();
+		while (depth-- > 0 && !cenv.is(Nil.NIL)) {
+			if (cenv instanceof Fixnum) {
+				int index = (int)((Fixnum)cenv).fixnum;
+				cenv = stackIndex(index+2);
+			} else {
+				Environment e = (Environment)cenv;
+				cenv = e.prevEnv();
+			}
+		}
 		return(cenv);
 	}
 
 	public ArcObject getenv(int depth, int index)
 	{
-		Environment cenv = findenv(depth);
-		if (cenv == null)
+		ArcObject cenv = findenv(depth);
+		if (cenv == Nil.NIL)
 			throw new NekoArcException("environment depth exceeded");
-		return(cenv.getEnv(index));
+		if (cenv instanceof Fixnum) {
+			int si = (int)((Fixnum)cenv).fixnum;
+			int start = (int)((Fixnum)stackIndex(si)).fixnum;
+			int size = (int)((Fixnum)stackIndex(si+1)).fixnum;
+			if (index > size)
+				throw new NekoArcException("stack environment index exceeded");
+			return(stackIndex(start+index));
+		}
+		return(((Environment)cenv).getEnv(index));
 	}
 
 	public ArcObject setenv(int depth, int index, ArcObject value)
 	{
-		Environment cenv = findenv(depth);
-		if (cenv == null)
+		ArcObject cenv = findenv(depth);
+		if (cenv == Nil.NIL)
 			throw new NekoArcException("environment depth exceeded");
-		return(cenv.setEnv(index, value));
+		if (cenv instanceof Fixnum) {
+			int si = (int)((Fixnum)cenv).fixnum;
+			int start = (int)((Fixnum)stackIndex(si)).fixnum;
+			int size = (int)((Fixnum)stackIndex(si+1)).fixnum;
+			if (index > size)
+				throw new NekoArcException("stack environment index exceeded");
+			return(setStackIndex(start+index, value));
+		}
+		return(((Environment)cenv).setEnv(index,value));
 	}
 
 	public ArcObject stackIndex(int index)
