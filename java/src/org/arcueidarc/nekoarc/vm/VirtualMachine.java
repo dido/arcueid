@@ -292,7 +292,7 @@ public class VirtualMachine
 		ip = 0;
 		code = null;
 		runnable = true;
-		env = null;
+		env = Nil.NIL;
 		cont = Nil.NIL;
 		setAcc(Nil.NIL);
 	}
@@ -483,8 +483,13 @@ public class VirtualMachine
 			cont = pop();
 			setEnv(pop());
 			setIP((int)((Fixnum)pop()).fixnum);
+		} else if (cont.is(Nil.NIL)) {
+			// If we have no continuation that was an attempt to return from the topmost
+			// level and we should halt the machine.
+			halt();
+		} else {
+			throw new NekoArcException("invalid continuation");
 		}
-		throw new NekoArcException("invalid continuation");
 	}
 
 	public void setEnv(ArcObject env)
