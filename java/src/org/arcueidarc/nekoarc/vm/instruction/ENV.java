@@ -13,10 +13,7 @@ public class ENV implements Instruction
 		minenv = vm.smallInstArg() & 0xff;
 		dsenv = vm.smallInstArg() & 0xff;
 		optenv = vm.smallInstArg() & 0xff;
-		if (vm.argc() < minenv)
-			throw new NekoArcException("too few arguments, at least " + minenv + " required, " + vm.argc() + " passed");
-		if (vm.argc() > minenv + optenv)
-			throw new NekoArcException("too many arguments, at most " + (minenv + optenv) + " allowed, " + vm.argc() + " passed");
+		vm.argcheck(minenv, minenv + optenv);
 		vm.mkenv(vm.argc(), minenv + optenv - vm.argc() + dsenv);
 	}
 }

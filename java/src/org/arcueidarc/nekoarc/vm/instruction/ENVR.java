@@ -16,8 +16,7 @@ public class ENVR implements Instruction
 		minenv = vm.smallInstArg() & 0xff;
 		dsenv = vm.smallInstArg() & 0xff;
 		optenv = vm.smallInstArg() & 0xff;
-		if (vm.argc() < minenv)
-			throw new NekoArcException("too few arguments, at least " + minenv + " required, " + vm.argc() + " passed");
+		vm.argcheck(minenv, -1);
 		ArcObject rest = Nil.NIL;
 		/* Swallow as many extra arguments as are available into the rest parameter,
 		 * up to the minimum + optional number of arguments. */
