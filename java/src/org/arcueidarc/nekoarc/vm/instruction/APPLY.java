@@ -9,6 +9,7 @@ public class APPLY implements Instruction
 	@Override
 	public void invoke(VirtualMachine vm) throws NekoArcException
 	{
+		vm.setargc(vm.smallInstArg());
 		vm.getAcc().apply(vm);
 	}
 
