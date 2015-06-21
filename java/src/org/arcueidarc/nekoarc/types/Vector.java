@@ -2,7 +2,7 @@ package org.arcueidarc.nekoarc.types;
 
 public class Vector extends ArcObject
 {
-	public static final ArcObject TYPE = Symbol.intern("cons");
+	public static final ArcObject TYPE = Symbol.intern("vector");
 	private ArcObject[] vec;
 
 	public Vector(int length)
