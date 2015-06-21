@@ -6,6 +6,11 @@ public class Closure extends Cons
 {
 	public static final ArcObject TYPE = Symbol.intern("closure");
 
+	public Closure(ArcObject ca, ArcObject cd)
+	{
+		super(ca, cd);
+	}
+
 	@Override
 	public void apply(VirtualMachine vm)
 	{
