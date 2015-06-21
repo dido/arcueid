@@ -412,6 +412,19 @@ public class VirtualMachine
 		return(argc = ac);
 	}
 
+	public void argcheck(int minarg, int maxarg)
+	{
+		if (argc() < minarg)
+			throw new NekoArcException("too few arguments, at least " + minarg + " required, " + argc() + " passed");
+		if (maxarg >= 0 && argc() > maxarg)
+			throw new NekoArcException("too many arguments, at most " + maxarg + " allowed, " + argc() + " passed");
+	}
+
+	public void argcheck(int arg)
+	{
+		argcheck(arg, arg);
+	}
+
 	/* Create a stack-based environment. */
 	public void mkenv(int prevsize, int extrasize)
 	{
@@ -420,7 +433,7 @@ public class VirtualMachine
 			push(Unbound.UNBOUND);
 		int count = prevsize + extrasize;
 		int envstart = sp - count;
-		
+
 		/* Stack environments are basically Fixnum pointers into the stack. */
 		int envptr = sp;
 		push(Fixnum.get(envstart));		// envptr
