@@ -11,7 +11,7 @@ public class CONTtest
 	@Test
 	public void test()
 	{
-		// cont 4; ret; hlt; nil; ldi 1; ret
+		// cont 3; ret; hlt; nil; ldi 1; ret
 		byte inst[] = { (byte)0x89, 0x03, 0x00, 0x00, 0x00,
 					0x0d,
 					0x14,
