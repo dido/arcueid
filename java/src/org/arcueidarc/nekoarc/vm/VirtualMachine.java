@@ -1,6 +1,6 @@
 package org.arcueidarc.nekoarc.vm;
 
-import org.arcueidarc.nekoarc.Environment;
+import org.arcueidarc.nekoarc.HeapEnv;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.Unbound;
@@ -451,7 +451,7 @@ public class VirtualMachine
 				int index = (int)((Fixnum)cenv).fixnum;
 				cenv = stackIndex(index+2);
 			} else {
-				Environment e = (Environment)cenv;
+				HeapEnv e = (HeapEnv)cenv;
 				cenv = e.prevEnv();
 			}
 		}
@@ -471,7 +471,7 @@ public class VirtualMachine
 				throw new NekoArcException("stack environment index exceeded");
 			return(stackIndex(start+index));
 		}
-		return(((Environment)cenv).getEnv(index));
+		return(((HeapEnv)cenv).getEnv(index));
 	}
 
 	public ArcObject setenv(int depth, int index, ArcObject value)
@@ -487,7 +487,7 @@ public class VirtualMachine
 				throw new NekoArcException("stack environment index exceeded");
 			return(setStackIndex(start+index, value));
 		}
-		return(((Environment)cenv).setEnv(index,value));
+		return(((HeapEnv)cenv).setEnv(index,value));
 	}
 
 	public ArcObject stackIndex(int index)
