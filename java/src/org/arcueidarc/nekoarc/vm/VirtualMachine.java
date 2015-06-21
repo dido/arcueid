@@ -442,6 +442,14 @@ public class VirtualMachine
 		env = Fixnum.get(envptr);
 	}
 
+	/** move current environment to heap if needed */
+	public ArcObject heapenv()
+	{
+		if (env instanceof Fixnum)
+			env = HeapEnv.fromStackEnv(this, (int)((Fixnum)env).fixnum);
+		return(env);
+	}
+
 	private ArcObject findenv(int depth)
 	{
 		ArcObject cenv = env;
