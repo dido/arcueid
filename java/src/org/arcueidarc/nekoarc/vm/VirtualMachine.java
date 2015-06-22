@@ -59,7 +59,7 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		new DUP(),		// 0x22
-		new CLS(),		// 0x23
+		NOINST,			// 0x23
 		new CONSR(),		// 0x24
 		NOINST,
 		new DCAR(),		// 0x26
@@ -101,7 +101,7 @@ public class VirtualMachine
 		NOINST,
 		NOINST,
 		new APPLY(),		// 0x4c
-		NOINST,
+		new CLS(),		// 0x4d,
 		new JMP(),		// 0x4e
 		new JT(),		// 0x4f
 		new JF(),		// 0x50
