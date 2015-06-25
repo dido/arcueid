@@ -318,9 +318,32 @@ public class VirtualMachine
 		ip++;
 	}
 
+	/**
+	 * Attempt to garbage collect the stack, after Richard A. Kelsey, "Tail Recursive Stack Disciplines for an Interpreter"
+	 * Basically, the only things on the stack that matter are environments and continuations.
+	 * The algorithm here works by copying all environments and continuations from the stack to the heap. When that's done it will move the stack pointer
+	 * to the top of the stack.
+	 * 1. Start with the environment register. Move that environment and all of its children to the heap.
+	 * 2. Continue with the continuation register. Move all those continuations and all their children to the heap.
+	 * 3. Move the remaining stack elements
+	 */
+	private void stackgc()
+	{
+	}
+
 	public void push(ArcObject obj)
 	{
-		stack[sp++] = obj;
+		for (;;) {
+			try {
+				stack[sp++] = obj;
+				return;
+			} catch (ArrayIndexOutOfBoundsException e) {
+				// We can try to garbage collect the stack
+				stackgc();
+				if (sp >= stack.length)
+					throw new NekoArcException("stack overflow");
+			}
+		}
 	}
 
 	public ArcObject pop()
