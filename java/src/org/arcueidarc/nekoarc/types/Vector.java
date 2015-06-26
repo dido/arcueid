@@ -20,6 +20,11 @@ public class Vector extends ArcObject
 		return(vec[i] = val);
 	}
 
+	public int length()
+	{
+		return(vec.length);
+	}
+
 	@Override
 	public ArcObject type()
 	{
