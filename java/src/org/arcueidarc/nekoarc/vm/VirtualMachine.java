@@ -334,6 +334,13 @@ public class VirtualMachine
 		int stackbottom = -1;
 
 		if (env instanceof Fixnum) {
+			int si = (int)((Fixnum)env).fixnum;
+			stackbottom = (int)((Fixnum)stackIndex(si)).fixnum;
+			env = HeapEnv.fromStackEnv(this, si);
+		}
+
+		if (cont instanceof Fixnum) {
+			stackbottom = (int)((Fixnum)cont).fixnum;
 		}
 
 		// Garbage collection failed to produce memory
@@ -343,6 +350,7 @@ public class VirtualMachine
 		// move what we can of the used portion of the stack to the bottom.
 		for (int i=0; i<sp - bp; i++)
 			setStackIndex(stackbottom + i, stackIndex(bp + i));
+		sp = stackbottom + (sp - bp);
 	}
 
 	public void push(ArcObject obj)
