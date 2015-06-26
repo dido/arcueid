@@ -1,5 +1,6 @@
 package org.arcueidarc.nekoarc.vm;
 
+import org.arcueidarc.nekoarc.Continuation;
 import org.arcueidarc.nekoarc.HeapEnv;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
@@ -13,6 +14,7 @@ import org.arcueidarc.nekoarc.vm.instruction.*;
 public class VirtualMachine
 {
 	private int sp;					// stack pointer
+	private int bp;					// base pointer
 	private ArcObject env;			// environment pointer
 	private ArcObject cont;			// continuation pointer
 	private ArcObject[] stack;		// stack
@@ -286,7 +288,7 @@ public class VirtualMachine
 
 	public VirtualMachine(int stacksize)
 	{
-		sp = 0;
+		sp = bp = 0;
 		stack = new ArcObject[stacksize];
 		ip = 0;
 		code = null;
@@ -320,15 +322,27 @@ public class VirtualMachine
 
 	/**
 	 * Attempt to garbage collect the stack, after Richard A. Kelsey, "Tail Recursive Stack Disciplines for an Interpreter"
-	 * Basically, the only things on the stack that matter are environments and continuations.
+	 * Basically, the only things on the stack that are garbage collected are environments and continuations.
 	 * The algorithm here works by copying all environments and continuations from the stack to the heap. When that's done it will move the stack pointer
 	 * to the top of the stack.
 	 * 1. Start with the environment register. Move that environment and all of its children to the heap.
-	 * 2. Continue with the continuation register. Move all those continuations and all their children to the heap.
-	 * 3. Move the remaining stack elements
+	 * 2. Continue with the continuation register. Copy the current continuation into the heap.
+	 * 3. Compact the stack by moving the remainder of the non-stack/non-continuation elements to the heap.
 	 */
 	private void stackgc()
 	{
+		int stackbottom = -1;
+
+		if (env instanceof Fixnum) {
+		}
+
+		// Garbage collection failed to produce memory
+		if (stackbottom < 0 || stackbottom == bp)
+			return;
+
+		// move what we can of the used portion of the stack to the bottom.
+		for (int i=0; i<sp - bp; i++)
+			setStackIndex(stackbottom + i, stackIndex(bp + i));
 	}
 
 	public void push(ArcObject obj)
@@ -536,6 +550,7 @@ public class VirtualMachine
 	{
 		int newip = ip + ipoffset;
 		push(Fixnum.get(newip));
+		push(Fixnum.get(bp));
 		push(env);
 		push(cont);
 		cont = Fixnum.get(sp);
@@ -548,7 +563,11 @@ public class VirtualMachine
 			sp = (int)((Fixnum)cont).fixnum;
 			cont = pop();
 			setEnv(pop());
+			setBP((int)((Fixnum)pop()).fixnum);
 			setIP((int)((Fixnum)pop()).fixnum);
+		} else if (cont instanceof Continuation) {
+			cont = ((Continuation)cont).restore(this);
+			restorecont();		// heap continuation is now a stack continuation
 		} else if (cont.is(Nil.NIL)) {
 			// If we have no continuation that was an attempt to return from the topmost
 			// level and we should halt the machine.
@@ -561,5 +580,13 @@ public class VirtualMachine
 	public void setEnv(ArcObject env)
 	{
 		this.env = env; 
+	}
+
+	public int getBP() {
+		return bp;
+	}
+
+	public void setBP(int bp) {
+		this.bp = bp;
 	}
 }
