@@ -10,6 +10,7 @@ public class APPLY implements Instruction
 	public void invoke(VirtualMachine vm) throws NekoArcException
 	{
 		vm.setargc(vm.smallInstArg());
+		vm.setBP(vm.getSP());
 		vm.getAcc().apply(vm);
 	}
 
