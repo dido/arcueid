@@ -51,17 +51,17 @@ public class TailRecursionTest
 				0x4c, 0x02,								// apply 2
 				0x0d									// ret
 		};
-		VirtualMachine vm = new VirtualMachine(20);
+		VirtualMachine vm = new VirtualMachine(14);
 		vm.load(inst, 0);
 		vm.setargc(3);
 		vm.push(Fixnum.get(1));							// x
-		vm.push(Fixnum.get(10000));						// y
+		vm.push(Fixnum.get(50000));						// y
 		vm.push(Fixnum.get(1));							// t
 		vm.setAcc(Nil.NIL);
 		assertTrue(vm.runnable());
 		vm.run();
 		assertFalse(vm.runnable());
-		assertEquals(10001, ((Fixnum)vm.getAcc()).fixnum);
+		assertEquals(50001, ((Fixnum)vm.getAcc()).fixnum);
 	}
 
 }
