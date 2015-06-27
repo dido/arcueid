@@ -340,7 +340,7 @@ public class VirtualMachine
 		}
 
 		if (cont instanceof Fixnum) {
-			stackbottom = (int)((Fixnum)cont).fixnum;
+			stackbottom = (int)((Fixnum)cont).fixnum + 1;
 		}
 
 		// Garbage collection failed to produce memory
@@ -348,9 +348,10 @@ public class VirtualMachine
 			return;
 
 		// move what we can of the used portion of the stack to the bottom.
-		for (int i=0; i<sp - bp; i++)
+		for (int i=0; i<sp - bp - 1; i++)
 			setStackIndex(stackbottom + i, stackIndex(bp + i));
-		sp = stackbottom + (sp - bp);
+		sp = stackbottom + (sp - bp - 1);
+		bp = stackbottom;
 	}
 
 	public void push(ArcObject obj)
@@ -470,9 +471,15 @@ public class VirtualMachine
 		argcheck(arg, arg);
 	}
 
-	/* Create a stack-based environment. */
+	/* Create an environment. If there is enough space on the stack, that environment will be there,
+	 * if not, it will be created in the heap. */
 	public void mkenv(int prevsize, int extrasize)
 	{
+		if (sp + extrasize + 3 > stack.length) {
+			mkheapenv(prevsize, extrasize);
+			return;
+		}
+		// If there is enough space on the stack, create the environment there.
 		// Add the extra environment entries
 		for (int i=0; i<extrasize; i++)
 			push(Unbound.UNBOUND);
@@ -485,6 +492,24 @@ public class VirtualMachine
 		push(Fixnum.get(count));		// envptr + 1
 		push(env);						// envptr + 2
 		env = Fixnum.get(envptr);
+		bp = sp;
+	}
+
+	private void mkheapenv(int prevsize, int extrasize)
+	{
+		// First, convert the parent environment to a heap environment if it is not already one
+		if (env instanceof Fixnum)
+			env = HeapEnv.fromStackEnv(this, (int)((Fixnum)env).fixnum);
+		int envstart = sp - prevsize;
+		// Create new heap environment and copy the environment values from the stack into it
+		HeapEnv nenv = new HeapEnv(prevsize + extrasize, env);
+		for (int i=0; i<prevsize; i++)
+			nenv.setEnv(i, stackIndex(envstart + i));
+		// Fill in extra environment entries with UNBOUND
+		for (int i=prevsize; i<prevsize+extrasize; i++)
+			nenv.setEnv(i, Unbound.UNBOUND);
+		bp = sp;
+		env = nenv;
 	}
 
 	/** move current environment to heap if needed */
