@@ -31,4 +31,10 @@ public class Vector extends ArcObject
 		return(TYPE);
 	}
 
+	@Override
+	public String toString()
+	{
+		return("<" + type().toString() + ">");
+	}
+
 }
