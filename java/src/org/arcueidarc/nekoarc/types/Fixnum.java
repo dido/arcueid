@@ -4,7 +4,6 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
 import org.arcueidarc.nekoarc.NekoArcException;
-import org.arcueidarc.nekoarc.util.IndexPhantomReference;
 import org.arcueidarc.nekoarc.util.LongMap;
 
 public class Fixnum extends Numeric
@@ -16,23 +15,6 @@ public class Fixnum extends Numeric
 	public static final Fixnum ZERO = get(0);
 	public static final Fixnum ONE = get(1);
 	public static final Fixnum TEN = get(10);
-
-	static {
-		// Thread that removes phantom references to fixnums
-		new Thread() {
-			public void run()
-			{
-				for (;;) {
-					try {
-						@SuppressWarnings("unchecked")
-						IndexPhantomReference<Fixnum> ipr = (IndexPhantomReference<Fixnum>) rq.remove();
-						table.remove(ipr.index);
-					} catch (InterruptedException e) {
-					}
-				}
-			}
-		}.start();
-	}
 
 	private Fixnum(long x)
 	{
@@ -50,7 +32,6 @@ public class Fixnum extends Numeric
 		}
 		f = new Fixnum(x);
 		table.put(x, new WeakReference<Fixnum>(f, rq));
-		new IndexPhantomReference<Fixnum>(f, rq, x);
 		return(f);
 	}
 
