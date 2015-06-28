@@ -340,11 +340,14 @@ public class VirtualMachine
 		}
 
 		if (cont instanceof Fixnum) {
-			stackbottom = (int)((Fixnum)cont).fixnum + 1;
+			// Try to move the current continuation on the stack to the heap
+			Continuation nc = Continuation.fromStackCont(this, (Fixnum)cont);
+			cont = nc;
+			stackbottom = 0;
 		}
 
 		// Garbage collection failed to produce memory
-		if (stackbottom < 0 || stackbottom == bp)
+		if (stackbottom < 0  || stackbottom > stack.length || stackbottom == bp)
 			return;
 
 		// move what we can of the used portion of the stack to the bottom.
@@ -581,6 +584,12 @@ public class VirtualMachine
 	// Make a continuation on the stack. The new continuation is saved in the continuation register.
 	public void makecont(int ipoffset)
 	{
+		if (sp + 4 > stack.length) {
+			// Try to do stack gc first. If it fails, nothing for it
+			stackgc();
+			if (sp + 4 > stack.length)
+				throw new NekoArcException("stack overflow while creating continuation");
+		}
 		int newip = ip + ipoffset;
 		push(Fixnum.get(newip));
 		push(Fixnum.get(bp));
