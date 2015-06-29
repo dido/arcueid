@@ -1,30 +1,24 @@
 package org.arcueidarc.nekoarc.functions.arith;
 
-import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.functions.Builtin;
 import org.arcueidarc.nekoarc.types.ArcObject;
-import org.arcueidarc.nekoarc.types.Cons;
 import org.arcueidarc.nekoarc.types.Fixnum;
+import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public class Add extends Builtin
 {
 	public Add()
 	{
-		super("+");
+		super("+", 0, 0, 0, true);
 	}
-	
+
 	@Override
-	protected ArcObject invoke(Cons args)
+	protected ArcObject invoke(VirtualMachine vm)
 	{
-		if (args instanceof Nil)
-			return(Fixnum.ZERO);
-		ArcObject result = args.car();
-		ArcObject rest = args.cdr();
-		while (!(rest instanceof Nil)) {
-			result = result.add(rest.car());
-			rest = rest.cdr();
-		}
-		return(result);
+		ArcObject sum = Fixnum.ZERO;
+		for (int i=0; i<vm.argc(); i++)
+			sum.add(vm.getenv(0, i));
+		return(sum);
 	}
 	
 }
