@@ -11,6 +11,7 @@ public class Closure extends Cons
 		super(ca, cd);
 	}
 
+	/** This is the only place where apply should be overridden */
 	@Override
 	public void apply(VirtualMachine vm)
 	{
