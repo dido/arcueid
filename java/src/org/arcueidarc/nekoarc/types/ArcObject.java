@@ -1,10 +1,16 @@
 package org.arcueidarc.nekoarc.types;
 
+import java.util.concurrent.SynchronousQueue;
+
 import org.arcueidarc.nekoarc.NekoArcException;
+import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
-public abstract class ArcObject
+public abstract class ArcObject implements Runnable
 {
+	private SynchronousQueue<ArcObject> queue;
+	private VirtualMachine vm;
+
 	public ArcObject car()
 	{
 		throw new NekoArcException("Can't take car of " + this.type());
@@ -43,7 +49,72 @@ public abstract class ArcObject
 
 	public abstract ArcObject type();
 
+	public int requiredArgs()
+	{
+		throw new NekoArcException("Cannot invoke object of type " + type());
+	}
+
+	public int optionalArgs()
+	{
+		return(0);
+	}
+
+	public int extraArgs()
+	{
+		return(0);
+	}
+
+	public boolean variadicP()
+	{
+		return(false);
+	}
+
+	/** The basic apply. This should normally not be overridden. Only Closure should probably override it because it sets up environments itself. */
 	public void apply(VirtualMachine vm)
+	{
+		int minenv, dsenv, optenv;
+		minenv = requiredArgs();
+		dsenv = extraArgs();
+		optenv = optionalArgs();
+		if (variadicP()) {
+			int i;
+			vm.argcheck(minenv, -1);
+			ArcObject rest = Nil.NIL;
+			for (i = vm.argc(); i>(minenv + optenv); i--)
+				rest = new Cons(vm.pop(), rest);
+			vm.mkenv(i, minenv + optenv - i + dsenv + 1);
+			/* store the rest parameter */
+			vm.setenv(0, minenv + optenv + dsenv, rest);
+		} else {
+			vm.argcheck(minenv, minenv + optenv);
+			vm.mkenv(vm.argc(), minenv + optenv - vm.argc() + dsenv);
+		}
+		queue = new SynchronousQueue<ArcObject>();
+		this.vm = vm;
+		// start the invoker thread
+		new Thread(this).start();
+		// Suspend the virtual machine thread until the invoke thread returns
+		for (;;) {
+			try {
+				vm.setAcc(queue.take());
+				vm.restorecont();
+				break;
+			} catch (InterruptedException e) {}
+		}
+	}
+
+	public void run()
+	{
+		for (;;) {
+			try {
+				queue.put(invoke(this.vm));
+				break;
+			} catch (InterruptedException e) {
+			}
+		}
+	}
+
+	protected ArcObject invoke(VirtualMachine vm)
 	{
 		throw new NekoArcException("Cannot invoke object of type " + type());
 	}
