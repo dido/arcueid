@@ -84,13 +84,16 @@ public class Cons extends ArcObject
 	}
 
 	@Override
-	public void apply(VirtualMachine vm)
+	public int requiredArgs()
 	{
-		vm.argcheck(1);
-		vm.mkenv(1, 0);
+		return(1);
+	}
+
+	@Override
+	protected ArcObject invoke(VirtualMachine vm)
+	{
 		Fixnum idx = Fixnum.cast(vm.getenv(0, 0), this);
-		vm.setAcc(this.nth(idx.fixnum).car());
-		vm.restorecont();
+		return(this.nth(idx.fixnum).car());
 	}
 }
 
