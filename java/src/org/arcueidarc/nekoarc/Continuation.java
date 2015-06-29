@@ -27,11 +27,27 @@ public class Continuation extends Vector
 		return(c);
 	}
 
-	public static Continuation fromStackCont(VirtualMachine vm, Fixnum sc)
+	public static Continuation fromStackCont(VirtualMachine vm, ArcObject sc)
 	{
-		Continuation c = new Continuation((int)sc.fixnum);
-		for (int i=0; i<sc.fixnum; i++)
+		int cc = (int)((Fixnum)sc).fixnum;
+		Continuation c = new Continuation(cc);
+		for (int i=0; i<cc; i++)
 			c.setIndex(i, vm.stackIndex(i));
 		return(c);
+	}
+
+
+	@Override
+	public int requiredArgs()
+	{
+		return(1);
+	}
+
+	/** The application of a continuation -- this does all the hard work of call/cc */
+	@Override
+	protected ArcObject invoke(VirtualMachine vm)
+	{
+		vm.setCont(this);
+		return(vm.getenv(0, 0));
 	}
 }
