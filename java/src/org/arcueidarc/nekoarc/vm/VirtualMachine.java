@@ -340,10 +340,11 @@ public class VirtualMachine
 		}
 
 		if (cont instanceof Fixnum) {
-			// Try to move the current continuation on the stack to the heap
-			Continuation nc = Continuation.fromStackCont(this, (Fixnum)cont);
-			cont = nc;
-			stackbottom = 0;
+//			// Try to move the current continuation on the stack to the heap
+//			Continuation nc = Continuation.fromStackCont(this, (Fixnum)cont);
+//			cont = nc;
+//			stackbottom = 0;
+			stackbottom = (int)((Fixnum)cont).fixnum + 1;
 		}
 
 		// Garbage collection failed to produce memory
@@ -380,8 +381,9 @@ public class VirtualMachine
 	public void run()
 		throws NekoArcException
 	{
-		while (runnable)
+		while (runnable) {
 			jmptbl[(int)code[ip++] & 0xff].invoke(this);
+		}
 	}
 
 	// Four-byte instruction arguments (most everything else). Little endian.
@@ -624,11 +626,23 @@ public class VirtualMachine
 		this.env = env; 
 	}
 
-	public int getBP() {
+	public int getBP()
+	{
 		return bp;
 	}
 
-	public void setBP(int bp) {
+	public void setBP(int bp)
+	{
 		this.bp = bp;
+	}
+
+	public ArcObject getCont()
+	{
+		return cont;
+	}
+
+	public void setCont(ArcObject cont)
+	{
+		this.cont = cont;
 	}
 }
