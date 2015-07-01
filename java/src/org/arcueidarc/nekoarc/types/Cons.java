@@ -1,8 +1,8 @@
 package org.arcueidarc.nekoarc.types;
 
+import org.arcueidarc.nekoarc.InvokeThread;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
-import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public class Cons extends ArcObject
 {
@@ -90,9 +90,9 @@ public class Cons extends ArcObject
 	}
 
 	@Override
-	protected ArcObject invoke(VirtualMachine vm)
+	public ArcObject invoke(InvokeThread thr)
 	{
-		Fixnum idx = Fixnum.cast(vm.getenv(0, 0), this);
+		Fixnum idx = Fixnum.cast(thr.getenv(0, 0), this);
 		return(this.nth(idx.fixnum).car());
 	}
 }
