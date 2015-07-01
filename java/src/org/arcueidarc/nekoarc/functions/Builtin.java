@@ -1,8 +1,8 @@
 package org.arcueidarc.nekoarc.functions;
 
+import org.arcueidarc.nekoarc.InvokeThread;
 import org.arcueidarc.nekoarc.types.ArcObject;
 import org.arcueidarc.nekoarc.types.Symbol;
-import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public abstract class Builtin extends ArcObject
 {
@@ -46,7 +46,7 @@ public abstract class Builtin extends ArcObject
 		return(variadic);
 	}
 
-	abstract protected ArcObject invoke(VirtualMachine vm);
+	public abstract ArcObject invoke(InvokeThread vm);
 
 	public ArcObject type()
 	{
