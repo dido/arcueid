@@ -19,12 +19,13 @@ public class Continuation extends Vector
 	/**
 	 * Restore a stack-based continuation.
 	 */
-	public Fixnum restore(VirtualMachine vm)
+	public void restore(VirtualMachine vm)
 	{
 		Fixnum c = Fixnum.get(this.length());
 		for (int i=0; i<this.length(); i++)
 			vm.setStackIndex(i, index(i));
-		return(c);
+		vm.setCont(c);
+		vm.restorecont();
 	}
 
 	public static Continuation fromStackCont(VirtualMachine vm, ArcObject sc)
@@ -45,9 +46,9 @@ public class Continuation extends Vector
 
 	/** The application of a continuation -- this does all the hard work of call/cc */
 	@Override
-	protected ArcObject invoke(VirtualMachine vm)
+	public ArcObject invoke(InvokeThread thr)
 	{
-		vm.setCont(this);
-		return(vm.getenv(0, 0));
+		// XXX -- fill this in
+		return null;
 	}
 }
