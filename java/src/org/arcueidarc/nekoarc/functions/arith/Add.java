@@ -1,9 +1,9 @@
 package org.arcueidarc.nekoarc.functions.arith;
 
+import org.arcueidarc.nekoarc.InvokeThread;
 import org.arcueidarc.nekoarc.functions.Builtin;
 import org.arcueidarc.nekoarc.types.ArcObject;
 import org.arcueidarc.nekoarc.types.Fixnum;
-import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public class Add extends Builtin
 {
@@ -13,12 +13,10 @@ public class Add extends Builtin
 	}
 
 	@Override
-	protected ArcObject invoke(VirtualMachine vm)
+	public ArcObject invoke(InvokeThread vm)
 	{
-		ArcObject sum = Fixnum.ZERO;
-		for (int i=0; i<vm.argc(); i++)
-			sum.add(vm.getenv(0, i));
-		return(sum);
+		// XXX - fixme
+		return(Fixnum.get(0));
 	}
 	
 }
