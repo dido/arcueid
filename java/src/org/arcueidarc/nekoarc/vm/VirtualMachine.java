@@ -610,10 +610,9 @@ public class VirtualMachine
 			setBP((int)((Fixnum)pop()).fixnum);
 			setIP((int)((Fixnum)pop()).fixnum);
 		} else if (cont instanceof Continuation) {
-			cont = ((Continuation)cont).restore(this);
-			restorecont();		// heap continuation is now a stack continuation
+			((Continuation)cont).restore(this);
 		} else if (cont.is(Nil.NIL)) {
-			// If we have no continuation that was an attempt to return from the topmost
+			// If we have no continuation, that was an attempt to return from the topmost
 			// level and we should halt the machine.
 			halt();
 		} else {
