@@ -1,5 +1,6 @@
 package org.arcueidarc.nekoarc.types;
 
+import org.arcueidarc.nekoarc.util.Callable;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public class Closure extends Cons
@@ -13,12 +14,18 @@ public class Closure extends Cons
 
 	/** This is the only place where apply should be overridden */
 	@Override
-	public void apply(VirtualMachine vm)
+	public void apply(VirtualMachine vm, Callable caller)
 	{
 		ArcObject newenv, newip;
 		newenv = this.car();
 		newip = this.cdr();
 		vm.setIP((int)((Fixnum)newip).fixnum);
 		vm.setEnv(newenv);
+		// If this is not a call from the vm itself, we need to take the additional step of waking up the VM thread
+		// and causing the caller thread to sleep. Unnecessary if this is already a VM thread.
+		if (vm != caller) {
+			vm.caller().put(this);				// wakes the VM so it begins executing the closure
+			vm.setAcc(caller.caller().ret());	// sleeps the caller until its JavaContinuation is restored
+		}
 	}
 }
