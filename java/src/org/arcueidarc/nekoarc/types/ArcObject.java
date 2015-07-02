@@ -3,10 +3,14 @@ package org.arcueidarc.nekoarc.types;
 import org.arcueidarc.nekoarc.InvokeThread;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
+import org.arcueidarc.nekoarc.util.Callable;
+import org.arcueidarc.nekoarc.util.Caller;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
-public abstract class ArcObject
+public abstract class ArcObject implements Callable
 {
+	private final Caller caller = new Caller();
+
 	public ArcObject car()
 	{
 		throw new NekoArcException("Can't take car of " + this.type());
@@ -66,7 +70,7 @@ public abstract class ArcObject
 	}
 
 	/** The basic apply. This should normally not be overridden. Only Closure should probably override it because it runs completely within the vm. */
-	public void apply(VirtualMachine vm)
+	public void apply(VirtualMachine vm, Callable caller)
 	{
 		int minenv, dsenv, optenv;
 		minenv = requiredArgs();
@@ -86,10 +90,12 @@ public abstract class ArcObject
 			vm.mkenv(vm.argc(), minenv + optenv - vm.argc() + dsenv);
 		}
 
-		InvokeThread thr = new InvokeThread(vm, this);
+		// Start the invoke thread
+		InvokeThread thr = new InvokeThread(vm, caller, this);
+		new Thread(thr).start();
 
-		// Suspend the virtual machine thread until the invoke thread returns
-		vm.setAcc(thr.sync());
+		// Suspend the caller's thread until the invoke thread returns
+		vm.setAcc(caller.caller().ret());
 		vm.restorecont();
 	}
 
@@ -107,5 +113,11 @@ public abstract class ArcObject
 	public boolean is(ArcObject other)
 	{
 		return(this == other);
+	}
+
+	@Override
+	public Caller caller()
+	{
+		return(caller );
 	}
 }
