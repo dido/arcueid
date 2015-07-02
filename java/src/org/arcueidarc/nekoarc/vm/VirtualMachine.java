@@ -8,16 +8,19 @@ import org.arcueidarc.nekoarc.Unbound;
 import org.arcueidarc.nekoarc.types.ArcObject;
 import org.arcueidarc.nekoarc.types.Fixnum;
 import org.arcueidarc.nekoarc.types.Symbol;
+import org.arcueidarc.nekoarc.util.Caller;
+import org.arcueidarc.nekoarc.util.Callable;
 import org.arcueidarc.nekoarc.util.ObjectMap;
 import org.arcueidarc.nekoarc.vm.instruction.*;
 
-public class VirtualMachine
+public class VirtualMachine implements Callable
 {
 	private int sp;					// stack pointer
 	private int bp;					// base pointer
 	private ArcObject env;			// environment pointer
 	private ArcObject cont;			// continuation pointer
 	private ArcObject[] stack;		// stack
+	private final Caller caller;
 	private int ip;					// instruction pointer
 	private byte[] code;
 	private boolean runnable;
@@ -296,6 +299,7 @@ public class VirtualMachine
 		env = Nil.NIL;
 		cont = Nil.NIL;
 		setAcc(Nil.NIL);
+		caller = new Caller();
 	}
 
 	public void load(final byte[] instructions, int ip, final ArcObject[] literals)
@@ -643,5 +647,11 @@ public class VirtualMachine
 	public void setCont(ArcObject cont)
 	{
 		this.cont = cont;
+	}
+
+	@Override
+	public Caller caller()
+	{
+		return(caller);
 	}
 }
