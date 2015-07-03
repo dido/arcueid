@@ -8,7 +8,7 @@ import org.arcueidarc.nekoarc.Unbound;
 import org.arcueidarc.nekoarc.types.ArcObject;
 import org.arcueidarc.nekoarc.types.Fixnum;
 import org.arcueidarc.nekoarc.types.Symbol;
-import org.arcueidarc.nekoarc.util.Caller;
+import org.arcueidarc.nekoarc.util.CallSync;
 import org.arcueidarc.nekoarc.util.Callable;
 import org.arcueidarc.nekoarc.util.ObjectMap;
 import org.arcueidarc.nekoarc.vm.instruction.*;
@@ -20,7 +20,7 @@ public class VirtualMachine implements Callable
 	private ArcObject env;			// environment pointer
 	private ArcObject cont;			// continuation pointer
 	private ArcObject[] stack;		// stack
-	private final Caller caller;
+	private final CallSync caller;
 	private int ip;					// instruction pointer
 	private byte[] code;
 	private boolean runnable;
@@ -299,7 +299,7 @@ public class VirtualMachine implements Callable
 		env = Nil.NIL;
 		cont = Nil.NIL;
 		setAcc(Nil.NIL);
-		caller = new Caller();
+		caller = new CallSync();
 	}
 
 	public void load(final byte[] instructions, int ip, final ArcObject[] literals)
@@ -650,7 +650,7 @@ public class VirtualMachine implements Callable
 	}
 
 	@Override
-	public Caller caller()
+	public CallSync sync()
 	{
 		return(caller);
 	}

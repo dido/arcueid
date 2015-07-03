@@ -4,12 +4,12 @@ import org.arcueidarc.nekoarc.InvokeThread;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
 import org.arcueidarc.nekoarc.util.Callable;
-import org.arcueidarc.nekoarc.util.Caller;
+import org.arcueidarc.nekoarc.util.CallSync;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 public abstract class ArcObject implements Callable
 {
-	private final Caller caller = new Caller();
+	private final CallSync caller = new CallSync();
 
 	public ArcObject car()
 	{
@@ -95,7 +95,7 @@ public abstract class ArcObject implements Callable
 		new Thread(thr).start();
 
 		// Suspend the caller's thread until the invoke thread returns
-		vm.setAcc(caller.caller().ret());
+		vm.setAcc(caller.sync().retval());
 		vm.restorecont();
 	}
 
@@ -116,7 +116,7 @@ public abstract class ArcObject implements Callable
 	}
 
 	@Override
-	public Caller caller()
+	public CallSync sync()
 	{
 		return(caller );
 	}

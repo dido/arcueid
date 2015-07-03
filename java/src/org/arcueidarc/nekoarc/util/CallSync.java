@@ -4,16 +4,16 @@ import java.util.concurrent.SynchronousQueue;
 
 import org.arcueidarc.nekoarc.types.ArcObject;
 
-public class Caller
+public class CallSync
 {
 	private final SynchronousQueue<ArcObject> syncqueue;
 
-	public Caller()
+	public CallSync()
 	{
 		syncqueue = new SynchronousQueue<ArcObject>();
 	}
 
-	public void put(ArcObject retval)
+	public void ret(ArcObject retval)
 	{
 		for (;;) {
 			try {
@@ -23,7 +23,7 @@ public class Caller
 		}
 	}
 
-	public ArcObject ret()
+	public ArcObject retval()
 	{
 		for (;;) {
 			try {

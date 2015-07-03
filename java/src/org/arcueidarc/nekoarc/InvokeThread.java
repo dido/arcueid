@@ -22,7 +22,7 @@ public class InvokeThread implements Runnable
 	@Override
 	public void run()
 	{
-		caller.caller().put(obj.invoke(this));
+		caller.sync().ret(obj.invoke(this));
 	}
 
 	public ArcObject getenv(int i, int j)

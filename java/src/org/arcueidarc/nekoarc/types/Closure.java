@@ -24,8 +24,8 @@ public class Closure extends Cons
 		// If this is not a call from the vm itself, we need to take the additional step of waking up the VM thread
 		// and causing the caller thread to sleep. Unnecessary if this is already a VM thread.
 		if (vm != caller) {
-			vm.caller().put(this);				// wakes the VM so it begins executing the closure
-			vm.setAcc(caller.caller().ret());	// sleeps the caller until its JavaContinuation is restored
+			vm.sync().ret(this);				// wakes the VM so it begins executing the closure
+			vm.setAcc(caller.sync().retval());	// sleeps the caller until its JavaContinuation is restored
 		}
 	}
 }

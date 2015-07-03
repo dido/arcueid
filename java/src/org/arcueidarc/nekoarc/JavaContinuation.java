@@ -21,7 +21,7 @@ public class JavaContinuation extends Continuation
 	{
 		// The restoration of a Java continuation should result in the InvokeThread resuming execution while the virtual machine
 		// thread waits for it.
-		vm.setAcc(caller.caller().ret());
+		vm.setAcc(caller.sync().retval());
 		vm.setCont(prev);
 		vm.restorecont();
 	}
