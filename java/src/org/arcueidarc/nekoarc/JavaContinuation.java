@@ -1,28 +1,41 @@
 package org.arcueidarc.nekoarc;
 
 import org.arcueidarc.nekoarc.types.ArcObject;
+import org.arcueidarc.nekoarc.types.Symbol;
 import org.arcueidarc.nekoarc.util.Callable;
 import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
-public class JavaContinuation extends Continuation
+public class JavaContinuation extends ArcObject implements Continuation
 {
+	public static final ArcObject TYPE = Symbol.intern("continuation");
+
 	private final ArcObject prev;
 	private final Callable caller;
+	private final ArcObject env;
 
-	public JavaContinuation(Callable c, ArcObject pcont)
+	public JavaContinuation(VirtualMachine vm, Callable c)
 	{
-		super(0);
-		prev = pcont;
+		prev = vm.getCont();
 		caller = c;
+		env = vm.heapenv();		// copy current env to heap
 	}
 
 	@Override
-	public void restore(VirtualMachine vm)
+	public void restore(VirtualMachine vm, Callable cc)
 	{
-		// The restoration of a Java continuation should result in the InvokeThread resuming execution while the virtual machine
-		// thread waits for it.
-		vm.setAcc(caller.sync().retval());
 		vm.setCont(prev);
-		vm.restorecont();
+		vm.setenvreg(env);
+		// This will re-enable the thread represented by this continuation
+		// This will stop the thread which restored this continuation
+		if (vm == cc) {
+			caller.sync().ret(vm.getAcc());
+			vm.setAcc(cc.sync().retval());
+		}
+	}
+
+	@Override
+	public ArcObject type()
+	{
+		return(TYPE);
 	}
 }
