@@ -96,7 +96,6 @@ public abstract class ArcObject implements Callable
 
 		// Suspend the caller's thread until the invoke thread returns
 		vm.setAcc(caller.sync().retval());
-		vm.restorecont();
 	}
 
 	public ArcObject invoke(InvokeThread vm)
