@@ -6,7 +6,7 @@ import org.arcueidarc.nekoarc.vm.VirtualMachine;
 
 /** The main reason this class exists is that Java is a weak-sauce language that doesn't have closures or true continuations. We have to
  *  emulate them using threads. */
-public class InvokeThread implements Runnable
+public class InvokeThread extends Thread
 {
 	public final Callable caller;
 	public final ArcObject obj;
@@ -22,7 +22,13 @@ public class InvokeThread implements Runnable
 	@Override
 	public void run()
 	{
-		caller.sync().ret(obj.invoke(this));
+		// Perform our function's thing
+		ArcObject ret = obj.invoke(this);
+		// Restore the continuation created by the caller
+		vm.restorecont(caller);
+		// Return the result to our caller's thread, waking them up
+		caller.sync().ret(ret);
+		// and this invoke thread's work is ended
 	}
 
 	public ArcObject getenv(int i, int j)
@@ -39,7 +45,7 @@ public class InvokeThread implements Runnable
 			vm.push(arg);
 
 		// new continuation
-		vm.setCont(new JavaContinuation(obj, vm.getCont()));
+		vm.setCont(new JavaContinuation(vm, obj));
 
 		// Apply the function.
 		fn.apply(vm, obj);
