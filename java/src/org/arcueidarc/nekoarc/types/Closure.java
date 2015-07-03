@@ -20,12 +20,13 @@ public class Closure extends Cons
 		newenv = this.car();
 		newip = this.cdr();
 		vm.setIP((int)((Fixnum)newip).fixnum);
-		vm.setEnv(newenv);
-		// If this is not a call from the vm itself, we need to take the additional step of waking up the VM thread
-		// and causing the caller thread to sleep. Unnecessary if this is already a VM thread.
+		vm.setenvreg(newenv);
+		// If this is not a call from the vm itself, some other additional actions need to be taken.
+		// 1. The virtual machine thread should be resumed.
+		// 2. The caller must be suspended until the continuation it created is restored.
 		if (vm != caller) {
 			vm.sync().ret(this);				// wakes the VM so it begins executing the closure
-			vm.setAcc(caller.sync().retval());	// sleeps the caller until its JavaContinuation is restored
+			vm.setAcc(caller.sync().retval());	// sleeps the caller until its own continuation is restored
 		}
 	}
 }
