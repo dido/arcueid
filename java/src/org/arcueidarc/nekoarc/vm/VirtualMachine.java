@@ -604,17 +604,22 @@ public class VirtualMachine implements Callable
 		cont = Fixnum.get(sp);
 	}
 
-	// Restore continuation
 	public void restorecont()
+	{
+		restorecont(this);
+	}
+
+	// Restore continuation
+	public void restorecont(Callable caller)
 	{
 		if (cont instanceof Fixnum) {
 			sp = (int)((Fixnum)cont).fixnum;
 			cont = pop();
-			setEnv(pop());
+			setenvreg(pop());
 			setBP((int)((Fixnum)pop()).fixnum);
 			setIP((int)((Fixnum)pop()).fixnum);
 		} else if (cont instanceof Continuation) {
-			((Continuation)cont).restore(this);
+			((Continuation)cont).restore(this, caller);
 		} else if (cont.is(Nil.NIL)) {
 			// If we have no continuation, that was an attempt to return from the topmost
 			// level and we should halt the machine.
@@ -624,7 +629,7 @@ public class VirtualMachine implements Callable
 		}
 	}
 
-	public void setEnv(ArcObject env)
+	public void setenvreg(ArcObject env)
 	{
 		this.env = env; 
 	}
