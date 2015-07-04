@@ -26,6 +26,7 @@ public class HeapContinuation extends Vector implements Continuation
 		Fixnum c = Fixnum.get(this.length());
 		for (int i=0; i<this.length(); i++)
 			vm.setStackIndex(i, index(i));
+		vm.setSP(this.length());
 		vm.setCont(c);
 		vm.restorecont();
 	}
@@ -46,12 +47,12 @@ public class HeapContinuation extends Vector implements Continuation
 		return(1);
 	}
 
-	/** The application of a continuation -- this does all the hard work of call/cc */
+	/** The application of a continuation -- this will set itself as the current continuation,
+	 *  ready to be restored just as the invokethread terminates. */
 	@Override
 	public ArcObject invoke(InvokeThread thr)
 	{
-		// XXX -- fill this in
-		return null;
+		thr.vm.setCont(this);
+		return(thr.getenv(0, 0));
 	}
-
 }
