@@ -1,6 +1,7 @@
 package org.arcueidarc.nekoarc.vm;
 
 import org.arcueidarc.nekoarc.Continuation;
+// import org.arcueidarc.nekoarc.HeapContinuation;
 import org.arcueidarc.nekoarc.HeapEnv;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
@@ -344,11 +345,11 @@ public class VirtualMachine implements Callable
 		}
 
 		if (cont instanceof Fixnum) {
-//			// Try to move the current continuation on the stack to the heap
-//			Continuation nc = Continuation.fromStackCont(this, (Fixnum)cont);
-//			cont = nc;
+			// If the current continuation is on the stack move it to the heap
+//			ArcObject nc = HeapContinuation.fromStackCont(this, (Fixnum)cont);
+//			this.setCont(nc);
 //			stackbottom = 0;
-			stackbottom = (int)((Fixnum)cont).fixnum + 1;
+//			stackbottom = (int)((Fixnum)cont).fixnum + 1;
 		}
 
 		// Garbage collection failed to produce memory
@@ -423,6 +424,12 @@ public class VirtualMachine implements Callable
 		return(this.runnable);
 	}
 
+	public boolean setrunnable(boolean runstate)
+	{
+		this.runnable = runstate;
+		return(runstate);
+	}
+
 	public ArcObject literal(int offset)
 	{
 		return(literals[offset]);
@@ -441,6 +448,11 @@ public class VirtualMachine implements Callable
 	public int getSP()
 	{
 		return(sp);
+	}
+
+	public void setSP(int sp)
+	{
+		this.sp = sp;
 	}
 
 	// add or replace a global binding
