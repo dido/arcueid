@@ -341,7 +341,7 @@ public class VirtualMachine implements Callable
 		if (env instanceof Fixnum) {
 			int si = (int)((Fixnum)env).fixnum;
 			stackbottom = (int)((Fixnum)stackIndex(si)).fixnum;
-			env = HeapEnv.fromStackEnv(this, si);
+			env = HeapEnv.fromStackEnv(this, env);
 		}
 
 		if (cont instanceof Fixnum) {
@@ -349,7 +349,7 @@ public class VirtualMachine implements Callable
 //			ArcObject nc = HeapContinuation.fromStackCont(this, (Fixnum)cont);
 //			this.setCont(nc);
 //			stackbottom = 0;
-//			stackbottom = (int)((Fixnum)cont).fixnum + 1;
+			stackbottom = (int)((Fixnum)cont).fixnum + 1;
 		}
 
 		// Garbage collection failed to produce memory
@@ -516,11 +516,11 @@ public class VirtualMachine implements Callable
 		bp = sp;
 	}
 
+	/** Create a new heap environment ab initio */
 	private void mkheapenv(int prevsize, int extrasize)
 	{
-		// First, convert the parent environment to a heap environment if it is not already one
-		if (env instanceof Fixnum)
-			env = HeapEnv.fromStackEnv(this, (int)((Fixnum)env).fixnum);
+		// First, convert what will become the parent environment to a heap environment if it is not already one
+		env = HeapEnv.fromStackEnv(this, env);
 		int envstart = sp - prevsize;
 		// Create new heap environment and copy the environment values from the stack into it
 		HeapEnv nenv = new HeapEnv(prevsize + extrasize, env);
@@ -536,8 +536,7 @@ public class VirtualMachine implements Callable
 	/** move current environment to heap if needed */
 	public ArcObject heapenv()
 	{
-		if (env instanceof Fixnum)
-			env = HeapEnv.fromStackEnv(this, (int)((Fixnum)env).fixnum);
+		env = HeapEnv.fromStackEnv(this, env);
 		return(env);
 	}
 
@@ -599,15 +598,19 @@ public class VirtualMachine implements Callable
 		return(stack[index] = value);
 	}
 
+	public void stackcheck(int required, final String message)
+	{
+		if (sp + required > stack.length) {
+			// Try to do stack gc first. If it fails, nothing for it
+			stackgc();
+			if (sp + required > stack.length)
+				throw new NekoArcException(message);
+		}
+	}
 	// Make a continuation on the stack. The new continuation is saved in the continuation register.
 	public void makecont(int ipoffset)
 	{
-		if (sp + 4 > stack.length) {
-			// Try to do stack gc first. If it fails, nothing for it
-			stackgc();
-			if (sp + 4 > stack.length)
-				throw new NekoArcException("stack overflow while creating continuation");
-		}
+		stackcheck(4, "stack overflow while creating continuation");
 		int newip = ip + ipoffset;
 		push(Fixnum.get(newip));
 		push(Fixnum.get(bp));
@@ -631,7 +634,13 @@ public class VirtualMachine implements Callable
 			setBP((int)((Fixnum)pop()).fixnum);
 			setIP((int)((Fixnum)pop()).fixnum);
 		} else if (cont instanceof Continuation) {
-			((Continuation)cont).restore(this, caller);
+			Continuation ct = (Continuation)cont;
+//			if (ct.stackReq() + sp > stack.length) {
+//				stackgc();
+//				if (ct.stackReq() + sp > stack.length)
+//					throw new NekoArcException("stack overflow while restoring heap continuation");
+//			}
+			ct.restore(this, caller);
 		} else if (cont.is(Nil.NIL)) {
 			// If we have no continuation, that was an attempt to return from the topmost
 			// level and we should halt the machine.
