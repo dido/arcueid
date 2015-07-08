@@ -1,7 +1,7 @@
 package org.arcueidarc.nekoarc.vm;
 
 import org.arcueidarc.nekoarc.Continuation;
-// import org.arcueidarc.nekoarc.HeapContinuation;
+import org.arcueidarc.nekoarc.HeapContinuation;
 import org.arcueidarc.nekoarc.HeapEnv;
 import org.arcueidarc.nekoarc.NekoArcException;
 import org.arcueidarc.nekoarc.Nil;
@@ -345,11 +345,12 @@ public class VirtualMachine implements Callable
 		}
 
 		if (cont instanceof Fixnum) {
+			int[] deepest = {0};
 			// If the current continuation is on the stack move it to the heap
-//			ArcObject nc = HeapContinuation.fromStackCont(this, (Fixnum)cont);
-//			this.setCont(nc);
-//			stackbottom = 0;
-			stackbottom = (int)((Fixnum)cont).fixnum + 1;
+			ArcObject nc = HeapContinuation.fromStackCont(this, cont, deepest);
+			this.setCont(nc);
+			stackbottom = deepest[0];
+//			stackbottom = (int)((Fixnum)cont).fixnum + 1;
 		}
 
 		// Garbage collection failed to produce memory
