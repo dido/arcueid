@@ -23,15 +23,14 @@ public class HeapContinuationTest
 		env.setEnv(2, Fixnum.get(6));
 
 		// Synthetic HeapContinuation
-		hc = new HeapContinuation(7);
+		hc = new HeapContinuation(3,		// 3 stack elements
+				Nil.NIL,					// previous continuation
+				env,						// environment
+				20);						// saved IP
 		// Stack elements
 		hc.setIndex(0, Fixnum.get(1));
 		hc.setIndex(1, Fixnum.get(2));
 		hc.setIndex(2, Fixnum.get(3));
-		hc.setIndex(3, Fixnum.get(20));		// instruction pointer
-		hc.setIndex(4, Fixnum.ZERO);		// base pointer
-		hc.setIndex(5, env);				// environment
-		hc.setIndex(6, Nil.NIL);			// previous continuation
 
 		// Code:
 		// env 2 0 0; lde0 0; push; lde0 1; apply 1; ret; hlt; hlt; hlt; hlt; hlt;
