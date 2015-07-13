@@ -33,9 +33,14 @@ public class HeapEnv extends Vector
 		return(setIndex(index, value));
 	}
 
+	public static ArcObject fromStackEnv(VirtualMachine vm, ArcObject sei)
+	{
+		return(fromStackEnv(vm, sei, null));
+	}
+
 	// Convert a stack-based environment si into a heap environment. Also affects any
 	// environments linked to it.
-	public static ArcObject fromStackEnv(VirtualMachine vm, ArcObject sei)
+	public static ArcObject fromStackEnv(VirtualMachine vm, ArcObject sei, int[] deepest)
 	{
 		if (sei instanceof HeapEnv || sei.is(Nil.NIL))
 			return(sei);
@@ -43,6 +48,8 @@ public class HeapEnv extends Vector
 		int start = (int)((Fixnum)vm.stackIndex(si)).fixnum;
 		int size = (int)((Fixnum)vm.stackIndex(si+1)).fixnum;
 		ArcObject penv = vm.stackIndex(si+2);
+		if (deepest != null && deepest[0] > start)
+			deepest[0] = start;
 		// Convert previous env into a stack-based one too
 		penv = fromStackEnv(vm, penv);
 		HeapEnv nenv = new HeapEnv(size, penv);

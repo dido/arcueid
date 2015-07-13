@@ -45,6 +45,7 @@ public class HeapContinuation extends Vector implements Continuation
 		// push the previous continuation
 		vm.push(prevcont);
 		vm.setCont(Fixnum.get(vm.getSP()));
+		vm.restorecont();
 	}
 
 	public static ArcObject fromStackCont(VirtualMachine vm, ArcObject sc)
@@ -70,12 +71,13 @@ public class HeapContinuation extends Vector implements Continuation
 		// Calculate the size of the actual continuation based on the saved base pointer
 		int bp = (int)((Fixnum)vm.stackIndex(cc-3)).fixnum;
 		int svsize = cc - bp - 4;
-		if (deepest != null)
+		if (deepest != null && deepest[0] > bp)
 			deepest[0] = bp;
 		// Turn previous continuation into a heap-based one too
 		ArcObject pco = vm.stackIndex(cc-1);
 		pco = fromStackCont(vm, pco, deepest);
-		HeapContinuation c = new HeapContinuation(svsize, pco, HeapEnv.fromStackEnv(vm, vm.stackIndex(cc-2)), (int)((Fixnum)vm.stackIndex(cc-4)).fixnum);
+		ArcObject senv = HeapEnv.fromStackEnv(vm, vm.stackIndex(cc-2), deepest);
+		HeapContinuation c = new HeapContinuation(svsize, pco, senv, (int)((Fixnum)vm.stackIndex(cc-4)).fixnum);
 
 		for (int i=0; i<svsize; i++)
 			c.setIndex(i, vm.stackIndex(bp + i));
