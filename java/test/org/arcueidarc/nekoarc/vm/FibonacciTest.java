@@ -61,12 +61,12 @@ public class FibonacciTest
 		literals[0] = new Closure(Nil.NIL, Fixnum.get(0));
 		vm.load(inst, 0, literals);
 		vm.setargc(1);
-		vm.push(Fixnum.get(8));
+		vm.push(Fixnum.get(25));
 		vm.setAcc(Nil.NIL);
 		assertTrue(vm.runnable());
 		vm.run();
 		assertFalse(vm.runnable());
-		assertEquals(34, ((Fixnum)vm.getAcc()).fixnum);
+		assertEquals(121393, ((Fixnum)vm.getAcc()).fixnum);
 	}
 
 }
