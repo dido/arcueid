@@ -336,28 +336,21 @@ public class VirtualMachine implements Callable
 	 */
 	private void stackgc()
 	{
-		int stackbottom = -1;
+		int[] deepest = {sp};
 
-		if (env instanceof Fixnum) {
-			int si = (int)((Fixnum)env).fixnum;
-			stackbottom = (int)((Fixnum)stackIndex(si)).fixnum;
-			env = HeapEnv.fromStackEnv(this, env);
-		}
+		if (env instanceof Fixnum)
+			env = HeapEnv.fromStackEnv(this, env, deepest);
 
-		if (cont instanceof Fixnum) {
-			int[] deepest = {0};
-			// If the current continuation is on the stack move it to the heap
-			ArcObject nc = HeapContinuation.fromStackCont(this, cont, deepest);
-			this.setCont(nc);
-			stackbottom = deepest[0];
-//			stackbottom = (int)((Fixnum)cont).fixnum + 1;
-		}
+		// If the current continuation is on the stack move it to the heap
+		if (cont instanceof Fixnum)
+			this.setCont(HeapContinuation.fromStackCont(this, cont, deepest));
 
+		int stackbottom = deepest[0];
 		// Garbage collection failed to produce memory
 		if (stackbottom < 0  || stackbottom > stack.length || stackbottom == bp)
 			return;
 
-		// move what we can of the used portion of the stack to the bottom.
+		// move what we can of the used portion of the stack to the lowest part of the stack we can reach.
 		for (int i=0; i<sp - bp - 1; i++)
 			setStackIndex(stackbottom + i, stackIndex(bp + i));
 		sp = stackbottom + (sp - bp - 1);
@@ -618,6 +611,7 @@ public class VirtualMachine implements Callable
 		push(env);
 		push(cont);
 		cont = Fixnum.get(sp);
+		bp = sp;
 	}
 
 	public void restorecont()
@@ -636,11 +630,6 @@ public class VirtualMachine implements Callable
 			setIP((int)((Fixnum)pop()).fixnum);
 		} else if (cont instanceof Continuation) {
 			Continuation ct = (Continuation)cont;
-//			if (ct.stackReq() + sp > stack.length) {
-//				stackgc();
-//				if (ct.stackReq() + sp > stack.length)
-//					throw new NekoArcException("stack overflow while restoring heap continuation");
-//			}
 			ct.restore(this, caller);
 		} else if (cont.is(Nil.NIL)) {
 			// If we have no continuation, that was an attempt to return from the topmost
