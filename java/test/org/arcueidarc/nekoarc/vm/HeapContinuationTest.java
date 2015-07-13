@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import org.arcueidarc.nekoarc.HeapContinuation;
 import org.arcueidarc.nekoarc.HeapEnv;
 import org.arcueidarc.nekoarc.Nil;
+import org.arcueidarc.nekoarc.types.ArcObject;
+import org.arcueidarc.nekoarc.types.Closure;
 import org.arcueidarc.nekoarc.types.Fixnum;
 import org.junit.Test;
 
@@ -75,6 +77,92 @@ public class HeapContinuationTest
 		vm.run();
 		assertFalse(vm.runnable());
 		assertEquals(28, ((Fixnum)vm.getAcc()).fixnum);
+	}
+
+	/** Next, we make a function that recurses several times, essentially
+	 *  (afn (x) (if (is x 0) 0 (+ (self (- x 1)) 2)))
+	 *  If stack space is very limited on the VM, the continuations that the recursive calls need to make should
+	 *  eventually migrate from the stack to the heap.
+	 */
+	@Test
+	public void test2()
+	{
+		// env 1 0 0; lde0 0; push; ldi 0; is; jf L1; ldi 2; ret;
+		// L1: cont L2; lde0 0; push; ldi 1; sub; push; ldl 0; apply 1; L2: push; add; ret
+		byte inst[] = { (byte)0xca, 0x01, 0x00, 0x00,	// env 1 0 0
+				0x69, 0x00,								// lde0 0
+				0x01,									// push
+				0x44, 0x00, 0x00, 0x00, 0x00,			// ldi 0
+				0x1f,									// is
+				0x50, 0x06, 0x00, 0x00, 0x00,			// jf L1 (6)
+				0x44, 0x00, 0x00, 0x00, 0x00,			// ldi 0
+				0x0d,									// ret
+				(byte)0x89, 0x11, 0x00, 0x00, 0x00,		// L1: cont L2 (0x11)
+				0x69, 0x00,								// lde0 0
+				0x01,									// push
+				0x44, 0x01, 0x00, 0x00, 0x00,			// ldi 1
+				0x16,									// sub
+				0x01,									// push
+				0x43, 0x00, 0x00, 0x00, 0x00,			// ldl 0
+				0x4c, 0x01,								// apply 1
+				0x01,									// L2: push
+				0x44, 0x02, 0x00, 0x00, 0x00,			// ldi 2
+				0x15,									// add
+				0x0d									// ret
+		};
+		VirtualMachine vm = new VirtualMachine(4);
+		ArcObject literals[] = new ArcObject[1];
+		literals[0] = new Closure(Nil.NIL, Fixnum.get(0));
+		vm.load(inst, 0, literals);
+		vm.setargc(1);
+		vm.push(Fixnum.get(100));
+		vm.setAcc(literals[0]);
+		assertTrue(vm.runnable());
+		vm.run();
+		assertFalse(vm.runnable());
+		assertEquals(200, ((Fixnum)vm.getAcc()).fixnum);
+	}
+
+	/** Next, we make a slight variation
+	 *  (afn (x) (if (is x 0) 0 (+ 2 (self (- x 1)))))
+	 */
+	@Test
+	public void test3()
+	{
+		// env 1 0 0; lde0 0; push; ldi 0; is; jf L1; ldi 2; ret;
+		// L1: cont L2; lde0 0; push; ldi 1; sub; push; ldl 0; apply 1; L2: push; add; ret
+		byte inst[] = { (byte)0xca, 0x01, 0x00, 0x00,	// env 1 0 0
+				0x69, 0x00,								// lde0 0
+				0x01,									// push
+				0x44, 0x00, 0x00, 0x00, 0x00,			// ldi 0
+				0x1f,									// is
+				0x50, 0x06, 0x00, 0x00, 0x00,			// jf L1 (6)
+				0x44, 0x00, 0x00, 0x00, 0x00,			// ldi 0
+				0x0d,									// ret
+				(byte)0x89, 0x17, 0x00, 0x00, 0x00,		// L1: cont L2 (0x17)
+				0x44, 0x02, 0x00, 0x00, 0x00,			// ldi 2
+				0x01,									// push
+				0x69, 0x00,								// lde0 0
+				0x01,									// push
+				0x44, 0x01, 0x00, 0x00, 0x00,			// ldi 1
+				0x16,									// sub
+				0x01,									// push
+				0x43, 0x00, 0x00, 0x00, 0x00,			// ldl 0
+				0x4c, 0x01,								// apply 1
+				0x15,									// L2: add
+				0x0d									// ret
+		};
+		VirtualMachine vm = new VirtualMachine(6);
+		ArcObject literals[] = new ArcObject[1];
+		literals[0] = new Closure(Nil.NIL, Fixnum.get(0));
+		vm.load(inst, 0, literals);
+		vm.setargc(1);
+		vm.push(Fixnum.get(100));
+		vm.setAcc(literals[0]);
+		assertTrue(vm.runnable());
+		vm.run();
+		assertFalse(vm.runnable());
+		assertEquals(200, ((Fixnum)vm.getAcc()).fixnum);
 	}
 
 }
