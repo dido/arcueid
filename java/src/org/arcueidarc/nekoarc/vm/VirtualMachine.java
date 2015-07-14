@@ -347,13 +347,13 @@ public class VirtualMachine implements Callable
 
 		int stackbottom = deepest[0];
 		// Garbage collection failed to produce memory
-		if (stackbottom < 0  || stackbottom > stack.length || stackbottom == bp)
+		if (stackbottom < 0  || stackbottom > stack.length || stackbottom == sp)
 			return;
 
 		// move what we can of the used portion of the stack to the lowest part of the stack we can reach.
-		for (int i=0; i<sp - bp - 1; i++)
+		for (int i=0; i<sp - bp; i++)
 			setStackIndex(stackbottom + i, stackIndex(bp + i));
-		sp = stackbottom + (sp - bp - 1);
+		sp = stackbottom + (sp - bp);
 		bp = stackbottom;
 	}
 
@@ -364,7 +364,8 @@ public class VirtualMachine implements Callable
 				stack[sp++] = obj;
 				return;
 			} catch (ArrayIndexOutOfBoundsException e) {
-				// We can try to garbage collect the stack
+				// Restore sp to its old value before stack gc
+				sp--;
 				stackgc();
 				if (sp >= stack.length)
 					throw new NekoArcException("stack overflow");
@@ -601,6 +602,7 @@ public class VirtualMachine implements Callable
 				throw new NekoArcException(message);
 		}
 	}
+
 	// Make a continuation on the stack. The new continuation is saved in the continuation register.
 	public void makecont(int ipoffset)
 	{
