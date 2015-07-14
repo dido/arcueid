@@ -88,7 +88,7 @@ public class HeapContinuationTest
 	public void test2()
 	{
 		// env 1 0 0; lde0 0; push; ldi 0; is; jf L1; ldi 2; ret;
-		// L1: cont L2; lde0 0; push; ldi 1; sub; push; ldl 0; apply 1; L2: push; add; ret
+		// L1: cont L2; lde0 0; push; ldi 1; sub; push; ldl 0; apply 1; L2: push; ldi 2; add; ret
 		byte inst[] = { (byte)0xca, 0x01, 0x00, 0x00,	// env 1 0 0
 				0x69, 0x00,								// lde0 0
 				0x01,									// push
@@ -130,7 +130,7 @@ public class HeapContinuationTest
 	public void test3()
 	{
 		// env 1 0 0; lde0 0; push; ldi 0; is; jf L1; ldi 2; ret;
-		// L1: cont L2; lde0 0; push; ldi 1; sub; push; ldl 0; apply 1; L2: push; add; ret
+		// L1: ldi 2; push; cont L2; lde0 0; push; ldi 1; sub; push; ldl 0; apply 1; L2: add; ret
 		byte inst[] = { (byte)0xca, 0x01, 0x00, 0x00,	// env 1 0 0
 				0x69, 0x00,								// lde0 0
 				0x01,									// push
@@ -139,9 +139,9 @@ public class HeapContinuationTest
 				0x50, 0x06, 0x00, 0x00, 0x00,			// jf L1 (6)
 				0x44, 0x00, 0x00, 0x00, 0x00,			// ldi 0
 				0x0d,									// ret
-				(byte)0x89, 0x17, 0x00, 0x00, 0x00,		// L1: cont L2 (0x17)
-				0x44, 0x02, 0x00, 0x00, 0x00,			// ldi 2
+				0x44, 0x02, 0x00, 0x00, 0x00,			// L1: ldi 2
 				0x01,									// push
+				(byte)0x89, 0x11, 0x00, 0x00, 0x00,		// cont L2 (0x11)
 				0x69, 0x00,								// lde0 0
 				0x01,									// push
 				0x44, 0x01, 0x00, 0x00, 0x00,			// ldi 1
@@ -152,17 +152,17 @@ public class HeapContinuationTest
 				0x15,									// L2: add
 				0x0d									// ret
 		};
-		VirtualMachine vm = new VirtualMachine(6);
+		VirtualMachine vm = new VirtualMachine(5);
 		ArcObject literals[] = new ArcObject[1];
 		literals[0] = new Closure(Nil.NIL, Fixnum.get(0));
 		vm.load(inst, 0, literals);
 		vm.setargc(1);
-		vm.push(Fixnum.get(100));
+		vm.push(Fixnum.get(1));
 		vm.setAcc(literals[0]);
 		assertTrue(vm.runnable());
 		vm.run();
 		assertFalse(vm.runnable());
-		assertEquals(200, ((Fixnum)vm.getAcc()).fixnum);
+		assertEquals(2, ((Fixnum)vm.getAcc()).fixnum);
 	}
 
 }
