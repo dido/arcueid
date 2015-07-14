@@ -56,7 +56,7 @@ public class FibonacciTest
 				0x15,									// add
 				0x0d									// ret
 		};
-		VirtualMachine vm = new VirtualMachine(12);
+		VirtualMachine vm = new VirtualMachine(8);
 		ArcObject literals[] = new ArcObject[1];
 		literals[0] = new Closure(Nil.NIL, Fixnum.get(0));
 		vm.load(inst, 0, literals);
