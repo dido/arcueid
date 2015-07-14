@@ -332,12 +332,11 @@ public class VirtualMachine implements Callable
 	 * to the top of the stack.
 	 * 1. Start with the environment register. Move that environment and all of its children to the heap.
 	 * 2. Continue with the continuation register. Copy the current continuation into the heap.
-	 * 3. Compact the stack by moving the remainder of the non-stack/non-continuation elements to the heap.
+	 * 3. Compact the stack by moving the remainder of the non-stack/non-continuation elements down.
 	 */
 	private void stackgc()
 	{
 		int[] deepest = {sp};
-
 		if (env instanceof Fixnum)
 			env = HeapEnv.fromStackEnv(this, env, deepest);
 
@@ -345,16 +344,12 @@ public class VirtualMachine implements Callable
 		if (cont instanceof Fixnum)
 			this.setCont(HeapContinuation.fromStackCont(this, cont, deepest));
 
-		int stackbottom = deepest[0];
-		// Garbage collection failed to produce memory
-		if (stackbottom < 0  || stackbottom > stack.length || stackbottom == sp)
-			return;
-
-		// move what we can of the used portion of the stack to the lowest part of the stack we can reach.
+		// If all environments and continuations have been moved to the heap, we can now
+		// move all other stack elements down to the bottom.
 		for (int i=0; i<sp - bp; i++)
-			setStackIndex(stackbottom + i, stackIndex(bp + i));
-		sp = stackbottom + (sp - bp);
-		bp = stackbottom;
+			setStackIndex(i, stackIndex(bp + i));
+		sp = (sp - bp);
+		bp = 0;
 	}
 
 	public void push(ArcObject obj)
