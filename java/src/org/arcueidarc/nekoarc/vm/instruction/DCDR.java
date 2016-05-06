@@ -11,7 +11,6 @@ public class DCDR implements Instruction
 	@Override
 	public void invoke(VirtualMachine vm) throws NekoArcException
 	{
-		// TODO Auto-generated method stub
 		if (vm.getAcc().is(Nil.NIL) || vm.getAcc().is(Unbound.UNBOUND))
 			vm.setAcc(Unbound.UNBOUND);
 		else
