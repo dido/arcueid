@@ -703,20 +703,25 @@ public class VirtualMachine implements Callable
 		if (env.is(Nil.NIL))
 			return;
 		ArcObject parentenv = nextenv();
-		// We only bother if the present environment and its parent
-		// (which is to be superseded) are both on the stack.
+		// We only bother if the current environment, which is to be
+		// superseded, is on the stack. We move the n values previously
+		// pushed to the location of the current environment,
+		// overwriting it, and we set the stack pointer to the point
+		// just after.
 		if (env instanceof Fixnum) {
 			// Destination is the previous environment
 			int si = (int)((Fixnum)env).fixnum;
 			int dest = (int)((Fixnum)stackIndex(si)).fixnum;
 			// Source is the values on the stack
-			int src = sp - n - 1;
+			int src = sp - n;
 			System.arraycopy(stack, src, stack, dest, n);
-			// new stack pointer
+			// new stack pointer has to point to just after moved stuff
+			setSP(dest + n);
 		}
 		// If the current environment was on the heap, none of this black
 	    // magic needs to be done.  It is enough to just set the environment
-		// register to point to the parent environment.
+		// register to point to the parent environment (the old environment
+		// thereby becoming garbage unless part of a continuation).
 		setenvreg(parentenv);
 	}
 }
