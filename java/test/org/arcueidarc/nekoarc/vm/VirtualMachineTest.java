@@ -102,7 +102,10 @@ public class VirtualMachineTest
 		vm.push(Fixnum.get(0));
 		vm.push(Fixnum.get(1));
 		vm.push(Fixnum.get(2));
+		assertEquals(3, vm.getSP());
+
 		vm.mkenv(3, 0);
+		assertEquals(6, vm.getSP());
 		assertEquals(0, ((Fixnum)vm.getenv(0, 0)).fixnum);
 		assertEquals(1, ((Fixnum)vm.getenv(0, 1)).fixnum);
 		assertEquals(2, ((Fixnum)vm.getenv(0, 2)).fixnum);
@@ -112,6 +115,7 @@ public class VirtualMachineTest
 		vm.push(Fixnum.get(5));
 		vm.menv(3);
 		vm.mkenv(3, 0);
+		assertEquals(6, vm.getSP());
 		assertEquals(3, ((Fixnum)vm.getenv(0, 0)).fixnum);
 		assertEquals(4, ((Fixnum)vm.getenv(0, 1)).fixnum);
 		assertEquals(5, ((Fixnum)vm.getenv(0, 2)).fixnum);
@@ -133,11 +137,15 @@ public class VirtualMachineTest
 		vm.push(Fixnum.get(7));
 		vm.menv(2);
 		vm.mkenv(2, 0);
+		assertEquals(5, vm.getSP());
 		assertEquals(6, ((Fixnum)vm.getenv(0, 0)).fixnum);
 		assertEquals(7, ((Fixnum)vm.getenv(0, 1)).fixnum);
 
+		// Reset environment and stack pointer
+		vm.setenvreg(Nil.NIL);
+		vm.setSP(0);
+	
 		// New environment larger than old environment
-		// New environment smaller than old environment
 		vm.push(Fixnum.get(0));
 		vm.push(Fixnum.get(1));
 		vm.push(Fixnum.get(2));
@@ -152,6 +160,7 @@ public class VirtualMachineTest
 		vm.push(Fixnum.get(11));
 		vm.menv(4);
 		vm.mkenv(4, 0);
+		assertEquals(7, vm.getSP());
 		assertEquals(8, ((Fixnum)vm.getenv(0, 0)).fixnum);
 		assertEquals(9, ((Fixnum)vm.getenv(0, 1)).fixnum);
 		assertEquals(10, ((Fixnum)vm.getenv(0, 2)).fixnum);
