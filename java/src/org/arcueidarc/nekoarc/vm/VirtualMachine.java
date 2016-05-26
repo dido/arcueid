@@ -64,13 +64,13 @@ public class VirtualMachine implements Callable
 		new IS(),		// 0x1f
 		NOINST,
 		NOINST,
-		new DUP(),		// 0x22
+		NOINST,		    // used to be DUP, 0x22
 		NOINST,			// 0x23
 		new CONSR(),		// 0x24
 		NOINST,
 		new DCAR(),		// 0x26
 		new DCDR(),		// 0x27
-		new SPL(),		// 0x28
+		NOINST,		    // used to be SPL, 0x28
 		NOINST,
 		NOINST,
 		NOINST,
@@ -486,6 +486,8 @@ public class VirtualMachine implements Callable
 	 * if not, it will be created in the heap. */
 	public void mkenv(int prevsize, int extrasize)
 	{
+		// Do a check for the space on the stack. If there is not enough,
+		// make the environment in the heap */
 		if (sp + extrasize + 3 > stack.length) {
 			mkheapenv(prevsize, extrasize);
 			return;
@@ -528,6 +530,18 @@ public class VirtualMachine implements Callable
 	{
 		env = HeapEnv.fromStackEnv(this, env);
 		return(env);
+	}
+
+	private ArcObject nextenv()
+	{
+		if (env.is(Nil.NIL))
+			return(Nil.NIL);
+		if (env instanceof Fixnum) {
+			int index = (int)((Fixnum)env).fixnum;
+			return(stackIndex(index+2));
+		}
+		HeapEnv e = (HeapEnv)env;
+		return(e.prevEnv());
 	}
 
 	private ArcObject findenv(int depth)
@@ -666,5 +680,48 @@ public class VirtualMachine implements Callable
 	public CallSync sync()
 	{
 		return(caller);
+	}
+
+	/**
+	 * Move n elements from the top of stack, overwriting the current
+	 * environment.  Points the stack pointer to just above the last
+	 * element moved.  Does not do this if current environment is on
+	 * the heap.  It will, in either case, set the environment register to
+	 * the parent environment (possibly leaving the heap environment as
+	 * garbage to be collected)
+	 *
+	 * This is essentially used to support tail calls and tail recursion.
+	 * When this mechanism is used, the new arguments are on the stack,
+	 * over the previous environment.  It will move all of the new arguments
+	 * onto the old environment and adjust the stack pointer appropriately.
+	 * When control is transferred to the tail called function the call
+	 * to mkenv will turn the stuff on the stack into a new environment.
+	*/
+	public void menv(int n)
+	{
+		// do nothing if we have no env
+		if (env.is(Nil.NIL))
+			return;
+		ArcObject parentenv = nextenv();
+		// We only bother if the current environment, which is to be
+		// superseded, is on the stack. We move the n values previously
+		// pushed to the location of the current environment,
+		// overwriting it, and we set the stack pointer to the point
+		// just after.
+		if (env instanceof Fixnum) {
+			// Destination is the previous environment
+			int si = (int)((Fixnum)env).fixnum;
+			int dest = (int)((Fixnum)stackIndex(si)).fixnum;
+			// Source is the values on the stack
+			int src = sp - n;
+			System.arraycopy(stack, src, stack, dest, n);
+			// new stack pointer has to point to just after moved stuff
+			setSP(dest + n);
+		}
+		// If the current environment was on the heap, none of this black
+	    // magic needs to be done.  It is enough to just set the environment
+		// register to point to the parent environment (the old environment
+		// thereby becoming garbage unless part of a continuation).
+		setenvreg(parentenv);
 	}
 }

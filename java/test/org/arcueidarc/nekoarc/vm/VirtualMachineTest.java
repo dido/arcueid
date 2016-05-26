@@ -47,6 +47,7 @@ public class VirtualMachineTest
 		assertEquals(0x12, vm.smallInstArg());
 		assertEquals(-1, vm.smallInstArg());
 	}
+
 	@Test
 	public void testEnv() throws NekoArcException
 	{
@@ -90,5 +91,70 @@ public class VirtualMachineTest
 		assertTrue(vm.getenv(0, 3).is(Unbound.UNBOUND));
 		assertTrue(vm.getenv(0, 4).is(Unbound.UNBOUND));
 		assertTrue(vm.getenv(0, 5).is(Unbound.UNBOUND));
+	}
+
+	@Test
+	public void testmenv() throws NekoArcException
+	{
+		VirtualMachine vm = new VirtualMachine(1024);
+
+		// New environment just as big as the old environment
+		vm.push(Fixnum.get(0));
+		vm.push(Fixnum.get(1));
+		vm.push(Fixnum.get(2));
+		vm.mkenv(3, 0);
+		assertEquals(0, ((Fixnum)vm.getenv(0, 0)).fixnum);
+		assertEquals(1, ((Fixnum)vm.getenv(0, 1)).fixnum);
+		assertEquals(2, ((Fixnum)vm.getenv(0, 2)).fixnum);
+
+		vm.push(Fixnum.get(3));
+		vm.push(Fixnum.get(4));
+		vm.push(Fixnum.get(5));
+		vm.menv(3);
+		vm.mkenv(3, 0);
+		assertEquals(3, ((Fixnum)vm.getenv(0, 0)).fixnum);
+		assertEquals(4, ((Fixnum)vm.getenv(0, 1)).fixnum);
+		assertEquals(5, ((Fixnum)vm.getenv(0, 2)).fixnum);
+
+		// Reset environment and stack pointer
+		vm.setenvreg(Nil.NIL);
+		vm.setSP(0);
+
+		// New environment smaller than old environment
+		vm.push(Fixnum.get(0));
+		vm.push(Fixnum.get(1));
+		vm.push(Fixnum.get(2));
+		vm.mkenv(3, 0);
+		assertEquals(0, ((Fixnum)vm.getenv(0, 0)).fixnum);
+		assertEquals(1, ((Fixnum)vm.getenv(0, 1)).fixnum);
+		assertEquals(2, ((Fixnum)vm.getenv(0, 2)).fixnum);
+
+		vm.push(Fixnum.get(6));
+		vm.push(Fixnum.get(7));
+		vm.menv(2);
+		vm.mkenv(2, 0);
+		assertEquals(6, ((Fixnum)vm.getenv(0, 0)).fixnum);
+		assertEquals(7, ((Fixnum)vm.getenv(0, 1)).fixnum);
+
+		// New environment larger than old environment
+		// New environment smaller than old environment
+		vm.push(Fixnum.get(0));
+		vm.push(Fixnum.get(1));
+		vm.push(Fixnum.get(2));
+		vm.mkenv(3, 0);
+		assertEquals(0, ((Fixnum)vm.getenv(0, 0)).fixnum);
+		assertEquals(1, ((Fixnum)vm.getenv(0, 1)).fixnum);
+		assertEquals(2, ((Fixnum)vm.getenv(0, 2)).fixnum);
+
+		vm.push(Fixnum.get(8));
+		vm.push(Fixnum.get(9));
+		vm.push(Fixnum.get(10));
+		vm.push(Fixnum.get(11));
+		vm.menv(4);
+		vm.mkenv(4, 0);
+		assertEquals(8, ((Fixnum)vm.getenv(0, 0)).fixnum);
+		assertEquals(9, ((Fixnum)vm.getenv(0, 1)).fixnum);
+		assertEquals(10, ((Fixnum)vm.getenv(0, 2)).fixnum);
+		assertEquals(11, ((Fixnum)vm.getenv(0, 3)).fixnum);
 	}
 }

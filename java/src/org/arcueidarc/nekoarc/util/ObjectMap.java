@@ -11,7 +11,7 @@ import java.util.Random;
  * @author Nathan Sweet */
 public class ObjectMap<K, V>
 {
-	private static final int PRIME1 = 0xbe1f14b1;
+//	private static final int PRIME1 = 0xbe1f14b1;
 	private static final int PRIME2 = 0xb4b82e39;
 	private static final int PRIME3 = 0xced1c241;
 
@@ -58,6 +58,7 @@ public class ObjectMap<K, V>
 
 	/** Creates a new map with the specified initial capacity and load factor. This map will hold initialCapacity * loadFactor items
 	 * before growing the backing table. */
+	@SuppressWarnings("unchecked")
 	public ObjectMap (int initialCapacity, float loadFactor) {
 		if (initialCapacity < 0) throw new IllegalArgumentException("initialCapacity must be >= 0: " + initialCapacity);
 		if (initialCapacity > 1 << 30) throw new IllegalArgumentException("initialCapacity is too large: " + initialCapacity);
@@ -471,6 +472,7 @@ public class ObjectMap<K, V>
 		if (sizeNeeded >= threshold) resize(nextPowerOfTwo((int)(sizeNeeded / loadFactor)));
 	}
 
+	@SuppressWarnings("unchecked")
 	private void resize (int newSize) {
 		int oldEndIndex = capacity + stashSize;
 
