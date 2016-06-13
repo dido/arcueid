@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.arcueidarc.nekoarc.vm.instruction.IStest" tests="10" skipped="0" failures="0" errors="0" timestamp="2016-06-03T04:00:49" hostname="qiana-VirtualBox" time="0.006">
+  <properties/>
+  <testcase name="testSameFixnums" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testSameFlonums" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.001"/>
+  <testcase name="testDiffStrings" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testNils" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testDiffFixnums" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testDiffFlonums" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testFixnumFlonum" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testDiffSymbol" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testSameStrings" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <testcase name="testSameSymbol" classname="org.arcueidarc.nekoarc.vm.instruction.IStest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

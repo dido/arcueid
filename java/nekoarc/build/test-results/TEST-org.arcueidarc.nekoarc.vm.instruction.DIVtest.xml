@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.arcueidarc.nekoarc.vm.instruction.DIVtest" tests="4" skipped="0" failures="0" errors="0" timestamp="2016-06-03T04:00:49" hostname="qiana-VirtualBox" time="0.003">
+  <properties/>
+  <testcase name="testFixnumDivFixnum1" classname="org.arcueidarc.nekoarc.vm.instruction.DIVtest" time="0.001"/>
+  <testcase name="testFixnumDivFixnum2" classname="org.arcueidarc.nekoarc.vm.instruction.DIVtest" time="0.0"/>
+  <testcase name="testFlonumDivFixnum" classname="org.arcueidarc.nekoarc.vm.instruction.DIVtest" time="0.001"/>
+  <testcase name="testFlonumDivFlonum" classname="org.arcueidarc.nekoarc.vm.instruction.DIVtest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

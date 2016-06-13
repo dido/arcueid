@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.arcueidarc.nekoarc.vm.instruction.LDEtest" tests="14" skipped="0" failures="0" errors="0" timestamp="2016-06-03T04:00:49" hostname="qiana-VirtualBox" time="0.003">
+  <properties/>
+  <testcase name="test0_0" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.001"/>
+  <testcase name="test0_1" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test0_2" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test0_3" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test1_0" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test1_1" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test1_2" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test1_3" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test1_4" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test0" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test1" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test2" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test3" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <testcase name="test4" classname="org.arcueidarc.nekoarc.vm.instruction.LDEtest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
