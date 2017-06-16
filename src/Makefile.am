@@ -18,20 +18,13 @@
 lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -Wl,--no-as-needed -version-info 0:0:0
-libarcueid_la_SOURCES = alloc.c arith.c arcueid.c ccode.c chan.c \
-	clos.c codegen.c compiler.c cons.c cont.c dirops.c disasm.c \
-	env.c err.c fileio.c gopt.c hash.c io.c load.c mathfns.c \
-	net.c osdep.c re.c regaux.c regcomp.c rregexec.c sio.c \
-	sread.c ssyntax.c string.c symbol.c thread.c util.c utf.c \
-	vector.c vmengine.c
+libarcueid_la_SOURCES = alloc.c
 
-include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h arith.h builtins.h compiler.h disasm.h \
-	gopt.h hash.h io.h jumptbl.h osdep.h regexp.h regcomp.h utf.h \
-	vmengine.h
+#include_HEADERS = arcueid.h
+noinst_HEADERS = alloc.h
 
-bin_PROGRAMS = arcueid
-arcueid_LDFLAGS = -Wl,--no-as-needed
-arcueid_SOURCES = repl.c
-arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
-arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@ @RLLIBS@
+#bin_PROGRAMS = arcueid
+#arcueid_LDFLAGS = -Wl,--no-as-needed
+#arcueid_SOURCES = repl.c
+#arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
+#arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@ @RLLIBS@

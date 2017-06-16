@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2013 Rafael R. Sevilla
+  Copyright (C) 2017 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -21,9 +21,6 @@
 #define _ALLOC_H_
 
 #include "arcueid.h"
-
-#define GCQUANTA 64
-#define GCMAXQUANTA GCQUANTA*64
 
 /* Memory block header */
 typedef struct Bhdr_t {
@@ -87,35 +84,9 @@ struct mm_ctx {
   /* The allocated list */
   Bhdr *alloc_head;
 
-  /* GC statistics */
-  unsigned long long gc_milliseconds;
+  /* Statistics */
   unsigned long long usedmem;
-
-  /* variables used by VCGC */
-  int gcquantum;		/* garbage collector visit max */
-  unsigned long long gcepochs;	/* number of GC epochs */
-  unsigned long long gccolour;	/* current GC colour */
-  unsigned long long gcnruns;	/* number of GC runs */
-  Bhdr *gcptr;			/* running pointer used by collector */
-  void *gcpptr;			/* previous pointer */
-  int visit;			/* visited node count for gc */
-  int gce;
-  int gct;
+  unsigned long long allocmem;
 };
-
-#define MMVAR(c, var) (((struct mm_ctx *)c->alloc_ctx)->var)
-#define BIBOPFL(c) (MMVAR(c, bibop_fl))
-#define BIBOPPG(c) (MMVAR(c, bibop_pages))
-#define ALLOCHEAD(c) (MMVAR(c, alloc_head))
-#define GCMS(c) (MMVAR(c, gc_milliseconds))
-#define USEDMEM(c) (MMVAR(c, usedmem))
-#define VISIT(c) (MMVAR(c, visit))
-#define GCPTR(c) (MMVAR(c, gcptr))
-#define GCPPTR(c) (MMVAR(c, gcpptr))
-
-extern void __arc_markprop(arc *c, value p);
-extern value arc_current_gc_milliseconds(arc *c);
-extern value arc_memory(arc *c);
-extern void arc_init_memmgr(arc *c);
 
 #endif
