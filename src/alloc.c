@@ -85,78 +85,63 @@ static void sysfree(void *ptr)
 
 #endif
 
-/* Allocate a new object using the BiBOP allocator */
-static void *bibop_alloc(arc *c, size_t osize)
+/*! \fn static void *bibop_alloc(mm_ctx *c, size_t osize)
+    \brief Allocates using the BiBOP allocator
+    \param c The memory allocator context
+    \param osize The size of the memory block to be allocated.
+
+    Allocate memory using the BiBOP allocator. The size _osize_ must
+    be less than or equal to MAX_BIBOP.
+ */
+static void *bibop_alloc(struct mm_ctx *c, size_t osize)
 {
-  Bhdr *h, *bpage;
-  size_t actual, alignsize;
+  struct Bhdr *h, *bpage;
+  size_t aosize, pagesize;
   char *bptr;
   int i;
+  struct BBPhdr *newpage;
 
   for (;;) {
-    /* Pull off an object from the BiBOP free list if there is an
-       available object of that size. */
-    if (BIBOPFL(c)[osize] != NULL) {
-      h = BIBOPFL(c)[osize];
-      BIBOPFL(c)[osize] = B2NB(BIBOPFL(c)[osize]);
+    /* Pull off an object from the BiBOP free list for that size if
+       there is such a thing available. */
+    if (c->bibop_fl[osize] != NULL) {
+      h = c->bibop_fl[osize];
+      c->bibop_fl[osize] = B2NB(h);
       break;
     }
-
     /* Create a new BiBOP page if the free list for that size is
-       empty.  The page base address is properly aligned since
-       sysalloc() is guaranteed to return aligned addresses, and
-       since BiBOP objects inside the page are padded to a multiple
-       of the alignment, all objects inside will also by definition
-       be aligned. */
-    actual = ALIGN_SIZE(osize) + BHDR_ALIGN_SIZE;
-    alignsize = actual * BIBOP_PAGE_SIZE + BHDR_ALIGN_SIZE;
-    bpage = (Bhdr *)sysalloc(alignsize);
+       empty. First, we need to compute the actual size of a BiBOP
+       object, which is the aligned size of the object plus the block
+       header. */
+    aosize = ALIGN_SIZE(osize) + BHDR_ALIGN_SIZE;
+    /* Then, we need to compute the size of the entire page. A page
+       consists of the Bhdr for the page itself, the BiBOP header,
+       and the actual objects themselves. */
+    pagesize = BHDR_ALIGN_SIZE + BBPHDR_ALIGN_SIZE + aosize * BIBOP_PAGE_SIZE;
+    bpage = (struct Bhdr *)sysalloc(pagesize);
     if (bpage == NULL)
       __arc_fatal("failed to allocate memory for BiBOP page", errno);
-    ALLOCMEM(c) += alignsize;
-    /* link the new BiBOP page into the BiBOP page list */
-    BSSIZE(bpage, alignsize);
-    bpage->_next = BIBOPPG(c)[osize];
-    BIBOPPG(c)[osize] = bpage;
+    c->allocmem += pagesize;
+    /* Link the new page into the BiBOP page list. */
+    newpage = (struct BBPhdr *)B2D(bpage);
+    newpage->next = c->bibop_pages[osize];
+    c->bibop_pages[osize] = newpage;
+
     /* Initialise the new BiBOP page */
-    bptr = B2D(bpage);
+    bptr = newpage->_dummy + BBHPAD;
     for (i=0; i<BIBOP_PAGE_SIZE; i++) {
-      h = (Bhdr *)bptr;
+      h = (struct Bhdr *)bptr;
       BSSIZE(h, osize);
       BFREE(h);
-      h->_next = BIBOPFL(c)[osize];
-      BIBOPFL(c)[osize] = h;
-      bptr += actual;
+      h->u._next = c->bibop_fl[osize];
+      c->bibop_fl[osize] = h;
+      bptr += aosize;
     }
   }
+
   /* Mark used memory, and prepare the new object for use */
-  USEDMEM(c) += osize;
+  c->usedmem += osize;
   BSSIZE(h, osize);
   BALLOC(h);
-  h->_next = ALLOCHEAD(c);
-  ALLOCHEAD(c) = h;
-  return(B2D(h));
-}
-
-static void *alloc(arc *c, size_t osize)
-{
-  Bhdr *h;
-  size_t actual;
-
-  /* Use BiBOP allocator for smaller objects of up to the maximum size */
-  if (osize <= MAX_BIBOP)
-    return(bibop_alloc(c, osize));
-
-  /* Normal allocation. Just append the block header size with proper
-     alignment padding. */
-  actual = osize + BHDR_ALIGN_SIZE;
-  h = (Bhdr *)sysalloc(alignsize);
-  if (h == NULL)
-    __arc_fatal("failed to allocate memory", errno);
-  ALLOCMEM(c) += alignsize;
-  USEDMEM(c) += osize;
-  BALLOC(h);
-  h->_next = ALLOCHEAD(c);
-  ALLOCHEAD(c) = h;
   return(B2D(h));
 }
