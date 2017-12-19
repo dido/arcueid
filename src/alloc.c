@@ -31,13 +31,6 @@
 #include "arcueid.h"
 #include "alloc.h"
 
-#define MMVAR(c, var) (((struct mm_ctx *)c->mm_ctx)->var)
-#define BIBOPFL(c) (MMVAR(c, bibop_fl))
-#define BIBOPPG(c) (MMVAR(c, bibop_pages))
-#define USEDMEM(c) (MMVAR(c, usedmem))
-#define ALLOCMEM(c) (MMVAR(c, allocmem))
-#define ALLOCHEAD(c) (MMVAR(c, allochead))
-
 #ifdef HAVE_POSIX_MEMALIGN
 
 static void *sysalloc(size_t size)
@@ -144,4 +137,16 @@ static void *bibop_alloc(struct mm_ctx *c, size_t osize)
   BSSIZE(h, osize);
   BALLOC(h);
   return(B2D(h));
+}
+
+void __arc_init_mm_ctx(struct mm_ctx *c)
+{
+  int i;
+
+  for (i=0; i<=MAX_BIBOP; i++) {
+    c->bibop_fl[i] = NULL;
+    c->bibop_pages[i] = NULL;
+  }
+  c->allocmem = 0LL;
+  c->usedmem = 0LL;
 }
