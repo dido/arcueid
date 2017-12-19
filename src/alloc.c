@@ -150,3 +150,24 @@ void __arc_init_mm_ctx(struct mm_ctx *c)
   c->allocmem = 0LL;
   c->usedmem = 0LL;
 }
+
+void *__arc_alloc(struct mm_ctx *c, size_t size)
+{
+  struct Bhdr *h;
+  size_t actual;
+
+  /* Use BiBOP allocator for smaller objects of up to the maximum size */
+  if (size <= MAX_BIBOP)
+    return(bibop_alloc(c, size));
+
+  /* Straight allocation for large objects. Just append the block
+     header size with proper alignment padding. */
+  actual = size + BHDR_ALIGN_SIZE;
+  h = (struct Bhdr *)sysalloc(actual);
+  if (h == NULL)
+    __arc_fatal("failed to allocate memory", errno);
+  c->allocmem += actual;
+  c->usedmem += size;
+  BALLOC(h);
+  return(B2D(h));
+}
