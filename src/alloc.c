@@ -169,5 +169,21 @@ void *__arc_alloc(struct mm_ctx *c, size_t size)
   c->allocmem += actual;
   c->usedmem += size;
   BALLOC(h);
+  BSSIZE(h, size);
   return(B2D(h));
+}
+
+void __arc_free(struct mm_ctx *c, void *ptr)
+{
+  struct Bhdr *h;
+
+  D2B(h, ptr);
+
+  if (BSIZE(h) <= MAX_BIBOP) {
+    /* BiBOP freeing */
+  }
+  /* Straight freeing */
+  c->allocmem -= BSIZE(h);
+  c->usedmem -= BSIZE(h) + BHDR_ALIGN_SIZE;
+  sysfree(h);
 }
