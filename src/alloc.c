@@ -78,7 +78,7 @@ static void sysfree(void *ptr)
 
 #endif
 
-/*! \fn static void *bibop_alloc(mm_ctx *c, size_t osize)
+/*! \fn static void *bibop_alloc(struct mm_ctx *c, size_t osize)
     \brief Allocates using the BiBOP allocator
     \param c The memory allocator context
     \param osize The size of the memory block to be allocated.
@@ -139,9 +139,10 @@ static void *bibop_alloc(struct mm_ctx *c, size_t osize)
   return(B2D(h));
 }
 
-void __arc_init_mm_ctx(struct mm_ctx *c)
+struct mm_ctx *__arc_new_mm_ctx(void)
 {
   int i;
+  struct mm_ctx *c = (struct mm_ctx *)sysalloc(sizeof(struct mm_ctx));
 
   for (i=0; i<=MAX_BIBOP; i++) {
     c->bibop_fl[i] = NULL;
@@ -149,6 +150,12 @@ void __arc_init_mm_ctx(struct mm_ctx *c)
   }
   c->allocmem = 0LL;
   c->usedmem = 0LL;
+  return(c);
+}
+
+void __arc_free_mm_ctx(struct mm_ctx *c)
+{
+  sysfree(c);
 }
 
 void *__arc_alloc(struct mm_ctx *c, size_t size)
