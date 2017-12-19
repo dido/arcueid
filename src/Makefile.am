@@ -1,4 +1,4 @@
-# Copyright (C) 2013 Rafael R. Sevilla
+# Copyright (C) 2017 Rafael R. Sevilla
 #
 # This file is part of Arcueid
 #
@@ -20,7 +20,7 @@ lib_LTLIBRARIES = libarcueid.la
 libarcueid_la_LDFLAGS = -Wl,--no-as-needed -version-info 0:0:0
 libarcueid_la_SOURCES = alloc.c
 
-#include_HEADERS = arcueid.h
+include_HEADERS = arcueid.h
 noinst_HEADERS = alloc.h
 
 #bin_PROGRAMS = arcueid
