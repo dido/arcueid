@@ -190,8 +190,33 @@ struct BBPhdr {
 struct mm_ctx {
   struct Bhdr *bibop_fl[MAX_BIBOP+1]; /*!< The BiBOP free lists */
   struct BBPhdr *bibop_pages[MAX_BIBOP+1]; /*!< The actual BiBOP pages */
+  unsigned long long allocmem;		   /*!< memory allocated from
+                                              the OS */
   unsigned long long usedmem;		   /*!< used memory */
-  unsigned long long allocmem;		   /*!< allocated memory */
 };
+
+/*! \fn extern void *__arc_init_mm_ctx(mm_ctx *c)
+    \brief Initialise memory allocator context
+    \param c The memory allocator context
+ */
+extern void __arc_init_mm_ctx(struct mm_ctx *c);
+
+/*! \fn extern void *__arc_alloc(mm_ctx *c, size_t size)
+    \brief Allocate memory
+    \param c The memory allocator context
+    \param size The size of the desired memory block
+
+    Allocate memory.
+ */
+extern void *__arc_alloc(struct mm_ctx *c, size_t size);
+
+/*! \fn extern void *__arc_free(mm_ctx *c, void *ptr)
+    \brief Free memory
+    \param c The memory allocator context
+    \param size The memory block to be freed
+
+    Free memory.
+ */
+extern void __arc_free(struct mm_ctx *c, void *ptr);
 
 #endif
