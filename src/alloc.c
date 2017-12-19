@@ -183,14 +183,23 @@ void *__arc_alloc(struct mm_ctx *c, size_t size)
 void __arc_free(struct mm_ctx *c, void *ptr)
 {
   struct Bhdr *h;
+  size_t size;
 
   D2B(h, ptr);
 
-  if (BSIZE(h) <= MAX_BIBOP) {
-    /* BiBOP freeing */
+  size = BSIZE(h);
+  c->usedmem -= size;
+  if (size <= MAX_BIBOP) {
+    /* BiBOP freeing. First mark as freed. */
+    BFREE(h);
+    /* Relink the freed block to the free list for its size */
+    h->u._next = c->bibop_fl[size];
+    c->bibop_fl[size] = h;
+    /* XXX we need to find a way to eventually return unused BiBOP pages,
+       which are going to be permanently a part of used memory otherwise. */
+    return;
   }
-  /* Straight freeing */
-  c->allocmem -= BSIZE(h);
-  c->usedmem -= BSIZE(h) + BHDR_ALIGN_SIZE;
+  /* Straight allocated block free. Allocated memory is also reduced here. */
+  c->allocmem -= size + BHDR_ALIGN_SIZE;
   sysfree(h);
 }
