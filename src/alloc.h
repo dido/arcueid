@@ -195,11 +195,15 @@ struct mm_ctx {
   unsigned long long usedmem;		   /*!< used memory */
 };
 
-/*! \fn extern void *__arc_init_mm_ctx(mm_ctx *c)
-    \brief Initialise memory allocator context
-    \param c The memory allocator context
+/*! \fn extern struct mm_ctx *__arc_new_mm_ctx(void)
+    \brief Create a new memory allocator context
  */
-extern void __arc_init_mm_ctx(struct mm_ctx *c);
+extern struct mm_ctx *__arc_new_mm_ctx(void);
+
+/*! \fn extern void __arc_free_mm_ctx(struct mm_ctx *c)
+    \brief Free a memory allocator context
+ */
+extern void __arc_free_mm_ctx(struct mm_ctx *c);
 
 /*! \fn extern void *__arc_alloc(mm_ctx *c, size_t size)
     \brief Allocate memory
