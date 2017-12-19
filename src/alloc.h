@@ -101,7 +101,7 @@ struct Bhdr {
     \brief Data to Bhdr
     Given a pointer to data dp, assign the corresponding Bhdr to b.
  */
-#define D2B(b, dp) (b) = (struct Bhdr *)(((char *)(dp)) - (char *)(((Bhdr *)0)->u._data + BPAD))
+#define D2B(b, dp) (b) = (struct Bhdr *)(((char *)(dp)) - (char *)(((struct Bhdr *)0)->u._data + BPAD))
 /*! \def B2NB(b)
     \brief Next Bhdr
     Get the next Bhdr in the linked list of free blocks. Only valid if
