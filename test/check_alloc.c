@@ -63,11 +63,17 @@ START_TEST(test_alloc)
   uint64_t seed;
   struct Bhdr *h;
   unsigned int rval;
+  unsigned long long ptrval;
 
   for (i=1; i<=MAX_SIZE; i++) {
     /* Allocate PAGE_SIZE * 2 blocks of size i */
-    for (j=0; j<BIBOP_PAGE_SIZE*2; j++)
+    for (j=0; j<BIBOP_PAGE_SIZE*2; j++) {
       ptrs[j] = (unsigned char *)__arc_alloc(c, i);
+      ptrval = (unsigned long long)ptrs[j];
+      /* Alignment check. All pointers returned by __arc_alloc must be
+	 aligned */
+      ck_assert((ptrval & (ALIGN-1)) == 0ULL);
+    }
     /* Fill these blocks with random data */
     for (j=BIBOP_PAGE_SIZE*2-1; j>=0; j--) {
       seed = (uint64_t)((i & 0xffff) | ((j & 0xffff) << 16));
