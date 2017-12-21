@@ -35,7 +35,7 @@
  */
 struct GChdr {
   arctype *t;			/*!< The type of the object  */
-  struct GCHdr *next;		/*!< Next allocated object */
+  struct GChdr *next;		/*!< Next allocated object */
   int colour;			/*!< Garbage collector colour */
   char _data[1];		/*!< Pointer to data of the block itself */
 };
@@ -57,14 +57,23 @@ struct gc_ctx {
   void *gcpptr;			/*!< previous pointer */
   int visit;			/*!< visited node count */
   struct GChdr *gcobjects;	/*!< List of all allocated objects */
+  int nprop;			/*!< Propagator flag */
+  int mutator;			/*!< Current mutator colour  */
+  int marker;			/*!< Current marker colour  */
+  int sweeper;			/*!< Current sweeper colour */
 };
+
+/*! \def PROPAGATOR
+    \brief Propagator colour
+*/
+#define PROPAGATOR 3
 
 /*! \def GCHDRSIZE
     \brief Actual size of a GC header.
 
     Excluding the dummy _data piece, the size of a GChdr structure.
  */
-#define GCHDRSIZE ((long)(((struct GChdr *)0)->u._data))
+#define GCHDRSIZE ((long)(((struct GChdr *)0)->_data))
 
 
 /*! \def GCHDR_ALIGN_SIZE
