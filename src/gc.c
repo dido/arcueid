@@ -36,3 +36,19 @@ value arc_new(arc *c, arctype *t, size_t size)
   gcc->gcobjects = obj;
   return((value)(obj->_data + GCHPAD));  
 }
+
+void arc_wb(arc *c, value dest, value src)
+{
+  struct gc_ctx *gcc = (struct gc_ctx *)c->gc_ctx;
+  struct GChdr *gh;
+
+  /* Do nothing if dest is a non-pointer (immediate) value */
+  if (IMMEDIATEP(dest))
+    return;
+
+  /* The VCGC write barrier requires that we mark the destination with
+     the propagator */
+  V2GCH(gh, dest);
+  gh->colour = PROPAGATOR;
+  gcc->nprop = 1;
+}
