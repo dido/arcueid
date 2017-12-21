@@ -25,11 +25,12 @@ typedef unsigned long value;
 typedef struct arc {
   void *mm_ctx;			/* memory manager context */
   void *gc_ctx;			/* garbage collector context */
+  void (*markroots)(struct arc *, void (*)(struct arc *, value));
 } arc;
 
 typedef struct arctype {
   void (*free)(arc *, value);
-  void (*mark)(arc *, value, void (*)(arc *, value));
+  void (*mark)(arc *, value, void (*)(arc *, value, int), int);
   int size;
 } arctype;
 
