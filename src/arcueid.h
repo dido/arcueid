@@ -76,4 +76,9 @@ extern void arc_wb(arc *c, value dest, value src);
  */
 extern arctype *arc_type(value val);
 
+/*! \fn value __arc_milliseconds(void)
+    \brief The epoch time in milliseconds
+ */
+extern unsigned long long __arc_milliseconds(void);
+
 #endif
