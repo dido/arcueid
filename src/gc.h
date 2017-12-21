@@ -90,7 +90,7 @@ struct gc_ctx {
     \brief Value to GC header
     Given a value _v_, assign the corresponding GChdr to _gh_.
  */
-#define V2GCH(gh, v) (gh) = (struct GChdr *)(((char *)(v)) - (char *)(GCHDRSIZE + GCPAD))
+#define V2GCH(gh, v) (gh) = (struct GChdr *)(((char *)(v)) - (char *)(GCHDRSIZE + GCHPAD))
 
 /*! \fn extern void __arc_gc(arc *c)
     \brief Garbage collector entry point
