@@ -52,15 +52,17 @@ struct gc_ctx {
   unsigned long long gccolour;	/*!< garbage collector colour  */
   
   int gcquantum;		/*!< Garbage collector visit max  */
-  struct Bhdr *gcptr;		/*!< running pointer used by
-                                   collector */
-  void *gcpptr;			/*!< previous pointer */
+  struct GChdr *gcptr;		/*!< running pointer used by
+				  collector */
+  struct GChdr *gcpptr;		/*!< previous pointer */
   int visit;			/*!< visited node count */
   struct GChdr *gcobjects;	/*!< List of all allocated objects */
   int nprop;			/*!< Propagator flag */
   int mutator;			/*!< Current mutator colour  */
   int marker;			/*!< Current marker colour  */
   int sweeper;			/*!< Current sweeper colour */
+  int gce;
+  int gct;
 };
 
 /*! \def PROPAGATOR
@@ -91,6 +93,12 @@ struct gc_ctx {
     Given a value _v_, assign the corresponding GChdr to _gh_.
  */
 #define V2GCH(gh, v) (gh) = (struct GChdr *)(((char *)(v)) - (char *)(GCHDRSIZE + GCHPAD))
+
+/*! \def GCH2V(gh)
+    \brief GChdr to value
+    Given a GChdr _gh_, return the corresponding value
+ */
+#define GCH2V(gh) ((value)((gh)->_data + GCHPAD))
 
 /*! \fn extern void __arc_gc(arc *c)
     \brief Garbage collector entry point
