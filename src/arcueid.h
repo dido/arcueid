@@ -1,5 +1,5 @@
 /* 
-  Copyright (C) 2013 Rafael R. Sevilla
+  Copyright (C) 2017,2018 Rafael R. Sevilla
 
   This file is part of Arcueid
 
@@ -53,5 +53,11 @@ extern value arc_new(arc *c, arctype *t, size_t size);
     is overwritten by some operation.
  */
 extern void arc_wb(value dest, value src);
+
+/*! \fn value arc_type(value val)
+    \brief Get the type of an Arcueid value
+    \param val Value
+ */
+extern arctype *arc_type(value val);
 
 #endif
