@@ -67,8 +67,24 @@ struct gc_ctx {
 
 /*! \def PROPAGATOR
     \brief Propagator colour
-*/
+ */
 #define PROPAGATOR 3
+
+/*! \def MAX_MARK_RECURSION
+    \brief Maximum depth of recursive marking
+ */
+#define MAX_MARK_RECURSION (16)
+
+/*! \def GCQUANTA
+    \brief Basic garbage collection visit quantum
+ */
+#define GCQUANTA (64)
+
+/*! \def GCMAXQUANTA
+    \brief Maximum garbage collection visit quantum
+ */
+#define GCMAXQUANTA (GCQUANTA*64)
+
 
 /*! \def GCHDRSIZE
     \brief Actual size of a GC header.
