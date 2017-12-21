@@ -97,6 +97,6 @@ struct gc_ctx {
 
     This function runs a garbage collector cycle.
  */
-extern void __arc_gc(arc *c);
+extern int __arc_gc(arc *c);
 
 #endif
