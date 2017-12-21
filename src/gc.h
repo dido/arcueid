@@ -86,6 +86,12 @@ struct gc_ctx {
  */
 #define GCHPAD (GCHDR_ALIGN_SIZE - GCHDRSIZE)
 
+/*! \def V2GCH
+    \brief Value to GC header
+    Given a value _v_, assign the corresponding GChdr to _gh_.
+ */
+#define V2GCH(gh, v) (gh) = (struct GChdr *)(((char *)(v)) - (char *)(GCHDRSIZE + GCPAD))
+
 /*! \fn extern void __arc_gc(arc *c)
     \brief Garbage collector entry point
 
