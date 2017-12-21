@@ -33,6 +33,21 @@ typedef struct arctype {
   int size;
 } arctype;
 
+/*! \def CNIL
+    \brief The nil value
+ */
+#define CNIL ((value)0)
+
+/*! \def IMMEDIATE_MASK
+    \brief Mask for immediate values
+ */
+#define IMMEDIATE_MASK 0x0f
+
+/*! \def IMMEDIATEP(x)
+    \brief Predicate if _x_ is an immediate value
+ */
+#define IMMEDIATEP(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL)
+
 extern void __arc_fatal(const char *errmsg, int errnum);
 
 /*! \fn value arc_new(arc *c, arctype *t, size_t extrasize)
@@ -43,8 +58,9 @@ extern void __arc_fatal(const char *errmsg, int errnum);
  */
 extern value arc_new(arc *c, arctype *t, size_t size);
 
-/*! \fn value arc_wb(value dest, value src)
+/*! \fn value arc_wb(arc *c, value dest, value src)
     \brief Garbage collector write barrier function
+    \param c The Arc context
     \param dest Destination pointer
     \param src Source pointer
 
@@ -52,7 +68,7 @@ extern value arc_new(arc *c, arctype *t, size_t size);
     algorithms. This should always be called before any pointer _dest_
     is overwritten by some operation.
  */
-extern void arc_wb(value dest, value src);
+extern void arc_wb(arc *c, value dest, value src);
 
 /*! \fn value arc_type(value val)
     \brief Get the type of an Arcueid value
