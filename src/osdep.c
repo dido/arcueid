@@ -16,9 +16,12 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
+#include "config.h"
 #include <stdio.h>
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 #include "arcueid.h"
 
 /* Report a fatal error */
@@ -28,9 +31,28 @@ void __arc_fatal(const char *errmsg, int errnum)
 
   if (errnum > 0) {
     strerror_r(errnum, serrmsg, sizeof(serrmsg)/sizeof(char));
-    fprintf(STDERR, "FATAL: %s (%s)", errmsg, serrmsg);
+    fprintf(stderr, "FATAL: %s (%s)", errmsg, serrmsg);
   } else {
-    fprintf(STDERR, "FATAL: %s", errmsg);
+    fprintf(stderr, "FATAL: %s", errmsg);
   }
   exit(1);
+}
+
+unsigned long long __arc_milliseconds(void)
+{
+#ifdef HAVE_CLOCK_GETTIME
+  struct timespec tp;
+  unsigned long long t;
+
+  if (clock_gettime(CLOCK_REALTIME, &tp) < 0) {
+    /* fall back to using time(2) if we have an error */
+    return((unsigned long long)time(NULL)*1000LL);
+  }
+  t = ((unsigned long long)tp.tv_sec)*1000LL
+    + ((unsigned long long)tp.tv_nsec / 1000000LL);
+  return(t);
+#else
+  /* fall back to using time(2) if clock_gettime is not available */
+  return((unsigned long long)time(NULL)*1000LL);
+#endif
 }
