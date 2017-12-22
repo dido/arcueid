@@ -20,9 +20,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "arcueid.h"
+#include "alloc.h"
+#include "gc.h"
 
-void __arc_fatal(const char *errmsg, int errnum)
+static void markroots(arc *c, void (*marker)(struct arc *, value))
 {
-  fprintf(stderr, "Error (%d): %s\n", errnum, errmsg);
-  exit(EXIT_FAILURE);
+  /* XXX fill in later */
+}
+
+void arc_init(arc *c)
+{
+  c->mm_ctx = __arc_new_mm_ctx();
+  c->gc_ctx = __arc_new_gc_ctx(c);
+  c->markroots = markroots;
 }
