@@ -84,6 +84,12 @@ typedef struct arctype {
  */
 #define IMMEDIATEP(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL)
 
+/* Initialization */
+/*! \fn value arc_init(arc *c)
+    \brief Initialize an Arc context
+ */
+extern void arc_init(arc *c);
+
 /* Memory management functions */
 
 /*! \fn value arc_new(arc *c, arctype *t, size_t extrasize)
