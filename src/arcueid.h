@@ -16,24 +16,57 @@
   You should have received a copy of the GNU Lesser General Public
   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
+
+/*! \file arcueid.h
+    \brief Main include file for Arcueid
+ */
 #ifndef _ARCUEID_H_
 
 #define _ARCUEID_H_
 
 #include <stdlib.h>
 
+/*! \typedef value
+    \brief The type definition for basic Arcueid values
+
+    All Arcueid objects are encapsulated as values. These can be
+    immediate values (where the last four bits are not all zero) or
+    pointers (where the last four bits are all zero).
+ */
 typedef unsigned long value;
 
+/*! \struct arc
+    \brief Arcueid interpreter context
+ */
 typedef struct arc {
-  void *mm_ctx;			/* memory manager context */
-  void *gc_ctx;			/* garbage collector context */
+  void *mm_ctx;			/*!< memory manager context */
+  void *gc_ctx;			/*!< garbage collector context */
+  /*! Root marking function called at the beginning of a GC cycle to
+      mark the initial root set */
   void (*markroots)(struct arc *, void (*)(struct arc *, value));
 } arc;
 
+/*! \struct arctype
+    \brief type definition structure
+    All Arcueid types are given a structure of this sort, which
+    contains function definitions used for garbage collector
+    processing.
+ */
 typedef struct arctype {
+  /*! Called before an object of this type is freed. Typically one
+      would put in here actions related to the destruction of the
+      object, such as closing file descriptors, freeing any extra
+      memory not allocated through the usual Arcueid memory
+      allocation mechanism, etc. */
   void (*free)(arc *, value);
+  /*! Called whenever the garbage collector marks an object of this
+      type. The function is passed the object itself, a function which
+      one passes all the pointers contained in the object (the marker
+      function), and the depth, which should be passed unchanged to
+      the marker function. */
   void (*mark)(arc *, value, void (*)(arc *, value, int), int);
-  int size;
+  int size;			/*!< The size of the object. This is
+                                   advisory only. */
 } arctype;
 
 /*! \def CNIL
@@ -136,6 +169,10 @@ static inline value arc_cons(arc *c, value car, value cdr)
   return(conscell);
 }
 
+/*! \fn void scar(arc *c, value v, value ncar)
+    \brief Set the car of a cons cell
+ */
+
 static inline void scar(arc *c, value v, value ncar)
 {
   cons *cc = (cons *)v;
@@ -144,6 +181,9 @@ static inline void scar(arc *c, value v, value ncar)
   cc->car = v;
 }
 
+/*! \fn void scdr(arc *c, value v, value ncdr)
+    \brief Set the cdr of a cons cell
+ */
 static inline void scdr(arc *c, value v, value ncdr)
 {
   cons *cc = (cons *)v;
@@ -152,6 +192,9 @@ static inline void scdr(arc *c, value v, value ncdr)
   cc->cdr = v;
 }
 
+/*! \fn void __arc_fatal(const char *errmsg, int errnum)
+    \brief Fatal error function
+ */
 extern void __arc_fatal(const char *errmsg, int errnum);
 
 /*! \fn value arc_type(value val)
