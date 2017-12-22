@@ -20,6 +20,8 @@
 
 #define _ARCUEID_H_
 
+#include <stdlib.h>
+
 typedef unsigned long value;
 
 typedef struct arc {
@@ -48,6 +50,28 @@ typedef struct arctype {
     \brief Predicate if _x_ is an immediate value
  */
 #define IMMEDIATEP(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL)
+
+/* Memory management functions */
+
+/*! \fn value arc_new(arc *c, arctype *t, size_t extrasize)
+    \brief Allocate an Arc object
+    \param c The Arc context
+    \param t The type descriptor for the object
+    \param size The size of the object
+ */
+extern value arc_new(arc *c, arctype *t, size_t size);
+
+/*! \fn value arc_wb(arc *c, value dest, value src)
+    \brief Garbage collector write barrier function
+    \param c The Arc context
+    \param dest Destination pointer
+    \param src Source pointer
+
+    The write barrier required by certain garbage collector
+    algorithms. This should always be called before any pointer _dest_
+    is overwritten by some operation.
+ */
+extern void arc_wb(arc *c, value dest, value src);
 
 /* Definitions for Fixnums */
 /*! \def FIXNUM_MAX
@@ -82,27 +106,53 @@ typedef struct arctype {
  */
 #define FIXNUMP(f) (((long)(f))&FIXNUM_FLAG)
 
+/* Definitions and prototypes for conses */
+
+/*! \struct cons
+    \brief A cons cell
+ */
+typedef struct {
+  value car;			/*!< car value for the cons cell */
+  value cdr;			/*!< cdr value for the cons cell  */
+} cons;
+
+/*! \var __arc_cons_t
+    \brief Type definition structure for conses
+ */
+extern arctype __arc_cons_t;
+
+#define car(v) (((cons *)(v))->car)
+#define cdr(v) (((cons *)(v))->cdr)
+
+/*! \fn value arc_cons(arc *c, var car, var cdr)
+    \brief Cons two values together
+ */
+static inline value arc_cons(arc *c, value car, value cdr)
+{
+  value conscell = arc_new(c, &__arc_cons_t, sizeof(cons));
+  cons *cc = (cons *)conscell;
+  cc->car = car;
+  cc->cdr = cdr;
+  return(conscell);
+}
+
+static inline void scar(arc *c, value v, value ncar)
+{
+  cons *cc = (cons *)v;
+  /* use the write barrier before overwriting the pointer */
+  arc_wb(c, cc->car, v);
+  cc->car = v;
+}
+
+static inline void scdr(arc *c, value v, value ncdr)
+{
+  cons *cc = (cons *)v;
+  /* use the write barrier before overwriting the pointer */
+  arc_wb(c, cc->cdr, v);
+  cc->cdr = v;
+}
+
 extern void __arc_fatal(const char *errmsg, int errnum);
-
-/*! \fn value arc_new(arc *c, arctype *t, size_t extrasize)
-    \brief Allocate an Arc object
-    \param c The Arc context
-    \param t The type descriptor for the object
-    \param size The size of the object
- */
-extern value arc_new(arc *c, arctype *t, size_t size);
-
-/*! \fn value arc_wb(arc *c, value dest, value src)
-    \brief Garbage collector write barrier function
-    \param c The Arc context
-    \param dest Destination pointer
-    \param src Source pointer
-
-    The write barrier required by certain garbage collector
-    algorithms. This should always be called before any pointer _dest_
-    is overwritten by some operation.
- */
-extern void arc_wb(arc *c, value dest, value src);
 
 /*! \fn value arc_type(value val)
     \brief Get the type of an Arcueid value
