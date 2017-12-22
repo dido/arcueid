@@ -51,18 +51,23 @@ struct gc_ctx {
   unsigned long long gcnruns;	/*!< number of gc runs */
   unsigned long long gccolour;	/*!< garbage collector colour  */
   
-  int gcquantum;		/*!< Garbage collector visit max  */
+  int gcquantum;		/*!< Garbage collector visit max
+                                   quantum */
   struct GChdr *gcptr;		/*!< running pointer used by
 				  collector */
-  struct GChdr *gcpptr;		/*!< previous pointer */
   int visit;			/*!< visited node count */
   struct GChdr *gcobjects;	/*!< List of all allocated objects */
-  int nprop;			/*!< Propagator flag */
+  int nprop;			/*!< Flag set if new propagator was
+                                   created since the start of the
+                                   GC cycle */
   int mutator;			/*!< Current mutator colour  */
   int marker;			/*!< Current marker colour  */
   int sweeper;			/*!< Current sweeper colour */
-  int gce;
-  int gct;
+  int gce;			/*!< GC stat, decremented when
+                                   propagators are found, incremented
+                                   when objects are swept.  */
+  int gct;			/*!< GC stat, incremented for every
+                                   mutator/marker colour object found. */
 };
 
 /*! \def PROPAGATOR
@@ -116,11 +121,21 @@ struct gc_ctx {
  */
 #define GCH2V(gh) ((value)((gh)->_data + GCHPAD))
 
-/*! \fn extern void __arc_gc(arc *c)
+/*! \fn void __arc_gc(arc *c)
     \brief Garbage collector entry point
 
     This function runs a garbage collector cycle.
  */
 extern int __arc_gc(arc *c);
+
+/*! \fn struct gc_ctx* __arc_new_gc_ctx(arc *c)
+    \brief Create a new garbage collector context
+ */
+extern struct gc_ctx *__arc_new_gc_ctx(arc *c);
+
+/*! \fn void __arc_free_gc_ctx(arc *c, struct gc_ctx *gcc)
+    \brief Free a garbage collector context
+ */
+extern void __arc_free_gc_ctx(arc *c, struct gc_ctx *gcc);
 
 #endif
