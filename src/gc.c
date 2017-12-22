@@ -87,6 +87,36 @@ static void mark(arc *c, value v, int depth)
   }
 }
 
+/* This is the VCGC algorithm. This particular implementation is
+   inspired by the one used by the Inferno OS. The GC roots and
+   objects affected by the write barrier are marked with the
+   propagator colour, which the algorithm interprets as part of the
+   root set from which objects ought to be marked with the mutator
+   colour.
+
+   The algorithm works by going over the entire allocated heap, which
+   is set up as a linked list. If it sees an object there which is
+   marked with the propagator colour, it will recursively mark that
+   object with the current mutator colour. It will stop recursing at
+   a designated maximum depth, or if the algorithm's visit quantum
+   runs out. In that case, the last such object encountered is
+   likewise marked with the propagator colour instead so it can be
+   picked up in a future GC run.
+
+   An object with the sweeper colour is unlinked from the list of
+   allocated objects and freed.
+
+   Objects in the current mutator colour are ignored.
+
+   Once all of the allocated objects have been visited it checks the
+   new propagator flag (nprop) to see if any new propagators have been
+   generated in between GC action. If there have been any new
+   propagators created, the flag is cleared first, and a new sweep of
+   the allocated heap is done, to find these propagators and mark
+   them. If no new propagators have been created, a garbage collection
+   epoch is declared ended, the mutator, marker, and sweeper colours
+   are changed, and the root set is again marked.
+ */
 int __arc_gc(arc *c)
 {
   struct gc_ctx *gcc = (struct gc_ctx *)c->gc_ctx;
@@ -95,11 +125,10 @@ int __arc_gc(arc *c)
   struct GChdr *v;
   int retval = 0;
 
+  gcc->gcnruns++;
   gcst = __arc_milliseconds();
-  if (gcc->gcptr == NULL) {
+  if (gcc->gcptr == NULL)
     gcc->gcptr = gcc->gcobjects;
-    gcc->gcpptr = NULL;
-  }
 
   for (gcc->visit = gcc->gcquantum; gcc->visit > 0;) {
     if (gcc->gcptr == NULL)
@@ -120,7 +149,6 @@ int __arc_gc(arc *c)
     } else {
       gcc->gct++;
     }
-    gcc->gcpptr = v;
     gcc->gcptr = gcc->gcptr->next;
   }
   gcc->gcquantum = (GCMAXQUANTA - GCQUANTA)/2
@@ -133,33 +161,62 @@ int __arc_gc(arc *c)
 
   /* If we have not yet exhausted the entire allocated heap but have
      run out of visit quanta, stop the current GC cycle for now. */
-  if (gcc->gcptr != NULL)
-    goto endgc;
 
-  /* We have completed the epoch if we have gone through all the allocated
-     objects and there are no more active propagators. When that happens,
-     we increment the number of epochs, change the GC colour, and mark
-     all of the roots again in preparation for the beginning of the next
-     garbage collection epoch. */
-  if (gcc->nprop == 0) {
-    retval = (gcc->gccolour % 3) == 0;
-    gcc->gcepochs++;
-    gcc->gccolour++;
-    gcc->mutator = gcc->gccolour % 3;
-    gcc->marker = (gcc->gccolour-1) % 3;
-    gcc->sweeper = (gcc->gccolour-2) % 3;
-    gcc->gce = 0;
-    gcc->gct = 1;
-    c->markroots(c, markprop);
-    /* XXX This would be a good time to free any unused BiBOP pages */
+  if (gcc->gcptr == NULL) {
+    /* We have completed the epoch if we have gone through all the allocated
+       objects and there are no more active propagators. When that happens,
+       we increment the number of epochs, change the GC colour, and mark
+       all of the roots again in preparation for the beginning of the next
+       garbage collection epoch. */
+    if (gcc->nprop == 0) {
+      retval = (gcc->gccolour % 3) == 0;
+      gcc->gcepochs++;
+      gcc->gccolour++;
+      gcc->mutator = gcc->gccolour % 3;
+      gcc->marker = (gcc->gccolour-1) % 3;
+      gcc->sweeper = (gcc->gccolour-2) % 3;
+      gcc->gce = 0;
+      gcc->gct = 1;
+      c->markroots(c, markprop);
+      /* XXX This would be a good time to free any unused BiBOP pages */
 #ifdef HAVE_MALLOC_TRIM
-    malloc_trim(0);
+      malloc_trim(0);
 #endif
+    }
+    /* clear the propagator flag if we get to the end. */
+    gcc->nprop = 0;
   }
-  gcc->nprop = 0;
 
- endgc:
   gcet = __arc_milliseconds();
   gcc->gc_milliseconds += gcet - gcst;
   return(retval);
+}
+
+struct gc_ctx *__arc_new_gc_ctx(arc *c)
+{
+  struct mm_ctx *mc = (struct mm_ctx *)c->mm_ctx;
+  struct gc_ctx *gcc;
+
+  gcc = (struct gc_ctx *)__arc_alloc(mc, sizeof(struct gc_ctx));
+  gcc->gc_milliseconds = 0ULL;
+  gcc->gcepochs = 0ULL;
+  gcc->gcnruns = 0ULL;
+  gcc->gccolour = 3ULL;
+  gcc->gcquantum = GCQUANTA;
+  gcc->gcptr = NULL;
+  gcc->visit = 0;
+  gcc->gcobjects = NULL;
+  gcc->nprop = 0;
+  gcc->mutator = gcc->gccolour % 3;
+  gcc->marker = (gcc->gccolour-1) % 3;
+  gcc->sweeper = (gcc->gccolour-2) % 3;
+  gcc->gce = 0;
+  gcc->gct = 1;
+  return(gcc);
+}
+
+void __arc_free_gc_ctx(arc *c, struct gc_ctx *gcc)
+{
+  struct mm_ctx *mc = (struct mm_ctx *)c->mm_ctx;
+  __arc_free(mc, gcc); 
 }
