@@ -55,6 +55,7 @@ struct gc_ctx {
                                    quantum */
   struct GChdr *gcptr;		/*!< running pointer used by
 				  collector */
+  struct GChdr *gcpptr;		/*!< previous pointer */
   int visit;			/*!< visited node count */
   struct GChdr *gcobjects;	/*!< List of all allocated objects */
   int nprop;			/*!< Flag set if new propagator was
