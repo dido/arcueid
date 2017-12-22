@@ -27,10 +27,10 @@ static void consmark(arc *c, value v,
 		     void (*marker)(struct arc *, value, int),
 		     int depth)
 {
-  cons *cc = (cons *)v;
+  cons_t *cc = (cons_t *)v;
   /* Recursively mark the car and cdr */
   marker(c, cc->car, depth);
   marker(c, cc->cdr, depth);
 }
 
-arctype __arc_cons_t = { consfree, consmark, sizeof(cons) };
+arctype __arc_cons_t = { consfree, consmark, sizeof(cons_t) };
