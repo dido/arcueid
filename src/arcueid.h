@@ -49,6 +49,39 @@ typedef struct arctype {
  */
 #define IMMEDIATEP(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL)
 
+/* Definitions for Fixnums */
+/*! \def FIXNUM_MAX
+    \brief Largest possible fixnum value
+ */
+#define FIXNUM_MAX (LONG_MAX >> 1)
+/*! \def FIXNUM_IN
+    \brief Smallest possible (negative) fixnum value
+ */
+#define FIXNUM_MIN (-FIXNUM_MAX)
+/*! \def FIXNUM_FLAG
+    \brief Bit flag in a value denoting a fixnum
+
+    A Fixnum is a value whose lowest bit is set to 1.
+ */
+#define FIXNUM_FLAG 0x01
+/*! \def INT2FIX(i)
+    \brief Convert an integer to a fixnum value
+    \param i The value to be converted
+    Converts a normal C integer value into a fixnum.
+ */
+#define INT2FIX(i) ((value)(((long)(i))<< 1 | FIXNUM_FLAG))
+/*! \def FIX2INT(x)
+    \brief Convert a fixnum to an integer
+    \warn FIXME: portability to systems that don't preserve sign bit
+    on right shifts
+ */
+#define FIX2INT(x) ((long)(x) >> 1)
+/*! \def FIXNUMP(f)
+    \brief Fixnum predicate
+    True if f is a fixnum
+ */
+#define FIXNUMP(f) (((long)(f))&FIXNUM_FLAG)
+
 extern void __arc_fatal(const char *errmsg, int errnum);
 
 /*! \fn value arc_new(arc *c, arctype *t, size_t extrasize)
