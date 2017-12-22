@@ -153,23 +153,23 @@ extern void arc_wb(arc *c, value dest, value src);
 typedef struct {
   value car;			/*!< car value for the cons cell */
   value cdr;			/*!< cdr value for the cons cell  */
-} cons;
+} cons_t;
 
 /*! \var __arc_cons_t
     \brief Type definition structure for conses
  */
 extern arctype __arc_cons_t;
 
-#define car(v) (((cons *)(v))->car)
-#define cdr(v) (((cons *)(v))->cdr)
+#define car(v) (((cons_t *)(v))->car)
+#define cdr(v) (((cons_t *)(v))->cdr)
 
 /*! \fn value arc_cons(arc *c, var car, var cdr)
     \brief Cons two values together
  */
-static inline value arc_cons(arc *c, value car, value cdr)
+static inline value cons(arc *c, value car, value cdr)
 {
-  value conscell = arc_new(c, &__arc_cons_t, sizeof(cons));
-  cons *cc = (cons *)conscell;
+  value conscell = arc_new(c, &__arc_cons_t, sizeof(cons_t));
+  cons_t *cc = (cons_t *)conscell;
   cc->car = car;
   cc->cdr = cdr;
   return(conscell);
@@ -181,7 +181,7 @@ static inline value arc_cons(arc *c, value car, value cdr)
 
 static inline void scar(arc *c, value v, value ncar)
 {
-  cons *cc = (cons *)v;
+  cons_t *cc = (cons_t *)v;
   /* use the write barrier before overwriting the pointer */
   arc_wb(c, cc->car, v);
   cc->car = v;
@@ -192,7 +192,7 @@ static inline void scar(arc *c, value v, value ncar)
  */
 static inline void scdr(arc *c, value v, value ncdr)
 {
-  cons *cc = (cons *)v;
+  cons_t *cc = (cons_t *)v;
   /* use the write barrier before overwriting the pointer */
   arc_wb(c, cc->cdr, v);
   cc->cdr = v;
