@@ -15,9 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
-TESTS = check_alloc
-check_PROGRAMS = check_alloc
+TESTS = check_alloc check_gc
+check_PROGRAMS = check_alloc check_gc
 
 check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/arcueid.h $(top_builddir)/src/alloc.h
 check_alloc_CFLAGS = @CHECK_CFLAGS@
 check_alloc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+check_gc_SOURCES = check_gc.c $(top_builddir)/src/arcueid.h $(top_builddir)/src/alloc.h $(top_builddir)/src/gc.h
+check_gc_CFLAGS = @CHECK_CFLAGS@
+check_gc_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
