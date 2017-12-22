@@ -127,8 +127,10 @@ int __arc_gc(arc *c)
 
   gcc->gcnruns++;
   gcst = __arc_milliseconds();
-  if (gcc->gcptr == NULL)
+  if (gcc->gcptr == NULL) {
+    gcc->gcpptr = NULL;
     gcc->gcptr = gcc->gcobjects;
+  }
 
   for (gcc->visit = gcc->gcquantum; gcc->visit > 0;) {
     if (gcc->gcptr == NULL)
@@ -144,11 +146,20 @@ int __arc_gc(arc *c)
 	 object. */
       gcc->gce++;
       v->t->free(c, GCH2V(v));
-      gcc->gcptr = v->next;
+      if (gcc->gcpptr == NULL) {
+	/* delete from the head of the list */
+	gcc->gcobjects = gcc->gcptr->next;
+      } else {
+	/* delete from the body of the list */
+	gcc->gcpptr->next = gcc->gcptr->next;
+      }
+      gcc->gcptr = gcc->gcptr->next;
       __arc_free(mc, v);
+      continue;
     } else {
       gcc->gct++;
     }
+    gcc->gcpptr = gcc->gcptr;
     gcc->gcptr = gcc->gcptr->next;
   }
   gcc->gcquantum = (GCMAXQUANTA - GCQUANTA)/2
@@ -219,4 +230,11 @@ void __arc_free_gc_ctx(arc *c, struct gc_ctx *gcc)
 {
   struct mm_ctx *mc = (struct mm_ctx *)c->mm_ctx;
   __arc_free(mc, gcc); 
+}
+
+arctype *arc_type(value val)
+{
+  struct GChdr *gh;
+  V2GCH(gh, val);
+  return(gh->t);
 }
