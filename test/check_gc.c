@@ -40,7 +40,7 @@ START_TEST(test_gc_cons)
   arc *c = &cc;
   struct gc_ctx *gcc;
   struct GChdr *ptr;
-  int count;
+  int count, i;
 
   arc_init(c);
   c->markroots = test_markroots;
@@ -77,6 +77,34 @@ START_TEST(test_gc_cons)
     ;
   while (__arc_gc(c) == 0)
     ;
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 0);
+
+  /* Make a longer, branched cons */
+  r = cons(c, cons(c, INT2FIX(1), CNIL),
+	   cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 4);
+
+  rootval = r;
+  for (i=0; i<10; i++) {
+    while (__arc_gc(c) == 0)
+      ;
+  }
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 4);
+
+  rootval = CNIL;
+  for (i=0; i<10; i++) {
+    while (__arc_gc(c) == 0)
+      ;
+  }
   count = 0;
   for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
     count++;
