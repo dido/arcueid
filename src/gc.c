@@ -231,10 +231,3 @@ void __arc_free_gc_ctx(arc *c, struct gc_ctx *gcc)
   struct mm_ctx *mc = (struct mm_ctx *)c->mm_ctx;
   __arc_free(mc, gcc); 
 }
-
-arctype *arc_type(value val)
-{
-  struct GChdr *gh;
-  V2GCH(gh, val);
-  return(gh->t);
-}
