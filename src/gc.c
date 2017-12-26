@@ -46,8 +46,6 @@ static void markprop(arc *c, value val)
   if (IMMEDIATEP(val))
     return;
 
-  /* The VCGC write barrier requires that we mark the destination with
-     the propagator */
   V2GCH(gh, val);
   gh->colour = PROPAGATOR;
   gcc->nprop = 1;
@@ -55,6 +53,8 @@ static void markprop(arc *c, value val)
 
 void arc_wb(arc *c, value dest, value src)
 {
+  /* The VCGC write barrier requires that we mark the destination with
+     the propagator */
   markprop(c, dest);
 }
 
@@ -180,7 +180,7 @@ int __arc_gc(arc *c)
        all of the roots again in preparation for the beginning of the next
        garbage collection epoch. */
     if (gcc->nprop == 0) {
-      retval = (gcc->gccolour % 3) == 0;
+      retval = 1;
       gcc->gcepochs++;
       gcc->gccolour++;
       gcc->mutator = gcc->gccolour % 3;
