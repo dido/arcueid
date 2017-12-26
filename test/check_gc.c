@@ -135,15 +135,127 @@ START_TEST(test_gc_cons)
 
   /* Remove it from the root set and let three epochs elapse */
   rootval = CNIL;
-  for (i=0; i<3; i++) {
+   for (i=0; i<3; i++) {
     while (__arc_gc(c) == 0)
       ;
   }
-  /* After three epochs, the object should have been colected */
+  /* After three epochs, the object should have been collected */
   count = 0;
   for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
     count++;
   ck_assert_int_eq(count, 0);
+}
+END_TEST
+
+START_TEST(test_gc_write_barrier)
+{
+  value r, b;
+  arc cc;
+  arc *c = &cc;
+  struct gc_ctx *gcc;
+  struct GChdr *ptr, *ptrb;
+  int count, i;
+
+  arc_init(c);
+  /* Set the markroots function to our test_markroots function above */
+  c->markroots = test_markroots;
+  gcc = (struct gc_ctx *)c->gc_ctx;
+
+  /* Create a test cons */
+  r = cons(c, cons(c, INT2FIX(1), CNIL),
+	   cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
+  /* Place it in the root set */
+  rootval = r;
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 4);
+  /* Since the object is part of the root set, we can go through as
+     many garbage collection cycles as needed and it should not be
+     collected. */
+  for (i=0; i<10; i++) {
+    while (__arc_gc(c) == 0)
+      ;
+  }
+  /* Now, we remove the element linked to the car. It should
+     be marked with the propagator colour. */
+  b = car(r);
+  V2GCH(ptr, r);
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  V2GCH(ptrb, b);
+  ck_assert_int_eq(ptrb->colour, gcc->marker);
+  scar(c, r, CNIL);
+  ck_assert_int_eq(ptrb->colour, PROPAGATOR);
+  /* After one epoch, the colour should move forwards */
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  ck_assert_int_eq(ptrb->colour, gcc->marker);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  ck_assert_int_eq(ptrb->colour, gcc->sweeper);
+  while (__arc_gc(c) == 0)
+    ;
+  /* The unlinked piece should have been collected */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 3);
+  /* Unlink the object and collect everything */
+  rootval = CNIL;
+  for (i=0; i<3; i++) {
+    while (__arc_gc(c) == 0)
+      ;
+  }
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 0);
+
+  /* Next try to do the same for scdr */
+  r = cons(c, cons(c, INT2FIX(1), CNIL),
+	   cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
+  rootval = r;
+  for (i=0; i<10; i++) {
+    while (__arc_gc(c) == 0)
+      ;
+  }
+
+  /* Now we try to do scdr */
+  V2GCH(ptr, r);
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  b = cdr(r);
+  V2GCH(ptrb, b);
+  ck_assert_int_eq(ptrb->colour, gcc->marker);
+  scdr(c, r, CNIL);
+  ck_assert_int_eq(ptrb->colour, PROPAGATOR);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  ck_assert_int_eq(ptrb->colour, gcc->marker);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  ck_assert_int_eq(ptrb->colour, gcc->sweeper);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  count = 0;
+  /* Only the root cons and the one linked to the car should remain
+     because they were part of the root */
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 2);
+  rootval = CNIL;
+  for (i=0; i<3; i++) {
+    while (__arc_gc(c) == 0)
+      ;
+  }
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 0);  
 }
 END_TEST
 
@@ -155,6 +267,7 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_gc, test_gc_cons);
+  tcase_add_test(tc_gc, test_gc_write_barrier);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
