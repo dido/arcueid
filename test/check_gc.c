@@ -43,11 +43,19 @@ START_TEST(test_gc_cons)
   int count, i;
 
   arc_init(c);
+  /* Set the markroots function to our test_markroots function above */
   c->markroots = test_markroots;
   gcc = (struct gc_ctx *)c->gc_ctx;
 
+  /* Create a single cons cell */
   r = cons(c, CNIL, CNIL);
+  /* When the cons is created, the colour should be mutator colour */
+  V2GCH(ptr, r);
+  ck_assert_int_eq(ptr->colour, gcc->mutator);
+
   count = 0;
+  /* Test that there should be one item in the list of all allocated
+     objects and that it should be a cons and the cons which we made. */
   for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
     count++;
   ck_assert_int_eq(count, 1);
@@ -55,13 +63,26 @@ START_TEST(test_gc_cons)
   ck_assert(car(r) == CNIL);
   ck_assert(cdr(r) == CNIL);
 
+  /* Place it in the root set */
   rootval = r;
+  /* Call __arc_gc repeatedly until the end of an epoch. After three
+     epochs elapse, any object not in the root set which was mutator
+     colour ought to be collected and freed.  However, since the
+     object is part of the root set, it should have propagator colour
+     at the end of every epoch. */
+  V2GCH(ptr, r);
   while (__arc_gc(c) == 0)
     ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
   while (__arc_gc(c) == 0)
     ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
   while (__arc_gc(c) == 0)
     ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+
+  /* Since the cons we created above is part of the root set, it
+     should not have been collected and should still be present */
   count = 0;
   for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
     count++;
@@ -70,11 +91,19 @@ START_TEST(test_gc_cons)
   ck_assert(car(r) == CNIL);
   ck_assert(cdr(r) == CNIL);
 
+  /* Remove the above created cons from the root set */
   rootval = CNIL;
+  /* Again, let three epochs elapse. */
   while (__arc_gc(c) == 0)
     ;
+  /* After one epoch, the colour should change to marker */
+  V2GCH(ptr, r);
+  ck_assert_int_eq(ptr->colour, gcc->marker);
+  /* After two epochs, the colour should change to sweeper */
   while (__arc_gc(c) == 0)
     ;
+  ck_assert_int_eq(ptr->colour, gcc->sweeper);
+  /* After three epochs, the object should be collected */
   while (__arc_gc(c) == 0)
     ;
   count = 0;
@@ -90,7 +119,11 @@ START_TEST(test_gc_cons)
     count++;
   ck_assert_int_eq(count, 4);
 
+  /* Place it in the root set */
   rootval = r;
+  /* Since the object is part of the root set, we can go through as
+     many garbage collection cycles as needed and it should not be
+     collected. */
   for (i=0; i<10; i++) {
     while (__arc_gc(c) == 0)
       ;
@@ -100,11 +133,13 @@ START_TEST(test_gc_cons)
     count++;
   ck_assert_int_eq(count, 4);
 
+  /* Remove it from the root set and let three epochs elapse */
   rootval = CNIL;
-  for (i=0; i<10; i++) {
+  for (i=0; i<3; i++) {
     while (__arc_gc(c) == 0)
       ;
   }
+  /* After three epochs, the object should have been colected */
   count = 0;
   for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
     count++;
