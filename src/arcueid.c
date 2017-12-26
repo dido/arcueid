@@ -34,3 +34,19 @@ void arc_init(arc *c)
   c->gc_ctx = __arc_new_gc_ctx(c);
   c->markroots = markroots;
 }
+
+arctype __arc_nil_t = { NULL, NULL, 0 };
+
+arctype *arc_type(value val)
+{
+  struct GChdr *gh;
+
+  if (NILP(val))
+    return(&__arc_nil_t);
+
+  if (FIXNUMP(val))
+    return(&__arc_fixnum_t);
+
+  V2GCH(gh, val);
+  return(gh->t);
+}
