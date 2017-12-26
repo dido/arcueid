@@ -145,6 +145,11 @@ extern void arc_wb(arc *c, value dest, value src);
  */
 #define FIXNUMP(f) (((long)(f))&FIXNUM_FLAG)
 
+/*! \var __arc_fixnum_t
+    \brief Type definition structure for fixnums
+ */
+extern arctype __arc_fixnum_t;
+
 /* Definitions and prototypes for conses */
 
 /*! \struct cons
