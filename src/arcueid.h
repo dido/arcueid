@@ -200,8 +200,8 @@ static inline void scar(arc *c, value v, value ncar)
 {
   cons_t *cc = (cons_t *)v;
   /* use the write barrier before overwriting the pointer */
-  arc_wb(c, cc->car, v);
-  cc->car = v;
+  arc_wb(c, cc->car, ncar);
+  cc->car = ncar;
 }
 
 /*! \fn void scdr(arc *c, value v, value ncdr)
@@ -211,8 +211,8 @@ static inline void scdr(arc *c, value v, value ncdr)
 {
   cons_t *cc = (cons_t *)v;
   /* use the write barrier before overwriting the pointer */
-  arc_wb(c, cc->cdr, v);
-  cc->cdr = v;
+  arc_wb(c, cc->cdr, ncdr);
+  cc->cdr = ncdr;
 }
 
 /*! \fn void __arc_fatal(const char *errmsg, int errnum)
