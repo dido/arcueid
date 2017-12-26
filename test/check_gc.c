@@ -185,6 +185,7 @@ START_TEST(test_gc_write_barrier)
   V2GCH(ptrb, b);
   ck_assert_int_eq(ptrb->colour, gcc->marker);
   scar(c, r, CNIL);
+  ck_assert(NILP(car(r)));
   ck_assert_int_eq(ptrb->colour, PROPAGATOR);
   /* After one epoch, the colour should move forwards */
   while (__arc_gc(c) == 0)
@@ -229,6 +230,7 @@ START_TEST(test_gc_write_barrier)
   V2GCH(ptrb, b);
   ck_assert_int_eq(ptrb->colour, gcc->marker);
   scdr(c, r, CNIL);
+  ck_assert(NILP(cdr(r)));
   ck_assert_int_eq(ptrb->colour, PROPAGATOR);
   while (__arc_gc(c) == 0)
     ;
