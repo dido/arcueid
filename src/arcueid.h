@@ -69,10 +69,22 @@ typedef struct arctype {
                                    advisory only. */
 } arctype;
 
+/* Definitions for nils */
 /*! \def CNIL
     \brief The nil value
  */
 #define CNIL ((value)0)
+
+/*! \def NILP(v)
+    \brief Nil predicate
+    True if v is a nil
+ */
+#define NILP(v) ((v) == CNIL)
+
+/*! \var __arc_nil_t
+    \brief Type definition structure for nils
+ */
+extern arctype __arc_nil_t;
 
 /*! \def IMMEDIATE_MASK
     \brief Mask for immediate values
