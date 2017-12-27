@@ -1,5 +1,5 @@
 ARCUEID ROADMAP
-Copyright (C) 2013 Rafael R. Sevilla
+Copyright (C) 2017, 2018 Rafael R. Sevilla
 ----------------------------------------------------------------------
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -7,51 +7,51 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** DONE base virtual machine [9/9]
+** TODO base virtual machine [1/10]
     - [X] Define virtual machine architecture
-    - [X] Design interpreter core
+    - [ ] Design interpreter core
 	  The interpreter core should be flexible enough that we can
 	  easily use switch threading, call threading, GCC labels as
 	  values, or even assembly language.  Each instruction should
 	  be separately implementable.
-    - [X] Build code generation infrastructure
-    - [X] Implement virtual machine instructions [35/35]
-      - [X] nop
-      - [X] push
-      - [X] pop
-      - [X] ldl
-      - [X] ldi
-      - [X] ldg
-      - [X] stg
-      - [X] lde
-      - [X] ste
-      - [X] cont
-      - [X] env
-      - [X] envr
-      - [X] apply
-      - [X] ret
-      - [X] jmp
-      - [X] jt
-      - [X] jf
-      - [X] jbnd
-      - [X] true
-      - [X] nil
-      - [X] hlt
-      - [X] add
-      - [X] sub
-      - [X] mul
-      - [X] div
-      - [X] cons
-      - [X] car
-      - [X] cdr
-      - [X] scar
-      - [X] scdr
-      - [X] is
-      - [X] dup
-      - [X] cls
-      - [X] consr
-      - [X] imenv
-    - [X] Environments [2/2]
+    - [ ] Build code generation infrastructure
+    - [ ] Implement virtual machine instructions [0/35]
+      - [ ] nop
+      - [ ] push
+      - [ ] pop
+      - [ ] ldl
+      - [ ] ldi
+      - [ ] ldg
+      - [ ] stg
+      - [ ] lde
+      - [ ] ste
+      - [ ] cont
+      - [ ] env
+      - [ ] envr
+      - [ ] apply
+      - [ ] ret
+      - [ ] jmp
+      - [ ] jt
+      - [ ] jf
+      - [ ] jbnd
+      - [ ] true
+      - [ ] nil
+      - [ ] hlt
+      - [ ] add
+      - [ ] sub
+      - [ ] mul
+      - [ ] div
+      - [ ] cons
+      - [ ] car
+      - [ ] cdr
+      - [ ] scar
+      - [ ] scdr
+      - [ ] is
+      - [ ] dup
+      - [ ] cls
+      - [ ] consr
+      - [ ] imenv
+    - [ ] Environments [0/0]
           We use what Clinger et. al. call the stack/heap strategy.
 	  Environments and continuations normally go on the stack, but
 	  may be moved to the heap if required, e.g. when a closure or
@@ -59,219 +59,218 @@ notice and this notice are preserved.
 	  Environments can have their lives extended if one of
 	  these things happens:
 
-	  2. A function returns with a closure in its value register
-	  3. A closure is stored in the global environment
-          4. A closure is stored in an environment other than at level 0.
-      - [X] Stack-based
-      - [X] Heap-based
-    - [X] Continuations [2/2]
+      1. A function returns with a closure in its value register
+      2. A closure is stored in the global environment
+      3. A closure is stored in an environment other than at level 0.
+    - [ ] Stack-based
+      1. [ ] Heap-based
+    - [ ] Continuations [0/2]
 	  Heap-based continuations are required to support ccc.
-      - [X] Stack-based
-      - [X] Heap-based
-    - [X] Foreign function interface [3/3]
-      - [X] Calling convention 1 (straight args)
-      - [X] Calling convention 2 (args as a C array)
-      - [X] Arcueid Foreign Functions (AFF)
-    - [X] Enable GCC's labels as values for doing interpreter threading
-    - [X] Type invocations [5/5]
-      - [X] procedure
-      - [X] list
-      - [X] vector
-      - [X] table
-      - [X] string
-** DONE memory management [2/2]
+      - [ ] Stack-based
+      - [ ] Heap-based
+    - [ ] Foreign function interface [0/3]
+      - [ ] Calling convention 1 (straight args)
+      - [ ] Calling convention 2 (args as a C array)
+      - [ ] Arcueid Foreign Functions (AFF)
+    - [ ] Enable GCC's labels as values for doing interpreter threading
+    - [ ] Type invocations [0/5]
+      - [ ] procedure
+      - [ ] list
+      - [ ] vector
+      - [ ] table
+      - [ ] string
+** TODO memory management [1/2]
    - [X] memory allocator
 	 A BiBOP-based memory allocator. Keep things simple first.
-   - [X] garbage collector [2/2]
-	 A simple mark and sweep garbage collector for now. Keep things
-	 simple first.
-     - [X] Garbage collection of data types [14/14]
-       - [X] Boxed Numeric Types [4/4]
-         - [X] bignum
-         - [X] rational
-         - [X] flonum
-         - [X] complex
-       - [X] Characters
-       - [X] Strings
-       - [X] Symbols
+   - [-] garbage collector [1/2]
+	 VCGC garbage collector
+     - [-] Garbage collection of data types [1/14]
+       - [ ] Boxed Numeric Types [0/4]
+         - [ ] bignum
+         - [ ] rational
+         - [ ] flonum
+         - [ ] complex
+       - [ ] Characters
+       - [ ] Strings
+       - [ ] Symbols
        - [X] Conses
-       - [X] Tables
-       - [X] Vectors
-       - [X] Tagged
-       - [X] Functions
-       - [X] String Ports
-       - [X] File Ports
-       - [X] Threads
-       - [X] Exceptions
-       - [X] Channels
+       - [ ] Tables
+       - [ ] Vectors
+       - [ ] Tagged
+       - [ ] Functions
+       - [ ] String Ports
+       - [ ] File Ports
+       - [ ] Threads
+       - [ ] Exceptions
+       - [ ] Channels
      - [X] Write barrier hooks
-** DONE Arc reader [13/13]
-   - [X] Lists
-   - [X] Improper lists
-   - [X] Bracketed functions
-   - [X] Quotes
-   - [X] Quasiquotes
-   - [X] Comma expressions
-   - [X] Strings
-   - [X] Characters
-   - [X] Comments
-   - [X] Symbols
-   - [X] Numbers [4/4]
-     - [X] Integer
-     - [X] Flonum
-     - [X] Rational
-     - [X] Complex
-   - [X] Regexps
-   - [X] Atstrings
-** DONE Arc compiler [5/5]
-   - [X] Literal expressions [9/9]
-     - [X] nil
-     - [X] true (t)
-     - [X] character
-     - [X] string
-     - [X] fixnum
-     - [X] bignum
-     - [X] flonum
-     - [X] rational
-     - [X] complex
-   - [X] Symbols [2/2]
-     - [X] Environment symbols
-     - [X] Global symbols
-   - [X] Lists [3/3]
-     - [X] Special forms [8/8]
-       - [X] if
-       - [X] fn [5/5]
-	 - [X] single symbol arguments
-	 - [X] simple argument lists
-	 - [X] optional arguments
-         - [X] rest arguments
-	 - [X] destructuring binds
-       - [X] quote
-       - [X] quasiquote
-       - [X] assign
-       - [X] compose in a functional position
-       - [X] complement in a functional position
-       - [X] andf in a functional position
-     - [X] Inline functions [7/7]
-       - [X] cons
-       - [X] car
-       - [X] cdr
-       - [X] +
-       - [X] -
-       - [X] *
-       - [X] /
-     - [X] Function applications
-   - [X] Macros
-   - [X] Special Syntax [4/4]
-       - [X] Compose (:)
-       - [X] Complement (~)
-       - [X] Structure access (. and !)
-       - [X] And (&)
-** DONE basic data types [17/17]
+** TODO Arc reader [0/13]
+   - [ ] Lists
+   - [ ] Improper lists
+   - [ ] Bracketed functions
+   - [ ] Quotes
+   - [ ] Quasiquotes
+   - [ ] Comma expressions
+   - [ ] Strings
+   - [ ] Characters
+   - [ ] Comments
+   - [ ] Symbols
+   - [ ] Numbers [0/4]
+     - [ ] Integer
+     - [ ] Flonum
+     - [ ] Rational
+     - [ ] Complex
+   - [ ] Regexps
+   - [ ] Atstrings
+** TODO Arc compiler [0/5]
+   - [ ] Literal expressions [0/9]
+     - [ ] nil
+     - [ ] true (t)
+     - [ ] character
+     - [ ] string
+     - [ ] fixnum
+     - [ ] bignum
+     - [ ] flonum
+     - [ ] rational
+     - [ ] complex
+   - [ ] Symbols [0/2]
+     - [ ] Environment symbols
+     - [ ] Global symbols
+   - [ ] Lists [0/3]
+     - [ ] Special forms [0/8]
+       - [ ] if
+       - [ ] fn [0/5]
+	 - [ ] single symbol arguments
+	 - [ ] simple argument lists
+	 - [ ] optional arguments
+         - [ ] rest arguments
+	 - [ ] destructuring binds
+       - [ ] quote
+       - [ ] quasiquote
+       - [ ] assign
+       - [ ] compose in a functional position
+       - [ ] complement in a functional position
+       - [ ] andf in a functional position
+     - [ ] Inline functions [0/7]
+       - [ ] cons
+       - [ ] car
+       - [ ] cdr
+       - [ ] +
+       - [ ] -
+       - [ ] *
+       - [ ] /
+     - [ ] Function applications
+   - [ ] Macros
+   - [ ] Special Syntax [0/4]
+     - [ ] Compose (:)
+     - [ ] Complement (~)
+     - [ ] Structure access (. and !)
+     - [ ] And (&)
+** TODO basic data types [2/17]
     - [X] Nil
-    - [X] True
-    - [X] Numeric Types [5/5]
+    - [ ] True
+    - [-] Numeric Types [1/5]
       - [X] fixnum
-      - [X] bignum
-      - [X] flonum
-      - [X] complex
-      - [X] rational
-    - [X] Characters
-    - [X] Strings
-    - [X] Symbols
+      - [ ] bignum
+      - [ ] flonum
+      - [ ] complex
+      - [ ] rational
+    - [ ] Characters
+    - [ ] Strings
+    - [ ] Symbols
     - [X] Conses
-    - [X] Tables [4/4]
-      - [X] Atomic keys [8/8]
-        - [X] Fixnum
-        - [X] Bignum
-        - [X] Flonum
-        - [X] Rational
-        - [X] Complex
-        - [X] Symbol
-        - [X] String
-        - [X] Character
-      - [X] Cons keys
-      - [X] Vector keys
-      - [X] Hash table keys
-    - [X] Vectors
-    - [X] Tagged
-    - [X] Functions
-    - [X] Input Ports
-    - [X] Output Ports
-    - [X] Threads
-    - [X] Exceptions
-    - [X] Channels
-    - [X] Regular Expressions
-** TODO Runtime Built-In Functions [18/20]
+    - [ ] Tables [0/4]
+      - [ ] Atomic keys [0/8]
+        - [ ] Fixnum
+        - [ ] Bignum
+        - [ ] Flonum
+        - [ ] Rational
+        - [ ] Complex
+        - [ ] Symbol
+        - [ ] String
+        - [ ] Character
+      - [ ] Cons keys
+      - [ ] Vector keys
+      - [ ] Hash table keys
+    - [ ] Vectors
+    - [ ] Tagged
+    - [ ] Functions
+    - [ ] Input Ports
+    - [ ] Output Ports
+    - [ ] Threads
+    - [ ] Exceptions
+    - [ ] Channels
+    - [ ] Regular Expressions
+** TODO Runtime Built-In Functions [0/20]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
-   - [X] Initialization for binding runtime primitives to global symbols
-   - [X] Type handling [5/5]
-     - [X] coerce [11/11]
-       - [X] Fixnum conversions [9/9]
-         - [X] fixnum -> int (trivial)
-         - [X] fixnum -> num (trivial)
-         - [X] fixnum -> fixnum (trivial)
-         - [X] fixnum -> bignum (trivial)
-         - [X] fixnum -> rational (trivial)
-         - [X] fixnum -> flonum
-         - [X] fixnum -> complex (same as fixnum -> flonum)
-         - [X] fixnum -> char
+   - [ ] Initialization for binding runtime primitives to global symbols
+   - [ ] Type handling [0/5]
+     - [ ] coerce [0/11]
+       - [ ] Fixnum conversions [0/9]
+         - [ ] fixnum -> int (trivial)
+         - [ ] fixnum -> num (trivial)
+         - [ ] fixnum -> fixnum (trivial)
+         - [ ] fixnum -> bignum (trivial)
+         - [ ] fixnum -> rational (trivial)
+         - [ ] fixnum -> flonum
+         - [ ] fixnum -> complex (same as fixnum -> flonum)
+         - [ ] fixnum -> char
 	       limit to 0 - 0x10FFFF, also exclude 0xd800-0xdfff, invalid
 	       Unicode block.
-         - [X] fixnum -> string (has base as optional arg)
-       - [X] Bignum conversions [7/7]
-         - [X] bignum -> int (trivial)
-         - [X] bignum -> num (trivial)
-         - [X] bignum -> bignum (trivial)
-         - [X] bignum -> rational (trivial)
-         - [X] bignum -> flonum
-         - [X] bignum -> complex (same as conversion to flonum)
-         - [X] bignum -> str
-       - [X] Flonum conversions [7/7]
-         - [X] flonum -> fixnum
-         - [X] flonum -> bignum
-         - [X] flonum -> rational
-         - [X] flonum -> flonum (trivial)
-         - [X] flonum -> num (trivial)
-         - [X] flonum -> complex (trivial)
-         - [X] flonum -> string
-       - [X] Rational conversions [8/8]
-	 - [X] rational -> fixnum (rounds)
-	 - [X] rational -> bignum (rounds)
-	 - [X] rational -> rational (trivial)
-	 - [X] rational -> num (trivial)
-	 - [X] rational -> flonum
-         - [X] rational -> complex (same as flonum)
-         - [X] rational -> string
-         - [X] rational -> cons
-       - [X] Complex conversions [4/4]
-         - [X] complex -> complex (trivial)
-         - [X] complex -> num (trivial)
-         - [X] complex -> string
-         - [X] complex -> cons
-       - [X] Character conversions [5/5]
-         - [X] char -> char (trivial)
-         - [X] char -> int (results in a fixnum from 0 - 0x10FFFF)
-         - [X] char -> fixnum (same as char -> int)
-         - [X] char -> bignum (same as char -> int)
-         - [X] char -> string
-       - [X] String conversions [10/10]
-         - [X] string -> string (trivial)
-         - [X] string -> symbol
-         - [X] string -> cons
-         - [X] string -> fixnum
-         - [X] string -> bignum
-         - [X] string -> flonum
-         - [X] string -> complex
-         - [X] string -> rational
-         - [X] string -> int
+         - [ ] fixnum -> string (has base as optional arg)
+       - [ ] Bignum conversions [0/7]
+         - [ ] bignum -> int (trivial)
+         - [ ] bignum -> num (trivial)
+         - [ ] bignum -> bignum (trivial)
+         - [ ] bignum -> rational (trivial)
+         - [ ] bignum -> flonum
+         - [ ] bignum -> complex (same as conversion to flonum)
+         - [ ] bignum -> str
+       - [ ] Flonum conversions [0/7]
+         - [ ] flonum -> fixnum
+         - [ ] flonum -> bignum
+         - [ ] flonum -> rational
+         - [ ] flonum -> flonum (trivial)
+         - [ ] flonum -> num (trivial)
+         - [ ] flonum -> complex (trivial)
+         - [ ] flonum -> string
+       - [ ] Rational conversions [0/8]
+	 - [ ] rational -> fixnum (rounds)
+	 - [ ] rational -> bignum (rounds)
+	 - [ ] rational -> rational (trivial)
+	 - [ ] rational -> num (trivial)
+	 - [ ] rational -> flonum
+         - [ ] rational -> complex (same as flonum)
+         - [ ] rational -> string
+         - [ ] rational -> cons
+       - [ ] Complex conversions [0/4]
+         - [ ] complex -> complex (trivial)
+         - [ ] complex -> num (trivial)
+         - [ ] complex -> string
+         - [ ] complex -> cons
+       - [ ] Character conversions [0/5]
+         - [ ] char -> char (trivial)
+         - [ ] char -> int (results in a fixnum from 0 - 0x10FFFF)
+         - [ ] char -> fixnum (same as char -> int)
+         - [ ] char -> bignum (same as char -> int)
+         - [ ] char -> string
+       - [ ] String conversions [0/10]
+         - [ ] string -> string (trivial)
+         - [ ] string -> symbol
+         - [ ] string -> cons
+         - [ ] string -> fixnum
+         - [ ] string -> bignum
+         - [ ] string -> flonum
+         - [ ] string -> complex
+         - [ ] string -> rational
+         - [ ] string -> int
                Note that unlike for the numeric types (coerce "..."
                'int) is not the same as using (coerce "..." 'fixnum)
                or (coerce "..." 'bignum).  What it does amounts to
 	       (coerce ... 'num) (see below) and then converts the
 	       result into an integer type of appropriate size.
-         - [X] string -> num (generic number conversion)
+         - [ ] string -> num (generic number conversion)
 	       Converts any string into a number of the appropriate
                type. This should use the best available numeric type
                that is able to most accurately represent the value
@@ -279,78 +278,78 @@ notice and this notice are preserved.
                as an optional argument as before.
 
 	       Basic algorithm makes the following tests:
-	       1. If string ends with ‘i’ or ‘j’, convert as complex
-	       2. If string contains ‘.’, convert as floating point.
-               3. If base is less than 14 and the string contains
-                  ‘e/E’, convert as floating point.
-               4. If base is less than 25 and the string contains
-	          ‘p/P’, convert as floating point.
-	       5. If string contains ‘/’, convert as rational.
-	       6. Otherwise, consider string as representing an integer
-       - [X] Symbol conversions [4/4]
-         - [X] symbol -> symbol (trivial)
-         - [X] symbol -> string
-         - [X] nil -> string (produces empty string)
-         - [X] t -> string
-       - [X] Cons conversions [4/4]
-         - [X] cons -> cons (trivial)
-         - [X] cons -> string
-         - [X] cons -> vector
-         - [X] cons -> table
-       - [X] Table conversions [2/2]
-         - [X] table -> table (trivial)
-         - [X] table -> cons
-       - [X] Vector conversions [2/2]
-         - [X] vector -> vector (trivial)
-         - [X] vector -> cons
-     - [X] type
-     - [X] annotate
-     - [X] rep
-     - [X] sym
-   - [X] Predicates [9/9]
-     - [X] Less-than (<) *
-     - [X] Greater-than (>) *
-     - [X] Less-than or equal (<=) *
-     - [X] Greater-than or equal (>=) *
-     - [X] spaceship operator (<=>) * (Arcueid extension)
-     - [X] bound
-     - [X] exact
-     - [X] is
-     - [X] iso
-   - [X] List operations [7/7]
-     - [X] car
-     - [X] cdr
-     - [X] cadr
-     - [X] cddr
-     - [X] cons
-     - [X] scar
-     - [X] scdr
-   - [-] Math operations [3/4]
-     - [X] Arithmetic [5/5]
-       - [X] * Multiplication
-       - [X] + Addition
-       - [X] - Subtraction
-       - [X] / Division
+	   1. If string ends with ‘i’ or ‘j’, convert as complex
+	   2. If string contains ‘.’, convert as floating point.
+	   3. If base is less than 14 and the string contains
+              ‘e/E’, convert as floating point.
+	   4. If base is less than 25 and the string contains
+	      ‘p/P’, convert as floating point.
+	   5. If string contains ‘/’, convert as rational.
+	   6. Otherwise, consider string as representing an integer
+       - [ ] Symbol conversions [0/4]
+         - [ ] symbol -> symbol (trivial)
+         - [ ] symbol -> string
+         - [ ] nil -> string (produces empty string)
+         - [ ] t -> string
+       - [ ] Cons conversions [0/4]
+         - [ ] cons -> cons (trivial)
+         - [ ] cons -> string
+         - [ ] cons -> vector
+         - [ ] cons -> table
+       - [ ] Table conversions [0/2]
+         - [ ] table -> table (trivial)
+         - [ ] table -> cons
+       - [ ] Vector conversions [0/2]
+         - [ ] vector -> vector (trivial)
+         - [ ] vector -> cons
+     - [ ] type
+     - [ ] annotate
+     - [ ] rep
+     - [ ] sym
+   - [ ] Predicates [0/9]
+     - [ ] Less-than (<) *
+     - [ ] Greater-than (>) *
+     - [ ] Less-than or equal (<=) *
+     - [ ] Greater-than or equal (>=) *
+     - [ ] spaceship operator (<=>) * (Arcueid extension)
+     - [ ] bound
+     - [ ] exact
+     - [ ] is
+     - [ ] iso
+   - [ ] List operations [0/7]
+     - [ ] car
+     - [ ] cdr
+     - [ ] cadr
+     - [ ] cddr
+     - [ ] cons
+     - [ ] scar
+     - [ ] scdr
+   - [-] Math operations [0/4]
+     - [-] Arithmetic [1/5]
+       - [ ] * Multiplication
+       - [ ] + Addition
+       - [ ] - Subtraction
+       - [ ] / Division
        - [X] div - integer division (extension)
-     - [X] Complex arithmetic [4/4]
+     - [ ] Complex arithmetic [0/4]
 	   This is again an Arcueid extension.  It's rather annoying
 	   to have support for complex numbers but no functions to
 	   manipulate them.
-       - [X] real
-       - [X] imag
-       - [X] conj
-       - [X] arg -- complex argument
-     - [X] Arc3-current functions [6/6]
-       - [X] expt
-       - [X] mod
-       - [X] rand
-       - [X] srand
-       - [X] sqrt
-       - [X] trunc
-     - [-] C99 math.h functions (Arcueid only) [3/37]
+       - [ ] real
+       - [ ] imag
+       - [ ] conj
+       - [ ] arg -- complex argument
+     - [ ] Arc3-current functions [0/6]
+       - [ ] expt
+       - [ ] mod
+       - [ ] rand
+       - [ ] srand
+       - [ ] sqrt
+       - [ ] trunc
+     - [ ] C99 math.h functions (Arcueid only) [0/37]
 	   These functions should support complex arguments in as far
 	   as it makes sense to do so.
-       - [X] abs -- works for all numeric types
+       - [ ] abs -- works for all numeric types
        - [ ] acos
        - [ ] acosh
        - [ ] asin
@@ -382,35 +381,35 @@ notice and this notice are preserved.
        - [ ] pow (alias for expt)
        - [ ] sin
        - [ ] sinh
-       - [X] sqrt (also in arc3)
+       - [ ] sqrt (also in arc3)
        - [ ] tan
        - [ ] tanh
        - [ ] tgamma
-       - [X] trunc (also in arc3)
-   - [X] Table operations [2/2]
-     - [X] maptable
-     - [X] table
-   - [X] Evaluation [4/4]
-     - [X] eval
-     - [X] apply
-     - [X] ssexpand
-     - [X] ssyntax
-   - [X] Macros [4/4]
-     - [X] macex
-     - [X] macex1
-     - [X] sig
+       - [ ] trunc (also in arc3)
+   - [ ] Table operations [0/2]
+     - [ ] maptable
+     - [ ] table
+   - [ ] Evaluation [0/4]
+     - [ ] eval
+     - [ ] apply
+     - [ ] ssexpand
+     - [ ] ssyntax
+   - [ ] Macros [0/4]
+     - [ ] macex
+     - [ ] macex1
+     - [ ] sig
 	   This is actually a global variable, and needs to be
 	   assigned at initialization.	   
-     - [X] uniq
-   - [X] Basic I/O primitives (src/io.c) [5/5]
+     - [ ] uniq
+   - [ ] Basic I/O primitives (src/io.c) [0/5]
          These are the base I/O functions provided by the Arcueid C
          runtime.
-     - [X] Input [5/5]
-       - [X] readb
-       - [X] readc
-       - [X] peekc
+     - [ ] Input [0/5]
+       - [ ] readb
+       - [ ] readc
+       - [ ] peekc
 	     Implemented in terms of ungetc
-       - [X] ungetc - this is not part of standard Arc
+       - [ ] ungetc - this is not part of standard Arc
 	   Note that there is no ungetb function.  This is proving a
 	   little tricky to implement.  Maybe what we should do is
 	   simplify the semantics of ungetc so that it requires a
@@ -419,58 +418,58 @@ notice and this notice are preserved.
 	   CHARACTER.  This saves us the trouble of decoding Unicode
 	   all over again, and reinforces the maxim of never mixing
 	   the b functions with the c functions.
-       - [X] sread (see the Arc reader above)
-     - [X] Output [3/3]
-       - [X] writeb
-       - [X] writec
-       - [X] write
-     - [X] File I/O [3/3]
-       - [X] infile
-       - [X] outfile
-       - [X] close
-     - [X] String port I/O [3/3]
+       - [ ] sread (see the Arc reader above)
+     - [ ] Output [0/3]
+       - [ ] writeb
+       - [ ] writec
+       - [ ] write
+     - [ ] File I/O [0/3]
+       - [ ] infile
+       - [ ] outfile
+       - [ ] close
+     - [ ] String port I/O [0/3]
 	   Note that doing readb/writeb or readc/writec on a string
 	   port have the same effect.  Strings are made up of Unicode
 	   characters so it would be quite messy to implement a
 	   separate 'byte index' into what is made up of characters.
-       - [X] instring
-       - [X] outstring
-       - [X] inside
-     - [X] Seeking / telling [2/2]
+       - [ ] instring
+       - [ ] outstring
+       - [ ] inside
+     - [ ] Seeking / telling [0/2]
              Note that these essential functions are not available in
              PG-Arc for some reason but will probably be necessary to
              implement CIEL.
-       - [X] seek
-       - [X] tell
-   - [X] Additional I/O functions (src/io.c) [8/8]
+       - [ ] seek
+       - [ ] tell
+   - [ ] Additional I/O functions (src/io.c) [0/8]
          These other I/O functions are defined in standard Arc but are not
          necessary for CIEL or the reader, so we do them later.
-     - [X] pipe-from
-     - [X] stdin
-     - [X] stdout
-     - [X] stderr
-     - [X] call-w/stdin
-     - [X] call-w/stdout
-     - [X] disp
-     - [X] flushout
-   - [X] Threads [2/2]
-     - [X] Creating and managing threads [8/8]
-       - [X] new-thread (spawn)
-       - [X] break-thread
-       - [X] kill-thread
-       - [X] current-thread
-       - [X] dead
-       - [X] sleep
-       - [X] atomic-invoke - implemented using channels
-       - [X] join-thread (not in standard Arc)
-     - [X] Channels (cf. Limbo and CSP, Arcueid extension) [3/3]
-       - [X] chan
-       - [X] <- (recv-channel) *
-       - [X] <-= (send-channel) *
-   - [X] Networking [3/3]
-     - [X] open-socket
-     - [X] client-ip
-     - [X] socket-accept
+     - [ ] pipe-from
+     - [ ] stdin
+     - [ ] stdout
+     - [ ] stderr
+     - [ ] call-w/stdin
+     - [ ] call-w/stdout
+     - [ ] disp
+     - [ ] flushout
+   - [ ] Threads [0/2]
+     - [ ] Creating and managing threads [0/8]
+       - [ ] new-thread (spawn)
+       - [ ] break-thread
+       - [ ] kill-thread
+       - [ ] current-thread
+       - [ ] dead
+       - [ ] sleep
+       - [ ] atomic-invoke - implemented using channels
+       - [ ] join-thread (not in standard Arc)
+     - [ ] Channels (cf. Limbo and CSP, Arcueid extension) [0/3]
+       - [ ] chan
+       - [ ] <- (recv-channel) *
+       - [ ] <-= (send-channel) *
+   - [ ] Networking [0/3]
+     - [ ] open-socket
+     - [ ] client-ip
+     - [ ] socket-accept
    - [ ] Networking Extensions (Arcueid extension) [0/8]
      - [ ] getaddrinfo (Arcueid only)
      - [ ] socket (Arcueid extension)
@@ -484,108 +483,108 @@ notice and this notice are preserved.
 	   on systems that support them.  Only fall back to standard
 	   POSIX.1-2001 select(2) only if no alternatives are
 	   available.
-   - [X] File system operations [5/5]
-     - [X] dir
-     - [X] dir-exists
-     - [X] file-exists
-     - [X] rmfile
-     - [X] mvfile
-   - [X] Error handling and continuations [6/6]
-     - [X] details
-     - [X] err
-     - [X] on-err
-     - [X] ccc
-     - [X] protect
-     - [X] dynamic-wind
-   - [X] Strings [1/1]
-     - [X] newstring
-   - [X] Time [5/5]
-     - [X] current-gc-milliseconds
-     - [X] current-process-milliseconds
-     - [X] msec
-     - [X] seconds
-     - [X] timedate
-   - [X] Regular Expressions (Arcueid extension) [3/3]
-     - [X] regular expression input in the reader
-     - [X] regular expression matching [2/2]
-       - [X] Basic matching
-       - [X] Substring captures
-     - [X] regcomp (compile a regular expression from a string)
-   - [X] Miscellaneous OS operations [4/4]
-     - [X] system
-     - [X] quit
-     - [X] setuid
-     - [X] memory
-   - [X] Miscellaneous [5/5]
-     - [X] sref *
-     - [X] len
-     - [X] bound
-     - [X] arcueid-code-setname
-     - [X] declare
-** TODO Threading [4/6]
-   - [X] Basic scheduling
-   - [X] Suspend threads on I/O
-   - [X] Synchronization
+   - [ ] File system operations [0/5]
+     - [ ] dir
+     - [ ] dir-exists
+     - [ ] file-exists
+     - [ ] rmfile
+     - [ ] mvfile
+   - [ ] Error handling and continuations [0/6]
+     - [ ] details
+     - [ ] err
+     - [ ] on-err
+     - [ ] ccc
+     - [ ] protect
+     - [ ] dynamic-wind
+   - [ ] Strings [0/1]
+     - [ ] newstring
+   - [ ] Time [0/5]
+     - [ ] current-gc-milliseconds
+     - [ ] current-process-milliseconds
+     - [ ] msec
+     - [ ] seconds
+     - [ ] timedate
+   - [ ] Regular Expressions (Arcueid extension) [0/3]
+     - [ ] regular expression input in the reader
+     - [ ] regular expression matching [0/2]
+       - [ ] Basic matching
+       - [ ] Substring captures
+     - [ ] regcomp (compile a regular expression from a string)
+   - [ ] Miscellaneous OS operations [0/4]
+     - [ ] system
+     - [ ] quit
+     - [ ] setuid
+     - [ ] memory
+   - [ ] Miscellaneous [0/5]
+     - [ ] sref *
+     - [ ] len
+     - [ ] bound
+     - [ ] arcueid-code-setname
+     - [ ] declare
+** TODO Threading [0/6]
+   - [ ] Basic scheduling
+   - [ ] Suspend threads on I/O
+   - [ ] Synchronization
    - [ ] Deadlock detection
-   - [X] Thread control
+   - [ ] Thread control
    - [ ] alt mechanism
-** DONE Baseline environment (arc.arc) [2/2]
-   - [X] Load all arc.arc functions
-   - [X] Test behaviour of all arc.arc functions
-** DONE pretty printer [2/2]
-   - [X] Framework for disp and write
-   - [X] Printers for various types [17/17]
-     - [X] nil
-     - [X] t
-     - [X] Numeric Types [5/5]
-       - [X] Fixnums
-       - [X] Bignums
-       - [X] Rationals
-       - [X] Flonums
-       - [X] Complex numbers
-     - [X] Characters
-     - [X] Strings
-     - [X] Symbols
-     - [X] Conses
-     - [X] Tables
-     - [X] Vectors
-     - [X] Tagged
-     - [X] Functions
-     - [X] Input Ports
-     - [X] Output Ports
-     - [X] Threads
-     - [X] Exceptions
-     - [X] Channels
-     - [X] Regular Expressions
-** DONE REPL [3/3]
-   - [X] Simple non-readline REPL
-   - [X] Read in an initial file for REPL
-   - [X] Readline support
-** TODO Regular Expressions [1/2]
+** TODO Baseline environment (arc.arc) [0/2]
+   - [ ] Load all arc.arc functions
+   - [ ] Test behaviour of all arc.arc functions
+** TODO pretty printer [0/2]
+   - [ ] Framework for disp and write
+   - [ ] Printers for various types [0/17]
+     - [ ] nil
+     - [ ] t
+     - [ ] Numeric Types [0/5]
+       - [ ] Fixnums
+       - [ ] Bignums
+       - [ ] Rationals
+       - [ ] Flonums
+       - [ ] Complex numbers
+     - [ ] Characters
+     - [ ] Strings
+     - [ ] Symbols
+     - [ ] Conses
+     - [ ] Tables
+     - [ ] Vectors
+     - [ ] Tagged
+     - [ ] Functions
+     - [ ] Input Ports
+     - [ ] Output Ports
+     - [ ] Threads
+     - [ ] Exceptions
+     - [ ] Channels
+     - [ ] Regular Expressions
+** TODO REPL [0/3]
+   - [ ] Simple non-readline REPL
+   - [ ] Read in an initial file for REPL
+   - [ ] Readline support
+** TODO Regular Expressions [0/3]
    We don't plan to provide complete compatibility with Perl or POSIX.
    Just enough.
-   - [X] Basic regular expression interface
+   - [ ] Basic regular expression interface
    - [ ] Macro wrapping for matches
-   - [-] Features [5/11]
-     - [X] Characters
+   - [ ] Features [0/12]
+     - [ ] Characters
      - [ ] Escaped characters
-     - [-] Character classes [1/3]
-       - [X] Basic (e.g. [A-Z])
+     - [ ] Character classes [0/3]
+       - [ ] Basic (e.g. [A-Z])
        - [ ] Perl-style character classes (\d, \s, etc.)
        - [ ] Unicode property character classes
-     - [-] Anchors [2/7]
-       - [X] ^ (beginning of line)
-       - [X] $ (end of line)
+     - [ ] Anchors [0/7]
+       - [ ] ^ (beginning of line)
+       - [ ] $ (end of line)
        - [ ] \A (start of string)
        - [ ] \Z (end of string)
        - [ ] \z (absolute end)
        - [ ] \b (beginning of word)
        - [ ] \B (end of word)
-     - [X] Kleene star
-     - [X] Kleene plus
+     - [ ] Kleene star
+     - [ ] Kleene plus
      - [ ] Counted repetition
-     - [X] Alternation
-     - [X] Capture groups
+     - [ ] Alternation
+     - [ ] Capture groups
      - [ ] Non-capturing groups
      - [ ] Case-insensitive matching
      - [ ] Multi-line regexes
