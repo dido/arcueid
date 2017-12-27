@@ -162,6 +162,23 @@ extern void arc_wb(arc *c, value dest, value src);
  */
 extern arctype __arc_fixnum_t;
 
+/* Definitions and prototypes for flonums */
+extern arctype __arc_flonum_t;
+
+/*! \fn value arc_flonum_new(arc *c, double f)
+    \brief flonum constructor function
+ */
+extern value arc_flonum_new(arc *c, double f);
+
+/*! \fn value arc_flonum(value f)
+    \brief flonum value to double
+    \warn Make sure that the value passed actually is a flonum
+ */
+static inline double arc_flonum(value f)
+{
+  return(*((double *)f));
+}
+
 /* Definitions and prototypes for conses */
 
 /*! \struct cons
