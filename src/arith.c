@@ -21,3 +21,14 @@
 
 /* Type for fixnums */
 arctype __arc_fixnum_t = { NULL, NULL, 0 };
+
+/* Type for flonums */
+arctype __arc_flonum_t = { NULL, NULL, sizeof(double) };
+
+value arc_flonum_new(arc *c, double f)
+{
+  value fl = arc_new(c, &__arc_flonum_t, sizeof(double));
+  double *flp = (double *)fl;
+  *flp = f;
+  return(fl);
+}
