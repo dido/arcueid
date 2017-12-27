@@ -83,7 +83,8 @@ static void mark(arc *c, value v, int depth)
     gcc->gce--;
     gh->colour = gcc->mutator;
     /* Recurse into the object's structure at increased depth */
-    gh->t->mark(c, v, mark, depth+1);
+    if (gh->t != NULL)
+      gh->t->mark(c, v, mark, depth+1);
   }
 }
 
@@ -145,7 +146,8 @@ int __arc_gc(arc *c)
 	 free function, unlink it from the list, and free the
 	 object. */
       gcc->gce++;
-      v->t->free(c, GCH2V(v));
+      if (v->t->free != NULL)
+	v->t->free(c, GCH2V(v));
       if (gcc->gcpptr == NULL) {
 	/* delete from the head of the list */
 	gcc->gcobjects = gcc->gcptr->next;
