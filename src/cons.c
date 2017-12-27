@@ -18,11 +18,6 @@
 */
 #include "arcueid.h"
 
-static void consfree(arc *c, value v)
-{
-  /* Nothing to do here */
-}
-
 static void consmark(arc *c, value v,
 		     void (*marker)(struct arc *, value, int),
 		     int depth)
@@ -33,4 +28,4 @@ static void consmark(arc *c, value v,
   marker(c, cc->cdr, depth);
 }
 
-arctype __arc_cons_t = { consfree, consmark, sizeof(cons_t) };
+arctype __arc_cons_t = { NULL, consmark, sizeof(cons_t) };
