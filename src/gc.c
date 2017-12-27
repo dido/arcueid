@@ -83,7 +83,7 @@ static void mark(arc *c, value v, int depth)
     gcc->gce--;
     gh->colour = gcc->mutator;
     /* Recurse into the object's structure at increased depth */
-    if (gh->t != NULL)
+    if (gh->t->mark != NULL)
       gh->t->mark(c, v, mark, depth+1);
   }
 }
