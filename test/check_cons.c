@@ -33,6 +33,9 @@ START_TEST(test_cons)
   arc_init(c);
   r = cons(c, cons(c, INT2FIX(1), CNIL),
 	   cons(c, INT2FIX(2), cons(c, INT2FIX(3), CNIL)));
+  ck_assert((r & 0x0f) == 0);
+  ck_assert(((car(r)) & 0x0f) == 0);
+  ck_assert(((car(car(r))) & 0x0f) != 0);
   ck_assert(arc_type(r) == &__arc_cons_t);
   ck_assert(arc_type(car(r)) == &__arc_cons_t);
   ck_assert(arc_type(car(car(r))) == &__arc_fixnum_t);
