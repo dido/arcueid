@@ -7,9 +7,9 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [1/10]
+** TODO base virtual machine [2/10]
     - [X] Define virtual machine architecture
-    - [ ] Design interpreter core
+    - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
 	  easily use switch threading, call threading, GCC labels as
 	  values, or even assembly language.  Each instruction should
@@ -85,10 +85,10 @@ notice and this notice are preserved.
    - [-] garbage collector [1/2]
 	 VCGC garbage collector
      - [-] Garbage collection of data types [1/14]
-       - [ ] Boxed Numeric Types [0/4]
+       - [-] Boxed Numeric Types [1/4]
          - [ ] bignum
          - [ ] rational
-         - [ ] flonum
+         - [X] flonum
          - [ ] complex
        - [ ] Characters
        - [ ] Strings
