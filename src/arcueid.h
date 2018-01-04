@@ -69,7 +69,7 @@ typedef struct arctype {
                                    advisory only. */
 } arctype;
 
-/* Definitions for nils */
+/*  =========== Definitions for nils */
 /*! \def CNIL
     \brief The nil value
  */
@@ -124,7 +124,7 @@ extern value arc_new(arc *c, arctype *t, size_t size);
  */
 extern void arc_wb(arc *c, value dest, value src);
 
-/* Definitions for Fixnums */
+/*  =========== Definitions for Fixnums */
 /*! \def FIXNUM_MAX
     \brief Largest possible fixnum value
  */
@@ -162,7 +162,7 @@ extern void arc_wb(arc *c, value dest, value src);
  */
 extern arctype __arc_fixnum_t;
 
-/* Definitions and prototypes for flonums */
+/*  =========== Definitions and prototypes for flonums */
 extern arctype __arc_flonum_t;
 
 /*! \fn value arc_flonum_new(arc *c, double f)
@@ -179,7 +179,7 @@ static inline double arc_flonum(value f)
   return(*((double *)f));
 }
 
-/* Definitions and prototypes for conses */
+/*  =========== Definitions and prototypes for conses */
 
 /*! \struct cons
     \brief A cons cell
@@ -230,6 +230,42 @@ static inline void scdr(arc *c, value v, value ncdr)
   /* use the write barrier before overwriting the pointer */
   arc_wb(c, cc->cdr, ncdr);
   cc->cdr = ncdr;
+}
+
+/* =========== Definitions and prototypes for vectors */
+
+/*! \var __arc_vector_t
+    \brief Type definition structure for vectors
+ */
+extern arctype __arc_vector_t;
+
+/*! \fn value arc_vector_new(arc *c, int size)
+    \brief vector constructor function
+ */
+extern value arc_vector_new(arc *c, int size);
+
+static inline int VLEN(value v)
+{
+  value *vec = (value *)v;
+  return(FIX2INT(vec[0]));
+}
+
+/*! \fn value VIDX(value v, int i)
+    \brief Get the value of an object in a vector at index i
+ */
+static inline value VIDX(value v, int i)
+{
+  value *vec = (value *)v;
+  return(vec[i+1]);
+}
+
+
+static inline value SVIDX(arc *c, value v, int i, value x)
+{
+  value *vec = (value *)v;
+  arc_wb(c, vec[i+1], x);
+  vec[i+1] = x;
+  return(x);
 }
 
 /*! \fn void __arc_fatal(const char *errmsg, int errnum)
