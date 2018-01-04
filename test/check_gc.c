@@ -268,7 +268,7 @@ START_TEST(test_gc_flonum)
   arc *c = &cc;
   struct gc_ctx *gcc;
   struct GChdr *ptr;
-  int count, i;
+  int count;
 
   arc_init(c);
   /* Set the markroots function to our test_markroots function above */
@@ -279,13 +279,14 @@ START_TEST(test_gc_flonum)
   r = arc_flonum_new(c, 3.1416);
 
   /* Test that there should be one item in the list of all allocated
-     objects and that it should be a cons and the cons which we made. */
+     objects and that it should be a flonum and the flonum which
+     we made. */
   count = 0;
   for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
     count++;
   ck_assert_int_eq(count, 1);
   ck_assert(arc_type(r) == &__arc_flonum_t);
-  ck_assert(fabs(arc_flonum(r) - 3.1416) - 1e-6);
+  ck_assert(fabs(arc_flonum(r) - 3.1416) < 1e-6);
 
   /* Place it in the root set */
   rootval = r;
@@ -336,6 +337,101 @@ START_TEST(test_gc_flonum)
 }
 END_TEST
 
+#define TEST_VEC_LEN 8
+
+START_TEST(test_gc_vector)
+{
+  value vec;
+  arc cc;
+  arc *c = &cc;
+  struct gc_ctx *gcc;
+  struct GChdr *ptr;
+  int count, i;
+
+  arc_init(c);
+  /* Set the markroots function to our test_markroots function above */
+  c->markroots = test_markroots;
+  gcc = (struct gc_ctx *)c->gc_ctx;
+
+  /* Create a single vector */
+  vec = arc_vector_new(c, TEST_VEC_LEN);
+
+  /* Test that there should be one item in the list of all allocated
+     objects and that it should be a cons and the cons which we made. */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 1);
+  ck_assert(arc_type(vec) == &__arc_vector_t);
+  ck_assert_int_eq(VLEN(vec), TEST_VEC_LEN);
+  for (i=0; i<TEST_VEC_LEN; i++)
+    ck_assert(NILP(VIDX(vec, i)));
+
+  /* Add some things into the vector, conses and flonums */
+  for (i=0; i<TEST_VEC_LEN; i++) {
+    SVIDX(c, vec, i, (i & 0x1) == 0 ? cons(c, CNIL, CNIL) :
+	  arc_flonum_new(c, (double)i));
+  }
+
+  /* Place it in the root set */
+  rootval = vec;
+  /* Call __arc_gc repeatedly until the end of an epoch. After three
+     epochs elapse, any object not in the root set which was mutator
+     colour ought to be collected and freed.  However, since the
+     object is part of the root set, it should have propagator colour
+     at the end of every epoch. */
+  V2GCH(ptr, vec);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, PROPAGATOR);
+
+  /* Since the vector we created above is part of the root set, it
+     should not have been collected and should still be present, along with
+     all the values it has in it. */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, TEST_VEC_LEN + 1);
+  ck_assert(arc_type(vec) == &__arc_vector_t);
+  /* Add some things into the vector, conses and flonums */
+  for (i=0; i<TEST_VEC_LEN; i++) {
+    value r = VIDX(vec, i);
+    if ((i & 0x1) == 0) {
+      ck_assert(arc_type(r) == &__arc_cons_t);
+    } else {
+      ck_assert(arc_type(r) == &__arc_flonum_t);
+      ck_assert(fabs(arc_flonum(r) - (double)i) < 1e-6);
+    }
+  }
+
+  /* Remove the above created flonum from the root set */
+  rootval = CNIL;
+  /* Again, let three epochs elapse. */
+  while (__arc_gc(c) == 0)
+    ;
+  /* After one epoch, the colour should change to marker */
+  V2GCH(ptr, vec);
+  ck_assert_int_eq(ptr->colour, gcc->marker);
+  /* After two epochs, the colour should change to sweeper */
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert_int_eq(ptr->colour, gcc->sweeper);
+  /* After three epochs, the object should be collected */
+  while (__arc_gc(c) == 0)
+    ;
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -346,6 +442,7 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_cons);
   tcase_add_test(tc_gc, test_gc_write_barrier);
   tcase_add_test(tc_gc, test_gc_flonum);
+  tcase_add_test(tc_gc, test_gc_vector);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
