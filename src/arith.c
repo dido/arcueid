@@ -18,6 +18,13 @@
 */
 
 #include "arcueid.h"
+#include "../config.h"
+
+#ifdef HAVE_GMP_H
+#include <gmp.h>
+#endif
+
+#define ABS(x) (((x)>=0)?(x):(-(x)))
 
 /* Type for fixnums */
 arctype __arc_fixnum_t = { NULL, NULL, 0 };
@@ -31,4 +38,23 @@ value arc_flonum_new(arc *c, double f)
   double *flp = (double *)fl;
   *flp = f;
   return(fl);
+}
+
+value __arc_add2(arc *c, value arg1, value arg2)
+{
+  long fixnum_sum;
+
+  if (FIXNUMP(arg1) && FIXNUMP(arg2)) {
+    fixnum_sum = FIX2INT(arg1) + FIX2INT(arg2);
+    if (ABS(fixnum_sum) > FIXNUM_MAX) {
+#ifdef HAVE_GMP_H
+    /* XXX - bignum support */
+#else
+      return(arc_flonum_new(c, (double)fixnum_sum));
+#endif
+    }
+    return(INT2FIX(fixnum_sum));
+  }
+  /* XXX - more type handling for addition */
+  return(CNIL);
 }
