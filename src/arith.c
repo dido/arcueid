@@ -27,10 +27,27 @@
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
 /* Type for fixnums */
-arctype __arc_fixnum_t = { NULL, NULL, 0 };
+arctype __arc_fixnum_t = { NULL, NULL, __arc_immediate_hash, 0 };
+
+static uint64_t flonum_hash(arc *c, value fl)
+{
+  /* XXX -- this is only really reliable as a hasher when the size of
+     a double and a uint64 are the same. If not, we ought to do
+     something better. */
+  struct hash_ctx ctx;
+  union { double fl; uint64_t h; } t;
+
+  t.fl = *((double *)fl);
+  static const uint64_t dc = 0x646f75626c65ULL;
+  
+  __arc_hash_init(&ctx);
+  __arc_hash_update(&ctx, &dc, 1);
+  __arc_hash_update(&ctx, &t.h, 1);
+  return(__arc_hash_final(&ctx));
+}
 
 /* Type for flonums */
-arctype __arc_flonum_t = { NULL, NULL, sizeof(double) };
+arctype __arc_flonum_t = { NULL, NULL, flonum_hash, sizeof(double) };
 
 value arc_flonum_new(arc *c, double f)
 {
