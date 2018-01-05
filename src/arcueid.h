@@ -1,20 +1,19 @@
-/* 
-  Copyright (C) 2017,2018 Rafael R. Sevilla
+/* Copyright (C) 2017, 2018 Rafael R. Sevilla
 
-  This file is part of Arcueid
+   This file is part of Arcueid
 
-  Arcueid is free software; you can redistribute it and/or modify it
-  under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 3 of the
-  License, or (at your option) any later version.
+   Arcueid is free software; you can redistribute it and/or modify it
+   under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 3 of the
+   License, or (at your option) any later version.
 
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Lesser General Public License for more details.
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Lesser General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU Lesser General Public
+   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
 /*! \file arcueid.h
@@ -25,12 +24,13 @@
 #define _ARCUEID_H_
 
 #include <stdlib.h>
+#include <stdint.h>
 
 /*! \typedef value
     \brief The type definition for basic Arcueid values
 
     All Arcueid objects are encapsulated as values. These can be
-    immediate values (where the last four bits are not all zero) or
+    immediate values (where the last four bits are not all zero) orb
     pointers (where the last four bits are all zero).
  */
 typedef unsigned long value;
@@ -65,9 +65,27 @@ typedef struct arctype {
       function), and the depth, which should be passed unchanged to
       the marker function. */
   void (*mark)(arc *, value, void (*)(arc *, value, int), int);
+  /*! Called whenever a hash of the value is required */
+  uint64_t (*hash)(arc *, value);
   int size;			/*!< The size of the object. This is
                                    advisory only. */
 } arctype;
+
+/*! \fn void __arc_fatal(const char *errmsg, int errnum)
+    \brief Fatal error function
+ */
+extern void __arc_fatal(const char *errmsg, int errnum);
+
+/*! \fn value arc_type(value val)
+    \brief Get the type of an Arcueid value
+    \param val Value
+ */
+extern arctype *arc_type(value val);
+
+/*! \fn value __arc_milliseconds(void)
+    \brief The epoch time in milliseconds
+ */
+extern unsigned long long __arc_milliseconds(void);
 
 /*  =========== Definitions for nils */
 /*! \def CNIL
@@ -268,20 +286,34 @@ static inline value SVIDX(arc *c, value v, int i, value x)
   return(x);
 }
 
-/*! \fn void __arc_fatal(const char *errmsg, int errnum)
-    \brief Fatal error function
- */
-extern void __arc_fatal(const char *errmsg, int errnum);
+/* =========== Definitions and prototypes for hashes */
 
-/*! \fn value arc_type(value val)
-    \brief Get the type of an Arcueid value
-    \param val Value
- */
-extern arctype *arc_type(value val);
+struct hash_ctx {
+  uint64_t h1;
+  uint64_t h2;
+  size_t len;
+};
 
-/*! \fn value __arc_milliseconds(void)
-    \brief The epoch time in milliseconds
+/*! \fn void __arc_hash_init(struct hash_ctx *ctx)
+    \brief Initialize a hash context
  */
-extern unsigned long long __arc_milliseconds(void);
+extern void __arc_hash_init(struct hash_ctx *ctx);
+
+/*! \fn void __arc_hash_update(struct hash_ctx *ctx, const uint64_t *data,
+			      const size_t len)
+    \brief Update the hash with new data
+ */
+extern void __arc_hash_update(struct hash_ctx *ctx, const uint64_t *data,
+			      const int len);
+
+/*! \fn void uint64_t __arc_hash_final(struct hash_ctx *ctx)
+    \brief Get the final value of the hash
+ */
+extern uint64_t __arc_hash_final(struct hash_ctx *ctx);
+
+/*! \fn uint64_t __arc_immediate_hash(arc *c, value val)
+    \brief Hash function for hashing all immediate values
+ */
+uint64_t __arc_immediate_hash(arc *c, value val);
 
 #endif
