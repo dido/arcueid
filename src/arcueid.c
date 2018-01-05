@@ -50,3 +50,13 @@ arctype *arc_type(value val)
   V2GCH(gh, val);
   return(gh->t);
 }
+
+uint64_t __arc_immediate_hash(arc *c, value val)
+{
+  struct hash_ctx ctx;
+  uint64_t tv = (uint64_t)val;
+
+  __arc_hash_init(&ctx);
+  __arc_hash_update(&ctx, &tv, 1);
+  return(__arc_hash_final(&ctx));
+}
