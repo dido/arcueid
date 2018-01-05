@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [2/10]
+** TODO base virtual machine [2/9]
     - [X] Define virtual machine architecture
     - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
@@ -51,19 +51,21 @@ notice and this notice are preserved.
       - [ ] cls
       - [ ] consr
       - [ ] imenv
-    - [ ] Environments [0/0]
-          We use what Clinger et. al. call the stack/heap strategy.
-	  Environments and continuations normally go on the stack, but
-	  may be moved to the heap if required, e.g. when a closure or
-	  continuation is required to outlive its initial context.
-	  Environments can have their lives extended if one of
-	  these things happens:
+    - [ ] Environments [0/2]
+      - [ ] Stack-based
+      - [ ] Heap-based
 
-      1. A function returns with a closure in its value register
-      2. A closure is stored in the global environment
-      3. A closure is stored in an environment other than at level 0.
-    - [ ] Stack-based
-      1. [ ] Heap-based
+	We use what Clinger et. al. call the stack/heap strategy.
+	Environments and continuations normally go on the stack, but
+	may be moved to the heap if required, e.g. when a closure or
+	continuation is required to outlive its initial context.
+	Environments can have their lives extended if one of
+	these things happens:
+
+        1. A function returns with a closure in its value register
+	2. A closure is stored in the global environment
+        3. A closure is stored in an environment other than at level 0.
+
     - [ ] Continuations [0/2]
 	  Heap-based continuations are required to support ccc.
       - [ ] Stack-based
@@ -84,7 +86,7 @@ notice and this notice are preserved.
 	 A BiBOP-based memory allocator. Keep things simple first.
    - [-] garbage collector [1/2]
 	 VCGC garbage collector
-     - [-] Garbage collection of data types [1/14]
+     - [-] Garbage collection of data types [2/14]
        - [-] Boxed Numeric Types [1/4]
          - [ ] bignum
          - [ ] rational
@@ -95,7 +97,7 @@ notice and this notice are preserved.
        - [ ] Symbols
        - [X] Conses
        - [ ] Tables
-       - [ ] Vectors
+       - [X] Vectors
        - [ ] Tagged
        - [ ] Functions
        - [ ] String Ports
@@ -166,13 +168,13 @@ notice and this notice are preserved.
      - [ ] Complement (~)
      - [ ] Structure access (. and !)
      - [ ] And (&)
-** TODO basic data types [2/17]
+** TODO basic data types [3/18]
     - [X] Nil
     - [ ] True
-    - [-] Numeric Types [1/5]
+    - [-] Numeric Types [2/5]
       - [X] fixnum
       - [ ] bignum
-      - [ ] flonum
+      - [X] flonum
       - [ ] complex
       - [ ] rational
     - [ ] Characters
@@ -192,7 +194,7 @@ notice and this notice are preserved.
       - [ ] Cons keys
       - [ ] Vector keys
       - [ ] Hash table keys
-    - [ ] Vectors
+    - [X] Vectors
     - [ ] Tagged
     - [ ] Functions
     - [ ] Input Ports
@@ -201,6 +203,7 @@ notice and this notice are preserved.
     - [ ] Exceptions
     - [ ] Channels
     - [ ] Regular Expressions
+    - [ ] Code
 ** TODO Runtime Built-In Functions [0/20]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
@@ -324,13 +327,13 @@ notice and this notice are preserved.
      - [ ] cons
      - [ ] scar
      - [ ] scdr
-   - [-] Math operations [0/4]
-     - [-] Arithmetic [1/5]
+   - [ ] Math operations [0/4]
+     - [ ] Arithmetic [0/5]
        - [ ] * Multiplication
        - [ ] + Addition
        - [ ] - Subtraction
        - [ ] / Division
-       - [X] div - integer division (extension)
+       - [ ] div - integer division (extension)
      - [ ] Complex arithmetic [0/4]
 	   This is again an Arcueid extension.  It's rather annoying
 	   to have support for complex numbers but no functions to
