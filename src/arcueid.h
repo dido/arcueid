@@ -316,4 +316,25 @@ extern uint64_t __arc_hash_final(struct hash_ctx *ctx);
  */
 uint64_t __arc_immediate_hash(arc *c, value val);
 
+/* =========== Definitions and prototypes for utility functions */
+
+/*! \struct ranctx
+    \brief PRNG context structure
+ */
+struct ranctx {
+  uint64_t a;
+  uint64_t b;
+  uint64_t c;
+  uint64_t d;
+};
+
+/*! \fn uint64_t __arc_rand(struct ranctx *x)
+    \brief Pseudo-random number generator
+ */
+extern uint64_t __arc_rand(struct ranctx *x);
+/*! \fn void __arc_srand(struct ranctx *x, uint64_t seed)
+    \brief Seed the PRNG
+ */
+extern void __arc_srand(struct ranctx *x, uint64_t seed);
+
 #endif
