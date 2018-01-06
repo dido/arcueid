@@ -173,13 +173,15 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
 
 /* ========== End Code from MurmurHash3 by aappleby */
 
-#define HASHSEED 0x93c467e37db0c7a4ULL
+#define ITERATIONS 16
+#define NBLOCKS 8
 
 /* Random seed is the fractional digits of e */
 #define RANDSEED 0xb7e151628aed2a6aULL
 
-#define ITERATIONS 16
-#define NBLOCKS 8
+#if SIZEOF_LONG >= 8
+
+#define HASHSEED 0x93c467e37db0c7a4ULL
 
 /* Tests comparing reference code for 64-bit MurmurHash3 with incremental
    implementation in Arcueid */
@@ -206,6 +208,12 @@ START_TEST(test_hash)
   }
 }
 END_TEST
+
+#else
+
+/* XXX - check the 32-bit hashing as well */
+
+#endif
 
 int main(void)
 {
