@@ -23,32 +23,6 @@
 #include "../src/arcueid.h"
 #include "../config.h"
 
-/* Random number generator based on
-   http://burtleburtle.net/bob/rand/smallprng.html */
-
-struct ranctx { uint64_t a; uint64_t b; uint64_t c; uint64_t d; };
-
-#define rot(x,k) (((x)<<(k))|((x)>>(64-(k))))
-
-uint64_t ranval(struct ranctx *x)
-{
-  uint64_t e = x->a - rot(x->b, 7);
-  x->a = x->b ^ rot(x->c, 13);
-  x->b = x->c + rot(x->d, 37);
-  x->c = x->d + e;
-  x->d = e + x->a;
-  return(x->d);
-}
-
-void raninit(struct ranctx *x, uint64_t seed)
-{
-  uint64_t i;
-  x->a = 0xf1ea5eed, x->b = x->c = x->d = seed;
-  for (i=0; i<20; ++i) {
-    (void)ranval(x);
-  }
-}
-
 /* ========== Code from MurmurHash3 by aappleby */
 
 #define	FORCE_INLINE inline __attribute__((always_inline))
@@ -194,10 +168,10 @@ START_TEST(test_hash)
   uint64_t tres;
   struct hash_ctx hctx;
 
-  raninit(&rctx, RANDSEED);
+  __arc_srand(&rctx, RANDSEED);
   for (i=0; i<ITERATIONS; i++) {
     for (j=0; j<NBLOCKS; j++)
-      data[j] = ranval(&rctx);
+      data[j] = __arc_rand(&rctx);
     /* compute reference result */
     MurmurHash3_x64_128(data, sizeof(data), HASHSEED, &rres);
     /* Compute result using arcueid */
