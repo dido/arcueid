@@ -25,32 +25,6 @@
 
 struct mm_ctx *c;
 
-/* Random number generator based on
-   http://burtleburtle.net/bob/rand/smallprng.html */
-
-struct ranctx { uint64_t a; uint64_t b; uint64_t c; uint64_t d; };
-
-#define rot(x,k) (((x)<<(k))|((x)>>(64-(k))))
-
-static uint64_t ranval(struct ranctx *x)
-{
-  uint64_t e = x->a - rot(x->b, 7);
-  x->a = x->b ^ rot(x->c, 13);
-  x->b = x->c + rot(x->d, 37);
-  x->c = x->d + e;
-  x->d = e + x->a;
-  return(x->d);
-}
-
-static void raninit(struct ranctx *x, uint64_t seed)
-{
-  uint64_t i;
-  x->a = 0xf1ea5eed, x->b = x->c = x->d = seed;
-  for (i=0; i<20; ++i) {
-    (void)ranval(x);
-  }
-}
-
 /* We limit the maximum test size. I have tested this privately up to
    MAX_BIBOP */
 #define MAX_SIZE 64
@@ -77,9 +51,9 @@ START_TEST(test_alloc)
     /* Fill these blocks with random data */
     for (j=BIBOP_PAGE_SIZE*2-1; j>=0; j--) {
       seed = (uint64_t)((i & 0xffff) | ((j & 0xffff) << 16));
-      raninit(&ctx, seed);
+      __arc_srand(&ctx, seed);
       for (k=0; k<i; k++)
-	ptrs[j][k] = (unsigned char)(ranval(&ctx) & 0xff);
+	ptrs[j][k] = (unsigned char)(__arc_rand(&ctx) & 0xff);
     }
 
     /* Verify that the random data is unchanged and that the Bhdrs contain
@@ -89,9 +63,9 @@ START_TEST(test_alloc)
       ck_assert(BALLOCP(h));
       ck_assert(BSIZE(h) == i);
       seed = (uint64_t)((i & 0xffff) | ((j & 0xffff) << 16));
-      raninit(&ctx, seed);
+      __arc_srand(&ctx, seed);
       for (k=0; k<i; k++) {
-	rval = (unsigned char)(ranval(&ctx) & 0xff);
+	rval = (unsigned char)(__arc_rand(&ctx) & 0xff);
 	ck_assert(ptrs[j][k] == rval);
       }
     }
