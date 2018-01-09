@@ -432,6 +432,111 @@ START_TEST(test_gc_vector)
 }
 END_TEST
 
+START_TEST(test_gc_wref)
+{
+  value wr, f, p, wr2;
+  arc cc;
+  arc *c = &cc;
+  struct gc_ctx *gcc;
+  struct GChdr *ptr;
+  int count;
+
+  arc_init(c);
+  /* Set the markroots function to our test_markroots function above */
+  c->markroots = test_markroots;
+  gcc = (struct gc_ctx *)c->gc_ctx;
+
+  /* Create a single flonum */
+  f = arc_flonum_new(c, 3.1416);
+  /* Create a weak reference to this flonum */
+  wr = arc_wref_new(c, f);
+  /* Create a cons cell containing the weak reference and the flonum */
+  p = cons(c, wr, f);
+  V2GCH(ptr, f);
+  ck_assert(ptr->wref == wr);
+  /* Try to create a second weak reference to f. This should be the
+     same as the first, since weak references should be singletons. */
+  wr2 = arc_wref_new(c, f);
+  ck_assert(wr == wr2);
+  
+  /* Place this cons at the root */
+  rootval = p;
+  /* Call __arc_gc repeatedly until the end of an epoch. After three
+     epochs elapse, any object not in the root set which was mutator
+     colour ought to be collected and freed.  However, since the
+     object is part of the root set, it should have propagator colour
+     at the end of every epoch. */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+
+  /* All three objects above must still remain at the end of all this
+     and must remain unchanged. */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 3);
+  ck_assert(arc_type(f) == &__arc_flonum_t);
+  ck_assert(fabs(arc_flonum(f) - 3.1416) - 1e-6);
+  ck_assert(arc_type(wr) == &__arc_wref_t);
+  ck_assert(arc_wrefv(wr) == f);
+  ck_assert(arc_type(p) == &__arc_cons_t);
+
+  /* Next, we set the cdr of p to nil, so that the only reference to
+     f is via the weak reference wr. */
+  scdr(c, p, CNIL);
+  /* Now, after four garbage collection epochs, f should be garbage
+     collected, and the weak reference should return CUNDEF.  Why
+     four? The write barrier in scdr will intially put f in
+     propagator so it will not become sweeper until after the fourth
+     epoch elapses. */
+
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert(arc_wrefv(wr) == f);
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert(arc_wrefv(wr) == f);
+
+  while (__arc_gc(c) == 0)
+    ;
+  ck_assert(arc_wrefv(wr) == CUNDEF);
+
+  /* Now, we clear out the old weakref. */
+  scar(c, p, CNIL);
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  /* Create a new wref and flonum */
+  f = arc_flonum_new(c, 3.1416);
+  V2GCH(ptr, f);
+  ck_assert(NILP(ptr->wref));
+  /* Create a weak reference to this flonum */
+  wr = arc_wref_new(c, f);
+  ck_assert(ptr->wref == wr);
+  scar(c, p, wr);
+  scdr(c, p, f);
+  /* Next, remove the weak reference from the root so that it gets
+     garbage collected. */
+  scar(c, p, CNIL);
+  ck_assert(!NILP(ptr->wref));
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  /* The weak reference should be cleared out at the end. */
+  ck_assert(NILP(ptr->wref));
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -443,6 +548,7 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_write_barrier);
   tcase_add_test(tc_gc, test_gc_flonum);
   tcase_add_test(tc_gc, test_gc_vector);
+  tcase_add_test(tc_gc, test_gc_wref);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
