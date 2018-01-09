@@ -62,7 +62,7 @@ value arc_wref_new(arc *c, value v)
   return(wref);
 }
 
-value arc_wrefv(arc *c, value wr)
+value arc_wrefv(value wr)
 {
   return(*((value *)wr));
 }
