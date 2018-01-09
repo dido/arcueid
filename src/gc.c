@@ -1,20 +1,19 @@
-/* 
-  Copyright (C) 2017,2018 Rafael R. Sevilla
+/* Copyright (C) 2017, 2018 Rafael R. Sevilla
 
-  This file is part of Arcueid
+   This file is part of Arcueid
 
-  Arcueid is free software; you can redistribute it and/or modify it
-  under the terms of the GNU Lesser General Public License as
-  published by the Free Software Foundation; either version 3 of the
-  License, or (at your option) any later version.
+   Arcueid is free software; you can redistribute it and/or modify it
+   under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 3 of the
+   License, or (at your option) any later version.
 
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Lesser General Public License for more details.
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU Lesser General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, see <http://www.gnu.org/licenses/>.
+   You should have received a copy of the GNU Lesser General Public
+   License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 #include <stdlib.h>
 #include "arcueid.h"
@@ -33,6 +32,7 @@ value arc_new(arc *c, arctype *t, size_t size)
   obj->t = t;
   obj->colour = gcc->mutator;
   obj->next = gcc->gcobjects;
+  obj->wref = CNIL;
   gcc->gcobjects = obj;
   return(GCH2V(obj));
 }
@@ -144,8 +144,13 @@ int __arc_gc(arc *c)
     } else if (v->colour == gcc->sweeper) {
       /* If an object has the sweeper colour, call the object's
 	 free function, unlink it from the list, and free the
-	 object. */
+	 object.  Also, set the reference for any weak reference
+	 pointer to CUNDEF. */
       gcc->gce++;
+      if (!NILP(v->wref)) {
+	value *ref = (value *)v->wref;
+	*ref = CUNDEF;
+      }
       if (v->t->free != NULL)
 	v->t->free(c, GCH2V(v));
       if (gcc->gcpptr == NULL) {
@@ -185,6 +190,9 @@ int __arc_gc(arc *c)
       retval = 1;
       gcc->gcepochs++;
       gcc->gccolour++;
+      /* In the unlikely event that the colour rolls over */
+      if (gcc->gccolour < 3)
+	gcc->gccolour = 3ULL;
       gcc->mutator = gcc->gccolour % 3;
       gcc->marker = (gcc->gccolour-1) % 3;
       gcc->sweeper = (gcc->gccolour-2) % 3;
