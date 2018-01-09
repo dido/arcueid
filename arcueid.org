@@ -86,7 +86,7 @@ notice and this notice are preserved.
 	 A BiBOP-based memory allocator. Keep things simple first.
    - [-] garbage collector [1/2]
 	 VCGC garbage collector
-     - [-] Garbage collection of data types [2/14]
+     - [-] Garbage collection of data types [3/15]
        - [-] Boxed Numeric Types [1/4]
          - [ ] bignum
          - [ ] rational
@@ -105,6 +105,7 @@ notice and this notice are preserved.
        - [ ] Threads
        - [ ] Exceptions
        - [ ] Channels
+       - [X] Weak references
      - [X] Write barrier hooks
 ** TODO Arc reader [0/13]
    - [ ] Lists
@@ -168,7 +169,7 @@ notice and this notice are preserved.
      - [ ] Complement (~)
      - [ ] Structure access (. and !)
      - [ ] And (&)
-** TODO basic data types [3/18]
+** TODO basic data types [4/19]
     - [X] Nil
     - [ ] True
     - [-] Numeric Types [2/5]
@@ -204,6 +205,7 @@ notice and this notice are preserved.
     - [ ] Channels
     - [ ] Regular Expressions
     - [ ] Code
+    - [X] Weak references
 ** TODO Runtime Built-In Functions [0/20]
    Consider whether or not to provide instructions for the asterisked
    functions, so as to make their use cheaper.
