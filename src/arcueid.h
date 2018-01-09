@@ -30,7 +30,7 @@
     \brief The type definition for basic Arcueid values
 
     All Arcueid objects are encapsulated as values. These can be
-    immediate values (where the last four bits are not all zero) orb
+    immediate values (where the last four bits are not all zero) or
     pointers (where the last four bits are all zero).
  */
 typedef unsigned long value;
@@ -44,6 +44,8 @@ typedef struct arc {
   /*! Root marking function called at the beginning of a GC cycle to
       mark the initial root set */
   void (*markroots)(struct arc *, void (*)(struct arc *, value));
+
+  
 } arc;
 
 /*! \struct arctype
@@ -87,9 +89,20 @@ extern arctype *arc_type(value val);
  */
 extern unsigned long long __arc_milliseconds(void);
 
+/*! \def IMMEDIATE_MASK
+    \brief Mask for immediate values
+ */
+#define IMMEDIATE_MASK 0x0f
+
+/*! \def IMMEDIATEP(x)
+    \brief Predicate if _x_ is an immediate value
+ */
+#define IMMEDIATEP(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL)
+
 /*  =========== Definitions for nils */
 /*! \def CNIL
     \brief The nil value
+    This is one of a few SPECIAL CONSTANTS defined by the interpreter.
  */
 #define CNIL ((value)0)
 
@@ -103,16 +116,6 @@ extern unsigned long long __arc_milliseconds(void);
     \brief Type definition structure for nils
  */
 extern arctype __arc_nil_t;
-
-/*! \def IMMEDIATE_MASK
-    \brief Mask for immediate values
- */
-#define IMMEDIATE_MASK 0x0f
-
-/*! \def IMMEDIATEP(x)
-    \brief Predicate if _x_ is an immediate value
- */
-#define IMMEDIATEP(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL)
 
 /* Initialization */
 /*! \fn value arc_init(arc *c)
@@ -286,6 +289,37 @@ static inline value SVIDX(arc *c, value v, int i, value x)
   return(x);
 }
 
+/* =========== Definitions and prototypes for weak references */
+
+/*! \var __arc_wref_t
+    \brief Type definition structure for weak references.
+ */
+extern arctype __arc_wref_t;
+
+/*! \def CUNDEF
+    \brief Undefined value
+    This SPECIAL CONSTANT is returned if the weak reference expires.
+ */
+#define CUNDEF ((value)4)
+
+/*! \fn value arc_wref_new(arc *c, value v)
+    \brief Create a new weak reference.
+
+    Create a new weak reference referring to _v_. This has the effect
+    that unless v is reachable by the garbage collector from some
+    other object besides the weak reference, it becomes a target for
+    garbage collection.
+ */
+extern value arc_wref_new(arc *c, value v);
+
+/*! \fn value arc_wrefv(arc *c, value wr)
+    \brief Dereference a weak reference.
+
+    If the weak reference _wr_ is still valid, returns its
+    value. Otherwise, returns _CUNDEF_.
+ */
+extern value arc_wrefv(arc *c, value wr);
+
 /* =========== Definitions and prototypes for hashes */
 
 struct hash_ctx {
@@ -293,6 +327,16 @@ struct hash_ctx {
   uint64_t h2;
   size_t len;
 };
+
+/*! \def ARC_HASHBITS
+    \brief Default initial number of bits for hashes
+ */
+#define ARC_HASHBITS 6
+
+/*! \var __arc_tbl_t
+    \brief Type definition structure for hash tables.
+ */
+extern arctype __arc_tbl_t;
 
 /*! \fn void __arc_hash_init(struct hash_ctx *ctx)
     \brief Initialize a hash context
@@ -306,6 +350,33 @@ extern void __arc_hash_init(struct hash_ctx *ctx);
 extern void __arc_hash_update(struct hash_ctx *ctx, const uint64_t *data,
 			      const int len);
 
+/*! \fn value arc_tbl_new(arc *c, int hashbits)
+    \brief Create a new hash table
+    Create a new hash table with 2^_hashbits_ entries
+ */
+extern value arc_tbl_new(arc *c, int hashbits);
+
+/*! \fn value arc_hash_lookup(arc *c, value tbl, value key)
+    \brief Look up a key in the hash table.
+    Looks up the value of _key_ in _tbl_. Returns CUNBOUND if _key_
+    has no mapping.
+ */
+extern value arc_tbl_lookup(arc *c, value tbl, value key);
+
+/*! \fn value arc_hash_insert(arc *c, value tbl, value key,
+                              value val)
+    \brief Insert a key and value into the hash table
+    Insert _key_ with value _val_ into _tbl_.
+ */
+extern value arc_tbl_insert(arc *c, value hash, value key, value val);
+
+/*! \fn value arc_hash_delete(arc *c, value tbl, value key)
+    \brief Delete a key from the hash table.
+    Removes any value mapping for _key_ in _tbl_. Returns the last
+    value it might have had, if any.
+ */
+extern value arc_hash_delete(arc *c, value tbl, value key);
+ 
 /*! \fn void uint64_t __arc_hash_final(struct hash_ctx *ctx)
     \brief Get the final value of the hash
  */
@@ -315,6 +386,21 @@ extern uint64_t __arc_hash_final(struct hash_ctx *ctx);
     \brief Hash function for hashing all immediate values
  */
 uint64_t __arc_immediate_hash(arc *c, value val);
+
+/*! \var __arc_hashtbl_t
+    \brief Arc's hash table
+ */
+extern arctype __arc_hashtbl_t;
+
+/*! \fn value arc_hashtbl_new(arc *c, int nbits)
+    \brief Create a new hash table.
+    The _bits_ argument is the number of bits to use for the hash mask
+    as the internal hash table size is set as a power of 2.
+ */
+value arc_hashtbl_new(arc *c, int nbits);
+
+/*! \fn value arc_hashtbl_
+ */
 
 /* =========== Definitions and prototypes for utility functions */
 
