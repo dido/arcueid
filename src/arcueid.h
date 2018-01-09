@@ -312,13 +312,13 @@ extern arctype __arc_wref_t;
  */
 extern value arc_wref_new(arc *c, value v);
 
-/*! \fn value arc_wrefv(arc *c, value wr)
+/*! \fn value arc_wrefv(value wr)
     \brief Dereference a weak reference.
 
     If the weak reference _wr_ is still valid, returns its
     value. Otherwise, returns _CUNDEF_.
  */
-extern value arc_wrefv(arc *c, value wr);
+extern value arc_wrefv(value wr);
 
 /* =========== Definitions and prototypes for hashes */
 
