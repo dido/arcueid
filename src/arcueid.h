@@ -68,7 +68,7 @@ typedef struct arctype {
       the marker function. */
   void (*mark)(arc *, value, void (*)(arc *, value, int), int);
   /*! Called whenever a hash of the value is required */
-  uint64_t (*hash)(arc *, value);
+  uint64_t (*hash)(arc *, value, uint64_t);
   int size;			/*!< The size of the object. This is
                                    advisory only. */
 } arctype;
@@ -335,7 +335,7 @@ extern arctype __arc_tbl_t;
 /*! \fn void __arc_hash_init(struct hash_ctx *ctx)
     \brief Initialize a hash context
  */
-extern void __arc_hash_init(struct hash_ctx *ctx);
+extern void __arc_hash_init(struct hash_ctx *ctx, uint64_t seed);
 
 /*! \fn void __arc_hash_update(struct hash_ctx *ctx, const uint64_t *data,
 			      const size_t len)
@@ -376,10 +376,10 @@ extern value arc_hash_delete(arc *c, value tbl, value key);
  */
 extern uint64_t __arc_hash_final(struct hash_ctx *ctx);
 
-/*! \fn uint64_t __arc_immediate_hash(arc *c, value val)
+/*! \fn uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed)
     \brief Hash function for hashing all immediate values
  */
-uint64_t __arc_immediate_hash(arc *c, value val);
+uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed);
 
 /*! \var __arc_hashtbl_t
     \brief Arc's hash table
