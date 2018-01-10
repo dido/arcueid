@@ -29,7 +29,7 @@
 /* Type for fixnums */
 arctype __arc_fixnum_t = { NULL, NULL, __arc_immediate_hash, 0 };
 
-static uint64_t flonum_hash(arc *c, value fl)
+static uint64_t flonum_hash(arc *c, value fl, uint64_t seed)
 {
   /* XXX -- this is only really reliable as a hasher when the size of
      a double and a uint64 are the same. If not, we ought to do
@@ -40,7 +40,7 @@ static uint64_t flonum_hash(arc *c, value fl)
   t.fl = *((double *)fl);
   static const uint64_t dc = 0x646f75626c65ULL;
   
-  __arc_hash_init(&ctx);
+  __arc_hash_init(&ctx, seed);
   __arc_hash_update(&ctx, &dc, 1);
   __arc_hash_update(&ctx, &t.h, 1);
   return(__arc_hash_final(&ctx));
