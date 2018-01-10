@@ -488,11 +488,8 @@ START_TEST(test_gc_wref)
   /* Next, we set the cdr of p to nil, so that the only reference to
      f is via the weak reference wr. */
   scdr(c, p, CNIL);
-  /* Now, after four garbage collection epochs, f should be garbage
-     collected, and the weak reference should return CUNDEF.  Why
-     four? The write barrier in scdr will intially put f in
-     propagator so it will not become sweeper until after the fourth
-     epoch elapses. */
+  /* Now, three GC epochs later f should become garbage despite the
+     reference. */
 
   while (__arc_gc(c) == 0)
     ;
@@ -503,7 +500,7 @@ START_TEST(test_gc_wref)
 
   while (__arc_gc(c) == 0)
     ;
-  ck_assert(arc_wrefv(wr) == CUNDEF);
+  ck_assert(NILP(arc_wrefv(wr)));
 
   /* Now, we clear out the old weakref. */
   scar(c, p, CNIL);
