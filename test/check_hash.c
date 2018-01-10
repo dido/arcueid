@@ -175,7 +175,7 @@ START_TEST(test_hash)
     /* compute reference result */
     MurmurHash3_x64_128(data, sizeof(data), HASHSEED, &rres);
     /* Compute result using arcueid */
-    __arc_hash_init(&hctx);
+    __arc_hash_init(&hctx, HASHSEED);
     __arc_hash_update(&hctx, data, NBLOCKS);
     tres = __arc_hash_final(&hctx);
     ck_assert(tres == rres[0]);
