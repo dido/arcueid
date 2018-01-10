@@ -149,7 +149,7 @@ int __arc_gc(arc *c)
       gcc->gce++;
       if (!NILP(v->wref)) {
 	value *ref = (value *)v->wref;
-	*ref = CUNDEF;
+	*ref = CNIL;
       }
       if (v->t->free != NULL)
 	v->t->free(c, GCH2V(v));
