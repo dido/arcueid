@@ -322,6 +322,13 @@ struct hash_ctx {
   size_t len;
 };
 
+/*! \def CUNBOUND
+    \brief The unbound value
+    This is one of a few SPECIAL CONSTANTS defined by the interpreter.
+ */
+#define CUNBOUND ((value)2)
+
+
 /*! \def ARC_HASHBITS
     \brief Default initial number of bits for hashes
  */
@@ -392,9 +399,6 @@ extern arctype __arc_hashtbl_t;
     as the internal hash table size is set as a power of 2.
  */
 value arc_hashtbl_new(arc *c, int nbits);
-
-/*! \fn value arc_hashtbl_
- */
 
 /* =========== Definitions and prototypes for utility functions */
 
