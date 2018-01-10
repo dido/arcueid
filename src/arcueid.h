@@ -296,12 +296,6 @@ static inline value SVIDX(arc *c, value v, int i, value x)
  */
 extern arctype __arc_wref_t;
 
-/*! \def CUNDEF
-    \brief Undefined value
-    This SPECIAL CONSTANT is returned if the weak reference expires.
- */
-#define CUNDEF ((value)4)
-
 /*! \fn value arc_wref_new(arc *c, value v)
     \brief Create a new weak reference.
 
