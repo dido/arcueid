@@ -29,7 +29,7 @@ static void wfree(arc *c, value wr)
   struct GChdr *gh;
 
   /* Nothing to do if the reference is already gone */
-  if (*ref == CUNDEF)
+  if (NILP(*ref))
     return;
 
   /* If the reference is not gone, we have to clear out the weak reference
