@@ -56,9 +56,9 @@ static inline uint64_t fmix64(uint64_t k)
 #define C1 0x87c37b91114253d5ULL
 #define C2 0x4cf5ad432745937fULL
 
-void __arc_hash_init(struct hash_ctx *ctx)
+void __arc_hash_init(struct hash_ctx *ctx, uint64_t seed)
 {
-  ctx->h1 = ctx->h2 = HASHSEED;
+  ctx->h1 = ctx->h2 = seed;
   ctx->len = 0;
 }
 
