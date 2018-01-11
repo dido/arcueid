@@ -28,7 +28,7 @@ static void mark(arc *c, value v,
     marker(c, vec[i], depth);
 }
     
-arctype __arc_vector_t = { NULL, mark, NULL, 0 };
+arctype __arc_vector_t = { NULL, mark, NULL, NULL, NULL, 0 };
 
 value arc_vector_new(arc *c, int size)
 {
