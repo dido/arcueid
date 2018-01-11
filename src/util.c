@@ -44,7 +44,7 @@ extern void __arc_srand(struct ranctx *x, uint64_t seed)
 
 uint64_t __arc_random(struct ranctx *x, uint64_t n)
 {
-  uint64_t max = UINT64_MAX - (UINT64_MAX % n);
+  uint64_t max = UINT64_MAX - (((UINT64_MAX % n) + 1) % n);
   uint64_t rnd;
 
   do {
