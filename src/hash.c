@@ -101,14 +101,12 @@ uint64_t __arc_hash_final(struct hash_ctx *ctx)
   return(ctx->h1);
 }
 
-#if 0
-static uint64_t hashseeds[NHASH] = {
+static const uint64_t hashseeds[NHASH] = {
   0x93c467e37db0c7a4ULL,	/* Euler-Mascheroni constant */
   0xb7e151628aed2a6aULL,	/* fractional digits of e */
   0x9e3779b9f4a7c15fULL		/* Golden ratio */
   /* more seeds need to be defined if more hashes are wanted. */
 };
-#endif
 
 #else
 
@@ -166,9 +164,16 @@ uint64_t __arc_hash_final(struct hash_ctx *ctx)
 
 #endif
 
+uint64_t __arc_hash(arc *c, value v, uint64_t seed)
+{
+  arctype *t = arc_type(v);
+  return(t->hash(c, v, seed));
+}
+
 typedef struct {
   int nbits;			/*!< number of hash bits  */
-  value tables[NHASH];		/*!< hash tables */
+  value k;			/*!< Table of keys */
+  value v;			/*!< Table of values */
 } hashtbl;
 
 static void tmark(arc *c, value v,
@@ -178,214 +183,136 @@ static void tmark(arc *c, value v,
   hashtbl *ht = (hashtbl *)v;
   int i;
 
-  for (i=0; i<NHASH; i++)
-    marker(c, ht->tables[i], depth);
+  for (i=0; i<NHASH; i++) {
+    marker(c, ht->k, depth);
+    marker(c, ht->v, depth);
+  }
 }
 
-arctype __arc_tbl_t = { NULL, tmark, NULL, sizeof(hashtbl) };
+arctype __arc_tbl_t = { NULL, tmark, NULL, NULL, NULL, sizeof(hashtbl) };
 
 #define HASHSIZE(n) ((unsigned long)1 << (n))
-#define HASHMASK(n) (HASHSIZE(n)-1)
-#define HASHIDX(tbl, tnum, hs) (VIDX(((hashtbl *)(tbl))->tables[tnum], (((hs)[(tnum)]) & HASHMASK(((hashtbl *)(tbl))->nbits))))
-#define SHASHIDX(c, tbl, tnum, hs, x) (SVIDX((c), ((hashtbl *)(tbl))->tables[tnum], (((hs)[(tnum)]) & HASHMASK(((hashtbl *)tbl)->nbits)), (x)))
+#define HASHMASK(tbl) (HASHSIZE(((hashtbl *)tbl)->nbits))
+#define HIDX(tbl, kv, hash) (VIDX(((hashtbl *)tbl)->kv, (hash) & (HASHMASK(tbl))))
+#define SHIDX(c, tbl, kv, hash, x) (SVIDX((c), ((hashtbl *)tbl)->kv, (hash) & (HASHMASK(tbl)), (x)))
+/* XXX - this needs to be better defined */
+#define MAX_PUSH(tbl) (8)
+
+static void push_keys(arc *c, value tbl, value k, value v,
+		      uint64_t *hashes);
+static void resize(arc *c, value tbl);
 
 value arc_tbl_new(arc *c, int nbits)
 {
   value vht = arc_new(c, &__arc_tbl_t, sizeof(hashtbl));
   hashtbl *ht = (hashtbl *)vht;
-  int i, size;
-
+  int size, i;
+  
   ht->nbits = nbits;
   size = HASHSIZE(nbits);
-  for (i=0; i<NHASH; i++)
-    ht->tables[i] = arc_vector_new(c, size);
+  ht->k = arc_vector_new(c, size);
+  ht->v = arc_vector_new(c, size);
+  for (i=0; i<size; i++) {
+    SVIDX(c, ht->k, i, CUNBOUND);
+    SVIDX(c, ht->v, i, CUNBOUND);
+  }
   return(vht);
 }
 
-typedef struct {
-  uint64_t h[NHASH];		/*!< Hashes of the key  */
-  value k;			/*!< The key itself  */
-  value v;			/*!< The associated value  */
-} hashbucket;
-
-static void bmark(arc *c, value v,
-		  void (*marker)(struct arc *, value, int),
-		  int depth)
+value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
 {
-  hashbucket *hb = (hashbucket *)v;
-  marker(c, hb->k, depth);
-  marker(c, hb->v, depth);
-}
-
-arctype __arc_hb_t = { NULL, bmark, NULL, sizeof(hashbucket) };
-
-static value bucket_new(arc *c, value key, value val, const uint64_t *hashes)
-{
-  value bv = arc_new(c, &__arc_hb_t, sizeof(hashbucket));
-  hashbucket *hb = (hashbucket *)bv;
+  uint64_t hashes[NHASH];
+  value key;
   int i;
 
-  for (i=0; i<NHASH; i++)
-    hb->h[i] = hashes[i];
-  hb->k = key;
-  hb->v = val;
-  return(bv);
-}
-
-/* Compare two sets of hashes */
-static int hcomp(const uint64_t *h1, const uint64_t *h2)
-{
-  int i;
-
+  /* Check for existing keys */
   for (i=0; i<NHASH; i++) {
-    if (h1[i] != h2[i])
-      return(0);
-  }
-  return(1);
-}
-
-/* Look up the key in tbl. Returns -1 if the key was not found.
-   Otherwise, returns the subtable number where it was found. The
-   value mapping may be returned by using the subtable number in
-   the HASHIDX macro. Uses the hashes to test if keys are equal. */
-int __arc_hash_primitive_lookup(arc *c, const value tbl, const value key,
-				const uint64_t *hashes)
-{
-  hashbucket *hb;
-  value b;
-  int i;
-
-  /* Check if the value exists in any of the tables */
-  for (i=0; i<NHASH; i++)  {
-    b = HASHIDX(tbl, i, hashes);
-    /* Empty bucket, look in another table. */
-    if (NILP(b))
-      continue;
-    /* see if it is our value */
-    hb = (hashbucket *)b;
-    /* Check all the hashes. It is the same object if and only if ALL
-       hashes match */
-    if (hcomp(hashes, hb->h))
-      return(i);
-  }
-  return(-1);
-}
-
-/* Try to move bucket hb to one of its NHASH alternate locations in
-   ht. Return 1 on success, 0 on failure. */
-static int try_move_bucket(arc *c, value ht, const hashbucket *hb)
-{
-  int i;
-  value b;
-
-  for (i=0; i<NHASH; i++) {
-    b = HASHIDX(ht, i, hb->h);
-    if (NILP(b)) {
-      SHASHIDX(c, ht, i, hb->h, (value)hb);
-      return(1);
-    }
-  }
-  return(0);
-}
-
-/* Try to insert key-val mapping into tbl. Returns 0 if it failed to
-   insert the mapping. Creates a bucket if necessary. */
-static int try_hash_insert(arc *c, value tbl, const value key,
-			   const value val,
-			   const uint64_t *hashes)
-{
-  int i, r;
-  value b;
-  hashbucket *hb;
-  
-  r = __arc_hash_primitive_lookup(c, tbl, key, hashes);
-  if (r > 0) {
-    /* Object is already present in the table. Update the value in the
-       bucket with val */
-    b = HASHIDX(tbl, r, hashes);
-    hb = (hashbucket *)b;
-    arc_wb(c, hb->v, val);
-    hb->v = val;
-    return(1);
-  }
-
-  /* Object is not already present in any table. Try to find a place
-     to put it. */
-  for (i=0; i<NHASH; i++) {
-    b = HASHIDX(tbl, i, hashes);
-    if (NILP(b)) {
-      r = i;
-      break;
+    hashes[i] = __arc_hash(c, k, hashseeds[i]);
+    if (__arc_is(c, HIDX(tbl, k, hashes[i]), k)) {
+      SHIDX(c, tbl, v, hashes[i], v);
+      return(v);
     }
   }
 
-  /* We have found or created a subtable that has an empty slot
-     corresponding to one of the hashes. Put the value there. */
-  do {
-    if (r > 0) {
-      b = bucket_new(c, key, val, hashes);
-      SHASHIDX(c, tbl, r, hashes, b);
-      return(1);
+  /* Key is not there yet. Check for empty buckets. Put the key in an empty
+     bucket if possible. */
+  for (i=0; i<NHASH; i++) {
+    key = HIDX(tbl, k, hashes[i]);
+    if (key == CUNBOUND) {
+      SHIDX(c, tbl, k, hashes[i], k);
+      SHIDX(c, tbl, v, hashes[i], v);
+      return(v);
     }
+  }
+  /* Otherwise, push the keys around until we find a place */
+  push_keys(c, tbl, k, v, hashes);
+  return(v);
+}
 
-    /* No obvious place to put it. See if we can move one of the buckets
-       already in place to one of the other alternative places where it
-       can go. */
+/* Push keys around until we have a new space to put a key to be inserted */
+static void push_keys(arc *c, value tbl, value k, value v,
+		      uint64_t *hashes)
+{
+  value ek, ev, nk;
+  struct ranctx rctx;
+  uint64_t ei, eh;
+  int i, p;
+
+  /* Use first hash as seed for the PRNG */
+  __arc_srand(&rctx, hashes[0]);
+  for (p=0; p<MAX_PUSH(tbl); p++) {
+    /* Evict a key at random */
+    ei = __arc_random(&rctx, NHASH);
+    eh = hashes[ei];
+    ek = HIDX(tbl, k, eh);
+    ev = HIDX(tbl, v, eh);
+    SHIDX(c, tbl, k, eh, k);
+    SHIDX(c, tbl, v, eh, v);
+
+    /* See if the evicted key hashes to an empty bucket */
     for (i=0; i<NHASH; i++) {
-      /* Get a bucket already occupying one of the subtables and try
-	 to move it to an alternate location. */
-      b = HASHIDX(tbl, i, hashes);
-      hb = (hashbucket *)b;
-      if (try_move_bucket(c, tbl, hb)) {
-	r = i;
-	break;
+      hashes[i] = __arc_hash(c, ek, hashseeds[i]);
+      nk = HIDX(tbl, k, hashes[i]);
+      if (nk == CUNBOUND) {
+	SHIDX(c, tbl, k, hashes[i], ek);
+	SHIDX(c, tbl, v, hashes[i], ev);
+	return;
       }
     }
-  } while (r > 0);
-  /* None of our attempts to insert the new object were
-     successful. This probably means that we ought to resize
-     the tables. */
-  return(0);
+    k = ek;
+    v = ev;
+  }
+  /* We have pushed stuff around as much as we could but failed to
+     find a place to put the current evicted key. Resize the table,
+     and then put this last evicted key in. This should definitely
+     succeed at this point, without any further contortions. */
+  resize(c, tbl);
+  __arc_tbl_insert(c, tbl, ek, ev);
 }
 
-/* Resize the hash tables */
-static void hash_resize(arc *c, value tbl)
+static void resize(arc *c, value tbl)
 {
-  value newsubtables[NHASH];
   hashtbl *ht = (hashtbl *)tbl;
-  int newsize, i, j, k;
-  value b;
-  hashbucket *hb;
+  int size, oldsize, i;
+  value oldk, oldv, k, v;
 
-  newsize = HASHSIZE(ht->nbits+1);
-  for (i=0; i<NHASH; i++)
-    newsubtables[i] = arc_vector_new(c, newsize);
-  /* Look for all of the old buckets in the current hash table and put
-     them into the new subtables */
-  for (i=0; i<NHASH; i++) {
-    for (j=0; j<HASHSIZE(ht->nbits); j++) {
-      b = VIDX(ht->tables[i], j);
-      if (NILP(b))
-	continue;
-      hb = (hashbucket *)b;
-      /* Find a new place for this bucket in the new subtables */
-      for (k=0; k<NHASH; k++) {
-	if (NILP(VIDX(newsubtables[k], hb->h[k] & HASHMASK(ht->nbits+1))))
-	  SVIDX(c, newsubtables[k], hb->h[k] & HASHMASK(ht->nbits+1), b);
-      }
-    }
-  }
+  oldsize = HASHSIZE(ht->nbits);
+  oldk = ht->k;
+  oldv = ht->v;
   ht->nbits++;
-  for (i=0; i<NHASH;i++) {
-    arc_wb(c, ht->tables[i], newsubtables[i]);
-    ht->tables[i] = newsubtables[i];
+  size = HASHSIZE(ht->nbits);
+  ht->k = arc_vector_new(c, size);
+  ht->v = arc_vector_new(c, size);
+  for (i=0; i<size; i++) {
+    SVIDX(c, ht->k, i, CUNBOUND);
+    SVIDX(c, ht->v, i, CUNBOUND);
   }
-}
-
-value __arc_primitive_hash_insert(arc *c, value tbl, const value key,
-				  const value val, const uint64_t *hashes)
-{
-  while (!try_hash_insert(c, tbl, key, val, hashes))
-    hash_resize(c, tbl);
-  return(val);
+  /* Move the old keys and values to the new hash */
+  for (i=0; i<oldsize; i++) {
+    k = VIDX(oldk, i);
+    if (k == CUNBOUND)
+      continue;
+    v = VIDX(oldv, i);
+    __arc_tbl_insert(c, tbl, k, v);
+  }
 }
