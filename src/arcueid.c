@@ -34,7 +34,7 @@ void arc_init(arc *c)
   c->markroots = markroots;
 }
 
-arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, 0 };
+arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, 0 };
 
 arctype *arc_type(value val)
 {
@@ -58,4 +58,34 @@ uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed)
   __arc_hash_init(&ctx, seed);
   __arc_hash_update(&ctx, &tv, 1);
   return(__arc_hash_final(&ctx));
+}
+
+int __arc_is(arc *c, value v1, value v2)
+{
+  arc_type *t;
+
+  /* If they are the same object, it is obviously the same as itself.
+     This comparison should suffice for immediate objects that are not
+     pointers. */
+  if (v1 == v2)
+    return(1);
+
+  /* If it is an immediate value, no further checks are required, they
+     are evidently not the same */
+  if (IMMEDIATEP(v1))
+    return(0);
+
+  /* If v1 and v2 have different types, they cannot be the same */
+  t = arc_type(v1);
+  if (t != arc_type(v2))
+    return(0);
+
+  /* If there is no type-specific function, 'is' cannot be used to
+     compare two objects of this type, thus they cannot be the same
+     under this definition unless they are the same object (as above) */
+  if (t->is == NULL)
+    return(0);
+
+  /* Use type-specific function to compare */
+  return(t->is(c, v1, v2));
 }
