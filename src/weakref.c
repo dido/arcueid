@@ -41,7 +41,7 @@ static void wfree(arc *c, value wr)
 /* Weak references have only a free function, no mark function
    (because this is a weak reference and obviously its referent should
    not be marked!) and are (for the moment) not hashable. */
-arctype __arc_wref_t = { wfree, NULL, NULL, sizeof(value) };
+arctype __arc_wref_t = { wfree, NULL, NULL, NULL, NULL, sizeof(value) };
 
 value arc_wref_new(arc *c, value v)
 {
