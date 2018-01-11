@@ -54,7 +54,7 @@ typedef struct arc {
     contains function definitions used for garbage collector
     processing.
  */
-typedef struct arctype {
+typedef struct {
   /*! Called before an object of this type is freed. Typically one
       would put in here actions related to the destruction of the
       object, such as closing file descriptors, freeing any extra
@@ -69,6 +69,10 @@ typedef struct arctype {
   void (*mark)(arc *, value, void (*)(arc *, value, int), int);
   /*! Called whenever a hash of the value is required */
   uint64_t (*hash)(arc *, value, uint64_t);
+  /*! Type-specific simple equivalence (Scheme eqv?) */
+  int (*is)(arc *, value, value);
+  /*! Type-specific structural equivalence (Scheme equal?) */
+  int (*iso)(arc *, value, value);
   int size;			/*!< The size of the object. This is
                                    advisory only. */
 } arctype;
@@ -88,6 +92,11 @@ extern arctype *arc_type(value val);
     \brief The epoch time in milliseconds
  */
 extern unsigned long long __arc_milliseconds(void);
+
+/*! \fn int __arc_is(arc *c, value v1, value v2)
+    \brief Simple equivalence (similar to Scheme's eqv?)
+ */
+extern int __arc_is(arc *c, value v1, value v2);
 
 /*! \def IMMEDIATE_MASK
     \brief Mask for immediate values
@@ -386,7 +395,12 @@ extern uint64_t __arc_hash_final(struct hash_ctx *ctx);
 /*! \fn uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed)
     \brief Hash function for hashing all immediate values
  */
-uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed);
+extern uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed);
+
+/*! \fn uint64_t __arc_hash(arc *c, value v, uint64_t seed)
+    \brief Hash a value using the type-defined hash function
+ */
+extern uint64_t __arc_hash(arc *c, value v, uint64_t seed);
 
 /*! \var __arc_hashtbl_t
     \brief Arc's hash table
@@ -420,5 +434,7 @@ extern uint64_t __arc_rand(struct ranctx *x);
     \brief Seed the PRNG
  */
 extern void __arc_srand(struct ranctx *x, uint64_t seed);
+
+
 
 #endif
