@@ -438,6 +438,6 @@ extern void __arc_srand(struct ranctx *x, uint64_t seed);
 /*! \fn uint64_t __arc_random(struct ranctx *x, uint64_t n)
     \brief Return pseudo-random number between 0 and n-1
  */
-uint64_t __arc_random(struct ranctx *x, uint64_t n)
+uint64_t __arc_random(struct ranctx *x, uint64_t n);
 
 #endif
