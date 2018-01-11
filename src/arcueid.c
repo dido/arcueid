@@ -62,7 +62,7 @@ uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed)
 
 int __arc_is(arc *c, value v1, value v2)
 {
-  arc_type *t;
+  arctype *t;
 
   /* If they are the same object, it is obviously the same as itself.
      This comparison should suffice for immediate objects that are not
