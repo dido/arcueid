@@ -19,8 +19,8 @@
 #include "../config.h"
 
 /* Arcueid's hash function is a Cuckoo hash with by default three
-   hashes  (which are implemented by using three different seeds for
-   MurmurHash3). Rehashing occurs whenever a hash insertion fails. */
+   hashes (which are implemented by using three different seeds for
+   MurmurHash3) with a stash for difficult keys. */
 
 /*! \def NHASH
     \brief The number of hashes used
@@ -171,9 +171,11 @@ uint64_t __arc_hash(arc *c, value v, uint64_t seed)
 }
 
 typedef struct {
-  int nbits;			/*!< number of hash bits  */
-  value k;			/*!< Table of keys */
-  value v;			/*!< Table of values */
+  int nbits;		/*!< number of hash bits  */
+  int usage;	       	/*!< number of mappings in the table */
+  int stashsize;	/*!< size of stash  */
+  value k;		/*!< Table of keys */
+  value v;		/*!< Table of values */
 } hashtbl;
 
 static void tmark(arc *c, value v,
@@ -192,15 +194,23 @@ static void tmark(arc *c, value v,
 arctype __arc_tbl_t = { NULL, tmark, NULL, NULL, NULL, sizeof(hashtbl) };
 
 #define HASHSIZE(n) ((unsigned long)1 << (n))
-#define HASHMASK(tbl) (HASHSIZE(((hashtbl *)tbl)->nbits))
+#define HASHBITS(tbl) (((hashtbl *)(tbl))->nbits)
+#define HASHMASK(tbl) (HASHSIZE(HASHBITS(tbl))-1)
 #define HIDX(tbl, kv, hash) (VIDX(((hashtbl *)tbl)->kv, (hash) & (HASHMASK(tbl))))
 #define SHIDX(c, tbl, kv, hash, x) (SVIDX((c), ((hashtbl *)tbl)->kv, (hash) & (HASHMASK(tbl)), (x)))
-/* XXX - this needs to be better defined */
-#define MAX_PUSH(tbl) (8)
+#define USAGE(tbl, op) (((hashtbl *)(tbl))->usage op)
+
+#define MIN(x,y) (((x) > (y)) ? (y) : (x))
+#define MAX(x,y) (((x) > (y)) ? (x) : (y))
 
 static void push_keys(arc *c, value tbl, value k, value v,
 		      uint64_t *hashes);
 static void resize(arc *c, value tbl);
+
+static int stashsize(int bits)
+{
+  return(MAX(3, bits*2));
+}
 
 value arc_tbl_new(arc *c, int nbits)
 {
@@ -210,12 +220,14 @@ value arc_tbl_new(arc *c, int nbits)
   
   ht->nbits = nbits;
   size = HASHSIZE(nbits);
-  ht->k = arc_vector_new(c, size);
-  ht->v = arc_vector_new(c, size);
+  ht->stashsize = stashsize(nbits);
+  ht->k = arc_vector_new(c, size + ht->stashsize);
+  ht->v = arc_vector_new(c, size + ht->stashsize);
   for (i=0; i<size; i++) {
     SVIDX(c, ht->k, i, CUNBOUND);
     SVIDX(c, ht->v, i, CUNBOUND);
   }
+  ht->usage = 0;
   return(vht);
 }
 
@@ -225,6 +237,7 @@ value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
   value key;
   int i;
 
+  USAGE(tbl, ++);
   /* Check for existing keys */
   for (i=0; i<NHASH; i++) {
     hashes[i] = __arc_hash(c, k, hashseeds[i]);
@@ -257,10 +270,15 @@ static void push_keys(arc *c, value tbl, value k, value v,
   struct ranctx rctx;
   uint64_t ei, eh;
   int i, p;
-
+  int push_iterations, bits;
+{
+  /* max(min(size, 8), sqrt(size)/8) */
+  bits = HASHBITS(tbl);
+  push_iterations = MAX(MIN(HASHSIZE(bits), 8), HASHSIZE(bits >> 1) >> 3));
+  
   /* Use first hash as seed for the PRNG */
   __arc_srand(&rctx, hashes[0]);
-  for (p=0; p<MAX_PUSH(tbl); p++) {
+  for (p=0; p<push_iterations(HASHBITS(tbl)); p++) {
     /* Evict a key at random */
     ei = __arc_random(&rctx, NHASH);
     eh = hashes[ei];
@@ -286,8 +304,11 @@ static void push_keys(arc *c, value tbl, value k, value v,
      find a place to put the current evicted key. Resize the table,
      and then put this last evicted key in. This should definitely
      succeed at this point, without any further contortions. */
+  /* Reduce the usage since the evicted key is removed until it is
+     re-added below. */
+  USAGE(tbl, --);
   resize(c, tbl);
-  __arc_tbl_insert(c, tbl, ek, ev);
+  __arc_tbl_insert(c, tbl, k, v);
 }
 
 static void resize(arc *c, value tbl)
@@ -300,9 +321,10 @@ static void resize(arc *c, value tbl)
   oldk = ht->k;
   oldv = ht->v;
   ht->nbits++;
+  ht->stashsize = stashsize(ht->nbits);
   size = HASHSIZE(ht->nbits);
-  ht->k = arc_vector_new(c, size);
-  ht->v = arc_vector_new(c, size);
+  ht->k = arc_vector_new(c, size + ht->stashsize);
+  ht->v = arc_vector_new(c, size + ht->stashsize);
   for (i=0; i<size; i++) {
     SVIDX(c, ht->k, i, CUNBOUND);
     SVIDX(c, ht->v, i, CUNBOUND);
@@ -315,4 +337,36 @@ static void resize(arc *c, value tbl)
     v = VIDX(oldv, i);
     __arc_tbl_insert(c, tbl, k, v);
   }
+}
+
+value __arc_tbl_lookup(arc *c, value tbl, value k)
+{
+  int i;
+  uint64_t hash;
+
+  for (i=0; i<NHASH; i++) {
+    hash = __arc_hash(c, k, hashseeds[i]);
+    if (__arc_is(c, HIDX(tbl, v, hash), k))
+      return(HIDX(tbl, v, hash));
+  }
+  return(CUNBOUND);
+}
+
+value __arc_tbl_delete(arc *c, value tbl, value k)
+{
+  int i;
+  uint64_t hash;
+  value oldv;
+
+  for (i=0; i<NHASH; i++) {
+    hash = __arc_hash(c, k, hashseeds[i]);
+    if (__arc_is(c, HIDX(tbl, v, hash), k)) {
+      oldv = HIDX(tbl, v, hash);
+      SHIDX(c, tbl, k, hash, CUNBOUND);
+      SHIDX(c, tbl, v, hash, CUNBOUND);
+      USAGE(tbl, --);
+      return(oldv);
+    }
+  }
+  return(CUNBOUND);  
 }
