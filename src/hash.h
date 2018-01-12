@@ -29,6 +29,8 @@ typedef struct {
   int stashsize;	/*!< size of stash  */
   int threshold;	/*!< number of mappings beyond which we have to
 			  resize */
+  value (*getkey)(arc *, value, uint64_t);
+  value (*getval)(arc *, value, uint64_t);
   value k;		/*!< Table of keys */
   value v;		/*!< Table of values */
 } hashtbl;
