@@ -36,6 +36,12 @@
  */
 typedef unsigned long value;
 
+/* \typedef Rune
+   \brief UCS-4 rune type
+ */
+typedef int32_t Rune;
+
+
 /*! \struct arc
     \brief Arcueid interpreter context
  */
