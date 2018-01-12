@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 
 /*! \typedef value
     \brief The type definition for basic Arcueid values
