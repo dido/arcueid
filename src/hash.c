@@ -17,15 +17,12 @@
  */
 #include "arcueid.h"
 #include "../config.h"
+#include "hash.h"
 
 /* Arcueid's hash function is a Cuckoo hash with by default three
    hashes (which are implemented by using three different seeds for
    MurmurHash3) with a stash for difficult keys. */
 
-/*! \def NHASH
-    \brief The number of hashes used
- */
-#define NHASH 3
 
 /* The hash function here is a hash based on the Murmur3 hash function.
    Arcueid always hashes blocks of data in 64-bit chunks, even on 32-bit
@@ -170,14 +167,6 @@ uint64_t __arc_hash(arc *c, value v, uint64_t seed)
   return(t->hash(c, v, seed));
 }
 
-typedef struct {
-  int nbits;		/*!< number of hash bits  */
-  int usage;	       	/*!< number of mappings in the table */
-  int stashsize;	/*!< size of stash  */
-  value k;		/*!< Table of keys */
-  value v;		/*!< Table of values */
-} hashtbl;
-
 static void tmark(arc *c, value v,
 		  void (*marker)(struct arc *, value, int),
 		  int depth)
@@ -192,13 +181,6 @@ static void tmark(arc *c, value v,
 }
 
 arctype __arc_tbl_t = { NULL, tmark, NULL, NULL, NULL, sizeof(hashtbl) };
-
-#define HASHSIZE(n) ((unsigned long)1 << (n))
-#define HASHBITS(tbl) (((hashtbl *)(tbl))->nbits)
-#define HASHMASK(tbl) (HASHSIZE(HASHBITS(tbl))-1)
-#define HIDX(tbl, kv, hash) (VIDX(((hashtbl *)tbl)->kv, (hash) & (HASHMASK(tbl))))
-#define SHIDX(c, tbl, kv, hash, x) (SVIDX((c), ((hashtbl *)tbl)->kv, (hash) & (HASHMASK(tbl)), (x)))
-#define USAGE(tbl, op) (((hashtbl *)(tbl))->usage op)
 
 #define MIN(x,y) (((x) > (y)) ? (y) : (x))
 #define MAX(x,y) (((x) > (y)) ? (x) : (y))
@@ -221,13 +203,14 @@ value arc_tbl_new(arc *c, int nbits)
   ht->nbits = nbits;
   size = HASHSIZE(nbits);
   ht->stashsize = stashsize(nbits);
+  ht->threshold = (size * MAXLOAD)/100;
+  ht->usage = 0;
   ht->k = arc_vector_new(c, size + ht->stashsize);
   ht->v = arc_vector_new(c, size + ht->stashsize);
   for (i=0; i<size; i++) {
     SVIDX(c, ht->k, i, CUNBOUND);
     SVIDX(c, ht->v, i, CUNBOUND);
   }
-  ht->usage = 0;
   return(vht);
 }
 
@@ -271,14 +254,14 @@ static void push_keys(arc *c, value tbl, value k, value v,
   uint64_t ei, eh;
   int i, p;
   int push_iterations, bits;
-{
+
   /* max(min(size, 8), sqrt(size)/8) */
   bits = HASHBITS(tbl);
-  push_iterations = MAX(MIN(HASHSIZE(bits), 8), HASHSIZE(bits >> 1) >> 3));
+  push_iterations = MAX(MIN(HASHSIZE(bits), 8), HASHSIZE(bits >> 1) >> 3);
   
   /* Use first hash as seed for the PRNG */
   __arc_srand(&rctx, hashes[0]);
-  for (p=0; p<push_iterations(HASHBITS(tbl)); p++) {
+  for (p=0; p<push_iterations; p++) {
     /* Evict a key at random */
     ei = __arc_random(&rctx, NHASH);
     eh = hashes[ei];
@@ -294,6 +277,9 @@ static void push_keys(arc *c, value tbl, value k, value v,
       if (nk == CUNBOUND) {
 	SHIDX(c, tbl, k, hashes[i], ek);
 	SHIDX(c, tbl, v, hashes[i], ev);
+	/* If the table usage exceeds threshold, resize the table */
+	if (USAGE(tbl, ) >= THRESHOLD(tbl))
+	  resize(c, tbl);
 	return;
       }
     }
@@ -309,7 +295,7 @@ static void push_keys(arc *c, value tbl, value k, value v,
   USAGE(tbl, --);
   resize(c, tbl);
   __arc_tbl_insert(c, tbl, k, v);
-}
+ }
 
 static void resize(arc *c, value tbl)
 {
@@ -323,8 +309,10 @@ static void resize(arc *c, value tbl)
   ht->nbits++;
   ht->stashsize = stashsize(ht->nbits);
   size = HASHSIZE(ht->nbits);
+  ht->threshold = (size * MAXLOAD)/100;
   ht->k = arc_vector_new(c, size + ht->stashsize);
   ht->v = arc_vector_new(c, size + ht->stashsize);
+  ht->usage = 0;
   for (i=0; i<size; i++) {
     SVIDX(c, ht->k, i, CUNBOUND);
     SVIDX(c, ht->v, i, CUNBOUND);
@@ -346,7 +334,7 @@ value __arc_tbl_lookup(arc *c, value tbl, value k)
 
   for (i=0; i<NHASH; i++) {
     hash = __arc_hash(c, k, hashseeds[i]);
-    if (__arc_is(c, HIDX(tbl, v, hash), k))
+    if (__arc_is(c, HIDX(tbl, k, hash), k))
       return(HIDX(tbl, v, hash));
   }
   return(CUNBOUND);
@@ -360,7 +348,7 @@ value __arc_tbl_delete(arc *c, value tbl, value k)
 
   for (i=0; i<NHASH; i++) {
     hash = __arc_hash(c, k, hashseeds[i]);
-    if (__arc_is(c, HIDX(tbl, v, hash), k)) {
+    if (__arc_is(c, HIDX(tbl, k, hash), k)) {
       oldv = HIDX(tbl, v, hash);
       SHIDX(c, tbl, k, hash, CUNBOUND);
       SHIDX(c, tbl, v, hash, CUNBOUND);
