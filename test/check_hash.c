@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "../src/arcueid.h"
+#include "../src/hash.h"
 #include "../config.h"
 
 /* ========== Code from MurmurHash3 by aappleby */
@@ -189,6 +190,59 @@ END_TEST
 
 #endif
 
+START_TEST(test_tbl)
+{
+  arc cc;
+  arc *c = &cc;
+  value tbl, res;
+  int i;
+  value k, v;
+  struct ranctx rctx;
+
+  arc_init(c);
+
+  tbl = arc_tbl_new(c, 1);
+  ck_assert(arc_type(tbl) == &__arc_tbl_t);
+  ck_assert_int_eq(HASHBITS(tbl), 1);
+  ck_assert_int_eq(HASHSIZE(HASHBITS(tbl)), 2);
+  ck_assert_int_eq(HASHMASK(tbl), 1);
+
+  __arc_tbl_insert(c, tbl, INT2FIX(1), INT2FIX(2));
+  res = __arc_tbl_lookup(c, tbl, INT2FIX(1));
+  ck_assert(arc_type(res) == &__arc_fixnum_t);
+  ck_assert_int_eq(FIX2INT(res), 2);
+
+  __arc_tbl_insert(c, tbl, INT2FIX(2), INT2FIX(3));
+  res = __arc_tbl_lookup(c, tbl, INT2FIX(1));
+  ck_assert(arc_type(res) == &__arc_fixnum_t);
+  ck_assert_int_eq(FIX2INT(res), 2);
+  res = __arc_tbl_lookup(c, tbl, INT2FIX(2));
+  ck_assert(arc_type(res) == &__arc_fixnum_t);
+  ck_assert_int_eq(FIX2INT(res), 3);
+
+  res = __arc_tbl_delete(c, tbl, INT2FIX(1));
+  ck_assert(arc_type(res) == &__arc_fixnum_t);
+  ck_assert_int_eq(FIX2INT(res), 2);
+  res = __arc_tbl_lookup(c, tbl, INT2FIX(1));
+  ck_assert(res == CUNBOUND);
+
+  __arc_srand(&rctx, RANDSEED);
+  for (i=0; i<1024; i++) {
+    k = INT2FIX(__arc_random(&rctx, FIXNUM_MAX));
+    v = INT2FIX(__arc_random(&rctx, FIXNUM_MAX));
+    __arc_tbl_insert(c, tbl, k, v);
+  }
+
+  __arc_srand(&rctx, RANDSEED);
+  for (i=0; i<1024; i++) {
+    k = INT2FIX(__arc_random(&rctx, FIXNUM_MAX));
+    v = INT2FIX(__arc_random(&rctx, FIXNUM_MAX));
+    res = __arc_tbl_lookup(c, tbl, k);
+    ck_assert_int_eq(FIX2INT(res), FIX2INT(v));
+  }
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -197,6 +251,7 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_hash, test_hash);
+  tcase_add_test(tc_hash, test_tbl);
 
   suite_add_tcase(s, tc_hash);
   sr = srunner_create(s);
