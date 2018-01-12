@@ -22,7 +22,7 @@ libarcueid_la_SOURCES = alloc.c arcueid.c arith.c cons.c gc.c hash.c \
 	osdep.c util.c vector.c weakref.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h gc.h
+noinst_HEADERS = alloc.h gc.h hash.h
 
 #bin_PROGRAMS = arcueid
 #arcueid_LDFLAGS = -Wl,--no-as-needed
