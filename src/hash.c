@@ -194,6 +194,26 @@ static int stashsize(int bits)
   return(MAX(3, bits*2));
 }
 
+static value default_getkey(arc *c, value tbl, uint64_t hash)
+{
+  return(HIDX(tbl, k, hash));
+}
+
+static value default_getval(arc *c, value tbl, uint64_t hash)
+{
+  return(HIDX(tbl, v, hash));
+}
+
+static value getkey(arc *c, value tbl, uint64_t hash)
+{
+  return(((hashtbl *)tbl)->getkey(c, tbl, hash));
+}
+
+static value getval(arc *c, value tbl, uint64_t hash)
+{
+  return(((hashtbl *)tbl)->getval(c, tbl, hash));
+}
+
 value arc_tbl_new(arc *c, int nbits)
 {
   value vht = arc_new(c, &__arc_tbl_t, sizeof(hashtbl));
@@ -204,6 +224,8 @@ value arc_tbl_new(arc *c, int nbits)
   size = HASHSIZE(nbits);
   ht->stashsize = stashsize(nbits);
   ht->threshold = (size * MAXLOAD)/100;
+  ht->getkey = default_getkey;
+  ht->getval = default_getval;
   ht->usage = 0;
   ht->k = arc_vector_new(c, size + ht->stashsize);
   ht->v = arc_vector_new(c, size + ht->stashsize);
@@ -224,7 +246,7 @@ value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
   /* Check for existing keys */
   for (i=0; i<NHASH; i++) {
     hashes[i] = __arc_hash(c, k, hashseeds[i]);
-    if (__arc_is(c, HIDX(tbl, k, hashes[i]), k)) {
+    if (__arc_is(c, getkey(c, tbl, hashes[i]), k)) {
       SHIDX(c, tbl, v, hashes[i], v);
       return(v);
     }
@@ -233,7 +255,7 @@ value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
   /* Key is not there yet. Check for empty buckets. Put the key in an empty
      bucket if possible. */
   for (i=0; i<NHASH; i++) {
-    key = HIDX(tbl, k, hashes[i]);
+    key = getkey(c, tbl, hashes[i]);
     if (key == CUNBOUND) {
       SHIDX(c, tbl, k, hashes[i], k);
       SHIDX(c, tbl, v, hashes[i], v);
@@ -265,15 +287,15 @@ static void push_keys(arc *c, value tbl, value k, value v,
     /* Evict a key at random */
     ei = __arc_random(&rctx, NHASH);
     eh = hashes[ei];
-    ek = HIDX(tbl, k, eh);
-    ev = HIDX(tbl, v, eh);
+    ek = getkey(c, tbl, eh);
+    ev = getval(c, tbl, eh);
     SHIDX(c, tbl, k, eh, k);
     SHIDX(c, tbl, v, eh, v);
 
     /* See if the evicted key hashes to an empty bucket */
     for (i=0; i<NHASH; i++) {
       hashes[i] = __arc_hash(c, ek, hashseeds[i]);
-      nk = HIDX(tbl, k, hashes[i]);
+      nk = getkey(c, tbl, hashes[i]);
       if (nk == CUNBOUND) {
 	SHIDX(c, tbl, k, hashes[i], ek);
 	SHIDX(c, tbl, v, hashes[i], ev);
@@ -334,8 +356,8 @@ value __arc_tbl_lookup(arc *c, value tbl, value k)
 
   for (i=0; i<NHASH; i++) {
     hash = __arc_hash(c, k, hashseeds[i]);
-    if (__arc_is(c, HIDX(tbl, k, hash), k))
-      return(HIDX(tbl, v, hash));
+    if (__arc_is(c, getkey(c, tbl, hash), k))
+      return(getval(c, tbl, hash));
   }
   return(CUNBOUND);
 }
@@ -348,8 +370,8 @@ value __arc_tbl_delete(arc *c, value tbl, value k)
 
   for (i=0; i<NHASH; i++) {
     hash = __arc_hash(c, k, hashseeds[i]);
-    if (__arc_is(c, HIDX(tbl, k, hash), k)) {
-      oldv = HIDX(tbl, v, hash);
+    if (__arc_is(c, getkey(c, tbl, hash), k)) {
+      oldv = getval(c, tbl, hash);
       SHIDX(c, tbl, k, hash, CUNBOUND);
       SHIDX(c, tbl, v, hash, CUNBOUND);
       USAGE(tbl, --);
