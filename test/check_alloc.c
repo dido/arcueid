@@ -61,7 +61,7 @@ START_TEST(test_alloc)
     for (j=0; j<BIBOP_PAGE_SIZE*2; j++) {
       D2B(h, ptrs[j]);
       ck_assert(BALLOCP(h));
-      ck_assert(BSIZE(h) == i);
+      ck_assert(BSIZE(h) == (unsigned)i);
       seed = (uint64_t)((i & 0xffff) | ((j & 0xffff) << 16));
       __arc_srand(&ctx, seed);
       for (k=0; k<i; k++) {
