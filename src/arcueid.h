@@ -360,48 +360,6 @@ extern void __arc_hash_init(struct hash_ctx *ctx, uint64_t seed);
  */
 extern void __arc_hash_update(struct hash_ctx *ctx, const uint64_t *data,
 			      const int len);
-
-/*! \def HASH_WEAK_KEY
-    \brief Use weak references for keys
- */
-#define HASH_WEAK_KEY 0x01
-/*! \def HASH_WEAK_VAL
-    \brief Use weak references for values
- */
-#define HASH_WEAK_VAL 0x02
-
-/*! \fn value arc_tbl_new_flags(arc *c, int hashbits, unsigned int flags)
-    \brief Create a new hash table, with flags
-    Create a new hash table with 2^_hashbits_ entries with flags as above
- */
-extern value arc_tbl_new_flags(arc *c, int hashbits, unsigned int flags);
-
-/*! \fn value arc_tbl_new(arc *c, int hashbits)
-    \brief Create a new hash table
-    Create a new hash table with 2^_hashbits_ entries
- */
-extern value arc_tbl_new(arc *c, int hashbits);
-
-/*! \fn value arc_hash_lookup(arc *c, value tbl, value key)
-    \brief Look up a key in the hash table.
-    Looks up the value of _key_ in _tbl_. Returns CUNBOUND if _key_
-    has no mapping.
- */
-extern value arc_tbl_lookup(arc *c, value tbl, value key);
-
-/*! \fn value arc_hash_insert(arc *c, value tbl, value key,
-                              value val)
-    \brief Insert a key and value into the hash table
-    Insert _key_ with value _val_ into _tbl_.
- */
-extern value arc_tbl_insert(arc *c, value hash, value key, value val);
-
-/*! \fn value arc_hash_delete(arc *c, value tbl, value key)
-    \brief Delete a key from the hash table.
-    Removes any value mapping for _key_ in _tbl_. Returns the last
-    value it might have had, if any.
- */
-extern value arc_hash_delete(arc *c, value tbl, value key);
  
 /*! \fn void uint64_t __arc_hash_final(struct hash_ctx *ctx)
     \brief Get the final value of the hash
@@ -422,6 +380,21 @@ extern uint64_t __arc_hash(arc *c, value v, uint64_t seed);
     \brief Arc's hash table
  */
 extern arctype __arc_tbl_t;
+
+/*! \def HASH_WEAK_KEY
+    \brief Use weak references for keys
+ */
+#define HASH_WEAK_KEY 0x01
+/*! \def HASH_WEAK_VAL
+    \brief Use weak references for values
+ */
+#define HASH_WEAK_VAL 0x02
+
+/*! \fn value arc_tbl_new_flags(arc *c, int hashbits, unsigned int flags)
+    \brief Create a new hash table, with flags
+    Create a new hash table with 2^_hashbits_ entries with flags as above
+ */
+extern value arc_tbl_new_flags(arc *c, int hashbits, unsigned int flags);
 
 /*! \fn value arc_tbl_new(arc *c, int nbits)
     \brief Create a new hash table.
