@@ -534,6 +534,81 @@ START_TEST(test_gc_wref)
 }
 END_TEST
 
+START_TEST(test_gc_tbl)
+{
+  value tbl;
+  arc cc;
+  arc *c = &cc;
+  struct gc_ctx *gcc;
+  struct GChdr *ptr;
+  int count;
+  double val;
+  value v;
+  
+  arc_init(c);
+  /* Set the markroots function to our test_markroots function above */
+  c->markroots = test_markroots;
+  gcc = (struct gc_ctx *)c->gc_ctx;
+
+  /* Create a table */
+  tbl = arc_tbl_new(c, 6);
+  rootval = tbl;  
+  count = 0;
+  /* A table consists of a table header and two vectors, so the count
+     should be 3 */
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 3);
+  /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  /* Should still be there */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 3);
+  /* Add a binding */
+  val = 1.0;
+  __arc_tbl_insert(c, tbl, INT2FIX(1), arc_flonum_new(c, val));
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 4);
+  /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 4);
+  v = __arc_tbl_lookup(c, tbl, INT2FIX(1));
+  ck_assert(arc_type(v) == &__arc_flonum_t);
+  ck_assert(fabs(arc_flonum(v) - val) < 1e-6);
+
+  rootval = CNIL;
+  /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 0);
+
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -546,6 +621,7 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_flonum);
   tcase_add_test(tc_gc, test_gc_vector);
   tcase_add_test(tc_gc, test_gc_wref);
+  tcase_add_test(tc_gc, test_gc_tbl);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
