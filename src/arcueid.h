@@ -402,17 +402,32 @@ extern uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed);
  */
 extern uint64_t __arc_hash(arc *c, value v, uint64_t seed);
 
-/*! \var __arc_hashtbl_t
+/*! \var __arc_tbl_t
     \brief Arc's hash table
  */
-extern arctype __arc_hashtbl_t;
+extern arctype __arc_tbl_t;
 
-/*! \fn value arc_hashtbl_new(arc *c, int nbits)
+/*! \fn value arc_tbl_new(arc *c, int nbits)
     \brief Create a new hash table.
     The _bits_ argument is the number of bits to use for the hash mask
     as the internal hash table size is set as a power of 2.
  */
-value arc_hashtbl_new(arc *c, int nbits);
+extern value arc_tbl_new(arc *c, int nbits);
+
+/*! \fn value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
+    \brief Insert _k_ mapping to _v_ into tbl
+ */
+extern value __arc_tbl_insert(arc *c, value tbl, const value k, const value v);
+
+/*! \fn value __arc_tbl_lookup(arc *c, value tbl, value k)
+    \brief Lookup mapping of _k_ in _tbl_, _CUNBOUND_ if not found
+ */
+extern value __arc_tbl_lookup(arc *c, value tbl, value k);
+
+/*! \fn value __arc_tbl_delete(arc *c, value tbl, value k)
+    \brief Delete mapping of _k_ (if any) in _tbl_
+ */
+extern value __arc_tbl_delete(arc *c, value tbl, value k);
 
 /* =========== Definitions and prototypes for utility functions */
 
