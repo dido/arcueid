@@ -31,6 +31,8 @@ typedef struct {
 			  resize */
   value (*getkey)(arc *, value, uint64_t);
   value (*getval)(arc *, value, uint64_t);
+  void (*setkey)(arc *, value, uint64_t, value);
+  void (*setval)(arc *, value, uint64_t, value);
   value k;		/*!< Table of keys */
   value v;		/*!< Table of values */
 } hashtbl;
