@@ -96,7 +96,11 @@ notice and this notice are preserved.
        - [ ] Strings
        - [ ] Symbols
        - [X] Conses
-       - [ ] Tables
+       - [-] Tables [1/4]
+	 - [X] Regular keys and values
+	 - [ ] Weak keys
+	 - [ ] Weak values
+	 - [ ] Weak keys and values
        - [X] Vectors
        - [ ] Tagged
        - [ ] Functions
