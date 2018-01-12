@@ -19,10 +19,10 @@ lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -Wl,--no-as-needed -version-info 0:0:0
 libarcueid_la_SOURCES = alloc.c arcueid.c arith.c cons.c gc.c hash.c \
-	osdep.c util.c vector.c weakref.c
+	osdep.c util.c vector.c utf.c weakref.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h gc.h hash.h
+noinst_HEADERS = alloc.h gc.h hash.h utf.h
 
 #bin_PROGRAMS = arcueid
 #arcueid_LDFLAGS = -Wl,--no-as-needed
