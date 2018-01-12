@@ -92,7 +92,7 @@ notice and this notice are preserved.
          - [ ] rational
          - [X] flonum
          - [ ] complex
-       - [ ] Characters
+       - [ ] Runes
        - [ ] Strings
        - [ ] Symbols
        - [X] Conses
@@ -115,7 +115,7 @@ notice and this notice are preserved.
    - [ ] Quasiquotes
    - [ ] Comma expressions
    - [ ] Strings
-   - [ ] Characters
+   - [ ] Runes
    - [ ] Comments
    - [ ] Symbols
    - [ ] Numbers [0/4]
@@ -178,20 +178,20 @@ notice and this notice are preserved.
       - [X] flonum
       - [ ] complex
       - [ ] rational
-    - [ ] Characters
+    - [ ] Runes
     - [ ] Strings
     - [ ] Symbols
     - [X] Conses
-    - [ ] Tables [0/4]
-      - [ ] Atomic keys [0/8]
-        - [ ] Fixnum
+    - [-] Tables [0/4]
+      - [-] Atomic keys [1/8]
+        - [X] Fixnum
         - [ ] Bignum
         - [ ] Flonum
         - [ ] Rational
         - [ ] Complex
         - [ ] Symbol
         - [ ] String
-        - [ ] Character
+        - [ ] Rune
       - [ ] Cons keys
       - [ ] Vector keys
       - [ ] Hash table keys
@@ -254,12 +254,12 @@ notice and this notice are preserved.
          - [ ] complex -> num (trivial)
          - [ ] complex -> string
          - [ ] complex -> cons
-       - [ ] Character conversions [0/5]
-         - [ ] char -> char (trivial)
-         - [ ] char -> int (results in a fixnum from 0 - 0x10FFFF)
-         - [ ] char -> fixnum (same as char -> int)
-         - [ ] char -> bignum (same as char -> int)
-         - [ ] char -> string
+       - [ ] Rune conversions [0/5]
+         - [ ] rune -> rune (trivial)
+         - [ ] rune -> int (results in a fixnum from 0 - 0x10FFFF)
+         - [ ] rune -> fixnum (same as char -> int)
+         - [ ] rune -> bignum (same as char -> int)
+         - [ ] rune -> string
        - [ ] String conversions [0/10]
          - [ ] string -> string (trivial)
          - [ ] string -> symbol
@@ -547,7 +547,7 @@ notice and this notice are preserved.
        - [ ] Rationals
        - [ ] Flonums
        - [ ] Complex numbers
-     - [ ] Characters
+     - [ ] Runes
      - [ ] Strings
      - [ ] Symbols
      - [ ] Conses
@@ -614,7 +614,7 @@ notice and this notice are preserved.
    - [ ] gtrue
    - [ ] gint
    - [ ] gflo
-   - [ ] gchar
+   - [ ] grune
    - [ ] gstr
    - [ ] gsym
    - [ ] gbstr - binary strings
