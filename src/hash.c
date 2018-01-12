@@ -199,9 +199,58 @@ static value default_getkey(arc *c, value tbl, uint64_t hash)
   return(HIDX(tbl, k, hash));
 }
 
+
 static value default_getval(arc *c, value tbl, uint64_t hash)
 {
   return(HIDX(tbl, v, hash));
+}
+
+static void default_setkey(arc *c, value tbl, uint64_t hash, value key)
+{
+  SHIDX(c, tbl, k, hash, key);
+}
+
+static void default_setval(arc *c, value tbl, uint64_t hash, value val)
+{
+  SHIDX(c, tbl, v, hash, val);
+}
+
+static value weak_getkey(arc *c, value tbl, uint64_t hash)
+{
+  value wk = default_getkey(c, tbl, hash);
+  value k = arc_wrefv(wk);
+  if (NILP(k)) {
+    default_setkey(c, tbl, hash, CUNBOUND);
+    default_setval(c, tbl, hash, CUNBOUND);
+    USAGE(tbl, --);
+    k = CUNBOUND;
+  }
+  return(k);
+}
+
+static value weak_getval(arc *c, value tbl, uint64_t hash)
+{
+  value wv = default_getval(c, tbl, hash);
+  value v = arc_wrefv(wv);
+  if (NILP(v)) {
+    default_setkey(c, tbl, hash, CUNBOUND);
+    default_setval(c, tbl, hash, CUNBOUND);
+    USAGE(tbl, --);
+    v = CUNBOUND;
+  }
+  return(v);
+}
+
+static void weak_setkey(arc *c, value tbl, uint64_t hash, value key)
+{
+  value wk = arc_wref_new(c, key);
+  default_setkey(c, tbl, hash, wk);
+}
+
+static void weak_setval(arc *c, value tbl, uint64_t hash, value val)
+{
+  value wv = arc_wref_new(c, val);
+  default_setval(c, tbl, hash, wv);
 }
 
 static value getkey(arc *c, value tbl, uint64_t hash)
@@ -214,7 +263,17 @@ static value getval(arc *c, value tbl, uint64_t hash)
   return(((hashtbl *)tbl)->getval(c, tbl, hash));
 }
 
-value arc_tbl_new(arc *c, int nbits)
+static void setkey(arc *c, value tbl, uint64_t hash, value key)
+{
+  return(((hashtbl *)tbl)->setkey(c, tbl, hash, key));
+}
+
+static void setval(arc *c, value tbl, uint64_t hash, value val)
+{
+  return(((hashtbl *)tbl)->setval(c, tbl, hash, val));
+}
+
+value arc_tbl_new_flags(arc *c, int nbits, unsigned int flags)
 {
   value vht = arc_new(c, &__arc_tbl_t, sizeof(hashtbl));
   hashtbl *ht = (hashtbl *)vht;
@@ -224,8 +283,20 @@ value arc_tbl_new(arc *c, int nbits)
   size = HASHSIZE(nbits);
   ht->stashsize = stashsize(nbits);
   ht->threshold = (size * MAXLOAD)/100;
-  ht->getkey = default_getkey;
-  ht->getval = default_getval;
+  if (flags & HASH_WEAK_KEY) {
+    ht->getkey = weak_getkey;
+    ht->setkey = weak_setkey;
+  } else {
+    ht->getkey = default_getkey;
+    ht->setkey = default_setkey;
+  }
+  if (flags & HASH_WEAK_VAL) {
+    ht->getval = weak_getval;
+    ht->setval = weak_setval;
+  } else {
+    ht->getval = default_getval;
+    ht->setval = default_setval;
+  }
   ht->usage = 0;
   ht->k = arc_vector_new(c, size + ht->stashsize);
   ht->v = arc_vector_new(c, size + ht->stashsize);
@@ -234,6 +305,11 @@ value arc_tbl_new(arc *c, int nbits)
     SVIDX(c, ht->v, i, CUNBOUND);
   }
   return(vht);
+}
+
+value arc_tbl_new(arc *c, int nbits)
+{
+  return(arc_tbl_new_flags(c, nbits, 0));
 }
 
 value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
@@ -247,7 +323,7 @@ value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
   for (i=0; i<NHASH; i++) {
     hashes[i] = __arc_hash(c, k, hashseeds[i]);
     if (__arc_is(c, getkey(c, tbl, hashes[i]), k)) {
-      SHIDX(c, tbl, v, hashes[i], v);
+      setval(c, tbl, hashes[i], v);
       return(v);
     }
   }
@@ -257,8 +333,8 @@ value __arc_tbl_insert(arc *c, value tbl, const value k, const value v)
   for (i=0; i<NHASH; i++) {
     key = getkey(c, tbl, hashes[i]);
     if (key == CUNBOUND) {
-      SHIDX(c, tbl, k, hashes[i], k);
-      SHIDX(c, tbl, v, hashes[i], v);
+      setkey(c, tbl, hashes[i], k);
+      setval(c, tbl, hashes[i], v);
       return(v);
     }
   }
@@ -289,16 +365,16 @@ static void push_keys(arc *c, value tbl, value k, value v,
     eh = hashes[ei];
     ek = getkey(c, tbl, eh);
     ev = getval(c, tbl, eh);
-    SHIDX(c, tbl, k, eh, k);
-    SHIDX(c, tbl, v, eh, v);
+    setkey(c, tbl, eh, k);
+    setval(c, tbl, eh, v);
 
     /* See if the evicted key hashes to an empty bucket */
     for (i=0; i<NHASH; i++) {
       hashes[i] = __arc_hash(c, ek, hashseeds[i]);
       nk = getkey(c, tbl, hashes[i]);
       if (nk == CUNBOUND) {
-	SHIDX(c, tbl, k, hashes[i], ek);
-	SHIDX(c, tbl, v, hashes[i], ev);
+	setkey(c, tbl, hashes[i], ek);
+	setval(c, tbl, hashes[i], ev);
 	/* If the table usage exceeds threshold, resize the table */
 	if (USAGE(tbl, ) >= THRESHOLD(tbl))
 	  resize(c, tbl);
@@ -372,8 +448,8 @@ value __arc_tbl_delete(arc *c, value tbl, value k)
     hash = __arc_hash(c, k, hashseeds[i]);
     if (__arc_is(c, getkey(c, tbl, hash), k)) {
       oldv = getval(c, tbl, hash);
-      SHIDX(c, tbl, k, hash, CUNBOUND);
-      SHIDX(c, tbl, v, hash, CUNBOUND);
+      setkey(c, tbl, hash, CUNBOUND);
+      setval(c, tbl, hash, CUNBOUND);
       USAGE(tbl, --);
       return(oldv);
     }
