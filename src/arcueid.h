@@ -361,6 +361,21 @@ extern void __arc_hash_init(struct hash_ctx *ctx, uint64_t seed);
 extern void __arc_hash_update(struct hash_ctx *ctx, const uint64_t *data,
 			      const int len);
 
+/*! \def HASH_WEAK_KEY
+    \brief Use weak references for keys
+ */
+#define HASH_WEAK_KEY 0x01
+/*! \def HASH_WEAK_VAL
+    \brief Use weak references for values
+ */
+#define HASH_WEAK_VAL 0x02
+
+/*! \fn value arc_tbl_new_flags(arc *c, int hashbits, unsigned int flags)
+    \brief Create a new hash table, with flags
+    Create a new hash table with 2^_hashbits_ entries with flags as above
+ */
+extern value arc_tbl_new_flags(arc *c, int hashbits, unsigned int flags);
+
 /*! \fn value arc_tbl_new(arc *c, int hashbits)
     \brief Create a new hash table
     Create a new hash table with 2^_hashbits_ entries
