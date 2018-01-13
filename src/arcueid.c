@@ -40,7 +40,7 @@ arctype *arc_type(value val)
 {
   struct GChdr *gh;
 
-  if (NILP(val))
+  if (NILP(val) || val == CUNBOUND)
     return(&__arc_nil_t);
 
   if (FIXNUMP(val))
@@ -89,3 +89,16 @@ int __arc_is(arc *c, value v1, value v2)
   /* Use type-specific function to compare */
   return(t->is(c, v1, v2));
 }
+
+struct {
+  char *name;
+  arctype *t;
+} builtin_types[] = {
+  { "nil", &__arc_nil_t },
+  { "fixnum", &__arc_fixnum_t },
+  { "flonum", &__arc_flonum_t },
+  { "cons", &__arc_cons_t },
+  { "hashtbl", &__arc_tbl_t },
+  { "vector", &__arc_vector_t },
+  { "wref", &__arc_wref_t }
+};
