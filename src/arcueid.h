@@ -52,14 +52,15 @@ typedef struct arc {
       mark the initial root set */
   void (*markroots)(struct arc *, void (*)(struct arc *, value));
 
-  
+  value runetbl;		/*!< table of runes */
+  value symtbl;			/*!< symbol table  */
 } arc;
 
 /*! \struct arctype
     \brief type definition structure
     All Arcueid types are given a structure of this sort, which
     contains function definitions used for garbage collector
-    processing.
+    processing and other type-specific stuff.
  */
 typedef struct {
   /*! Called before an object of this type is freed. Typically one
@@ -80,8 +81,8 @@ typedef struct {
   int (*is)(arc *, value, value);
   /*! Type-specific structural equivalence (Scheme equal?) */
   int (*iso)(arc *, value, value);
-  int size;			/*!< The size of the object. This is
-                                   advisory only. */
+  /*! Type-specific initialization */
+  void (*init)(arc *);
 } arctype;
 
 /*! \fn void __arc_fatal(const char *errmsg, int errnum)
