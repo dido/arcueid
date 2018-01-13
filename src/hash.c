@@ -180,7 +180,7 @@ static void tmark(arc *c, value v,
   }
 }
 
-arctype __arc_tbl_t = { NULL, tmark, NULL, NULL, NULL, sizeof(hashtbl) };
+arctype __arc_tbl_t = { NULL, tmark, NULL, NULL, NULL, NULL };
 
 #define MIN(x,y) (((x) > (y)) ? (y) : (x))
 #define MAX(x,y) (((x) > (y)) ? (x) : (y))
