@@ -63,9 +63,14 @@ static void mark(arc *c, value v, int depth)
   struct gc_ctx *gcc = (struct gc_ctx *)c->gc_ctx;
   struct GChdr *gh;
 
-  /* Ignore immediate objects */
-  if (IMMEDIATEP(v))
+  /* Ignore immediate objects, but call the marker method if any.
+     Most immediate types don't have such a thing. */
+  if (IMMEDIATEP(v)) {
+    arctype *t = arc_type(v);
+    if (t->mark != NULL)
+      t->mark(c, v, mark, depth+1);
     return;
+  }
 
   V2GCH(gh, v);
   /* Mark the object with the propagator colour if it is not already
