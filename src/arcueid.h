@@ -36,11 +36,6 @@
  */
 typedef unsigned long value;
 
-/* \typedef Rune
-   \brief UCS-4 rune type
- */
-typedef int32_t Rune;
-
 
 /*! \struct arc
     \brief Arcueid interpreter context
@@ -424,6 +419,28 @@ extern value __arc_tbl_lookup(arc *c, value tbl, value k);
     \brief Delete mapping of _k_ (if any) in _tbl_
  */
 extern value __arc_tbl_delete(arc *c, value tbl, value k);
+
+/* =========== Definitions and prototypes for runes (characters) */
+
+/* \typedef Rune
+   \brief UCS-4 rune type
+ */
+typedef int32_t Rune;
+
+/*! \var __arc_rune_t
+    \brief Type definition struct for runes
+ */
+extern arctype __arc_rune_t;
+
+/*! \fn value arc_rune_new(arc *c, Rune r)
+    \brief Create or obtain a new rune
+ */
+extern value arc_rune_new(arc *c, Rune r);
+
+/*! \fn Rune arc_rune(value r)
+    \brief Get the value of a rune
+ */
+static inline Rune arc_rune(value r) { return(*((Rune *)r)); }
 
 /* =========== Definitions and prototypes for utility functions */
 
