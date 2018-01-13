@@ -34,7 +34,7 @@ void arc_init(arc *c)
   c->markroots = markroots;
 }
 
-arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, 0 };
+arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, NULL };
 
 arctype *arc_type(value val)
 {
