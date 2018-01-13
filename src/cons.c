@@ -28,4 +28,4 @@ static void mark(arc *c, value v,
   marker(c, cc->cdr, depth);
 }
 
-arctype __arc_cons_t = { NULL, mark, NULL, NULL, NULL, sizeof(cons_t) };
+arctype __arc_cons_t = { NULL, mark, NULL, NULL, NULL, NULL };
