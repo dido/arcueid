@@ -605,7 +605,85 @@ START_TEST(test_gc_tbl)
   for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
     count++;
   ck_assert_int_eq(count, 0);
+}
+END_TEST
 
+/* This also doubles as a test for weak value hashes */
+START_TEST(test_gc_rune)
+{
+  arc cc;
+  arc *c = &cc;
+  struct gc_ctx *gcc;
+  struct GChdr *ptr;
+  int count;
+  value r;
+
+  arc_init(c);
+  __arc_rune_t.init(c);
+  c->markroots = test_markroots;
+  gcc = (struct gc_ctx *)c->gc_ctx;
+  rootval = arc_vector_new(c, 3);
+  /* Normally c->runetbl would be part of the root set, but we are overriding
+     the rootset */
+  SVIDX(c, rootval, 0, c->runetbl);
+  SVIDX(c, rootval, 1, arc_rune_new(c, 0x16a0));
+  SVIDX(c, rootval, 2, arc_rune_new(c, 0x9f8d));
+  arc_rune_new(c, 0x16a6);
+
+  /* There ought to be exactly 10 objects:
+     1. Rune table
+     2. Key vector in rune table
+     3. Value vector in rune table
+     4. Weak reference for rune 0x16a0
+     5. Rune 0x16a0
+     6. Weak reference for rune 0x9f8d
+     7. Rune 0x9f8d
+     8. Weak reference for rune 0x16a6
+     9. Rune 0x16a6
+     10. Vector for root set.
+   */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 10);
+  /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  /* After a full garbage collection cycle, rune 0x16a6 should have been
+     collected, though the weak reference should remain. */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 9);
+
+  /* Attempt to read all the runes */
+  r = __arc_tbl_lookup(c, VIDX(rootval, 0), INT2FIX(0x16a0));
+  ck_assert(r == VIDX(rootval, 1));
+
+  r = __arc_tbl_lookup(c, VIDX(rootval, 0), INT2FIX(0x9f8d));
+  ck_assert(r == VIDX(rootval, 2));
+
+  /* Now that the character has been collected, it becomes unbound */
+  r = __arc_tbl_lookup(c, VIDX(rootval, 0), INT2FIX(0x16a6));
+  ck_assert(r == CUNBOUND);
+
+  /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  /* After another full garbage collection cycle, the weak reference
+     to rune 0x16a6 should have also been collected. */ 
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 8);
 }
 END_TEST
 
@@ -622,6 +700,7 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_vector);
   tcase_add_test(tc_gc, test_gc_wref);
   tcase_add_test(tc_gc, test_gc_tbl);
+  tcase_add_test(tc_gc, test_gc_rune);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
