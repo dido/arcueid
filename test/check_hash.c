@@ -232,6 +232,11 @@ START_TEST(test_tbl)
   ck_assert(arc_type(res) == &__arc_fixnum_t);
   ck_assert_int_eq(FIX2INT(res), 0x16a0);
 
+  __arc_tbl_insert(c, tbl, arc_flonum_new(c, 10.0), INT2FIX(10));
+  res = __arc_tbl_lookup(c, tbl, arc_flonum_new(c, 10.0));
+  ck_assert(arc_type(res) == &__arc_fixnum_t);
+  ck_assert_int_eq(FIX2INT(res), 10);
+
   __arc_srand(&rctx, RANDSEED);
   for (i=0; i<1024; i++) {
     k = INT2FIX(__arc_random(&rctx, FIXNUM_MAX));
