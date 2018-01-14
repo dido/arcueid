@@ -200,6 +200,7 @@ START_TEST(test_tbl)
   struct ranctx rctx;
 
   arc_init(c);
+  __arc_rune_t.init(c);
 
   tbl = arc_tbl_new(c, 1);
   ck_assert(arc_type(tbl) == &__arc_tbl_t);
@@ -225,6 +226,11 @@ START_TEST(test_tbl)
   ck_assert_int_eq(FIX2INT(res), 2);
   res = __arc_tbl_lookup(c, tbl, INT2FIX(1));
   ck_assert(res == CUNBOUND);
+
+  __arc_tbl_insert(c, tbl, arc_rune_new(c, 0x16a0), INT2FIX(0x16a0));
+  res = __arc_tbl_lookup(c, tbl, arc_rune_new(c, 0x16a0));
+  ck_assert(arc_type(res) == &__arc_fixnum_t);
+  ck_assert_int_eq(FIX2INT(res), 0x16a0);
 
   __arc_srand(&rctx, RANDSEED);
   for (i=0; i<1024; i++) {
