@@ -187,10 +187,10 @@ notice and this notice are preserved.
     - [ ] Symbols
     - [X] Conses
     - [-] Tables [0/4]
-      - [-] Atomic keys [2/8]
+      - [-] Atomic keys [3/8]
         - [X] Fixnum
         - [ ] Bignum
-        - [ ] Flonum
+        - [X] Flonum
         - [ ] Rational
         - [ ] Complex
         - [ ] Symbol
