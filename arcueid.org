@@ -86,20 +86,20 @@ notice and this notice are preserved.
 	 A BiBOP-based memory allocator. Keep things simple first.
    - [-] garbage collector [1/2]
 	 VCGC garbage collector
-     - [-] Garbage collection of data types [3/15]
+     - [-] Garbage collection of data types [4/15]
        - [-] Boxed Numeric Types [1/4]
          - [ ] bignum
          - [ ] rational
          - [X] flonum
          - [ ] complex
-       - [ ] Runes
+       - [X] Runes
        - [ ] Strings
        - [ ] Symbols
        - [X] Conses
-       - [-] Tables [1/4]
+       - [-] Tables [2/4]
 	 - [X] Regular keys and values
 	 - [ ] Weak keys
-	 - [ ] Weak values
+	 - [X] Weak values
 	 - [ ] Weak keys and values
        - [X] Vectors
        - [ ] Tagged
@@ -187,7 +187,7 @@ notice and this notice are preserved.
     - [ ] Symbols
     - [X] Conses
     - [-] Tables [0/4]
-      - [-] Atomic keys [1/8]
+      - [-] Atomic keys [2/8]
         - [X] Fixnum
         - [ ] Bignum
         - [ ] Flonum
@@ -195,7 +195,7 @@ notice and this notice are preserved.
         - [ ] Complex
         - [ ] Symbol
         - [ ] String
-        - [ ] Rune
+        - [X] Rune
       - [ ] Cons keys
       - [ ] Vector keys
       - [ ] Hash table keys
