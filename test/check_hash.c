@@ -190,6 +190,30 @@ END_TEST
 
 #endif
 
+START_TEST(test_hashing)
+{
+  uint64_t h1, h2;
+  value v1, v2;
+  arc cc;
+  arc *c = &cc;
+
+  arc_init(c);
+  __arc_rune_t.init(c);
+
+  h1 = __arc_hash(c, INT2FIX(1), HASHSEED);
+  h2 = __arc_hash(c, INT2FIX(1), HASHSEED);
+  ck_assert(h1 == h2);
+  h2 = __arc_hash(c, INT2FIX(2), HASHSEED);
+  ck_assert(h1 != h2);
+  v1 = arc_string_new_cstr(c, "abc");
+  v2 = arc_string_new_cstr(c, "abc");
+  ck_assert(v1 != v2);
+  h1 = __arc_hash(c, v1, HASHSEED);
+  h2 = __arc_hash(c, v2, HASHSEED);
+  ck_assert(h1 == h2);
+}
+END_TEST
+
 START_TEST(test_tbl)
 {
   arc cc;
@@ -262,6 +286,7 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_hash, test_hash);
+  tcase_add_test(tc_hash, test_hashing);
   tcase_add_test(tc_hash, test_tbl);
 
   suite_add_tcase(s, tc_hash);
