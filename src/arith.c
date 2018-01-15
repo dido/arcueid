@@ -38,10 +38,11 @@ static uint64_t flonum_hash(arc *c, value fl, uint64_t seed)
   union { double fl; uint64_t h; } t;
 
   t.fl = *((double *)fl);
-  static const uint64_t dc = 0x646f75626c65ULL;
+  /* first 64 bits of sha512 of 'flonum' */
+  static const uint64_t magic = 0x55f11188ffce44c2ULL;
   
   __arc_hash_init(&ctx, seed);
-  __arc_hash_update(&ctx, &dc, 1);
+  __arc_hash_update(&ctx, &magic, 1);
   __arc_hash_update(&ctx, &t.h, 1);
   return(__arc_hash_final(&ctx));
 }
