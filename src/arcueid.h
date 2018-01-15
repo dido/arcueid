@@ -442,6 +442,26 @@ extern value arc_rune_new(arc *c, Rune r);
  */
 static inline Rune arc_rune(value r) { return(*((Rune *)r)); }
 
+/* =========== Definitions and prototypes for strings */
+
+/*! \fn value arc_string_new(arc *c, int len, Rune ch)
+    \brief Create a new string.
+    Create a new string of length _len_ filled with _ch_.
+ */
+extern value arc_string_new(arc *c, int len, Rune ch);
+
+/*! \fn value arc_string_new_str(arc *c, int len, Rune *s)
+    \brief Create a new string from an array of Runes
+    Create a new string of length _len_ from an array of Runes _s_.
+ */
+extern value arc_string_new_str(arc *c, int len, Rune *s);
+
+/*! \fn value arc_string_new_cstr(arc *c, char *str)
+    \brief Create a new string from a C string
+    Create a new string from a UTF-8 encoded null-terminated C string.
+ */
+extern value arc_string_new_cstr(arc *c, char *cstr);
+
 /* =========== Definitions and prototypes for utility functions */
 
 /*! \struct ranctx
