@@ -38,8 +38,7 @@ static uint64_t strhash(arc *c, value s, uint64_t seed)
   arcstr *sd = (arcstr *)s;
   /* first 64 bits of sha512 of 'string' */
   static const uint64_t magic = 0x2757cb3cafc39af4ULL;
-  unsigned int lendiv, endpos;
-  int i;
+  unsigned int lendiv, endpos, i;
 
   __arc_hash_init(&ctx, seed);
   __arc_hash_update(&ctx, &magic, 1);
@@ -48,7 +47,7 @@ static uint64_t strhash(arc *c, value s, uint64_t seed)
   lendiv = (sizeof(Rune)*sd->length)/sizeof(uint64_t);
   __arc_hash_update(&ctx, (uint64_t *)sd->strdata, lendiv);
   endpos = (lendiv * sizeof(uint64_t)) / sizeof(Rune);
-  for (i=endpos; i<endpos + (sizeof(Rune)*sd->length) % sizeof(uint64_t); i++) {
+  for (i=endpos; i<sd->length; i++) {
     t = (uint64_t)(*(sd->strdata + i));
     __arc_hash_update(&ctx, &t, 1);
   }
@@ -72,7 +71,7 @@ value arc_str_new(arc *c, int len, Rune ch)
 {
   value val = str_alloc(c, len);
   arcstr *str = (arcstr *)val;
-  int i;
+  unsigned int i;
 
   for (i=0; i<str->length; i++)
     *(str->strdata + i) = ch;
@@ -100,7 +99,7 @@ value arc_string_new_cstr(arc *c, char *cstr)
   val = str_alloc(c, len);
   str = (arcstr *)val;
   r = str->strdata;
-  for (p = cstr; p;)
+  for (p = cstr; *p;)
     p += chartorune(r++, p);
   return(val);
 }
