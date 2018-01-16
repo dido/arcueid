@@ -54,7 +54,18 @@ static uint64_t strhash(arc *c, value s, uint64_t seed)
   return(__arc_hash_final(&ctx));
 }
 
-arctype __arc_string_t = { strfree, NULL, strhash, NULL, NULL, NULL };
+static int striso(arc *c, value s1, value s2)
+{
+  arcstr *str1 = (arcstr *)s1, *str2 = (arcstr *)s2;
+
+  /* Must have same length */
+  if (str1->length != str2->length)
+    return(0);
+  /* Compare */
+  return(memcmp(str1->strdata, str2->strdata, str1->length*sizeof(Rune)) == 0);
+}
+
+arctype __arc_string_t = { strfree, NULL, strhash, striso, striso, NULL };
 
 static value str_alloc(arc *c, int len)
 {
