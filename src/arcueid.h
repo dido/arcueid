@@ -430,6 +430,12 @@ extern value __arc_tbl_lookup_full(arc *c, value tbl, value k,
 				   uint64_t (*hash)(arc *, value, uint64_t),
 				   int (*is)(arc *, value, value));
 
+/*! \fn value __arc_tbl_lookup_str(arc *c, value tbl, const char *key)
+    \brief Look up a C UTF-8 string in a table
+*/
+extern value __arc_tbl_lookup_cstr(arc *c, value tbl, const char *key);
+
+
 /*! \fn value __arc_tbl_delete(arc *c, value tbl, value k)
     \brief Delete mapping of _k_ (if any) in _tbl_
  */
@@ -458,6 +464,11 @@ extern value arc_rune_new(arc *c, Rune r);
 static inline Rune arc_rune(value r) { return(*((Rune *)r)); }
 
 /* =========== Definitions and prototypes for strings */
+
+/*! \var __arc_string_t
+    \brief Type definition structure for strings
+ */
+extern arctype __arc_string_t;
 
 /*! \fn value arc_string_new(arc *c, int len, Rune ch)
     \brief Create a new string.
