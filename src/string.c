@@ -149,7 +149,7 @@ value arc_strcatrune(arc *c, value s, Rune r)
   return(s);
 }
 
-value arc_substr(arc *c, value s, int sidx, int eidx)
+value arc_substr(arc *c, value s, unsigned int sidx, unsigned int eidx)
 {
   unsigned int len, nlen;
   value ns;
@@ -194,7 +194,7 @@ unsigned int arc_strutflen(arc *c, value s)
 
 int arc_strrune(arc *c, value s, Rune r)
 {
-  int i;
+  unsigned int i;
   Rune *rp = ((arcstr *)s)->strdata;
 
   for (i=0; i<arc_strlen(c, s); i++) {
@@ -206,7 +206,7 @@ int arc_strrune(arc *c, value s, Rune r)
 
 char *arc_str2cstr(arc *c, value s, char *ptr)
 {
-  int i, nc;
+  unsigned int i, nc;
   char *p;
   Rune *r;
 
