@@ -187,14 +187,14 @@ notice and this notice are preserved.
     - [ ] Symbols
     - [X] Conses
     - [-] Tables [0/4]
-      - [-] Atomic keys [3/8]
+      - [-] Atomic keys [4/8]
         - [X] Fixnum
         - [ ] Bignum
         - [X] Flonum
         - [ ] Rational
         - [ ] Complex
         - [ ] Symbol
-        - [ ] String
+        - [X] String
         - [X] Rune
       - [ ] Cons keys
       - [ ] Vector keys
