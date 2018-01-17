@@ -482,10 +482,10 @@ extern Rune arc_strsetindex(arc *c, value s, int index, Rune r);
  */
 extern value arc_strcatrune(arc *c, value s, Rune r);
 
-/*! \fn value arc_substr(arc *c, value s, int sidx, int eidx)
+/*! \fn value arc_substr(arc *c, value s, unsigned int sidx, unsigned int eidx)
     \brief Return a substring of _s_ between indices _sidx_ and _eidx_
  */
-extern value arc_substr(arc *c, value s, int sidx, int eidx);
+extern value arc_substr(arc *c, value s, unsigned int sidx, unsigned int eidx);
 
 /*! \fn value arc_strcat(arc *c, value s1, value s2)
     \brief Return a string that is the concatenation of _s1_ and _s2_
