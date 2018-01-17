@@ -125,12 +125,12 @@ value arc_string_new_str(arc *c, int len, Rune *s)
   return(val);
 }
 
-value arc_string_new_cstr(arc *c, char *cstr)
+value arc_string_new_cstr(arc *c, const char *cstr)
 {
   int len;
   value val;
   arcstr *str;
-  char *p;
+  const char *p;
   Rune *r;
 
   len = utflen(cstr);
