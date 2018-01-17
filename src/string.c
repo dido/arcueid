@@ -130,17 +130,23 @@ Rune arc_strsetindex(arc *c, value s, int index, Rune r)
   return(((arcstr *)s)->strdata[index] = r);
 }
 
-/* XXX - this is extremely inefficient! */
+/* XXX - this is extremely inefficient! It will allocate a new memory
+   block and copy the old data, and add r to the end, and then free
+   the block containing the old data. */
 value arc_strcatrune(arc *c, value s, Rune r)
 {
-  value newstr;
   arcstr *sp = (arcstr *)s, *nsp;
+  Rune *old;
 
-  newstr = str_alloc(c, sp->length+1);
-  nsp = (arcstr *)newstr;
-  memcpy(nsp->strdata, sp->strdata, sizeof(Rune)*sp->length);
-  *(nsp->strdata + sp->length) = r;
-  return(newstr);
+  old = sp->strdata;
+  sp->strdata = (Rune *)__arc_alloc((struct mm_ctx *)c->mm_ctx,
+				    sizeof(Rune)*(sp->length+1));
+  
+  memcpy(sp->strdata, old, sizeof(Rune)*sp->length);
+  *(sp->strdata + sp->length) = r;
+  sp->length++;
+  __arc_free((struct mm_ctx *)c->mm_ctx, old);
+  return(s);
 }
 
 value arc_substr(arc *c, value s, int sidx, int eidx)
