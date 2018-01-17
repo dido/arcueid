@@ -186,7 +186,7 @@ unsigned int arc_strutflen(arc *c, value s)
   return(count);
 }
 
-int arc_strchr(arc *c, value s, Rune r)
+int arc_strrune(arc *c, value s, Rune r)
 {
   int i;
   Rune *rp = ((arcstr *)s)->strdata;
