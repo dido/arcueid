@@ -440,10 +440,27 @@ value __arc_tbl_lookup_full(arc *c, value tbl, value k,
   return(CUNBOUND);
 }
 
-
 value __arc_tbl_lookup(arc *c, value tbl, value k)
 {
   return(__arc_tbl_lookup_full(c, tbl, k, __arc_hash, __arc_is));
+}
+
+static uint64_t sshash(arc *c, value s, uint64_t seed)
+{
+  const char *ss = (char *)s;
+  return(__arc_utfstrhash(c, ss, seed));
+}
+
+static int ssis(arc *c, value v1, value v2)
+{
+  if (arc_type(v1) != &__arc_string_t)
+    return(0);
+  return(arc_is_str_cstr(c, (char *)v2, v1));
+}
+
+value __arc_tbl_lookup_cstr(arc *c, value tbl, const char *key)
+{
+  return(__arc_tbl_lookup_full(c, tbl, (value)key, sshash, ssis));
 }
 
 value __arc_tbl_delete(arc *c, value tbl, value k)
