@@ -48,7 +48,7 @@ typedef struct arc {
   void (*markroots)(struct arc *, void (*)(struct arc *, value));
 
   value runetbl;		/*!< table of runes */
-  value symtbl;			/*!< symbol table  */
+  value obtbl;			/*!< obtbl for symbols  */
 } arc;
 
 /*! \struct arctype
