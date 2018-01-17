@@ -42,7 +42,7 @@ static void syminit(arc *c)
 }
 
 
-arctype __arc_symbol_t = { NULL, mark, hash, NULL, NULL, syminit };
+arctype __arc_sym_t = { NULL, mark, hash, NULL, NULL, syminit };
 
 value arc_intern(arc *c, const char *s)
 {
@@ -53,7 +53,7 @@ value arc_intern(arc *c, const char *s)
     return(sym);
 
   str = arc_string_new_cstr(c, s);
-  sym = arc_new(c, &__arc_symbol_t, sizeof(value));
+  sym = arc_new(c, &__arc_sym_t, sizeof(value));
   *((value *)sym) = str;
   __arc_tbl_insert(c, c->symtbl, str, sym);
   return(sym);
