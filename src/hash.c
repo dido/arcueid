@@ -425,17 +425,25 @@ static void resize(arc *c, value tbl)
   }
 }
 
-value __arc_tbl_lookup(arc *c, value tbl, value k)
+value __arc_tbl_lookup_full(arc *c, value tbl, value k,
+			    uint64_t (*hash)(arc *, value, uint64_t),
+			    int (*is)(arc *, value, value))
 {
   int i;
-  uint64_t hash;
+  uint64_t hashv;
 
   for (i=0; i<NHASH; i++) {
-    hash = __arc_hash(c, k, hashseeds[i]);
-    if (__arc_is(c, getkey(c, tbl, hash), k))
-      return(getval(c, tbl, hash));
+    hashv = hash(c, k, hashseeds[i]);
+    if (is(c, getkey(c, tbl, hashv), k))
+      return(getval(c, tbl, hashv));
   }
   return(CUNBOUND);
+}
+
+
+value __arc_tbl_lookup(arc *c, value tbl, value k)
+{
+  return(__arc_tbl_lookup_full(c, tbl, k, __arc_hash, __arc_is));
 }
 
 value __arc_tbl_delete(arc *c, value tbl, value k)
