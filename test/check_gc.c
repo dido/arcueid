@@ -687,6 +687,48 @@ START_TEST(test_gc_rune)
 }
 END_TEST
 
+START_TEST(test_gc_string)
+{
+  arc cc;
+  arc *c = &cc;
+  struct gc_ctx *gcc;
+  struct GChdr *ptr;
+  int count;
+
+  arc_init(c);
+  c->markroots = test_markroots;
+  gcc = (struct gc_ctx *)c->gc_ctx;
+
+  rootval = arc_string_new_cstr(c, "abc");
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 1);
+  /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 1);
+  rootval = CNIL;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 0);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -701,6 +743,7 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_wref);
   tcase_add_test(tc_gc, test_gc_tbl);
   tcase_add_test(tc_gc, test_gc_rune);
+  tcase_add_test(tc_gc, test_gc_string);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
