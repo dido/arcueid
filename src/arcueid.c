@@ -93,12 +93,15 @@ int __arc_is(arc *c, value v1, value v2)
 struct {
   char *name;
   arctype *t;
-} builtin_types[] = {
+} __arc_builtin_types[] = {
   { "nil", &__arc_nil_t },
   { "fixnum", &__arc_fixnum_t },
   { "flonum", &__arc_flonum_t },
   { "cons", &__arc_cons_t },
   { "hashtbl", &__arc_tbl_t },
   { "vector", &__arc_vector_t },
-  { "wref", &__arc_wref_t }
+  { "wref", &__arc_wref_t },
+  { "rune", &__arc_rune_t },
+  { "sym", &__arc_sym_t },
+  { "string", &__arc_string_t }
 };
