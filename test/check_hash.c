@@ -295,6 +295,17 @@ START_TEST(test_tbl)
     res = __arc_tbl_lookup(c, tbl, k);
     ck_assert_int_eq(FIX2INT(res), FIX2INT(v));
   }
+
+  __arc_tbl_insert(c, tbl, arc_string_new_cstr(c, "abc"), INT2FIX(11));
+  res = __arc_tbl_lookup(c, tbl, arc_string_new_cstr(c, "abc"));
+  ck_assert(arc_type(res) == &__arc_fixnum_t);
+  ck_assert_int_eq(FIX2INT(res), 11);
+  res = __arc_tbl_lookup(c, tbl, arc_string_new_cstr(c, "abcd"));
+  ck_assert(res == CUNBOUND);
+  res = __arc_tbl_lookup_cstr(c, tbl, "abc");
+  ck_assert_int_eq(FIX2INT(res), 11);
+  res = __arc_tbl_lookup_cstr(c, tbl, "abcd");
+  ck_assert(res == CUNBOUND);
 }
 END_TEST
 
