@@ -22,7 +22,7 @@ uint64_t rhash(arc *c, value val, uint64_t seed)
   struct hash_ctx ctx;
   Rune *r = (Rune *)val;
   uint64_t rv = (uint64_t)(*r);
-  static const uint64_t magic = 0x6875aecf4c191260;
+  static const uint64_t magic = 0x6875aecf4c191260ULL;
 
   __arc_hash_init(&ctx, seed);
   __arc_hash_update(&ctx, &magic, 1);
