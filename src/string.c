@@ -135,7 +135,7 @@ Rune arc_strsetindex(arc *c, value s, int index, Rune r)
    the block containing the old data. */
 value arc_strcatrune(arc *c, value s, Rune r)
 {
-  arcstr *sp = (arcstr *)s, *nsp;
+  arcstr *sp = (arcstr *)s;
   Rune *old;
 
   old = sp->strdata;
