@@ -486,7 +486,7 @@ extern value arc_string_new_str(arc *c, int len, Rune *s);
     \brief Create a new string from a C string
     Create a new string from a UTF-8 encoded null-terminated C string.
  */
-extern value arc_string_new_cstr(arc *c, char *cstr);
+extern value arc_string_new_cstr(arc *c, const char *cstr);
 
 /*! \fn unsigned int arc_strlen(arc *, value v)
     \brief Get the length of a string
@@ -540,6 +540,18 @@ extern char *arc_str2cstr(arc *c, value s, char *ptr);
     \brief Compare a UTF-8 string and Arcueid string
  */
 extern int arc_is_str_cstr(arc *c, const char *s1, const value s2);
+
+/* =========== Definitions and prototypes for symbols */
+
+/*! \var __arc_symbol_t
+    \brief Type definition structure for symbols
+ */
+extern arctype __arc_symbol_t;
+
+/*! \fn value arc_intern(arc *c, const char *s)
+    \brief Intern a UTF-8 C string into the symbol table.
+ */
+extern value arc_intern(arc *c, const char *s);
 
 /* =========== Definitions and prototypes for utility functions */
 
