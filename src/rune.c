@@ -17,7 +17,7 @@
  */
 #include "arcueid.h"
 
-uint64_t rhash(arc *c, value val, uint64_t seed)
+static uint64_t rhash(arc *c, value val, uint64_t seed)
 {
   struct hash_ctx ctx;
   Rune *r = (Rune *)val;
