@@ -44,7 +44,6 @@ START_TEST(test_make_strings)
   arc cc;
   arc *c = &cc;
   value newstring;
-  int i;
   Rune runes[] = { 0x9060, 0x91ce, 0x5fd7, 0x8cb4 };
   char *str;
 
@@ -61,14 +60,21 @@ START_TEST(test_make_strings)
 
   newstring = arc_string_new(c, 3, 0x16a0);
   ck_assert_int_eq(arc_strlen(c, newstring), 3);
-  ck_assert_int_eq(arc_strindex(newstring, 0), 0x16a0);
-  ck_assert_int_eq(arc_strindex(newstring, 1), 0x16a0);
-  ck_assert_int_eq(arc_strindex(newstring, 2), 0x16a0);
+  ck_assert_int_eq(arc_strindex(c, newstring, 0), 0x16a0);
+  ck_assert_int_eq(arc_strindex(c, newstring, 1), 0x16a0);
+  ck_assert_int_eq(arc_strindex(c, newstring, 2), 0x16a0);
 
-  newstring = arc_string_new_str(c, 4, Runes);
-  ck_assert_int_eq(arc_strlen(c, newstring), 3);
+  newstring = arc_string_new_str(c, 4, runes);
+  ck_assert_int_eq(arc_strlen(c, newstring), 4);
   arc_str2cstr(c, newstring, str);
   ck_assert(strcmp(str, "遠野志貴") == 0);
+
+  ck_assert(arc_is_str_cstr(c, "abc", arc_string_new_cstr(c, "abc")));
+  ck_assert(arc_is_str_cstr(c, "abcd", arc_string_new_cstr(c, "abcd")));
+  ck_assert(arc_is_str_cstr(c, "遠野志貴", arc_string_new_cstr(c, "遠野志貴")));
+  ck_assert(!arc_is_str_cstr(c, "遠野志貴", arc_string_new_cstr(c, "abcd")));
+  ck_assert(!arc_is_str_cstr(c, "遠野志貴", arc_string_new_cstr(c, "遠野志")));
+  ck_assert(!arc_is_str_cstr(c, "遠野志", arc_string_new_cstr(c, "遠野志貴")));
 }
 END_TEST
 
@@ -81,7 +87,7 @@ int main(void)
 
   tcase_add_test(tc_string, test_make_strings);
 
-  suite_add_tcase(s, tc_hash);
+  suite_add_tcase(s, tc_string);
   sr = srunner_create(s);
   srunner_run_all(sr, CK_VERBOSE);
   number_failed = srunner_ntests_failed(sr);
