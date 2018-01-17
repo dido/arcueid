@@ -211,6 +211,26 @@ START_TEST(test_hashing)
   h1 = __arc_hash(c, v1, HASHSEED);
   h2 = __arc_hash(c, v2, HASHSEED);
   ck_assert(h1 == h2);
+  v2 = arc_string_new_cstr(c, "abd");
+  h2 = __arc_hash(c, v2, HASHSEED);
+  ck_assert(h1 != h2);
+}
+END_TEST
+
+START_TEST(test_hash_str)
+{
+  uint64_t h1, h2;
+  arc cc;
+  arc *c = &cc;
+
+  arc_init(c);
+  h1 = __arc_hash(c, arc_string_new_cstr(c, "abc"), HASHSEED);
+  h2 = __arc_utfstrhash(c, "abc", HASHSEED);
+  ck_assert(h1 == h2);
+
+  h1 = __arc_hash(c, arc_string_new_cstr(c, "abcd"), HASHSEED);
+  h2 = __arc_utfstrhash(c, "abcd", HASHSEED);
+
 }
 END_TEST
 
@@ -287,6 +307,7 @@ int main(void)
 
   tcase_add_test(tc_hash, test_hash);
   tcase_add_test(tc_hash, test_hashing);
+  tcase_add_test(tc_hash, test_hash_str);
   tcase_add_test(tc_hash, test_tbl);
 
   suite_add_tcase(s, tc_hash);
