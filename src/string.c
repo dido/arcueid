@@ -31,13 +31,40 @@ static void strfree(arc *c, value s)
   __arc_free((struct mm_ctx *)c->mm_ctx, sd->strdata);
 }
 
+/* first 64 bits of sha512 of 'string' */
+static const uint64_t magic = 0x2757cb3cafc39af4ULL;
+
+uint64_t __arc_utfstrhash(arc *c, const char *s, uint64_t seed)
+{
+  struct hash_ctx ctx;
+  uint64_t t;
+  Rune r[2];
+  const char *p;
+  int ofs;
+
+  __arc_hash_init(&ctx, seed);
+  __arc_hash_update(&ctx, &magic, 1);
+  t = (uint64_t)utflen(s);
+  __arc_hash_update(&ctx, &t, 1);
+  ofs = 0;
+  for (p = s; *p;) {
+    p += chartorune(r + ofs, p);
+    ofs = (ofs + 1) % 2;
+    if (ofs == 0)
+      __arc_hash_update(&ctx, (uint64_t *)r, 1);
+  }
+  if (ofs > 0) {
+    t = (uint64_t)r[0];
+    __arc_hash_update(&ctx, &t, 1);
+  }
+  return(__arc_hash_final(&ctx));
+}
+
 static uint64_t strhash(arc *c, value s, uint64_t seed)
 {
   struct hash_ctx ctx;
   uint64_t t;
   arcstr *sd = (arcstr *)s;
-  /* first 64 bits of sha512 of 'string' */
-  static const uint64_t magic = 0x2757cb3cafc39af4ULL;
   unsigned int lendiv, endpos, i;
 
   __arc_hash_init(&ctx, seed);
@@ -78,7 +105,7 @@ static value str_alloc(arc *c, int len)
   return(val);
 }
 
-value arc_str_new(arc *c, int len, Rune ch)
+value arc_string_new(arc *c, int len, Rune ch)
 {
   value val = str_alloc(c, len);
   arcstr *str = (arcstr *)val;
@@ -218,4 +245,21 @@ char *arc_str2cstr(arc *c, value s, char *ptr)
   }
   *p = 0;			/* null terminator */
   return(ptr);
+}
+
+int arc_is_str_cstr(arc *c, const char *s1, const value s2)
+{
+  const arcstr *ss = (arcstr *)s2;
+  Rune r, *rp;
+  const char *p;
+
+  if (utflen(s1) != ss->length)
+    return(0);
+
+  for (rp = ss->strdata, p = s1; *p;) {
+    p += chartorune(&r, p);
+    if (*rp++ != r)
+      return(0);
+  }
+  return(1);
 }
