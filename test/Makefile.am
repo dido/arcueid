@@ -39,6 +39,6 @@ check_rune_SOURCES = check_rune.c $(top_builddir)/src/arcueid.h
 check_rune_CFLAGS = @CHECK_CFLAGS@
 check_rune_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
-check_string_SOURCES = check_rune.c $(top_builddir)/src/arcueid.h
+check_string_SOURCES = check_string.c $(top_builddir)/src/arcueid.h
 check_string_CFLAGS = @CHECK_CFLAGS@
 check_string_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
