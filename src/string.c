@@ -114,3 +114,102 @@ value arc_string_new_cstr(arc *c, char *cstr)
     p += chartorune(r++, p);
   return(val);
 }
+
+unsigned int arc_strlen(arc *c, value v)
+{
+  return(((arcstr *)v)->length);
+}
+
+Rune arc_strindex(arc *c, value s, int index)
+{
+  return(((arcstr *)s)->strdata[index]);
+}
+
+Rune arc_strsetindex(arc *c, value s, int index, Rune r)
+{
+  return(((arcstr *)s)->strdata[index] = r);
+}
+
+/* XXX - this is extremely inefficient! */
+value arc_strcatrune(arc *c, value s, Rune r)
+{
+  value newstr;
+  arcstr *sp = (arcstr *)s, *nsp;
+
+  newstr = str_alloc(c, sp->length+1);
+  nsp = (arcstr *)newstr;
+  memcpy(nsp->strdata, sp->strdata, sizeof(Rune)*sp->length);
+  *(nsp->strdata + sp->length) = r;
+  return(newstr);
+}
+
+value arc_substr(arc *c, value s, int sidx, int eidx)
+{
+  unsigned int len, nlen;
+  value ns;
+
+  len = arc_strlen(c, s);;
+  if (eidx > len)
+    eidx = len;
+  nlen = eidx - sidx;
+  ns = str_alloc(c, nlen);
+  memcpy(((arcstr *)ns)->strdata, ((arcstr *)s)->strdata + sidx,
+	 nlen*sizeof(Rune));
+  return(ns);
+}
+
+value arc_strcat(arc *c, value s1, value s2)
+{
+  value newstr;
+  int len;
+  Rune *rptr;
+
+  len = ((arcstr *)s1)->length + ((arcstr *)s2)->length;
+  newstr = str_alloc(c, len);
+  rptr = ((arcstr *)newstr)->strdata;
+  memcpy(rptr, ((arcstr *)s1)->strdata, sizeof(Rune)*((arcstr *)s1)->length);
+  rptr += ((arcstr *)s1)->length;
+  memcpy(rptr, ((arcstr *)s2)->strdata, sizeof(Rune)*((arcstr *)s2)->length);
+  return(newstr);
+}
+
+unsigned int arc_strutflen(arc *c, value s)
+{
+  unsigned int i, count;
+  char buf[UTFmax];
+  Rune *r = ((arcstr *)s)->strdata;
+
+  for (i=0; i<arc_strlen(c, s); i++) {
+    count += runetochar(buf, r);
+    r++;
+  }
+  return(count);
+}
+
+int arc_strchr(arc *c, value s, Rune r)
+{
+  int i;
+  Rune *rp = ((arcstr *)s)->strdata;
+
+  for (i=0; i<arc_strlen(c, s); i++) {
+    if (*rp++ == r)
+      return(i);
+  }
+  return(-1);
+}
+
+char *arc_str2cstr(arc *c, value s, char *ptr)
+{
+  int i, nc;
+  char *p;
+  Rune *r;
+
+  p = ptr;
+  r = ((arcstr *)s)->strdata;
+  for (i=0; i<arc_strlen(c, s); i++) {
+    nc = runetochar(p, r++);
+    p += nc;
+  }
+  *p = 0;			/* null terminator */
+  return(ptr);
+}
