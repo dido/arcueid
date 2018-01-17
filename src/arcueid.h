@@ -462,6 +462,54 @@ extern value arc_string_new_str(arc *c, int len, Rune *s);
  */
 extern value arc_string_new_cstr(arc *c, char *cstr);
 
+/*! \fn unsigned int arc_strlen(arc *, value v)
+    \brief Get the length of a string
+ */
+extern unsigned int arc_strlen(arc *c, value v);
+
+/*! \fn Rune arc_strindex(arc *c, value s, int index)
+    \brief Get the Rune at _index_ in _s_
+ */
+extern Rune arc_strindex(arc *c, value s, int index);
+
+/*! \fn Rune arc_strsetindex(arc *c, value s, int index, Rune r)
+    \brief Set the rune at _index_ in _s_ to _r_
+ */
+extern Rune arc_strsetindex(arc *c, value s, int index, Rune r);
+
+/*! \fn Rune arc_strcatrune(arc *c, value s, Rune r)
+    \brief Add rune _r_ to the end of _s_
+ */
+extern value arc_strcatrune(arc *c, value s, Rune r);
+
+/*! \fn value arc_substr(arc *c, value s, int sidx, int eidx)
+    \brief Return a substring of _s_ between indices _sidx_ and _eidx_
+ */
+extern value arc_substr(arc *c, value s, int sidx, int eidx);
+
+/*! \fn value arc_strcat(arc *c, value s1, value s2)
+    \brief Return a string that is the concatenation of _s1_ and _s2_
+ */
+extern value arc_strcat(arc *c, value s1, value s2);
+
+/*! \fn unsigned int arc_strutflen(arc *c, value s)
+    \brief Return the length of _s_ in UTF-8 bytes
+ */
+extern unsigned int arc_strutflen(arc *c, value s);
+
+/*! \fn int arc_strrune(arc *c, value s, Rune r)
+    \brief Return the index in _s_ where rune _r_ is first encountered.
+    Returns -1 if the _r_ is not in _s_
+*/
+extern int arc_strrune(arc *c, value s, Rune r);
+
+/*! \fn char *arc_str2cstr(arc *c, value s, char *ptr)
+    \brief Convert _s_ into a null-terminated UTF-8 C string in _ptr_
+    _ptr_ must be big enough to hold the UTF-8 representation of _s_. This
+    will not work properly if _s_ has null characters anywhere.
+ */
+extern char *arc_str2cstr(arc *c, value s, char *ptr);
+
 /* =========== Definitions and prototypes for utility functions */
 
 /*! \struct ranctx
