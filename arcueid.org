@@ -86,14 +86,14 @@ notice and this notice are preserved.
 	 A BiBOP-based memory allocator. Keep things simple first.
    - [-] garbage collector [1/2]
 	 VCGC garbage collector
-     - [-] Garbage collection of data types [4/15]
+     - [-] Garbage collection of data types [5/15]
        - [-] Boxed Numeric Types [1/4]
          - [ ] bignum
          - [ ] rational
          - [X] flonum
          - [ ] complex
        - [X] Runes
-       - [ ] Strings
+       - [X] Strings
        - [ ] Symbols
        - [X] Conses
        - [-] Tables [2/4]
@@ -173,7 +173,7 @@ notice and this notice are preserved.
      - [ ] Complement (~)
      - [ ] Structure access (. and !)
      - [ ] And (&)
-** TODO basic data types [5/19]
+** TODO basic data types [6/19]
     - [X] Nil
     - [ ] True
     - [-] Numeric Types [2/5]
@@ -183,7 +183,7 @@ notice and this notice are preserved.
       - [ ] complex
       - [ ] rational
     - [X] Runes
-    - [ ] Strings
+    - [X] Strings
     - [ ] Symbols
     - [X] Conses
     - [-] Tables [0/4]
