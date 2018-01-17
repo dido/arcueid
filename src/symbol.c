@@ -38,7 +38,7 @@ static uint64_t hash(arc *c, value val, uint64_t seed)
 
 static void syminit(arc *c)
 {
-  c->symtbl = arc_tbl_new_flags(c, 6, HASH_WEAK_KEY | HASH_WEAK_VAL);
+  c->obtbl = arc_tbl_new_flags(c, 6, HASH_WEAK_KEY | HASH_WEAK_VAL);
 }
 
 
@@ -48,13 +48,13 @@ value arc_intern(arc *c, const char *s)
 {
   value sym, str;
 
-  sym = __arc_tbl_lookup_cstr(c, c->symtbl, s);
+  sym = __arc_tbl_lookup_cstr(c, c->obtbl, s);
   if (sym != CUNBOUND)
     return(sym);
 
   str = arc_string_new_cstr(c, s);
   sym = arc_new(c, &__arc_sym_t, sizeof(value));
   *((value *)sym) = str;
-  __arc_tbl_insert(c, c->symtbl, str, sym);
+  __arc_tbl_insert(c, c->obtbl, str, sym);
   return(sym);
 }
