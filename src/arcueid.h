@@ -378,6 +378,12 @@ extern uint64_t __arc_immediate_hash(arc *c, value val, uint64_t seed);
  */
 extern uint64_t __arc_hash(arc *c, value v, uint64_t seed);
 
+/*! \fn uint64_t __arc_utfstrhash(arc *c, const char *s, uint64_t seed)
+    \brief Hash a UTF-8 string
+    This should compute the same hash as hashing the string itself.
+ */
+extern uint64_t __arc_utfstrhash(arc *c, const char *s, uint64_t seed);
+
 /*! \var __arc_tbl_t
     \brief Arc's hash table
  */
@@ -414,6 +420,15 @@ extern value __arc_tbl_insert(arc *c, value tbl, const value k, const value v);
     \brief Lookup mapping of _k_ in _tbl_, _CUNBOUND_ if not found
  */
 extern value __arc_tbl_lookup(arc *c, value tbl, value k);
+
+/*! \fn value __arc_tbl_lookup_full(arc *c, value tbl, value k, uint64_t (*hash)(arc *, value, uint64_t), int (*is)(arc *, value, value))
+    \brief Lookup mapping of _k_ in _tbl_, _CUNBOUND_ if not found
+    Full lookup permitting override of hash and comparison functions.
+ */
+
+extern value __arc_tbl_lookup_full(arc *c, value tbl, value k,
+				   uint64_t (*hash)(arc *, value, uint64_t),
+				   int (*is)(arc *, value, value));
 
 /*! \fn value __arc_tbl_delete(arc *c, value tbl, value k)
     \brief Delete mapping of _k_ (if any) in _tbl_
@@ -509,6 +524,11 @@ extern int arc_strrune(arc *c, value s, Rune r);
     will not work properly if _s_ has null characters anywhere.
  */
 extern char *arc_str2cstr(arc *c, value s, char *ptr);
+
+/*! \fn int arc_is_str_cstr(arc *c, const char *s1, const value s2)
+    \brief Compare a UTF-8 string and Arcueid string
+ */
+extern int arc_is_str_cstr(arc *c, const char *s1, const value s2);
 
 /* =========== Definitions and prototypes for utility functions */
 
