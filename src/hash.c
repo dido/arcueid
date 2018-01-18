@@ -217,8 +217,11 @@ static void default_setval(arc *c, value tbl, uint64_t hash, value val)
 
 static value weak_getkey(arc *c, value tbl, uint64_t hash)
 {
-  value wk = default_getkey(c, tbl, hash);
-  value k = arc_wrefv(wk);
+  value wk, k;
+  wk = default_getkey(c, tbl, hash);
+  if (arc_type(wk) != &__arc_wref_t)
+    return(wk);
+  k = arc_wrefv(wk);
   if (NILP(k)) {
     default_setkey(c, tbl, hash, CUNBOUND);
     default_setval(c, tbl, hash, CUNBOUND);
@@ -230,8 +233,11 @@ static value weak_getkey(arc *c, value tbl, uint64_t hash)
 
 static value weak_getval(arc *c, value tbl, uint64_t hash)
 {
-  value wv = default_getval(c, tbl, hash);
-  value v = arc_wrefv(wv);
+  value wv, v;
+  wv = default_getval(c, tbl, hash);
+  if (arc_type(wv) != &__arc_wref_t)
+    return(wv);
+  v = arc_wrefv(wv);
   if (NILP(v)) {
     default_setkey(c, tbl, hash, CUNBOUND);
     default_setval(c, tbl, hash, CUNBOUND);
