@@ -541,6 +541,11 @@ extern char *arc_str2cstr(arc *c, value s, char *ptr);
  */
 extern int arc_is_str_cstr(arc *c, const char *s1, const value s2);
 
+/*! \fn value arc_strdup(arc *c, const value s)
+    \brief Duplicate a string 
+ */
+extern value arc_strdup(arc *c, const value s);
+
 /* =========== Definitions and prototypes for symbols */
 
 /*! \var __arc_sym_t
@@ -548,10 +553,20 @@ extern int arc_is_str_cstr(arc *c, const char *s1, const value s2);
  */
 extern arctype __arc_sym_t;
 
-/*! \fn value arc_intern(arc *c, const char *s)
+/*! \fn value arc_intern_cstr(arc *c, const char *s)
     \brief Intern a UTF-8 C string into the symbol table.
  */
-extern value arc_intern(arc *c, const char *s);
+extern value arc_intern_cstr(arc *c, const char *s);
+
+/*! \fn value arc_intern(arc *c, value s)
+    \brief Intern a string into the symbol table.
+ */
+extern value arc_intern(arc *c, value s);
+
+/*! \fn value arc_sym2name(arc *c, value sym)
+    \brief Return a string representation of a symbol
+ */
+extern value arc_sym2name(arc *c, value sym);
 
 /* =========== Definitions and prototypes for utility functions */
 
