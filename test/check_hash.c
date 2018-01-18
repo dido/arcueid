@@ -245,6 +245,7 @@ START_TEST(test_tbl)
 
   arc_init(c);
   __arc_rune_t.init(c);
+  __arc_sym_t.init(c);
 
   tbl = arc_tbl_new(c, 1);
   ck_assert(arc_type(tbl) == &__arc_tbl_t);
@@ -306,6 +307,14 @@ START_TEST(test_tbl)
   ck_assert_int_eq(FIX2INT(res), 11);
   res = __arc_tbl_lookup_cstr(c, tbl, "abcd");
   ck_assert(res == CUNBOUND);
+
+  res = __arc_tbl_lookup(c, tbl, arc_intern_cstr(c, "abc"));
+  ck_assert(res == CUNBOUND);
+  __arc_tbl_insert(c, tbl, arc_intern_cstr(c, "abc"), INT2FIX(12));
+  res = __arc_tbl_lookup(c, tbl, arc_intern_cstr(c, "abc"));
+  ck_assert_int_eq(FIX2INT(res), 12);
+  res = __arc_tbl_lookup(c, tbl, arc_string_new_cstr(c, "abc"));
+  ck_assert_int_eq(FIX2INT(res), 11);
 }
 END_TEST
 
