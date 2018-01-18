@@ -729,6 +729,91 @@ START_TEST(test_gc_string)
 }
 END_TEST
 
+START_TEST(test_gc_sym)
+{
+  arc cc;
+  arc *c = &cc;
+  struct gc_ctx *gcc;
+  struct GChdr *ptr;
+  int count;
+  value r;
+
+  arc_init(c);
+  __arc_sym_t.init(c);
+  c->markroots = test_markroots;
+  gcc = (struct gc_ctx *)c->gc_ctx;
+  rootval = arc_vector_new(c, 3);
+  /* Normally c->obtbl would be part of the root set, but we are overriding
+     the rootset */
+  SVIDX(c, rootval, 0, c->obtbl);
+  SVIDX(c, rootval, 1, arc_intern_cstr(c, "foo"));
+  SVIDX(c, rootval, 2, arc_intern_cstr(c, "bar"));
+  arc_intern_cstr(c, "baz");
+
+  /* There ought to be exactly 16 objects:
+     1. obtbl
+     2. Key vector in obtbl.
+     3. Value vector in obtbl.
+     4. String "foo"
+     5. Weak reference for "foo" as key
+     6. Symbol 'foo
+     7. Weak reference for 'foo as value
+     8. String "bar"
+     9. Weak reference for "bar" as key
+     10. Symbol 'bar
+     11. Weak reference for 'bar as value
+     12. String "baz"
+     13. Weak reference for "baz" as key
+     14. Symbol 'baz
+     15. Weak reference for 'baz as value
+     16. Vector for root set.
+  */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 16);
+
+  /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  /* After garbage collection, the symbol 'baz and the associated string
+     should be gone, but the weak references should remain. */
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 14);
+  
+  /* Attempt to read the symbols */
+  r = __arc_tbl_lookup_cstr(c, VIDX(rootval, 0), "foo");
+  ck_assert(r == VIDX(rootval, 1));
+
+  r = __arc_tbl_lookup_cstr(c, VIDX(rootval, 0), "bar");
+  ck_assert(r == VIDX(rootval, 2));
+
+  /* baz has been collected, so it should be unbound */
+  r = __arc_tbl_lookup_cstr(c, VIDX(rootval, 0), "baz");
+  ck_assert(r == CUNBOUND);
+
+    /* Garbage collect */
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  while (__arc_gc(c) == 0)
+    ;
+  /* After another full garbage collection cycle, the weak reference
+     to 'baz should have also been collected. */ 
+  count = 0;
+  for (ptr = gcc->gcobjects; ptr; ptr = ptr->next)
+    count++;
+  ck_assert_int_eq(count, 12);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -744,6 +829,7 @@ int main(void)
   tcase_add_test(tc_gc, test_gc_tbl);
   tcase_add_test(tc_gc, test_gc_rune);
   tcase_add_test(tc_gc, test_gc_string);
+  tcase_add_test(tc_gc, test_gc_sym);
 
   suite_add_tcase(s, tc_gc);
   sr = srunner_create(s);
