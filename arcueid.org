@@ -86,7 +86,7 @@ notice and this notice are preserved.
 	 A BiBOP-based memory allocator. Keep things simple first.
    - [-] garbage collector [1/2]
 	 VCGC garbage collector
-     - [-] Garbage collection of data types [5/15]
+     - [-] Garbage collection of data types [7/15]
        - [-] Boxed Numeric Types [1/4]
          - [ ] bignum
          - [ ] rational
@@ -94,13 +94,13 @@ notice and this notice are preserved.
          - [ ] complex
        - [X] Runes
        - [X] Strings
-       - [ ] Symbols
+       - [X] Symbols
        - [X] Conses
-       - [-] Tables [2/4]
+       - [X] Tables [4/4]
 	 - [X] Regular keys and values
-	 - [ ] Weak keys
+	 - [X] Weak keys
 	 - [X] Weak values
-	 - [ ] Weak keys and values
+	 - [X] Weak keys and values
        - [X] Vectors
        - [ ] Tagged
        - [ ] Functions
