@@ -253,7 +253,7 @@ int arc_is_str_cstr(arc *c, const char *s1, const value s2)
   Rune r, *rp;
   const char *p;
 
-  if (utflen(s1) != ss->length)
+  if ((unsigned)utflen(s1) != ss->length)
     return(0);
 
   for (rp = ss->strdata, p = s1; *p;) {
@@ -262,4 +262,11 @@ int arc_is_str_cstr(arc *c, const char *s1, const value s2)
       return(0);
   }
   return(1);
+}
+
+value arc_strdup(arc *c, const value s)
+{
+  const arcstr *ss = (arcstr *)s;
+
+  return(arc_string_new_str(c, ss->length, ss->strdata));
 }
