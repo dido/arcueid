@@ -173,7 +173,7 @@ notice and this notice are preserved.
      - [ ] Complement (~)
      - [ ] Structure access (. and !)
      - [ ] And (&)
-** TODO basic data types [6/19]
+** TODO basic data types [7/19]
     - [X] Nil
     - [ ] True
     - [-] Numeric Types [2/5]
@@ -184,16 +184,16 @@ notice and this notice are preserved.
       - [ ] rational
     - [X] Runes
     - [X] Strings
-    - [ ] Symbols
+    - [X] Symbols
     - [X] Conses
     - [-] Tables [0/4]
-      - [-] Atomic keys [4/8]
+      - [-] Atomic keys [5/8]
         - [X] Fixnum
         - [ ] Bignum
         - [X] Flonum
         - [ ] Rational
         - [ ] Complex
-        - [ ] Symbol
+        - [X] Symbol
         - [X] String
         - [X] Rune
       - [ ] Cons keys
