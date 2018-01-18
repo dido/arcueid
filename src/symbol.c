@@ -41,10 +41,9 @@ static void syminit(arc *c)
   c->obtbl = arc_tbl_new_flags(c, 6, HASH_WEAK_KEY | HASH_WEAK_VAL);
 }
 
-
 arctype __arc_sym_t = { NULL, mark, hash, NULL, NULL, syminit };
 
-value arc_intern(arc *c, const char *s)
+value arc_intern_cstr(arc *c, const char *s)
 {
   value sym, str;
 
@@ -57,4 +56,23 @@ value arc_intern(arc *c, const char *s)
   *((value *)sym) = str;
   __arc_tbl_insert(c, c->obtbl, str, sym);
   return(sym);
+}
+
+value arc_intern(arc *c, value str)
+{
+  value sym;
+
+  sym = __arc_tbl_lookup(c, c->obtbl, str);
+  if (sym != CUNBOUND)
+    return(sym);
+
+  sym = arc_new(c, &__arc_sym_t, sizeof(value));
+  *((value *)sym) = str;
+  __arc_tbl_insert(c, c->obtbl, str, sym);
+  return(sym);
+}
+
+value arc_sym2name(arc *c, value sym)
+{
+  return(*((value *)sym));
 }
