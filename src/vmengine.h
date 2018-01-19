@@ -22,6 +22,7 @@
 
 #include <setjmp.h>
 #include <assert.h>
+#include "arcueid.h"
 
 enum vminst {
   inop=0,
@@ -66,5 +67,45 @@ enum vminst {
   ilde0=105,
   iste0=106
 };
+
+enum threadstate {
+  Talt,				/*!< blocked in alt instruction */
+  Tsend,			/*!< waiting to send */
+  Trecv,			/*!< waiting to recv */
+  Tiowait,			/*!< I/O wait */
+  Tsleep,			/*!< sleep */
+  Tready,			/*!< ready to be scheduled */
+  Tcritical,			/*!< critical section */
+  Trelease,			/*!< thread released */
+  Tbroken,			/*!< error break */
+};
+
+typedef struct {
+  struct arc *c;		/*!< Arc context  */
+  value func;			/*!< Function register */
+  value env;			/*!< Environment register */
+  value acc;			/*!< Accumulator */
+  value cont;			/*!< Continuation register */
+  value *sp;			/*!< Stack pointer */
+  value stack;			/*!< Actual stack */
+  value *stkbase;		/*!< Base pointer of stack */
+  value *stktop;		/*!< Top of value stack */
+  union {
+    char *ptr;			/*!< Current instruction in code */
+    int aff_line;		/*!< line number in a foreign function */
+  } ip;				/*!< Instruction pointer */
+  int argc;			/*!< Argument count */
+  enum threadstate state;	/*!< Thread state */
+  int tid;			/*!< Thread ID */
+  unsigned long quanta;		/*!< Time slice */
+  unsigned long long ticks;	/*!< time used */
+  unsigned long long wuptime;	/*!< wakeup time */
+  int waitfd;			/*!< file descriptor waited on */
+  int waitrw;			/*!< wait on read/write */
+  value exh;			/*!< current exception handler */
+  jmp_buf errjmp;		/*!< error jump point  */
+  value cmarks;			/*!< continuation marks */
+  value rvch;			/*!< return value channel */
+} arc_thread;
 
 #endif
