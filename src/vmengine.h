@@ -108,4 +108,9 @@ typedef struct {
   value rvch;			/*!< return value channel */
 } arc_thread;
 
+/* \fn value __arc_thread_new(arc *c, int tid)
+   \brief Create a new thread
+ */
+extern value __arc_thread_new(arc *c, int tid);
+
 #endif
