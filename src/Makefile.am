@@ -23,7 +23,7 @@ libarcueid_la_SOURCES = alloc.c arcueid.c arith.c cons.c gc.c hash.c \
 	weakref.c
 
 include_HEADERS = arcueid.h
-noinst_HEADERS = alloc.h gc.h hash.h utf.h vmengine.h
+noinst_HEADERS = alloc.h gc.h hash.h utf.h vmengine.h ../config.h
 
 #bin_PROGRAMS = arcueid
 #arcueid_LDFLAGS = -Wl,--no-as-needed
