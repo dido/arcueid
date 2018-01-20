@@ -81,7 +81,10 @@ if test "x$enable_unit_tests" != xno; then
 		     TEST_MAKEFILE=test/Makefile])
 fi
 AC_SUBST(SRC_SUBDIRS)
-  
+
+AC_ARG_WITH([stack-size], [AS_HELP_STRING([--with-stack-size], [Set default thread stack size @<:@default=16384@:>@ ])], [], [with_stack_size=16384])
+AC_DEFINE_UNQUOTED([THREAD_STACK_SIZE], $with_stack_size, [Default thread stack size])
+
 AC_ARG_ENABLE([bignum], [AS_HELP_STRING([--disable-bignum], [disable bignum/rational support])], [], [enable_bignum=yes])
 GMP_LIBS=
 if test "x$enable_bignum" != xno; then
