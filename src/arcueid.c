@@ -21,6 +21,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "gc.h"
+#include "../config.h"
 
 static void markroots(arc *c, void (*marker)(struct arc *, value))
 {
@@ -32,6 +33,7 @@ void arc_init(arc *c)
   c->mm_ctx = __arc_new_mm_ctx();
   c->gc_ctx = __arc_new_gc_ctx(c);
   c->markroots = markroots;
+  c->stksize = THREAD_STACK_SIZE;
 }
 
 arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, NULL };
