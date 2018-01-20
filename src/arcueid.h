@@ -80,6 +80,21 @@ typedef struct {
   void (*init)(arc *);
 } arctype;
 
+/*! \enum arc_trstate
+    \brief Arc trampoline states
+ */
+enum arc_trstate {
+  /*! Resume execution */
+  TR_RESUME=1,
+  /*! Return to the thread dispatcher if the thread has been
+      suspended for whatever reason */
+  TR_SUSPEND=3,
+  /*! Apply the function set up in the value register. */
+  TR_FNAPP=5,
+  /*! Restore the last continuation in the continuation register */
+  TR_RC=7
+};
+
 /*! \fn void __arc_fatal(const char *errmsg, int errnum)
     \brief Fatal error function
  */
