@@ -584,6 +584,13 @@ extern value arc_intern(arc *c, value s);
  */
 extern value arc_sym2name(arc *c, value sym);
 
+/* =========== Definitions and prototypes for threads */
+
+/*! \var __arc_thread_t
+    \brief Type definition structure for threads
+ */
+extern arctype __arc_thread_t;
+
 /* =========== Definitions and prototypes for utility functions */
 
 /*! \struct ranctx
