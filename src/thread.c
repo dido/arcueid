@@ -18,6 +18,7 @@
 
 #include "arcueid.h"
 #include "vmengine.h"
+#include "gc.h"
 
 static void mark(arc *c, value v,
 		     void (*marker)(struct arc *, value, int),
@@ -38,7 +39,12 @@ static void mark(arc *c, value v,
     marker(c, *ptr, depth);
 }
 
-arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, NULL };
+void init(arc *c)
+{
+  c->vmthreads = c->curthread = CNIL;
+}
+
+arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, init };
 
 value __arc_thread_new(arc *c, int tid)
 {
@@ -71,3 +77,143 @@ value __arc_thread_new(arc *c, int tid)
   t->rvch = CNIL;
   return(thr);
 }
+
+void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
+{
+  /* XXX fill this in */
+}
+
+static void process_iowait(arc *c, value iothreads, int polltimeout)
+{
+  /* XXX fill this in */
+}
+
+void arc_thread_dispatch(arc *c)
+{
+  value thr;
+  int nthreads, blockedthreads, iowait, stoppedthreads;
+  int sleepthreads, runthreads;
+  int gcstatus, select_timeout;
+  unsigned long long minsleep;
+  value vmqueue, prev, iowait_threads;
+  arc_thread *t;
+
+  for (;;) {
+    nthreads = blockedthreads = iowait = stoppedthreads = sleepthreads = 0;
+    sleepthreads = runthreads = 0;
+    minsleep = ULLONG_MAX;
+    prev = iowait_threads = CNIL;
+    for (vmqueue = c->vmthreads; vmqueue; vmqueue = cdr(vmqueue)) {
+      thr = car(vmqueue);
+      arc_wb(c, c->curthread, thr);
+      c->curthread = thr;
+      ++nthreads;
+      t = (arc_thread *)thr;
+      switch (t->state) {
+	/* Remove a thread in Trelease or Tbroken state from the queue */
+      case Trelease:
+      case Tbroken:
+	stoppedthreads++;
+	/* XXX - if RVCH is a channel (type not yet defined), send the value
+	   through it first. */
+	/* Write the current accumulator to the return value */
+	arc_wb(c, t->rvch, t->acc);
+	t->rvch = t->acc;
+	/* Unlink the thread from the queue */
+	if (prev == CNIL) {
+	  arc_wb(c, c->vmthreads, cdr(vmqueue));
+	  c->vmthreads = cdr(vmqueue);
+	} else {
+	  scdr(c, prev, cdr(vmqueue));
+	}
+	if (NILP(cdr(vmqueue))) {
+	  arc_wb(c, c->vmthrtail, prev);
+	  c->vmthrtail = prev;
+	}
+	goto finished;
+	break;
+      case Talt:
+      case Tsend:
+      case Trecv:
+	++blockedthreads;
+	break;
+      case Tsleep:
+	/* Wake up a sleeping thread if wakeup time is reached */
+	if (__arc_milliseconds() >= t->wuptime) {
+	  t->state = Tready;
+	  t->acc = CNIL;
+	} else {
+	  sleepthreads++;
+	  if (t->wuptime < minsleep)
+	    minsleep = t->wuptime;
+	  goto finish_thread;
+	}
+      case Tready:
+	/* run the thread */
+	if (t->quanta <= 0)
+	  t->quanta = c->quantum;
+	__arc_thr_trampoline(c, thr, TR_RESUME);
+	break;
+      case Tcritical:
+	/* Run a thread in critical section until it relinquishes the
+	   critical section. */
+	while (t->state == Tcritical) {
+	  if (t->quanta <= 0)
+	    t->quanta = c->quantum;
+	  __arc_thr_trampoline(c, thr, TR_RESUME);
+	}
+	break;
+      case Tiowait:
+	iowait++;
+	iowait_threads = cons(c, thr, iowait_threads);
+	break;
+      }
+    finish_thread:
+      if (t->state == Tready || t->state == Tcritical)
+	runthreads++;
+      prev = vmqueue;
+    finished:
+      ;
+    }
+
+    if (nthreads == 0)
+      return;
+
+    /* XXX - should we print a warning if all threads are blocked? */
+    if (nthreads == blockedthreads)
+      return;
+    /* All runnable threads have been allowed to run. See if we need
+       any post-run cleanup work before we resume the loop */
+    if (iowait > 0) {
+      /* XXX Select timeout is chosen based on the following:
+	 1. If the GC has not yet finished an epoch, do not wait.
+	 2. If all threads are blocked on I/O or are waiting on
+	    channels, wait until I/O is possible.
+	 3. If all threads are asleep, blocked, or waiting on I/O,
+ 	    wait for at most the time until the first sleep expires.
+	 4. If there are any runnable threads, do not wait.
+      */
+      if (gcstatus != 0) {
+	select_timeout = 0;
+      } else if ((iowait + blockedthreads) == nthreads) {
+	select_timeout = -1;
+      } else if ((iowait + sleepthreads + blockedthreads) == nthreads) {
+	select_timeout = minsleep - __arc_milliseconds();
+      } else {
+	select_timeout = 0;
+      }
+      process_iowait(c, iowait_threads, select_timeout);
+    }
+
+    if (sleepthreads == nthreads) {
+      unsigned long long st;
+
+      /* Sleep until it's time for a thread to wake up */
+      st = minsleep - __arc_milliseconds();
+      __arc_sleep(st);
+    }
+
+    gcstatus = __arc_gc(c);
+  }
+}
+      
