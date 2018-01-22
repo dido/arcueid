@@ -56,3 +56,17 @@ unsigned long long __arc_milliseconds(void)
   return((unsigned long long)time(NULL)*1000LL);
 #endif
 }
+
+void __arc_sleep(unsigned long long st)
+{
+#ifdef HAVE_NANOSLEEP
+  struct timespec req;
+  req.tv_sec = st/1000;
+  req.tv_nsec = ((st % 1000) * 1000000L);
+  nanosleep(&req, NULL);
+#elif HAVE_USLEEP
+  usleep(st * 1000);
+#else
+#error No sleep function available
+#endif
+}
