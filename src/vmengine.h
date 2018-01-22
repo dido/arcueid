@@ -97,7 +97,7 @@ typedef struct {
   int argc;			/*!< Argument count */
   enum threadstate state;	/*!< Thread state */
   int tid;			/*!< Thread ID */
-  unsigned long quanta;		/*!< Time slice */
+  long quanta;			/*!< Time slice */
   unsigned long long ticks;	/*!< time used */
   unsigned long long wuptime;	/*!< wakeup time */
   int waitfd;			/*!< file descriptor waited on */
