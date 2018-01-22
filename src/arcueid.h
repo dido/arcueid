@@ -47,9 +47,17 @@ typedef struct arc {
       mark the initial root set */
   void (*markroots)(struct arc *, void (*)(struct arc *, value));
 
+  int stksize;			/*!< default stack size for threads */
+
+  /* Threads */
+  value vmthreads;		/*!< list of scheduled threads */
+  value curthread;		/*!< currently executing thread  */
+  value vmthrtail;		/*!< tail of vmthread queue */
+  long quantum;			/*!< thread quantum */
+
+  /* Tables */
   value runetbl;		/*!< table of runes */
   value obtbl;			/*!< obtbl for symbols */
-  int stksize;			/*!< default stack size for threads */
 } arc;
 
 /*! \struct arctype
@@ -107,10 +115,15 @@ extern void __arc_fatal(const char *errmsg, int errnum);
  */
 extern arctype *arc_type(value val);
 
-/*! \fn value __arc_milliseconds(void)
+/*! \fn unsigned long long __arc_milliseconds(void)
     \brief The epoch time in milliseconds
  */
 extern unsigned long long __arc_milliseconds(void);
+
+/*! \fn void __arc_sleep(unsigned long long st)
+    \brief sleep for _st_ milliseconds
+ */
+extern void __arc_sleep(unsigned long long st);
 
 /*! \fn int __arc_is(arc *c, value v1, value v2)
     \brief Simple equivalence (similar to Scheme's eqv?)
