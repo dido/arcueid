@@ -129,7 +129,7 @@ AC_CHECK_FUNCS(clock_gettime, [], [
   ])
 ])
 
-AC_CHECK_FUNCS(posix_memalign realpath malloc_trim)
+AC_CHECK_FUNCS(posix_memalign realpath malloc_trim nanosleep usleep)
 
 AC_ARG_WITH(epoll, AC_HELP_STRING(--without-epoll,disable epoll support (Linux only)))
 dnl System type checks.
