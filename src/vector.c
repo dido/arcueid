@@ -27,8 +27,14 @@ static void mark(arc *c, value v,
   for (i=1; i<=FIX2INT(vec[0]); i++)
     marker(c, vec[i], depth);
 }
-    
-arctype __arc_vector_t = { NULL, mark, NULL, NULL, NULL, NULL };
+
+static enum arc_trstate apply(arc *c, value t)
+{
+  /* XXX fill this in */
+  return(TR_RC);
+}
+
+arctype __arc_vector_t = { NULL, mark, NULL, NULL, NULL, NULL, apply };
 
 value arc_vector_new(arc *c, int size)
 {
