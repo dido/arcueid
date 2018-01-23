@@ -16,6 +16,7 @@
    License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <setjmp.h>
 #include "arcueid.h"
 #include "vmengine.h"
 #include "gc.h"
@@ -44,6 +45,8 @@ void init(arc *c)
   c->vmthreads = c->curthread = CNIL;
 }
 
+
+
 arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, init };
 
 value __arc_thread_new(arc *c, int tid)
@@ -63,7 +66,7 @@ value __arc_thread_new(arc *c, int tid)
   slen = VLEN(t->stack);
   t->stkbase = s+1;
   t->stktop = t->sp = s+slen;
-  t->ip.ptr = NULL;
+  t->ip = 0;
   t->argc = 0;
   t->state = Tready;
   t->tid = tid;
@@ -78,12 +81,69 @@ value __arc_thread_new(arc *c, int tid)
   return(thr);
 }
 
-void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
+static enum arc_trstate resume_thread(arc *c, value thr)
 {
-  /* XXX fill this in */
+  /* XXX fill me in */
+  return(TR_SUSPEND);
 }
 
-static void process_iowait(arc *c, value iothreads, int polltimeout)
+static enum arc_trstate apply_acc(arc *c, value thr)
+{
+  /* XXX fill me in */
+  return(TR_SUSPEND);
+}
+
+static value apply_cont(arc *c, value thr)
+{
+  /* XXX fill me in */
+  return(CNIL);
+}
+
+void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
+{
+  value cont;
+  int jmpval;
+  arc_thread *t = (arc_thread *)thr;
+
+  jmpval = setjmp(t->errjmp);
+  if (jmpval == 2) {
+    t->quanta = 0;
+    t->state = Tbroken;
+    return;
+  }
+
+  for (;;) {
+    switch (state) {
+    case TR_RESUME:
+      state = resume_thread(c, thr);
+      break;
+    case TR_SUSPEND:
+      /* just return to the dispatcher */
+      return;
+    case TR_FNAPP:
+      /* Apply value in the accumulator */
+      state = apply_acc(c, thr);
+      break;
+    case TR_RC:
+    default:
+      /* Restore last continuation on the continuation register. */
+      cont = apply_cont(c, thr);
+      if (NILP(cont)) {
+	/* No available continuation. If this happens, current thread
+	   should terminate. */
+	t->quanta = 0;
+	t->state = Trelease;
+	return;
+      }
+      /* Else resume the thread after restoring the continuation. */
+      state = TR_RESUME;
+      break;
+    }
+  }
+    
+}
+
+static void process_iowait(arc *c, value iothreads, int select_timeout)
 {
   /* XXX fill this in */
 }
@@ -176,6 +236,7 @@ void arc_thread_dispatch(arc *c)
       ;
     }
 
+    /* No more threads */
     if (nthreads == 0)
       return;
 
