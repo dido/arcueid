@@ -45,9 +45,13 @@ void init(arc *c)
   c->vmthreads = c->curthread = CNIL;
 }
 
+static enum arc_trstate apply(arc *c, value t)
+{
+  /* XXX fill this in */
+  return(TR_RC);
+}
 
-
-arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, init };
+arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, init, apply };
 
 value __arc_thread_new(arc *c, int tid)
 {
@@ -87,12 +91,6 @@ static enum arc_trstate resume_thread(arc *c, value thr)
   return(TR_SUSPEND);
 }
 
-static enum arc_trstate apply_acc(arc *c, value thr)
-{
-  /* XXX fill me in */
-  return(TR_SUSPEND);
-}
-
 static value apply_cont(arc *c, value thr)
 {
   /* XXX fill me in */
@@ -104,6 +102,7 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
   value cont;
   int jmpval;
   arc_thread *t = (arc_thread *)thr;
+  arctype *type;
 
   jmpval = setjmp(t->errjmp);
   if (jmpval == 2) {
@@ -122,7 +121,11 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
       return;
     case TR_FNAPP:
       /* Apply value in the accumulator */
-      state = apply_acc(c, thr);
+      type = arc_type(t->acc);
+      /* XXX - error handling should be fixed here */
+      if (type->apply == NULL)
+	__arc_fatal("cannot apply object", 0);
+      state = type->apply(c, thr);
       break;
     case TR_RC:
     default:
