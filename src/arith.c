@@ -26,8 +26,9 @@
 
 #define ABS(x) (((x)>=0)?(x):(-(x)))
 
+/* XXX - apply should do something */
 /* Type for fixnums */
-arctype __arc_fixnum_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, NULL };
+arctype __arc_fixnum_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, NULL, NULL };
 
 static uint64_t flonum_hash(arc *c, value fl, uint64_t seed)
 {
@@ -53,7 +54,7 @@ static int flonum_iso(arc *c, value v1, value v2)
 }
 
 /* Type for flonums */
-arctype __arc_flonum_t = { NULL, NULL, flonum_hash, flonum_iso, flonum_iso, NULL };
+arctype __arc_flonum_t = { NULL, NULL, flonum_hash, flonum_iso, flonum_iso, NULL, NULL };
 
 value arc_flonum_new(arc *c, double f)
 {
