@@ -38,7 +38,7 @@ static void rinit(arc *c)
 /* No type-specific is or iso predicates are needed for runes. Since
    rune objects are enforced to be singletons, comparing their
    references ought to be enough. */
-arctype __arc_rune_t = { NULL, NULL, rhash, NULL, NULL, rinit };
+arctype __arc_rune_t = { NULL, NULL, rhash, NULL, NULL, rinit, NULL };
 
 value arc_rune_new(arc *c, Rune r)
 {
