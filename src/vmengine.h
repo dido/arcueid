@@ -21,9 +21,18 @@
 #define _VMENGINE_H_
 
 #include <setjmp.h>
-#include <assert.h>
 #include "arcueid.h"
 
+/*! \enum vminst
+    \brief Virtual machine instructions
+    This is parsed by scripts to generate some include files. Be
+    careful with extraneous text here!
+
+    Virtual machine instructions have the convention that the top two
+    bits give the number of operands for the instruction, from 0 to 3,
+    thus the env instruction with three operands, is 11001010 in
+    binary, with the top two bits 0b11 = 3.
+*/
 enum vminst {
   inop=0,
   ipush=1,
@@ -68,6 +77,9 @@ enum vminst {
   iste0=106
 };
 
+/*! \enum threadstate
+    \brief Thread states
+ */
 enum threadstate {
   Talt,				/*!< blocked in alt instruction */
   Tsend,			/*!< waiting to send */
@@ -90,10 +102,7 @@ typedef struct {
   value stack;			/*!< Actual stack */
   value *stkbase;		/*!< Base pointer of stack */
   value *stktop;		/*!< Top of value stack */
-  union {
-    char *ptr;			/*!< Current instruction in code */
-    int aff_line;		/*!< line number in a foreign function */
-  } ip;				/*!< Instruction pointer */
+  int ip;			/*!< Instruction pointer */
   int argc;			/*!< Argument count */
   enum threadstate state;	/*!< Thread state */
   int tid;			/*!< Thread ID */
@@ -112,5 +121,12 @@ typedef struct {
    \brief Create a new thread
  */
 extern value __arc_thread_new(arc *c, int tid);
+
+/* \fn void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
+   \brief Thread trampoline
+   Resume execution of _thr_ until some condition occurs such that the
+   thread is no longer able to continue executing.
+ */
+extern void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state);
 
 #endif
