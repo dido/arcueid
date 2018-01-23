@@ -41,7 +41,7 @@ static void syminit(arc *c)
   c->obtbl = arc_tbl_new_flags(c, 6, HASH_WEAK_KEY | HASH_WEAK_VAL);
 }
 
-arctype __arc_sym_t = { NULL, mark, hash, NULL, NULL, syminit };
+arctype __arc_sym_t = { NULL, mark, hash, NULL, NULL, syminit, NULL };
 
 value arc_intern_cstr(arc *c, const char *s)
 {
