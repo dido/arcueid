@@ -599,6 +599,24 @@ extern value arc_intern(arc *c, value s);
  */
 extern value arc_sym2name(arc *c, value sym);
 
+/* =========== Definitions and prototypes for continuations */
+/*! \fn value __arc_cont(arc *c, value thr, int ip)
+    \brief Create a new continuation
+ */
+extern value __arc_cont(arc *c, value thr, int ip);
+
+/* =========== Definitions and prototypes for environments */
+
+/*! \fn value __arc_getenv0(arc *c, value thr, int index)
+    \brief Get the value of a variable in the environment
+ */ 
+extern value __arc_getenv0(arc *c, value thr, int index);
+
+/*! \fn value __arc_putenv0(arc *c, value thr, int index, value newval)
+    \brief Set the value of a variable in the environment
+ */ 
+extern value __arc_putenv0(arc *c, value thr, int index, value newval);
+
 /* =========== Definitions and prototypes for threads */
 
 /*! \var arctype __arc_thread_t
@@ -606,11 +624,232 @@ extern value arc_sym2name(arc *c, value sym);
  */
 extern arctype __arc_thread_t;
 
+/*! \fn value arc_thr_acc(arc *c, value thr)
+    \brief Get value of thread accumulator.
+ */
+extern value arc_thr_acc(arc *c, value thr);
+
+/*! \fn value arc_thr_set_acc(arc *c, value thr)
+    \brief Set value of thread accumulator.
+ */
+extern value arc_thr_setacc(arc *c, value thr, value val);
+
+/*! \fn value arc_thr_setip(arc *c, value thr, int ip)
+    \brief Set value of instruction pointer.
+ */
+extern int arc_thr_setip(arc *c, value thr, int ip);
+
+/*! \fn enum arc_trstate __arc_affyield(arc *c, value thr)
+    \brief Yield execution of a foreign function.
+    Voluntarily give up the thread's time slice until the thread can
+    be scheduled again.
+ */
+extern enum arc_trstate __arc_yield(arc *c, value thr, int line);
+
+/*! \fn enum arc_trstate __arc_iowait(arc *c, value thr, int fd, int rw)
+    \brief Enter an I/O wait state
+
+    Sends the calling thread it into Tiowait on the file descriptor
+    _fd_, which is read if _rw_ is 0 or write if not.  The calling
+    thread will not resume until _fd_ becomes readable or writable.
+ */
+extern enum arc_trstate __arc_thr_iowait(arc *c, value thr, int fd, int rw);
+
 /* =========== Definitions and prototypes for foreign functions */
 /*! \var arctype __arc_ffunc_t
     \brief Type definition structure for foreign functions
  */
 extern arctype __arc_ffunc_t;
+
+/*! \fn value arc_ff_new(arc *c, int argc, value (*func)())
+    \brief Create a simple foreign function
+ */
+extern value arc_ff_new(arc *c, int argc, value (*func)());
+
+/*! \fn value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value))
+    \brief Create an advanced foreign function
+ */
+extern value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value));
+
+/*! \fn void __arc_affenv(arc *c, value thr, int nargs, int optargs,
+			 int localvars, int restarg)
+    \brief Set up the environment for a foreign function
+ */
+extern void __arc_affenv(arc *c, value thr, int nargs, int optargs,
+			 int localvars, int restarg);
+
+/*! \fn enum arc_trstate __arc_affapply(arc *c, value thr, value cont, value func, ...);
+    \brief Apply a function from within a foreign function.
+    The function may be a bytecode function or some other
+    function. End the arguments with _CLASTARG_.
+ */
+extern enum arc_trstate __arc_affapply(arc *c, value thr, value cont, value func, ...);
+
+/*! \fn enum arc_trstate __arc_affapply2(arc *c, value thr, value cont, value func, value argv);
+   \brief Apply a function from within a foreign function, with a list of arguments.
+   The function may be a bytecode function or some other function.
+ */
+extern enum arc_trstate __arc_affapply2(arc *c, value thr, value cont, value func, value argv);
+
+/* Arcueid Foreign Functions.  This is possibly the most insane abuse
+   of the C preprocessor I have ever done.  The technique used for defining
+   parameters and variables using variadic macros used here is inspired by
+   this:
+
+   http://stackoverflow.com/questions/1872220/is-it-possible-to-iterate-over-arguments-in-variadic-macros
+
+   The actual mechanism that provides our continuations is based on
+   Simon Tatham's Coroutines in C:
+
+   http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
+ */
+
+/*! \def CLASTARG
+    \brief The last argument
+    This is one of a few SPECIAL CONSTANTS defined by the interpreter.
+ */
+#define CLASTARG ((value)8)
+
+#define CONCATENATE(arg1, arg2)   CONCATENATE1(arg1, arg2)
+#define CONCATENATE1(arg1, arg2)  CONCATENATE2(arg1, arg2)
+#define CONCATENATE2(arg1, arg2)  arg1##arg2
+
+#define FOR_EACH_1(what, x) what(x)
+#define FOR_EACH_2(what, x, ...) what(x); FOR_EACH_1(what, __VA_ARGS__)
+#define FOR_EACH_3(what, x, ...) what(x); FOR_EACH_2(what, __VA_ARGS__)
+#define FOR_EACH_4(what, x, ...) what(x); FOR_EACH_3(what, __VA_ARGS__)
+#define FOR_EACH_5(what, x, ...) what(x); FOR_EACH_4(what, __VA_ARGS__)
+#define FOR_EACH_6(what, x, ...) what(x); FOR_EACH_5(what, __VA_ARGS__)
+#define FOR_EACH_7(what, x, ...) what(x); FOR_EACH_6(what, __VA_ARGS__)
+#define FOR_EACH_8(what, x, ...) what(x); FOR_EACH_7(what, __VA_ARGS__)
+
+#define NARGS(...) NARGS_(__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0)
+#define NARGS_(_1, _2, _3, _4, _5, _6, _7, _8, _, ...) _
+
+#define FOR_EACH_(N, what, ...) CONCATENATE(FOR_EACH_, N)(what, __VA_ARGS__)
+#define FOR_EACH(what, ...) FOR_EACH_(NARGS(__VA_ARGS__), what, __VA_ARGS__)
+
+/*! \def AFFDEF(fname)
+    \brief Begin the definition of an Arcueid foreign function
+ */
+#define AFFDEF(fname) enum arc_trstate fname(arc *c, value thr) { char __nargs__ = 0; char  __optargs__ = 0; char __restarg__ = 0; char __localvars__ = 0; do
+
+/*! \def AFFEND
+    \brief End the definition of an Arcueid foreign function
+ */
+#define AFFEND while (0); return(TR_RC); }
+
+/*! \def ADEFARG(x)
+    \brief Define a required argument of a foreign function
+ */
+#define ADEFARG(x) const char x = __nargs__++
+
+/*! \def AOPTARG(x)
+    \brief Define an optional argument of a foreign function
+    Make sure that this appears after all uses of ADEFARG/AARG/ADEFVAR/AVAR
+ */
+#define AOPTARG(x) const char x = __nargs__ +  __optargs__++
+
+/*! \def ARARG(x)
+    \brief Define the name of the rest argument of a variadic foreign function
+    Do not use this argument more than once in a function, and make sure
+    it appears after all other uses of ADEFARG/AOPTARG/ADEFVAR.
+ */
+#define ARARG(x) const char x = __nargs__ + __optargs__ + __localvars__; __restarg__ = 1
+
+/*! \def ADEFVAR(x)
+    \brief Define a local variable for a foreign function
+    The variable becomes part of the closure of the foreign function.
+ */
+#define ADEFVAR(x) const char x = __nargs__ + __optargs__ + __localvars__++;
+
+/*! \def AARG(...)
+    \brief Define several arguments
+ */
+#define AARG(...) FOR_EACH(ADEFARG, __VA_ARGS__)
+
+/*! \def AARG(...)
+    \brief Define several optional arguments
+ */
+#define AOARG(...) FOR_EACH(AOPTARG, __VA_ARGS__)
+
+/*! \def AARG(...)
+    \brief Define several local variables
+ */
+#define AVAR(...) FOR_EACH(ADEFVAR, __VA_ARGS__)
+
+/*! \def AFBEGIN
+    \brief Begin the code of a foreign function
+    This macro should appear only after the definitions of arguments and
+    local variables above.
+ */
+#define AFBEGIN								\
+  __arc_affenv(c, thr, __nargs__, __optargs__, __localvars__, __restarg__); \
+  switch (__arc_affip(c, thr)) {					\
+ case 0:;
+
+/*! \def AFEND
+    \brief End the code of a foreign function.
+ */
+#define AFEND }
+
+/*! \def AV(x)
+    \brief Get the value of local variable/argument _x_
+ */
+#define AV(x) (__arc_getenv0(c, thr, x))
+
+/*! \def WV(x, y)
+    \brief Set the value of local variable/argument _x_ to _y_
+ */
+#define WV(x, y) (__arc_putenv0(c, thr, x, y))
+
+#define AFCALL(func, ...)						\
+  do {									\
+    return(__arc_affapply(c, thr, __arc_cont(c, thr, __LINE__), func, __VA_ARGS__, CLASTARG)); case __LINE__:; \
+  } while (0)
+
+/* call giving args as a list */
+#define AFCALL2(func, argv)						\
+  do {									\
+    return(__arc_affapply2(c, thr, __arc_cont(c, thr, __LINE__), func, argv)); case __LINE__:; \
+  } while (0)
+
+/* Tail call -- this will pass the return value of the function called
+   back to the caller of the function which invoked it. */
+#define AFTCALL(func, ...)					       \
+  do {								       \
+    return(__arc_affapply(c, thr, CNIL, func, __VA_ARGS__, CLASTARG)); \
+  } while (0)
+
+/* tail call giving args as a list */
+#define AFTCALL2(func, argv)						\
+  do {									\
+    return(__arc_affapply2(c, thr, CNIL, func, argv));			\
+  } while (0)
+
+#define AFCRV (arc_thr_acc(c, thr))
+
+#define AYIELD()							\
+  do {									\
+    __arc_thr_setip(c, thr, __LINE__); return(__arc_yield(c, thr)); case __LINE__:; \
+  } while (0)
+
+#define AIOWAITR(fd)							\
+  do {									\
+    __arc_thr_setip(c, thr, __LINE__); return(__arc_iowait(c, thr, fd, 0)); case __LINE__:; \
+  } while (0)
+
+#define AIOWAITW(fd)							\
+  do {									\
+    __arc_thr_setip(c, thr, __LINE__); return(__arc_iowait(c, __LINE__, fd, 1)); case __LINE__:; \
+  } while (0)
+
+#define ARETURN(val)			\
+  do {						\
+    arc_thr_setacc(c, thr, val);		\
+    return(TR_RC);				\
+  } while (0)
+
 
 /* =========== definitions and prototypes for utility functions */
 
