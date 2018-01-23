@@ -60,6 +60,21 @@ typedef struct arc {
   value obtbl;			/*!< obtbl for symbols */
 } arc;
 
+/*! \enum arc_trstate
+    \brief Arc trampoline states
+ */
+enum arc_trstate {
+  /*! Resume execution */
+  TR_RESUME=1,
+  /*! Return to the thread dispatcher if the thread has been
+      suspended for whatever reason */
+  TR_SUSPEND=3,
+  /*! Apply the function set up in the value register. */
+  TR_FNAPP=5,
+  /*! Restore the last continuation in the continuation register */
+  TR_RC=7
+};
+
 /*! \struct arctype
     \brief type definition structure
     All Arcueid types are given a structure of this sort, which
@@ -87,22 +102,9 @@ typedef struct {
   int (*iso)(arc *, value, value);
   /*! Type-specific initialization */
   void (*init)(arc *);
+  /*! Type-specific apply */
+  enum arc_trstate (*apply)(arc *, value);
 } arctype;
-
-/*! \enum arc_trstate
-    \brief Arc trampoline states
- */
-enum arc_trstate {
-  /*! Resume execution */
-  TR_RESUME=1,
-  /*! Return to the thread dispatcher if the thread has been
-      suspended for whatever reason */
-  TR_SUSPEND=3,
-  /*! Apply the function set up in the value register. */
-  TR_FNAPP=5,
-  /*! Restore the last continuation in the continuation register */
-  TR_RC=7
-};
 
 /*! \fn void __arc_fatal(const char *errmsg, int errnum)
     \brief Fatal error function
@@ -599,12 +601,18 @@ extern value arc_sym2name(arc *c, value sym);
 
 /* =========== Definitions and prototypes for threads */
 
-/*! \var __arc_thread_t
+/*! \var arctype __arc_thread_t
     \brief Type definition structure for threads
  */
 extern arctype __arc_thread_t;
 
-/* =========== Definitions and prototypes for utility functions */
+/* =========== Definitions and prototypes for foreign functions */
+/*! \var arctype __arc_ffunc_t
+    \brief Type definition structure for foreign functions
+ */
+extern arctype __arc_ffunc_t;
+
+/* =========== definitions and prototypes for utility functions */
 
 /*! \struct ranctx
     \brief PRNG context structure
