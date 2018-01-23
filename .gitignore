@@ -58,3 +58,4 @@ test/tmp/*.txt
 arc/news/arc
 ar-lib
 test-driver
+tmp
