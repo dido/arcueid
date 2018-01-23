@@ -92,7 +92,13 @@ static int striso(arc *c, value s1, value s2)
   return(memcmp(str1->strdata, str2->strdata, str1->length*sizeof(Rune)) == 0);
 }
 
-arctype __arc_string_t = { strfree, NULL, strhash, striso, striso, NULL };
+static enum arc_trstate apply(arc *c, value t)
+{
+  /* XXX fill this in */
+  return(TR_RC);
+}
+
+arctype __arc_string_t = { strfree, NULL, strhash, striso, striso, NULL, apply };
 
 static value str_alloc(arc *c, int len)
 {
