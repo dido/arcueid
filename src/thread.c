@@ -106,7 +106,7 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
 
   jmpval = setjmp(t->errjmp);
   if (jmpval == 2) {
-    t->quanta = 0;
+    t->quanta = 0L;
     t->state = Tbroken;
     return;
   }
@@ -134,7 +134,7 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
       if (NILP(cont)) {
 	/* No available continuation. If this happens, current thread
 	   should terminate. */
-	t->quanta = 0;
+	t->quanta = 0L;
 	t->state = Trelease;
 	return;
       }
@@ -281,3 +281,37 @@ void arc_thread_dispatch(arc *c)
   }
 }
       
+value arc_thr_acc(arc *c, value thr)
+{
+  return(((arc_thread *)thr)->acc);
+}
+
+value arc_thr_setacc(arc *c, value thr, value val)
+{
+  arc_thread *t = (arc_thread *)thr;
+  arc_wb(c, t->acc, val);
+  return(t->acc = val);
+}
+
+int arc_thr_setip(arc *c, value thr, int ip)
+{
+  return(((arc_thread *)thr)->ip=ip);
+}
+
+enum arc_trstate __arc_yield(arc *c, value thr)
+{
+  arc_thread *t = (arc_thread *)thr;
+
+  /* Thread willingly gives up the remainder of its time slice */
+  t->quanta = 0L;
+  return(TR_SUSPEND);
+}
+
+enum arc_trstate __arc_thr_iowait(arc *c, value thr, int fd, int rw)
+{
+  arc_thread *t = (arc_thread *)thr;
+  t->waitfd = fd;
+  t->waitrw = rw;
+  t->state = Tiowait;
+  return(TR_SUSPEND);
+}
