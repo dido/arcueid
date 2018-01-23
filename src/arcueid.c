@@ -36,7 +36,7 @@ void arc_init(arc *c)
   c->stksize = THREAD_STACK_SIZE;
 }
 
-arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, NULL };
+arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, NULL, NULL };
 
 arctype *arc_type(value val)
 {
