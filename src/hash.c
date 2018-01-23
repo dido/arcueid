@@ -180,7 +180,13 @@ static void tmark(arc *c, value v,
   }
 }
 
-arctype __arc_tbl_t = { NULL, tmark, NULL, NULL, NULL, NULL };
+static enum arc_trstate apply(arc *c, value t)
+{
+  /* XXX fill this in */
+  return(TR_RC);
+}
+
+arctype __arc_tbl_t = { NULL, tmark, NULL, NULL, NULL, NULL, apply };
 
 #define MIN(x,y) (((x) > (y)) ? (y) : (x))
 #define MAX(x,y) (((x) > (y)) ? (x) : (y))
