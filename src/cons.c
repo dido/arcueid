@@ -28,4 +28,10 @@ static void mark(arc *c, value v,
   marker(c, cc->cdr, depth);
 }
 
-arctype __arc_cons_t = { NULL, mark, NULL, NULL, NULL, NULL };
+static enum arc_trstate apply(arc *c, value t)
+{
+  /* XXX fill this in */
+  return(TR_RC);
+}
+
+arctype __arc_cons_t = { NULL, mark, NULL, NULL, NULL, NULL, apply };
