@@ -42,7 +42,7 @@ arctype *arc_type(value val)
 {
   struct GChdr *gh;
 
-  if (NILP(val) || val == CUNBOUND)
+  if (NILP(val) || val == CUNBOUND || val == CLASTARG)
     return(&__arc_nil_t);
 
   if (FIXNUMP(val))
