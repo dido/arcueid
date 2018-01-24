@@ -64,6 +64,7 @@ value __arc_thread_new(arc *c, int tid)
   slen = VLEN(t->stack);
   t->stkbase = s+1;
   t->stktop = t->sp = s+slen;
+  t->line = CNIL;
   t->ip = 0;
   t->argc = 0;
   t->state = Tready;
@@ -79,9 +80,9 @@ value __arc_thread_new(arc *c, int tid)
   return(thr);
 }
 
-static enum arc_trstate resume_thread(arc *c, value thr)
+enum arc_trstate __arc_vmengine(arc *c, value thr, value func)
 {
-  /* XXX fill me in */
+  /* XXX fill me in! */
   return(TR_SUSPEND);
 }
 
@@ -108,7 +109,7 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
   for (;;) {
     switch (state) {
     case TR_RESUME:
-      state = resume_thread(c, thr);
+      state = (arc_type(t->func) == &__arc_ffunc_t) ? __arc_resume_aff(c, thr, t->func) : __arc_vmengine(c, thr, t->func);
       break;
     case TR_SUSPEND:
       /* just return to the dispatcher */
@@ -308,4 +309,9 @@ enum arc_trstate __arc_thr_iowait(arc *c, value thr, int fd, int rw)
   t->waitrw = rw;
   t->state = Tiowait;
   return(TR_SUSPEND);
+}
+
+value arc_thr_setfunc(arc *c, value thr, value fun)
+{
+  return(((arc_thread *)thr)->func=fun);
 }
