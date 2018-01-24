@@ -850,6 +850,12 @@ extern enum arc_trstate __arc_affapply2(arc *c, value thr, value cont, value fun
     return(TR_RC);				\
   } while (0)
 
+/* =========== definitions and prototypes for error handling */
+
+/*! \fn void arc_err_cstr(arc *c, value fileline, const char *fmt, ...)
+    \brief Raise an error with a C format string message
+ */
+extern void arc_err_cstr(arc *c, value fileline, const char *fmt, ...);
 
 /* =========== definitions and prototypes for utility functions */
 
