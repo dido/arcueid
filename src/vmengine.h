@@ -102,6 +102,7 @@ typedef struct {
   value stack;			/*!< Actual stack */
   value *stkbase;		/*!< Base pointer of stack */
   value *stktop;		/*!< Top of value stack */
+  value line;			/*!< Current code line */
   int ip;			/*!< Instruction pointer */
   int argc;			/*!< Argument count */
   enum threadstate state;	/*!< Thread state */
@@ -117,16 +118,38 @@ typedef struct {
   value rvch;			/*!< return value channel */
 } arc_thread;
 
-/* \fn value __arc_thread_new(arc *c, int tid)
-   \brief Create a new thread
+/*! \def CPUSH(thr, val)
+    \brief Push _val_ into the stack of _thr_
+ */
+#define CPUSH(thr, val) do {			\
+    *(((arc_thread *)(thr)->sp)--) = (val);	\
+  } while (0)
+
+/*! \def CPOP(thr)
+    \brief Pop value from _thr_
+ */
+#define CPOP(thr) (*(++((arc_thread *)(thr))->sp))
+
+/*! \fn value __arc_thread_new(arc *c, int tid)
+    \brief Create a new thread
  */
 extern value __arc_thread_new(arc *c, int tid);
 
-/* \fn void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
-   \brief Thread trampoline
-   Resume execution of _thr_ until some condition occurs such that the
-   thread is no longer able to continue executing.
+/*! \fn void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
+    \brief Thread trampoline
+    Resume execution of _thr_ until some condition occurs such that the
+    thread is no longer able to continue executing.
  */
 extern void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state);
+
+/*! \fn enum arc_trstate __arc_vmengine(arc *c, value thr, value vmc)
+    \brief Run virtual machine code
+*/
+extern enum arc_trstate __arc_vmengine(arc *c, value thr, value vmc);
+
+/*! \fn enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff)
+    \brief Resume execution of a foreign function
+ */
+extern enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff);
 
 #endif
