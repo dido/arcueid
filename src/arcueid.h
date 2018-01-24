@@ -671,11 +671,6 @@ extern value arc_ff_new(arc *c, int argc, value (*func)());
  */
 extern value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value));
 
-/*! \fn enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff)
-    \brief Resume execution of a foreign function
- */
-extern enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff);
-
 /*! \fn void __arc_affenv(arc *c, value thr, int nargs, int optargs,
 			 int localvars, int restarg)
     \brief Set up the environment for a foreign function
