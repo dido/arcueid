@@ -45,13 +45,7 @@ void init(arc *c)
   c->vmthreads = c->curthread = CNIL;
 }
 
-static enum arc_trstate apply(arc *c, value t)
-{
-  /* XXX fill this in */
-  return(TR_RC);
-}
-
-arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, init, apply };
+arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, init, NULL };
 
 value __arc_thread_new(arc *c, int tid)
 {
@@ -125,7 +119,7 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
       /* XXX - error handling should be fixed here */
       if (type->apply == NULL)
 	__arc_fatal("cannot apply object", 0);
-      state = type->apply(c, thr);
+      state = type->apply(c, thr, t->acc);
       break;
     case TR_RC:
     default:
