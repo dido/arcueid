@@ -92,7 +92,7 @@ static int striso(arc *c, value s1, value s2)
   return(memcmp(str1->strdata, str2->strdata, str1->length*sizeof(Rune)) == 0);
 }
 
-static enum arc_trstate apply(arc *c, value t)
+static enum arc_trstate apply(arc *c, value t, value v)
 {
   /* XXX fill this in */
   return(TR_RC);
