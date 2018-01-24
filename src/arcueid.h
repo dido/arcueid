@@ -106,11 +106,6 @@ typedef struct {
   enum arc_trstate (*apply)(arc *, value, value);
 } arctype;
 
-/*! \fn void __arc_fatal(const char *errmsg, int errnum)
-    \brief Fatal error function
- */
-extern void __arc_fatal(const char *errmsg, int errnum);
-
 /*! \fn value arc_type(value val)
     \brief Get the type of an Arcueid value
     \param val Value
@@ -634,10 +629,15 @@ extern value arc_thr_acc(arc *c, value thr);
  */
 extern value arc_thr_setacc(arc *c, value thr, value val);
 
-/*! \fn value arc_thr_setip(arc *c, value thr, int ip)
+/*! \fn int arc_thr_setip(arc *c, value thr, int ip)
     \brief Set value of instruction pointer.
  */
 extern int arc_thr_setip(arc *c, value thr, int ip);
+
+/*! \fn value arc_thr_setfunc(arc *c, value thr, value fun)
+    \brief Set value of function register.
+ */
+extern value arc_thr_setfunc(arc *c, value thr, value fun);
 
 /*! \fn enum arc_trstate __arc_affyield(arc *c, value thr)
     \brief Yield execution of a foreign function.
@@ -670,6 +670,11 @@ extern value arc_ff_new(arc *c, int argc, value (*func)());
     \brief Create an advanced foreign function
  */
 extern value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value));
+
+/*! \fn enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff)
+    \brief Resume execution of a foreign function
+ */
+extern enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff);
 
 /*! \fn void __arc_affenv(arc *c, value thr, int nargs, int optargs,
 			 int localvars, int restarg)
@@ -856,6 +861,11 @@ extern enum arc_trstate __arc_affapply2(arc *c, value thr, value cont, value fun
     \brief Raise an error with a C format string message
  */
 extern void arc_err_cstr(arc *c, value fileline, const char *fmt, ...);
+
+/*! \fn void __arc_fatal(const char *errmsg, int errnum)
+    \brief Fatal error function
+ */
+extern void __arc_fatal(const char *errmsg, int errnum);
 
 /* =========== definitions and prototypes for utility functions */
 
