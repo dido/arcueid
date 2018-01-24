@@ -103,7 +103,7 @@ typedef struct {
   /*! Type-specific initialization */
   void (*init)(arc *);
   /*! Type-specific apply */
-  enum arc_trstate (*apply)(arc *, value);
+  enum arc_trstate (*apply)(arc *, value, value);
 } arctype;
 
 /*! \fn void __arc_fatal(const char *errmsg, int errnum)
@@ -644,7 +644,7 @@ extern int arc_thr_setip(arc *c, value thr, int ip);
     Voluntarily give up the thread's time slice until the thread can
     be scheduled again.
  */
-extern enum arc_trstate __arc_yield(arc *c, value thr, int line);
+extern enum arc_trstate __arc_yield(arc *c, value thr);
 
 /*! \fn enum arc_trstate __arc_iowait(arc *c, value thr, int fd, int rw)
     \brief Enter an I/O wait state
