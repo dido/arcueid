@@ -34,3 +34,17 @@ void arc_err_cstr(arc *c, value fileline, const char *fmt, ...)
   va_end(ap);
   longjmp(((arc_thread *)c->curthread)->errjmp, 2);
 }
+
+/* Report a fatal error */
+void __arc_fatal(const char *errmsg, int errnum)
+{
+  char serrmsg[1024];
+
+  if (errnum > 0) {
+    strerror_r(errnum, serrmsg, sizeof(serrmsg)/sizeof(char));
+    fprintf(stderr, "FATAL: %s (%s)", errmsg, serrmsg);
+  } else {
+    fprintf(stderr, "FATAL: %s", errmsg);
+  }
+  exit(1);
+}
