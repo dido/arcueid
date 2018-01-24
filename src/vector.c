@@ -28,7 +28,7 @@ static void mark(arc *c, value v,
     marker(c, vec[i], depth);
 }
 
-static enum arc_trstate apply(arc *c, value t)
+static enum arc_trstate apply(arc *c, value t, value v)
 {
   /* XXX fill this in */
   return(TR_RC);
