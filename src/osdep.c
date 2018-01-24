@@ -24,20 +24,6 @@
 #include <time.h>
 #include "arcueid.h"
 
-/* Report a fatal error */
-void __arc_fatal(const char *errmsg, int errnum)
-{
-  char serrmsg[1024];
-
-  if (errnum > 0) {
-    strerror_r(errnum, serrmsg, sizeof(serrmsg)/sizeof(char));
-    fprintf(stderr, "FATAL: %s (%s)", errmsg, serrmsg);
-  } else {
-    fprintf(stderr, "FATAL: %s", errmsg);
-  }
-  exit(1);
-}
-
 unsigned long long __arc_milliseconds(void)
 {
 #ifdef HAVE_CLOCK_GETTIME
