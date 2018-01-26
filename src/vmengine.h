@@ -102,6 +102,7 @@ typedef struct {
   value stack;			/*!< Actual stack */
   value *stkbase;		/*!< Base pointer of stack */
   value *stktop;		/*!< Top of value stack */
+  value *stkfn;			/*!< Start of stack for function */
   value line;			/*!< Current code line */
   int ip;			/*!< Instruction pointer */
   int argc;			/*!< Argument count */
