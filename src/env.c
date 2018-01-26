@@ -56,6 +56,11 @@
    next lexically superior environment, nil when there are no further
    such environments. The remaining elements are the
 
+   The environment register in a thread contains either a fixnum,
+   which is interpreted as an absolute offset into the stack pointing
+   to the beginning of the environment, or a vector, which is the
+   environment above as described.
+
    [1] William D. Clinger, Anne H. Hartheimer, and Eric M. Ost.
        Implementation Strategies for continuations.  In Proceedings
        Record of the 1988 ACM Symposium on Lisp and Functional
@@ -74,5 +79,10 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
     CPUSH(thr, CUNBOUND);
   /* Add the count */
   CPUSH(thr, INT2FIX(prevsize+extrasize));
-  envstart = thr->sp;
+  envstart = t->sp;
+  CPUSH(thr, t->env);
+  esofs = t->stktop - envstart;
+  t->stkfn = t->sp;
+  arc_wb(c, t->env, INT2FIX(esofs));
+  t->env = INT2FIX(esofs);
 }
