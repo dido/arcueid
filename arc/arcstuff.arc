@@ -38,18 +38,18 @@
   (let test testify.sep
     (rev:map [coerce _ 'string]
              (map rev
-                  (loop (cs  (coerce s 'cons)
-			     toks  nil
-			     tok  nil
-			     lastsep nil)
-			(if no.cs
-			    (consif tok (consif lastsep toks))
-			    (test car.cs)
-			    (recur cdr.cs
-				   (consif tok (consif lastsep toks))
-				   nil (if keepsep (coerce car.cs 'string)
-					   lastsep))
-			    (recur cdr.cs toks (cons car.cs tok) lastsep)))))))
+                  (aloop (cs  (coerce s 'cons)
+			      toks  nil
+			      tok  nil
+			      lastsep nil)
+			 (if no.cs
+			     (consif tok (consif lastsep toks))
+			     (test car.cs)
+			     (recur cdr.cs
+				    (consif tok (consif lastsep toks))
+				    nil (if keepsep (coerce car.cs 'string)
+					    lastsep))
+			     (recur cdr.cs toks (cons car.cs tok) lastsep)))))))
 
 ;; Pure Arc ssexpand.  
 (def arc-ssexpand (s)
