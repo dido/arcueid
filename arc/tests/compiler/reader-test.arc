@@ -151,11 +151,11 @@
 	  (unquote (a b c)))
 
 	 ("Read unquote splicing sym"
-	  (w/instring fp ",@@z" (zread fp))
+	  (w/instring fp ",@z" (zread fp))
 	  (unquote-splicing z))
 
 	 ("Read unquote-splicing list"
-	  (w/instring fp ",@@(a b c)" (zread fp))
+	  (w/instring fp ",@(a b c)" (zread fp))
 	  (unquote-splicing (a b c)))
 
 	 ("Read characters"
