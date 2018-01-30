@@ -79,10 +79,10 @@
 
 ;; Ought to be built-in.  This is defined in terms of $ functions supported
 ;; by Anarki for bootstrap purposes.
-(def substring (s n (o e))
-  (if no.e
-      ($ (substring s n))
-      ($ (substring s n e))))
+;; (def substring (s n (o e))
+;;  (if no.e
+;;     ($ (substring s n))
+;;      ($ (substring s n e))))
 
 (def newlinec (c)
   (in c #\return #\newline #\u0085 #\page #\u2028 #\u2029))
@@ -92,8 +92,14 @@
   (annotate 'regexp (cons rx flags)))
 
 ;; Uses Racket's string->number
-(def string->num (s (o radix 10))
-  ($ (let ((n (string->number s radix))) (if n n 'nil))))
+;;(def string->num (s (o radix 10))
+;;  ($ (let ((n (string->number s radix))) (if n n 'nil))))
 
 ;; Strange that this was omitted
 (def hexdigit (c) (or (digit c) (<= #\a c #\f) (<= #\A c #\F)))
+
+(mac aloop (withses . body)
+    (let w pair.withses
+    `((rfn recur ,(map1 car w) ,@body)
+        ,@(map1 cadr w))))
+
