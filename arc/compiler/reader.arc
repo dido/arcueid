@@ -34,42 +34,42 @@
 ;; Parse one s-expression from src.  Returns the s-expression.
 (def zread (src (o eof nil) (o rparen [err "misplaced " _]))
   (let fp (if (isa src 'string) (instring src) src)
-    ((loop (ch (scan fp))
-	   (case ch
-	     nil readeof
-	     #\( readlist
-	     #\) (rparen (readc fp))
-	     #\[ readbrfn
-	     #\] (rparen (readc fp))
-	     #\' (do (readc fp) (fn (f e) (readquote f e 'quote)))
-	     #\` (do (readc fp) (fn (f e) (readquote f e 'quasiquote)))
-	     #\, readcomma
-	     #\" readstring
-	     #\# (do (readc fp)
-		     (case (peekc fp)
-		       nil (err "end of file reached while reading #")
-		       #\\ readchar
-		       #\| (do (readblockcomment fp) (recur (scan fp)))
-		       #\! (do (readcomment fp) (recur (scan fp)))
-		       #\; (do (readsexprcomment fp eof) (recur (scan fp)))
-		       ;; #\( readvector
-		       ;; #\< (do (readc fp)
-		       ;; 	       (if (is (peekc fp) #\<)
-		       ;; 		   (do (readc fp)
-		       ;; 		       readheredoc)
-		       ;; 		   (fn (fp eof) (readsym fp eof "#<"))))
-		       #\/ readregex
-		       (fn (fp eof) (readsym fp eof "#"))))
-	     #\; (do (readcomment fp) (recur (scan fp)))
-	     readsym)) fp eof)))
+    ((aloop (ch (scan fp))
+	    (case ch
+	      nil readeof
+	      #\( readlist
+	      #\) (rparen (readc fp))
+	      #\[ readbrfn
+	      #\] (rparen (readc fp))
+	      #\' (do (readc fp) (fn (f e) (readquote f e 'quote)))
+	      #\` (do (readc fp) (fn (f e) (readquote f e 'quasiquote)))
+	      #\, readcomma
+	      #\" readstring
+	      #\# (do (readc fp)
+		      (case (peekc fp)
+			nil (err "end of file reached while reading #")
+			#\\ readchar
+			#\| (do (readblockcomment fp) (recur (scan fp)))
+			#\! (do (readcomment fp) (recur (scan fp)))
+			#\; (do (readsexprcomment fp eof) (recur (scan fp)))
+			;; #\( readvector
+			;; #\< (do (readc fp)
+			;; 	       (if (is (peekc fp) #\<)
+			;; 		   (do (readc fp)
+			;; 		       readheredoc)
+			;; 		   (fn (fp eof) (readsym fp eof "#<"))))
+			#\/ readregex
+			(fn (fp eof) (readsym fp eof "#"))))
+	      #\; (do (readcomment fp) (recur (scan fp)))
+	      readsym)) fp eof)))
 
 ;; Scan for the first non-blank character.  The non-blank character will
 ;; not be removed from fp.
 (def scan (fp)
-  (loop (r (peekc fp))
-	(if (no r) nil
-	    (whitec r) (do (readc fp) (recur (peekc fp)))
-	    r)))
+  (aloop (r (peekc fp))
+	 (if (no r) nil
+	     (whitec r) (do (readc fp) (recur (peekc fp)))
+	     r)))
 
 (def readeof (fp eof)
   eof)
@@ -82,11 +82,11 @@
 
 ;; Read a symbol from fp.  Should return a string.
 (def getsymbol (fp)
-  (loop (ch (peekc fp) buf (outstring))
-	(if (or (no ch) (no (symc ch)))
-	    (inside buf)
-	    (do (writec (readc fp) buf)
-		(recur (peekc fp) buf)))))
+  (aloop (ch (peekc fp) buf (outstring))
+	 (if (or (no ch) (no (symc ch)))
+	     (inside buf)
+	     (do (writec (readc fp) buf)
+		 (recur (peekc fp) buf)))))
 
 ;; Read a symbol from fp, adding the prefix (if specified).  Should
 ;; return the symbol or a number if the symbol can be parsed as a number.
@@ -97,15 +97,15 @@
 
 (def readlist (fp eof)
   (readc fp)			;remove opening paren that got us here
-  (loop (top nil last nil indot nil)
-	(scan fp)
-	(let ch (peekc fp)
-	  (if (no ch) (err "unterminated list meets end of file")
-	      (is ch #\.)
-	      (if indot (err "illegal use of .")
-		  (do (readc fp) (recur top last 1)))
-	      (ccc
-	       (fn (k)
+  (aloop (top nil last nil indot nil)
+	 (scan fp)
+	 (let ch (peekc fp)
+	   (if (no ch) (err "unterminated list meets end of file")
+	       (is ch #\.)
+	       (if indot (err "illegal use of .")
+		   (do (readc fp) (recur top last 1)))
+	       (ccc
+		 (fn (k)
 		   (let val (zread fp eof
 				   [if (is _ #\)) (k top)
 				       (err "misplaced " _)])
@@ -125,7 +125,7 @@
 ;; [ ... _ ... ] to (fn (_) (... _ ...))
 (def readbrfn (fp eof)
   (readc fp)			; remove opening bracket that got us here
-  (loop (top nil last nil)
+  (aloop (top nil last nil)
 	(scan fp)
 	(let ch (peekc fp)
 	  (if (no ch) (err "unterminated bracket fn meets end of file")
@@ -143,23 +143,23 @@
 ;; Read comments. Keep reading until we reach the end of line or end of
 ;; file.
 (def readcomment (fp)
-  (loop (r (readc fp))
-	(if (or (no r) (newlinec r)) r
-	    (recur (readc fp)))))
+  (aloop (r (readc fp))
+	 (if (or (no r) (newlinec r)) r
+	     (recur (readc fp)))))
 
 ;; Read block comments.  Keep reading and just ignore everything until
 ;; we see a |#.
 (def readblockcomment (fp)
   (readc fp)
-  (loop (r (readc fp) nestlevel 0)
-	(if (and (is r #\|) (is (peekc fp) #\#))
-	    (do (readc fp)
-		(if (is nestlevel 0)
-		    (peekc fp)
-		    (recur (readc fp) (- nestlevel 1))))
-	    (and (is r #\#) (is (peekc fp) #\|))
-	    (do (readc fp) (recur (readc fp) (+ nestlevel 1)))
-	    (recur (readc fp) nestlevel))))
+  (aloop (r (readc fp) nestlevel 0)
+	 (if (and (is r #\|) (is (peekc fp) #\#))
+	     (do (readc fp)
+		 (if (is nestlevel 0)
+		     (peekc fp)
+		     (recur (readc fp) (- nestlevel 1))))
+	     (and (is r #\#) (is (peekc fp) #\|))
+	     (do (readc fp) (recur (readc fp) (+ nestlevel 1)))
+	     (recur (readc fp) nestlevel))))
 
 ;; Read a sexpr comment.  Does a single read and ignores it.
 (def readsexprcomment (fp eof)
@@ -196,70 +196,70 @@
 	       (and (in (sym 0) #\u #\U)
 		    (string->num (substring sym 1) 16)))
 	   (coerce it 'char)		; Unicode escape
-	   (is (len sym 1))
+	   (is (len sym) 1)
 	   (sym 0)			; plain char
 	   (err (+ "bad character constant: #\\" sym))))))
 
 ;; Read a string.
 (def readstring (fp eof (o endch #\") (o metachar (fn (ch buf) nil)))
   (readc fp)
-  (loop (state 0 ch (peekc fp) buf (outstring) digits nil)
-	(case state
-	  ;; normal characters
-	  0 (if (is ch endch)
-		(recur 1 (readc fp) buf digits)
-		(is ch #\\) (do (readc fp) (recur 2 (peekc fp) buf digits))
-		(do (writec (readc fp) buf)
-		    (recur state (peekc fp) buf digits)))
-	  ;; end of string
-	  1 (inside buf)
-	  ;; escape sequence
-	  2 (let addesc [do (readc fp) (writec _ buf)
-			    (recur 0 (peekc fp) buf digits)]
-	      (if (is ch endch) (addesc endch)
-		  (case ch
-		    #\a (addesc #\u0007)
-		    #\b (addesc #\backspace)
-		    #\t (addesc #\tab)
-		    #\n (addesc #\newline)
-		    #\v (addesc #\vtab)
-		    #\f (addesc #\page)
-		    #\r (addesc #\return)
-		    #\e (addesc #\u001b)
-		    #\' (addesc #\')
-		    #\\ (addesc #\\)
-		    #\u (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 4)))
-		    #\U (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 8)))
-		    (if (metachar ch buf)
-			(do (readc fp) (recur 0 (peekc fp) buf digits))
-			(and (digit ch) (< ch #\8)) (recur 3 ch buf (list 0 0))
-			(err (+ "unknown escape sequence \\" ch " in string"))))))
-	  ;; octal escape sequence
-	  3
-	  (let (value ndigits) digits
-	    (if (and (digit ch) (< ch #\8) (< ndigits 3))
-		(do (readc fp)
-		    (recur state (peekc fp) buf
-			   (list (+ (* value 8) (- (int ch) 48))
-				 (+ ndigits 1))))
-		;; terminate
-		(do (writec (coerce value 'char) buf)
-		    (recur 0 ch buf nil))))
-	  4
-	  (if (hexdigit ch) (recur 5 ch buf digits)
-	      (err "no hex digit following Unicode escape in string"))
-	  5
-	  (let (value ndigits max) digits
-	    (if (and (< ndigits max) (hexdigit ch))
-		(let val (if (digit ch)
-			     (- (int ch) 48)
-			     (- (int:downcase ch) 87))
-		  (readc fp)
-		  (recur state (peekc fp) buf
-			 (list (+ (* value 16) val) (+ ndigits 1) max)))
-		(do (writec (coerce value 'char) buf)
-		    (recur 0 ch buf nil))))
-	  (err "FATAL: invalid readstring state"))))
+  (aloop (state 0 ch (peekc fp) buf (outstring) digits nil)
+	 (case state
+	   ;; normal characters
+	   0 (if (is ch endch)
+		 (recur 1 (readc fp) buf digits)
+		 (is ch #\\) (do (readc fp) (recur 2 (peekc fp) buf digits))
+		 (do (writec (readc fp) buf)
+		     (recur state (peekc fp) buf digits)))
+	   ;; end of string
+	   1 (inside buf)
+	   ;; escape sequence
+	   2 (let addesc [do (readc fp) (writec _ buf)
+			     (recur 0 (peekc fp) buf digits)]
+	       (if (is ch endch) (addesc endch)
+		   (case ch
+		     #\a (addesc #\u0007)
+		     #\b (addesc #\backspace)
+		     #\t (addesc #\tab)
+		     #\n (addesc #\newline)
+		     #\v (addesc #\vtab)
+		     #\f (addesc #\page)
+		     #\r (addesc #\return)
+		     #\e (addesc #\u001b)
+		     #\' (addesc #\')
+		     #\\ (addesc #\\)
+		     #\u (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 4)))
+		     #\U (do (readc fp) (recur 4 (peekc fp) buf (list 0 0 8)))
+		     (if (metachar ch buf)
+			 (do (readc fp) (recur 0 (peekc fp) buf digits))
+			 (and (digit ch) (< ch #\8)) (recur 3 ch buf (list 0 0))
+			 (err (+ "unknown escape sequence \\" ch " in string"))))))
+	   ;; octal escape sequence
+	   3
+	   (let (value ndigits) digits
+	     (if (and (digit ch) (< ch #\8) (< ndigits 3))
+		 (do (readc fp)
+		     (recur state (peekc fp) buf
+			    (list (+ (* value 8) (- (int ch) 48))
+				  (+ ndigits 1))))
+		 ;; terminate
+		 (do (writec (coerce value 'char) buf)
+		     (recur 0 ch buf nil))))
+	   4
+	   (if (hexdigit ch) (recur 5 ch buf digits)
+	       (err "no hex digit following Unicode escape in string"))
+	   5
+	   (let (value ndigits max) digits
+	     (if (and (< ndigits max) (hexdigit ch))
+		 (let val (if (digit ch)
+			      (- (int ch) 48)
+			      (- (int:downcase ch) 87))
+		   (readc fp)
+		   (recur state (peekc fp) buf
+			  (list (+ (* value 16) val) (+ ndigits 1) max)))
+		 (do (writec (coerce value 'char) buf)
+		     (recur 0 ch buf nil))))
+	   (err "FATAL: invalid readstring state"))))
 
 ;; Unique to Arcueid.  Not supported by regular Arc.
 (def readregex (fp eof)
@@ -276,16 +276,16 @@
 	 ;; recognises the i and m flags which denote case-insensitive
 	 ;; and multiline regexes respectively.  They may only be specified
 	 ;; exactly once.
-	 (loop (iflag nil mflag nil)
-	       (case (peekc fp)
-		 #\i (if iflag (err "case-insensitive flag specified more than once")
-			 (do (readc fp) (recur t mflag)))
-		 #\m (if mflag (err "multiline flag specified more than once")
-			 (do (readc fp) (recur iflag t)))
-		 (if (and iflag mflag) (mkregexp rx 3)
-		     iflag (mkregexp rx 2)
-		     mflag (mkregexp rx 1)
-		     (mkregexp rx 0))))))
+	 (aloop (iflag nil mflag nil)
+		(case (peekc fp)
+		  #\i (if iflag (err "case-insensitive flag specified more than once")
+			  (do (readc fp) (recur t mflag)))
+		  #\m (if mflag (err "multiline flag specified more than once")
+			  (do (readc fp) (recur iflag t)))
+		  (if (and iflag mflag) (mkregexp rx 3)
+		      iflag (mkregexp rx 2)
+		      mflag (mkregexp rx 1)
+		      (mkregexp rx 0))))))
 
 ;; (def readheredoc (fp eof)
 ;;   ;; first, read the terminator string. Include the newline at the end.
