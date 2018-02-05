@@ -75,7 +75,7 @@
    1. Parameters (prevsize)
    2. Local variables (extrasize)
    3. Environment size as a fixnum (prevsize + extrasize)
-   4. Previous environment
+   4. Next lexically superior environment
 
    A stack-based environment is an absolute fixnum offset from the top of
    the stack to the start of the environment.
@@ -91,11 +91,73 @@ void __arc_env_new(arc *c, value thr, int prevsize, int extrasize)
   for (i=0; i<extrasize; i++)
     CPUSH(thr, CUNBOUND);
   /* Add the count */
-  CPUSH(thr, INT2FIX(prevsize+extrasize));
+  CPUSH(thr, INT2FIX(prevsize+extrasize)); /* environment size */
   envstart = t->sp;
-  CPUSH(thr, t->env);
+  CPUSH(thr, t->env);		/* next lexically superior environment */
   esofs = INT2FIX(t->stktop - envstart);
   t->stkfn = t->sp;
   arc_wb(c, t->env, esofs);
   t->env = esofs;
+}
+
+#define HEAPENVP(env) (arc_type(env) == &__arc_vector_t)
+
+static value nextenv(arc *c, value thr, value env)
+{
+  value *envptr;
+  arc_thread *t;
+
+  if (NILP(env))
+    return(CNIL);
+
+  if (HEAPENVP(env))
+    return(VIDX(env, 0));
+
+  t = (arc_thread *)thr;
+  /* We have a stack-based environment. Get the address of the
+     environment pointer from the stack. */
+  envptr = t->stktop + FIX2INT(env);
+  return(*envptr);
+}
+  
+
+/* Get a pointer to a value from the environment. This works whether
+   an environment is on the stack or the heap. */
+static value *envval(arc *c, value thr, int depth, int index)
+{
+  arc_thread *t = (arc_thread *)thr;  
+  value *senv, *senvstart, env;
+  int count;
+
+  env = t->env;
+  /* Find the environment frame being referenced */
+  while (depth-- > 0 && !NILP(env))
+    env = nextenv(c, thr, env);
+
+  if (NILP(env))
+    return(CNIL);
+
+  if (HEAPENVP(env)) {
+    value *vec = (value *)env;
+    return(vec + index + 2);
+  }
+
+  /* For a stack-based environment, we have to do some gymnastics */
+  senv = t->stktop + FIX2INT(env);
+  count = FIX2INT(senv + 1);
+  senvstart = senv + count + 1;
+  return(senvstart - index);
+}
+
+value __arc_getenv(arc *c, value thr, int depth, int index)
+{
+  return(*envval(c, thr, depth, index));
+}
+
+value __arc_putenv(arc *c, value thr, int depth, int index, value val)
+{
+  value *ptr = envval(c, thr, depth, index);
+  arc_wb(c, *ptr, val);
+  *ptr = val;
+  return(val);
 }
