@@ -69,10 +69,23 @@
 #include "arcueid.h"
 #include "vmengine.h"
 
-void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
+/* The basic structure of a stack-based environment is as follows, from
+   higher to lower stack offsets, since the stack grows down:
+
+   1. Parameters (prevsize)
+   2. Local variables (extrasize)
+   3. Environment size as a fixnum (prevsize + extrasize)
+   4. Previous environment
+
+   A stack-based environment is an absolute fixnum offset from the top of
+   the stack to the start of the environment.
+ */
+void __arc_env_new(arc *c, value thr, int prevsize, int extrasize)
 {
   int i;
   arc_thread *t = (arc_thread *)thr;
+  value esofs;
+  value *envstart;
 
   /* Add the extra environment entries */
   for (i=0; i<extrasize; i++)
@@ -81,8 +94,8 @@ void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
   CPUSH(thr, INT2FIX(prevsize+extrasize));
   envstart = t->sp;
   CPUSH(thr, t->env);
-  esofs = t->stktop - envstart;
+  esofs = INT2FIX(t->stktop - envstart);
   t->stkfn = t->sp;
-  arc_wb(c, t->env, INT2FIX(esofs));
-  t->env = INT2FIX(esofs);
+  arc_wb(c, t->env, esofs);
+  t->env = esofs;
 }
