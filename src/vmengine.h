@@ -1,4 +1,4 @@
-o/* Copyright (C) 2017, 2018 Rafael R. Sevilla
+/* Copyright (C) 2017, 2018 Rafael R. Sevilla
 
    This file is part of Arcueid
 
@@ -124,7 +124,7 @@ typedef struct {
     XXX - check for the stack filling up
  */
 #define CPUSH(thr, val) do {			\
-    *(((arc_thread *)(thr)->sp)--) = (val);	\
+    *(((arc_thread *)(thr))->sp--) = (val);	\
   } while (0)
 
 /*! \def CPOP(thr)
@@ -156,7 +156,7 @@ extern enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff);
 
 /* =========== definitions and prototypes for environments */
 
-/*! \fn void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize)
+/*! \fn void __arc_env_new(arc *c, value thr, int prevsize, int extrasize)
     \brief Make a new stack environment
     Make a new environment on the stack.  The prevsize parameter is the
    count of objects already on the stack that become part of the
@@ -164,7 +164,7 @@ extern enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff);
    elements on the stack that are to be added.  These additional
    elements have the initial value CUNBOUND.
  */
-void __arc_mkenv(arc *c, value thr, int prevsize, int extrasize);
+void __arc_env_new(arc *c, value thr, int prevsize, int extrasize);
 
 
 #endif
