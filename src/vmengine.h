@@ -166,5 +166,14 @@ extern enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff);
  */
 void __arc_env_new(arc *c, value thr, int prevsize, int extrasize);
 
+/*! \fn value __arc_getenv(arc *c, value thr, int depth, int index)
+    \brief Get a value from the current environment.
+ */
+extern value __arc_getenv(arc *c, value thr, int depth, int index);
+
+/*! \fn value __arc_putenv(arc *c, value thr, int depth, int index, value val)
+    \brief Set a value in the current environment.
+ */
+extern value __arc_putenv(arc *c, value thr, int depth, int index, value val);
 
 #endif
