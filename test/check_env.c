@@ -41,9 +41,16 @@ START_TEST(test_env_simple)
   ck_assert(__arc_getenv(c, thr, 0, 4) == CUNBOUND);
   ck_assert(__arc_getenv(c, thr, 0, 5) == CUNBOUND);
 
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 0)), 1);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 1)), 2);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 2)), 3);
+  ck_assert(__arc_getenv0(c, thr, 3) == CUNBOUND);
+  ck_assert(__arc_getenv0(c, thr, 4) == CUNBOUND);
+  ck_assert(__arc_getenv0(c, thr, 5) == CUNBOUND);
+
   __arc_putenv(c, thr, 0, 3, INT2FIX(4));
-  __arc_putenv(c, thr, 0, 4, INT2FIX(5));
-  __arc_putenv(c, thr, 0, 5, INT2FIX(6));
+  __arc_putenv0(c, thr, 4, INT2FIX(5));
+  __arc_putenv0(c, thr, 5, INT2FIX(6));
 
   ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 0, 3)), 4);
   ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 0, 4)), 5);
