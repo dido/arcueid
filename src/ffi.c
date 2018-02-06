@@ -137,3 +137,64 @@ enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff)
 {
   return(((ffunc *)aff)->ff.aff(c, thr));
 }
+
+/* Sets up environment for functions with rest arguments */
+static void affenvr(arc *c, value thr, int minenv, int optenv, int dsenv)
+{
+  arc_thread *t = (arc_thread *)thr;
+  int i;
+  value rest;
+
+  if (t->argc < minenv) {
+    arc_err_cstr(c, t->line, "too few arguments, at least %d required, %d passed", minenv, t->argc);
+    return;
+  }
+  rest = CNIL;
+
+  /* Swallow as many extra arguments into the rest parameter,
+     up to the minimum + optional number of arguments */
+  for (i=t->argc; i>(minenv + optenv); i--)
+    rest = cons(c, CPOP(thr), rest);
+  /* Create a new environment with the number of additional
+     arguments thus obtained. Unbound arguments include an
+     extra one for storing the rest parameter, whatever it
+     might have */
+  __arc_env_new(c, thr, i, minenv + optenv - i + dsenv + 1);
+  /* Store the rest parameter */
+  __arc_putenv0(c, thr, minenv + optenv + dsenv, rest);
+}
+
+void __arc_affenv(arc *c, value thr, int nargs, int optargs,
+			 int localvars, int restarg)
+{
+  arc_thread *t = (arc_thread *)thr;
+
+  /* We only need to set up the environment if this is the first call
+     into the function. If this gets called again after the state
+     ("instruction pointer") is something other than zero, it does
+     nothing because the environment will already have been set up by
+     a prior call. */
+  if (t->ip != 0)
+    return;
+
+  if (restarg) {
+    affenvr(c, thr, nargs, optargs, localvars);
+    return;
+  }
+
+  if (t->argc < nargs) {
+    arc_err_cstr(c, t->line, "too few arguments, at least %d required, %d passed", nargs, t->argc);
+    return;
+  }
+
+  if (t->argc > nargs + optargs) {
+    arc_err_cstr(c, t->line, "too many arguments, at most %d allowed, %d passed", nargs + optargs, t->argc);
+    return;
+  }
+  __arc_env_new(c, thr, t->argc, nargs + optargs - t->argc + localvars);
+}
+
+int __arc_affip(arc *c, value thr)
+{
+  return(((arc_thread *)thr)->ip);
+}
