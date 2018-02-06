@@ -116,7 +116,7 @@ static value nextenv(arc *c, value thr, value env)
   t = (arc_thread *)thr;
   /* We have a stack-based environment. Get the address of the
      environment pointer from the stack. */
-  envptr = t->stktop + FIX2INT(env);
+  envptr = t->stktop - FIX2INT(env);
   return(*envptr);
 }
   
@@ -143,8 +143,8 @@ static value *envval(arc *c, value thr, int depth, int index)
   }
 
   /* For a stack-based environment, we have to do some gymnastics */
-  senv = t->stktop + FIX2INT(env);
-  count = FIX2INT(senv + 1);
+  senv = t->stktop - FIX2INT(env);
+  count = FIX2INT(*(senv + 1));
   senvstart = senv + count + 1;
   return(senvstart - index);
 }
