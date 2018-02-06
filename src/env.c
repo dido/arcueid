@@ -161,3 +161,31 @@ value __arc_putenv(arc *c, value thr, int depth, int index, value val)
   *ptr = val;
   return(val);
 }
+
+value __arc_getenv0(arc *c, value thr, int iindx)
+{
+  arc_thread *t = (arc_thread *)thr;
+  value *base;
+  int count;
+
+  if (HEAPENVP(t->env))
+    return(VIDX(t->env, iindx+1));
+  base = t->stktop - FIX2INT(t->env);
+  count = FIX2INT(*(base + 1));
+  return(*(base + count + 1 - iindx));
+}
+
+value __arc_putenv0(arc *c, value thr, int iindx, value val)
+{
+  arc_thread *t = (arc_thread *)thr;
+  value *base, *ptr;
+  int count;
+
+  if (HEAPENVP(t->env))
+    return(SVIDX(c, t->env, iindx+1, val));
+  base = t->stktop - FIX2INT(t->env);
+  count = FIX2INT(*(base + 1));
+  ptr = base + count + 1 - iindx;
+  arc_wb(c, *ptr, val);
+  return(*ptr = val);
+}
