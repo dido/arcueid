@@ -50,7 +50,7 @@ arctype __arc_thread_t = { NULL, mark, NULL, NULL, NULL, init, NULL };
 value __arc_thread_new(arc *c, int tid)
 {
   value thr = arc_new(c, &__arc_thread_t, sizeof(arc_thread));
-  arc_thread *t = (arc_thread *)t;
+  arc_thread *t = (arc_thread *)thr;
   value *s;
   int slen;
 
