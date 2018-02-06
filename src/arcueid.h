@@ -674,6 +674,8 @@ extern value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value));
 /*! \fn void __arc_affenv(arc *c, value thr, int nargs, int optargs,
 			 int localvars, int restarg)
     \brief Set up the environment for a foreign function
+    This is not intended to be used directly. It is generally to be used
+    only by the AFBEGIN macro.
  */
 extern void __arc_affenv(arc *c, value thr, int nargs, int optargs,
 			 int localvars, int restarg);
@@ -690,6 +692,13 @@ extern enum arc_trstate __arc_affapply(arc *c, value thr, value cont, value func
    The function may be a bytecode function or some other function.
  */
 extern enum arc_trstate __arc_affapply2(arc *c, value thr, value cont, value func, value argv);
+
+/*! \fn int __arc_affip(arc *c, value thr)
+    \brief Get the current state (instruction pointer) of a foreign function
+    This function should normally not be used directly, but only as part
+    of the AFBEGIN macro below.
+ */
+extern int __arc_affip(arc *c, value thr);
 
 /* Arcueid Foreign Functions.  This is possibly the most insane abuse
    of the C preprocessor I have ever done.  The technique used for defining
