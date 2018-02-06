@@ -67,6 +67,30 @@ START_TEST(test_env_simple)
   ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 1, 4)), 5);
   ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 1, 5)), 6);
 
+  CPUSH(thr, INT2FIX(11));
+  CPUSH(thr, INT2FIX(12));
+  CPUSH(thr, INT2FIX(13));
+  CPUSH(thr, INT2FIX(14));
+  CPUSH(thr, INT2FIX(15));
+  __arc_env_new(c, thr, 5, 0);
+
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 0, 0)), 11);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 0, 1)), 12);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 0, 2)), 13);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 0, 3)), 14);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 0, 4)), 15);
+
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 1, 0)), 7);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 1, 1)), 8);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 1, 2)), 9);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 1, 3)), 10);
+
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 2, 0)), 1);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 2, 1)), 2);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 2, 2)), 3);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 2, 3)), 4);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 2, 4)), 5);
+  ck_assert_int_eq(FIX2INT(__arc_getenv(c, thr, 2, 5)), 6);
 }
 END_TEST
 
