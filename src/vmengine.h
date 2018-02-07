@@ -176,6 +176,14 @@ extern value __arc_getenv(arc *c, value thr, int depth, int index);
  */
 extern value __arc_putenv(arc *c, value thr, int depth, int index, value val);
 
+/*! \fn value void __arc_menv(arc *c, value thr, int n)
+    \brief Move environment
+    Used for tail calls, to overwrite the current environment with the
+    current arguments just before a function application. Normally
+    occurs with the menv instruction which is generated before tail
+    calls.
+ */
+extern void __arc_menv(arc *c, value thr, int n);
 
 /*! \fn void __arc_restorecont(arc *c, value thr, value cont)
     \brief Restore a continuation
