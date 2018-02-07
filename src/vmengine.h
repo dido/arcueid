@@ -176,4 +176,10 @@ extern value __arc_getenv(arc *c, value thr, int depth, int index);
  */
 extern value __arc_putenv(arc *c, value thr, int depth, int index, value val);
 
+
+/*! \fn void __arc_restorecont(arc *c, value thr, value cont)
+    \brief Restore a continuation
+ */
+extern void __arc_restorecont(arc *c, value thr, value cont);
+
 #endif
