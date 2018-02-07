@@ -27,6 +27,28 @@ AFFDEF(simple_aff)
 }
 AFFEND
 
+AFFDEF(subtractor)
+{
+  AARG(a, b);
+  AFBEGIN;
+  ARETURN(INT2FIX(FIX2INT(AV(a)) - FIX2INT(AV(b))));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(doubler)
+{
+  AARG(a, b);
+  AVAR(subf);
+  AFBEGIN;
+
+  WV(subf, arc_aff_new(c, subtractor));
+  AFCALL(AV(subf), AV(a), AV(b));
+  ARETURN(INT2FIX(2 * FIX2INT(AFCRV)));
+  AFEND;
+}
+AFFEND
+
 START_TEST(test_aff_simple)
 {
   arc cc;
@@ -41,6 +63,44 @@ START_TEST(test_aff_simple)
 }
 END_TEST
 
+START_TEST(test_subtractor)
+{
+  arc cc;
+  arc *c = &cc;
+  value thr;
+  arc_thread *t;
+
+  arc_init(c);
+  thr = __arc_thread_new(c, 1);
+  t = (arc_thread *)thr;
+  arc_thr_setacc(c, thr, arc_aff_new(c, subtractor));
+  CPUSH(thr, INT2FIX(3));
+  CPUSH(thr, INT2FIX(2));
+  t->argc = 2;
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
+  ck_assert_int_eq(FIX2INT(arc_thr_acc(c, thr)), 1);
+}
+END_TEST
+
+START_TEST(test_doubler)
+{
+  arc cc;
+  arc *c = &cc;
+  value thr;
+  arc_thread *t;
+
+  arc_init(c);
+  thr = __arc_thread_new(c, 1);
+  t = (arc_thread *)thr;
+  arc_thr_setacc(c, thr, arc_aff_new(c, doubler));
+  CPUSH(thr, INT2FIX(5));
+  CPUSH(thr, INT2FIX(2));
+  t->argc = 2;
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
+  ck_assert_int_eq(FIX2INT(arc_thr_acc(c, thr)), 6);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -49,6 +109,8 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_aff, test_aff_simple);
+  tcase_add_test(tc_aff, test_subtractor);
+  tcase_add_test(tc_aff, test_doubler);
 
   suite_add_tcase(s, tc_aff);
   sr = srunner_create(s);
