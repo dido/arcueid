@@ -1,5 +1,5 @@
 ARCUEID README -- Important introductory notes.
-Copyright (C) 2009,2010,2011,2012 Rafael R. Sevilla
+Copyright (C) 2018 Rafael R. Sevilla
 See the end for copying conditions.
 
 This is Arcueid, an implementation of Paul Graham's Arc dialect of
@@ -29,7 +29,7 @@ Please report any problems with Arcueid on the project's Github
 issue tracker: https://github.com/dido/arcueid/issues
 
 For more information on the Arc dialect of Lisp, see the Arc Language
-wiki: http://sites.google.com/site/arclanguagewiki/home
+site: http://arclanguage.github.io.
 
 If you are building this from a source tarball, the usual ./configure;
 make; make install combo should work, but you will get an Arcueid REPL
@@ -50,7 +50,7 @@ prerequisites installed:
 - GNU MP and any development headers (libgmp and libgmp-dev on
   Ubuntu/Debian)
 - GNU Check (http://check.sourceforge.net, available under the package
-  name 'check' on Ubuntu)
+  name 'check' on Ubuntu) if you want to run the unit tests
 - GNU Readline and any development headers (libreadline-dev)
 - pkg-config (http://www.freedesktop.org/wiki/Software/pkg-config,
   pkg-config on Ubuntu/Debian)
