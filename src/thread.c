@@ -83,13 +83,18 @@ value __arc_thread_new(arc *c, int tid)
 enum arc_trstate __arc_vmengine(arc *c, value thr, value func)
 {
   /* XXX fill me in! */
+  __arc_fatal("__arc_vmengine not yet implemented", 0);
   return(TR_SUSPEND);
 }
 
 static value apply_cont(arc *c, value thr)
 {
-  /* XXX fill me in */
-  return(CNIL);
+  value cont = ((arc_thread *)thr)->cont;
+
+  if (NILP(cont))
+    return(CNIL);
+  __arc_restorecont(c, thr, cont);
+  return(cont);
 }
 
 void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
@@ -117,9 +122,8 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
     case TR_FNAPP:
       /* Apply value in the accumulator */
       type = arc_type(t->acc);
-      /* XXX - error handling should be fixed here */
       if (type->apply == NULL)
-	__arc_fatal("cannot apply object", 0);
+	arc_err_cstr(c, t->line, "cannot apply object", 0);
       state = type->apply(c, thr, t->acc);
       break;
     case TR_RC:
@@ -144,6 +148,7 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
 static void process_iowait(arc *c, value iothreads, int select_timeout)
 {
   /* XXX fill this in */
+  __arc_fatal("__arc_vmengine not yet implemented", 0);
 }
 
 void arc_thread_dispatch(arc *c)
@@ -244,7 +249,7 @@ void arc_thread_dispatch(arc *c)
     /* All runnable threads have been allowed to run. See if we need
        any post-run cleanup work before we resume the loop */
     if (iowait > 0) {
-      /* XXX Select timeout is chosen based on the following:
+      /* Select timeout is chosen based on the following:
 	 1. If the GC has not yet finished an epoch, do not wait.
 	 2. If all threads are blocked on I/O or are waiting on
 	    channels, wait until I/O is possible.
