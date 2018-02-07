@@ -225,6 +225,8 @@ enum arc_trstate __arc_affapply(arc *c, value thr, value cont, value func, ...)
   t->argc = argc;
   /* Set accumulator to function to be called */
   arc_thr_setacc(c, thr, func);
-  /* XXX - do something about environments with tail calls */
+  /* If this is a tail call, overwrite the current environment */
+  if (NILP(cont))
+    __arc_menv(c, thr, argc);
   return(TR_FNAPP);
 }
