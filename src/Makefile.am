@@ -18,9 +18,9 @@
 lib_LTLIBRARIES = libarcueid.la
 
 libarcueid_la_LDFLAGS = -Wl,--no-as-needed -version-info 0:0:0
-libarcueid_la_SOURCES = alloc.c arcueid.c arith.c cons.c env.c err.c \
-	ffi.c gc.c hash.c osdep.c rune.c string.c symbol.c util.c \
-	thread.c vector.c utf.c weakref.c
+libarcueid_la_SOURCES = alloc.c arcueid.c arith.c cons.c cont.c \
+	env.c err.c ffi.c gc.c hash.c osdep.c rune.c string.c \
+	symbol.c util.c thread.c vector.c utf.c weakref.c
 
 include_HEADERS = arcueid.h
 noinst_HEADERS = alloc.h gc.h hash.h utf.h vmengine.h ../config.h
