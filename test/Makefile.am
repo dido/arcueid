@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
-TESTS = check_alloc check_cons check_env check_gc check_hash check_rune \
-	check_string check_symbol
-check_PROGRAMS = check_alloc check_cons check_env check_gc check_hash \
+TESTS = check_alloc check_cons check_env check_ffi check_gc check_hash \
 	check_rune check_string check_symbol
+check_PROGRAMS = check_alloc check_cons check_env check_ffi check_gc \
+	check_hash check_rune check_string check_symbol
 
 check_alloc_SOURCES = check_alloc.c $(top_builddir)/src/arcueid.h $(top_builddir)/src/alloc.h
 check_alloc_CFLAGS = @CHECK_CFLAGS@
@@ -28,9 +28,13 @@ check_cons_SOURCES = check_cons.c $(top_builddir)/src/arcueid.h
 check_cons_CFLAGS = @CHECK_CFLAGS@
 check_cons_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
-check_env_SOURCES = check_env.c $(top_builddir)/src/arcueid.h
+check_env_SOURCES = check_env.c $(top_builddir)/src/arcueid.h $(top_builddir)/src/vmengine.h
 check_env_CFLAGS = @CHECK_CFLAGS@
 check_env_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
+
+check_ffi_SOURCES = check_ffi.c $(top_builddir)/src/arcueid.h $(top_builddir)/src/vmengine.h
+check_ffi_CFLAGS = @CHECK_CFLAGS@
+check_ffi_LDADD = @CHECK_LIBS@ -L../src @LIBARCUEID_LIBS@
 
 check_gc_SOURCES = check_gc.c $(top_builddir)/src/arcueid.h $(top_builddir)/src/alloc.h $(top_builddir)/src/gc.h
 check_gc_CFLAGS = @CHECK_CFLAGS@
