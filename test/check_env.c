@@ -101,6 +101,74 @@ START_TEST(test_env_simple)
 }
 END_TEST
 
+START_TEST(test_menv)
+{
+  arc cc;
+  arc *c = &cc;
+  value thr;
+
+  arc_init(c);
+  thr = __arc_thread_new(c, 1);
+  CPUSH(thr, INT2FIX(1));
+  CPUSH(thr, INT2FIX(2));
+  CPUSH(thr, INT2FIX(3));
+  __arc_env_new(c, thr, 3, 0);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 0)), 1);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 1)), 2);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 2)), 3);
+
+  CPUSH(thr, INT2FIX(4));
+  CPUSH(thr, INT2FIX(5));
+  CPUSH(thr, INT2FIX(6));
+  __arc_menv(c, thr, 3);
+  __arc_env_new(c, thr, 3, 0);
+
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 0)), 4);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 1)), 5);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 2)), 6);
+
+  /* New environment smaller than old */
+  thr = __arc_thread_new(c, 2);
+
+  CPUSH(thr, INT2FIX(1));
+  CPUSH(thr, INT2FIX(2));
+  CPUSH(thr, INT2FIX(3));
+  __arc_env_new(c, thr, 3, 0);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 0)), 1);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 1)), 2);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 2)), 3);
+  CPUSH(thr, INT2FIX(7));
+  CPUSH(thr, INT2FIX(8));
+  __arc_menv(c, thr, 2);
+  __arc_env_new(c, thr, 2, 0);
+
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 0)), 7);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 1)), 8);
+
+  /* New environment is larger than the old environment */
+  thr = __arc_thread_new(c, 3);
+
+  CPUSH(thr, INT2FIX(1));
+  CPUSH(thr, INT2FIX(2));
+  CPUSH(thr, INT2FIX(3));
+  __arc_env_new(c, thr, 3, 0);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 0)), 1);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 1)), 2);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 2)), 3);
+  CPUSH(thr, INT2FIX(9));
+  CPUSH(thr, INT2FIX(10));
+  CPUSH(thr, INT2FIX(11));
+  CPUSH(thr, INT2FIX(12));
+  __arc_menv(c, thr, 4);
+  __arc_env_new(c, thr, 4, 0);
+
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 0)), 9);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 1)), 10);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 2)), 11);
+  ck_assert_int_eq(FIX2INT(__arc_getenv0(c, thr, 3)), 12);
+}
+END_TEST
+
 int main(void)
 {
   int number_failed;
@@ -109,6 +177,7 @@ int main(void)
   SRunner *sr;
 
   tcase_add_test(tc_env, test_env_simple);
+  tcase_add_test(tc_env, test_menv);
 
   suite_add_tcase(s, tc_env);
   sr = srunner_create(s);
