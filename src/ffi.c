@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Lesser General Public
    License along with this library; if not, see <http://www.gnu.org/licenses/>.
 */
-
+#include <stdarg.h>
 #include "arcueid.h"
 #include "vmengine.h"
 
@@ -197,4 +197,34 @@ void __arc_affenv(arc *c, value thr, int nargs, int optargs,
 int __arc_affip(arc *c, value thr)
 {
   return(((arc_thread *)thr)->ip);
+}
+
+enum arc_trstate __arc_affapply(arc *c, value thr, value cont, value func, ...)
+{
+  int argc;
+  va_list ap;
+  value arg;
+  arc_thread *t = (arc_thread *)thr;
+
+  /* Add the continuation to the continuation register if a
+     continuation was passed. If it is nil, then the current
+     continuation is used, as it is a tail call. */
+  if (!NILP(cont)) {
+    arc_wb(c, t->cont, cont);
+    t->cont = cont;
+  }
+  va_start(ap, func);
+  /* Push arguments onto the stack. Look for CLASTARG sentinel */
+  va_start(ap, func);
+  while ((arg = va_arg(ap, value)) != CLASTARG) {
+    argc++;
+    CPUSH(thr, arg);
+  }
+  va_end(ap);
+  /* Set the argument count */
+  t->argc = argc;
+  /* Set accumulator to function to be called */
+  arc_thr_setacc(c, thr, func);
+  /* XXX - do something about environments with tail calls */
+  return(TR_FNAPP);
 }
