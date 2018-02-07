@@ -66,6 +66,7 @@
        Record of the 1988 ACM Symposium on Lisp and Functional
        Programming, ACM, 1988. DOI 10.1145/62678.62692
  */
+#include <string.h>
 #include "arcueid.h"
 #include "vmengine.h"
 
@@ -188,4 +189,60 @@ value __arc_putenv0(arc *c, value thr, int iindx, value val)
   ptr = base + count + 1 - iindx;
   arc_wb(c, *ptr, val);
   return(*ptr = val);
+}
+
+/* Move n elements from the top of stack, overwriting the current
+   environment.  Points the stack pointer to just above the last
+   element moved.  Does not do this if current environment is on
+   the heap.  It will, in either case, set the environment register to
+   the parent environment (possibly leaving the heap environment as
+   garbage to be collected)
+
+   This is essentially used to support tail calls and tail recursion.
+   When this mechanism is used, the new arguments are on the stack,
+   over the previous environment.  It will move all of the new arguments
+   onto the old environment and adjust the stack pointer appropriately.
+   When control is transferred to the tail called function the call
+   to __arc_mkenv will turn the stuff on the stack into a new
+   environment. */
+void __arc_menv(arc *c, value thr, int n)
+{
+  arc_thread *t = (arc_thread *)thr;
+  value *src, *dest, *penv;
+  value parentenv;
+  int i;
+
+  /* Do nothing if we have no env */
+  if (NILP(t->env))
+    return;
+
+  parentenv = nextenv(c, thr, t->env);
+
+  if (HEAPENVP(t->env)) {
+    /* If we have a heap environment, none of this black magic needs
+       to be done. We merely need to set the environment register to
+       point to the parent environment. That heap environment might
+       just become garbage as a result. */
+    arc_wb(c, t->env, parentenv);
+    t->env = parentenv;
+  }
+  /* First we need to run the write barrier on the environment that is
+     about to be overwritten. */
+  penv = t->stktop - FIX2INT(t->env);
+  for (i=0; i<FIX2INT(*(penv + 1)); i++)
+    arc_wb(c, *envval(c, thr, 0, i), CNIL);
+  /* Source of our copy is the last value pushed on the stack */
+  src = t->sp + 1;
+  /* Destination of our copy is the (n-1)th element of the
+     environment. May be larger or smaller than the actual size of the
+     environment. Doesn't matter, as long as it remains inside the
+     stack! */
+  dest = envval(c, thr, 0, n-1);
+  /* memmove because the new environment might be larger than the old
+     and as such they might overlap. */
+  memmove(dest, src, n*sizeof(value));
+  /* new stack pointer points to just outside previous one */
+  t->sp = dest-1;
+  arc_wb(c, t->env, parentenv);
+  t->env = parentenv;  
 }
