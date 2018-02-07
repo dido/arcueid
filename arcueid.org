@@ -7,7 +7,7 @@ notice and this notice are preserved.
 ----------------------------------------------------------------------
 
 * The Arc Runtime
-** TODO base virtual machine [2/9]
+** TODO base virtual machine [3/9]
     - [X] Define virtual machine architecture
     - [X] Design interpreter core
 	  The interpreter core should be flexible enough that we can
@@ -71,10 +71,10 @@ notice and this notice are preserved.
 	  Heap-based continuations are required to support ccc.
       - [ ] Stack-based
       - [ ] Heap-based
-    - [ ] Foreign function interface [0/3]
-      - [ ] Calling convention 1 (straight args)
-      - [ ] Calling convention 2 (args as a C array)
-      - [ ] Arcueid Foreign Functions (AFF)
+    - [X] Foreign function interface [3/3]
+      - [X] Calling convention 1 (straight args)
+      - [X] Calling convention 2 (args as a C array)
+      - [X] Arcueid Foreign Functions (AFF)
     - [ ] Enable GCC's labels as values for doing interpreter threading
     - [ ] Type invocations [0/5]
       - [ ] procedure
