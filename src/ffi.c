@@ -35,17 +35,9 @@
 void *alloca (size_t);
 #endif
 
-typedef struct {
-  int argc;
-  union {
-    value (*ff)();
-    enum arc_trstate (*aff)(arc *, value);
-  } ff;
-} ffunc;
-
 enum arc_trstate apply(arc *c, value thr, value v)
 {
-  ffunc *ff = (ffunc *)v;
+  arc_ffunc *ff = (arc_ffunc *)v;
   int argc, i;
   value *argv;
   arc_thread *t = (arc_thread *)thr;
@@ -117,8 +109,8 @@ arctype __arc_ffunc_t = { NULL, NULL, NULL, NULL, NULL, NULL, apply };
 
 value arc_ff_new(arc *c, int argc, value (*func)())
 {
-  value vff = arc_new(c, &__arc_ffunc_t, sizeof(ffunc));
-  ffunc *ff = (ffunc *)vff;
+  value vff = arc_new(c, &__arc_ffunc_t, sizeof(arc_ffunc));
+  arc_ffunc *ff = (arc_ffunc *)vff;
   ff->argc = argc;
   ff->ff.ff = func;
   return(vff);
@@ -126,8 +118,8 @@ value arc_ff_new(arc *c, int argc, value (*func)())
 
 value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value))
 {
-  value vff = arc_new(c, &__arc_ffunc_t, sizeof(ffunc));
-  ffunc *ff = (ffunc *)vff;
+  value vff = arc_new(c, &__arc_ffunc_t, sizeof(arc_ffunc));
+  arc_ffunc *ff = (arc_ffunc *)vff;
   ff->argc = -2;
   ff->ff.aff = func;
   return(vff);
@@ -135,7 +127,7 @@ value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value))
 
 enum arc_trstate __arc_resume_aff(arc *c, value thr, value aff)
 {
-  return(((ffunc *)aff)->ff.aff(c, thr));
+  return(((arc_ffunc *)aff)->ff.aff(c, thr));
 }
 
 /* Sets up environment for functions with rest arguments */
