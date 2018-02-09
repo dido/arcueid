@@ -640,8 +640,8 @@ extern int arc_thr_setip(arc *c, value thr, int ip);
 extern value arc_thr_setfunc(arc *c, value thr, value fun);
 
 /*! \fn enum arc_trstate __arc_affyield(arc *c, value thr)
-    \brief Yield execution of a foreign function.
-    Voluntarily give up the thread's time slice until the thread can
+    \brief Yield execution of a thread.
+    Voluntarily give up a thread's time slice until the thread can
     be scheduled again.
  */
 extern enum arc_trstate __arc_yield(arc *c, value thr);
@@ -660,6 +660,17 @@ extern enum arc_trstate __arc_thr_iowait(arc *c, value thr, int fd, int rw);
     \brief Type definition structure for foreign functions
  */
 extern arctype __arc_ffunc_t;
+
+/*! \struct arc_ffunc
+    \brief Foreign function
+ */
+typedef struct {
+  int argc;	  /*!< argument count (-1 for variadic, -2 for aff) */
+  union {
+    value (*ff)();		/*!< standard foreign function */
+    enum arc_trstate (*aff)(arc *, value); /*!< Arcueid foreign function  */
+  } ff;					   /*!< Foreign function  */
+} arc_ffunc;
 
 /*! \fn value arc_ff_new(arc *c, int argc, value (*func)())
     \brief Create a simple foreign function
