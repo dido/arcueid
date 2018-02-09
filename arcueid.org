@@ -52,8 +52,8 @@ notice and this notice are preserved.
       - [ ] cls
       - [ ] consr
       - [ ] imenv
-    - [ ] Environments [0/2]
-      - [ ] Stack-based
+    - [-] Environments [1/2]
+      - [X] Stack-based
       - [ ] Heap-based
 
 	We use what Clinger et. al. call the stack/heap strategy.
@@ -67,9 +67,9 @@ notice and this notice are preserved.
 	2. A closure is stored in the global environment
         3. A closure is stored in an environment other than at level 0.
 
-    - [ ] Continuations [0/2]
+    - [-] Continuations [1/2]
 	  Heap-based continuations are required to support ccc.
-      - [ ] Stack-based
+      - [X] Stack-based
       - [ ] Heap-based
     - [X] Foreign function interface [3/3]
       - [X] Calling convention 1 (straight args)
@@ -622,20 +622,15 @@ notice and this notice are preserved.
    - [ ] grune
    - [ ] gstr
    - [ ] gsym
-   - [ ] gbstr - binary strings
    - [ ] crat
    - [ ] ccomplex
    - [ ] ccons
-   - [ ] cannotate - this is for the moment limited to creating T_CODE
-         objects from a cons consisting of the binary bytecode string
-         and literals
+   - [ ] cannotate
    - [ ] xdup
    - [ ] xmst
    - [ ] xmld
    - [ ] gtab
    - [ ] ctadd
-   - [ ] additional functionality for cannotate, so that it can, you
-	 know, actually perform type annotations...
 * Enhancements
 ** TODO use ropes as strings
    This is a valuable enhancement as efficent string handling for very
