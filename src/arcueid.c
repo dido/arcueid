@@ -23,9 +23,28 @@
 #include "gc.h"
 #include "../config.h"
 
+struct {
+  char *name;
+  arctype *t;
+} __arc_builtin_types[] = {
+  { "nil", &__arc_nil_t },
+  { "fixnum", &__arc_fixnum_t },
+  { "flonum", &__arc_flonum_t },
+  { "cons", &__arc_cons_t },
+  { "hashtbl", &__arc_tbl_t },
+  { "vector", &__arc_vector_t },
+  { "wref", &__arc_wref_t },
+  { "rune", &__arc_rune_t },
+  { "sym", &__arc_sym_t },
+  { "string", &__arc_string_t },
+  { NULL, NULL}
+};
+
 static void markroots(arc *c, void (*marker)(struct arc *, value))
 {
-  /* XXX fill in later */
+  marker(c, c->vmthreads);
+  marker(c, c->runetbl);
+  marker(c, c->obtbl);
 }
 
 void arc_init(arc *c)
@@ -34,6 +53,16 @@ void arc_init(arc *c)
   c->gc_ctx = __arc_new_gc_ctx(c);
   c->markroots = markroots;
   c->stksize = THREAD_STACK_SIZE;
+}
+
+void arc_types_init(arc *c)
+{
+  int i;
+
+  for (i=0; __arc_builtin_types[i].name; i++) {
+    if (__arc_builtin_types[i].t->init != NULL)
+      __arc_builtin_types[i].t->init(c);
+  }
 }
 
 arctype __arc_nil_t = { NULL, NULL, __arc_immediate_hash, NULL, NULL, NULL, NULL };
@@ -92,18 +121,3 @@ int __arc_is(arc *c, value v1, value v2)
   return(t->is(c, v1, v2));
 }
 
-struct {
-  char *name;
-  arctype *t;
-} __arc_builtin_types[] = {
-  { "nil", &__arc_nil_t },
-  { "fixnum", &__arc_fixnum_t },
-  { "flonum", &__arc_flonum_t },
-  { "cons", &__arc_cons_t },
-  { "hashtbl", &__arc_tbl_t },
-  { "vector", &__arc_vector_t },
-  { "wref", &__arc_wref_t },
-  { "rune", &__arc_rune_t },
-  { "sym", &__arc_sym_t },
-  { "string", &__arc_string_t }
-};
