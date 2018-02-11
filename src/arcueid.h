@@ -17,7 +17,7 @@
 */
 
 /*! \file arcueid.h
-    \brief Main include file for Arcueid
+    \brief Main header file for Arcueid
  */
 #ifndef _ARCUEID_H_
 
@@ -869,6 +869,27 @@ extern int __arc_affip(arc *c, value thr);
     arc_thr_setacc(c, thr, val);		\
     return(TR_RC);				\
   } while (0)
+
+/* =========== definitions and prototypes for I/O */
+/*! \var arctype __arc_io_t
+    \brief Type definition structure for I/O objects
+ */
+extern arctype __arc_io_t;
+
+/*! \fn value __arc_allocio(arc *c, size_t xdsize, arc_type *t, value ioops)
+    \brief Allocate an I/O object
+    Should not be used directly unless you're making an I/O object.
+    \arg \c xdsize Size of extra data required by the I/O object
+    \arg \c t Type definition for the I/O object (delegated to by the new I/O object)
+    \agr \c ioops I/O operation functions
+ */
+extern value __arc_allocio(arc *c, size_t xdsize, arc_type *t, value ioops);
+
+/*! \fn void *__arc_iodata(value io)
+    \brief Get specific I/O data for an I/O object
+    Generally only useful for the implementors of I/O-style objects.
+ */
+extern void *__arc_iodata(value io);
 
 /* =========== definitions and prototypes for error handling */
 
