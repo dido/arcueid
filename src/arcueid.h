@@ -163,7 +163,7 @@ extern void arc_init(arc *c);
 
 /* Memory management functions */
 
-/*! \fn value arc_new(arc *c, arctype *t, size_t extrasize)
+/*! \fn value arc_new(arc *c, arctype *t, size_t size)
     \brief Allocate an Arc object
     \param c The Arc context
     \param t The type descriptor for the object
@@ -881,9 +881,9 @@ extern arctype __arc_io_t;
     Should not be used directly unless you're making an I/O object.
     \arg \c xdsize Size of extra data required by the I/O object
     \arg \c t Type definition for the I/O object (delegated to by the new I/O object)
-    \agr \c ioops I/O operation functions
+    \arg \c ioops I/O operation functions
  */
-extern value __arc_allocio(arc *c, size_t xdsize, arc_type *t, value ioops);
+extern value __arc_allocio(arc *c, size_t xdsize, arctype *t, value ioops);
 
 /*! \fn void *__arc_iodata(value io)
     \brief Get specific I/O data for an I/O object
