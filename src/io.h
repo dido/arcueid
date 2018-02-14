@@ -65,11 +65,10 @@ enum {
     be added for specific I/O objects.
 */
 struct io_t {
-  unsigned int flags;		/*!< flags  */
-  Rune ungetrune;		/*!< Buffered unget rune  */
-  value io_ops;			/*!< I/O operations functions  */
-  arc_type *iot;		/*!< Specific I/O type (called after)  */
-  char _data[1];		/*!< pointer to specific data of the I/O  */
+  Rune ungetrune;	  /*!< Buffered unget rune  */
+  value io_ops;		  /*!< I/O operations functions  */
+  arctype *iot;		  /*!< Specific I/O type (called after)  */
+  char _data[1];	  /*!< pointer to specific data of the I/O  */
 };
 
 /*! \def IOHDRSIZE
@@ -97,7 +96,7 @@ struct io_t {
 /*! \def IODATA(v, t)
     \brief Specific I/O data
  */
-#define IODATA(v, t) ((t)(((char *)(((struct io_t *)(v))->_data)) + GCHPAD))
+#define IODATA(v) (((char *)(((struct io_t *)(v))->_data)) + IOPAD)
 
 /*! \def IO_OP(op)
     \brief Get the I/O op function
