@@ -366,6 +366,10 @@ struct hash_ctx {
  */
 #define CUNBOUND ((value)2)
 
+/*! \def BOUNDP(v)
+    \brief Macro to test if a value is bound (not CUNBOUND)
+ */
+#define BOUNDP(v) ((v) != (CUNBOUND))
 
 /*! \def ARC_HASHBITS
     \brief Default initial number of bits for hashes
@@ -655,6 +659,27 @@ extern enum arc_trstate __arc_yield(arc *c, value thr);
  */
 extern enum arc_trstate __arc_thr_iowait(arc *c, value thr, int fd, int rw);
 
+/*! \fn value arc_cmark(arc *c, value thr, value key)
+    \brief Read a continuation mark from in a thread
+ */
+extern value arc_cmark(arc *c, value thr, value key);
+
+/*! \fn value arc_scmark(arc *c, value thr, value key, value val)
+    \brief Set a continuation mark in a thread
+    This function should not be used directly. Using it in ways
+    substantially different from the way the call-w/cmark macro uses
+    it will cause the continuation mark system to malfunction.
+ */
+extern value arc_scmark(arc *c, value thr, value key, value val);
+
+/*! \fn value arc_scmark(arc *c, value thr, value key, value val)
+    \brief Clear a continuation mark in a thread
+    This function should not be used directly. Using it in ways
+    substantially different from the way the call-w/cmark macro uses
+    it will cause thecontinuation mark system to malfunction.
+ */
+extern value arc_ccmark(arc *c, value thr, value key);
+
 /* =========== Definitions and prototypes for foreign functions */
 /*! \var arctype __arc_ffunc_t
     \brief Type definition structure for foreign functions
@@ -902,6 +927,18 @@ extern void arc_err_cstr(arc *c, value fileline, const char *fmt, ...);
     \brief Fatal error function
  */
 extern void __arc_fatal(const char *errmsg, int errnum);
+
+/*! \fn enum arc_trstate arc_readb(arc *c, value thr)
+    \brief Read a byte from an I/O object
+    This is an AFF.
+ */
+extern enum arc_trstate arc_readb(arc *c, value thr);
+
+/*! \fn enum arc_trstate arc_writeb(arc *c, value thr)
+    \brief Write a byte to an I/O object
+    This is an AFF.
+ */
+extern enum arc_trstate arc_writeb(arc *c, value thr);
 
 /* =========== definitions and prototypes for utility functions */
 
