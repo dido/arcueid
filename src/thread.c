@@ -320,3 +320,38 @@ value arc_thr_setfunc(arc *c, value thr, value fun)
 {
   return(((arc_thread *)thr)->func=fun);
 }
+
+value arc_cmark(arc *c, value thr, value key)
+{
+  value cm = ((arc_thread *)thr)->cmarks, val;
+
+  val = __arc_tbl_lookup(c, cm, key);
+  return((BOUNDP(val)) ? car(val) : CNIL);
+}
+
+value arc_scmark(arc *c, value thr, value key, value val)
+{
+  value cm = ((arc_thread *)thr)->cmarks, bind;
+  bind = __arc_tbl_lookup(c, cm, key);
+  if (!BOUNDP(bind))
+    bind = CNIL;
+  bind = cons(c, val, bind);
+  __arc_tbl_insert(c, cm, key, bind);
+  return(val);
+}
+
+value arc_ccmark(arc *c, value thr, value key)
+{
+  value cm = ((arc_thread *)thr)->cmarks, bind, val;
+  bind = __arc_tbl_lookup(c, cm, key);
+  if (!BOUNDP(bind))
+    return(CNIL);
+  val = car(bind);
+  bind = cdr(bind);
+  if (NILP(bind)) {
+    __arc_tbl_delete(c, cm, key);
+  } else {
+    __arc_tbl_insert(c, cm, key, bind);
+  }
+  return(val);
+}
