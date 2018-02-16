@@ -54,7 +54,8 @@ static enum arc_trstate ioapply(arc *c, value t, value v)
 
 arctype __arc_io_t = { iofree, iomark, NULL, NULL, NULL, NULL, ioapply };
 
-value __arc_allocio(arc *c, size_t xdsize, arctype *t, value ioops)
+value __arc_allocio(arc *c, size_t xdsize, arctype *t, value ioops,
+		    unsigned int flags)
 {
   struct io_t *io;
 
@@ -69,3 +70,53 @@ void *__arc_iodata(value io)
 {
   return((void *)IODATA(io));
 }
+
+/* Get one of the standard fd's */
+static value get_stdfd(arc *c, value thr, value fdsym)
+{
+  value fd;
+
+  fd = arc_cmark(c, thr, fdsym);
+  if (NILP(fd))
+    fd = arc_gbind(c, fdsym);
+  return(fd);
+}
+
+AFFDEF(arc_readb)
+{
+  AOARG(fd);
+  Rune ch;
+  AFBEGIN;
+  /* if fd is not passed, try to get stdin-fd */
+  if (!BOUNDP(AV(fd)))
+    WV(fd, get_stdfd(c, thr, arc_intern_cstr(c, "stdin-fd")));
+  if (arc_type(AV(fd)) != &__arc_io_t) {
+    arc_err_cstr(c, "argument is not an I/O port");
+    ARETURN(CNIL);
+  }
+  if (!(((struct io_t *)AV(fd))->flags & IO_FLAG_READ)) {
+    arc_err_cstr(c, "argument is not an input port");
+    ARETURN(CNIL);
+  }
+  AFCALL(VIDX(((struct io_t *)AV(fd))->io_ops, IO_close), AV(fd));
+  if (!NILP(AFCRV)) {
+    arc_err_cstr(c, "port is closed");
+    ARETURN(CNIL);
+  }
+  /* Note that if there is an unget value available, it will return
+     the whole *CHARACTER*, not a possible byte within the character!
+     As before, one isn't really supposed to mix the 'c' functions
+     with the 'b' functions.  Do so at your own risk! */
+  if ((ch = ((struct io_t *)AV(fd))->ungetrune) >= 0) {
+    ((struct io_t *)AV(fd))->ungetrune = -1;
+    ARETURN(INT2FIX(ch));
+  }
+  AFCALL(VIDX(((struct io_t *)AV(fd))->io_ops, IO_ready), AV(fd));
+  if (NILP(AFCRV)) {
+    arc_err_cstr(c, "port is not ready for reading");
+    ARETURN(CNIL);
+  }
+  AFTCALL(VIDX(((struct io_t *)AV(fd))->io_ops, IO_getb), AV(fd));
+  AFEND;
+}
+AFFEND
