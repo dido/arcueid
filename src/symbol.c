@@ -38,7 +38,7 @@ static uint64_t hash(arc *c, value val, uint64_t seed)
 
 static void syminit(arc *c)
 {
-  c->obtbl = arc_tbl_new_flags(c, 6, HASH_WEAK_KEY | HASH_WEAK_VAL);
+  c->obtbl = arc_tbl_new_flags(c, ARC_HASHBITS, HASH_WEAK_KEY | HASH_WEAK_VAL);
 }
 
 arctype __arc_sym_t = { NULL, mark, hash, NULL, NULL, syminit, NULL };
