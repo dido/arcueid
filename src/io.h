@@ -65,6 +65,7 @@ enum {
     be added for specific I/O objects.
 */
 struct io_t {
+  unsigned int flags;	  /*!< flags  */
   Rune ungetrune;	  /*!< Buffered unget rune  */
   value io_ops;		  /*!< I/O operations functions  */
   arctype *iot;		  /*!< Specific I/O type (called after)  */
