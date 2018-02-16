@@ -44,7 +44,7 @@ enum arc_trstate apply(arc *c, value thr, value v)
 
   argc = t->argc;
   if (ff->argc >= 0 && ff->argc != argc) {
-    arc_err_cstr(c, t->line, "wrong number of arguments (%d for %d)", argc, ff->argc);
+    arc_err_cstr(c, "wrong number of arguments (%d for %d)", argc, ff->argc);
     return(TR_RC);
   }
 
@@ -97,7 +97,7 @@ enum arc_trstate apply(arc *c, value thr, value v)
 				     argv[4], argv[5], argv[6], argv[7]));
     break;
   default:
-    arc_err_cstr(c, t->line, "too many arguments");
+    arc_err_cstr(c, "too many arguments");
     break;
   }
   /* Restore continuation for non-AFF. The trampoline this was called
@@ -138,7 +138,7 @@ static void affenvr(arc *c, value thr, int minenv, int optenv, int dsenv)
   value rest;
 
   if (t->argc < minenv) {
-    arc_err_cstr(c, t->line, "too few arguments, at least %d required, %d passed", minenv, t->argc);
+    arc_err_cstr(c, "too few arguments, at least %d required, %d passed", minenv, t->argc);
     return;
   }
   rest = CNIL;
@@ -175,12 +175,12 @@ void __arc_affenv(arc *c, value thr, int nargs, int optargs,
   }
 
   if (t->argc < nargs) {
-    arc_err_cstr(c, t->line, "too few arguments, at least %d required, %d passed", nargs, t->argc);
+    arc_err_cstr(c, "too few arguments, at least %d required, %d passed", nargs, t->argc);
     return;
   }
 
   if (t->argc > nargs + optargs) {
-    arc_err_cstr(c, t->line, "too many arguments, at most %d allowed, %d passed", nargs + optargs, t->argc);
+    arc_err_cstr(c, "too many arguments, at most %d allowed, %d passed", nargs + optargs, t->argc);
     return;
   }
   __arc_env_new(c, thr, t->argc, nargs + optargs - t->argc + localvars);
