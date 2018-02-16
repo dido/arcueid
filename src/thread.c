@@ -123,7 +123,7 @@ void __arc_thr_trampoline(arc *c, value thr, enum arc_trstate state)
       /* Apply value in the accumulator */
       type = arc_type(t->acc);
       if (type->apply == NULL)
-	arc_err_cstr(c, t->line, "cannot apply object", 0);
+	arc_err_cstr(c, "cannot apply object", 0);
       state = type->apply(c, thr, t->acc);
       break;
     case TR_RC:
