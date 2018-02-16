@@ -58,6 +58,7 @@ typedef struct arc {
   /* Tables */
   value runetbl;		/*!< table of runes */
   value obtbl;			/*!< obtbl for symbols */
+  value genv;			/*!< global environment */
 } arc;
 
 /*! \enum arc_trstate
@@ -137,7 +138,7 @@ extern int __arc_is(arc *c, value v1, value v2);
  */
 #define IMMEDIATEP(x) (((value)(x) & IMMEDIATE_MASK) || (value)(x) == CNIL)
 
-/*  =========== Definitions for nils */
+/* =========== Definitions for nils */
 /*! \def CNIL
     \brief The nil value
     This is one of a few SPECIAL CONSTANTS defined by the interpreter.
@@ -161,7 +162,7 @@ extern arctype __arc_nil_t;
  */
 extern void arc_init(arc *c);
 
-/* Memory management functions */
+/* =========== Memory management functions */
 
 /*! \fn value arc_new(arc *c, arctype *t, size_t size)
     \brief Allocate an Arc object
@@ -183,7 +184,29 @@ extern value arc_new(arc *c, arctype *t, size_t size);
  */
 extern void arc_wb(arc *c, value dest, value src);
 
-/*  =========== Definitions for Fixnums */
+/* =========== Global symbol table functions */
+
+/*! \fn value arc_bind(arc *c, value sym, value binding)
+    \brief Bind symbol \a sym to the value \a binding in the global symbol table
+ */
+extern value arc_bind(arc *c, value sym, value binding);
+
+/*! \fn value arc_bindc(arc *c, const char *csym, value binding)
+    \brief Bind C string \a csym to the value \a binding in the global symbol table
+ */
+extern value arc_bindc(arc *c, const char *csym, value binding);
+
+/*! \fn value arc_gbind(arc *c, value sym)
+    \brief Get the globally bound value (if any) of symbol \a sym
+ */
+extern value arc_gbind(arc *c, value sym);
+
+/*! \fn value arc_gbindc(arc *c, const char *csym)
+    \brief Get the globally bound value (if any) of C string \a csym
+ */
+extern value arc_gbindc(arc *c, const char *sym);
+
+/* =========== Definitions for Fixnums */
 /*! \def FIXNUM_MAX
     \brief Largest possible fixnum value
  */
@@ -221,7 +244,7 @@ extern void arc_wb(arc *c, value dest, value src);
  */
 extern arctype __arc_fixnum_t;
 
-/*  =========== Definitions and prototypes for flonums */
+/* =========== Definitions and prototypes for flonums */
 extern arctype __arc_flonum_t;
 
 /*! \fn value arc_flonum_new(arc *c, double f)
