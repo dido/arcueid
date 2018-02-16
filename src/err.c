@@ -25,7 +25,7 @@
 
 /* This is going to get a lot more complicated later once we implement
    error handling and dynamic-wind. */
-void arc_err_cstr(arc *c, value fileline, const char *fmt, ...)
+void arc_err_cstr(arc *c, const char *fmt, ...)
 {
   va_list ap;
   char cstr[1000];
