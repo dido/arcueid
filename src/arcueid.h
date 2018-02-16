@@ -261,7 +261,7 @@ static inline double arc_flonum(value f)
   return(*((double *)f));
 }
 
-/*  =========== Definitions and prototypes for conses */
+/* =========== Definitions and prototypes for conses */
 
 /*! \struct cons
     \brief A cons cell
@@ -924,32 +924,32 @@ extern int __arc_affip(arc *c, value thr);
  */
 extern arctype __arc_io_t;
 
-/*! \fn value __arc_allocio(arc *c, size_t xdsize, arc_type *t, value ioops)
+/*! \def IO_FLAG_READ
+    \brief Flag bit for I/O supporting read
+ */
+#define IO_FLAG_READ 0x01
+
+/*! \def IO_FLAG_WRITE
+    \brief Flag bit for I/O supporting write
+ */
+#define IO_FLAG_WRITE 0x02
+
+/*! \fn value __arc_allocio(arc *c, size_t xdsize, arc_type *t, value ioops, unsigned int flags)
     \brief Allocate an I/O object
     Should not be used directly unless you're making an I/O object.
     \arg \c xdsize Size of extra data required by the I/O object
     \arg \c t Type definition for the I/O object (delegated to by the new I/O object)
     \arg \c ioops I/O operation functions
+    \arg \c flags I/O flags (see IO_FLAG_* defs)
  */
-extern value __arc_allocio(arc *c, size_t xdsize, arctype *t, value ioops);
+extern value __arc_allocio(arc *c, size_t xdsize, arctype *t, value ioops,
+			   unsigned int flags);
 
 /*! \fn void *__arc_iodata(value io)
     \brief Get specific I/O data for an I/O object
     Generally only useful for the implementors of I/O-style objects.
  */
 extern void *__arc_iodata(value io);
-
-/* =========== definitions and prototypes for error handling */
-
-/*! \fn void arc_err_cstr(arc *c, value fileline, const char *fmt, ...)
-    \brief Raise an error with a C format string message
- */
-extern void arc_err_cstr(arc *c, value fileline, const char *fmt, ...);
-
-/*! \fn void __arc_fatal(const char *errmsg, int errnum)
-    \brief Fatal error function
- */
-extern void __arc_fatal(const char *errmsg, int errnum);
 
 /*! \fn enum arc_trstate arc_readb(arc *c, value thr)
     \brief Read a byte from an I/O object
@@ -962,6 +962,30 @@ extern enum arc_trstate arc_readb(arc *c, value thr);
     This is an AFF.
  */
 extern enum arc_trstate arc_writeb(arc *c, value thr);
+
+/*! \fn enum arc_trstate arc_readc(arc *c, value thr)
+    \brief Read a character from an I/O object
+    This is an AFF.
+ */
+extern enum arc_trstate arc_readc(arc *c, value thr);
+
+/*! \fn enum arc_trstate arc_writec(arc *c, value thr)
+    \brief Write a character to an I/O object
+    This is an AFF.
+ */
+extern enum arc_trstate arc_writec(arc *c, value thr);
+
+/* =========== definitions and prototypes for error handling */
+
+/*! \fn void arc_err_cstr(arc *c, const char *fmt, ...)
+    \brief Raise an error with a C format string message
+ */
+extern void arc_err_cstr(arc *c, const char *fmt, ...);
+
+/*! \fn void __arc_fatal(const char *errmsg, int errnum)
+    \brief Fatal error function
+ */
+extern void __arc_fatal(const char *errmsg, int errnum);
 
 /* =========== definitions and prototypes for utility functions */
 
