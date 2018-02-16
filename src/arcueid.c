@@ -45,6 +45,7 @@ static void markroots(arc *c, void (*marker)(struct arc *, value))
   marker(c, c->vmthreads);
   marker(c, c->runetbl);
   marker(c, c->obtbl);
+  marker(c, c->genv);
 }
 
 void arc_init(arc *c)
@@ -59,6 +60,7 @@ void arc_types_init(arc *c)
 {
   int i;
 
+  c->genv = arc_tbl_new(c, ARC_HASHBITS);
   for (i=0; __arc_builtin_types[i].name; i++) {
     if (__arc_builtin_types[i].t->init != NULL)
       __arc_builtin_types[i].t->init(c);
@@ -119,5 +121,25 @@ int __arc_is(arc *c, value v1, value v2)
 
   /* Use type-specific function to compare */
   return(t->is(c, v1, v2));
+}
+
+value arc_bind(arc *c, value sym, value binding)
+{
+  return(__arc_tbl_insert(c, c->genv, sym, binding));
+}
+
+value arc_bindc(arc *c, const char *csym, value binding)
+{
+  return(arc_bind(c, arc_intern_cstr(c, csym), binding));
+}
+
+value arc_gbind(arc *c, value sym)
+{
+  return(__arc_tbl_lookup(c, c->genv, sym));
+}
+
+value arc_gbindc(arc *c, const char *csym)
+{
+  return(arc_gbind(c, arc_intern_cstr(c, csym)));
 }
 
