@@ -58,6 +58,7 @@ typedef struct arc {
   /* Tables */
   value runetbl;		/*!< table of runes */
   value obtbl;			/*!< obtbl for symbols */
+  value fftbl;			/*!< foreign function table */
   value genv;			/*!< global environment */
 } arc;
 
@@ -933,6 +934,14 @@ extern arctype __arc_io_t;
     \brief Flag bit for I/O supporting write
  */
 #define IO_FLAG_WRITE 0x02
+
+/*! \def IO_FLAG_GETB_IS_GETC
+    \brief Flag bit for pure character streams
+    If this flag is true, then the only difference between getb and getc
+    is that getc will wrap the results into a Rune, while getb will
+    return the Unicode point value of the current character.
+ */
+#define IO_FLAG_GETB_IS_GETC 0x04
 
 /*! \fn value __arc_allocio(arc *c, size_t xdsize, arc_type *t, value ioops, unsigned int flags)
     \brief Allocate an I/O object
