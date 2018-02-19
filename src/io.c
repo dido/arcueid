@@ -18,6 +18,7 @@
 #include "arcueid.h"
 #include "alloc.h"
 #include "io.h"
+#include "utf.h"
 
 /* Delegate to type-specific I/O free function if any */
 static void iofree(arc *c, value v)
@@ -117,6 +118,68 @@ AFFDEF(arc_readb)
     ARETURN(CNIL);
   }
   AFTCALL(IO_OP(AV(fd), IO_getb), AV(fd));
+  AFEND;
+}
+AFFEND
+
+AFFDEF(arc_readc)
+{
+  AOARG(fd);
+  AVAR(chr, buf, i);
+  /* the following entries are always destroyed */
+  char cbuf[UTFmax];
+  Rune ch;
+  int j;
+  AFBEGIN;
+  if (!BOUNDP(AV(fd)))
+    WV(fd, get_stdfd(c, thr, arc_intern_cstr(c, "stdin-fd")));
+  if (arc_type(AV(fd)) != &__arc_io_t) {
+    arc_err_cstr(c, "argument is not an I/O port");
+    ARETURN(CNIL);
+  }
+  if (!(IO_FLAGS(AV(fd)) & IO_FLAG_READ)) {
+    arc_err_cstr(c, "argument is not an input port");
+    ARETURN(CNIL);
+  }
+  AFCALL(IO_OP(AV(fd), IO_closed_p), AV(fd));
+  if (!NILP(AFCRV)) {
+    arc_err_cstr(c, "port is closed");
+    ARETURN(CNIL);
+  }
+  if ((ch = IO_UNGETRUNE(AV(fd))) >= 0) {
+    ((struct io_t *)AV(fd))->ungetrune = -1;
+    ARETURN(arc_rune_new(c, ch));
+  }
+  AFCALL(IO_OP(AV(fd), IO_ready), AV(fd));
+  if (NILP(AFCRV)) {
+    arc_err_cstr(c, "port is not ready for reading");
+    ARETURN(CNIL);
+  }
+
+  /* If getb is getc, we can use getb itself to read */
+  if ((IO_FLAGS(AV(fd)) & IO_FLAG_GETB_IS_GETC)) {
+    AFCALL(IO_OP(AV(fd), IO_getb), AV(fd));
+    if (NILP(AFCRV))
+      ARETURN(CNIL);
+    ARETURN(arc_rune_new(c, FIX2INT(AFCRV)));
+  }
+  WV(buf, arc_vector_new(c, UTFmax));
+  for (WV(i, INT2FIX(0)); FIX2INT(AV(i)) < UTFmax; WV(i, INT2FIX(FIX2INT(AV(i)) + 1))) {
+    /* arc_aff_new will memoize an aff for arc_readb as required */
+    AFCALL(arc_aff_new(c, arc_readb), AV(fd));
+    WV(chr, AFCRV);
+    if (NILP(AV(chr)))
+      ARETURN(CNIL);
+    SVIDX(c, AV(buf), FIX2INT(AV(i)), AV(chr));
+    /* Arcueid fixnum vector to C array of chars */
+    for (j=0; j<=FIX2INT(AV(i)); j++)
+      cbuf[j] = FIX2INT(VIDX(AV(buf), j));
+    if (fullrune(cbuf, FIX2INT(AV(i))+1)) {
+      chartorune(&ch, cbuf);
+      ARETURN(arc_rune_new(c, ch));
+    }
+  }
+  ARETURN(CNIL);
   AFEND;
 }
 AFFEND
