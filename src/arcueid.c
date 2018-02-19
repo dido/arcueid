@@ -45,6 +45,7 @@ static void markroots(arc *c, void (*marker)(struct arc *, value))
   marker(c, c->vmthreads);
   marker(c, c->runetbl);
   marker(c, c->obtbl);
+  marker(c, c->fftbl);
   marker(c, c->genv);
 }
 
