@@ -56,6 +56,7 @@ START_TEST(test_aff_simple)
   value thr;
 
   arc_init(c);
+  __arc_ffunc_t.init(c);
   thr = __arc_thread_new(c, 1);
   arc_thr_setacc(c, thr, arc_aff_new(c, simple_aff));
   __arc_thr_trampoline(c, thr, TR_FNAPP);
@@ -71,6 +72,7 @@ START_TEST(test_subtractor)
   arc_thread *t;
 
   arc_init(c);
+  __arc_ffunc_t.init(c);
   thr = __arc_thread_new(c, 1);
   t = (arc_thread *)thr;
   arc_thr_setacc(c, thr, arc_aff_new(c, subtractor));
@@ -90,6 +92,7 @@ START_TEST(test_doubler)
   arc_thread *t;
 
   arc_init(c);
+  __arc_ffunc_t.init(c);
   thr = __arc_thread_new(c, 1);
   t = (arc_thread *)thr;
   arc_thr_setacc(c, thr, arc_aff_new(c, doubler));
