@@ -35,6 +35,11 @@
 void *alloca (size_t);
 #endif
 
+static void init(arc *c)
+{
+  c->fftbl = arc_tbl_new_flags(c, ARC_HASHBITS, HASH_WEAK_VAL);
+}
+
 enum arc_trstate apply(arc *c, value thr, value v)
 {
   arc_ffunc *ff = (arc_ffunc *)v;
@@ -105,23 +110,56 @@ enum arc_trstate apply(arc *c, value thr, value v)
   return(TR_RC);
 }
 
-arctype __arc_ffunc_t = { NULL, NULL, NULL, NULL, NULL, NULL, apply };
+arctype __arc_ffunc_t = { NULL, NULL, NULL, NULL, NULL, init, apply };
+
+#define SEED 0x93c467e37db0c7a4ULL
+
+static uint64_t hashfn(void *f)
+{
+  /* magic number, first 64 bits of sha512 hash of 'ffunc' */
+  static const uint64_t magic = 0x8d0662dfd97dfd69ULL;
+  uint64_t hv;
+  struct hash_ctx ctx;
+  __arc_hash_init(&ctx, SEED);
+  __arc_hash_update(&ctx, &magic, 1);
+  hv = (uint64_t)f;
+  __arc_hash_update(&ctx, &hv, 1);
+  hv = __arc_hash_final(&ctx);
+  return(INT2FIX(hv));
+}
 
 value arc_ff_new(arc *c, int argc, value (*func)())
 {
-  value vff = arc_new(c, &__arc_ffunc_t, sizeof(arc_ffunc));
-  arc_ffunc *ff = (arc_ffunc *)vff;
+  value vff, k;
+  arc_ffunc *ff;
+
+  k = hashfn(func);
+  vff = __arc_tbl_lookup(c, c->fftbl, k);
+  if (vff != CUNBOUND)
+    return(vff);
+  vff = arc_new(c, &__arc_ffunc_t, sizeof(arc_ffunc));
+  ff = (arc_ffunc *)vff;
   ff->argc = argc;
   ff->ff.ff = func;
+  __arc_tbl_insert(c, c->fftbl, k, vff);
   return(vff);
 }
 
 value arc_aff_new(arc *c, enum arc_trstate (*func)(arc *, value))
 {
-  value vff = arc_new(c, &__arc_ffunc_t, sizeof(arc_ffunc));
-  arc_ffunc *ff = (arc_ffunc *)vff;
+  value vff, k;
+  arc_ffunc *ff;
+
+  k = hashfn(func);
+  vff = __arc_tbl_lookup(c, c->fftbl, k);
+  if (vff != CUNBOUND)
+    return(vff);
+
+  vff = arc_new(c, &__arc_ffunc_t, sizeof(arc_ffunc));
+  ff = (arc_ffunc *)vff;
   ff->argc = -2;
   ff->ff.aff = func;
+  __arc_tbl_insert(c, c->fftbl, k, vff);
   return(vff);
 }
 
