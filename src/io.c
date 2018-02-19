@@ -94,11 +94,11 @@ AFFDEF(arc_readb)
     arc_err_cstr(c, "argument is not an I/O port");
     ARETURN(CNIL);
   }
-  if (!(((struct io_t *)AV(fd))->flags & IO_FLAG_READ)) {
+  if (!(IO_FLAGS(AV(fd)) & IO_FLAG_READ)) {
     arc_err_cstr(c, "argument is not an input port");
     ARETURN(CNIL);
   }
-  AFCALL(VIDX(((struct io_t *)AV(fd))->io_ops, IO_close), AV(fd));
+  AFCALL(IO_OP(AV(fd), IO_closed_p), AV(fd));
   if (!NILP(AFCRV)) {
     arc_err_cstr(c, "port is closed");
     ARETURN(CNIL);
@@ -107,16 +107,16 @@ AFFDEF(arc_readb)
      the whole *CHARACTER*, not a possible byte within the character!
      As before, one isn't really supposed to mix the 'c' functions
      with the 'b' functions.  Do so at your own risk! */
-  if ((ch = ((struct io_t *)AV(fd))->ungetrune) >= 0) {
+  if ((ch = IO_UNGETRUNE(AV(fd))) >= 0) {
     ((struct io_t *)AV(fd))->ungetrune = -1;
     ARETURN(INT2FIX(ch));
   }
-  AFCALL(VIDX(((struct io_t *)AV(fd))->io_ops, IO_ready), AV(fd));
+  AFCALL(IO_OP(AV(fd), IO_ready), AV(fd));
   if (NILP(AFCRV)) {
     arc_err_cstr(c, "port is not ready for reading");
     ARETURN(CNIL);
   }
-  AFTCALL(VIDX(((struct io_t *)AV(fd))->io_ops, IO_getb), AV(fd));
+  AFTCALL(IO_OP(AV(fd), IO_getb), AV(fd));
   AFEND;
 }
 AFFEND
