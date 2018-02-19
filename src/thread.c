@@ -40,7 +40,7 @@ static void mark(arc *c, value v,
     marker(c, *ptr, depth);
 }
 
-void init(arc *c)
+static void init(arc *c)
 {
   c->vmthreads = c->curthread = CNIL;
 }
