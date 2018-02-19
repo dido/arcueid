@@ -104,5 +104,15 @@ struct io_t {
  */
 #define IO_OP(v, op) (VIDX(IO(v)->io_ops, (op)))
 
+/*! \def IO_FLAGS(op)
+    \brief Get the I/O flags
+ */
+#define IO_FLAGS(io) (((struct io_t *)io)->flags)
+
+/*! \def IO_FLAGS(op)
+    \brief Get the unget rune, if any
+ */
+#define IO_UNGETRUNE(io) (((struct io_t *)io)->ungetrune)
+
 #endif
 
