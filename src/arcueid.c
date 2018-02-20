@@ -37,6 +37,8 @@ struct {
   { "rune", &__arc_rune_t },
   { "sym", &__arc_sym_t },
   { "string", &__arc_string_t },
+  { "io", &__arc_io_t },
+  { "sio", &__arc_sio_t },
   { NULL, NULL}
 };
 
