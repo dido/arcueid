@@ -43,7 +43,7 @@ typedef unsigned long value;
 typedef struct arc {
   void *mm_ctx;			/*!< memory manager context */
   void *gc_ctx;			/*!< garbage collector context */
-  /*! Root marking function called at the beginning of a GC cycle to
+  /*! root marking function called at the beginning of a GC cycle to
       mark the initial root set */
   void (*markroots)(struct arc *, void (*)(struct arc *, value));
 
@@ -60,6 +60,7 @@ typedef struct arc {
   value obtbl;			/*!< obtbl for symbols */
   value fftbl;			/*!< foreign function table */
   value genv;			/*!< global environment */
+  value builtins;		/*!< builtins vector */
 } arc;
 
 /*! \enum arc_trstate
@@ -622,6 +623,11 @@ extern value arc_intern(arc *c, value s);
  */
 extern value arc_sym2name(arc *c, value sym);
 
+/*! \def CTRUE
+    \brief 't' symbol used as true value
+ */
+#define CTRUE (arc_intern_cstr(c, "t"))
+
 /* =========== Definitions and prototypes for continuations */
 /*! \fn value __arc_cont(arc *c, value thr, int ip)
     \brief Create a new continuation
@@ -983,6 +989,8 @@ extern enum arc_trstate arc_readc(arc *c, value thr);
     This is an AFF.
  */
 extern enum arc_trstate arc_writec(arc *c, value thr);
+
+/* =========== definitions and prototypes for string I/O */
 
 /* =========== definitions and prototypes for error handling */
 
