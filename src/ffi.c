@@ -231,7 +231,7 @@ int __arc_affip(arc *c, value thr)
 
 enum arc_trstate __arc_affapply(arc *c, value thr, value cont, value func, ...)
 {
-  int argc;
+  int argc=0;
   va_list ap;
   value arg;
   arc_thread *t = (arc_thread *)thr;
@@ -243,7 +243,6 @@ enum arc_trstate __arc_affapply(arc *c, value thr, value cont, value func, ...)
     arc_wb(c, t->cont, cont);
     t->cont = cont;
   }
-  va_start(ap, func);
   /* Push arguments onto the stack. Look for CLASTARG sentinel */
   va_start(ap, func);
   while ((arg = va_arg(ap, value)) != CLASTARG) {
