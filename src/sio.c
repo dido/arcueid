@@ -188,7 +188,7 @@ value arc_instring(arc *c, value string)
 
 value arc_outstring(arc *c, value string)
 {
-  return(mkstringio(c, IO_FLAG_READ|IO_FLAG_WRITE, CNIL));
+  return(mkstringio(c, IO_FLAG_READ|IO_FLAG_WRITE, string));
 }
 
 value arc_inside(arc *c, value sio)
