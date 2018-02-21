@@ -97,7 +97,7 @@ struct io_t {
 /*! \def IODATA(v, t)
     \brief Specific I/O data
  */
-#define IODATA(v) (((char *)(((struct io_t *)(v))->_data)) + IOPAD)
+#define IODATA(v, t) ((t)(((char *)(((struct io_t *)(v))->_data)) + IOPAD))
 
 /*! \def IO_OP(op)
     \brief Get the I/O op function
