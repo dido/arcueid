@@ -64,6 +64,7 @@ value __arc_allocio(arc *c, size_t xdsize, arctype *t, value ioops,
   io->ungetrune = -1;
   io->io_ops = ioops;
   io->iot = t;
+  io->flags = flags;
   return((value)io);
 }
 
@@ -95,7 +96,7 @@ AFFDEF(arc_readb)
     arc_err_cstr(c, "argument is not an I/O port");
     ARETURN(CNIL);
   }
-  if (!(IO_FLAGS(AV(fd)) & IO_FLAG_READ)) {
+  if ((IO_FLAGS(AV(fd)) & IO_FLAG_READ) == 0) {
     arc_err_cstr(c, "argument is not an input port");
     ARETURN(CNIL);
   }
