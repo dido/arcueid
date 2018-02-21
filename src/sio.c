@@ -162,7 +162,7 @@ static value mkstringio(arc *c, unsigned int rwflags, value string)
   value ioops;
 
   ioops = __arc_tbl_lookup(c, c->builtins, arc_intern_cstr(c, "sio"));
-  if (NILP(ioops)) {
+  if (!BOUNDP(ioops)) {
     ioops = arc_vector_new(c, IO_last+1);
     SVIDX(c, ioops, IO_closed_p, arc_aff_new(c, sio_closed_p));
     SVIDX(c, ioops, IO_ready, arc_aff_new(c, sio_ready));
