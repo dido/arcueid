@@ -60,7 +60,7 @@ typedef struct arc {
   value obtbl;			/*!< obtbl for symbols */
   value fftbl;			/*!< foreign function table */
   value genv;			/*!< global environment */
-  value builtins;		/*!< builtins vector */
+  value builtins;		/*!< builtins table */
 } arc;
 
 /*! \enum arc_trstate
@@ -991,6 +991,19 @@ extern enum arc_trstate arc_readc(arc *c, value thr);
 extern enum arc_trstate arc_writec(arc *c, value thr);
 
 /* =========== definitions and prototypes for string I/O */
+/*! \fn value arc_instring(arc *c, value string)
+    \brief Create a string I/O for input
+ */
+extern value arc_instring(arc *c, value string);
+/*! \fn value arc_outstring(arc *c, value string)
+    \brief Create a string I/O for output
+ */
+extern value arc_outstring(arc *c, value string);
+
+/*! \fn value arc_inside(arc *c, value sio)
+    \brief Get the string value of a string I/O object
+ */
+extern value arc_inside(arc *c, value sio);
 
 /* =========== definitions and prototypes for error handling */
 
