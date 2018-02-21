@@ -158,11 +158,16 @@ extern int __arc_is(arc *c, value v1, value v2);
  */
 extern arctype __arc_nil_t;
 
-/* Initialization */
+/* =========== Initialization */
 /*! \fn value arc_init(arc *c)
     \brief Initialize an Arc context
  */
 extern void arc_init(arc *c);
+
+/*! \fn value arc_init(arc *c)
+    \brief Initialize type-specific information in an Arc context
+ */
+extern void arc_types_init(arc *c);
 
 /* =========== Memory management functions */
 
