@@ -161,10 +161,40 @@ static value mkstringio(arc *c, unsigned int rwflags, value string)
 
   sio = __arc_allocio(c, type, &stringio_tfn, sizeof(struct stringio_t));
   IO(sio)->flags = IO_FLAG_GETB_IS_GETC | rwflags;
-  IO(sio)->io_ops = CNIL;	/* XXX */
+  IO(sio)->io_ops = __arc_tbl_lookup(c, arc_intern_cstr(c, "sio"));
+  if (NILP(IO(sio)->io_ops)) {
+    IO(sio)->io_ops = arc_vector_new(c, IO_last+1);
+    SVIDX(c, IO(sio)->io_ops, IO_closed_p, arc_aff_new(c, sio_closed_p));
+    SVIDX(c, IO(sio)->io_ops, IO_ready, arc_aff_new(c, sio_ready));
+    SVIDX(c, IO(sio)->io_ops, IO_wready, arc_aff_new(c, sio_wready));
+    SVIDX(c, IO(sio)->io_ops, IO_getb, arc_aff_new(c, sio_getb));
+    SVIDX(c, IO(sio)->io_ops, IO_putb, arc_aff_new(c, sio_putb));
+    SVIDX(c, IO(sio)->io_ops, IO_seek, arc_aff_new(c, sio_seek));
+    SVIDX(c, IO(sio)->io_ops, IO_tell, arc_aff_new(c, sio_tell));
+    SVIDX(c, IO(sio)->io_ops, IO_close, arc_aff_new(c, sio_close));
+    __arc_tbl_insert(c, arc_intern_cstr(c, "sio"), IO(sio)->io_ops);
+  }
 
   SIODATA(sio)->closed = 0;
   SIODATA(sio)->idx = 0;
   SIODATA(sio)->str = string;
   return(sio);
+}
+
+value arc_instring(arc *c, value string)
+{
+  return(mkstringio(c, IO_FLAG_READ, string));
+}
+
+value arc_outstring(arc *c, value string)
+{
+  return(mkstringio(c, IO_FLAG_READ|IO_FLAG_WRITE, CNIL));
+}
+
+value arc_inside(arc *c, value sio)
+{
+  /* XXX type checks */
+  if (NILP(SIODATA(sio)->str))
+    return(arc_string_new_cstr(c, ""));
+  return(SIODATA(sio)->str);
 }
