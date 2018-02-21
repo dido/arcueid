@@ -31,7 +31,7 @@ static void sio_marker(arc *c, value v,
 		       void (*marker)(struct arc *, value, int),
 		       int depth)
 {
-  mark(c, SIODATA(v)->str, depth);
+  marker(c, SIODATA(v)->str, depth);
 }
 
 /* Only sio_marker adds onto the default io type functions */
@@ -51,6 +51,7 @@ static AFFDEF(sio_ready)
 {
   AARG(sio);
   AFBEGIN;
+  AV(sio);
   ARETURN(CTRUE);
   AFEND;
 }
@@ -84,7 +85,7 @@ static AFFDEF(sio_getb)
 }
 AFFEND
 
-static AFFDEF(sio_writeb)
+static AFFDEF(sio_putb)
 {
   AARG(sio, byte);
   int len;
@@ -100,7 +101,7 @@ static AFFDEF(sio_writeb)
 					   (Rune)FIX2INT(AV(byte)));
   } else {
     arc_strsetindex(c, SIODATA(AV(sio))->str, SIODATA(AV(sio))->idx++,
-		    (Rune)FIX2INT(AV(byte)))
+		    (Rune)FIX2INT(AV(byte)));
   }
   ARETURN(AV(byte));
   AFEND;
@@ -158,22 +159,23 @@ AFFEND
 static value mkstringio(arc *c, unsigned int rwflags, value string)
 {
   value sio;
+  value ioops;
 
-  sio = __arc_allocio(c, type, &stringio_tfn, sizeof(struct stringio_t));
-  IO(sio)->flags = IO_FLAG_GETB_IS_GETC | rwflags;
-  IO(sio)->io_ops = __arc_tbl_lookup(c, arc_intern_cstr(c, "sio"));
-  if (NILP(IO(sio)->io_ops)) {
-    IO(sio)->io_ops = arc_vector_new(c, IO_last+1);
-    SVIDX(c, IO(sio)->io_ops, IO_closed_p, arc_aff_new(c, sio_closed_p));
-    SVIDX(c, IO(sio)->io_ops, IO_ready, arc_aff_new(c, sio_ready));
-    SVIDX(c, IO(sio)->io_ops, IO_wready, arc_aff_new(c, sio_wready));
-    SVIDX(c, IO(sio)->io_ops, IO_getb, arc_aff_new(c, sio_getb));
-    SVIDX(c, IO(sio)->io_ops, IO_putb, arc_aff_new(c, sio_putb));
-    SVIDX(c, IO(sio)->io_ops, IO_seek, arc_aff_new(c, sio_seek));
-    SVIDX(c, IO(sio)->io_ops, IO_tell, arc_aff_new(c, sio_tell));
-    SVIDX(c, IO(sio)->io_ops, IO_close, arc_aff_new(c, sio_close));
-    __arc_tbl_insert(c, arc_intern_cstr(c, "sio"), IO(sio)->io_ops);
+  ioops = __arc_tbl_lookup(c, c->builtins, arc_intern_cstr(c, "sio"));
+  if (NILP(ioops)) {
+    ioops = arc_vector_new(c, IO_last+1);
+    SVIDX(c, ioops, IO_closed_p, arc_aff_new(c, sio_closed_p));
+    SVIDX(c, ioops, IO_ready, arc_aff_new(c, sio_ready));
+    SVIDX(c, ioops, IO_wready, arc_aff_new(c, sio_wready));
+    SVIDX(c, ioops, IO_getb, arc_aff_new(c, sio_getb));
+    SVIDX(c, ioops, IO_putb, arc_aff_new(c, sio_putb));
+    SVIDX(c, ioops, IO_seek, arc_aff_new(c, sio_seek));
+    SVIDX(c, ioops, IO_tell, arc_aff_new(c, sio_tell));
+    SVIDX(c, ioops, IO_close, arc_aff_new(c, sio_close));
+    __arc_tbl_insert(c, c->builtins, arc_intern_cstr(c, "sio"), ioops);
   }
+  sio = __arc_allocio(c, sizeof(struct stringio_t), &__arc_sio_t, ioops,
+		      IO_FLAG_GETB_IS_GETC | rwflags);
 
   SIODATA(sio)->closed = 0;
   SIODATA(sio)->idx = 0;
