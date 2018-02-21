@@ -39,6 +39,7 @@ struct {
   { "string", &__arc_string_t },
   { "io", &__arc_io_t },
   { "sio", &__arc_sio_t },
+  { "ffunc", &__arc_ffunc_t},
   { NULL, NULL}
 };
 
