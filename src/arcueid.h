@@ -991,6 +991,11 @@ extern enum arc_trstate arc_readc(arc *c, value thr);
 extern enum arc_trstate arc_writec(arc *c, value thr);
 
 /* =========== definitions and prototypes for string I/O */
+/*! \var arctype __arc_sio_t
+    \brief Type definition structure for string I/O objects
+ */
+extern arctype __arc_sio_t;
+
 /*! \fn value arc_instring(arc *c, value string)
     \brief Create a string I/O for input
  */
