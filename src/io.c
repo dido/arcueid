@@ -69,7 +69,7 @@ value __arc_allocio(arc *c, size_t xdsize, arctype *t, value ioops,
 
 void *__arc_iodata(value io)
 {
-  return((void *)IODATA(io));
+  return(IODATA(io, void *));
 }
 
 /* Get one of the standard fd's */
