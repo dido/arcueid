@@ -49,6 +49,7 @@ static void markroots(arc *c, void (*marker)(struct arc *, value))
   marker(c, c->obtbl);
   marker(c, c->fftbl);
   marker(c, c->genv);
+  marker(c, c->builtins);
 }
 
 void arc_init(arc *c)
@@ -64,6 +65,8 @@ void arc_types_init(arc *c)
   int i;
 
   c->genv = arc_tbl_new(c, ARC_HASHBITS);
+  c->builtins = arc_tbl_new_flags(c, ARC_HASHBITS,
+				  HASH_WEAK_KEY | HASH_WEAK_VAL);
   for (i=0; __arc_builtin_types[i].name; i++) {
     if (__arc_builtin_types[i].t->init != NULL)
       __arc_builtin_types[i].t->init(c);
