@@ -44,9 +44,9 @@ START_TEST(test_sio_readb)
 
   CPUSH(thr, sio);
   t->argc = 1;
-  arc_thr_setacc(c, thr, arc_aff_new(c, arc_readb));
+  arc_thr_setacc(c, thr, arc_aff_new(c, arc_readc));
   __arc_thr_trampoline(c, thr, TR_FNAPP);
-  ck_assert_int_eq(FIX2INT(arc_thr_acc(c, thr)), 0x62);
+  ck_assert(arc_thr_acc(c, thr) == arc_rune_new(c, 0x62));
 
   CPUSH(thr, sio);
   t->argc = 1;
@@ -63,6 +63,12 @@ START_TEST(test_sio_readb)
   CPUSH(thr, sio);
   t->argc = 1;
   arc_thr_setacc(c, thr, arc_aff_new(c, arc_readb));
+  __arc_thr_trampoline(c, thr, TR_FNAPP);
+  ck_assert(NILP(arc_thr_acc(c, thr)));
+
+  CPUSH(thr, sio);
+  t->argc = 1;
+  arc_thr_setacc(c, thr, arc_aff_new(c, arc_readc));
   __arc_thr_trampoline(c, thr, TR_FNAPP);
   ck_assert(NILP(arc_thr_acc(c, thr)));
 }
