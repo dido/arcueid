@@ -111,11 +111,14 @@ static AFFDEF(fio_ready)
   for (;;) {
     fp = FIODATA(AV(fio))->fp;
     /* XXX - NOT PORTABLE! */
+    /*
 #ifdef _IO_fpos_t
     check = (fp->_IO_read_ptr != fp->_IO_read_end);
 #else
     check = (fp->_gptr < (fp)->_egptr);
 #endif
+    */
+    check = 0;
     if (check)
       ARETURN(CTRUE);
     /* No buffered data available. See if the underlying file descriptor

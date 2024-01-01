@@ -34,4 +34,4 @@ bin_PROGRAMS = arcueid
 arcueid_LDFLAGS = -Wl,--no-as-needed
 arcueid_SOURCES = repl.c
 arcueid_CFLAGS = -DPKGDATA=\"$(pkgdatadir)\"
-arcueid_LDADD = $(LIBOBJS) @LIBARCUEID_LIBS@ @RLLIBS@
+arcueid_LDADD = libarcueid.la $(LIBOBJS) @LIBARCUEID_LIBS@ @RLLIBS@

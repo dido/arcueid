@@ -129,11 +129,14 @@ static int stdin_ready(arc *c)
   int retval, check;
 
   /* XXX - NOT PORTABLE! */
+  /*
 #ifdef _IO_fpos_t
   check = (stdin->_IO_read_ptr != stdin->_IO_read_end);
 #else
   check = (stdin->_gptr < (stdin)->_egptr);
 #endif
+  */
+  check = 0;
   if (check)
     return(1);
 

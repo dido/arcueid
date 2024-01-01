@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 #
-AC_PREREQ(2.61)
-AC_INIT([Arcueid], [0.1.3], [dido@imperium.ph])
+AC_PREREQ([2.71])
+AC_INIT([Arcueid],[0.1.3],[dido@imperium.ph])
 AC_CONFIG_SRCDIR([src/alloc.c])
 
 AM_INIT_AUTOMAKE([-Wall -Werror])
@@ -27,7 +27,7 @@ AC_PROG_CC
 AC_PROG_LN_S
 AM_PROG_AR
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 AM_PROG_CC_C_O
 
 AC_C_CONST
@@ -38,7 +38,11 @@ AC_C_BIGENDIAN
 AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO
 
-AC_HEADER_STDC
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 
 MATH_LIBS=-lm
 AC_CHECK_HEADERS(math.h,, AC_MSG_FAILURE([Math library header seems to be missing.]))
@@ -49,7 +53,7 @@ AC_CHECK_HEADERS(malloc.h)
 
 AC_FUNC_ALLOCA
 
-AC_ARG_WITH(readline, AC_HELP_STRING(--without-readline,disable readline support))
+AC_ARG_WITH(readline, AS_HELP_STRING([--without-readline],[disable readline support]))
 if test xno != x$with_readline; then
    AX_LIB_READLINE
    AC_SUBST(RLLIBS)
@@ -128,7 +132,7 @@ AC_CHECK_FUNCS(clock_gettime, [], [
 
 AC_CHECK_FUNCS(posix_memalign realpath malloc_trim)
 
-AC_ARG_WITH(epoll, AC_HELP_STRING(--without-epoll,disable epoll support (Linux only)))
+AC_ARG_WITH(epoll, AS_HELP_STRING([--without-epoll],[disable epoll support (Linux only)]))
 dnl System type checks.
 case "$host" in
   *-linux-*)
